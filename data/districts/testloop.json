@@ -1,0 +1,112 @@
+{
+  "districtId": "testloop",
+  "name": {
+    "bn": "টেস্টলুপ",
+    "en": "Test Loop"
+  },
+  "nodes": [
+    { "nodeId": "N1", "x": 0, "z": 0, "kind": "junction" },
+    { "nodeId": "N2", "x": 100, "z": 0, "kind": "junction" },
+    { "nodeId": "N3", "x": 100, "z": 100, "kind": "junction" },
+    { "nodeId": "N4", "x": 0, "z": 100, "kind": "junction" },
+    { "nodeId": "N5", "x": 200, "z": 0, "kind": "junction" },
+    { "nodeId": "N6", "x": 200, "z": 100, "kind": "uturn" },
+    { "nodeId": "N7", "x": 210, "z": 100, "kind": "junction" },
+    { "nodeId": "N8", "x": 210, "z": 0, "kind": "junction" }
+  ],
+  "segments": [
+    {
+      "segmentId": "S1",
+      "startNodeId": "N1",
+      "endNodeId": "N2",
+      "width": 10,
+      "surfaceCondition": 1.0,
+      "trafficDensity": 0.3,
+      "speedLimit": 40,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": true,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "testloop",
+      "tags": []
+    },
+    {
+      "segmentId": "S2",
+      "startNodeId": "N2",
+      "endNodeId": "N3",
+      "width": 10,
+      "surfaceCondition": 1.0,
+      "trafficDensity": 0.3,
+      "speedLimit": 40,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "testloop",
+      "tags": []
+    },
+    {
+      "segmentId": "S4",
+      "startNodeId": "N3",
+      "endNodeId": "N4",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.2,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.3,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.3,
+      "pickupPractical": true,
+      "district": "testloop",
+      "tags": []
+    },
+    {
+      "segmentId": "S5",
+      "startNodeId": "N4",
+      "endNodeId": "N1",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.2,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.3,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.3,
+      "pickupPractical": true,
+      "district": "testloop",
+      "tags": []
+    }
+  ],
+  "pois": [
+    {
+      "id": "poi_fuel",
+      "kind": "fuel",
+      "nodeId": "N2",
+      "nameKey": "poi.fuel"
+    }
+  ],
+  "lots": []
+}
