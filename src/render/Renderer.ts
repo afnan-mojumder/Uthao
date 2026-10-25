@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { CameraRig } from './CameraRig';
 import { MotorcycleMesh } from './vehicles';
+import { RideMarkers } from './props';
 import {
   AdaptiveQualityManager,
   type QualityLevel,
@@ -13,6 +14,7 @@ export class Renderer {
   readonly scene: THREE.Scene;
   readonly cameraRig: CameraRig;
   readonly bikeMesh: MotorcycleMesh;
+  readonly markers: RideMarkers;
   readonly qualityManager: AdaptiveQualityManager;
 
   private canvas: HTMLCanvasElement;
@@ -57,6 +59,9 @@ export class Renderer {
 
     this.bikeMesh = new MotorcycleMesh();
     this.scene.add(this.bikeMesh.root);
+
+    this.markers = new RideMarkers();
+    this.scene.add(this.markers.root);
 
     this.buildTestScene();
     this.setupLighting();
@@ -243,11 +248,18 @@ export class Renderer {
 
     this.bikeMesh.setPose({ x, y: 0, z, heading, lean, steer });
 
+    // Update ride markers animation
+    this.markers.update(1 / 60);
+
     // Update Camera Rig
     const bikePos = new THREE.Vector3(x, 0, z);
     this.cameraRig.update(bikePos, heading, this.bikeSpeed, this.colliders);
 
     this.webglRenderer.render(this.scene, this.cameraRig.camera);
+  }
+
+  setPassengerVisible(visible: boolean): void {
+    this.bikeMesh.setPassengerVisible(visible);
   }
 
   getFps(): number {
