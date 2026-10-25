@@ -1,9 +1,11 @@
 import type { GameManager, SimSnapshot } from '../sim/GameManager';
 import type { Command, CommandResult } from '../core/commands';
 import type { WeatherKind } from '../core/types';
+import type { Renderer } from '../render/Renderer';
 
 export interface DebugApi {
   gm: GameManager;
+  renderer?: Renderer;
   dispatch: (cmd: Command) => CommandResult;
   snapshot: () => SimSnapshot;
   setSeed: (seed: number) => void;
@@ -11,6 +13,10 @@ export interface DebugApi {
   setTime: (hhmm: string) => void;
   setWeather: (w: WeatherKind) => void;
   autopilot: (on: boolean) => void;
+  getFps: () => number;
+  getDrawCalls: () => number;
+  getTriangles: () => number;
+  toggleCamera: () => void;
 }
 
 declare global {
@@ -19,7 +25,7 @@ declare global {
   }
 }
 
-export function initDebugApi(gm: GameManager): void {
+export function initDebugApi(gm: GameManager, renderer?: Renderer): void {
   const isDev =
     (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') ||
     (typeof import.meta !== 'undefined' && Boolean(import.meta.env?.DEV));
@@ -36,6 +42,7 @@ export function initDebugApi(gm: GameManager): void {
 
   window.__uthao = {
     gm,
+    renderer,
     dispatch: (cmd: Command) => gm.dispatch(cmd),
     snapshot: () => gm.snapshot(),
     setSeed: (seed: number) => {
@@ -61,5 +68,9 @@ export function initDebugApi(gm: GameManager): void {
       autopilotEnabled = on;
       console.log(`[DebugApi] autopilot: ${autopilotEnabled}`);
     },
+    getFps: () => renderer?.getFps() ?? 60,
+    getDrawCalls: () => renderer?.getDrawCalls() ?? 0,
+    getTriangles: () => renderer?.getTriangles() ?? 0,
+    toggleCamera: () => renderer?.cameraRig.toggleMode(),
   };
 }
