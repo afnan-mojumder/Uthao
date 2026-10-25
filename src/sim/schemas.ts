@@ -97,3 +97,31 @@ export interface DistrictData {
   pois: Poi[];
   lots?: unknown[];
 }
+
+export const ArchetypeRangeSchema = z.tuple([z.number(), z.number()]);
+
+export const ArchetypeDefinitionSchema = z.object({
+  id: z.enum(['bargainer', 'commuter', 'careful', 'regular', 'risky']),
+  name: z.object({
+    bn: z.string(),
+    en: z.string(),
+  }),
+  budgetFactor: ArchetypeRangeSchema,
+  patience: ArchetypeRangeSchema,
+  urgency: ArchetypeRangeSchema,
+  bargainingTendency: ArchetypeRangeSchema,
+  safetySensitivity: ArchetypeRangeSchema,
+  trustInRider: ArchetypeRangeSchema,
+  localKnowledge: ArchetypeRangeSchema,
+  paymentReliability: ArchetypeRangeSchema,
+  walkTolerance: ArchetypeRangeSchema,
+  names: z.array(z.string()),
+});
+
+export const ArchetypesDataSchema = z.record(
+  z.enum(['bargainer', 'commuter', 'careful', 'regular', 'risky']),
+  ArchetypeDefinitionSchema
+);
+
+export type ArchetypeDefinition = z.infer<typeof ArchetypeDefinitionSchema>;
+export type ArchetypesData = z.infer<typeof ArchetypesDataSchema>;
