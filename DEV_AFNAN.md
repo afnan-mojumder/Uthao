@@ -31,7 +31,7 @@ Work top to bottom, but **skip a task whose dependencies aren't done yet** and c
 Format: `- [ ] **<id>** <title> (<points>), deps: <ids>`. Tick by changing only `[ ]` → `[x]`, because `scripts/agent/*.sh` parse this exact format.
 
 - [x] **T0.1** Scaffold, tooling, docs (3), deps: none
-- [ ] **T0.2** Core utilities (3), deps: T0.1
+- [x] **T0.2** Core utilities (3), deps: T0.1
 - [ ] **T0.3** GameManager skeleton and fixed-step loop (3), deps: T0.2
 - [ ] **T1.1** Bike model, pure math (3), deps: T0.2
 - [ ] **T1.5** Road network v0 and routing (5), deps: T0.2
