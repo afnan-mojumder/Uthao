@@ -34,7 +34,7 @@ Format: `- [ ] **<id>** <title> (<points>), deps: <ids>`. Tick by changing only 
 - [x] **T0.2** Core utilities (3), deps: T0.1
 - [x] **T0.3** GameManager skeleton and fixed-step loop (3), deps: T0.2
 - [x] **T1.1** Bike model, pure math (3), deps: T0.2
-- [ ] **T1.5** Road network v0 and routing (5), deps: T0.2
+- [x] **T1.5** Road network v0 and routing (5), deps: T0.2
 - [ ] **T1.2** Physics world and MotorcycleController (5), deps: T1.1
 - [ ] **T1.3** Renderer, test scene, camera rig (5), deps: T0.3
 - [ ] **T1.6** Passenger FSM, pickup → drop-off (5), deps: T1.2, T1.3, T1.5
