@@ -1,0 +1,7 @@
+.remember/
+node_modules/
+dist/
+assets-src/
+test-results/
+playwright-report/
+.DS_Store
