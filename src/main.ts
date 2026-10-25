@@ -1,5 +1,12 @@
 import { GameManager, runFrame } from './sim/GameManager';
+import { Renderer } from './render/Renderer';
 import { initDebugApi } from './debug/debugApi';
+import { SIM_DT } from './config/constants';
+import {
+  createDefaultBikeSpec,
+  createDefaultBikeState,
+  stepBike,
+} from './physics/bikeModel';
 
 console.log('Uthao booting...');
 
@@ -9,20 +16,24 @@ const gm = new GameManager({
   data: {},
 });
 
-initDebugApi(gm);
-
-const canvas = document.getElementById('game-canvas') as HTMLCanvasElement | null;
-let ctx: CanvasRenderingContext2D | null = null;
+const canvas = document.getElementById('game-canvas') as HTMLCanvasElement;
+let renderer: Renderer | undefined;
 
 if (canvas) {
-  ctx = canvas.getContext('2d');
-  const resize = () => {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-  };
-  window.addEventListener('resize', resize);
-  resize();
+  renderer = Renderer.init(canvas, 'medium');
 }
+
+initDebugApi(gm, renderer);
+
+// Simple default bike state for test scene
+const bikeSpec = createDefaultBikeSpec();
+let bikeState = createDefaultBikeState();
+const env = {
+  wet: false,
+  surface: 1.0,
+  hasPassenger: false,
+  conditionPct: 100,
+};
 
 let lastTime = performance.now();
 
@@ -32,13 +43,19 @@ function frame(now: number) {
 
   runFrame(gm, dt);
 
-  if (ctx && canvas) {
-    ctx.fillStyle = '#0a0a0a';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  // Steer bike around test loop if moving
+  bikeState = stepBike(
+    bikeState,
+    { throttle: 0.2, brake: 0, steer: 0 },
+    bikeSpec,
+    env,
+    SIM_DT
+  );
 
-    ctx.fillStyle = '#333';
-    ctx.font = '14px monospace';
-    ctx.fillText(`Clock: ${gm.clock.hhmm()} | Day: ${gm.clock.day} | Ticks: ${gm.ticks}`, 20, 70);
+  if (renderer) {
+    renderer.setBikeState(bikeState);
+    const alpha = gm.accumulator / SIM_DT;
+    renderer.render(gm.snapshot(), alpha);
   }
 
   requestAnimationFrame(frame);
