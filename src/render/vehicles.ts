@@ -15,6 +15,7 @@ export class MotorcycleMesh {
   private forkGroup: THREE.Group;
   private frontWheel: THREE.Mesh;
   private rearWheel: THREE.Mesh;
+  private passengerGroup: THREE.Group;
 
   constructor() {
     this.root = new THREE.Group();
@@ -138,6 +139,34 @@ export class MotorcycleMesh {
     const visor = new THREE.Mesh(visorGeo, visorMat);
     visor.position.set(0, 1.3, 0.08);
     riderGroup.add(visor);
+
+    // Passenger (pillion rider)
+    this.passengerGroup = new THREE.Group();
+    this.passengerGroup.visible = false;
+    this.leanGroup.add(this.passengerGroup);
+
+    const pTorsoGeo = new THREE.BoxGeometry(0.32, 0.42, 0.22);
+    const pTorsoMat = new THREE.MeshStandardMaterial({
+      color: 0x008080, // Teal
+      roughness: 0.5,
+    });
+    const pTorso = new THREE.Mesh(pTorsoGeo, pTorsoMat);
+    pTorso.position.set(0, 0.92, -0.42);
+    pTorso.rotation.x = 0.1;
+    this.passengerGroup.add(pTorso);
+
+    const pHelmetGeo = new THREE.SphereGeometry(0.15, 12, 10);
+    const pHelmetMat = new THREE.MeshStandardMaterial({
+      color: 0xffbb00, // Gold / Yellow helmet
+      roughness: 0.3,
+    });
+    const pHelmet = new THREE.Mesh(pHelmetGeo, pHelmetMat);
+    pHelmet.position.set(0, 1.25, -0.38);
+    this.passengerGroup.add(pHelmet);
+  }
+
+  setPassengerVisible(visible: boolean): void {
+    this.passengerGroup.visible = visible;
   }
 
   setPose(pose: VehiclePose): void {
