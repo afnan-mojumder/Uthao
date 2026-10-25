@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { DistrictSchema } from '../src/sim/schemas.ts';
+import { DistrictSchema, ArchetypesDataSchema } from '../src/sim/schemas.ts';
 
 // Validate dialogue files
 const dialogueDir = path.resolve('data/dialogue');
@@ -44,6 +44,22 @@ if (fs.existsSync(districtsDir)) {
         process.exit(1);
       }
     }
+  }
+}
+
+// Validate archetypes file
+const archetypesPath = path.resolve('data/archetypes.json');
+if (fs.existsSync(archetypesPath)) {
+  try {
+    const raw = JSON.parse(fs.readFileSync(archetypesPath, 'utf-8'));
+    const result = ArchetypesDataSchema.safeParse(raw);
+    if (!result.success) {
+      console.error(`Schema validation failed for ${archetypesPath}:`, result.error.format());
+      process.exit(1);
+    }
+  } catch (err) {
+    console.error(`Failed reading archetypes ${archetypesPath}:`, err);
+    process.exit(1);
   }
 }
 
