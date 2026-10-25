@@ -27,3 +27,15 @@ Two members build it, each with their own AI coding agent. Agents work autonomou
 Things for humans to look at are collected in `docs/QUESTIONS.md` (decisions, Bangla review, deploy readiness) and `docs/PLAYTEST.md` (manual playtests). Progress logs are in `docs/progress/`.
 
 Requirements: git, bash (Linux/macOS/WSL/Git Bash), Node.js LTS ≥ 20, and push access to the repo.
+
+## Development commands
+
+- `npm run dev`: Start local development server.
+- `npm run build`: Build production assets into `dist/`.
+- `npm run preview`: Preview production build locally.
+- `npm run check`: Run full verification (`tsc --noEmit && eslint . && vitest run && node scripts/validate-data.mjs`).
+- `npm run test`: Run unit tests with Vitest.
+- `npm run e2e`: Run Playwright end-to-end test suite.
+- `npm run balance`: Run headless simulation balance tests.
+- `npm run assets`: Fetch and optimize CC0 game assets.
+
