@@ -15,4 +15,4 @@ One line per finished task: `YYYY-MM-DD Tx.y done — note`
 2026-10-26 T2.3 done — Pure NegotiationSystem with sigmoid acceptance formula, patience decay, counteroffers, detour/walk penalties, and dialogue keys
 2026-10-26 T2.6 done — EconomyManager with debt conversion, fuel consumption, receipts matching GDD, and TripSummary UI
 2026-10-26 T2.5 done — pickupOptions with crossing nodes, mid-trip closure rerouting, off-app policy strikes and suspensions
-
+2026-10-27 T2.7 done — Lane graph with left-hand traffic, IDM car following, signal controller, and TrafficManager
