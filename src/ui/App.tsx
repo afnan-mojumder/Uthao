@@ -6,30 +6,72 @@ import {
   loadingSignal,
   contextLostSignal,
   pausedSignal,
+  hudSignal,
+  isMapOpenSignal,
+  isPhoneOpenSignal,
+  isJournalOpenSignal,
+  activeCrimeEncounterSignal,
+  activePoliceCaseSignal,
+  activeAccidentSignal,
+  daySummarySignal,
+  conductSignal,
 } from './store';
 import { RotateOverlay } from './overlays/RotateOverlay';
 import { Unsupported } from './overlays/Unsupported';
 import { Loading } from './overlays/Loading';
-import { t } from './i18n';
+import { RidingHud } from './hud/RidingHud';
+import { DistrictMap } from './map/DistrictMap';
+import { UthaoPhone } from './phone/UthaoPhone';
+import { DangerAlert } from './encounters/DangerAlert';
+import { PoliceEncounterModal } from './encounters/PoliceEncounterModal';
+import { AccidentModal } from './encounters/AccidentModal';
+import { ConsequenceJournal } from './journal/ConsequenceJournal';
+import { DaySummaryModal } from './menus/DaySummaryModal';
+import { PoliceEncounterSystem } from '../sim/darkChoices/PoliceEncounterSystem';
+import { CrimeEncounterSystem } from '../sim/darkChoices/CrimeEncounterSystem';
+import { AccidentManager } from '../sim/darkChoices/AccidentManager';
+
+const policeSystem = new PoliceEncounterSystem();
+const crimeSystem = new CrimeEncounterSystem();
+const accidentManager = new AccidentManager();
 
 export function App(): JSX.Element {
   useEffect(() => {
     const checkOrientation = () => {
       if (typeof window === 'undefined') return;
-      // Show rotate overlay if screen height > screen width and width < 900 (mobile/tablet portrait)
       const isPortrait = window.innerHeight > window.innerWidth && window.innerWidth < 900;
       rotateOverlaySignal.value = isPortrait;
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'm' || e.key === 'M') {
+        isMapOpenSignal.value = !isMapOpenSignal.value;
+      } else if (e.key === 'Tab') {
+        e.preventDefault();
+        isPhoneOpenSignal.value = !isPhoneOpenSignal.value;
+      } else if (e.key === 'j' || e.key === 'J') {
+        isJournalOpenSignal.value = !isJournalOpenSignal.value;
+      } else if (e.key === 'Escape') {
+        if (isMapOpenSignal.value) isMapOpenSignal.value = false;
+        else if (isPhoneOpenSignal.value) isPhoneOpenSignal.value = false;
+        else if (isJournalOpenSignal.value) isJournalOpenSignal.value = false;
+        else pausedSignal.value = !pausedSignal.value;
+      }
     };
 
     checkOrientation();
     window.addEventListener('resize', checkOrientation);
     window.addEventListener('orientationchange', checkOrientation);
+    window.addEventListener('keydown', handleKeyDown);
 
     return () => {
       window.removeEventListener('resize', checkOrientation);
       window.removeEventListener('orientationchange', checkOrientation);
+      window.removeEventListener('keydown', handleKeyDown);
     };
   }, []);
+
+  const conduct = conductSignal.value;
 
   return (
     <div
@@ -42,16 +84,186 @@ export function App(): JSX.Element {
         userSelect: 'none',
       }}
     >
-      {/* Unsupported WebGL Overlay */}
+      {/* 1. Riding HUD Panel (Low-Poly Dhaka Street HUD) */}
+      <RidingHud
+        speedKmh={hudSignal.value.speedKmh}
+        fuelPct={hudSignal.value.fuelPct}
+        todaysNet={hudSignal.value.todaysNet}
+        currentDistrict={hudSignal.value.currentDistrict}
+        timeString={hudSignal.value.timeString}
+        passenger={{
+          name: 'Nabila',
+          mood: 'happy',
+          status: 'OnTrip',
+        }}
+        navigation={{
+          instruction: 'Turn right to Green Road',
+          distanceText: '1.2 km',
+          etaText: '5 min',
+        }}
+        onToggleMap={() => {
+          isMapOpenSignal.value = !isMapOpenSignal.value;
+        }}
+        onToggleCamera={() => {
+          // Camera toggle trigger
+        }}
+        onOpenMenu={() => {
+          isJournalOpenSignal.value = true;
+        }}
+      />
+
+      {/* 2. District Map Pause Menu (Dhaka Map) */}
+      {isMapOpenSignal.value && (
+        <DistrictMap
+          onClose={() => {
+            isMapOpenSignal.value = false;
+          }}
+          onSetGps={(_poiId, name) => {
+            hudSignal.value = {
+              ...hudSignal.value,
+              objectiveText: `Navigate to ${name}`,
+            };
+          }}
+        />
+      )}
+
+      {/* 3. Uthao Phone & Ride Negotiation Modal */}
+      {isPhoneOpenSignal.value && (
+        <UthaoPhone
+          onAccept={(fare, isOffApp) => {
+            isPhoneOpenSignal.value = false;
+            if (isOffApp) {
+              conduct.executeDarkAction('off_app_ride', 1, 720, 'p_nabila', Math.round(fare * 0.2));
+            }
+            hudSignal.value = {
+              ...hudSignal.value,
+              todaysNet: hudSignal.value.todaysNet + fare,
+              objectiveText: `Drop off Nabila at Dhanmondi 27 (Fare: ৳${fare})`,
+            };
+          }}
+          onDecline={() => {
+            isPhoneOpenSignal.value = false;
+          }}
+        />
+      )}
+
+      {/* 4. Danger Alert / Alley Robbery Encounter Modal */}
+      {activeCrimeEncounterSignal.value && (
+        <DangerAlert
+          encounter={activeCrimeEncounterSignal.value}
+          onSelectOption={(responseId) => {
+            if (activeCrimeEncounterSignal.value) {
+              crimeSystem.resolveEncounter(
+                activeCrimeEncounterSignal.value.encounterId,
+                responseId,
+                conduct,
+                1,
+                800
+              );
+              activeCrimeEncounterSignal.value = null;
+            }
+          }}
+        />
+      )}
+
+      {/* 5. Traffic Police & Bribery Encounter Modal */}
+      {activePoliceCaseSignal.value && (
+        <PoliceEncounterModal
+          policeCase={activePoliceCaseSignal.value}
+          onPayFine={() => {
+            if (activePoliceCaseSignal.value) {
+              policeSystem.payOfficialFine(activePoliceCaseSignal.value.caseId, conduct, 1, 700);
+              activePoliceCaseSignal.value = null;
+            }
+          }}
+          onAttemptBribe={(amount) => {
+            if (activePoliceCaseSignal.value) {
+              const res = policeSystem.attemptBribe(activePoliceCaseSignal.value.caseId, amount, conduct, 1, 700);
+              if (res.outcome === 'accepted') {
+                activePoliceCaseSignal.value = null;
+              }
+            }
+          }}
+          onContest={() => {
+            if (activePoliceCaseSignal.value) {
+              const res = policeSystem.contestCase(activePoliceCaseSignal.value.caseId, conduct);
+              if (res.dismissed) {
+                activePoliceCaseSignal.value = null;
+              }
+            }
+          }}
+          onAcceptWarning={() => {
+            if (activePoliceCaseSignal.value) {
+              policeSystem.acceptWarning(activePoliceCaseSignal.value.caseId, conduct);
+              activePoliceCaseSignal.value = null;
+            }
+          }}
+          onFlee={() => {
+            if (activePoliceCaseSignal.value) {
+              policeSystem.fleeCheckpoint(activePoliceCaseSignal.value.caseId, conduct, 1, 700);
+              activePoliceCaseSignal.value = null;
+            }
+          }}
+        />
+      )}
+
+      {/* 6. Accident Response Modal */}
+      {activeAccidentSignal.value && (
+        <AccidentModal
+          accident={activeAccidentSignal.value}
+          onCheckVictims={() => {
+            if (activeAccidentSignal.value) {
+              accidentManager.respondToAccident(activeAccidentSignal.value.accidentId, 'checked_victims', conduct, 1, 750);
+              activeAccidentSignal.value = null;
+            }
+          }}
+          onCallEmergency={() => {
+            if (activeAccidentSignal.value) {
+              accidentManager.respondToAccident(activeAccidentSignal.value.accidentId, 'emergency_services', conduct, 1, 750);
+              activeAccidentSignal.value = null;
+            }
+          }}
+          onSettleCash={() => {
+            if (activeAccidentSignal.value) {
+              accidentManager.respondToAccident(activeAccidentSignal.value.accidentId, 'settled_cash', conduct, 1, 750);
+              activeAccidentSignal.value = null;
+            }
+          }}
+          onFleeHitAndRun={() => {
+            if (activeAccidentSignal.value) {
+              accidentManager.respondToAccident(activeAccidentSignal.value.accidentId, 'evaded_fled', conduct, 1, 750);
+              activeAccidentSignal.value = null;
+            }
+          }}
+        />
+      )}
+
+      {/* 7. Consequence & Integrity Dossier Journal */}
+      {isJournalOpenSignal.value && (
+        <ConsequenceJournal
+          conduct={conduct.getConduct()}
+          onClose={() => {
+            isJournalOpenSignal.value = false;
+          }}
+        />
+      )}
+
+      {/* 8. Day Summary Accounting Screen */}
+      {daySummarySignal.value && (
+        <DaySummaryModal
+          accounting={daySummarySignal.value}
+          onSleepNextDay={() => {
+            daySummarySignal.value = null;
+          }}
+        />
+      )}
+
+      {/* System Overlays */}
       {unsupportedSignal.value && <Unsupported message={unsupportedSignal.value} />}
-
-      {/* Rotate Device Screen (Portrait prevention) */}
       {rotateOverlaySignal.value && <RotateOverlay />}
-
-      {/* Loading Overlay */}
       {loadingSignal.value && <Loading />}
 
-      {/* WebGL Context Lost Overlay */}
+      {/* Context Lost Overlay */}
       {contextLostSignal.value && (
         <div
           data-testid="context-lost-overlay"
@@ -78,7 +290,7 @@ export function App(): JSX.Element {
             }}
           >
             <p style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600 }}>
-              {t('ui.context_lost')}
+              গ্রাফিক্স বিচ্ছিন্ন হয়েছে। পুনরায় চালু হচ্ছে...
             </p>
           </div>
         </div>
@@ -104,7 +316,7 @@ export function App(): JSX.Element {
             pointerEvents: 'auto',
           }}
         >
-          {t('ui.paused')}
+          বিরতি (Paused)
         </div>
       )}
     </div>

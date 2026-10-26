@@ -20,7 +20,14 @@ import {
   pausedSignal,
   contextLostSignal,
   unsupportedSignal,
+  hudSignal,
+  isMapOpenSignal,
+  isPhoneOpenSignal,
+  activePoliceCaseSignal,
+  activeCrimeEncounterSignal,
 } from './ui/store';
+import { PoliceEncounterSystem } from './sim/darkChoices/PoliceEncounterSystem';
+import { CrimeEncounterSystem } from './sim/darkChoices/CrimeEncounterSystem';
 import type { RideRequest } from './core/types';
 import type { DistrictData } from './sim/schemas';
 import testloopData from '../data/districts/testloop.json';
@@ -110,6 +117,42 @@ initDebugApi(gm, {
   rideManager,
 });
 
+// Expose browser window debug helpers for testing UI & dark choices
+const debugPolice = new PoliceEncounterSystem();
+const debugCrime = new CrimeEncounterSystem();
+
+if (typeof window !== 'undefined') {
+  const win = window as unknown as {
+    __uthao: Record<string, unknown>;
+  };
+  if (win.__uthao) {
+    win.__uthao.toggleMap = () => {
+      isMapOpenSignal.value = !isMapOpenSignal.value;
+    };
+    win.__uthao.openPhone = () => {
+      isPhoneOpenSignal.value = true;
+    };
+    win.__uthao.triggerPoliceStop = (violation = 'red_light') => {
+      activePoliceCaseSignal.value = debugPolice.createCase(violation as never, 'moderate', 2, 'balanced');
+    };
+    win.__uthao.triggerAlleyAmbush = () => {
+      activeCrimeEncounterSignal.value = debugCrime.checkForEncounter(
+        {
+          segmentId: 'alley_seg_01',
+          districtId: 'puranpara',
+          isNarrowAlley: true,
+          lightingLevel: 'pitch_black',
+          pedestrianActivity: 'deserted',
+          policePresence: false,
+          isolated: true,
+        },
+        23,
+        'p_nabila'
+      );
+    };
+  }
+}
+
 // Create initial test ride request
 const sampleRequest: RideRequest = {
   requestId: 'req_tutorial_01',
@@ -185,6 +228,10 @@ function frame(now: number) {
         brake: state.brake,
         steer: state.steer,
       };
+
+      // Hotkey listeners for Map, Phone
+      if (state.map) isMapOpenSignal.value = !isMapOpenSignal.value;
+      if (state.phone) isPhoneOpenSignal.value = !isPhoneOpenSignal.value;
     }
 
     // Physics step
@@ -221,7 +268,13 @@ function frame(now: number) {
     renderer.render(gm.snapshot(), alpha);
   }
 
-  // Update HUD
+  // Update Dynamic Preact Glass HUD & Classic HUD
+  const speedKmh = bikeState.speed * 3.6;
+  hudSignal.value = {
+    ...hudSignal.value,
+    speedKmh,
+  };
+
   if (hud) {
     let objective = 'Free roam';
     let fare: number | undefined;
@@ -238,7 +291,7 @@ function frame(now: number) {
     }
 
     hud.update({
-      speedKmh: bikeState.speed * 3.6,
+      speedKmh,
       objectiveText: objective,
       fare,
     });
