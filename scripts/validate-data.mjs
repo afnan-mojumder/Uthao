@@ -4,9 +4,9 @@ import { DistrictSchema, ArchetypesDataSchema } from '../src/sim/schemas.ts';
 
 // Validate dialogue files
 const dialogueDir = path.resolve('data/dialogue');
+const dicts = { bn: {}, en: {} };
 if (fs.existsSync(dialogueDir)) {
   const langs = ['bn', 'en'];
-  const dicts = { bn: {}, en: {} };
 
   for (const lang of langs) {
     const langDir = path.join(dialogueDir, lang);
@@ -49,6 +49,129 @@ if (fs.existsSync(districtsDir)) {
         if (!result.success) {
           console.error(`Schema validation failed for ${filePath}:`, result.error.format());
           process.exit(1);
+        }
+
+        const district = result.data;
+
+        // Check 1: Every string key exists in bn + en
+        for (const poi of district.pois) {
+          if (typeof dicts.en[poi.nameKey] === 'undefined') {
+            console.error(`District ${filePath}: POI nameKey '${poi.nameKey}' missing in en dialogue`);
+            process.exit(1);
+          }
+          if (typeof dicts.bn[poi.nameKey] === 'undefined') {
+            console.error(`District ${filePath}: POI nameKey '${poi.nameKey}' missing in bn dialogue`);
+            process.exit(1);
+          }
+        }
+
+        // Check 2: Every POI on a pickupPractical segment
+        for (const poi of district.pois) {
+          const onPractical = district.segments.some(
+            (s) => (s.startNodeId === poi.nodeId || s.endNodeId === poi.nodeId) && s.pickupPractical
+          );
+          if (!onPractical) {
+            console.error(`District ${filePath}: POI ${poi.id} (${poi.nodeId}) is not on any pickupPractical segment`);
+            process.exit(1);
+          }
+        }
+
+        // Check 3: Every divided road has a U-turn node every <= 400 m
+        const dividedSegs = district.segments.filter((s) => s.divided);
+        if (dividedSegs.length > 0) {
+          const uturnNodeIds = new Set(
+            district.nodes
+              .filter((n) => n.kind === 'uturn' || (n.tags && n.tags.includes('uturn')))
+              .map((n) => n.nodeId)
+          );
+          const nodeMap = new Map(district.nodes.map((n) => [n.nodeId, n]));
+
+          for (const seg of dividedSegs) {
+            const sNode = nodeMap.get(seg.startNodeId);
+            const eNode = nodeMap.get(seg.endNodeId);
+            if (!sNode || !eNode) continue;
+            const midX = (sNode.x + eNode.x) / 2;
+            const midZ = (sNode.z + eNode.z) / 2;
+
+            let nearestDist = Infinity;
+            for (const uId of uturnNodeIds) {
+              const uNode = nodeMap.get(uId);
+              if (uNode) {
+                const d = Math.hypot(uNode.x - midX, uNode.z - midZ);
+                if (d < nearestDist) nearestDist = d;
+              }
+            }
+            if (nearestDist > 400) {
+              console.error(
+                `District ${filePath}: divided segment ${seg.segmentId} is ${nearestDist.toFixed(1)}m from nearest U-turn (max 400m)`
+              );
+              process.exit(1);
+            }
+          }
+        }
+
+        // Check 4: Graph strongly connected for motorcycles (excluding inaccessible)
+        const motoSegs = district.segments.filter((s) => s.motorcycleAccessible);
+        if (motoSegs.length > 0) {
+          const adj = new Map();
+          const revAdj = new Map();
+          const accessibleNodes = new Set();
+
+          for (const s of motoSegs) {
+            accessibleNodes.add(s.startNodeId);
+            accessibleNodes.add(s.endNodeId);
+            if (!adj.has(s.startNodeId)) adj.set(s.startNodeId, []);
+            if (!adj.has(s.endNodeId)) adj.set(s.endNodeId, []);
+            if (!revAdj.has(s.startNodeId)) revAdj.set(s.startNodeId, []);
+            if (!revAdj.has(s.endNodeId)) revAdj.set(s.endNodeId, []);
+
+            adj.get(s.startNodeId).push(s.endNodeId);
+            revAdj.get(s.endNodeId).push(s.startNodeId);
+
+            if (!s.oneWay) {
+              adj.get(s.endNodeId).push(s.startNodeId);
+              revAdj.get(s.startNodeId).push(s.endNodeId);
+            }
+          }
+
+          const startNode = accessibleNodes.values().next().value;
+          if (startNode) {
+            // Forward BFS
+            const visited = new Set();
+            const queue = [startNode];
+            visited.add(startNode);
+            while (queue.length > 0) {
+              const curr = queue.shift();
+              for (const next of (adj.get(curr) || [])) {
+                if (!visited.has(next)) {
+                  visited.add(next);
+                  queue.push(next);
+                }
+              }
+            }
+
+            // Backward BFS
+            const revVisited = new Set();
+            const revQueue = [startNode];
+            revVisited.add(startNode);
+            while (revQueue.length > 0) {
+              const curr = revQueue.shift();
+              for (const next of (revAdj.get(curr) || [])) {
+                if (!revVisited.has(next)) {
+                  revVisited.add(next);
+                  revQueue.push(next);
+                }
+              }
+            }
+
+            if (visited.size !== accessibleNodes.size || revVisited.size !== accessibleNodes.size) {
+              console.error(
+                `District ${filePath}: motorcycle road network is not strongly connected! ` +
+                  `Reachable forward: ${visited.size}/${accessibleNodes.size}, reachable backward: ${revVisited.size}/${accessibleNodes.size}`
+              );
+              process.exit(1);
+            }
+          }
         }
       } catch (err) {
         console.error(`Failed reading district ${filePath}:`, err);

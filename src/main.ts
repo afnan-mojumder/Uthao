@@ -24,6 +24,8 @@ import {
 import type { RideRequest } from './core/types';
 import type { DistrictData } from './sim/schemas';
 import testloopData from '../data/districts/testloop.json';
+import mirparaData from '../data/districts/mirpara.json';
+import { initMapViewer } from './debug/mapViewer';
 
 console.log('Uthao booting...');
 
@@ -38,25 +40,32 @@ function hasWebGL2Support(): boolean {
   }
 }
 
-if (!hasWebGL2Support()) {
-  unsupportedSignal.value = 'WebGL2 is required to run Uthao on this device';
-}
+const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+const isMapTool = urlParams?.get('tool') === 'map';
 
-// 2. Mount Preact UI App
-if (typeof document !== 'undefined') {
-  const uiRoot = document.getElementById('ui-root');
-  if (uiRoot) {
-    render(h(App, null), uiRoot);
+if (isMapTool) {
+  const districtChoice = urlParams?.get('district') === 'testloop' ? testloopData : mirparaData;
+  initMapViewer({ district: districtChoice as DistrictData });
+} else {
+  if (!hasWebGL2Support()) {
+    unsupportedSignal.value = 'WebGL2 is required to run Uthao on this device';
   }
-}
 
-const roadNetwork = RoadNetwork.fromDistricts([testloopData as DistrictData]);
+  // 2. Mount Preact UI App
+  if (typeof document !== 'undefined') {
+    const uiRoot = document.getElementById('ui-root');
+    if (uiRoot) {
+      render(h(App, null), uiRoot);
+    }
+  }
 
-const gm = new GameManager({
-  seed: 42,
-  mode: 'career',
-  data: { testloop: testloopData },
-});
+  const roadNetwork = RoadNetwork.fromDistricts([testloopData as DistrictData]);
+
+  const gm = new GameManager({
+    seed: 42,
+    mode: 'career',
+    data: { testloop: testloopData },
+  });
 
 // Bind reactive signals store to sim event bus
 bindEventBusToStore(gm.bus);
@@ -249,6 +258,8 @@ function frame(now: number) {
   }
 }
 
+
 if (typeof requestAnimationFrame !== 'undefined') {
   requestAnimationFrame(frame);
+}
 }
