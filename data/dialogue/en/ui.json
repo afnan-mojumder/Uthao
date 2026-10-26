@@ -7,5 +7,18 @@
   "ui.paused": "Paused",
   "ui.resume": "Resume",
   "ui.context_lost": "Graphics context lost. Restoring rendering...",
-  "ui.restart": "Restart"
+  "ui.restart": "Restart",
+  "trip.summary.title": "Trip Summary",
+  "trip.summary.fare": "Fare",
+  "trip.summary.tip": "Tip",
+  "trip.summary.commission": "Commission",
+  "trip.summary.fuel": "Fuel",
+  "trip.summary.other_costs": "Other Costs",
+  "trip.summary.net": "Net Earnings",
+  "trip.summary.rating": "Rating",
+  "trip.summary.continue": "Continue",
+  "trip.summary.consequences": "Consequences",
+  "bike.fuel_empty": "Fuel Tank Empty!",
+  "bike.push_to_station": "Push to station (1.5 m/s)",
+  "bike.call_friend": "Call Friend (-৳100, 20m)"
 }

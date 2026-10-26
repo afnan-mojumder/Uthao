@@ -7,5 +7,18 @@
   "ui.paused": "বিরতি",
   "ui.resume": "চালিয়ে যান",
   "ui.context_lost": "গ্রাফিক্স বিচ্ছিন্ন হয়েছে। পুনরায় চালু হচ্ছে...",
-  "ui.restart": "আবার শুরু করুন"
+  "ui.restart": "আবার শুরু করুন",
+  "trip.summary.title": "ট্রিপের বিবরণ",
+  "trip.summary.fare": "ভাড়া",
+  "trip.summary.tip": "বকশিশ",
+  "trip.summary.commission": "কমিশন",
+  "trip.summary.fuel": "জ্বালানি খরচ",
+  "trip.summary.other_costs": "অন্যান্য খরচ",
+  "trip.summary.net": "নীট আয়",
+  "trip.summary.rating": "রেটিং",
+  "trip.summary.continue": "এগিয়ে যান",
+  "trip.summary.consequences": "ফলাফল",
+  "bike.fuel_empty": "তেল শেষ হয়ে গেছে!",
+  "bike.push_to_station": "পাম্পে ঠেলে নিন (১.৫ মি/সে)",
+  "bike.call_friend": "বন্ধুকে ফোন করুন (-৳১০০, ২০ মিনিট)"
 }
