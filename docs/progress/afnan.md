@@ -19,3 +19,4 @@ One line per finished task: `YYYY-MM-DD Tx.y done — note`
 2026-10-27 T2.9 done — Headless bot simulation strategies, balance tests v1, and benchmark report in docs/BALANCE.md
 2026-10-27 T3.2 done — District generator, Mirpara 600x600m district with divided arterial, market street, alleys, and 2D MapViewer tool
 2026-10-27 T3.5 done — Time of day cycle, WeatherSystem with flood accumulation, and WeatherFx rendering with rain, headlights, and streetlights
+2026-10-27 T3.6 done — EventDirector, encounter conditions/effects, ChoiceCard UI, and encounter data schemas
