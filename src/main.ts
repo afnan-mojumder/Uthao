@@ -33,8 +33,10 @@ import {
 import { PoliceEncounterSystem } from './sim/darkChoices/PoliceEncounterSystem';
 import { CrimeEncounterSystem } from './sim/darkChoices/CrimeEncounterSystem';
 import { AccidentManager } from './sim/darkChoices/AccidentManager';
+import { audioManager } from './audio/AudioManager';
 import type { RideRequest } from './core/types';
 import type { DistrictData } from './sim/schemas';
+import type { HudState } from './ui/store';
 import testloopData from '../data/districts/testloop.json';
 
 console.log('Uthao booting...');
@@ -138,6 +140,14 @@ if (typeof window !== 'undefined') {
     win.__uthao.openPhone = () => {
       isPhoneOpenSignal.value = true;
     };
+    win.__uthao.toggleCamera = () => {
+      renderer?.cameraRig.toggleMode();
+    };
+    win.__uthao.soundHorn = () => {
+      audioManager.unlock();
+      audioManager.startHorn();
+      setTimeout(() => audioManager.stopHorn(), 350);
+    };
     win.__uthao.openStory = () => {
       isStoryModalOpenSignal.value = true;
     };
@@ -217,6 +227,12 @@ if (typeof window !== 'undefined') {
       env.wet = nextWet;
       env.surface = nextWet ? 0.75 : 1.0;
       renderer?.setWeather(nextWet ? 'rain' : 'clear');
+    } else if (e.key === 'c' || e.key === 'C') {
+      renderer?.cameraRig.toggleMode();
+    } else if (e.key === 'h' || e.key === 'H') {
+      audioManager.unlock();
+      audioManager.startHorn();
+      setTimeout(() => audioManager.stopHorn(), 350);
     }
   });
 }
@@ -273,6 +289,8 @@ function frame(now: number) {
 
   const steps = runFrame(gm, dt);
 
+  let lastThrottle = 0;
+
   for (let s = 0; s < steps; s++) {
     inputManager.update(SIM_DT);
     const activeReq = rideManager.getActiveRequest();
@@ -301,6 +319,8 @@ function frame(now: number) {
       if (state.map) isMapOpenSignal.value = !isMapOpenSignal.value;
       if (state.phone) isPhoneOpenSignal.value = !isPhoneOpenSignal.value;
     }
+
+    lastThrottle = input.throttle;
 
     // Physics step
     env.hasPassenger = activeReq?.status === 'OnTrip';
@@ -336,11 +356,53 @@ function frame(now: number) {
     renderer.render(gm.snapshot(), alpha);
   }
 
+  // Update Audio simulation
+  audioManager.updateEngine(bikeState.speed, lastThrottle);
+  audioManager.setAmbience(0.6, env.wet);
+
   // Update Dynamic Preact Glass HUD & Classic HUD
   const speedKmh = bikeState.speed * 3.6;
+
+  let passengerState: HudState['passenger'] = undefined;
+  let navState: HudState['navigation'] = {
+    instruction: 'Free Roam · Looking for ride requests',
+    distanceText: '0 m',
+    etaText: 'Active',
+  };
+
+  if (activeReq) {
+    if (activeReq.status === 'WaitingForPickup') {
+      const dist = pNode ? Math.hypot(pNode.x - bikeState.x, pNode.z - bikeState.z) : 0;
+      passengerState = {
+        name: 'Nabila',
+        mood: 'happy',
+        status: 'WaitingForPickup',
+      };
+      navState = {
+        instruction: 'Pick up passenger at Farmgate Stand (N1)',
+        distanceText: dist > 1000 ? `${(dist / 1000).toFixed(1)} km` : `${Math.round(dist)} m`,
+        etaText: `${Math.max(1, Math.round(dist / 8))}s`,
+      };
+    } else if (activeReq.status === 'OnTrip') {
+      const dist = dNode ? Math.hypot(dNode.x - bikeState.x, dNode.z - bikeState.z) : 0;
+      passengerState = {
+        name: 'Nabila',
+        mood: 'neutral',
+        status: 'OnTrip',
+      };
+      navState = {
+        instruction: 'Drop off at Green Rd / Padma Fuel (N2)',
+        distanceText: dist > 1000 ? `${(dist / 1000).toFixed(1)} km` : `${Math.round(dist)} m`,
+        etaText: `${Math.max(1, Math.round(dist / 8))}s`,
+      };
+    }
+  }
+
   hudSignal.value = {
     ...hudSignal.value,
     speedKmh,
+    passenger: passengerState,
+    navigation: navState,
   };
 
   if (hud) {

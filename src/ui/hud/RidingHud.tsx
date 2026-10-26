@@ -1,4 +1,5 @@
 import type { JSX } from 'preact';
+import { useState } from 'preact/hooks';
 import { toBanglaDigits, formatTaka } from '../utils/bangla';
 
 export interface RidingHudProps {
@@ -20,6 +21,7 @@ export interface RidingHudProps {
   onToggleMap?: () => void;
   onToggleCamera?: () => void;
   onOpenMenu?: () => void;
+  onOpenPhone?: () => void;
 }
 
 export function RidingHud({
@@ -37,7 +39,10 @@ export function RidingHud({
   onToggleMap,
   onToggleCamera,
   onOpenMenu,
+  onOpenPhone,
 }: RidingHudProps): JSX.Element {
+  const [headlights, setHeadlights] = useState(false);
+  const [hazard, setHazard] = useState(false);
   const displaySpeed = Math.round(speedKmh);
   const fuelSegments = 6;
   const activeFuelBars = Math.round((fuelPct / 100) * fuelSegments);
@@ -137,6 +142,7 @@ export function RidingHud({
         {/* Top-Right Passenger Info Card */}
         {passenger && (
           <div
+            onClick={onOpenPhone}
             style={{
               background: 'rgba(15, 23, 42, 0.75)',
               backdropFilter: 'blur(16px)',
@@ -149,7 +155,9 @@ export function RidingHud({
               gap: '12px',
               boxShadow: '0 12px 30px -6px rgba(0, 0, 0, 0.45)',
               pointerEvents: 'auto',
+              cursor: 'pointer',
             }}
+            title="Open Passenger Chat & Phone [Tab]"
           >
             {/* Passenger Avatar */}
             <div
@@ -207,6 +215,7 @@ export function RidingHud({
         {/* Circular Minimap (Bottom-Left) */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', pointerEvents: 'auto' }}>
           <div
+            onClick={onToggleMap}
             style={{
               width: '128px',
               height: '128px',
@@ -216,7 +225,9 @@ export function RidingHud({
               position: 'relative',
               overflow: 'hidden',
               boxShadow: '0 15px 35px rgba(0, 0, 0, 0.6), inset 0 0 20px rgba(0, 0, 0, 0.8)',
+              cursor: 'pointer',
             }}
+            title="Open Dhaka District Map [M]"
           >
             {/* Grid street lanes */}
             <svg
@@ -332,6 +343,77 @@ export function RidingHud({
               ))}
             </div>
             <span style={{ fontSize: '11px', fontWeight: 800, color: '#22c55e' }}>F</span>
+          </div>
+
+          {/* Functional Cockpit Controls: Headlight, Horn, Hazard */}
+          <div style={{ display: 'flex', gap: '10px', marginTop: '10px', pointerEvents: 'auto' }}>
+            <button
+              type="button"
+              onClick={() => setHeadlights(!headlights)}
+              style={{
+                width: '32px',
+                height: '32px',
+                borderRadius: '8px',
+                background: headlights ? 'rgba(56, 189, 248, 0.3)' : 'rgba(30, 41, 59, 0.6)',
+                border: headlights ? '1px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.1)',
+                color: headlights ? '#38bdf8' : '#94a3b8',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                fontSize: '14px',
+              }}
+              title="Toggle Headlight (H)"
+            >
+              💡
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                if (typeof window !== 'undefined') {
+                  const win = window as unknown as { __uthao?: Record<string, () => void> };
+                  win.__uthao?.soundHorn?.();
+                }
+              }}
+              style={{
+                width: '32px',
+                height: '32px',
+                borderRadius: '8px',
+                background: 'rgba(30, 41, 59, 0.6)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                color: '#f59e0b',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                fontSize: '14px',
+              }}
+              title="Honk Horn"
+            >
+              📢
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setHazard(!hazard)}
+              style={{
+                width: '32px',
+                height: '32px',
+                borderRadius: '8px',
+                background: hazard ? 'rgba(239, 68, 68, 0.3)' : 'rgba(30, 41, 59, 0.6)',
+                border: hazard ? '1px solid #ef4444' : '1px solid rgba(255, 255, 255, 0.1)',
+                color: hazard ? '#ef4444' : '#94a3b8',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                fontSize: '14px',
+              }}
+              title="Toggle Hazard Lights"
+            >
+              ⚠️
+            </button>
           </div>
         </div>
 

@@ -108,61 +108,169 @@ export class MotorcycleMesh {
     headlight.position.set(0, 0.45, 0.12);
     this.forkGroup.add(headlight);
 
-    // Rider
+    // Rearview Mirrors
+    const mirrorStemGeo = new THREE.CylinderGeometry(0.01, 0.01, 0.22, 6);
+    const mirrorStemMat = new THREE.MeshStandardMaterial({ color: 0x111111 });
+    const mirrorGlassGeo = new THREE.BoxGeometry(0.11, 0.07, 0.02);
+    const mirrorGlassMat = new THREE.MeshStandardMaterial({ color: 0x93c5fd, roughness: 0.1, metalness: 0.9 });
+
+    // Left mirror
+    const mStemL = new THREE.Mesh(mirrorStemGeo, mirrorStemMat);
+    mStemL.position.set(-0.3, 0.65, 0.05);
+    mStemL.rotation.z = -0.3;
+    this.forkGroup.add(mStemL);
+    const mGlassL = new THREE.Mesh(mirrorGlassGeo, mirrorGlassMat);
+    mGlassL.position.set(-0.34, 0.76, 0.05);
+    this.forkGroup.add(mGlassL);
+
+    // Right mirror
+    const mStemR = new THREE.Mesh(mirrorStemGeo, mirrorStemMat);
+    mStemR.position.set(0.3, 0.65, 0.05);
+    mStemR.rotation.z = 0.3;
+    this.forkGroup.add(mStemR);
+    const mGlassR = new THREE.Mesh(mirrorGlassGeo, mirrorGlassMat);
+    mGlassR.position.set(0.34, 0.76, 0.05);
+    this.forkGroup.add(mGlassR);
+
+    // Tail lamp
+    const tailLightGeo = new THREE.BoxGeometry(0.16, 0.06, 0.04);
+    const tailLightMat = new THREE.MeshStandardMaterial({
+      color: 0xef4444,
+      emissive: 0xef4444,
+      emissiveIntensity: 0.9,
+    });
+    const tailLight = new THREE.Mesh(tailLightGeo, tailLightMat);
+    tailLight.position.set(0, 0.62, -0.62);
+    this.leanGroup.add(tailLight);
+
+    // ==========================================================
+    // PROTAGONIST RIDER (Rafi) — FULL MOUNTED 3D BODY
+    // ==========================================================
     const riderGroup = new THREE.Group();
     this.leanGroup.add(riderGroup);
 
-    // Torso / jacket
-    const torsoGeo = new THREE.BoxGeometry(0.35, 0.45, 0.25);
-    const torsoMat = new THREE.MeshStandardMaterial({ color: 0x2b2b2b });
+    // Torso / jacket with green Uthao safety vest
+    const torsoGeo = new THREE.BoxGeometry(0.36, 0.46, 0.26);
+    const torsoMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.8 }); // Dark jacket
     const torso = new THREE.Mesh(torsoGeo, torsoMat);
     torso.position.set(0, 0.95, -0.15);
-    torso.rotation.x = 0.2; // slight forward lean
+    torso.rotation.x = 0.25; // Athletic forward riding posture
     riderGroup.add(torso);
 
-    // Helmet / head
-    const helmetGeo = new THREE.SphereGeometry(0.16, 12, 10);
+    // Fluorescent Uthao vest strap
+    const vestGeo = new THREE.BoxGeometry(0.37, 0.18, 0.27);
+    const vestMat = new THREE.MeshStandardMaterial({ color: 0x22c55e, roughness: 0.5 }); // Uthao Green
+    const vest = new THREE.Mesh(vestGeo, vestMat);
+    vest.position.set(0, 0.96, -0.15);
+    vest.rotation.x = 0.25;
+    riderGroup.add(vest);
+
+    // Helmet / Head
+    const helmetGeo = new THREE.SphereGeometry(0.17, 14, 12);
     const helmetMat = new THREE.MeshStandardMaterial({
-      color: 0xdd2222,
+      color: 0xef4444, // Red racing helmet
       roughness: 0.3,
+      metalness: 0.2,
     });
     const helmet = new THREE.Mesh(helmetGeo, helmetMat);
-    helmet.position.set(0, 1.3, -0.05);
+    helmet.position.set(0, 1.32, -0.04);
     riderGroup.add(helmet);
 
-    // Visor
-    const visorGeo = new THREE.BoxGeometry(0.18, 0.08, 0.08);
+    // Glossy Visor
+    const visorGeo = new THREE.BoxGeometry(0.2, 0.09, 0.1);
     const visorMat = new THREE.MeshStandardMaterial({
-      color: 0x111111,
+      color: 0x020617,
       roughness: 0.1,
+      metalness: 0.9,
     });
     const visor = new THREE.Mesh(visorGeo, visorMat);
-    visor.position.set(0, 1.3, 0.08);
+    visor.position.set(0, 1.32, 0.1);
     riderGroup.add(visor);
 
-    // Passenger (pillion rider)
+    // Arms & Hands gripping handlebars
+    const armGeo = new THREE.CylinderGeometry(0.06, 0.05, 0.45, 8);
+    const armMat = new THREE.MeshStandardMaterial({ color: 0x1e293b });
+
+    // Left Arm
+    const armL = new THREE.Mesh(armGeo, armMat);
+    armL.position.set(-0.24, 0.98, 0.05);
+    armL.rotation.set(0.7, 0, 0.35);
+    riderGroup.add(armL);
+
+    // Right Arm
+    const armR = new THREE.Mesh(armGeo, armMat);
+    armR.position.set(0.24, 0.98, 0.05);
+    armR.rotation.set(0.7, 0, -0.35);
+    riderGroup.add(armR);
+
+    // Legs & Riding Boots on footpegs
+    const thighGeo = new THREE.BoxGeometry(0.14, 0.4, 0.16);
+    const pantsMat = new THREE.MeshStandardMaterial({ color: 0x1e3a8a, roughness: 0.9 }); // Dark blue jeans
+    const bootGeo = new THREE.BoxGeometry(0.12, 0.14, 0.24);
+    const bootMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.7 });
+
+    // Left leg
+    const thighL = new THREE.Mesh(thighGeo, pantsMat);
+    thighL.position.set(-0.2, 0.65, -0.15);
+    thighL.rotation.set(0.5, 0, 0.2);
+    riderGroup.add(thighL);
+
+    const bootL = new THREE.Mesh(bootGeo, bootMat);
+    bootL.position.set(-0.22, 0.35, -0.05);
+    riderGroup.add(bootL);
+
+    // Right leg
+    const thighR = new THREE.Mesh(thighGeo, pantsMat);
+    thighR.position.set(0.2, 0.65, -0.15);
+    thighR.rotation.set(0.5, 0, -0.2);
+    riderGroup.add(thighR);
+
+    const bootR = new THREE.Mesh(bootGeo, bootMat);
+    bootR.position.set(0.22, 0.35, -0.05);
+    riderGroup.add(bootR);
+
+    // ==========================================================
+    // PASSENGER (Nabila / Pillion Rider)
+    // ==========================================================
     this.passengerGroup = new THREE.Group();
     this.passengerGroup.visible = false;
     this.leanGroup.add(this.passengerGroup);
 
     const pTorsoGeo = new THREE.BoxGeometry(0.32, 0.42, 0.22);
     const pTorsoMat = new THREE.MeshStandardMaterial({
-      color: 0x008080, // Teal
-      roughness: 0.5,
+      color: 0x0d9488, // Teal kurta / shalwar kameez
+      roughness: 0.6,
     });
     const pTorso = new THREE.Mesh(pTorsoGeo, pTorsoMat);
-    pTorso.position.set(0, 0.92, -0.42);
-    pTorso.rotation.x = 0.1;
+    pTorso.position.set(0, 0.96, -0.44);
+    pTorso.rotation.x = 0.15;
     this.passengerGroup.add(pTorso);
 
-    const pHelmetGeo = new THREE.SphereGeometry(0.15, 12, 10);
+    const pHelmetGeo = new THREE.SphereGeometry(0.16, 14, 12);
     const pHelmetMat = new THREE.MeshStandardMaterial({
-      color: 0xffbb00, // Gold / Yellow helmet
+      color: 0xf59e0b, // Golden yellow safety helmet
       roughness: 0.3,
     });
     const pHelmet = new THREE.Mesh(pHelmetGeo, pHelmetMat);
-    pHelmet.position.set(0, 1.25, -0.38);
+    pHelmet.position.set(0, 1.32, -0.4);
     this.passengerGroup.add(pHelmet);
+
+    const pVisorGeo = new THREE.BoxGeometry(0.18, 0.08, 0.08);
+    const pVisorMat = new THREE.MeshStandardMaterial({ color: 0x020617, roughness: 0.1 });
+    const pVisor = new THREE.Mesh(pVisorGeo, pVisorMat);
+    pVisor.position.set(0, 1.32, -0.27);
+    this.passengerGroup.add(pVisor);
+
+    // Passenger Arms holding rider's waist
+    const pArmL = new THREE.Mesh(armGeo, pTorsoMat);
+    pArmL.position.set(-0.2, 0.95, -0.28);
+    pArmL.rotation.set(0.5, 0, 0.2);
+    this.passengerGroup.add(pArmL);
+
+    const pArmR = new THREE.Mesh(armGeo, pTorsoMat);
+    pArmR.position.set(0.2, 0.95, -0.28);
+    pArmR.rotation.set(0.5, 0, -0.2);
+    this.passengerGroup.add(pArmR);
   }
 
   setPassengerVisible(visible: boolean): void {

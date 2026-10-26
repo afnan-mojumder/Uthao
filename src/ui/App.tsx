@@ -101,24 +101,26 @@ export function App(): JSX.Element {
         todaysNet={hudSignal.value.todaysNet}
         currentDistrict={hudSignal.value.currentDistrict}
         timeString={hudSignal.value.timeString}
-        passenger={{
-          name: 'Nabila',
-          mood: 'happy',
-          status: 'OnTrip',
-        }}
-        navigation={{
-          instruction: 'Turn right to Green Road',
-          distanceText: '1.2 km',
-          etaText: '5 min',
+        passenger={hudSignal.value.passenger}
+        navigation={hudSignal.value.navigation ?? {
+          instruction: 'Free Roam · Looking for ride requests',
+          distanceText: '0 km',
+          etaText: 'Active',
         }}
         onToggleMap={() => {
           isMapOpenSignal.value = !isMapOpenSignal.value;
         }}
         onToggleCamera={() => {
-          // Camera toggle trigger
+          if (typeof window !== 'undefined') {
+            const win = window as unknown as { __uthao?: Record<string, () => void> };
+            win.__uthao?.toggleCamera?.();
+          }
         }}
         onOpenMenu={() => {
-          isJournalOpenSignal.value = true;
+          isJournalOpenSignal.value = !isJournalOpenSignal.value;
+        }}
+        onOpenPhone={() => {
+          isPhoneOpenSignal.value = true;
         }}
       />
 

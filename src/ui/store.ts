@@ -19,6 +19,18 @@ export interface HudState {
   objectiveText: string;
   gear: number;
   fuel: number;
+  passenger?: {
+    name: string;
+    mood: 'happy' | 'neutral' | 'frustrated';
+    status: 'WaitingForPickup' | 'OnTrip' | 'Completed' | 'None';
+  };
+  navigation?: {
+    instruction: string;
+    distanceText: string;
+    etaText: string;
+  };
+  headlightsOn?: boolean;
+  hazardOn?: boolean;
 }
 
 export interface ChoiceOption {
