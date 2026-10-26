@@ -20,5 +20,18 @@
   "trip.summary.consequences": "ফলাফল",
   "bike.fuel_empty": "তেল শেষ হয়ে গেছে!",
   "bike.push_to_station": "পাম্পে ঠেলে নিন (১.৫ মি/সে)",
-  "bike.call_friend": "বন্ধুকে ফোন করুন (-৳১০০, ২০ মিনিট)"
+  "bike.call_friend": "বন্ধুকে ফোন করুন (-৳১০০, ২০ মিনিট)",
+  "poi.fuel": "পেট্রোল পাম্প",
+  "poi.mirpara.rafi_home": "রাফির বাসা",
+  "poi.mirpara.tea_stall": "মিন্টুর চায়ের টং",
+  "poi.mirpara.fuel": "মিরপাড়া পেট্রোল পাম্প",
+  "poi.mirpara.garage": "কামাল ভাইয়ের গ্যারেজ",
+  "poi.mirpara.school": "মিরপাড়া হাই স্কুল",
+  "poi.mirpara.pharmacy": "মায়ের দোয়া ফার্মেসি",
+  "poi.mirpara.campus_gate": "ক্যাম্পাস উত্তর গেট",
+  "poi.mirpara.footbridge": "ফুটওভার ব্রিজ ক্রসিং",
+  "poi.mirpara.bazaar": "মিরপাড়া কাঁচাবাজার",
+  "poi.mirpara.bus_stand": "মিরপাড়া বাস স্ট্যান্ড",
+  "poi.mirpara.clinic": "কমিউনিটি স্বাস্থ্য ক্লিনিক",
+  "poi.mirpara.green_tower": "গ্রিন টাওয়ার অ্যাপার্টমেন্ট"
 }

@@ -59,6 +59,18 @@ export const PoiSchema = z.object({
   nameKey: z.string(),
 });
 
+export const BuildingLotSchema = z.object({
+  lotId: z.string(),
+  x: z.number(),
+  z: z.number(),
+  width: z.number(),
+  depth: z.number(),
+  facingHeading: z.number(),
+  zone: z.enum(['residential', 'commercial', 'market', 'civic']),
+});
+
+export type BuildingLot = z.infer<typeof BuildingLotSchema>;
+
 export const DistrictSchema = z.object({
   districtId: z.string(),
   name: z.object({
@@ -68,7 +80,7 @@ export const DistrictSchema = z.object({
   nodes: z.array(RoadNodeSchema),
   segments: z.array(RoadSegmentSchema),
   pois: z.array(PoiSchema).default([]),
-  lots: z.array(z.unknown()).default([]),
+  lots: z.array(BuildingLotSchema).default([]),
 });
 
 export interface Poi {
@@ -96,7 +108,7 @@ export interface DistrictData {
   nodes: RoadNode[];
   segments: RoadSegment[];
   pois: Poi[];
-  lots?: unknown[];
+  lots?: BuildingLot[];
 }
 
 export const ArchetypeRangeSchema = z.tuple([z.number(), z.number()]);

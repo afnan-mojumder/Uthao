@@ -1,0 +1,2082 @@
+{
+  "districtId": "mirpara",
+  "name": {
+    "bn": "মিরপাড়া",
+    "en": "Mirpara"
+  },
+  "nodes": [
+    {
+      "nodeId": "art_n_0",
+      "x": 0,
+      "z": 295,
+      "kind": "uturn",
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "nodeId": "art_s_0",
+      "x": 0,
+      "z": 305,
+      "kind": "uturn",
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "nodeId": "art_n_1",
+      "x": 150,
+      "z": 295,
+      "kind": "uturn",
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "nodeId": "art_s_1",
+      "x": 150,
+      "z": 305,
+      "kind": "uturn",
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "nodeId": "art_n_2",
+      "x": 300,
+      "z": 295,
+      "kind": "junction",
+      "tags": [
+        "crossing"
+      ]
+    },
+    {
+      "nodeId": "art_s_2",
+      "x": 300,
+      "z": 305,
+      "kind": "junction",
+      "tags": [
+        "crossing"
+      ]
+    },
+    {
+      "nodeId": "art_n_3",
+      "x": 450,
+      "z": 295,
+      "kind": "uturn",
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "nodeId": "art_s_3",
+      "x": 450,
+      "z": 305,
+      "kind": "uturn",
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "nodeId": "art_n_4",
+      "x": 600,
+      "z": 295,
+      "kind": "uturn",
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "nodeId": "art_s_4",
+      "x": 600,
+      "z": 305,
+      "kind": "uturn",
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "nodeId": "res_n1_0",
+      "x": 0,
+      "z": 77,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "res_n2_0",
+      "x": 0,
+      "z": 177,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "res_n1_1",
+      "x": 153,
+      "z": 80,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "res_n2_1",
+      "x": 153,
+      "z": 180,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "res_n1_2",
+      "x": 302,
+      "z": 79,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "res_n2_2",
+      "x": 302,
+      "z": 179,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "res_n1_3",
+      "x": 452,
+      "z": 81,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "res_n2_3",
+      "x": 452,
+      "z": 181,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "res_n1_4",
+      "x": 600,
+      "z": 83,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "res_n2_4",
+      "x": 600,
+      "z": 183,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "res_s1_0",
+      "x": 0,
+      "z": 418,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "res_s2_0",
+      "x": 0,
+      "z": 518,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "res_s1_1",
+      "x": 146,
+      "z": 419,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "res_s2_1",
+      "x": 146,
+      "z": 519,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "res_s1_2",
+      "x": 303,
+      "z": 419,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "res_s2_2",
+      "x": 303,
+      "z": 519,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "res_s1_3",
+      "x": 454,
+      "z": 420,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "res_s2_3",
+      "x": 454,
+      "z": 520,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "res_s1_4",
+      "x": 600,
+      "z": 417,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "res_s2_4",
+      "x": 600,
+      "z": 517,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "alley_nw_mid",
+      "x": 75,
+      "z": 130,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "alley_ne_gate",
+      "x": 375,
+      "z": 50,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "alley_sc_mid",
+      "x": 225,
+      "z": 470,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "alley_se_deadend",
+      "x": 525,
+      "z": 490,
+      "kind": "deadEnd"
+    }
+  ],
+  "segments": [
+    {
+      "segmentId": "S_mirpara_1",
+      "startNodeId": "art_n_0",
+      "endNodeId": "art_n_1",
+      "width": 12,
+      "surfaceCondition": 0.95,
+      "trafficDensity": 0.55,
+      "speedLimit": 50,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": true,
+      "divided": true,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mirpara",
+      "tags": [
+        "arterial"
+      ]
+    },
+    {
+      "segmentId": "S_mirpara_2",
+      "startNodeId": "art_s_1",
+      "endNodeId": "art_s_0",
+      "width": 12,
+      "surfaceCondition": 0.95,
+      "trafficDensity": 0.55,
+      "speedLimit": 50,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": true,
+      "divided": true,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mirpara",
+      "tags": [
+        "arterial"
+      ]
+    },
+    {
+      "segmentId": "S_mirpara_3",
+      "startNodeId": "art_n_1",
+      "endNodeId": "art_n_2",
+      "width": 12,
+      "surfaceCondition": 0.95,
+      "trafficDensity": 0.55,
+      "speedLimit": 50,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": true,
+      "divided": true,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mirpara",
+      "tags": [
+        "arterial"
+      ]
+    },
+    {
+      "segmentId": "S_mirpara_4",
+      "startNodeId": "art_s_2",
+      "endNodeId": "art_s_1",
+      "width": 12,
+      "surfaceCondition": 0.95,
+      "trafficDensity": 0.55,
+      "speedLimit": 50,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": true,
+      "divided": true,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mirpara",
+      "tags": [
+        "arterial"
+      ]
+    },
+    {
+      "segmentId": "S_mirpara_5",
+      "startNodeId": "art_n_2",
+      "endNodeId": "art_n_3",
+      "width": 12,
+      "surfaceCondition": 0.95,
+      "trafficDensity": 0.55,
+      "speedLimit": 50,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": true,
+      "divided": true,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mirpara",
+      "tags": [
+        "arterial"
+      ]
+    },
+    {
+      "segmentId": "S_mirpara_6",
+      "startNodeId": "art_s_3",
+      "endNodeId": "art_s_2",
+      "width": 12,
+      "surfaceCondition": 0.95,
+      "trafficDensity": 0.55,
+      "speedLimit": 50,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": true,
+      "divided": true,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mirpara",
+      "tags": [
+        "arterial"
+      ]
+    },
+    {
+      "segmentId": "S_mirpara_7",
+      "startNodeId": "art_n_3",
+      "endNodeId": "art_n_4",
+      "width": 12,
+      "surfaceCondition": 0.95,
+      "trafficDensity": 0.55,
+      "speedLimit": 50,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": true,
+      "divided": true,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mirpara",
+      "tags": [
+        "arterial"
+      ]
+    },
+    {
+      "segmentId": "S_mirpara_8",
+      "startNodeId": "art_s_4",
+      "endNodeId": "art_s_3",
+      "width": 12,
+      "surfaceCondition": 0.95,
+      "trafficDensity": 0.55,
+      "speedLimit": 50,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": true,
+      "divided": true,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mirpara",
+      "tags": [
+        "arterial"
+      ]
+    },
+    {
+      "segmentId": "S_mirpara_9",
+      "startNodeId": "art_n_0",
+      "endNodeId": "art_s_0",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 25,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mirpara",
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "segmentId": "S_mirpara_10",
+      "startNodeId": "art_n_1",
+      "endNodeId": "art_s_1",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 25,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mirpara",
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "segmentId": "S_mirpara_11",
+      "startNodeId": "art_n_2",
+      "endNodeId": "art_s_2",
+      "width": 6,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 20,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.7,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mirpara",
+      "tags": [
+        "crossing",
+        "footbridge"
+      ]
+    },
+    {
+      "segmentId": "S_mirpara_12",
+      "startNodeId": "art_n_3",
+      "endNodeId": "art_s_3",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 25,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mirpara",
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "segmentId": "S_mirpara_13",
+      "startNodeId": "art_n_4",
+      "endNodeId": "art_s_4",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 25,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mirpara",
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "segmentId": "S_mirpara_14",
+      "startNodeId": "res_n1_0",
+      "endNodeId": "res_n1_1",
+      "width": 7,
+      "surfaceCondition": 0.5,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.85,
+      "pickupPractical": true,
+      "district": "mirpara",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_mirpara_15",
+      "startNodeId": "res_n2_0",
+      "endNodeId": "res_n2_1",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mirpara",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_mirpara_16",
+      "startNodeId": "res_n1_1",
+      "endNodeId": "res_n1_2",
+      "width": 7,
+      "surfaceCondition": 0.85,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mirpara",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_mirpara_17",
+      "startNodeId": "res_n2_1",
+      "endNodeId": "res_n2_2",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mirpara",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_mirpara_18",
+      "startNodeId": "res_n1_2",
+      "endNodeId": "res_n1_3",
+      "width": 7,
+      "surfaceCondition": 0.85,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mirpara",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_mirpara_19",
+      "startNodeId": "res_n2_2",
+      "endNodeId": "res_n2_3",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mirpara",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_mirpara_20",
+      "startNodeId": "res_n1_3",
+      "endNodeId": "res_n1_4",
+      "width": 7,
+      "surfaceCondition": 0.85,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mirpara",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_mirpara_21",
+      "startNodeId": "res_n2_3",
+      "endNodeId": "res_n2_4",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mirpara",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_mirpara_22",
+      "startNodeId": "res_n1_0",
+      "endNodeId": "res_n2_0",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mirpara",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_mirpara_23",
+      "startNodeId": "res_n2_0",
+      "endNodeId": "art_n_0",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 35,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mirpara",
+      "tags": []
+    },
+    {
+      "segmentId": "S_mirpara_24",
+      "startNodeId": "res_n1_1",
+      "endNodeId": "res_n2_1",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mirpara",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_mirpara_25",
+      "startNodeId": "res_n2_1",
+      "endNodeId": "art_n_1",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 35,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mirpara",
+      "tags": []
+    },
+    {
+      "segmentId": "S_mirpara_26",
+      "startNodeId": "res_n1_2",
+      "endNodeId": "res_n2_2",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mirpara",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_mirpara_27",
+      "startNodeId": "res_n2_2",
+      "endNodeId": "art_n_2",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 35,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mirpara",
+      "tags": []
+    },
+    {
+      "segmentId": "S_mirpara_28",
+      "startNodeId": "res_n1_3",
+      "endNodeId": "res_n2_3",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mirpara",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_mirpara_29",
+      "startNodeId": "res_n2_3",
+      "endNodeId": "art_n_3",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 35,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mirpara",
+      "tags": []
+    },
+    {
+      "segmentId": "S_mirpara_30",
+      "startNodeId": "res_n1_4",
+      "endNodeId": "res_n2_4",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mirpara",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_mirpara_31",
+      "startNodeId": "res_n2_4",
+      "endNodeId": "art_n_4",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 35,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mirpara",
+      "tags": []
+    },
+    {
+      "segmentId": "S_mirpara_32",
+      "startNodeId": "res_s1_0",
+      "endNodeId": "res_s1_1",
+      "width": 9,
+      "surfaceCondition": 0.65,
+      "trafficDensity": 0.7,
+      "speedLimit": 25,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.85,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mirpara",
+      "tags": [
+        "market"
+      ]
+    },
+    {
+      "segmentId": "S_mirpara_33",
+      "startNodeId": "res_s1_1",
+      "endNodeId": "res_s1_2",
+      "width": 9,
+      "surfaceCondition": 0.65,
+      "trafficDensity": 0.7,
+      "speedLimit": 25,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.85,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mirpara",
+      "tags": [
+        "market"
+      ]
+    },
+    {
+      "segmentId": "S_mirpara_34",
+      "startNodeId": "res_s1_2",
+      "endNodeId": "res_s1_3",
+      "width": 9,
+      "surfaceCondition": 0.65,
+      "trafficDensity": 0.7,
+      "speedLimit": 25,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.85,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mirpara",
+      "tags": [
+        "market"
+      ]
+    },
+    {
+      "segmentId": "S_mirpara_35",
+      "startNodeId": "res_s1_3",
+      "endNodeId": "res_s1_4",
+      "width": 9,
+      "surfaceCondition": 0.65,
+      "trafficDensity": 0.7,
+      "speedLimit": 25,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.85,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mirpara",
+      "tags": [
+        "market"
+      ]
+    },
+    {
+      "segmentId": "S_mirpara_36",
+      "startNodeId": "res_s2_0",
+      "endNodeId": "res_s2_1",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mirpara",
+      "tags": []
+    },
+    {
+      "segmentId": "S_mirpara_37",
+      "startNodeId": "res_s2_1",
+      "endNodeId": "res_s2_2",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mirpara",
+      "tags": []
+    },
+    {
+      "segmentId": "S_mirpara_38",
+      "startNodeId": "res_s2_2",
+      "endNodeId": "res_s2_3",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mirpara",
+      "tags": []
+    },
+    {
+      "segmentId": "S_mirpara_39",
+      "startNodeId": "res_s2_3",
+      "endNodeId": "res_s2_4",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mirpara",
+      "tags": []
+    },
+    {
+      "segmentId": "S_mirpara_40",
+      "startNodeId": "art_s_0",
+      "endNodeId": "res_s1_0",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 35,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mirpara",
+      "tags": []
+    },
+    {
+      "segmentId": "S_mirpara_41",
+      "startNodeId": "res_s1_0",
+      "endNodeId": "res_s2_0",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mirpara",
+      "tags": []
+    },
+    {
+      "segmentId": "S_mirpara_42",
+      "startNodeId": "art_s_1",
+      "endNodeId": "res_s1_1",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 35,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mirpara",
+      "tags": []
+    },
+    {
+      "segmentId": "S_mirpara_43",
+      "startNodeId": "res_s1_1",
+      "endNodeId": "res_s2_1",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mirpara",
+      "tags": []
+    },
+    {
+      "segmentId": "S_mirpara_44",
+      "startNodeId": "art_s_2",
+      "endNodeId": "res_s1_2",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 35,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mirpara",
+      "tags": []
+    },
+    {
+      "segmentId": "S_mirpara_45",
+      "startNodeId": "res_s1_2",
+      "endNodeId": "res_s2_2",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mirpara",
+      "tags": []
+    },
+    {
+      "segmentId": "S_mirpara_46",
+      "startNodeId": "art_s_3",
+      "endNodeId": "res_s1_3",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 35,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mirpara",
+      "tags": []
+    },
+    {
+      "segmentId": "S_mirpara_47",
+      "startNodeId": "res_s1_3",
+      "endNodeId": "res_s2_3",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mirpara",
+      "tags": []
+    },
+    {
+      "segmentId": "S_mirpara_48",
+      "startNodeId": "art_s_4",
+      "endNodeId": "res_s1_4",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 35,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mirpara",
+      "tags": []
+    },
+    {
+      "segmentId": "S_mirpara_49",
+      "startNodeId": "res_s1_4",
+      "endNodeId": "res_s2_4",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mirpara",
+      "tags": []
+    },
+    {
+      "segmentId": "S_mirpara_50",
+      "startNodeId": "res_n1_0",
+      "endNodeId": "alley_nw_mid",
+      "width": 3.5,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 20,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "alley",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mirpara",
+      "tags": [
+        "alley"
+      ]
+    },
+    {
+      "segmentId": "S_mirpara_51",
+      "startNodeId": "alley_nw_mid",
+      "endNodeId": "res_n2_1",
+      "width": 3.5,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 20,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "alley",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mirpara",
+      "tags": [
+        "alley"
+      ]
+    },
+    {
+      "segmentId": "S_mirpara_52",
+      "startNodeId": "res_n1_2",
+      "endNodeId": "alley_ne_gate",
+      "width": 2.5,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 15,
+      "turnRestrictions": [],
+      "motorcycleAccessible": false,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "alley",
+      "floodSensitivity": 0.2,
+      "pickupPractical": false,
+      "district": "mirpara",
+      "tags": [
+        "alley",
+        "pedestrian_only"
+      ]
+    },
+    {
+      "segmentId": "S_mirpara_53",
+      "startNodeId": "alley_ne_gate",
+      "endNodeId": "res_n1_3",
+      "width": 2.5,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 15,
+      "turnRestrictions": [],
+      "motorcycleAccessible": false,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "alley",
+      "floodSensitivity": 0.2,
+      "pickupPractical": false,
+      "district": "mirpara",
+      "tags": [
+        "alley",
+        "pedestrian_only"
+      ]
+    },
+    {
+      "segmentId": "S_mirpara_54",
+      "startNodeId": "res_s1_1",
+      "endNodeId": "alley_sc_mid",
+      "width": 3.5,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 20,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "alley",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mirpara",
+      "tags": [
+        "alley"
+      ]
+    },
+    {
+      "segmentId": "S_mirpara_55",
+      "startNodeId": "alley_sc_mid",
+      "endNodeId": "res_s2_2",
+      "width": 3.5,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 20,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "alley",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mirpara",
+      "tags": [
+        "alley"
+      ]
+    },
+    {
+      "segmentId": "S_mirpara_56",
+      "startNodeId": "res_s2_3",
+      "endNodeId": "alley_se_deadend",
+      "width": 2.5,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 15,
+      "turnRestrictions": [],
+      "motorcycleAccessible": false,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "alley",
+      "floodSensitivity": 0.2,
+      "pickupPractical": false,
+      "district": "mirpara",
+      "tags": [
+        "alley",
+        "deadend"
+      ]
+    }
+  ],
+  "pois": [
+    {
+      "id": "poi_mirpara_home",
+      "kind": "home",
+      "nodeId": "res_n2_0",
+      "nameKey": "poi.mirpara.rafi_home"
+    },
+    {
+      "id": "poi_mirpara_tea_stall",
+      "kind": "teaStall",
+      "nodeId": "res_n2_1",
+      "nameKey": "poi.mirpara.tea_stall"
+    },
+    {
+      "id": "poi_mirpara_fuel",
+      "kind": "fuel",
+      "nodeId": "art_s_1",
+      "nameKey": "poi.mirpara.fuel"
+    },
+    {
+      "id": "poi_mirpara_garage",
+      "kind": "garage",
+      "nodeId": "res_s1_0",
+      "nameKey": "poi.mirpara.garage"
+    },
+    {
+      "id": "poi_mirpara_school",
+      "kind": "school",
+      "nodeId": "res_n1_2",
+      "nameKey": "poi.mirpara.school"
+    },
+    {
+      "id": "poi_mirpara_pharmacy",
+      "kind": "pharmacy",
+      "nodeId": "res_s1_2",
+      "nameKey": "poi.mirpara.pharmacy"
+    },
+    {
+      "id": "poi_mirpara_campus_gate",
+      "kind": "officeGate",
+      "nodeId": "res_n1_1",
+      "nameKey": "poi.mirpara.campus_gate"
+    },
+    {
+      "id": "poi_mirpara_footbridge",
+      "kind": "crossing",
+      "nodeId": "art_n_2",
+      "nameKey": "poi.mirpara.footbridge"
+    },
+    {
+      "id": "poi_mirpara_bazaar",
+      "kind": "market",
+      "nodeId": "res_s1_1",
+      "nameKey": "poi.mirpara.bazaar"
+    },
+    {
+      "id": "poi_mirpara_bus_stand",
+      "kind": "busStop",
+      "nodeId": "art_s_3",
+      "nameKey": "poi.mirpara.bus_stand"
+    },
+    {
+      "id": "poi_mirpara_clinic",
+      "kind": "hospital",
+      "nodeId": "res_s2_1",
+      "nameKey": "poi.mirpara.clinic"
+    },
+    {
+      "id": "poi_mirpara_green_tower",
+      "kind": "apartment",
+      "nodeId": "res_n2_3",
+      "nameKey": "poi.mirpara.green_tower"
+    }
+  ],
+  "lots": [
+    {
+      "lotId": "lot_mirpara_1",
+      "x": 75,
+      "z": 283,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5707963267948966,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_2",
+      "x": 75,
+      "z": 317,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": -1.5707963267948966,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_3",
+      "x": 225,
+      "z": 283,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5707963267948966,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_4",
+      "x": 225,
+      "z": 317,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": -1.5707963267948966,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_5",
+      "x": 375,
+      "z": 283,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5707963267948966,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_6",
+      "x": 375,
+      "z": 317,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": -1.5707963267948966,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_7",
+      "x": 525,
+      "z": 283,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5707963267948966,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_8",
+      "x": 525,
+      "z": 317,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": -1.5707963267948966,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_9",
+      "x": 12,
+      "z": 300,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_10",
+      "x": 162,
+      "z": 300,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_11",
+      "x": 312,
+      "z": 300,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_12",
+      "x": 462,
+      "z": 300,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_13",
+      "x": 612,
+      "z": 300,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_14",
+      "x": 77,
+      "z": 67,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.551190995937692,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_15",
+      "x": 77,
+      "z": 167,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.551190995937692,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_16",
+      "x": 227,
+      "z": 68,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5775076354262194,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_17",
+      "x": 227,
+      "z": 168,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5775076354262194,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_18",
+      "x": 377,
+      "z": 68,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.557463783500751,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_19",
+      "x": 377,
+      "z": 168,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.557463783500751,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_20",
+      "x": 526,
+      "z": 70,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5572836357815685,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_21",
+      "x": 526,
+      "z": 170,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5572836357815685,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_22",
+      "x": 12,
+      "z": 127,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_23",
+      "x": 12,
+      "z": 236,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_24",
+      "x": 165,
+      "z": 130,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_25",
+      "x": 163,
+      "z": 238,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": -0.026081041290752262,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_26",
+      "x": 314,
+      "z": 129,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_27",
+      "x": 313,
+      "z": 237,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": -0.017239671194529696,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_28",
+      "x": 464,
+      "z": 131,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_29",
+      "x": 463,
+      "z": 238,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": -0.017542060057402487,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_30",
+      "x": 612,
+      "z": 133,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_31",
+      "x": 612,
+      "z": 239,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_32",
+      "x": 73,
+      "z": 407,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5639471188309615,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_mirpara_33",
+      "x": 225,
+      "z": 407,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5707963267948966,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_mirpara_34",
+      "x": 379,
+      "z": 408,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5641739070522287,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_mirpara_35",
+      "x": 527,
+      "z": 407,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.591341380828297,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_mirpara_36",
+      "x": 73,
+      "z": 507,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5639471188309615,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_37",
+      "x": 225,
+      "z": 507,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5707963267948966,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_38",
+      "x": 379,
+      "z": 508,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5641739070522287,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_39",
+      "x": 527,
+      "z": 507,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.591341380828297,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_40",
+      "x": 12,
+      "z": 362,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_41",
+      "x": 12,
+      "z": 468,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_42",
+      "x": 160,
+      "z": 362,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": -0.035073330533225366,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_43",
+      "x": 158,
+      "z": 469,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_44",
+      "x": 313,
+      "z": 362,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0.02630971725292219,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_45",
+      "x": 315,
+      "z": 469,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_46",
+      "x": 464,
+      "z": 362,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0.03476859185608236,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_47",
+      "x": 466,
+      "z": 470,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_48",
+      "x": 612,
+      "z": 361,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_49",
+      "x": 612,
+      "z": 467,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_50",
+      "x": 44,
+      "z": 94,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0.9556100886829226,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_51",
+      "x": 120,
+      "z": 145,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.0007558630951863,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_52",
+      "x": 192,
+      "z": 434,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0.9975419164019239,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_53",
+      "x": 270,
+      "z": 484,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.0098955195425248,
+      "zone": "residential"
+    }
+  ]
+}

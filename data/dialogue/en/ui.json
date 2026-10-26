@@ -20,5 +20,18 @@
   "trip.summary.consequences": "Consequences",
   "bike.fuel_empty": "Fuel Tank Empty!",
   "bike.push_to_station": "Push to station (1.5 m/s)",
-  "bike.call_friend": "Call Friend (-৳100, 20m)"
+  "bike.call_friend": "Call Friend (-৳100, 20m)",
+  "poi.fuel": "Fuel Station",
+  "poi.mirpara.rafi_home": "Rafi's Home",
+  "poi.mirpara.tea_stall": "Mintu's Tea Stall",
+  "poi.mirpara.fuel": "Mirpara Fuel Station",
+  "poi.mirpara.garage": "Kamal Bhai's Garage",
+  "poi.mirpara.school": "Mirpara High School",
+  "poi.mirpara.pharmacy": "Mayer Doa Pharmacy",
+  "poi.mirpara.campus_gate": "North Campus Gate",
+  "poi.mirpara.footbridge": "Footbridge Crossing",
+  "poi.mirpara.bazaar": "Mirpara Kacha Bazaar",
+  "poi.mirpara.bus_stand": "Mirpara Bus Stand",
+  "poi.mirpara.clinic": "Community Health Clinic",
+  "poi.mirpara.green_tower": "Green Tower Apartments"
 }
