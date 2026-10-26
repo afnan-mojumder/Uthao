@@ -32,7 +32,7 @@ Work top to bottom, but **skip a task whose dependencies aren't done yet** and c
 
 Format: `- [ ] **<id>** <title> (<points>), deps: <ids>`. Tick by changing only `[ ]` → `[x]`, because `scripts/agent/*.sh` parse this exact format.
 
-- [ ] **T1.4** Input: keyboard, gamepad, touch, tilt, bindings (5), deps: T0.1 (A)
+- [x] **T1.4** Input: keyboard, gamepad, touch, tilt, bindings (5), deps: T0.1 (A)
 - [ ] **T3.1** Asset pipeline (5), deps: T0.1 (A)
 - [ ] **T0.4** App shell: capability check, lifecycle, overlays, i18n (3), deps: T0.3 (A)
 - [ ] **T3.9** Audio (3), deps: T1.3 (A)
