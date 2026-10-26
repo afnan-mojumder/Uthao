@@ -35,7 +35,7 @@ Format: `- [ ] **<id>** <title> (<points>), deps: <ids>`. Tick by changing only 
 - [x] **T1.4** Input: keyboard, gamepad, touch, tilt, bindings (5), deps: T0.1 (A)
 - [x] **T3.1** Asset pipeline (5), deps: T0.1 (A)
 - [x] **T0.4** App shell: capability check, lifecycle, overlays, i18n (3), deps: T0.3 (A)
-- [ ] **T3.9** Audio (3), deps: T1.3 (A)
+- [x] **T3.9** Audio (3), deps: T1.3 (A)
 - [ ] **T2.4** Negotiation and phone UI (5), deps: T2.3 (A), T0.4
 - [ ] **T2.8** Rider HUD v1 and minimap (3), deps: T1.6 (A), T2.6 (A), T0.4
 - [ ] **T4.1** Day lifecycle and living expenses (3), deps: T2.6 (A)
