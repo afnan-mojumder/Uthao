@@ -12,4 +12,5 @@ One line per finished task: `YYYY-MM-DD Tx.y done — note`
 2026-10-25 T1.6 done — Passenger FSM, RideManager, 3D markers & pillion passenger mesh, Preact HUD, AutopilotController, and e2e autopilot ride test green; M1 feel check: fixed-step loop ensures predictable braking (10m from 40 km/h) and smooth cornering
 2026-10-25 T2.1 done — RequestGenerator with Poisson arrivals, fare model, surge cap, and archetypes.json with unit tests passing
 2026-10-25 T2.2 done — PassengerAI expected budget, opening offers, and mood reactions to near misses, bumps, lateness, and horn spam
+2026-10-26 T2.3 done — Pure NegotiationSystem with sigmoid acceptance formula, patience decay, counteroffers, detour/walk penalties, and dialogue keys
 
