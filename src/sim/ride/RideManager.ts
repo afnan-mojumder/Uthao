@@ -6,12 +6,12 @@ import type { RoadNetwork } from '../road/RoadNetwork';
 import type { EventBus, GameEvents } from '../../core/events';
 import type {
   RideRequest,
-  TripReceipt,
   Transaction,
   PassengerState,
 } from '../../core/types';
 import { distance2d } from '../../core/math';
 import type { Fsm } from '../../core/fsm';
+import { receipt } from '../economy/fuel';
 
 export interface RideManagerOptions {
   roadNetwork: RoadNetwork;
@@ -124,28 +124,18 @@ export class RideManager {
           this.fsm.send('arrived'); // enters 'Completed'
           this.activeRequest.status = this.fsm.state;
 
-          const fare = this.activeRequest.initialFare;
-          const commission = Math.round(fare * 0.15);
-          const fuelCost = 10;
-          const net = fare - commission - fuelCost;
-
-          const receipt: TripReceipt = {
+          const tripReceipt = receipt({
             requestId: this.activeRequest.requestId,
-            fare,
-            tip: 0,
-            commission,
-            fuelCost,
-            otherCosts: 0,
-            net,
+            fare: this.activeRequest.initialFare,
+            bookingType: this.activeRequest.bookingType,
             durationMin: this.activeRequest.estimatedDuration,
             distanceKm: this.activeRequest.estimatedDistance,
             rating: 5,
-            consequences: [],
-          };
+          });
 
           this.bus.emit('ride/completed', {
             requestId: this.activeRequest.requestId,
-            receipt,
+            receipt: tripReceipt,
           });
 
           const tx: Transaction = {
@@ -153,7 +143,7 @@ export class RideManager {
             day: 1,
             minute: 0,
             kind: 'fare',
-            amount: net,
+            amount: tripReceipt.net,
             requestId: this.activeRequest.requestId,
           };
           this.bus.emit('economy/transaction', { tx });
