@@ -1,1 +1,11 @@
-{}
+{
+  "ui.rotate_device": "Please rotate your device to landscape to play",
+  "ui.rotate_hint": "Uthao is designed for landscape mobile and desktop screens",
+  "ui.unsupported_webgl": "WebGL2 is required to run Uthao",
+  "ui.unsupported_hint": "Please enable WebGL2 or update your browser to continue",
+  "ui.loading": "Loading Dhaka streets...",
+  "ui.paused": "Paused",
+  "ui.resume": "Resume",
+  "ui.context_lost": "Graphics context lost. Restoring rendering...",
+  "ui.restart": "Restart"
+}

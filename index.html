@@ -16,7 +16,7 @@
         overflow: hidden;
         background: #000;
         color: #fff;
-        font-family: sans-serif;
+        font-family: system-ui, -apple-system, sans-serif;
       }
       #app {
         position: relative;
@@ -38,12 +38,19 @@
         pointer-events: none;
         z-index: 10;
       }
+      #ui-root {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 20;
+      }
     </style>
   </head>
   <body>
     <div id="app">
       <div id="boot-text">Uthao</div>
       <canvas id="game-canvas"></canvas>
+      <div id="ui-root"></div>
     </div>
     <script type="module" src="/src/main.ts"></script>
   </body>

@@ -6,6 +6,8 @@ import { DistrictSchema, ArchetypesDataSchema } from '../src/sim/schemas.ts';
 const dialogueDir = path.resolve('data/dialogue');
 if (fs.existsSync(dialogueDir)) {
   const langs = ['bn', 'en'];
+  const dicts = { bn: {}, en: {} };
+
   for (const lang of langs) {
     const langDir = path.join(dialogueDir, lang);
     if (fs.existsSync(langDir)) {
@@ -14,7 +16,8 @@ if (fs.existsSync(dialogueDir)) {
         if (file.endsWith('.json')) {
           const filePath = path.join(langDir, file);
           try {
-            JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+            const content = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+            Object.assign(dicts[lang], content);
           } catch (err) {
             console.error(`Invalid JSON in ${filePath}:`, err);
             process.exit(1);
@@ -22,6 +25,14 @@ if (fs.existsSync(dialogueDir)) {
         }
       }
     }
+  }
+
+  // Verify missing bn keys compared to en
+  const enKeys = Object.keys(dicts.en);
+  const missingBnKeys = enKeys.filter((k) => typeof dicts.bn[k] === 'undefined');
+  if (missingBnKeys.length > 0) {
+    console.error(`Missing bn dialogue keys (${missingBnKeys.length}):`, missingBnKeys);
+    process.exit(1);
   }
 }
 
