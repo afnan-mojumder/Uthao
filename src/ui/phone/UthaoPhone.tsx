@@ -1,12 +1,14 @@
 import type { JSX } from 'preact';
-import { useState } from 'preact/hooks';
+import { useState, useEffect } from 'preact/hooks';
 import { toBanglaDigits, formatTaka } from '../utils/bangla';
+import { PrimaryButton, DangerButton, StatusBar } from '../components';
 
 export interface UthaoPhoneProps {
   onAccept: (fare: number, isOffApp: boolean) => void;
   onDecline: () => void;
   onCounterOffer?: (newFare: number) => void;
   initialOffer?: number;
+  suggestedFare?: number;
   passengerName?: string;
   rating?: number;
   completedRides?: number;
@@ -20,450 +22,438 @@ export function UthaoPhone({
   onAccept,
   onDecline,
   onCounterOffer,
-  initialOffer = 120,
+  initialOffer = 80,
+  suggestedFare = 120,
   passengerName = 'Nabila Rahman',
   rating = 4.8,
   completedRides = 127,
-  pickupLocation = 'Farmgate (Farmgate Bus Stand)',
+  pickupLocation = 'Farmgate Bus Stand',
   dropoffLocation = 'Dhanmondi 27 (Rapa Plaza)',
   distanceKm = 6.2,
   durationMins = 18,
 }: UthaoPhoneProps): JSX.Element {
+  const [viewMode, setViewMode] = useState<'request' | 'negotiate'>('request');
   const [currentOffer, setCurrentOffer] = useState<number>(initialOffer);
-  const [mood, setMood] = useState<'happy' | 'neutral' | 'frustrated'>('happy');
-  const [, setBargainRounds] = useState<number>(0);
+  const [patience, setPatience] = useState<number>(70);
+  const [mood, setMood] = useState<'happy' | 'neutral' | 'angry'>('neutral');
+  const [countdown, setCountdown] = useState<number>(12);
+  const [customInputOpen, setCustomInputOpen] = useState<boolean>(false);
+  const [customAmountStr, setCustomAmountStr] = useState<string>('');
+  const [activeBottomTab, setActiveBottomTab] = useState<'home' | 'chat' | 'earnings' | 'profile'>('home');
 
-  const handleAddCounter = (addedAmount: number) => {
-    const updated = currentOffer + addedAmount;
-    setCurrentOffer(updated);
-    setBargainRounds((r) => r + 1);
+  // Countdown timer for Ride Request
+  useEffect(() => {
+    if (viewMode !== 'request') return;
+    const interval = setInterval(() => {
+      setCountdown((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [viewMode]);
 
-    // If rider demands too much, passenger mood worsens
-    if (updated > initialOffer + 80) {
-      setMood('frustrated');
-    } else if (updated > initialOffer + 30) {
+  const handleQuickCounter = (additional: number) => {
+    const nextFare = currentOffer + additional;
+    setCurrentOffer(nextFare);
+    setPatience((p) => Math.max(10, p - 20));
+    if (nextFare > suggestedFare + 40) {
+      setMood('angry');
+    } else if (nextFare > suggestedFare) {
       setMood('neutral');
+    } else {
+      setMood('happy');
     }
+    if (onCounterOffer) onCounterOffer(nextFare);
+  };
 
-    if (onCounterOffer) onCounterOffer(updated);
+  const handleCustomSubmit = () => {
+    const val = parseInt(customAmountStr, 10);
+    if (!isNaN(val) && val > 0) {
+      setCurrentOffer(val);
+      setPatience((p) => Math.max(10, p - 25));
+      if (val > suggestedFare + 40) setMood('angry');
+      setCustomInputOpen(false);
+      if (onCounterOffer) onCounterOffer(val);
+    }
   };
 
   return (
     <div
       data-testid="uthao-phone-modal"
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 9500,
-        background: 'rgba(5, 10, 20, 0.75)',
-        backdropFilter: 'blur(16px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '20px',
-        userSelect: 'none',
-        fontFamily: 'system-ui, -apple-system, sans-serif',
-      }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-xl animate-fade-in font-sans select-none"
     >
-      {/* Smartphone Outer Casing */}
+      {/* Smartphone Casing */}
       <div
-        style={{
-          width: '380px',
-          maxHeight: '92vh',
-          background: '#090f1d',
-          borderRadius: '44px',
-          border: '4px solid #1e293b',
-          boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.9), 0 0 30px rgba(56, 189, 248, 0.15)',
-          overflow: 'hidden',
-          display: 'flex',
-          flexDirection: 'column',
-          position: 'relative',
-        }}
+        className="relative w-[380px] max-w-full max-h-[92vh] rounded-[44px] border-[4px] border-slate-800 bg-[#0A0F1D] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9),0_0_40px_rgba(34,197,94,0.15)] flex flex-col overflow-hidden text-slate-100"
       >
-        {/* Phone Notch & Status Bar */}
-        <div
-          style={{
-            padding: '12px 24px 6px',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            fontSize: '12px',
-            fontWeight: 700,
-            color: '#cbd5e1',
-            background: '#090f1d',
-          }}
-        >
+        {/* Status Bar */}
+        <header className="px-6 pt-3 pb-1 flex items-center justify-between text-xs font-bold text-slate-300 bg-[#0A0F1D]">
           <span>4:25</span>
-          {/* Dynamic Island / Speaker */}
-          <div
-            style={{
-              width: '84px',
-              height: '18px',
-              background: '#000000',
-              borderRadius: '20px',
-            }}
-          />
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          {/* Dynamic Island Speaker */}
+          <div className="w-20 h-4 bg-black rounded-full shadow-inner" />
+          <div className="flex items-center gap-1.5 text-[11px]">
             <span>5G</span>
             <span>📶</span>
             <span>78% 🔋</span>
           </div>
-        </div>
+        </header>
 
-        {/* Uthao App Header */}
-        <div
-          style={{
-            padding: '14px 20px',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            {/* Uthao Logo */}
-            <div
-              style={{
-                width: '32px',
-                height: '32px',
-                borderRadius: '8px',
-                background: '#22c55e',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#052e16',
-                fontWeight: 900,
-                fontSize: '18px',
-              }}
+        {/* View Mode Switcher Header Pill */}
+        <div className="px-4 py-1.5 bg-slate-900/80 border-b border-slate-800 flex items-center justify-between text-[11px]">
+          <span className="text-slate-400 font-medium">Screen View:</span>
+          <div className="flex items-center gap-1 bg-slate-800 p-0.5 rounded-lg">
+            <button
+              type="button"
+              onClick={() => setViewMode('request')}
+              className={`px-2 py-0.5 rounded-md font-bold transition-all ${
+                viewMode === 'request'
+                  ? 'bg-emerald-500 text-slate-950 shadow-sm'
+                  : 'text-slate-400 hover:text-white'
+              }`}
             >
-              উ
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span style={{ fontSize: '17px', fontWeight: 900, color: '#ffffff', letterSpacing: '-0.02em' }}>
-                Uthao
-              </span>
-              <span style={{ fontSize: '10px', color: '#94a3b8' }}>Ride. Earn. Your City.</span>
-            </div>
-          </div>
-
-          <div style={{ fontSize: '18px', color: '#94a3b8', cursor: 'pointer' }}>🔔</div>
-        </div>
-
-        {/* Tab Switcher */}
-        <div
-          style={{
-            display: 'flex',
-            padding: '10px 16px',
-            gap: '8px',
-            background: 'rgba(15, 23, 42, 0.6)',
-          }}
-        >
-          <div
-            style={{
-              background: '#22c55e',
-              color: '#052e16',
-              fontWeight: 800,
-              fontSize: '12px',
-              padding: '6px 14px',
-              borderRadius: '20px',
-            }}
-          >
-            Ride Request
-          </div>
-          <div style={{ color: '#94a3b8', fontSize: '12px', fontWeight: 600, padding: '6px 12px' }}>
-            Map
-          </div>
-          <div style={{ color: '#94a3b8', fontSize: '12px', fontWeight: 600, padding: '6px 12px' }}>
-            Earnings
-          </div>
-        </div>
-
-        {/* Scrollable Request Content */}
-        <div
-          style={{
-            padding: '16px 20px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '14px',
-            overflowY: 'auto',
-          }}
-        >
-          {/* Passenger Header Card */}
-          <div
-            style={{
-              background: 'rgba(30, 41, 59, 0.5)',
-              borderRadius: '16px',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-              padding: '14px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-            }}
-          >
-            <div
-              style={{
-                width: '46px',
-                height: '46px',
-                borderRadius: '50%',
-                background: 'linear-gradient(135deg, #f43f5e, #fb7185)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '22px',
-              }}
+              2. Request
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode('negotiate')}
+              className={`px-2 py-0.5 rounded-md font-bold transition-all ${
+                viewMode === 'negotiate'
+                  ? 'bg-emerald-500 text-slate-950 shadow-sm'
+                  : 'text-slate-400 hover:text-white'
+              }`}
             >
-              👩
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '15px', fontWeight: 800, color: '#ffffff' }}>
-                  {passengerName}
-                </span>
-                <span
-                  style={{
-                    background: 'rgba(56, 189, 248, 0.15)',
-                    color: '#38bdf8',
-                    fontSize: '10px',
-                    fontWeight: 800,
-                    padding: '2px 8px',
-                    borderRadius: '10px',
-                  }}
-                >
-                  Regular
-                </span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
-                <span style={{ color: '#f59e0b', fontSize: '12px' }}>★</span>
-                <span style={{ fontSize: '12px', fontWeight: 700, color: '#e2e8f0' }}>
-                  {rating}
-                </span>
-                <span style={{ fontSize: '11px', color: '#94a3b8' }}>
-                  ({toBanglaDigits(completedRides)} rides)
-                </span>
-              </div>
-            </div>
+              3. Negotiate
+            </button>
           </div>
+        </div>
 
-          {/* Dialogue Speech Bubble */}
-          <div
-            style={{
-              background: 'rgba(30, 41, 59, 0.8)',
-              border: '1px solid rgba(255, 255, 255, 0.12)',
-              borderRadius: '18px 18px 18px 4px',
-              padding: '12px 16px',
-              position: 'relative',
-            }}
-          >
-            <p style={{ margin: 0, fontSize: '15px', fontWeight: 700, color: '#f8fafc' }}>
-              "ভাই, ধানমন্ডি যাবেন?"
-            </p>
-            <span style={{ fontSize: '10px', color: '#64748b', display: 'block', textAlign: 'right', marginTop: '4px' }}>
-              4:24 PM
-            </span>
-          </div>
-
-          {/* Their Offer & Mood Bar */}
-          <div
-            style={{
-              background: 'rgba(15, 23, 42, 0.7)',
-              borderRadius: '16px',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-              padding: '12px 16px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '8px',
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-              <span style={{ fontSize: '13px', color: '#94a3b8', fontWeight: 600 }}>Their Offer</span>
-              <span style={{ fontSize: '26px', fontWeight: 900, color: '#ffffff', letterSpacing: '-0.02em' }}>
-                {formatTaka(currentOffer)}
-              </span>
-            </div>
-
-            {/* Mood Progress Bar */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span style={{ fontSize: '18px' }}>
-                {mood === 'happy' ? '😊' : mood === 'neutral' ? '😐' : '😠'}
-              </span>
-              <div
-                style={{
-                  flex: 1,
-                  height: '8px',
-                  borderRadius: '4px',
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  overflow: 'hidden',
-                }}
+        {/* ============================================================== */}
+        {/* SCREEN 2: UTHAO PHONE APP (RIDE REQUEST)                      */}
+        {/* ============================================================== */}
+        {viewMode === 'request' && (
+          <div className="flex-1 flex flex-col overflow-y-auto">
+            {/* App Header */}
+            <div className="px-5 py-3 flex items-center justify-between border-b border-slate-800/80 bg-slate-900/40">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-emerald-500 flex items-center justify-center text-slate-950 font-black text-lg shadow-md shadow-emerald-500/30">
+                  উ
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-white leading-tight">Uthao</h3>
+                  <p className="text-[10px] text-slate-400 font-medium">Ride. Earn. Your City.</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-white bg-slate-800/50"
+                aria-label="Notifications"
               >
-                <div
-                  style={{
-                    width: mood === 'happy' ? '85%' : mood === 'neutral' ? '50%' : '20%',
-                    height: '100%',
-                    background:
+                🔔
+              </button>
+            </div>
+
+            {/* Top Tabs */}
+            <div className="px-4 py-2 flex items-center gap-2 bg-slate-900/30 border-b border-slate-800/50">
+              <button
+                type="button"
+                className="px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-500 text-slate-950 shadow-sm"
+              >
+                Ride Requests
+              </button>
+              <button
+                type="button"
+                className="px-3 py-1 rounded-full text-xs font-semibold text-slate-400 hover:text-slate-200"
+              >
+                Map
+              </button>
+              <button
+                type="button"
+                className="px-3 py-1 rounded-full text-xs font-semibold text-slate-400 hover:text-slate-200"
+              >
+                Earnings
+              </button>
+            </div>
+
+            {/* Scrollable Request Content */}
+            <div className="p-4 flex-1 space-y-3">
+              {/* Passenger Request Card */}
+              <div className="p-3.5 rounded-2xl bg-slate-800/50 border border-slate-700/60 shadow-md">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-rose-500 to-amber-500 flex items-center justify-center text-lg shadow-inner">
+                      👩
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-bold text-sm text-white">{passengerName}</span>
+                        <span className="text-[10px] px-1.5 py-0.2 rounded font-bold bg-sky-500/20 text-sky-400 border border-sky-500/30">
+                          Regular
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1 text-xs text-amber-400 font-semibold mt-0.5">
+                        <span>★ {rating}</span>
+                        <span className="text-slate-400 text-[11px] font-normal">
+                          ({toBanglaDigits(completedRides)} rides)
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="text-right">
+                    <div className="text-lg font-black text-emerald-400 font-mono">
+                      ৳ ৫৮০
+                    </div>
+                    <span className="text-[10px] text-slate-400">(Suggested)</span>
+                  </div>
+                </div>
+
+                {/* Route Points */}
+                <div className="mt-3 pt-3 border-t border-slate-700/50 space-y-2 text-xs">
+                  <div className="flex items-start gap-2">
+                    <span className="text-emerald-400 mt-0.5">🟢</span>
+                    <div>
+                      <span className="text-[10px] text-slate-400 uppercase font-semibold">Pickup</span>
+                      <p className="font-bold text-slate-100">{pickupLocation}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-rose-400 mt-0.5">🔴</span>
+                    <div>
+                      <span className="text-[10px] text-slate-400 uppercase font-semibold">Drop-off</span>
+                      <p className="font-bold text-slate-100">{dropoffLocation}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-2.5 pt-2 border-t border-slate-700/40 flex items-center justify-between text-[11px] text-slate-400 font-medium">
+                  <span>{toBanglaDigits(distanceKm)} km</span>
+                  <span>~ {toBanglaDigits(durationMins)} mins</span>
+                </div>
+              </div>
+
+              {/* Passenger Speech Bubble */}
+              <div className="p-3 rounded-2xl bg-slate-800/80 border border-slate-700/60 shadow-sm relative">
+                <p className="text-xs font-bold text-slate-100 italic leading-relaxed">
+                  &quot;ভাই, ধানমন্ডি যাবেন? আমি আছি, একটু দ্রুত যাবেন।&quot;
+                </p>
+                <div className="flex items-center justify-between mt-2 pt-1 border-t border-slate-700/40">
+                  <span className="text-[10px] text-slate-400">4:24 PM</span>
+                  {/* Circular 12s timer */}
+                  <div className="flex items-center gap-1.5 text-xs font-mono font-bold text-amber-400 bg-amber-950/60 px-2 py-0.5 rounded-full border border-amber-600/30">
+                    <span>⏱️</span>
+                    <span>{toBanglaDigits(countdown)} sec</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons: Accept / Decline */}
+              <div className="flex items-center gap-2 pt-1">
+                <PrimaryButton
+                  fullWidth
+                  size="md"
+                  icon=">>"
+                  onClick={() => setViewMode('negotiate')}
+                >
+                  Accept
+                </PrimaryButton>
+                <DangerButton
+                  fullWidth
+                  size="md"
+                  icon="✕"
+                  onClick={onDecline}
+                >
+                  Decline
+                </DangerButton>
+              </div>
+            </div>
+
+            {/* Bottom App Navigation Bar */}
+            <nav className="px-4 py-2 bg-slate-900/90 border-t border-slate-800/80 flex items-center justify-around text-xs">
+              {[
+                { id: 'home', label: 'Home', icon: '🏠' },
+                { id: 'chat', label: 'Chat', icon: '💬' },
+                { id: 'earnings', label: 'Earnings', icon: '💵' },
+                { id: 'profile', label: 'Profile', icon: '👤' },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setActiveBottomTab(tab.id as typeof activeBottomTab)}
+                  className={`flex flex-col items-center gap-0.5 ${
+                    activeBottomTab === tab.id
+                      ? 'text-emerald-400 font-bold'
+                      : 'text-slate-500 hover:text-slate-300'
+                  }`}
+                >
+                  <span className="text-base">{tab.icon}</span>
+                  <span className="text-[10px]">{tab.label}</span>
+                </button>
+              ))}
+            </nav>
+          </div>
+        )}
+
+        {/* ============================================================== */}
+        {/* SCREEN 3: RIDE NEGOTIATION DIALOG                             */}
+        {/* ============================================================== */}
+        {viewMode === 'negotiate' && (
+          <div className="flex-1 flex flex-col overflow-y-auto p-4 space-y-3">
+            {/* Header: Passenger & Mood */}
+            <div className="p-3 rounded-2xl bg-slate-800/60 border border-slate-700/60 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-rose-500 to-amber-500 flex items-center justify-center text-lg">
+                  👩
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-white">{passengerName}</h4>
+                  <div className="text-xs text-amber-400 font-semibold">★ {rating}</div>
+                </div>
+              </div>
+
+              <div className="flex flex-col items-end">
+                <span className="text-[10px] text-slate-400 uppercase font-bold">Passenger Mood</span>
+                <div className="flex items-center gap-1 mt-0.5">
+                  <span className="text-base">
+                    {mood === 'happy' ? '😊' : mood === 'neutral' ? '😐' : '😠'}
+                  </span>
+                  <span
+                    className={`text-xs font-bold capitalize ${
                       mood === 'happy'
-                        ? 'linear-gradient(90deg, #22c55e, #38bdf8)'
+                        ? 'text-emerald-400'
                         : mood === 'neutral'
-                        ? '#f59e0b'
-                        : '#ef4444',
-                    transition: 'all 0.3s ease',
-                  }}
+                        ? 'text-amber-400'
+                        : 'text-rose-400'
+                    }`}
+                  >
+                    {mood}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Passenger Dialogue */}
+            <div className="p-3 rounded-2xl bg-slate-800/80 border border-slate-700/70 relative">
+              <p className="text-xs font-bold text-slate-100 italic leading-relaxed">
+                &quot;ভাই, ধানমন্ডি যান। ৳ ৮০ হবে?&quot;
+              </p>
+            </div>
+
+            {/* Fare Comparison Card */}
+            <div className="p-3 rounded-2xl bg-slate-900/80 border border-slate-800 flex items-center justify-between">
+              <div>
+                <span className="text-[11px] text-slate-400 font-medium">Their Offer</span>
+                <div className="text-xl font-black text-white font-mono mt-0.5">
+                  {formatTaka(currentOffer)}
+                </div>
+              </div>
+
+              <div className="text-right">
+                <span className="text-[11px] text-slate-400 font-medium">Suggested Fare</span>
+                <div className="text-lg font-black text-slate-400 font-mono mt-0.5">
+                  {formatTaka(suggestedFare)}
+                </div>
+              </div>
+            </div>
+
+            {/* Patience Meter */}
+            <div className="space-y-1">
+              <StatusBar
+                label="Patience (যাত্রীর ধৈর্য)"
+                value={patience}
+                variant="patience"
+                icon="⏳"
+              />
+            </div>
+
+            {/* Quick Bargaining Counters */}
+            <div className="space-y-1.5 pt-1">
+              <span className="text-[11px] font-bold text-slate-400 uppercase">Counter Bargain (দরদাম)</span>
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleQuickCounter(20)}
+                  className="py-2 px-1 rounded-xl bg-slate-800/80 hover:bg-slate-700 border border-amber-500/40 text-amber-300 font-bold text-xs shadow-sm active:scale-95 transition-all text-center"
+                >
+                  <div>+ ৳ ২০</div>
+                  <div className="text-[10px] text-slate-400 font-normal">({formatTaka(currentOffer + 20)})</div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleQuickCounter(40)}
+                  className="py-2 px-1 rounded-xl bg-slate-800/80 hover:bg-slate-700 border border-amber-500/40 text-amber-300 font-bold text-xs shadow-sm active:scale-95 transition-all text-center"
+                >
+                  <div>+ ৳ ৪০</div>
+                  <div className="text-[10px] text-slate-400 font-normal">({formatTaka(currentOffer + 40)})</div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCustomInputOpen(!customInputOpen)}
+                  className="py-2 px-1 rounded-xl bg-slate-800/80 hover:bg-slate-700 border border-slate-600 text-slate-200 font-bold text-xs shadow-sm active:scale-95 transition-all text-center"
+                >
+                  Custom Amount
+                </button>
+              </div>
+            </div>
+
+            {/* Custom Amount Drawer */}
+            {customInputOpen && (
+              <div className="p-2.5 rounded-xl bg-slate-800 border border-slate-700 flex items-center gap-2">
+                <input
+                  type="number"
+                  placeholder="Enter amount (৳)..."
+                  value={customAmountStr}
+                  onInput={(e) => setCustomAmountStr((e.target as HTMLInputElement).value)}
+                  className="w-full px-2.5 py-1 text-xs rounded-lg bg-slate-900 border border-slate-600 text-white"
                 />
+                <button
+                  type="button"
+                  onClick={handleCustomSubmit}
+                  className="px-3 py-1 bg-emerald-500 text-slate-950 font-bold text-xs rounded-lg whitespace-nowrap"
+                >
+                  Offer
+                </button>
               </div>
-              <span style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 600 }}>
-                {mood === 'happy' ? 'Pleased' : mood === 'neutral' ? 'Neutral' : 'Frustrated'}
-              </span>
+            )}
+
+            {/* Dark Choice / Alternative Bargain Row */}
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => onAccept(currentOffer, true)}
+                className="p-2 rounded-xl bg-slate-800/70 border border-amber-500/50 hover:bg-amber-950/30 text-amber-300 text-xs font-bold transition-all shadow-sm flex flex-col items-center justify-center text-center"
+                title="Bypass Uthao 20% platform commission"
+              >
+                <span>অ্যাপের বাইরে যাবেন?</span>
+                <span className="text-[9px] text-amber-400/70">(Off-App 100% Cash)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleQuickCounter(10)}
+                className="p-2 rounded-xl bg-slate-800/70 border border-slate-700 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-all shadow-sm flex items-center justify-center text-center"
+              >
+                এটা বেশি, হবে না
+              </button>
+            </div>
+
+            {/* Primary Action Buttons */}
+            <div className="flex items-center gap-2 pt-2 border-t border-slate-800">
+              <PrimaryButton
+                fullWidth
+                size="md"
+                onClick={() => onAccept(currentOffer, false)}
+              >
+                Accept {formatTaka(currentOffer)}
+              </PrimaryButton>
+
+              <DangerButton
+                fullWidth
+                size="md"
+                onClick={onDecline}
+              >
+                Walk Away
+              </DangerButton>
             </div>
           </div>
-
-          {/* Route Details Card */}
-          <div
-            style={{
-              background: 'rgba(15, 23, 42, 0.7)',
-              borderRadius: '16px',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-              padding: '12px 16px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '10px',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
-              <span style={{ color: '#22c55e', fontSize: '14px', marginTop: '2px' }}>🟢</span>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <span style={{ fontSize: '11px', color: '#94a3b8' }}>Pickup</span>
-                <span style={{ fontSize: '13px', fontWeight: 700, color: '#ffffff' }}>{pickupLocation}</span>
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
-              <span style={{ color: '#ef4444', fontSize: '14px', marginTop: '2px' }}>🔴</span>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <span style={{ fontSize: '11px', color: '#94a3b8' }}>Drop-off</span>
-                <span style={{ fontSize: '13px', fontWeight: 700, color: '#ffffff' }}>{dropoffLocation}</span>
-              </div>
-            </div>
-
-            <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.06)', paddingTop: '8px', display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: '12px', color: '#94a3b8' }}>{toBanglaDigits(distanceKm)} km</span>
-              <span style={{ fontSize: '12px', color: '#94a3b8' }}>~ {toBanglaDigits(durationMins)} mins</span>
-            </div>
-          </div>
-
-          {/* Quick Counter Buttons */}
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <button
-              onClick={() => handleAddCounter(20)}
-              style={{
-                flex: 1,
-                background: 'rgba(30, 41, 59, 0.8)',
-                border: '1px solid rgba(245, 158, 11, 0.4)',
-                borderRadius: '12px',
-                color: '#f59e0b',
-                padding: '9px 0',
-                fontSize: '13px',
-                fontWeight: 800,
-                cursor: 'pointer',
-              }}
-            >
-              +৳২০
-            </button>
-            <button
-              onClick={() => handleAddCounter(50)}
-              style={{
-                flex: 1,
-                background: 'rgba(30, 41, 59, 0.8)',
-                border: '1px solid rgba(245, 158, 11, 0.4)',
-                borderRadius: '12px',
-                color: '#f59e0b',
-                padding: '9px 0',
-                fontSize: '13px',
-                fontWeight: 800,
-                cursor: 'pointer',
-              }}
-            >
-              +৳৫০
-            </button>
-            <button
-              onClick={() => handleAddCounter(100)}
-              style={{
-                flex: 1,
-                background: 'rgba(30, 41, 59, 0.8)',
-                border: '1px solid rgba(245, 158, 11, 0.4)',
-                borderRadius: '12px',
-                color: '#f59e0b',
-                padding: '9px 0',
-                fontSize: '13px',
-                fontWeight: 800,
-                cursor: 'pointer',
-              }}
-            >
-              +৳১০০
-            </button>
-          </div>
-
-          {/* Primary Action: Accept Ride */}
-          <button
-            onClick={() => onAccept(currentOffer, false)}
-            style={{
-              background: '#22c55e',
-              border: 'none',
-              borderRadius: '16px',
-              color: '#052e16',
-              padding: '14px 0',
-              fontSize: '16px',
-              fontWeight: 900,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '10px',
-              boxShadow: '0 8px 25px rgba(34, 197, 94, 0.4)',
-            }}
-          >
-            <span>➤</span>
-            <span>গ্রহণ করুন (Accept)</span>
-          </button>
-
-          {/* Secondary Action: Dark Choice (Go Off-App) */}
-          <button
-            onClick={() => onAccept(currentOffer, true)}
-            style={{
-              background: 'rgba(30, 41, 59, 0.65)',
-              border: '1px solid rgba(245, 158, 11, 0.5)',
-              borderRadius: '14px',
-              color: '#fbbf24',
-              padding: '11px 0',
-              fontSize: '13px',
-              fontWeight: 800,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-            }}
-            title="Bypasses Uthao 20% commission (Direct cash, but moral/platform penalty if reported)"
-          >
-            <span>💬</span>
-            <span>"অ্যাপের বাইরে যাবেন?" (Go Off-App)</span>
-          </button>
-
-          {/* Decline Button */}
-          <button
-            onClick={onDecline}
-            style={{
-              background: 'rgba(239, 68, 68, 0.1)',
-              border: '1px solid rgba(239, 68, 68, 0.35)',
-              borderRadius: '14px',
-              color: '#f87171',
-              padding: '11px 0',
-              fontSize: '13px',
-              fontWeight: 800,
-              cursor: 'pointer',
-            }}
-          >
-            ✕ বাতিল (Decline)
-          </button>
-        </div>
+        )}
       </div>
     </div>
   );

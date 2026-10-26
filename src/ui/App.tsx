@@ -10,6 +10,8 @@ import {
   isMapOpenSignal,
   isPhoneOpenSignal,
   isJournalOpenSignal,
+  isStoryModalOpenSignal,
+  isShowcaseModalOpenSignal,
   activeCrimeEncounterSignal,
   activePoliceCaseSignal,
   activeAccidentSignal,
@@ -27,6 +29,8 @@ import { PoliceEncounterModal } from './encounters/PoliceEncounterModal';
 import { AccidentModal } from './encounters/AccidentModal';
 import { ConsequenceJournal } from './journal/ConsequenceJournal';
 import { DaySummaryModal } from './menus/DaySummaryModal';
+import { StoryRelationshipsModal } from './story/StoryRelationshipsModal';
+import { ComponentShowcaseModal } from './showcase/ComponentShowcaseModal';
 import { PoliceEncounterSystem } from '../sim/darkChoices/PoliceEncounterSystem';
 import { CrimeEncounterSystem } from '../sim/darkChoices/CrimeEncounterSystem';
 import { AccidentManager } from '../sim/darkChoices/AccidentManager';
@@ -51,10 +55,16 @@ export function App(): JSX.Element {
         isPhoneOpenSignal.value = !isPhoneOpenSignal.value;
       } else if (e.key === 'j' || e.key === 'J') {
         isJournalOpenSignal.value = !isJournalOpenSignal.value;
+      } else if (e.key === 's' || e.key === 'S') {
+        isStoryModalOpenSignal.value = !isStoryModalOpenSignal.value;
+      } else if (e.key === 'u' || e.key === 'U') {
+        isShowcaseModalOpenSignal.value = !isShowcaseModalOpenSignal.value;
       } else if (e.key === 'Escape') {
         if (isMapOpenSignal.value) isMapOpenSignal.value = false;
         else if (isPhoneOpenSignal.value) isPhoneOpenSignal.value = false;
         else if (isJournalOpenSignal.value) isJournalOpenSignal.value = false;
+        else if (isStoryModalOpenSignal.value) isStoryModalOpenSignal.value = false;
+        else if (isShowcaseModalOpenSignal.value) isShowcaseModalOpenSignal.value = false;
         else pausedSignal.value = !pausedSignal.value;
       }
     };
@@ -257,6 +267,71 @@ export function App(): JSX.Element {
           }}
         />
       )}
+
+      {/* 9. Story & Relationships Screen */}
+      <StoryRelationshipsModal
+        isOpen={isStoryModalOpenSignal.value}
+        onClose={() => {
+          isStoryModalOpenSignal.value = false;
+        }}
+      />
+
+      {/* 10-14. Component Library & Reference Sheet Showcase Modal */}
+      <ComponentShowcaseModal
+        isOpen={isShowcaseModalOpenSignal.value}
+        onClose={() => {
+          isShowcaseModalOpenSignal.value = false;
+        }}
+      />
+
+      {/* Quick Launch Floating Ribbon (Top-Right) */}
+      <div
+        style={{
+          position: 'absolute',
+          top: '20px',
+          right: '20px',
+          display: 'flex',
+          gap: '8px',
+          zIndex: 9000,
+          pointerEvents: 'auto',
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => {
+            isShowcaseModalOpenSignal.value = !isShowcaseModalOpenSignal.value;
+          }}
+          className="px-3 py-1.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-emerald-500/50 text-emerald-400 font-bold text-xs shadow-lg backdrop-blur-md flex items-center gap-1.5 cursor-pointer transition-all active:scale-95"
+          title="Toggle Component Reference Sheet [U]"
+        >
+          <span>🎨</span>
+          <span>UI Sheet [U]</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            isStoryModalOpenSignal.value = !isStoryModalOpenSignal.value;
+          }}
+          className="px-3 py-1.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-pink-500/50 text-pink-400 font-bold text-xs shadow-lg backdrop-blur-md flex items-center gap-1.5 cursor-pointer transition-all active:scale-95"
+          title="Toggle Story & Relationships [S]"
+        >
+          <span>👥</span>
+          <span>Story [S]</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            isJournalOpenSignal.value = !isJournalOpenSignal.value;
+          }}
+          className="px-3 py-1.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-sky-500/50 text-sky-400 font-bold text-xs shadow-lg backdrop-blur-md flex items-center gap-1.5 cursor-pointer transition-all active:scale-95"
+          title="Toggle Consequence Journal [J]"
+        >
+          <span>⚖️</span>
+          <span>Karma [J]</span>
+        </button>
+      </div>
 
       {/* System Overlays */}
       {unsupportedSignal.value && <Unsupported message={unsupportedSignal.value} />}

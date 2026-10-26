@@ -43,6 +43,8 @@ export const contextLostSignal = signal<boolean>(false);
 export const isMapOpenSignal = signal<boolean>(false);
 export const isPhoneOpenSignal = signal<boolean>(false);
 export const isJournalOpenSignal = signal<boolean>(false);
+export const isStoryModalOpenSignal = signal<boolean>(false);
+export const isShowcaseModalOpenSignal = signal<boolean>(false);
 
 // Dark Choices & Encounters Signals
 export const activeCrimeEncounterSignal = signal<CrimeEncounter | null>(null);

@@ -23,11 +23,16 @@ import {
   hudSignal,
   isMapOpenSignal,
   isPhoneOpenSignal,
+  isStoryModalOpenSignal,
+  isShowcaseModalOpenSignal,
   activePoliceCaseSignal,
   activeCrimeEncounterSignal,
+  activeAccidentSignal,
+  daySummarySignal,
 } from './ui/store';
 import { PoliceEncounterSystem } from './sim/darkChoices/PoliceEncounterSystem';
 import { CrimeEncounterSystem } from './sim/darkChoices/CrimeEncounterSystem';
+import { AccidentManager } from './sim/darkChoices/AccidentManager';
 import type { RideRequest } from './core/types';
 import type { DistrictData } from './sim/schemas';
 import testloopData from '../data/districts/testloop.json';
@@ -120,6 +125,7 @@ initDebugApi(gm, {
 // Expose browser window debug helpers for testing UI & dark choices
 const debugPolice = new PoliceEncounterSystem();
 const debugCrime = new CrimeEncounterSystem();
+const debugAccident = new AccidentManager();
 
 if (typeof window !== 'undefined') {
   const win = window as unknown as {
@@ -131,6 +137,29 @@ if (typeof window !== 'undefined') {
     };
     win.__uthao.openPhone = () => {
       isPhoneOpenSignal.value = true;
+    };
+    win.__uthao.openStory = () => {
+      isStoryModalOpenSignal.value = true;
+    };
+    win.__uthao.openShowcase = () => {
+      isShowcaseModalOpenSignal.value = true;
+    };
+    win.__uthao.triggerDaySummary = () => {
+      daySummarySignal.value = {
+        day: 1,
+        grossFare: 2480,
+        appCommission: 496,
+        fuelAndRepairs: 550,
+        officialFines: 500,
+        unofficialPayments: 200,
+        compensationAndMedical: 500,
+        netSavings: 864,
+        completedRides: 16,
+        reputationDelta: 8,
+      };
+    };
+    win.__uthao.triggerAccident = () => {
+      activeAccidentSignal.value = debugAccident.reportCollision('moderate', 'rider_fault', true);
     };
     win.__uthao.triggerPoliceStop = (violation = 'red_light') => {
       activePoliceCaseSignal.value = debugPolice.createCase(violation as never, 'moderate', 2, 'balanced');
