@@ -120,4 +120,20 @@ export const BALANCE = {
     workshopDeposit: 25000,
     betterBike: 20000,
   },
+  BOT: {
+    shiftMinutes: 600,
+    reckless: {
+      speedMultiplier: 1.35,
+      nearMissRatePerKm: 0.25,
+      crashChancePerRide: 0.05,
+      repairCostMin: 350,
+      repairCostMax: 500,
+      crashDelayMin: 15,
+    },
+    tip: {
+      minMoodForTip: 0.75,
+      tipPercentage: 0.12,
+      minTip: 10,
+    },
+  },
 };
