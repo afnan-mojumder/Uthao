@@ -41,7 +41,7 @@ Format: `- [ ] **<id>** <title> (<points>), deps: <ids>`. Tick by changing only 
 - [x] **T2.1** Request generator and fare model (3), deps: T1.5
 - [x] **T2.2** Passenger AI (3), deps: T2.1
 - [x] **T2.3** Negotiation system (5), deps: T2.2
-- [ ] **T2.6** Economy: fuel, costs, receipts (3), deps: T1.6
+- [x] **T2.6** Economy: fuel, costs, receipts (3), deps: T1.6
 - [ ] **T2.5** Detours, U-turns, pickup adjustment, off-app (5), deps: T2.3, T1.6
 - [ ] **T2.7** Lane graph and basic traffic (8), deps: T1.5, T1.3
 - [ ] **T2.9** Bots and balance test v1 (5), deps: T2.5, T2.6
