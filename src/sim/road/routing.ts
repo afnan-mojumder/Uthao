@@ -320,3 +320,89 @@ export function route(
 ): Route | null {
   return graph.route(fromNodeId, toNodeId, opts);
 }
+
+export interface PickupOptionsResult {
+  direct: Route;
+  crossPoint?: {
+    nodeId: string;
+    walkM: number;
+    savesMin: number;
+  };
+}
+
+export function pickupOptions(
+  req: { pickupNodeId: string },
+  riderPos: { x: number; z: number } | string,
+  graph: RoutingGraph,
+  options?: { maxWalkM?: number }
+): PickupOptionsResult | null {
+  const nodesMap = graph.getNodesMap();
+  let startNodeId: string | null = null;
+
+  if (typeof riderPos === 'string') {
+    startNodeId = riderPos;
+  } else {
+    let bestDist = Infinity;
+    for (const node of nodesMap.values()) {
+      const d = distance2d(riderPos.x, riderPos.z, node.x, node.z);
+      if (d < bestDist) {
+        bestDist = d;
+        startNodeId = node.nodeId;
+      }
+    }
+  }
+
+  if (!startNodeId) {
+    return null;
+  }
+
+  const direct = graph.route(startNodeId, req.pickupNodeId, { mode: 'motorcycle' });
+  if (!direct) {
+    return null;
+  }
+
+  const pickupNode = nodesMap.get(req.pickupNodeId);
+  if (!pickupNode) {
+    return { direct };
+  }
+
+  const maxWalkM = options?.maxWalkM ?? 300;
+  let bestCrossPoint: { nodeId: string; walkM: number; savesMin: number } | undefined;
+  let maxNetSavings = 0;
+
+  for (const node of nodesMap.values()) {
+    // A cross point is only a node with tags: ['crossing'] (zebra/footbridge)
+    if (!node.tags?.includes('crossing')) {
+      continue;
+    }
+    if (node.nodeId === req.pickupNodeId) {
+      continue;
+    }
+
+    const walkM = distance2d(pickupNode.x, pickupNode.z, node.x, node.z);
+    if (walkM > maxWalkM) {
+      continue;
+    }
+
+    const crossRoute = graph.route(startNodeId, node.nodeId, { mode: 'motorcycle' });
+    if (!crossRoute) {
+      continue;
+    }
+
+    const savesMin = direct.etaMin - crossRoute.etaMin;
+    if (savesMin > 0 && savesMin > maxNetSavings) {
+      maxNetSavings = savesMin;
+      bestCrossPoint = {
+        nodeId: node.nodeId,
+        walkM: Math.round(walkM),
+        savesMin: Math.max(1, Math.round(savesMin)),
+      };
+    }
+  }
+
+  return {
+    direct,
+    crossPoint: bestCrossPoint,
+  };
+}
+

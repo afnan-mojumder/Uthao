@@ -80,6 +80,7 @@ export interface RoadNode {
   z: number;
   kind: RoadNodeKind;
   signal?: boolean;
+  tags?: string[];
 }
 
 export type RoadType =
