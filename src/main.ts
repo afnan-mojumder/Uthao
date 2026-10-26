@@ -84,7 +84,7 @@ const canvas = typeof document !== 'undefined'
 let renderer: Renderer | undefined;
 
 if (canvas && hasWebGL2Support()) {
-  renderer = Renderer.init(canvas, 'medium');
+  renderer = Renderer.init(canvas, 'medium', roadNetwork);
 
   // WebGL context lost & restored lifecycle listeners
   canvas.addEventListener('webglcontextlost', (e) => {
@@ -97,7 +97,7 @@ if (canvas && hasWebGL2Support()) {
   canvas.addEventListener('webglcontextrestored', () => {
     contextLostSignal.value = false;
     if (canvas) {
-      renderer = Renderer.init(canvas, 'medium');
+      renderer = Renderer.init(canvas, 'medium', roadNetwork);
     }
   });
 }
@@ -144,6 +144,14 @@ if (typeof window !== 'undefined') {
     win.__uthao.openShowcase = () => {
       isShowcaseModalOpenSignal.value = true;
     };
+    win.__uthao.setTimeOfDay = (time: 'day' | 'evening' | 'night') => {
+      renderer?.setTimeOfDay(time);
+    };
+    win.__uthao.setWeather = (weather: 'clear' | 'rain') => {
+      renderer?.setWeather(weather);
+      env.wet = weather === 'rain';
+      env.surface = weather === 'rain' ? 0.75 : 1.0;
+    };
     win.__uthao.triggerDaySummary = () => {
       daySummarySignal.value = {
         day: 1,
@@ -180,6 +188,37 @@ if (typeof window !== 'undefined') {
       );
     };
   }
+}
+
+// Hook up traffic collision to accident & condition
+if (renderer) {
+  renderer.onTrafficCollision = (trafficType: string) => {
+    console.log(`Traffic collision with ${trafficType}`);
+    env.conditionPct = Math.max(10, env.conditionPct - 15);
+    const activeReq = rideManager.getActiveRequest();
+    if (activeReq?.status === 'OnTrip') {
+      activeAccidentSignal.value = debugAccident.reportCollision('minor', 'shared', true);
+    }
+  };
+}
+
+// Keyboard shortcuts for Time of Day (N) and Weather (R)
+if (typeof window !== 'undefined') {
+  let currentTimeIndex = 0;
+  const times: Array<'day' | 'evening' | 'night'> = ['day', 'evening', 'night'];
+
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'n' || e.key === 'N') {
+      currentTimeIndex = (currentTimeIndex + 1) % times.length;
+      const nextTime = times[currentTimeIndex]!;
+      renderer?.setTimeOfDay(nextTime);
+    } else if (e.key === 'r' || e.key === 'R') {
+      const nextWet = !env.wet;
+      env.wet = nextWet;
+      env.surface = nextWet ? 0.75 : 1.0;
+      renderer?.setWeather(nextWet ? 'rain' : 'clear');
+    }
+  });
 }
 
 // Create initial test ride request

@@ -9,6 +9,7 @@
     { "nodeId": "N2", "x": 100, "z": 0, "kind": "junction" },
     { "nodeId": "N3", "x": 100, "z": 100, "kind": "junction" },
     { "nodeId": "N4", "x": 0, "z": 100, "kind": "junction" },
+    { "nodeId": "N_alley", "x": 50, "z": 50, "kind": "junction" },
     { "nodeId": "N5", "x": 200, "z": 0, "kind": "junction" },
     { "nodeId": "N6", "x": 200, "z": 100, "kind": "uturn" },
     { "nodeId": "N7", "x": 210, "z": 100, "kind": "junction" },
@@ -98,6 +99,48 @@
       "pickupPractical": true,
       "district": "testloop",
       "tags": []
+    },
+    {
+      "segmentId": "S_alley_1",
+      "startNodeId": "N4",
+      "endNodeId": "N_alley",
+      "width": 4.5,
+      "surfaceCondition": 0.7,
+      "trafficDensity": 0.1,
+      "speedLimit": 20,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.5,
+      "riskLevel": 0.6,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 1,
+      "roadType": "alley",
+      "floodSensitivity": 0.5,
+      "pickupPractical": true,
+      "district": "testloop",
+      "tags": ["narrow", "dark_alley"]
+    },
+    {
+      "segmentId": "S_alley_2",
+      "startNodeId": "N_alley",
+      "endNodeId": "N3",
+      "width": 4.5,
+      "surfaceCondition": 0.7,
+      "trafficDensity": 0.1,
+      "speedLimit": 20,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.5,
+      "riskLevel": 0.6,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 1,
+      "roadType": "alley",
+      "floodSensitivity": 0.5,
+      "pickupPractical": true,
+      "district": "testloop",
+      "tags": ["narrow", "dark_alley"]
     }
   ],
   "pois": [
@@ -106,6 +149,24 @@
       "kind": "fuel",
       "nodeId": "N2",
       "nameKey": "poi.fuel"
+    },
+    {
+      "id": "poi_garage",
+      "kind": "garage",
+      "nodeId": "N4",
+      "nameKey": "poi.garage"
+    },
+    {
+      "id": "poi_tea",
+      "kind": "teaStall",
+      "nodeId": "N1",
+      "nameKey": "poi.tea"
+    },
+    {
+      "id": "poi_market",
+      "kind": "market",
+      "nodeId": "N3",
+      "nameKey": "poi.market"
     }
   ],
   "lots": []
