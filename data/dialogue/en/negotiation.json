@@ -1,0 +1,23 @@
+{
+  "dialogue.negotiation.opening": "Brother, will you go? Fare is ৳{fare}.",
+  "dialogue.negotiation.accept_ok": "Alright brother, let's go!",
+  "dialogue.negotiation.counter_accepted": "Fine, let's go for that fare.",
+  "dialogue.negotiation.counter_rejected": "No brother, that's too expensive. How about ৳{fare}?",
+  "dialogue.negotiation.discount_accepted": "Thank you brother, you gave a good discount. Let's go!",
+  "dialogue.negotiation.pickup_adjust_accepted": "Okay, I'll walk across to the other side.",
+  "dialogue.negotiation.pickup_adjust_rejected": "No brother, I can't walk over there.",
+  "dialogue.negotiation.detour_explained": "Ah, there's bad traffic that way. Understood.",
+  "dialogue.negotiation.refuse_alley_accepted": "Fine, drop me off at the alley entrance.",
+  "dialogue.negotiation.refuse_alley_rejected": "No brother, you must take me inside the alley.",
+  "dialogue.negotiation.off_app_accepted": "Sure, off-app is fine. Let's go.",
+  "dialogue.negotiation.off_app_rejected": "No brother, let's keep it on the app.",
+  "dialogue.negotiation.walked_away": "Never mind then, I'll find another bike.",
+  "dialogue.negotiation.rider_declined": "Sorry brother, I cannot take this ride.",
+  "reason.TOO_EXPENSIVE": "Too expensive",
+  "reason.OUT_OF_PATIENCE": "Out of patience",
+  "reason.URGENT": "In a hurry",
+  "reason.TRUSTS_YOU": "Trusts you",
+  "reason.BAD_TRAFFIC": "Bad traffic",
+  "reason.WALK_TOO_FAR": "Too far to walk",
+  "reason.FAIR_PRICE": "Fair price"
+}
