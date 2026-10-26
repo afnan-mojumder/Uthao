@@ -1,0 +1,62 @@
+{
+  "version": "1.0.0",
+  "licensePolicy": "CC0-1.0",
+  "description": "Asset manifest for Uthao. Every external asset must be CC0 licensed. Missing assets automatically fallback to Bangladesh procedural models.",
+  "packs": [
+    {
+      "name": "Kenney City Kit Roads",
+      "license": "CC0-1.0",
+      "url": "https://kenney.nl/assets/city-kit-roads",
+      "targetDir": "public/assets/models/kenney_roads",
+      "type": "gltf"
+    },
+    {
+      "name": "Kenney City Kit Commercial",
+      "license": "CC0-1.0",
+      "url": "https://kenney.nl/assets/city-kit-commercial",
+      "targetDir": "public/assets/models/kenney_commercial",
+      "type": "gltf"
+    },
+    {
+      "name": "Kenney City Kit Suburban",
+      "license": "CC0-1.0",
+      "url": "https://kenney.nl/assets/city-kit-suburban",
+      "targetDir": "public/assets/models/kenney_suburban",
+      "type": "gltf"
+    },
+    {
+      "name": "Kenney Car Kit",
+      "license": "CC0-1.0",
+      "url": "https://kenney.nl/assets/car-kit",
+      "targetDir": "public/assets/models/kenney_cars",
+      "type": "gltf"
+    },
+    {
+      "name": "Kenney UI Audio",
+      "license": "CC0-1.0",
+      "url": "https://kenney.nl/assets/ui-audio",
+      "targetDir": "public/assets/audio/ui",
+      "type": "audio"
+    },
+    {
+      "name": "Kenney Impact Sounds",
+      "license": "CC0-1.0",
+      "url": "https://kenney.nl/assets/impact-sounds",
+      "targetDir": "public/assets/audio/impact",
+      "type": "audio"
+    }
+  ],
+  "proceduralModels": [
+    "motorcycle",
+    "cng",
+    "rickshaw",
+    "bus",
+    "teaStall",
+    "fuelCanopy",
+    "garageShutter",
+    "footbridge",
+    "rooftopWaterTank",
+    "overheadWires",
+    "shopSignboard"
+  ]
+}
