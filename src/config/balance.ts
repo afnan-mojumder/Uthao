@@ -64,6 +64,22 @@ export const BALANCE = {
     e: 1.5,
     patienceDecayPerRound: 0.25,
   },
+  TRAFFIC: {
+    idm: {
+      a: 1.5,
+      b: 2.0,
+      s0: 2.0,
+      T: 1.2,
+      delta: 4.0,
+    },
+    lod: {
+      near: 120,
+      mid: 300,
+      far: 600,
+    },
+    signalGreenTimeSec: 30,
+    spawnMinDistM: 80,
+  },
   ARCHETYPES: {
     bargainer: { budgetFactor: 0.75, openingFactor: 0.8 },
     commuter: { budgetFactor: 1.0, openingFactor: 0.95 },
