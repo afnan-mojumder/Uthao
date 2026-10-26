@@ -17,3 +17,4 @@ One line per finished task: `YYYY-MM-DD Tx.y done — note`
 2026-10-26 T2.5 done — pickupOptions with crossing nodes, mid-trip closure rerouting, off-app policy strikes and suspensions
 2026-10-27 T2.7 done — Lane graph with left-hand traffic, IDM car following, signal controller, and TrafficManager
 2026-10-27 T2.9 done — Headless bot simulation strategies, balance tests v1, and benchmark report in docs/BALANCE.md
+2026-10-27 T3.2 done — District generator, Mirpara 600x600m district with divided arterial, market street, alleys, and 2D MapViewer tool
