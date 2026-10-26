@@ -44,7 +44,7 @@ Format: `- [ ] **<id>** <title> (<points>), deps: <ids>`. Tick by changing only 
 - [x] **T2.6** Economy: fuel, costs, receipts (3), deps: T1.6
 - [x] **T2.5** Detours, U-turns, pickup adjustment, off-app (5), deps: T2.3, T1.6
 - [x] **T2.7** Lane graph and basic traffic (8), deps: T1.5, T1.3
-- [ ] **T2.9** Bots and balance test v1 (5), deps: T2.5, T2.6
+- [x] **T2.9** Bots and balance test v1 (5), deps: T2.5, T2.6
 - [ ] **T3.2** District generator and Mirpara (8), deps: T1.5
 - [ ] **T3.5** Time of day and weather (5), deps: T1.3, T1.5
 - [ ] **T3.6** EventDirector and encounter framework (5), deps: T1.6, T0.4 (T)
