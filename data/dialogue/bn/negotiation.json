@@ -1,0 +1,23 @@
+{
+  "dialogue.negotiation.opening": "ভাই, যাবেন? ভাড়া ৳{fare}।",
+  "dialogue.negotiation.accept_ok": "আচ্ছা ভাই, চলেন যাই!",
+  "dialogue.negotiation.counter_accepted": "ঠিক আছে, এই ভাড়াতেই চলেন।",
+  "dialogue.negotiation.counter_rejected": "না ভাই, বেশি হয়ে যায়। ৳{fare} হলে চলেন।",
+  "dialogue.negotiation.discount_accepted": "ধন্যবাদ ভাই, ছাড় দেওয়ার জন্য। চলেন!",
+  "dialogue.negotiation.pickup_adjust_accepted": "আচ্ছা ঠিক আছে, আমি ওপারে হেঁটে আসছি।",
+  "dialogue.negotiation.pickup_adjust_rejected": "না ভাই, ওপারে হেঁটে যাওয়া সম্ভব না।",
+  "dialogue.negotiation.detour_explained": "ওহ, ওই রাস্তায় অনেক জ্যাম তাহলে। বুঝলাম।",
+  "dialogue.negotiation.refuse_alley_accepted": "আচ্ছা ঠিক আছে, গলির মুখে নামিয়ে দিলেই হবে।",
+  "dialogue.negotiation.refuse_alley_rejected": "না ভাই, আমার গলির ভেতরেই যেতে হবে।",
+  "dialogue.negotiation.off_app_accepted": "সমস্যা নেই, অ্যাপ ছাড়াই চলেন।",
+  "dialogue.negotiation.off_app_rejected": "না ভাই, অ্যাপের মাধ্যমেই যাওয়া ভালো।",
+  "dialogue.negotiation.walked_away": "থাক ভাই, লাগবে না। অন্য বাইক দেখি।",
+  "dialogue.negotiation.rider_declined": "মাফ করবেন ভাই, এই ভাড়ায় যাওয়া সম্ভব না।",
+  "reason.TOO_EXPENSIVE": "ভাড়া বেশি",
+  "reason.OUT_OF_PATIENCE": "ধৈর্য শেষ",
+  "reason.URGENT": "জরুরি তাড়া",
+  "reason.TRUSTS_YOU": "আস্থা আছে",
+  "reason.BAD_TRAFFIC": "প্রচণ্ড জ্যাম",
+  "reason.WALK_TOO_FAR": "অনেকটা হাঁটা",
+  "reason.FAIR_PRICE": "উচিত ভাড়া"
+}
