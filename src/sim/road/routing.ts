@@ -7,6 +7,8 @@ export interface RouteOptions {
   avoid?: string[]; // segmentIds to avoid
   weather?: WeatherKind;
   minute?: number;
+  isFlooded?: (segment: RoadSegment) => boolean;
+  getFloodLevel?: (segmentId: string) => number;
 }
 
 export interface Route {
@@ -170,12 +172,14 @@ export class RoutingGraph {
           continue;
         }
 
-        // Flooding check: heavyRain with floodSensitivity > 0.9 is impassable
-        if (
-          !isWalk &&
-          opts.weather === 'heavyRain' &&
-          seg.floodSensitivity > 0.9
-        ) {
+        // Flooding check: heavyRain with floodSensitivity > 0.9 is impassable, OR floodLevel > 0.9
+        const currentFloodLevel = opts.getFloodLevel ? opts.getFloodLevel(seg.segmentId) : 0;
+        const isFloodedImpassable =
+          (opts.weather === 'heavyRain' && seg.floodSensitivity > 0.9) ||
+          currentFloodLevel > 0.9 ||
+          (opts.isFlooded && opts.isFlooded(seg) && seg.floodSensitivity > 0.9);
+
+        if (!isWalk && isFloodedImpassable) {
           continue;
         }
 
@@ -228,7 +232,11 @@ export class RoutingGraph {
         let speedMs = 1.39; // walk speed (5 km/h)
         if (!isWalk) {
           let speedKmh = seg.speedLimit;
-          if (opts.weather === 'heavyRain' && seg.floodSensitivity > 0.6) {
+          const isFloodedSlow =
+            (opts.weather === 'heavyRain' && seg.floodSensitivity > 0.6) ||
+            currentFloodLevel >= 0.5 ||
+            (opts.isFlooded && opts.isFlooded(seg));
+          if (isFloodedSlow) {
             speedKmh = Math.min(speedKmh, 10); // speed cap in water
           }
           const weatherMult =

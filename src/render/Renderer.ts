@@ -8,6 +8,7 @@ import {
 } from './quality';
 import type { SimSnapshot } from '../sim/GameManager';
 import { lerp, angleDiff } from '../core/math';
+import { WeatherFx } from './WeatherFx';
 
 export class Renderer {
   readonly webglRenderer: THREE.WebGLRenderer;
@@ -16,6 +17,9 @@ export class Renderer {
   readonly bikeMesh: MotorcycleMesh;
   readonly markers: RideMarkers;
   readonly qualityManager: AdaptiveQualityManager;
+  readonly dirLight: THREE.DirectionalLight;
+  readonly hemiLight: THREE.HemisphereLight;
+  readonly weatherFx: WeatherFx;
 
   private canvas: HTMLCanvasElement;
   private colliders: THREE.Object3D[] = [];
@@ -64,7 +68,32 @@ export class Renderer {
     this.scene.add(this.markers.root);
 
     this.buildTestScene();
-    this.setupLighting();
+
+    this.hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.8);
+    this.hemiLight.position.set(0, 50, 0);
+    this.scene.add(this.hemiLight);
+
+    this.dirLight = new THREE.DirectionalLight(0xfffaed, 1.2);
+    this.dirLight.position.set(50, 80, 50);
+    this.dirLight.castShadow = this.qualityManager.config.shadows;
+    if (this.dirLight.castShadow) {
+      this.dirLight.shadow.mapSize.width = 1024;
+      this.dirLight.shadow.mapSize.height = 1024;
+      this.dirLight.shadow.camera.near = 0.5;
+      this.dirLight.shadow.camera.far = 250;
+      const d = 50;
+      this.dirLight.shadow.camera.left = -d;
+      this.dirLight.shadow.camera.right = d;
+      this.dirLight.shadow.camera.top = d;
+      this.dirLight.shadow.camera.bottom = -d;
+    }
+    this.scene.add(this.dirLight);
+
+    this.weatherFx = new WeatherFx(this.scene, {
+      dirLight: this.dirLight,
+      hemiLight: this.hemiLight,
+      drawDistance: this.qualityManager.config.drawDistance,
+    });
 
     window.addEventListener('resize', () => this.resize());
     this.resize();
@@ -92,28 +121,6 @@ export class Renderer {
     this.webglRenderer.setSize(width, height, false);
     this.cameraRig.camera.aspect = width / (height || 1);
     this.cameraRig.camera.updateProjectionMatrix();
-  }
-
-  private setupLighting(): void {
-    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.8);
-    hemiLight.position.set(0, 50, 0);
-    this.scene.add(hemiLight);
-
-    const dirLight = new THREE.DirectionalLight(0xfffaed, 1.2);
-    dirLight.position.set(50, 80, 50);
-    dirLight.castShadow = this.qualityManager.config.shadows;
-    if (dirLight.castShadow) {
-      dirLight.shadow.mapSize.width = 1024;
-      dirLight.shadow.mapSize.height = 1024;
-      dirLight.shadow.camera.near = 0.5;
-      dirLight.shadow.camera.far = 250;
-      const d = 50;
-      dirLight.shadow.camera.left = -d;
-      dirLight.shadow.camera.right = d;
-      dirLight.shadow.camera.top = d;
-      dirLight.shadow.camera.bottom = -d;
-    }
-    this.scene.add(dirLight);
   }
 
   private buildTestScene(): void {
@@ -254,6 +261,16 @@ export class Renderer {
     // Update Camera Rig
     const bikePos = new THREE.Vector3(x, 0, z);
     this.cameraRig.update(bikePos, heading, this.bikeSpeed, this.colliders);
+
+    // Update Weather and Lighting FX
+    this.weatherFx.update(
+      1 / 60,
+      snapshot.clock.minutes,
+      snapshot.weather,
+      { x, y: 0, z },
+      heading,
+      false
+    );
 
     this.webglRenderer.render(this.scene, this.cameraRig.camera);
   }

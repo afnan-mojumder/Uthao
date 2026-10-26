@@ -197,7 +197,15 @@ function frame(now: number) {
     }
 
     // Physics step
+    const currentSegment = roadNetwork.segmentAt(bikeState.x, bikeState.z);
+    env.wet = gm.weatherSystem.isRoadWet();
+    if (currentSegment) {
+      env.surface = gm.weatherSystem.getSurfaceModifier(currentSegment);
+    } else {
+      env.surface = env.wet ? 0.85 : 1.0;
+    }
     env.hasPassenger = activeReq?.status === 'OnTrip';
+    env.conditionPct = gm.economy.motorcycleCondition;
     bikeState = stepBike(bikeState, input, bikeSpec, env, SIM_DT);
 
     // Update RideManager
