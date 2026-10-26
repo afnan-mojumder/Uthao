@@ -1,3 +1,4 @@
+import { render, h } from 'preact';
 import { GameManager, runFrame } from './sim/GameManager';
 import { Renderer } from './render/Renderer';
 import { initDebugApi } from './debug/debugApi';
@@ -12,11 +13,42 @@ import { RoadNetwork } from './sim/road/RoadNetwork';
 import { RideManager } from './sim/ride/RideManager';
 import { AutopilotController } from './debug/autopilot';
 import { Hud } from './ui/hud/Hud';
+import { InputManager } from './input';
+import { App } from './ui/App';
+import {
+  bindEventBusToStore,
+  pausedSignal,
+  contextLostSignal,
+  unsupportedSignal,
+} from './ui/store';
 import type { RideRequest } from './core/types';
 import type { DistrictData } from './sim/schemas';
 import testloopData from '../data/districts/testloop.json';
 
 console.log('Uthao booting...');
+
+// 1. WebGL2 capability check
+function hasWebGL2Support(): boolean {
+  if (typeof document === 'undefined') return true;
+  try {
+    const testCanvas = document.createElement('canvas');
+    return Boolean(window.WebGL2RenderingContext && testCanvas.getContext('webgl2'));
+  } catch {
+    return false;
+  }
+}
+
+if (!hasWebGL2Support()) {
+  unsupportedSignal.value = 'WebGL2 is required to run Uthao on this device';
+}
+
+// 2. Mount Preact UI App
+if (typeof document !== 'undefined') {
+  const uiRoot = document.getElementById('ui-root');
+  if (uiRoot) {
+    render(h(App, null), uiRoot);
+  }
+}
 
 const roadNetwork = RoadNetwork.fromDistricts([testloopData as DistrictData]);
 
@@ -26,20 +58,51 @@ const gm = new GameManager({
   data: { testloop: testloopData },
 });
 
+// Bind reactive signals store to sim event bus
+bindEventBusToStore(gm.bus);
+
 const rideManager = new RideManager({
   roadNetwork,
   bus: gm.bus,
 });
 
-const canvas = document.getElementById('game-canvas') as HTMLCanvasElement;
+const canvas = typeof document !== 'undefined'
+  ? (document.getElementById('game-canvas') as HTMLCanvasElement)
+  : null;
 let renderer: Renderer | undefined;
 
-if (canvas) {
+if (canvas && hasWebGL2Support()) {
   renderer = Renderer.init(canvas, 'medium');
+
+  // WebGL context lost & restored lifecycle listeners
+  canvas.addEventListener('webglcontextlost', (e) => {
+    e.preventDefault();
+    gm.dispatch({ type: 'pause' });
+    pausedSignal.value = true;
+    contextLostSignal.value = true;
+  });
+
+  canvas.addEventListener('webglcontextrestored', () => {
+    contextLostSignal.value = false;
+    if (canvas) {
+      renderer = Renderer.init(canvas, 'medium');
+    }
+  });
+}
+
+// Mobile/desktop tab visibility lifecycle handling
+if (typeof document !== 'undefined') {
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      gm.dispatch({ type: 'pause' });
+      pausedSignal.value = true;
+    }
+  });
 }
 
 const hud = typeof document !== 'undefined' ? new Hud() : undefined;
 const autopilot = new AutopilotController(roadNetwork);
+const inputManager = new InputManager();
 
 initDebugApi(gm, {
   renderer,
@@ -74,30 +137,6 @@ if (renderer && pNode && dNode) {
   renderer.markers.setDropoff(dNode.x, dNode.z, false);
 }
 
-// Keyboard controls for manual driving
-const keys = {
-  forward: false,
-  backward: false,
-  left: false,
-  right: false,
-};
-
-if (typeof window !== 'undefined') {
-  window.addEventListener('keydown', (e) => {
-    if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') keys.forward = true;
-    if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') keys.backward = true;
-    if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') keys.left = true;
-    if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') keys.right = true;
-  });
-
-  window.addEventListener('keyup', (e) => {
-    if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') keys.forward = false;
-    if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') keys.backward = false;
-    if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') keys.left = false;
-    if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') keys.right = false;
-  });
-}
-
 const bikeSpec = createDefaultBikeSpec();
 // Start bike slightly before N1 heading towards it
 let bikeState = {
@@ -115,7 +154,7 @@ const env = {
   conditionPct: 100,
 };
 
-let lastTime = performance.now();
+let lastTime = typeof performance !== 'undefined' ? performance.now() : 0;
 
 function frame(now: number) {
   const dt = (now - lastTime) / 1000;
@@ -124,9 +163,10 @@ function frame(now: number) {
   const steps = runFrame(gm, dt);
 
   for (let s = 0; s < steps; s++) {
+    inputManager.update(SIM_DT);
     const activeReq = rideManager.getActiveRequest();
 
-    // Autopilot or player input
+    // Autopilot or inputManager
     let input: BikeInput;
 
     if (autopilot.isEnabled()) {
@@ -139,10 +179,11 @@ function frame(now: number) {
       }
       input = autopilot.step(bikeState);
     } else {
+      const state = inputManager.read();
       input = {
-        throttle: keys.forward ? 0.75 : 0,
-        brake: keys.backward ? 1.0 : 0,
-        steer: (keys.left ? -1.0 : 0) + (keys.right ? 1.0 : 0),
+        throttle: state.throttle,
+        brake: state.brake,
+        steer: state.steer,
       };
     }
 
@@ -203,7 +244,11 @@ function frame(now: number) {
     });
   }
 
-  requestAnimationFrame(frame);
+  if (typeof requestAnimationFrame !== 'undefined') {
+    requestAnimationFrame(frame);
+  }
 }
 
-requestAnimationFrame(frame);
+if (typeof requestAnimationFrame !== 'undefined') {
+  requestAnimationFrame(frame);
+}
