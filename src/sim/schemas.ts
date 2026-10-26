@@ -7,6 +7,7 @@ export const RoadNodeSchema = z.object({
   z: z.number(),
   kind: z.enum(['junction', 'uturn', 'deadEnd', 'poi']),
   signal: z.boolean().optional(),
+  tags: z.array(z.string()).optional(),
 });
 
 export const RoadSegmentSchema = z.object({

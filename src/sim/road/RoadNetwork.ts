@@ -1,6 +1,12 @@
 import type { RoadNode, RoadSegment } from '../../core/types';
 import type { DistrictData, Poi } from '../schemas';
-import { RoutingGraph, type Route, type RouteOptions } from './routing';
+import {
+  RoutingGraph,
+  type Route,
+  type RouteOptions,
+  pickupOptions,
+  type PickupOptionsResult,
+} from './routing';
 import { nearestNode, segmentAt } from './spatial';
 
 export class RoadNetwork {
@@ -87,5 +93,17 @@ export class RoadNetwork {
 
   getPois(): Poi[] {
     return this.pois;
+  }
+
+  getGraph(): RoutingGraph {
+    return this.graph;
+  }
+
+  pickupOptions(
+    req: { pickupNodeId: string },
+    riderPos: { x: number; z: number } | string,
+    options?: { maxWalkM?: number }
+  ): PickupOptionsResult | null {
+    return pickupOptions(req, riderPos, this.graph, options);
   }
 }

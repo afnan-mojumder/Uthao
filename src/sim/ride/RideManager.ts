@@ -11,6 +11,9 @@ import type {
 } from '../../core/types';
 import { distance2d } from '../../core/math';
 import type { Fsm } from '../../core/fsm';
+import type { Route, PickupOptionsResult } from '../road/routing';
+import type { Rng } from '../../core/rng';
+import { BALANCE } from '../../config/balance';
 import { receipt } from '../economy/fuel';
 
 export interface RideManagerOptions {
@@ -25,6 +28,10 @@ export class RideManager {
   private offeredRequests: Map<string, RideRequest> = new Map();
   private activeRequest: RideRequest | null = null;
   private fsm: Fsm<PassengerState, PassengerEvent> | null = null;
+  currentRoute: Route | null = null;
+  offAppStrikes: number = 0;
+  appSuspendedUntilDay: number = 0;
+  readonly directContacts: Set<string> = new Set();
 
   constructor(opts: RideManagerOptions) {
     this.roadNetwork = opts.roadNetwork;
@@ -44,14 +51,81 @@ export class RideManager {
     this.bus.emit('ride/requested', { request });
   }
 
-  accept(requestId: string): boolean {
+  accept(requestId: string, startNodeId?: string): boolean {
     const req = this.offeredRequests.get(requestId);
     if (!req) return false;
 
     this.activeRequest = { ...req };
     this.fsm = createPassengerFsm(this.activeRequest.status);
+    this.currentRoute = this.roadNetwork.route(
+      startNodeId ?? req.pickupNodeId,
+      req.destinationNodeId,
+      { mode: 'motorcycle' }
+    );
     this.bus.emit('ride/accepted', { requestId });
     return true;
+  }
+
+  pickupOptions(
+    req: { pickupNodeId: string },
+    riderPos: { x: number; z: number } | string,
+    options?: { maxWalkM?: number }
+  ): PickupOptionsResult | null {
+    return this.roadNetwork.pickupOptions(req, riderPos, options);
+  }
+
+  rerouteIfBlocked(blockedSegmentId: string, currentNodeId?: string): Route | null {
+    if (!this.activeRequest || !this.currentRoute) {
+      return null;
+    }
+    if (!this.currentRoute.segmentIds.includes(blockedSegmentId)) {
+      return null;
+    }
+
+    const fromNode = currentNodeId ?? this.activeRequest.pickupNodeId;
+    const newRoute = this.roadNetwork.route(fromNode, this.activeRequest.destinationNodeId, {
+      mode: 'motorcycle',
+      avoid: [blockedSegmentId],
+    });
+
+    if (newRoute) {
+      this.currentRoute = newRoute;
+      return newRoute;
+    }
+    return null;
+  }
+
+  addStrike(currentDay: number): { strikes: number; suspended: boolean } {
+    this.offAppStrikes++;
+    const suspended = this.offAppStrikes >= BALANCE.OFF_APP.strikesToSuspend;
+    if (suspended) {
+      this.appSuspendedUntilDay = currentDay + BALANCE.OFF_APP.suspendDays;
+      this.bus.emit('story/flag', { key: 'appSuspended', value: true });
+      this.bus.emit('story/flag', { key: 'appSuspendedUntilDay', value: this.appSuspendedUntilDay });
+    }
+    return { strikes: this.offAppStrikes, suspended };
+  }
+
+  recordOffAppRide(
+    passengerId: string,
+    currentDay: number,
+    rng: Rng
+  ): { detected: boolean; strikes: number; suspended: boolean } {
+    this.directContacts.add(passengerId);
+    const detected = rng.chance(BALANCE.OFF_APP.policyDetectChance);
+    if (detected) {
+      const res = this.addStrike(currentDay);
+      return { detected: true, strikes: res.strikes, suspended: res.suspended };
+    }
+    return {
+      detected: false,
+      strikes: this.offAppStrikes,
+      suspended: this.isAppSuspended(currentDay),
+    };
+  }
+
+  isAppSuspended(currentDay: number): boolean {
+    return currentDay < this.appSuspendedUntilDay;
   }
 
   cancel(
