@@ -399,3 +399,110 @@ export function createBusMesh(): THREE.Group {
 
   return root;
 }
+
+/**
+ * Procedural Sedan / Ride-hail Car (white/silver sedan).
+ */
+export function createCarMesh(): THREE.Group {
+  const root = new THREE.Group();
+
+  // Lower body
+  const bodyGeo = new THREE.BoxGeometry(1.8, 0.6, 4.4);
+  const bodyMat = new THREE.MeshStandardMaterial({
+    color: 0xeeeeee,
+    roughness: 0.3,
+    metalness: 0.4,
+  });
+  const body = new THREE.Mesh(bodyGeo, bodyMat);
+  body.position.set(0, 0.5, 0);
+  root.add(body);
+
+  // Cabin
+  const cabinGeo = new THREE.BoxGeometry(1.5, 0.55, 2.2);
+  const cabinMat = new THREE.MeshStandardMaterial({
+    color: 0x1e293b,
+    roughness: 0.1,
+  });
+  const cabin = new THREE.Mesh(cabinGeo, cabinMat);
+  cabin.position.set(0, 1.05, -0.2);
+  root.add(cabin);
+
+  // 4 Wheels
+  const wheelGeo = new THREE.CylinderGeometry(0.3, 0.3, 0.2, 16);
+  const wheelMat = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.8 });
+
+  const positions: [number, number, number][] = [
+    [-0.9, 0.3, 1.3],
+    [0.9, 0.3, 1.3],
+    [-0.9, 0.3, -1.3],
+    [0.9, 0.3, -1.3],
+  ];
+
+  for (const [wx, wy, wz] of positions) {
+    const wheel = new THREE.Mesh(wheelGeo, wheelMat);
+    wheel.rotation.z = Math.PI / 2;
+    wheel.position.set(wx, wy, wz);
+    root.add(wheel);
+  }
+
+  return root;
+}
+
+export class InstancedTrafficRenderer {
+  readonly group: THREE.Group;
+  private carInstanced: THREE.InstancedMesh;
+  private busInstanced: THREE.InstancedMesh;
+  private cngInstanced: THREE.InstancedMesh;
+  private dummy = new THREE.Object3D();
+
+  constructor(maxVehicles = 100) {
+    this.group = new THREE.Group();
+
+    const carGeo = new THREE.BoxGeometry(1.8, 1.4, 4.4);
+    const carMat = new THREE.MeshStandardMaterial({ color: 0xcccccc, roughness: 0.4 });
+    this.carInstanced = new THREE.InstancedMesh(carGeo, carMat, maxVehicles);
+    this.carInstanced.count = 0;
+    this.group.add(this.carInstanced);
+
+    const busGeo = new THREE.BoxGeometry(2.4, 2.8, 8.0);
+    const busMat = new THREE.MeshStandardMaterial({ color: 0x1e88e5, roughness: 0.5 });
+    this.busInstanced = new THREE.InstancedMesh(busGeo, busMat, maxVehicles);
+    this.busInstanced.count = 0;
+    this.group.add(this.busInstanced);
+
+    const cngGeo = new THREE.BoxGeometry(1.3, 1.8, 2.8);
+    const cngMat = new THREE.MeshStandardMaterial({ color: 0x2e7d32, roughness: 0.6 });
+    this.cngInstanced = new THREE.InstancedMesh(cngGeo, cngMat, maxVehicles);
+    this.cngInstanced.count = 0;
+    this.group.add(this.cngInstanced);
+  }
+
+  update(agents: Array<{ kind: string; x: number; z: number; heading: number }>): void {
+    let carCount = 0;
+    let busCount = 0;
+    let cngCount = 0;
+
+    for (const a of agents) {
+      this.dummy.position.set(a.x, 0.7, a.z);
+      this.dummy.rotation.set(0, a.heading, 0);
+      this.dummy.updateMatrix();
+
+      if (a.kind === 'bus' && busCount < this.busInstanced.instanceMatrix.count) {
+        this.busInstanced.setMatrixAt(busCount++, this.dummy.matrix);
+      } else if (a.kind === 'cng' && cngCount < this.cngInstanced.instanceMatrix.count) {
+        this.cngInstanced.setMatrixAt(cngCount++, this.dummy.matrix);
+      } else if (carCount < this.carInstanced.instanceMatrix.count) {
+        this.carInstanced.setMatrixAt(carCount++, this.dummy.matrix);
+      }
+    }
+
+    this.busInstanced.count = busCount;
+    this.cngInstanced.count = cngCount;
+    this.carInstanced.count = carCount;
+
+    this.busInstanced.instanceMatrix.needsUpdate = true;
+    this.cngInstanced.instanceMatrix.needsUpdate = true;
+    this.carInstanced.instanceMatrix.needsUpdate = true;
+  }
+}
+
