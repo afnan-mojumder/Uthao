@@ -1,6 +1,7 @@
 import { EventBus, type GameEvents } from '../core/events';
-import { GameClock } from '../core/clock';
+import { GameClock, TIME_SCALE } from '../core/clock';
 import { Rng } from '../core/rng';
+import { WeatherSystem } from './world/WeatherSystem';
 import {
   SIM_DT,
   MAX_FRAME_DT,
@@ -50,6 +51,7 @@ export class GameManager {
   readonly bus: EventBus<GameEvents>;
   readonly rng: Rng;
   readonly clock: GameClock;
+  readonly weatherSystem: WeatherSystem;
 
   paused: boolean = false;
   accumulator: number = 0;
@@ -95,6 +97,7 @@ export class GameManager {
     this.bus = new EventBus<GameEvents>();
     this.rng = new Rng(this.seed);
     this.clock = new GameClock(1, 7 * 60);
+    this.weatherSystem = new WeatherSystem({ initialWeather: this.weather });
   }
 
   tick(dt: number = SIM_DT): void {
@@ -107,6 +110,10 @@ export class GameManager {
     const prevHour = Math.floor(this.clock.minutes / 60);
     this.clock.advance(dt);
     const currHour = Math.floor(this.clock.minutes / 60);
+
+    const dtMinutes = (dt * TIME_SCALE) / 60;
+    this.weatherSystem.update(dtMinutes);
+    this.weather = this.weatherSystem.weather;
 
     if (currHour !== prevHour) {
       this.bus.emit('clock/hour', { hour: currHour % 24 });

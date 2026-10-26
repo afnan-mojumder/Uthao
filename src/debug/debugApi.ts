@@ -96,6 +96,7 @@ export function initDebugApi(
     setWeather: (w: WeatherKind) => {
       const prev = gm.weather;
       gm.weather = w;
+      gm.weatherSystem.setWeather(w);
       gm.bus.emit('world/weatherChanged', { from: prev, to: w });
     },
     autopilot: (on: boolean) => {
