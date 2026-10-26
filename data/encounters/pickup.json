@@ -1,0 +1,65 @@
+[
+  {
+    "id": "enc_uturn_problem",
+    "category": "pickup",
+    "trigger": {
+      "phase": "requestOffered"
+    },
+    "weight": 10,
+    "cooldownMin": 45,
+    "oncePerDay": false,
+    "lineKey": "encounter.uturn_cross.title",
+    "choices": [
+      {
+        "id": "ask_cross",
+        "labelKey": "encounter.uturn_cross.choice.cross",
+        "effects": [
+          { "type": "mood", "delta": -0.05 }
+        ]
+      },
+      {
+        "id": "uturn",
+        "labelKey": "encounter.uturn_cross.choice.uturn",
+        "effects": [
+          { "type": "time", "min": 3 }
+        ]
+      },
+      {
+        "id": "cancel",
+        "labelKey": "encounter.uturn_cross.choice.cancel",
+        "effects": [
+          { "type": "rating", "delta": -0.05 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "enc_alley_enter",
+    "category": "pickup",
+    "trigger": {
+      "phase": "atPickup",
+      "roadType": ["alley"]
+    },
+    "weight": 8,
+    "cooldownMin": 60,
+    "oncePerDay": false,
+    "lineKey": "encounter.alley_pickup.title",
+    "choices": [
+      {
+        "id": "refuse_politely",
+        "labelKey": "encounter.alley_pickup.choice.walk",
+        "effects": [
+          { "type": "mood", "delta": -0.1 }
+        ]
+      },
+      {
+        "id": "enter_alley",
+        "labelKey": "encounter.alley_pickup.choice.enter",
+        "effects": [
+          { "type": "time", "min": 2 },
+          { "type": "mood", "delta": 0.1 }
+        ]
+      }
+    ]
+  }
+]

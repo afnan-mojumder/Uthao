@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { RoadNode, RoadSegment, DistrictId } from '../core/types';
+import type { RoadNode, RoadSegment, DistrictId, TransactionKind } from '../core/types';
 
 export const RoadNodeSchema = z.object({
   nodeId: z.string(),
@@ -138,3 +138,133 @@ export const ArchetypesDataSchema = z.record(
 
 export type ArchetypeDefinition = z.infer<typeof ArchetypeDefinitionSchema>;
 export type ArchetypesData = z.infer<typeof ArchetypesDataSchema>;
+
+export const ConditionSchema = z.object({
+  phase: z
+    .enum(['requestOffered', 'atPickup', 'onTrip', 'dropOff', 'roaming'])
+    .optional(),
+  tags: z.array(z.string()).optional(),
+  weather: z
+    .array(z.enum(['clear', 'cloudy', 'lightRain', 'heavyRain']))
+    .optional(),
+  hours: z.tuple([z.number(), z.number()]).optional(),
+  chapter: z.union([z.number(), z.tuple([z.number(), z.number()])]).optional(),
+  flags: z
+    .record(z.string(), z.union([z.boolean(), z.number(), z.string()]))
+    .optional(),
+  minRelationship: z.record(z.string(), z.number()).optional(),
+  minTrust: z.number().optional(),
+  maxTrust: z.number().optional(),
+  minMood: z.number().optional(),
+  maxMood: z.number().optional(),
+  minCash: z.number().optional(),
+  maxCash: z.number().optional(),
+  minSpeed: z.number().optional(),
+  maxSpeed: z.number().optional(),
+  hasPassenger: z.boolean().optional(),
+  passengerLocalKnowledgeMin: z.number().optional(),
+  passengerPaymentReliabilityMax: z.number().optional(),
+  bikeConditionMax: z.number().optional(),
+  roadType: z.array(z.string()).optional(),
+  district: z.array(z.string()).optional(),
+  custom: z.string().optional(),
+});
+
+export type Condition = z.infer<typeof ConditionSchema>;
+
+export const EffectSchema = z.discriminatedUnion('type', [
+  z.object({
+    type: z.literal('money'),
+    amount: z.number(),
+    kind: z.custom<TransactionKind>(),
+  }),
+  z.object({
+    type: z.literal('time'),
+    min: z.number(),
+  }),
+  z.object({
+    type: z.literal('mood'),
+    delta: z.number(),
+  }),
+  z.object({
+    type: z.literal('trust'),
+    delta: z.number(),
+  }),
+  z.object({
+    type: z.literal('rating'),
+    delta: z.number(),
+  }),
+  z.object({
+    type: z.literal('relationship'),
+    characterId: z.string(),
+    delta: z.number(),
+  }),
+  z.object({
+    type: z.literal('localTrust'),
+    delta: z.number(),
+  }),
+  z.object({
+    type: z.literal('flag'),
+    key: z.string(),
+    value: z.union([z.boolean(), z.number(), z.string()]),
+  }),
+  z.object({
+    type: z.literal('route'),
+    action: z.enum(['avoid', 'forceVia', 'closeSegment']),
+    ref: z.string(),
+  }),
+  z.object({
+    type: z.literal('endTrip'),
+    paid: z.boolean(),
+  }),
+  z.object({
+    type: z.literal('startMinigame'),
+    kind: z.enum(['flee', 'pushBike']),
+  }),
+  z.object({
+    type: z.literal('spawnRequest'),
+    templateId: z.string(),
+  }),
+  z.object({
+    type: z.literal('injury'),
+    severity: z.number().optional(),
+  }),
+]);
+
+export type Effect = z.infer<typeof EffectSchema>;
+
+export const EncounterChoiceDefSchema = z.object({
+  id: z.string(),
+  labelKey: z.string(),
+  requires: ConditionSchema.optional(),
+  effects: z.array(EffectSchema),
+});
+
+export type EncounterChoiceDef = z.infer<typeof EncounterChoiceDefSchema>;
+
+export const EncounterCategorySchema = z.enum([
+  'route',
+  'pickup',
+  'payment',
+  'passenger',
+  'bike',
+  'world',
+  'crime',
+  'story',
+]);
+
+export type EncounterCategory = z.infer<typeof EncounterCategorySchema>;
+
+export const EncounterDefSchema = z.object({
+  id: z.string(),
+  category: EncounterCategorySchema,
+  trigger: ConditionSchema,
+  weight: z.number().positive(),
+  cooldownMin: z.number().nonnegative(),
+  oncePerDay: z.boolean().optional(),
+  lineKey: z.string(),
+  choices: z.array(EncounterChoiceDefSchema).min(1),
+});
+
+export type EncounterDef = z.infer<typeof EncounterDefSchema>;
+

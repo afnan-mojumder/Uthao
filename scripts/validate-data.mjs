@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { DistrictSchema, ArchetypesDataSchema } from '../src/sim/schemas.ts';
+import { DistrictSchema, ArchetypesDataSchema, EncounterDefSchema } from '../src/sim/schemas.ts';
 
 // Validate dialogue files
 const dialogueDir = path.resolve('data/dialogue');
@@ -194,6 +194,52 @@ if (fs.existsSync(archetypesPath)) {
   } catch (err) {
     console.error(`Failed reading archetypes ${archetypesPath}:`, err);
     process.exit(1);
+  }
+}
+
+// Validate encounters
+const encountersDir = path.resolve('data/encounters');
+if (fs.existsSync(encountersDir)) {
+  const files = fs.readdirSync(encountersDir);
+  for (const file of files) {
+    if (file.endsWith('.json')) {
+      const filePath = path.join(encountersDir, file);
+      try {
+        const raw = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+        if (!Array.isArray(raw)) {
+          console.error(`Expected array of encounters in ${filePath}`);
+          process.exit(1);
+        }
+        for (const enc of raw) {
+          const res = EncounterDefSchema.safeParse(enc);
+          if (!res.success) {
+            console.error(`Encounter schema error in ${filePath} (${enc?.id}):`, res.error.format());
+            process.exit(1);
+          }
+          if (typeof dicts.en[enc.lineKey] === 'undefined') {
+            console.error(`Encounter ${enc.id} in ${filePath}: lineKey '${enc.lineKey}' missing in en dialogue`);
+            process.exit(1);
+          }
+          if (typeof dicts.bn[enc.lineKey] === 'undefined') {
+            console.error(`Encounter ${enc.id} in ${filePath}: lineKey '${enc.lineKey}' missing in bn dialogue`);
+            process.exit(1);
+          }
+          for (const choice of enc.choices) {
+            if (typeof dicts.en[choice.labelKey] === 'undefined') {
+              console.error(`Encounter ${enc.id} choice ${choice.id} in ${filePath}: labelKey '${choice.labelKey}' missing in en dialogue`);
+              process.exit(1);
+            }
+            if (typeof dicts.bn[choice.labelKey] === 'undefined') {
+              console.error(`Encounter ${enc.id} choice ${choice.id} in ${filePath}: labelKey '${choice.labelKey}' missing in bn dialogue`);
+              process.exit(1);
+            }
+          }
+        }
+      } catch (err) {
+        console.error(`Failed reading encounter file ${filePath}:`, err);
+        process.exit(1);
+      }
+    }
   }
 }
 

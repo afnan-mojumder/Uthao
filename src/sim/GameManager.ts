@@ -13,10 +13,27 @@ import type {
   StoryState,
   WeatherKind,
 } from '../core/types';
+import { EventDirector } from './events/EventDirector';
+import { EconomyManager } from './economy/EconomyManager';
+import type { EncounterDef } from './schemas';
+import type { EncounterContext } from './events/conditions';
+import type { EffectContext } from './events/effects';
+import routeEncounters from '../../data/encounters/route.json';
+import pickupEncounters from '../../data/encounters/pickup.json';
+import paymentEncounters from '../../data/encounters/payment.json';
+import bikeEncounters from '../../data/encounters/bike.json';
+
+const DEFAULT_ENCOUNTERS: EncounterDef[] = [
+  ...routeEncounters,
+  ...pickupEncounters,
+  ...paymentEncounters,
+  ...bikeEncounters,
+] as EncounterDef[];
 
 export interface GameData {
   districts?: unknown;
   archetypes?: unknown;
+  encounters?: EncounterDef[];
   [key: string]: unknown;
 }
 
@@ -52,6 +69,8 @@ export class GameManager {
   readonly rng: Rng;
   readonly clock: GameClock;
   readonly weatherSystem: WeatherSystem;
+  readonly economyManager: EconomyManager;
+  readonly eventDirector: EventDirector;
 
   paused: boolean = false;
   accumulator: number = 0;
@@ -98,6 +117,19 @@ export class GameManager {
     this.rng = new Rng(this.seed);
     this.clock = new GameClock(1, 7 * 60);
     this.weatherSystem = new WeatherSystem({ initialWeather: this.weather });
+    this.economyManager = new EconomyManager(this.bus, this.economy);
+
+    const encounterDefs =
+      (this.data.encounters as EncounterDef[] | undefined) ?? DEFAULT_ENCOUNTERS;
+    this.eventDirector = new EventDirector({
+      definitions: encounterDefs,
+      seed: this.seed,
+      pauseOnDecisions: true,
+    });
+
+    this.bus.on('day/started', () => {
+      this.eventDirector.resetDaily();
+    });
   }
 
   tick(dt: number = SIM_DT): void {
@@ -118,6 +150,24 @@ export class GameManager {
     if (currHour !== prevHour) {
       this.bus.emit('clock/hour', { hour: currHour % 24 });
     }
+
+    // Evaluate encounters (once per game minute or on phase change)
+    const ctx: EncounterContext = {
+      phase: 'roaming',
+      minute: this.clock.minutes,
+      day: this.clock.day,
+      weather: this.weather,
+      chapter: this.story.currentChapter,
+      flags: this.story.branchFlags,
+      relationships: this.story.characterRelationships,
+      cash: this.economyManager.cash,
+      speedKmh: 0,
+      bikeCondition: this.economyManager.motorcycleCondition,
+    };
+    const encounter = this.eventDirector.evaluate(ctx, this.bus);
+    if (encounter && this.eventDirector.pauseOnDecisions) {
+      this.paused = true;
+    }
   }
 
   dispatch(cmd: Command): CommandResult {
@@ -133,7 +183,24 @@ export class GameManager {
         return { success: true };
       case 'buyFuel':
         this.economy.fuelLevel += cmd.liters;
+        this.economyManager.fuelLevel = this.economy.fuelLevel;
         return { success: true };
+      case 'chooseEncounterOption': {
+        const effectCtx: EffectContext = {
+          gameManager: this,
+          economyManager: this.economyManager,
+          eventBus: this.bus,
+        };
+        const ok = this.eventDirector.chooseOption(
+          cmd.instanceId,
+          cmd.choiceId,
+          effectCtx
+        );
+        if (ok && this.paused && this.eventDirector.pauseOnDecisions) {
+          this.paused = false;
+        }
+        return { success: ok };
+      }
       case 'endShift': {
         const prevDay = this.clock.day;
         this.clock.endShift();

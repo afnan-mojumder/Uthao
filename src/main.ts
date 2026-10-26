@@ -22,6 +22,7 @@ import {
   unsupportedSignal,
 } from './ui/store';
 import type { RideRequest } from './core/types';
+import type { Command } from './core/commands';
 import type { DistrictData } from './sim/schemas';
 import testloopData from '../data/districts/testloop.json';
 import mirparaData from '../data/districts/mirpara.json';
@@ -68,7 +69,7 @@ if (isMapTool) {
   });
 
 // Bind reactive signals store to sim event bus
-bindEventBusToStore(gm.bus);
+bindEventBusToStore(gm.bus, (cmd: Command) => gm.dispatch(cmd));
 
 const rideManager = new RideManager({
   roadNetwork,

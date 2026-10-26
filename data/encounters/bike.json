@@ -1,0 +1,35 @@
+[
+  {
+    "id": "enc_puncture",
+    "category": "bike",
+    "trigger": {
+      "phase": "roaming",
+      "custom": "puncture"
+    },
+    "weight": 5,
+    "cooldownMin": 180,
+    "oncePerDay": true,
+    "lineKey": "encounter.puncture.title",
+    "choices": [
+      {
+        "id": "nearby_mechanic",
+        "labelKey": "encounter.puncture.choice.mechanic",
+        "requires": {
+          "minCash": 250
+        },
+        "effects": [
+          { "type": "money", "amount": -250, "kind": "repair" },
+          { "type": "time", "min": 10 }
+        ]
+      },
+      {
+        "id": "call_mintu",
+        "labelKey": "encounter.puncture.choice.mintu",
+        "effects": [
+          { "type": "time", "min": 25 },
+          { "type": "relationship", "characterId": "mintu", "delta": 2 }
+        ]
+      }
+    ]
+  }
+]

@@ -10,6 +10,7 @@ import {
 import { RotateOverlay } from './overlays/RotateOverlay';
 import { Unsupported } from './overlays/Unsupported';
 import { Loading } from './overlays/Loading';
+import { ChoiceCard } from './choice/ChoiceCard';
 import { t } from './i18n';
 
 export function App(): JSX.Element {
@@ -107,6 +108,9 @@ export function App(): JSX.Element {
           {t('ui.paused')}
         </div>
       )}
+
+      {/* Choice Card Overlay for Encounters */}
+      <ChoiceCard />
     </div>
   );
 }

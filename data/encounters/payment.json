@@ -1,0 +1,39 @@
+[
+  {
+    "id": "enc_no_change",
+    "category": "payment",
+    "trigger": {
+      "phase": "dropOff",
+      "passengerPaymentReliabilityMax": 0.6
+    },
+    "weight": 10,
+    "cooldownMin": 90,
+    "oncePerDay": false,
+    "lineKey": "encounter.no_change.title",
+    "choices": [
+      {
+        "id": "waive",
+        "labelKey": "encounter.no_change.choice.waive",
+        "effects": [
+          { "type": "money", "amount": -20, "kind": "fare" },
+          { "type": "mood", "delta": 0.15 },
+          { "type": "rating", "delta": 0.1 }
+        ]
+      },
+      {
+        "id": "wait",
+        "labelKey": "encounter.no_change.choice.wait",
+        "effects": [
+          { "type": "time", "min": 5 }
+        ]
+      },
+      {
+        "id": "digital",
+        "labelKey": "encounter.no_change.choice.digital",
+        "effects": [
+          { "type": "money", "amount": 0, "kind": "fare" }
+        ]
+      }
+    ]
+  }
+]

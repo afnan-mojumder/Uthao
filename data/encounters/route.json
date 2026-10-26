@@ -1,0 +1,41 @@
+[
+  {
+    "id": "enc_market_detour",
+    "category": "route",
+    "trigger": {
+      "phase": "onTrip",
+      "passengerLocalKnowledgeMin": 0.5,
+      "tags": ["market"]
+    },
+    "weight": 10,
+    "cooldownMin": 60,
+    "oncePerDay": false,
+    "lineKey": "encounter.market_detour.title",
+    "choices": [
+      {
+        "id": "follow",
+        "labelKey": "encounter.market_detour.choice.follow",
+        "effects": [
+          { "type": "route", "action": "forceVia", "ref": "market" },
+          { "type": "time", "min": 5 },
+          { "type": "mood", "delta": 0.1 },
+          { "type": "trust", "delta": 5 }
+        ]
+      },
+      {
+        "id": "explain",
+        "labelKey": "encounter.market_detour.choice.explain",
+        "effects": [
+          { "type": "mood", "delta": 0 }
+        ]
+      },
+      {
+        "id": "own_route",
+        "labelKey": "encounter.market_detour.choice.own",
+        "effects": [
+          { "type": "mood", "delta": -0.15 }
+        ]
+      }
+    ]
+  }
+]
