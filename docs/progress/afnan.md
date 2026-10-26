@@ -14,4 +14,5 @@ One line per finished task: `YYYY-MM-DD Tx.y done — note`
 2026-10-25 T2.2 done — PassengerAI expected budget, opening offers, and mood reactions to near misses, bumps, lateness, and horn spam
 2026-10-26 T2.3 done — Pure NegotiationSystem with sigmoid acceptance formula, patience decay, counteroffers, detour/walk penalties, and dialogue keys
 2026-10-26 T2.6 done — EconomyManager with debt conversion, fuel consumption, receipts matching GDD, and TripSummary UI
+2026-10-26 T2.5 done — pickupOptions with crossing nodes, mid-trip closure rerouting, off-app policy strikes and suspensions
 
