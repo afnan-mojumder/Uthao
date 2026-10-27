@@ -24,6 +24,7 @@ import {
 import type { RideRequest } from './core/types';
 import type { Command } from './core/commands';
 import type { DistrictData } from './sim/schemas';
+import type { QualityLevel } from './render/quality';
 import testloopData from '../data/districts/testloop.json';
 import mirparaData from '../data/districts/mirpara.json';
 import { initMapViewer } from './debug/mapViewer';
@@ -60,12 +61,18 @@ if (isMapTool) {
     }
   }
 
-  const roadNetwork = RoadNetwork.fromDistricts([testloopData as DistrictData]);
+  const districtChoice = urlParams?.get('district') === 'mirpara' ? mirparaData : testloopData;
+  const qualityParam = urlParams?.get('quality') as QualityLevel | null;
+  const qualityChoice: QualityLevel =
+    qualityParam && ['low', 'medium', 'high'].includes(qualityParam)
+      ? qualityParam
+      : 'medium';
+  const roadNetwork = RoadNetwork.fromDistricts([districtChoice as DistrictData]);
 
   const gm = new GameManager({
     seed: 42,
     mode: 'career',
-    data: { testloop: testloopData },
+    data: { [districtChoice.districtId]: districtChoice },
   });
 
 // Bind reactive signals store to sim event bus
@@ -82,7 +89,8 @@ const canvas = typeof document !== 'undefined'
 let renderer: Renderer | undefined;
 
 if (canvas && hasWebGL2Support()) {
-  renderer = Renderer.init(canvas, 'medium');
+  renderer = Renderer.init(canvas, qualityChoice);
+  renderer.loadDistrict(districtChoice as DistrictData);
 
   // WebGL context lost & restored lifecycle listeners
   canvas.addEventListener('webglcontextlost', (e) => {
@@ -95,7 +103,8 @@ if (canvas && hasWebGL2Support()) {
   canvas.addEventListener('webglcontextrestored', () => {
     contextLostSignal.value = false;
     if (canvas) {
-      renderer = Renderer.init(canvas, 'medium');
+      renderer = Renderer.init(canvas, qualityChoice);
+      renderer.loadDistrict(districtChoice as DistrictData);
     }
   });
 }
@@ -121,11 +130,13 @@ initDebugApi(gm, {
 });
 
 // Create initial test ride request
+const pNodeId = districtChoice.nodes[0]?.nodeId ?? 'N1';
+const dNodeId = districtChoice.nodes[1]?.nodeId ?? 'N2';
 const sampleRequest: RideRequest = {
   requestId: 'req_tutorial_01',
   passengerId: 'p_nabila',
-  pickupNodeId: 'N1',
-  destinationNodeId: 'N2',
+  pickupNodeId: pNodeId,
+  destinationNodeId: dNodeId,
   initialFare: 120,
   estimatedDistance: 0.1,
   estimatedDuration: 2,
@@ -148,11 +159,12 @@ if (renderer && pNode && dNode) {
 }
 
 const bikeSpec = createDefaultBikeSpec();
-// Start bike slightly before N1 heading towards it
+const startNode = districtChoice.nodes[0] ?? { x: 0, z: 0 };
+// Start bike slightly before pickup node heading towards it
 let bikeState = {
   ...createDefaultBikeState(),
-  x: -9,
-  z: 0,
+  x: startNode.x - 9,
+  z: startNode.z,
   heading: Math.PI / 2, // Facing +X
   speed: 0,
 };
@@ -165,6 +177,7 @@ const env = {
 };
 
 let lastTime = typeof performance !== 'undefined' ? performance.now() : 0;
+let roamNodeIndex = 0;
 
 function frame(now: number) {
   const dt = (now - lastTime) / 1000;
@@ -185,6 +198,12 @@ function frame(now: number) {
           autopilot.setDestination(bikeState.x, bikeState.z, activeReq.pickupNodeId);
         } else if (activeReq.status === 'OnTrip') {
           autopilot.setDestination(bikeState.x, bikeState.z, activeReq.destinationNodeId);
+        }
+      } else if (districtChoice.nodes.length > 0 && autopilot.isFinished()) {
+        roamNodeIndex = (roamNodeIndex + 1) % districtChoice.nodes.length;
+        const nextNode = districtChoice.nodes[roamNodeIndex];
+        if (nextNode) {
+          autopilot.setDestination(bikeState.x, bikeState.z, nextNode.nodeId);
         }
       }
       input = autopilot.step(bikeState);

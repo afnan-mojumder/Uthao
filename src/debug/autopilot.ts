@@ -68,6 +68,13 @@ export class AutopilotController {
     this.currentTargetNodeId = null;
   }
 
+  isFinished(): boolean {
+    return (
+      this.currentPathNodeIds.length === 0 ||
+      this.currentTargetIndex >= this.currentPathNodeIds.length
+    );
+  }
+
   step(bike: BikeState): BikeInput {
     if (!this.enabled || this.currentPathNodeIds.length === 0) {
       return { throttle: 0, brake: 0, steer: 0 };

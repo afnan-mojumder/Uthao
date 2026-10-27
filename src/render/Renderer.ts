@@ -9,6 +9,9 @@ import {
 import type { SimSnapshot } from '../sim/GameManager';
 import { lerp, angleDiff } from '../core/math';
 import { WeatherFx } from './WeatherFx';
+import type { DistrictData } from '../sim/schemas';
+import type { PhysicsWorld } from '../physics/PhysicsWorld';
+import { CityBuilder } from './CityBuilder';
 
 export class Renderer {
   readonly webglRenderer: THREE.WebGLRenderer;
@@ -20,9 +23,11 @@ export class Renderer {
   readonly dirLight: THREE.DirectionalLight;
   readonly hemiLight: THREE.HemisphereLight;
   readonly weatherFx: WeatherFx;
+  cityBuilder?: CityBuilder;
 
   private canvas: HTMLCanvasElement;
   private colliders: THREE.Object3D[] = [];
+  private testSceneGroup?: THREE.Group;
   private prevBikePose = { x: 0, y: 0, z: 0, heading: 0, lean: 0, steer: 0 };
   private currBikePose = { x: 0, y: 0, z: 0, heading: 0, lean: 0, steer: 0 };
   private bikeSpeed = 0;
@@ -124,6 +129,9 @@ export class Renderer {
   }
 
   private buildTestScene(): void {
+    this.testSceneGroup = new THREE.Group();
+    this.testSceneGroup.name = 'test_scene_group';
+
     // Ground plane
     const groundGeo = new THREE.PlaneGeometry(600, 600);
     const groundMat = new THREE.MeshStandardMaterial({
@@ -133,7 +141,7 @@ export class Renderer {
     const ground = new THREE.Mesh(groundGeo, groundMat);
     ground.rotation.x = -Math.PI / 2;
     ground.receiveShadow = true;
-    this.scene.add(ground);
+    this.testSceneGroup.add(ground);
 
     // 400 m loop road (100m x 100m square loop with rounded corners)
     // Road ribbon
@@ -157,7 +165,7 @@ export class Renderer {
       mesh.rotation.z = rotY;
       mesh.position.set(x, 0.01, z);
       mesh.receiveShadow = true;
-      this.scene.add(mesh);
+      this.testSceneGroup?.add(mesh);
     };
 
     // 4 sides of the loop
@@ -178,7 +186,7 @@ export class Renderer {
       const kerb = new THREE.Mesh(geo, kerbMat);
       kerb.position.set(x, 0.1, z);
       kerb.rotation.y = rotY;
-      this.scene.add(kerb);
+      this.testSceneGroup?.add(kerb);
       this.colliders.push(kerb);
     };
 
@@ -207,7 +215,7 @@ export class Renderer {
       mesh.position.set(x, h / 2, z);
       mesh.castShadow = true;
       mesh.receiveShadow = true;
-      this.scene.add(mesh);
+      this.testSceneGroup?.add(mesh);
       this.colliders.push(mesh);
     };
 
@@ -218,6 +226,22 @@ export class Renderer {
 
     createBuilding(16, 24, 20, 118, 20);
     createBuilding(22, 28, 25, 120, 60);
+
+    this.scene.add(this.testSceneGroup);
+  }
+
+  loadDistrict(district: DistrictData, physicsWorld?: PhysicsWorld): void {
+    if (this.testSceneGroup) {
+      this.scene.remove(this.testSceneGroup);
+      this.testSceneGroup = undefined;
+    }
+    if (this.cityBuilder) {
+      this.scene.remove(this.cityBuilder.root);
+    }
+    this.cityBuilder = new CityBuilder();
+    this.cityBuilder.buildDistrict(district, physicsWorld);
+    this.scene.add(this.cityBuilder.root);
+    this.colliders.push(...this.cityBuilder.colliders);
   }
 
   setBikeState(state: {
@@ -271,6 +295,11 @@ export class Renderer {
       heading,
       false
     );
+
+    // Update CityBuilder LOD chunks
+    if (this.cityBuilder) {
+      this.cityBuilder.update({ x, z }, this.qualityManager.config.drawDistance);
+    }
 
     this.webglRenderer.render(this.scene, this.cameraRig.camera);
   }
