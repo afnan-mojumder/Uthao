@@ -119,3 +119,40 @@ export function bindEventBusToStore(
     }
   };
 }
+
+export interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
+}
+
+export const installPromptSignal = signal<boolean>(false);
+let deferredInstallPrompt: BeforeInstallPromptEvent | null = null;
+
+export function initPwaInstall(): void {
+  if (typeof window === 'undefined') return;
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredInstallPrompt = e as BeforeInstallPromptEvent;
+    installPromptSignal.value = true;
+  });
+  window.addEventListener('appinstalled', () => {
+    deferredInstallPrompt = null;
+    installPromptSignal.value = false;
+  });
+}
+
+export async function promptPwaInstall(): Promise<boolean> {
+  if (!deferredInstallPrompt) return false;
+  try {
+    deferredInstallPrompt.prompt();
+    const choice = await deferredInstallPrompt.userChoice;
+    deferredInstallPrompt = null;
+    installPromptSignal.value = false;
+    return choice?.outcome === 'accepted';
+  } catch {
+    deferredInstallPrompt = null;
+    installPromptSignal.value = false;
+    return false;
+  }
+}
+

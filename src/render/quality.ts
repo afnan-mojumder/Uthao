@@ -6,6 +6,7 @@ export interface QualityConfig {
   shadows: boolean;
   drawDistance: number;
   resolutionScale: number;
+  rainParticles: number;
 }
 
 export function getQualityConfig(level: QualityLevel, dpr = 1): QualityConfig {
@@ -17,6 +18,7 @@ export function getQualityConfig(level: QualityLevel, dpr = 1): QualityConfig {
         shadows: false,
         drawDistance: 200,
         resolutionScale: 1.0,
+        rainParticles: 350,
       };
     case 'medium':
       return {
@@ -25,6 +27,7 @@ export function getQualityConfig(level: QualityLevel, dpr = 1): QualityConfig {
         shadows: true,
         drawDistance: 300,
         resolutionScale: 1.0,
+        rainParticles: 750,
       };
     case 'high':
       return {
@@ -33,6 +36,7 @@ export function getQualityConfig(level: QualityLevel, dpr = 1): QualityConfig {
         shadows: true,
         drawDistance: 450,
         resolutionScale: 1.0,
+        rainParticles: 1500,
       };
   }
 }

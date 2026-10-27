@@ -21,6 +21,7 @@ import {
   pausedSignal,
   contextLostSignal,
   unsupportedSignal,
+  initPwaInstall,
 } from './ui/store';
 import type { RideRequest } from './core/types';
 import type { Command } from './core/commands';
@@ -85,6 +86,7 @@ if (isMapTool) {
 
   // 2. Mount Preact UI App
   if (typeof document !== 'undefined') {
+    initPwaInstall();
     const uiRoot = document.getElementById('ui-root');
     if (uiRoot) {
       render(h(App, null), uiRoot);

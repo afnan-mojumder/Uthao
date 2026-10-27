@@ -68,7 +68,8 @@ export function stepBike(
   input: BikeInput,
   spec: BikeSpec,
   env: BikeEnvironment,
-  dt: number
+  dt: number,
+  out?: BikeState
 ): BikeState {
   let effectiveAccel = spec.accel * clamp(input.throttle, 0, 1);
   if (env.conditionPct < spec.conditionPenaltyThreshold) {
@@ -129,6 +130,18 @@ export function stepBike(
   const avgSpeed = (state.speed + newSpeed) / 2;
   const newX = state.x + Math.sin(newHeading) * avgSpeed * dt;
   const newZ = state.z + Math.cos(newHeading) * avgSpeed * dt;
+
+  if (out) {
+    out.x = newX;
+    out.z = newZ;
+    out.heading = newHeading;
+    out.speed = newSpeed;
+    out.lean = newLean;
+    out.steer = newSteer;
+    out.wobble = wobble;
+    out.crashed = crashed;
+    return out;
+  }
 
   return {
     x: newX,

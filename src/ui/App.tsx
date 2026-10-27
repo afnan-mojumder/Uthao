@@ -6,6 +6,8 @@ import {
   loadingSignal,
   contextLostSignal,
   pausedSignal,
+  installPromptSignal,
+  promptPwaInstall,
 } from './store';
 import { RotateOverlay } from './overlays/RotateOverlay';
 import { Unsupported } from './overlays/Unsupported';
@@ -111,6 +113,35 @@ export function App(): JSX.Element {
 
       {/* Choice Card Overlay for Encounters */}
       <ChoiceCard />
+
+      {/* PWA Install Button for Android / Chrome */}
+      {installPromptSignal.value && (
+        <button
+          data-testid="pwa-install-btn"
+          onClick={() => void promptPwaInstall()}
+          style={{
+            position: 'absolute',
+            bottom: '24px',
+            right: '24px',
+            background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+            border: 'none',
+            color: '#fff',
+            padding: '10px 18px',
+            borderRadius: '9999px',
+            fontWeight: 700,
+            fontSize: '0.85rem',
+            cursor: 'pointer',
+            boxShadow: '0 4px 14px rgba(16, 185, 129, 0.4)',
+            pointerEvents: 'auto',
+            zIndex: 1000,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+          }}
+        >
+          <span style={{ fontSize: '1.1rem' }}>📲</span> Install App
+        </button>
+      )}
     </div>
   );
 }

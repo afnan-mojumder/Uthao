@@ -103,6 +103,7 @@ export class Renderer {
       dirLight: this.dirLight,
       hemiLight: this.hemiLight,
       drawDistance: this.qualityManager.config.drawDistance,
+      rainCount: this.qualityManager.config.rainParticles,
     });
 
     this.peopleRenderer = new PeopleRenderer();
@@ -340,7 +341,14 @@ export class Renderer {
     trafficAgents: TrafficAgent[],
     timeSec = 0
   ): void {
-    this.peopleRenderer.update(pedestrians, trafficAgents, timeSec);
+    const camPos = { x: this.currBikePose.x, z: this.currBikePose.z };
+    this.peopleRenderer.update(
+      pedestrians,
+      trafficAgents,
+      timeSec,
+      camPos,
+      this.qualityManager.config.drawDistance
+    );
   }
 
   getFps(): number {

@@ -29,6 +29,16 @@ export class MotorcycleController {
   readonly collider: RAPIER.Collider;
   readonly characterController: RAPIER.KinematicCharacterController;
 
+  private readonly _desiredTranslation = { x: 0, y: 0, z: 0 };
+  private readonly _bodyTranslation = { x: 0, y: 0.5, z: 0 };
+  private readonly _bodyRotation = { x: 0, y: 0, z: 0, w: 1 };
+  private readonly _leftDir = { x: 0, y: 0, z: 0 };
+  private readonly _rightDir = { x: 0, y: 0, z: 0 };
+  private readonly _rayOrigin = { x: 0, y: 0.5, z: 0 };
+  private readonly _leftRay: RAPIER.Ray;
+  private readonly _rightRay: RAPIER.Ray;
+  private readonly _nextState: BikeState = createDefaultBikeState();
+
   constructor(opts: MotorcycleControllerOptions) {
     this.world = opts.world;
     this.bus = opts.bus;
@@ -57,42 +67,36 @@ export class MotorcycleController {
     this.characterController.enableAutostep(0.3, 0.2, true);
     this.characterController.enableSnapToGround(0.5);
     this.world.step();
+
+    this._leftRay = new RAPIER.Ray(this._rayOrigin, this._leftDir);
+    this._rightRay = new RAPIER.Ray(this._rayOrigin, this._rightDir);
   }
 
   update(input: BikeInput, env: BikeEnvironment, dt: number): BikeState {
-    const desiredState = stepBike(this.state, input, this.spec, env, dt);
+    const desiredState = stepBike(this.state, input, this.spec, env, dt, this._nextState);
 
-    const desiredTranslation = {
-      x: desiredState.x - this.state.x,
-      y: 0,
-      z: desiredState.z - this.state.z,
-    };
+    this._desiredTranslation.x = desiredState.x - this.state.x;
+    this._desiredTranslation.y = 0;
+    this._desiredTranslation.z = desiredState.z - this.state.z;
 
     // Sync kinematic body to current state immediately
     const halfYaw = this.state.heading / 2;
-    this.body.setTranslation(
-      {
-        x: this.state.x,
-        y: 0.5,
-        z: this.state.z,
-      },
-      true
-    );
-    this.body.setRotation(
-      {
-        x: 0,
-        y: Math.sin(halfYaw),
-        z: 0,
-        w: Math.cos(halfYaw),
-      },
-      true
-    );
+    this._bodyTranslation.x = this.state.x;
+    this._bodyTranslation.y = 0.5;
+    this._bodyTranslation.z = this.state.z;
+    this.body.setTranslation(this._bodyTranslation, true);
+
+    this._bodyRotation.x = 0;
+    this._bodyRotation.y = Math.sin(halfYaw);
+    this._bodyRotation.z = 0;
+    this._bodyRotation.w = Math.cos(halfYaw);
+    this.body.setRotation(this._bodyRotation, true);
     this.world.step();
 
     // Compute movement against obstacles
     this.characterController.computeColliderMovement(
       this.collider,
-      desiredTranslation
+      this._desiredTranslation
     );
 
     const movement = this.characterController.computedMovement();
@@ -104,8 +108,8 @@ export class MotorcycleController {
     if (numCollisions > 0) {
       // Find maximum impact velocity along collision normal
       let maxImpactKmh = 0;
-      const vx = desiredTranslation.x / dt;
-      const vz = desiredTranslation.z / dt;
+      const vx = this._desiredTranslation.x / dt;
+      const vz = this._desiredTranslation.z / dt;
 
       for (let i = 0; i < numCollisions; i++) {
         const col = this.characterController.computedCollision(i);
@@ -144,24 +148,20 @@ export class MotorcycleController {
     } else if (totalSpeedKmh > 20) {
       // Near miss check: raycast left and right
       const rayDist = 1.0;
-      const leftDir = {
-        x: -Math.cos(this.state.heading),
-        y: 0,
-        z: Math.sin(this.state.heading),
-      };
-      const rightDir = {
-        x: Math.cos(this.state.heading),
-        y: 0,
-        z: -Math.sin(this.state.heading),
-      };
+      this._leftDir.x = -Math.cos(this.state.heading);
+      this._leftDir.y = 0;
+      this._leftDir.z = Math.sin(this.state.heading);
 
-      const origin = { x: this.state.x, y: 0.5, z: this.state.z };
+      this._rightDir.x = Math.cos(this.state.heading);
+      this._rightDir.y = 0;
+      this._rightDir.z = -Math.sin(this.state.heading);
 
-      const leftRay = new RAPIER.Ray(origin, leftDir);
-      const rightRay = new RAPIER.Ray(origin, rightDir);
+      this._rayOrigin.x = this.state.x;
+      this._rayOrigin.y = 0.5;
+      this._rayOrigin.z = this.state.z;
 
-      const hitLeft = this.world.raw.castRay(leftRay, rayDist, true);
-      const hitRight = this.world.raw.castRay(rightRay, rayDist, true);
+      const hitLeft = this.world.raw.castRay(this._leftRay, rayDist, true);
+      const hitRight = this.world.raw.castRay(this._rightRay, rayDist, true);
 
       let minClearance: number | null = null;
       if (hitLeft !== null) minClearance = hitLeft.timeOfImpact;
@@ -181,26 +181,20 @@ export class MotorcycleController {
     }
 
     // Apply movement
-    this.state = {
-      x: this.state.x + movement.x,
-      z: this.state.z + movement.z,
-      heading: desiredState.heading,
-      speed: desiredState.speed,
-      lean: desiredState.lean,
-      steer: desiredState.steer,
-      wobble: desiredState.wobble,
-      crashed: desiredState.crashed || collisionSeverity === 'crash',
-    };
+    this.state.x += movement.x;
+    this.state.z += movement.z;
+    this.state.heading = desiredState.heading;
+    this.state.speed = desiredState.speed;
+    this.state.lean = desiredState.lean;
+    this.state.steer = desiredState.steer;
+    this.state.wobble = desiredState.wobble;
+    this.state.crashed = desiredState.crashed || collisionSeverity === 'crash';
 
     // Update body position to new state
-    this.body.setTranslation(
-      {
-        x: this.state.x,
-        y: 0.5,
-        z: this.state.z,
-      },
-      true
-    );
+    this._bodyTranslation.x = this.state.x;
+    this._bodyTranslation.y = 0.5;
+    this._bodyTranslation.z = this.state.z;
+    this.body.setTranslation(this._bodyTranslation, true);
 
     return this.state;
   }

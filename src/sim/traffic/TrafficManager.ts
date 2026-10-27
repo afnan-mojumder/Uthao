@@ -151,6 +151,7 @@ export class TrafficManager {
   readonly roadEvents?: RoadEventManager;
   private rng: Rng;
   private nextAgentSeq = 0;
+  private agentsByLane: Map<string, TrafficAgent[]> = new Map();
 
   constructor(
     network: RoadNetwork,
@@ -405,18 +406,24 @@ export class TrafficManager {
     this.signals.update(dt);
     this.pedestrians.update(dt, player, camera);
 
-    // Group agents by lane to identify leader-follower pairs
-    const agentsByLane = new Map<string, TrafficAgent[]>();
+    // Group agents by lane to identify leader-follower pairs using pooled map
+    for (const arr of this.agentsByLane.values()) {
+      arr.length = 0;
+    }
     for (const agent of this.agents.values()) {
-      if (!agentsByLane.has(agent.laneId)) {
-        agentsByLane.set(agent.laneId, []);
+      let laneList = this.agentsByLane.get(agent.laneId);
+      if (!laneList) {
+        laneList = [];
+        this.agentsByLane.set(agent.laneId, laneList);
       }
-      agentsByLane.get(agent.laneId)!.push(agent);
+      laneList.push(agent);
     }
 
     // Sort agents on each lane by distAlongLane descending (furthest along lane is leader)
-    for (const laneAgents of agentsByLane.values()) {
-      laneAgents.sort((a, b) => b.distAlongLane - a.distAlongLane);
+    for (const laneAgents of this.agentsByLane.values()) {
+      if (laneAgents.length > 1) {
+        laneAgents.sort((a, b) => b.distAlongLane - a.distAlongLane);
+      }
     }
 
     // Update each agent using IDM car following
@@ -455,7 +462,7 @@ export class TrafficManager {
         continue;
       }
 
-      const laneAgents = agentsByLane.get(agent.laneId) ?? [];
+      const laneAgents = this.agentsByLane.get(agent.laneId) ?? [];
       const myIdx = laneAgents.findIndex((a) => a.id === agent.id);
       const leader = myIdx > 0 ? laneAgents[myIdx - 1] : null;
 

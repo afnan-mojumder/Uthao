@@ -6,6 +6,7 @@ export interface WeatherFxOptions {
   dirLight?: THREE.DirectionalLight;
   hemiLight?: THREE.HemisphereLight;
   drawDistance?: number;
+  rainCount?: number;
 }
 
 export class WeatherFx {
@@ -19,7 +20,7 @@ export class WeatherFx {
   private rainMaterial: THREE.PointsMaterial;
   private rainPoints: THREE.Points;
   private rainPositions: Float32Array;
-  private readonly rainCount = 1000;
+  private readonly rainCount: number;
   private readonly rainBoxSize = 50;
 
   readonly headlight: THREE.SpotLight;
@@ -36,6 +37,7 @@ export class WeatherFx {
     this.dirLight = opts.dirLight;
     this.hemiLight = opts.hemiLight;
     this.drawDistance = opts.drawDistance ?? 250;
+    this.rainCount = opts.rainCount ?? 800;
 
     // 1. Rain particle system (GPU Points)
     this.rainGroup = new THREE.Group();

@@ -81,10 +81,12 @@ test.describe('Performance check (T3.3)', () => {
         const api = window.__uthao;
         return {
           fps: api?.getFps() ?? 0,
+          drawCalls: api?.getDrawCalls() ?? 0,
         };
       });
       samples.push(metrics.fps);
       expect(metrics.fps).toBeGreaterThanOrEqual(25);
+      expect(metrics.drawCalls).toBeLessThanOrEqual(150);
     }
 
     const avgFps = Math.round(samples.reduce((a, b) => a + b, 0) / (samples.length || 1));

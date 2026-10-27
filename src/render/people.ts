@@ -80,41 +80,55 @@ export class PeopleRenderer {
   update(
     pedestrians: PedestrianAgent[],
     trafficAgents: TrafficAgent[],
-    timeSec = 0
+    timeSec = 0,
+    cameraPos?: { x: number; z: number },
+    maxDistance = 250
   ): void {
-    // 1. Update pedestrians
-    const pedCount = Math.min(pedestrians.length, this.maxPedestrians);
-    this.pedMesh.count = pedCount;
-
-    for (let i = 0; i < pedCount; i++) {
+    // 1. Update pedestrians with optional distance culling
+    let pedCount = 0;
+    const maxPeds = this.maxPedestrians;
+    for (let i = 0; i < pedestrians.length && pedCount < maxPeds; i++) {
       const p = pedestrians[i]!;
+      if (cameraPos) {
+        const d = Math.hypot(p.x - cameraPos.x, p.z - cameraPos.z);
+        if (d > maxDistance) continue;
+      }
       this.dummy.position.set(p.x, 0, p.z);
       this.dummy.rotation.set(0, p.heading, 0);
 
       // Subtle walking bob when moving
       if (p.state !== 'yielding') {
         this.dummy.position.y = Math.abs(Math.sin(timeSec * 8 + i * 1.5)) * 0.04;
+      } else {
+        this.dummy.position.y = 0;
       }
 
       this.dummy.updateMatrix();
-      this.pedMesh.setMatrixAt(i, this.dummy.matrix);
+      this.pedMesh.setMatrixAt(pedCount, this.dummy.matrix);
+      pedCount++;
     }
+    this.pedMesh.count = pedCount;
     if (this.pedMesh.instanceMatrix) {
       this.pedMesh.instanceMatrix.needsUpdate = true;
     }
 
-    // 2. Update rickshaws
-    const rickshaws = trafficAgents.filter((a) => a.kind === 'rickshaw');
-    const rCount = Math.min(rickshaws.length, this.maxRickshaws);
-    this.rickshawMesh.count = rCount;
-
-    for (let i = 0; i < rCount; i++) {
-      const r = rickshaws[i]!;
+    // 2. Update rickshaws without array allocations (.filter)
+    let rCount = 0;
+    for (let i = 0; i < trafficAgents.length && rCount < this.maxRickshaws; i++) {
+      const r = trafficAgents[i]!;
+      if (r.kind !== 'rickshaw') continue;
+      if (cameraPos) {
+        const d = Math.hypot(r.x - cameraPos.x, r.z - cameraPos.z);
+        if (d > maxDistance) continue;
+      }
       this.dummy.position.set(r.x, 0, r.z);
       this.dummy.rotation.set(0, r.heading, 0);
+      this.dummy.position.y = 0;
       this.dummy.updateMatrix();
-      this.rickshawMesh.setMatrixAt(i, this.dummy.matrix);
+      this.rickshawMesh.setMatrixAt(rCount, this.dummy.matrix);
+      rCount++;
     }
+    this.rickshawMesh.count = rCount;
     if (this.rickshawMesh.instanceMatrix) {
       this.rickshawMesh.instanceMatrix.needsUpdate = true;
     }
