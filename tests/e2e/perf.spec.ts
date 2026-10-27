@@ -53,4 +53,42 @@ test.describe('Performance check (T3.3)', () => {
     expect(maxTriangles).toBeGreaterThan(0);
     expect(maxTriangles).toBeLessThanOrEqual(300000);
   });
+
+  test('cross-district drive keeps fps >= 30 on pixel7 low', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== 'pixel7', 'Pixel 7 profile only');
+    test.setTimeout(60000);
+
+    await page.goto('/?debug=1&district=world&quality=low');
+    await page.waitForSelector('#game-canvas');
+    await page.waitForTimeout(1000);
+
+    // Turn on autopilot to drive across districts
+    await page.evaluate(() => {
+      window.__uthao?.autopilot(true);
+    });
+
+    // Allow warm-up for initial district streaming and shader compilation
+    await page.waitForTimeout(2000);
+
+    const samples: number[] = [];
+    const durationMs = 15000;
+    const intervalMs = 2500;
+    const startTime = Date.now();
+
+    while (Date.now() - startTime < durationMs) {
+      await page.waitForTimeout(intervalMs);
+      const metrics = await page.evaluate(() => {
+        const api = window.__uthao;
+        return {
+          fps: api?.getFps() ?? 0,
+        };
+      });
+      samples.push(metrics.fps);
+      expect(metrics.fps).toBeGreaterThanOrEqual(25);
+    }
+
+    const avgFps = Math.round(samples.reduce((a, b) => a + b, 0) / (samples.length || 1));
+    console.log(`[${testInfo.project.name}] Cross-district drive avg FPS = ${avgFps}`);
+    expect(avgFps).toBeGreaterThanOrEqual(30);
+  });
 });

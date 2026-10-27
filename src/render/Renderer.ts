@@ -9,7 +9,8 @@ import {
 import type { SimSnapshot } from '../sim/GameManager';
 import { lerp, angleDiff } from '../core/math';
 import { WeatherFx } from './WeatherFx';
-import type { DistrictData } from '../sim/schemas';
+import type { DistrictId } from '../core/types';
+import type { DistrictData, WorldData } from '../sim/schemas';
 import type { PhysicsWorld } from '../physics/PhysicsWorld';
 import { CityBuilder } from './CityBuilder';
 import { PeopleRenderer } from './people';
@@ -251,6 +252,25 @@ export class Renderer {
     this.colliders.push(...this.cityBuilder.colliders);
   }
 
+  loadWorld(
+    world: WorldData,
+    districtProvider: (id: DistrictId) => DistrictData | undefined,
+    physicsWorld?: PhysicsWorld,
+    initialPos: { x: number; z: number } = { x: 300, z: 300 }
+  ): void {
+    if (this.testSceneGroup) {
+      this.scene.remove(this.testSceneGroup);
+      this.testSceneGroup = undefined;
+    }
+    if (this.cityBuilder) {
+      this.scene.remove(this.cityBuilder.root);
+    }
+    this.cityBuilder = new CityBuilder();
+    this.cityBuilder.initWorldStreaming(world, districtProvider, physicsWorld, initialPos);
+    this.scene.add(this.cityBuilder.root);
+    this.colliders.push(...this.cityBuilder.colliders);
+  }
+
   setBikeState(state: {
     x: number;
     z: number;
@@ -303,9 +323,9 @@ export class Renderer {
       false
     );
 
-    // Update CityBuilder LOD chunks
+    // Update CityBuilder LOD chunks and streaming
     if (this.cityBuilder) {
-      this.cityBuilder.update({ x, z }, this.qualityManager.config.drawDistance);
+      this.cityBuilder.update({ x, z }, this.qualityManager.config.drawDistance, 4);
     }
 
     this.webglRenderer.render(this.scene, this.cameraRig.camera);

@@ -24,11 +24,40 @@ import {
 } from './ui/store';
 import type { RideRequest } from './core/types';
 import type { Command } from './core/commands';
-import type { DistrictData } from './sim/schemas';
+import type { DistrictData, WorldData } from './sim/schemas';
 import type { QualityLevel } from './render/quality';
+import type { DistrictId } from './core/types';
 import testloopData from '../data/districts/testloop.json';
 import mirparaData from '../data/districts/mirpara.json';
+import fulgateData from '../data/districts/fulgate.json';
+import dhanbaghData from '../data/districts/dhanbagh.json';
+import mohakhalData from '../data/districts/mohakhal.json';
+import gulbariData from '../data/districts/gulbari.json';
+import puranparaData from '../data/districts/puranpara.json';
+import motinagarData from '../data/districts/motinagar.json';
+import worldDataJson from '../data/world.json';
 import { initMapViewer } from './debug/mapViewer';
+
+const allDistrictsMap: Record<string, DistrictData> = {
+  mirpara: mirparaData as DistrictData,
+  fulgate: fulgateData as DistrictData,
+  dhanbagh: dhanbaghData as DistrictData,
+  mohakhal: mohakhalData as DistrictData,
+  gulbari: gulbariData as DistrictData,
+  puranpara: puranparaData as DistrictData,
+  motinagar: motinagarData as DistrictData,
+  testloop: testloopData as DistrictData,
+};
+
+const allDistrictsList: DistrictData[] = [
+  mirparaData as DistrictData,
+  fulgateData as DistrictData,
+  dhanbaghData as DistrictData,
+  mohakhalData as DistrictData,
+  gulbariData as DistrictData,
+  puranparaData as DistrictData,
+  motinagarData as DistrictData,
+];
 
 console.log('Uthao booting...');
 
@@ -62,53 +91,75 @@ if (isMapTool) {
     }
   }
 
-  const districtChoice = urlParams?.get('district') === 'mirpara' ? mirparaData : testloopData;
+  const districtParam = urlParams?.get('district');
+  const isSingleDistrict = Boolean(
+    districtParam && districtParam !== 'world' && allDistrictsMap[districtParam]
+  );
+  const activeDistrict: DistrictData = isSingleDistrict
+    ? allDistrictsMap[districtParam!]!
+    : (mirparaData as DistrictData);
   const qualityParam = urlParams?.get('quality') as QualityLevel | null;
   const qualityChoice: QualityLevel =
     qualityParam && ['low', 'medium', 'high'].includes(qualityParam)
       ? qualityParam
       : 'medium';
-  const roadNetwork = RoadNetwork.fromDistricts([districtChoice as DistrictData]);
+
+  const roadNetwork = isSingleDistrict
+    ? RoadNetwork.fromDistricts([activeDistrict])
+    : RoadNetwork.fromWorld(worldDataJson as WorldData, allDistrictsList);
 
   const gm = new GameManager({
     seed: 42,
     mode: 'career',
-    data: { [districtChoice.districtId]: districtChoice },
+    data: allDistrictsMap,
   });
 
-// Bind reactive signals store to sim event bus
-bindEventBusToStore(gm.bus, (cmd: Command) => gm.dispatch(cmd));
+  // Bind reactive signals store to sim event bus
+  bindEventBusToStore(gm.bus, (cmd: Command) => gm.dispatch(cmd));
 
-const rideManager = new RideManager({
-  roadNetwork,
-  bus: gm.bus,
-});
-
-const canvas = typeof document !== 'undefined'
-  ? (document.getElementById('game-canvas') as HTMLCanvasElement)
-  : null;
-let renderer: Renderer | undefined;
-
-if (canvas && hasWebGL2Support()) {
-  renderer = Renderer.init(canvas, qualityChoice);
-  renderer.loadDistrict(districtChoice as DistrictData);
-
-  // WebGL context lost & restored lifecycle listeners
-  canvas.addEventListener('webglcontextlost', (e) => {
-    e.preventDefault();
-    gm.dispatch({ type: 'pause' });
-    pausedSignal.value = true;
-    contextLostSignal.value = true;
+  const rideManager = new RideManager({
+    roadNetwork,
+    bus: gm.bus,
   });
 
-  canvas.addEventListener('webglcontextrestored', () => {
-    contextLostSignal.value = false;
-    if (canvas) {
-      renderer = Renderer.init(canvas, qualityChoice);
-      renderer.loadDistrict(districtChoice as DistrictData);
+  const canvas = typeof document !== 'undefined'
+    ? (document.getElementById('game-canvas') as HTMLCanvasElement)
+    : null;
+  let renderer: Renderer | undefined;
+
+  function loadRendererScene(r: Renderer) {
+    if (isSingleDistrict) {
+      r.loadDistrict(activeDistrict);
+    } else {
+      r.loadWorld(
+        worldDataJson as WorldData,
+        (id: DistrictId) => allDistrictsMap[id],
+        undefined,
+        { x: 300, z: 300 }
+      );
     }
-  });
-}
+  }
+
+  if (canvas && hasWebGL2Support()) {
+    renderer = Renderer.init(canvas, qualityChoice);
+    loadRendererScene(renderer);
+
+    // WebGL context lost & restored lifecycle listeners
+    canvas.addEventListener('webglcontextlost', (e) => {
+      e.preventDefault();
+      gm.dispatch({ type: 'pause' });
+      pausedSignal.value = true;
+      contextLostSignal.value = true;
+    });
+
+    canvas.addEventListener('webglcontextrestored', () => {
+      contextLostSignal.value = false;
+      if (canvas) {
+        renderer = Renderer.init(canvas, qualityChoice);
+        loadRendererScene(renderer);
+      }
+    });
+  }
 
 // Mobile/desktop tab visibility lifecycle handling
 if (typeof document !== 'undefined') {
@@ -133,8 +184,8 @@ initDebugApi(gm, {
 });
 
 // Create initial test ride request
-const pNodeId = districtChoice.nodes[0]?.nodeId ?? 'N1';
-const dNodeId = districtChoice.nodes[1]?.nodeId ?? 'N2';
+const pNodeId = activeDistrict.nodes[0]?.nodeId ?? 'N1';
+const dNodeId = activeDistrict.nodes[1]?.nodeId ?? 'N2';
 const sampleRequest: RideRequest = {
   requestId: 'req_tutorial_01',
   passengerId: 'p_nabila',
@@ -162,7 +213,7 @@ if (renderer && pNode && dNode) {
 }
 
 const bikeSpec = createDefaultBikeSpec();
-const startNode = districtChoice.nodes[0] ?? { x: 0, z: 0 };
+const startNode = activeDistrict.nodes[0] ?? { x: 0, z: 0 };
 // Start bike slightly before pickup node heading towards it
 let bikeState = {
   ...createDefaultBikeState(),
@@ -202,9 +253,9 @@ function frame(now: number) {
         } else if (activeReq.status === 'OnTrip') {
           autopilot.setDestination(bikeState.x, bikeState.z, activeReq.destinationNodeId);
         }
-      } else if (districtChoice.nodes.length > 0 && autopilot.isFinished()) {
-        roamNodeIndex = (roamNodeIndex + 1) % districtChoice.nodes.length;
-        const nextNode = districtChoice.nodes[roamNodeIndex];
+      } else if (activeDistrict.nodes.length > 0 && autopilot.isFinished()) {
+        roamNodeIndex = (roamNodeIndex + 1) % activeDistrict.nodes.length;
+        const nextNode = activeDistrict.nodes[roamNodeIndex];
         if (nextNode) {
           autopilot.setDestination(bikeState.x, bikeState.z, nextNode.nodeId);
         }

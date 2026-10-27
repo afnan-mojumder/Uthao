@@ -49,6 +49,14 @@ export class PhysicsWorld {
     return collider;
   }
 
+  removeCollider(collider: RAPIER.Collider): void {
+    const body = collider.parent();
+    this.raw.removeCollider(collider, false);
+    if (body) {
+      this.raw.removeRigidBody(body);
+    }
+  }
+
   addStaticPolyline(
     points: { x: number; z: number }[],
     height: number = 0.5

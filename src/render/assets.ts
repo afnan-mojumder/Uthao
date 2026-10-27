@@ -17,19 +17,27 @@ export class AssetManager {
    * Loads a model by ID with in-memory caching and guaranteed procedural fallback.
    * Every asset ID has a procedural fallback so a missing GLTF file or failed network request never crashes.
    */
-  async loadModel(id: string): Promise<THREE.Object3D> {
-    const cached = this.cache.get(id);
+  async loadModel(id: string, lod: 'high' | 'low' = 'high'): Promise<THREE.Object3D> {
+    const key = lod === 'low' ? `${id}_low` : id;
+    const cached = this.cache.get(key);
     if (cached) {
       return cached.clone();
     }
 
     // Attempt to load from GLTF if environment allows, else return procedural fallback
-    const model = this.createProceduralFallback(id);
-    this.cache.set(id, model);
+    const model = this.createProceduralFallback(id, lod);
+    this.cache.set(key, model);
     return model.clone();
   }
 
-  createProceduralFallback(id: string): THREE.Object3D {
+  createProceduralFallback(id: string, lod: 'high' | 'low' = 'high'): THREE.Object3D {
+    if (lod === 'low') {
+      const group = new THREE.Group();
+      const geo = new THREE.BoxGeometry(1, 1, 1);
+      const mat = new THREE.MeshBasicMaterial({ color: 0x64748b });
+      group.add(new THREE.Mesh(geo, mat));
+      return group;
+    }
     switch (id) {
       case 'motorcycle':
       case 'bike':
