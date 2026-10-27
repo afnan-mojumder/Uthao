@@ -1,11 +1,20 @@
 import type { EncounterDef, EncounterChoiceDef } from '../schemas';
-import type { EncounterInstance, EncounterChoice } from '../../core/types';
+import type { EncounterInstance, EncounterChoice, RoadSegment } from '../../core/types';
 import type { EncounterContext, EncounterPhase } from './conditions';
 import { evaluateCondition } from './conditions';
 import type { EffectContext } from './effects';
 import { applyEffects } from './effects';
 import { Rng } from '../../core/rng';
 import type { EventBus, GameEvents } from '../../core/events';
+import {
+  type CrimeOutcome,
+  type FleeResult,
+  type RobberyResult,
+  calculateSegmentEncounterProbability,
+  sampleCrimeOutcome,
+  resolveFlee,
+  resolveRobbery,
+} from './flee';
 
 export interface EventDirectorOptions {
   definitions?: EncounterDef[];
@@ -182,5 +191,90 @@ export class EventDirector {
     this.activeEncounterDef = null;
 
     return true;
+  }
+
+  /**
+   * Evaluates per-segment encounter probability when entering a segment while on trip or at pickup.
+   * Outcome split: harmless 0.6 / suspicious 0.3 / dangerous 0.1.
+   */
+  evaluateSegmentCrime(
+    segment: RoadSegment,
+    ctx: EncounterContext,
+    bus?: EventBus<GameEvents>,
+    rng?: Rng
+  ): {
+    triggered: boolean;
+    outcome?: CrimeOutcome;
+    instance?: EncounterInstance | null;
+  } {
+    const prob = calculateSegmentEncounterProbability({
+      riskLevel: segment.riskLevel,
+      minute: ctx.minute,
+      isReckless: !!ctx.flags?.['isReckless'],
+    });
+
+    const r = rng ?? this.rng;
+    if (!r.chance(prob)) {
+      return { triggered: false };
+    }
+
+    const outcome = sampleCrimeOutcome(r);
+    if (outcome === 'harmless') {
+      return { triggered: true, outcome: 'harmless', instance: null };
+    }
+
+    // Look for matching crime encounter definitions
+    const crimeDefs = this.definitions.filter((d) => d.category === 'crime');
+    let matchingDef = crimeDefs.find((d) =>
+      evaluateCondition(d.trigger, { ...ctx, segment })
+    );
+    if (!matchingDef && crimeDefs.length > 0) {
+      matchingDef = crimeDefs[0];
+    }
+
+    let instance: EncounterInstance | null = null;
+    if (matchingDef) {
+      // Ensure 'turn_around' is always available before entering a dangerous segment
+      const validChoices: EncounterChoiceDef[] = [];
+      let hasTurnAround = false;
+      for (const choice of matchingDef.choices) {
+        if (choice.id === 'turn_around') hasTurnAround = true;
+        if (!choice.requires || evaluateCondition(choice.requires, ctx)) {
+          validChoices.push(choice);
+        }
+      }
+
+      if (!hasTurnAround) {
+        validChoices.unshift({
+          id: 'turn_around',
+          labelKey: 'encounter.crime.choice.turn_around',
+          effects: [{ type: 'route', action: 'avoid', ref: segment.segmentId }],
+        });
+      }
+
+      instance = {
+        id: `inst_${matchingDef.id}_${Math.floor(ctx.minute)}_${r.int(1000, 9999)}`,
+        encounterId: matchingDef.id,
+        lineKey: matchingDef.lineKey,
+        choices: validChoices.map((c) => ({ id: c.id, labelKey: c.labelKey })),
+      };
+
+      this.activeEncounter = instance;
+      this.activeEncounterDef = matchingDef;
+
+      if (bus) {
+        bus.emit('encounter/started', { instance });
+      }
+    }
+
+    return { triggered: true, outcome, instance };
+  }
+
+  resolveFlee(speedKmh: number, bikeCondition: number, rng?: Rng): FleeResult {
+    return resolveFlee({ speedKmh, bikeCondition, rng: rng ?? this.rng });
+  }
+
+  resolveRobbery(cashOnHand: number, rng?: Rng): RobberyResult {
+    return resolveRobbery(cashOnHand, rng ?? this.rng);
   }
 }

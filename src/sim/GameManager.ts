@@ -22,6 +22,7 @@ import routeEncounters from '../../data/encounters/route.json';
 import pickupEncounters from '../../data/encounters/pickup.json';
 import paymentEncounters from '../../data/encounters/payment.json';
 import bikeEncounters from '../../data/encounters/bike.json';
+import crimeEncounters from '../../data/encounters/crime.json';
 import { ReputationSystem } from './reputation/ReputationSystem';
 import type { SafetyRecord } from '../core/types';
 
@@ -30,6 +31,7 @@ const DEFAULT_ENCOUNTERS: EncounterDef[] = [
   ...pickupEncounters,
   ...paymentEncounters,
   ...bikeEncounters,
+  ...crimeEncounters,
 ] as EncounterDef[];
 
 export interface GameData {

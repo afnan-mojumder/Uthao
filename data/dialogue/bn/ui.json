@@ -51,5 +51,14 @@
   "encounter.no_change.choice.digital": "মোবাইল ব্যাংকিংয়ে টাকা নিন",
   "encounter.puncture.title": "টায়ার পাংচার হয়েছে!",
   "encounter.puncture.choice.mechanic": "কাছের মেকানিক (-৳২৫০, ১০ মিনিট)",
-  "encounter.puncture.choice.mintu": "সাহায্যের জন্য মিন্টুকে ডাকুন (২৫ মিনিট)"
+  "encounter.puncture.choice.mintu": "সাহায্যের জন্য মিন্টুকে ডাকুন (২৫ মিনিট)",
+  "encounter.crime.suspicious_pickup.title": "এই পিকআপ জায়গাটা ঠিক লাগছে না: 'কিছু একটা ঠিক লাগছে না'",
+  "encounter.crime.dark_alley.title": "সামনে অন্ধকার গলিতে কয়েকজন পথ আটকে দাঁড়িয়ে আছে",
+  "encounter.crime.robbery_attempt.title": "রাস্তায় দাঁড়িয়ে কয়েকজন মোটরসাইকেল থামাতে বলছে",
+  "encounter.crime.choice.turn_around": "ঢোকার আগেই ঘুরে ফিরে যান",
+  "encounter.crime.choice.refuse_report": "পিকআপ বাতিল করে অ্যাপে রিপোর্ট করুন",
+  "encounter.crime.choice.proceed": "সাবধানে এগিয়ে যান",
+  "encounter.crime.choice.try_flee": "গতি বাড়িয়ে পালিয়ে যান",
+  "encounter.crime.choice.comply": "দাবি মেনে টাকা দিয়ে দিন",
+  "encounter.crime.choice.call_help": "ফোনে সাহায্যের জন্য কল করুন"
 }

@@ -1,0 +1,117 @@
+[
+  {
+    "id": "enc_suspicious_pickup",
+    "category": "crime",
+    "trigger": {
+      "phase": "atPickup",
+      "roadType": ["alley"]
+    },
+    "weight": 8,
+    "cooldownMin": 60,
+    "oncePerDay": false,
+    "lineKey": "encounter.crime.suspicious_pickup.title",
+    "choices": [
+      {
+        "id": "turn_around",
+        "labelKey": "encounter.crime.choice.turn_around",
+        "effects": [
+          { "type": "route", "action": "avoid", "ref": "active_segment" }
+        ]
+      },
+      {
+        "id": "refuse_report",
+        "labelKey": "encounter.crime.choice.refuse_report",
+        "effects": [
+          { "type": "localTrust", "delta": 5 },
+          { "type": "endTrip", "paid": false }
+        ]
+      },
+      {
+        "id": "proceed",
+        "labelKey": "encounter.crime.choice.proceed",
+        "effects": [
+          { "type": "flag", "key": "enteredSuspiciousZone", "value": true }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "enc_dark_alley_blockage",
+    "category": "crime",
+    "trigger": {
+      "phase": "onTrip",
+      "roadType": ["alley"],
+      "hours": [20, 5]
+    },
+    "weight": 10,
+    "cooldownMin": 60,
+    "oncePerDay": false,
+    "lineKey": "encounter.crime.dark_alley.title",
+    "choices": [
+      {
+        "id": "turn_around",
+        "labelKey": "encounter.crime.choice.turn_around",
+        "effects": [
+          { "type": "route", "action": "avoid", "ref": "active_segment" }
+        ]
+      },
+      {
+        "id": "try_flee",
+        "labelKey": "encounter.crime.choice.try_flee",
+        "effects": [
+          { "type": "startMinigame", "kind": "flee" }
+        ]
+      },
+      {
+        "id": "comply",
+        "labelKey": "encounter.crime.choice.comply",
+        "effects": [
+          { "type": "flag", "key": "robberyComply", "value": true }
+        ]
+      },
+      {
+        "id": "call_help",
+        "labelKey": "encounter.crime.choice.call_help",
+        "effects": [
+          { "type": "time", "min": 2 },
+          { "type": "localTrust", "delta": 5 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "enc_robbery_attempt",
+    "category": "crime",
+    "trigger": {
+      "phase": "roaming",
+      "hours": [22, 5]
+    },
+    "weight": 7,
+    "cooldownMin": 90,
+    "oncePerDay": false,
+    "lineKey": "encounter.crime.robbery_attempt.title",
+    "choices": [
+      {
+        "id": "turn_around",
+        "labelKey": "encounter.crime.choice.turn_around",
+        "effects": [
+          { "type": "route", "action": "avoid", "ref": "active_segment" }
+        ]
+      },
+      {
+        "id": "try_flee",
+        "labelKey": "encounter.crime.choice.try_flee",
+        "effects": [
+          { "type": "startMinigame", "kind": "flee" }
+        ]
+      },
+      {
+        "id": "comply",
+        "labelKey": "encounter.crime.choice.comply",
+        "effects": [
+          { "type": "flag", "key": "robbed", "value": true }
+        ]
+      }
+    ]
+  }
+]

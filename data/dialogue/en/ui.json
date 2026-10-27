@@ -51,5 +51,14 @@
   "encounter.no_change.choice.digital": "Accept mobile wallet transfer",
   "encounter.puncture.title": "Tire puncture!",
   "encounter.puncture.choice.mechanic": "Nearby mechanic (-৳250, 10 min)",
-  "encounter.puncture.choice.mintu": "Call Mintu for help (25 min)"
+  "encounter.puncture.choice.mintu": "Call Mintu for help (25 min)",
+  "encounter.crime.suspicious_pickup.title": "Something feels off about this pickup spot: 'Kichu ekta thik lagche na'",
+  "encounter.crime.dark_alley.title": "A group is blocking the narrow dark lane ahead",
+  "encounter.crime.robbery_attempt.title": "Aggressive figures step into the road demanding you stop",
+  "encounter.crime.choice.turn_around": "Turn around before entering",
+  "encounter.crime.choice.refuse_report": "Refuse pickup and report in-app",
+  "encounter.crime.choice.proceed": "Proceed cautiously",
+  "encounter.crime.choice.try_flee": "Accelerate and flee",
+  "encounter.crime.choice.comply": "Comply and surrender cash",
+  "encounter.crime.choice.call_help": "Call for help on phone"
 }
