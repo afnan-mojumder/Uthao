@@ -49,7 +49,7 @@ Format: `- [ ] **<id>** <title> (<points>), deps: <ids>`. Tick by changing only 
 - [x] **T3.5** Time of day and weather (5), deps: T1.3, T1.5
 - [x] **T3.6** EventDirector and encounter framework (5), deps: T1.6, T0.4 (T)
 - [x] **T3.3** City builder, render (8), deps: T3.2, T3.1 (T), T1.3
-- [ ] **T3.4** Pedestrians, rickshaws, local traffic (5), deps: T2.7
+- [x] **T3.4** Pedestrians, rickshaws, local traffic (5), deps: T2.7
 - [ ] **T4.2** ReputationSystem (3), deps: T2.6
 - [ ] **T4.6** Crime and suspicious-pickup system (5), deps: T3.6
 - [ ] **T4.7** MissionManager, chapters 1–2, v1 crime mission, v1 ending (8), deps: T3.8 (T), T4.1 (T)

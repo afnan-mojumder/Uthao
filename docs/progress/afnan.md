@@ -21,3 +21,4 @@ One line per finished task: `YYYY-MM-DD Tx.y done — note`
 2026-10-27 T3.5 done — Time of day cycle, WeatherSystem with flood accumulation, and WeatherFx rendering with rain, headlights, and streetlights
 2026-10-27 T3.6 done — EventDirector, encounter conditions/effects, ChoiceCard UI, and encounter data schemas
 2026-10-27 T3.3 done — CityBuilder procedural roads, Dhaka apartment blocks, Bangla signage atlas, LOD culling, and Playwright 30s autopilot perf budget verification (75 draw calls <= 150, 2.8k tris <= 300k)
+2026-10-27 T3.4 done — PedestrianManager with fairness-bounded jaywalking (1.5x stopping distance), bus stop dwelling (10-20s), rickshaws (3.5 m/s, slow turns), horn yield, and PeopleRenderer instanced rendering
