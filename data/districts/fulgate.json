@@ -1,0 +1,2048 @@
+{
+  "districtId": "fulgate",
+  "name": {
+    "bn": "ফার্মগেট",
+    "en": "Fulgate"
+  },
+  "nodes": [
+    {
+      "nodeId": "fulgate_art_n_0",
+      "x": 600,
+      "z": 295,
+      "kind": "uturn",
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "nodeId": "fulgate_art_s_0",
+      "x": 600,
+      "z": 305,
+      "kind": "uturn",
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "nodeId": "fulgate_art_n_1",
+      "x": 750,
+      "z": 295,
+      "kind": "uturn",
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "nodeId": "fulgate_art_s_1",
+      "x": 750,
+      "z": 305,
+      "kind": "uturn",
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "nodeId": "fulgate_art_n_2",
+      "x": 900,
+      "z": 295,
+      "kind": "junction",
+      "signal": true,
+      "tags": [
+        "crossing"
+      ]
+    },
+    {
+      "nodeId": "fulgate_art_s_2",
+      "x": 900,
+      "z": 305,
+      "kind": "junction",
+      "signal": true,
+      "tags": [
+        "crossing"
+      ]
+    },
+    {
+      "nodeId": "fulgate_art_n_3",
+      "x": 1050,
+      "z": 295,
+      "kind": "uturn",
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "nodeId": "fulgate_art_s_3",
+      "x": 1050,
+      "z": 305,
+      "kind": "uturn",
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "nodeId": "fulgate_art_n_4",
+      "x": 1200,
+      "z": 295,
+      "kind": "uturn",
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "nodeId": "fulgate_art_s_4",
+      "x": 1200,
+      "z": 305,
+      "kind": "uturn",
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "nodeId": "fulgate_res_n1_0",
+      "x": 600,
+      "z": 81,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "fulgate_res_n2_0",
+      "x": 600,
+      "z": 181,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "fulgate_res_n1_1",
+      "x": 750,
+      "z": 81,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "fulgate_res_n2_1",
+      "x": 750,
+      "z": 181,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "fulgate_res_n1_2",
+      "x": 903,
+      "z": 82,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "fulgate_res_n2_2",
+      "x": 903,
+      "z": 182,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "fulgate_res_n1_3",
+      "x": 1051,
+      "z": 81,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "fulgate_res_n2_3",
+      "x": 1051,
+      "z": 181,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "fulgate_res_n1_4",
+      "x": 1200,
+      "z": 81,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "fulgate_res_n2_4",
+      "x": 1200,
+      "z": 181,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "fulgate_res_s1_0",
+      "x": 600,
+      "z": 420,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "fulgate_res_s2_0",
+      "x": 600,
+      "z": 520,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "fulgate_res_s1_1",
+      "x": 748,
+      "z": 420,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "fulgate_res_s2_1",
+      "x": 748,
+      "z": 520,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "fulgate_res_s1_2",
+      "x": 903,
+      "z": 421,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "fulgate_res_s2_2",
+      "x": 903,
+      "z": 521,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "fulgate_res_s1_3",
+      "x": 1052,
+      "z": 421,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "fulgate_res_s2_3",
+      "x": 1052,
+      "z": 521,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "fulgate_res_s1_4",
+      "x": 1200,
+      "z": 421,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "fulgate_res_s2_4",
+      "x": 1200,
+      "z": 521,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "fulgate_alley_nw_mid",
+      "x": 675,
+      "z": 130,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "fulgate_alley_ne_gate",
+      "x": 975,
+      "z": 50,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "fulgate_alley_sc_mid",
+      "x": 825,
+      "z": 470,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "fulgate_alley_se_deadend",
+      "x": 1125,
+      "z": 490,
+      "kind": "deadEnd"
+    }
+  ],
+  "segments": [
+    {
+      "segmentId": "S_fulgate_1",
+      "startNodeId": "fulgate_art_n_0",
+      "endNodeId": "fulgate_art_n_1",
+      "width": 12,
+      "surfaceCondition": 0.95,
+      "trafficDensity": 0.8,
+      "speedLimit": 50,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.15,
+      "oneWay": true,
+      "divided": true,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "fulgate",
+      "tags": [
+        "arterial"
+      ]
+    },
+    {
+      "segmentId": "S_fulgate_2",
+      "startNodeId": "fulgate_art_s_1",
+      "endNodeId": "fulgate_art_s_0",
+      "width": 12,
+      "surfaceCondition": 0.95,
+      "trafficDensity": 0.8,
+      "speedLimit": 50,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.15,
+      "oneWay": true,
+      "divided": true,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "fulgate",
+      "tags": [
+        "arterial"
+      ]
+    },
+    {
+      "segmentId": "S_fulgate_3",
+      "startNodeId": "fulgate_art_n_1",
+      "endNodeId": "fulgate_art_n_2",
+      "width": 12,
+      "surfaceCondition": 0.95,
+      "trafficDensity": 0.8,
+      "speedLimit": 50,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.15,
+      "oneWay": true,
+      "divided": true,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "fulgate",
+      "tags": [
+        "arterial"
+      ]
+    },
+    {
+      "segmentId": "S_fulgate_4",
+      "startNodeId": "fulgate_art_s_2",
+      "endNodeId": "fulgate_art_s_1",
+      "width": 12,
+      "surfaceCondition": 0.95,
+      "trafficDensity": 0.8,
+      "speedLimit": 50,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.15,
+      "oneWay": true,
+      "divided": true,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "fulgate",
+      "tags": [
+        "arterial"
+      ]
+    },
+    {
+      "segmentId": "S_fulgate_5",
+      "startNodeId": "fulgate_art_n_2",
+      "endNodeId": "fulgate_art_n_3",
+      "width": 12,
+      "surfaceCondition": 0.95,
+      "trafficDensity": 0.8,
+      "speedLimit": 50,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.15,
+      "oneWay": true,
+      "divided": true,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "fulgate",
+      "tags": [
+        "arterial"
+      ]
+    },
+    {
+      "segmentId": "S_fulgate_6",
+      "startNodeId": "fulgate_art_s_3",
+      "endNodeId": "fulgate_art_s_2",
+      "width": 12,
+      "surfaceCondition": 0.95,
+      "trafficDensity": 0.8,
+      "speedLimit": 50,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.15,
+      "oneWay": true,
+      "divided": true,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "fulgate",
+      "tags": [
+        "arterial"
+      ]
+    },
+    {
+      "segmentId": "S_fulgate_7",
+      "startNodeId": "fulgate_art_n_3",
+      "endNodeId": "fulgate_art_n_4",
+      "width": 12,
+      "surfaceCondition": 0.95,
+      "trafficDensity": 0.8,
+      "speedLimit": 50,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.15,
+      "oneWay": true,
+      "divided": true,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "fulgate",
+      "tags": [
+        "arterial"
+      ]
+    },
+    {
+      "segmentId": "S_fulgate_8",
+      "startNodeId": "fulgate_art_s_4",
+      "endNodeId": "fulgate_art_s_3",
+      "width": 12,
+      "surfaceCondition": 0.95,
+      "trafficDensity": 0.8,
+      "speedLimit": 50,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.15,
+      "oneWay": true,
+      "divided": true,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "fulgate",
+      "tags": [
+        "arterial"
+      ]
+    },
+    {
+      "segmentId": "S_fulgate_9",
+      "startNodeId": "fulgate_art_n_0",
+      "endNodeId": "fulgate_art_s_0",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 25,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.15,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "fulgate",
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "segmentId": "S_fulgate_10",
+      "startNodeId": "fulgate_art_n_1",
+      "endNodeId": "fulgate_art_s_1",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 25,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.15,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "fulgate",
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "segmentId": "S_fulgate_11",
+      "startNodeId": "fulgate_art_n_2",
+      "endNodeId": "fulgate_art_s_2",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 25,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.6,
+      "riskLevel": 0.15,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "fulgate",
+      "tags": [
+        "crossing",
+        "footbridge"
+      ]
+    },
+    {
+      "segmentId": "S_fulgate_12",
+      "startNodeId": "fulgate_art_n_3",
+      "endNodeId": "fulgate_art_s_3",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 25,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.15,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "fulgate",
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "segmentId": "S_fulgate_13",
+      "startNodeId": "fulgate_art_n_4",
+      "endNodeId": "fulgate_art_s_4",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 25,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.15,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "fulgate",
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "segmentId": "S_fulgate_14",
+      "startNodeId": "fulgate_res_n1_0",
+      "endNodeId": "fulgate_res_n1_1",
+      "width": 7,
+      "surfaceCondition": 0.6,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.15,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.85,
+      "pickupPractical": true,
+      "district": "fulgate",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_fulgate_15",
+      "startNodeId": "fulgate_res_n2_0",
+      "endNodeId": "fulgate_res_n2_1",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.15,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "fulgate",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_fulgate_16",
+      "startNodeId": "fulgate_res_n1_1",
+      "endNodeId": "fulgate_res_n1_2",
+      "width": 7,
+      "surfaceCondition": 0.85,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.15,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "fulgate",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_fulgate_17",
+      "startNodeId": "fulgate_res_n2_1",
+      "endNodeId": "fulgate_res_n2_2",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.15,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "fulgate",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_fulgate_18",
+      "startNodeId": "fulgate_res_n1_2",
+      "endNodeId": "fulgate_res_n1_3",
+      "width": 7,
+      "surfaceCondition": 0.85,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.15,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "fulgate",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_fulgate_19",
+      "startNodeId": "fulgate_res_n2_2",
+      "endNodeId": "fulgate_res_n2_3",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.15,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "fulgate",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_fulgate_20",
+      "startNodeId": "fulgate_res_n1_3",
+      "endNodeId": "fulgate_res_n1_4",
+      "width": 7,
+      "surfaceCondition": 0.85,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.15,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "fulgate",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_fulgate_21",
+      "startNodeId": "fulgate_res_n2_3",
+      "endNodeId": "fulgate_res_n2_4",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.15,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "fulgate",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_fulgate_22",
+      "startNodeId": "fulgate_res_n1_0",
+      "endNodeId": "fulgate_res_n2_0",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.15,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "fulgate",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_fulgate_23",
+      "startNodeId": "fulgate_res_n2_0",
+      "endNodeId": "fulgate_art_n_0",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 35,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.15,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "fulgate",
+      "tags": []
+    },
+    {
+      "segmentId": "S_fulgate_24",
+      "startNodeId": "fulgate_res_n1_1",
+      "endNodeId": "fulgate_res_n2_1",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.15,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "fulgate",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_fulgate_25",
+      "startNodeId": "fulgate_res_n2_1",
+      "endNodeId": "fulgate_art_n_1",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 35,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.15,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "fulgate",
+      "tags": []
+    },
+    {
+      "segmentId": "S_fulgate_26",
+      "startNodeId": "fulgate_res_n1_2",
+      "endNodeId": "fulgate_res_n2_2",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.15,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "fulgate",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_fulgate_27",
+      "startNodeId": "fulgate_res_n2_2",
+      "endNodeId": "fulgate_art_n_2",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 35,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.15,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "fulgate",
+      "tags": []
+    },
+    {
+      "segmentId": "S_fulgate_28",
+      "startNodeId": "fulgate_res_n1_3",
+      "endNodeId": "fulgate_res_n2_3",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.15,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "fulgate",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_fulgate_29",
+      "startNodeId": "fulgate_res_n2_3",
+      "endNodeId": "fulgate_art_n_3",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 35,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.15,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "fulgate",
+      "tags": []
+    },
+    {
+      "segmentId": "S_fulgate_30",
+      "startNodeId": "fulgate_res_n1_4",
+      "endNodeId": "fulgate_res_n2_4",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.15,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "fulgate",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_fulgate_31",
+      "startNodeId": "fulgate_res_n2_4",
+      "endNodeId": "fulgate_art_n_4",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 35,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.15,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "fulgate",
+      "tags": []
+    },
+    {
+      "segmentId": "S_fulgate_32",
+      "startNodeId": "fulgate_res_s1_0",
+      "endNodeId": "fulgate_res_s1_1",
+      "width": 9,
+      "surfaceCondition": 0.65,
+      "trafficDensity": 0.7,
+      "speedLimit": 25,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.85,
+      "riskLevel": 0.15,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "fulgate",
+      "tags": [
+        "market"
+      ]
+    },
+    {
+      "segmentId": "S_fulgate_33",
+      "startNodeId": "fulgate_res_s2_0",
+      "endNodeId": "fulgate_res_s2_1",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.15,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "fulgate",
+      "tags": []
+    },
+    {
+      "segmentId": "S_fulgate_34",
+      "startNodeId": "fulgate_res_s1_1",
+      "endNodeId": "fulgate_res_s1_2",
+      "width": 9,
+      "surfaceCondition": 0.65,
+      "trafficDensity": 0.7,
+      "speedLimit": 25,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.85,
+      "riskLevel": 0.15,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "fulgate",
+      "tags": [
+        "market"
+      ]
+    },
+    {
+      "segmentId": "S_fulgate_35",
+      "startNodeId": "fulgate_res_s2_1",
+      "endNodeId": "fulgate_res_s2_2",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.15,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "fulgate",
+      "tags": []
+    },
+    {
+      "segmentId": "S_fulgate_36",
+      "startNodeId": "fulgate_res_s1_2",
+      "endNodeId": "fulgate_res_s1_3",
+      "width": 9,
+      "surfaceCondition": 0.65,
+      "trafficDensity": 0.7,
+      "speedLimit": 25,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.85,
+      "riskLevel": 0.15,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "fulgate",
+      "tags": [
+        "market"
+      ]
+    },
+    {
+      "segmentId": "S_fulgate_37",
+      "startNodeId": "fulgate_res_s2_2",
+      "endNodeId": "fulgate_res_s2_3",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.15,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "fulgate",
+      "tags": []
+    },
+    {
+      "segmentId": "S_fulgate_38",
+      "startNodeId": "fulgate_res_s1_3",
+      "endNodeId": "fulgate_res_s1_4",
+      "width": 9,
+      "surfaceCondition": 0.65,
+      "trafficDensity": 0.7,
+      "speedLimit": 25,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.85,
+      "riskLevel": 0.15,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "fulgate",
+      "tags": [
+        "market"
+      ]
+    },
+    {
+      "segmentId": "S_fulgate_39",
+      "startNodeId": "fulgate_res_s2_3",
+      "endNodeId": "fulgate_res_s2_4",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.15,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "fulgate",
+      "tags": []
+    },
+    {
+      "segmentId": "S_fulgate_40",
+      "startNodeId": "fulgate_art_s_0",
+      "endNodeId": "fulgate_res_s1_0",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 35,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.15,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "fulgate",
+      "tags": []
+    },
+    {
+      "segmentId": "S_fulgate_41",
+      "startNodeId": "fulgate_res_s1_0",
+      "endNodeId": "fulgate_res_s2_0",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.15,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "fulgate",
+      "tags": []
+    },
+    {
+      "segmentId": "S_fulgate_42",
+      "startNodeId": "fulgate_art_s_1",
+      "endNodeId": "fulgate_res_s1_1",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 35,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.15,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "fulgate",
+      "tags": []
+    },
+    {
+      "segmentId": "S_fulgate_43",
+      "startNodeId": "fulgate_res_s1_1",
+      "endNodeId": "fulgate_res_s2_1",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.15,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "fulgate",
+      "tags": []
+    },
+    {
+      "segmentId": "S_fulgate_44",
+      "startNodeId": "fulgate_art_s_2",
+      "endNodeId": "fulgate_res_s1_2",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 35,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.15,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "fulgate",
+      "tags": []
+    },
+    {
+      "segmentId": "S_fulgate_45",
+      "startNodeId": "fulgate_res_s1_2",
+      "endNodeId": "fulgate_res_s2_2",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.15,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "fulgate",
+      "tags": []
+    },
+    {
+      "segmentId": "S_fulgate_46",
+      "startNodeId": "fulgate_art_s_3",
+      "endNodeId": "fulgate_res_s1_3",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 35,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.15,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "fulgate",
+      "tags": []
+    },
+    {
+      "segmentId": "S_fulgate_47",
+      "startNodeId": "fulgate_res_s1_3",
+      "endNodeId": "fulgate_res_s2_3",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.15,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "fulgate",
+      "tags": []
+    },
+    {
+      "segmentId": "S_fulgate_48",
+      "startNodeId": "fulgate_art_s_4",
+      "endNodeId": "fulgate_res_s1_4",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 35,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.15,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "fulgate",
+      "tags": []
+    },
+    {
+      "segmentId": "S_fulgate_49",
+      "startNodeId": "fulgate_res_s1_4",
+      "endNodeId": "fulgate_res_s2_4",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.15,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "fulgate",
+      "tags": []
+    },
+    {
+      "segmentId": "S_fulgate_50",
+      "startNodeId": "fulgate_res_n1_0",
+      "endNodeId": "fulgate_alley_nw_mid",
+      "width": 3.5,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 20,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.15,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "alley",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "fulgate",
+      "tags": [
+        "alley"
+      ]
+    },
+    {
+      "segmentId": "S_fulgate_51",
+      "startNodeId": "fulgate_alley_nw_mid",
+      "endNodeId": "fulgate_res_n2_1",
+      "width": 3.5,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 20,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.15,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "alley",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "fulgate",
+      "tags": [
+        "alley"
+      ]
+    },
+    {
+      "segmentId": "S_fulgate_52",
+      "startNodeId": "fulgate_res_n1_2",
+      "endNodeId": "fulgate_alley_ne_gate",
+      "width": 2.5,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 15,
+      "turnRestrictions": [],
+      "motorcycleAccessible": false,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.15,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "alley",
+      "floodSensitivity": 0.2,
+      "pickupPractical": false,
+      "district": "fulgate",
+      "tags": [
+        "alley",
+        "pedestrian_only"
+      ]
+    },
+    {
+      "segmentId": "S_fulgate_53",
+      "startNodeId": "fulgate_alley_ne_gate",
+      "endNodeId": "fulgate_res_n1_3",
+      "width": 2.5,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 15,
+      "turnRestrictions": [],
+      "motorcycleAccessible": false,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.15,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "alley",
+      "floodSensitivity": 0.2,
+      "pickupPractical": false,
+      "district": "fulgate",
+      "tags": [
+        "alley",
+        "pedestrian_only"
+      ]
+    },
+    {
+      "segmentId": "S_fulgate_54",
+      "startNodeId": "fulgate_res_s1_1",
+      "endNodeId": "fulgate_alley_sc_mid",
+      "width": 3.5,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 20,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.15,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "alley",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "fulgate",
+      "tags": [
+        "alley"
+      ]
+    },
+    {
+      "segmentId": "S_fulgate_55",
+      "startNodeId": "fulgate_alley_sc_mid",
+      "endNodeId": "fulgate_res_s2_2",
+      "width": 3.5,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 20,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.15,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "alley",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "fulgate",
+      "tags": [
+        "alley"
+      ]
+    },
+    {
+      "segmentId": "S_fulgate_56",
+      "startNodeId": "fulgate_res_s2_3",
+      "endNodeId": "fulgate_alley_se_deadend",
+      "width": 2.5,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 15,
+      "turnRestrictions": [],
+      "motorcycleAccessible": false,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.15,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "alley",
+      "floodSensitivity": 0.2,
+      "pickupPractical": false,
+      "district": "fulgate",
+      "tags": [
+        "alley",
+        "deadend"
+      ]
+    }
+  ],
+  "pois": [
+    {
+      "id": "poi_fulgate_junction",
+      "kind": "crossing",
+      "nodeId": "fulgate_art_n_2",
+      "nameKey": "poi.fulgate.junction"
+    },
+    {
+      "id": "poi_fulgate_bus_terminal",
+      "kind": "busStop",
+      "nodeId": "fulgate_res_n2_1",
+      "nameKey": "poi.fulgate.bus_terminal"
+    },
+    {
+      "id": "poi_fulgate_footbridge",
+      "kind": "crossing",
+      "nodeId": "fulgate_art_n_1",
+      "nameKey": "poi.fulgate.footbridge"
+    },
+    {
+      "id": "poi_fulgate_ananda_cinema",
+      "kind": "market",
+      "nodeId": "fulgate_res_s1_2",
+      "nameKey": "poi.fulgate.ananda_cinema"
+    },
+    {
+      "id": "poi_fulgate_tea_stall",
+      "kind": "teaStall",
+      "nodeId": "fulgate_res_n1_0",
+      "nameKey": "poi.fulgate.tea_stall"
+    },
+    {
+      "id": "poi_fulgate_fuel",
+      "kind": "fuel",
+      "nodeId": "fulgate_art_s_3",
+      "nameKey": "poi.fulgate.fuel"
+    }
+  ],
+  "lots": [
+    {
+      "lotId": "lot_fulgate_1",
+      "x": 675,
+      "z": 283,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5707963267948966,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_fulgate_2",
+      "x": 675,
+      "z": 317,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": -1.5707963267948966,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_fulgate_3",
+      "x": 825,
+      "z": 283,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5707963267948966,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_fulgate_4",
+      "x": 825,
+      "z": 317,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": -1.5707963267948966,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_fulgate_5",
+      "x": 975,
+      "z": 283,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5707963267948966,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_fulgate_6",
+      "x": 975,
+      "z": 317,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": -1.5707963267948966,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_fulgate_7",
+      "x": 1125,
+      "z": 283,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5707963267948966,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_fulgate_8",
+      "x": 1125,
+      "z": 317,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": -1.5707963267948966,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_fulgate_9",
+      "x": 612,
+      "z": 300,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_fulgate_10",
+      "x": 762,
+      "z": 300,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_fulgate_11",
+      "x": 912,
+      "z": 300,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_fulgate_12",
+      "x": 1062,
+      "z": 300,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_fulgate_13",
+      "x": 1212,
+      "z": 300,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_fulgate_14",
+      "x": 675,
+      "z": 69,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5707963267948966,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_fulgate_15",
+      "x": 675,
+      "z": 169,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5707963267948966,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_fulgate_16",
+      "x": 827,
+      "z": 70,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5642604721489655,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_fulgate_17",
+      "x": 827,
+      "z": 170,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5642604721489655,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_fulgate_18",
+      "x": 977,
+      "z": 70,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.577552980730682,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_fulgate_19",
+      "x": 977,
+      "z": 170,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.577552980730682,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_fulgate_20",
+      "x": 1126,
+      "z": 69,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5707963267948966,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_fulgate_21",
+      "x": 1126,
+      "z": 169,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5707963267948966,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_fulgate_22",
+      "x": 612,
+      "z": 131,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_fulgate_23",
+      "x": 612,
+      "z": 238,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_fulgate_24",
+      "x": 762,
+      "z": 131,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_fulgate_25",
+      "x": 762,
+      "z": 238,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_fulgate_26",
+      "x": 915,
+      "z": 132,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_fulgate_27",
+      "x": 913,
+      "z": 239,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": -0.026542437751397186,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_fulgate_28",
+      "x": 1063,
+      "z": 131,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_fulgate_29",
+      "x": 1062,
+      "z": 238,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": -0.008771704844442806,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_fulgate_30",
+      "x": 1212,
+      "z": 131,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_fulgate_31",
+      "x": 1212,
+      "z": 238,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_fulgate_32",
+      "x": 674,
+      "z": 408,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5707963267948966,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_fulgate_33",
+      "x": 674,
+      "z": 508,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5707963267948966,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_fulgate_34",
+      "x": 826,
+      "z": 409,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.564344803401928,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_fulgate_35",
+      "x": 826,
+      "z": 509,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.564344803401928,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_fulgate_36",
+      "x": 978,
+      "z": 409,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5707963267948966,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_fulgate_37",
+      "x": 978,
+      "z": 509,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5707963267948966,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_fulgate_38",
+      "x": 1126,
+      "z": 409,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5707963267948966,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_fulgate_39",
+      "x": 1126,
+      "z": 509,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5707963267948966,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_fulgate_40",
+      "x": 612,
+      "z": 363,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_fulgate_41",
+      "x": 612,
+      "z": 470,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_fulgate_42",
+      "x": 761,
+      "z": 363,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": -0.017389551289330653,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_fulgate_43",
+      "x": 760,
+      "z": 470,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_fulgate_44",
+      "x": 913,
+      "z": 363,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0.025856305359259733,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_fulgate_45",
+      "x": 915,
+      "z": 471,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_fulgate_46",
+      "x": 1063,
+      "z": 363,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0.017239671194529696,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_fulgate_47",
+      "x": 1064,
+      "z": 471,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_fulgate_48",
+      "x": 1212,
+      "z": 363,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_fulgate_49",
+      "x": 1212,
+      "z": 471,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_fulgate_50",
+      "x": 644,
+      "z": 95,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0.9920813818816976,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_fulgate_51",
+      "x": 719,
+      "z": 146,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0.973619668702219,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_fulgate_52",
+      "x": 793,
+      "z": 435,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0.9948777271765435,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_fulgate_53",
+      "x": 871,
+      "z": 485,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0.9917220574271658,
+      "zone": "residential"
+    }
+  ]
+}

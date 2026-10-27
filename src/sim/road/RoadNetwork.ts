@@ -1,5 +1,5 @@
 import type { RoadNode, RoadSegment } from '../../core/types';
-import type { DistrictData, Poi } from '../schemas';
+import type { DistrictData, Poi, WorldData } from '../schemas';
 import {
   RoutingGraph,
   type Route,
@@ -22,7 +22,10 @@ export class RoadNetwork {
     this.graph = new RoutingGraph(nodes, segments);
   }
 
-  static fromDistricts(districts: DistrictData[]): RoadNetwork {
+  static fromDistricts(
+    districts: DistrictData[],
+    connectors: RoadSegment[] = []
+  ): RoadNetwork {
     const allNodes: RoadNode[] = [];
     const allSegments: RoadSegment[] = [];
     const allPois: Poi[] = [];
@@ -48,7 +51,21 @@ export class RoadNetwork {
       }
     }
 
+    for (const conn of connectors) {
+      if (!segmentIds.has(conn.segmentId)) {
+        segmentIds.add(conn.segmentId);
+        allSegments.push(conn);
+      }
+    }
+
     return new RoadNetwork(allNodes, allSegments, allPois);
+  }
+
+  static fromWorld(
+    worldData: WorldData,
+    districts: DistrictData[]
+  ): RoadNetwork {
+    return RoadNetwork.fromDistricts(districts, worldData.connectors ?? []);
   }
 
   nearestNode(

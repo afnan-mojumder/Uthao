@@ -1,0 +1,2046 @@
+{
+  "districtId": "motinagar",
+  "name": {
+    "bn": "মতিনগর",
+    "en": "Motinagar"
+  },
+  "nodes": [
+    {
+      "nodeId": "motinagar_art_n_0",
+      "x": 600,
+      "z": 1495,
+      "kind": "uturn",
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "nodeId": "motinagar_art_s_0",
+      "x": 600,
+      "z": 1505,
+      "kind": "uturn",
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "nodeId": "motinagar_art_n_1",
+      "x": 750,
+      "z": 1495,
+      "kind": "uturn",
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "nodeId": "motinagar_art_s_1",
+      "x": 750,
+      "z": 1505,
+      "kind": "uturn",
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "nodeId": "motinagar_art_n_2",
+      "x": 900,
+      "z": 1495,
+      "kind": "junction",
+      "tags": [
+        "crossing"
+      ]
+    },
+    {
+      "nodeId": "motinagar_art_s_2",
+      "x": 900,
+      "z": 1505,
+      "kind": "junction",
+      "tags": [
+        "crossing"
+      ]
+    },
+    {
+      "nodeId": "motinagar_art_n_3",
+      "x": 1050,
+      "z": 1495,
+      "kind": "uturn",
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "nodeId": "motinagar_art_s_3",
+      "x": 1050,
+      "z": 1505,
+      "kind": "uturn",
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "nodeId": "motinagar_art_n_4",
+      "x": 1200,
+      "z": 1495,
+      "kind": "uturn",
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "nodeId": "motinagar_art_s_4",
+      "x": 1200,
+      "z": 1505,
+      "kind": "uturn",
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "nodeId": "motinagar_res_n1_0",
+      "x": 600,
+      "z": 1281,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "motinagar_res_n2_0",
+      "x": 600,
+      "z": 1381,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "motinagar_res_n1_1",
+      "x": 749,
+      "z": 1281,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "motinagar_res_n2_1",
+      "x": 749,
+      "z": 1381,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "motinagar_res_n1_2",
+      "x": 900,
+      "z": 1281,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "motinagar_res_n2_2",
+      "x": 900,
+      "z": 1381,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "motinagar_res_n1_3",
+      "x": 1049,
+      "z": 1279,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "motinagar_res_n2_3",
+      "x": 1049,
+      "z": 1379,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "motinagar_res_n1_4",
+      "x": 1200,
+      "z": 1281,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "motinagar_res_n2_4",
+      "x": 1200,
+      "z": 1381,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "motinagar_res_s1_0",
+      "x": 600,
+      "z": 1619,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "motinagar_res_s2_0",
+      "x": 600,
+      "z": 1719,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "motinagar_res_s1_1",
+      "x": 749,
+      "z": 1619,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "motinagar_res_s2_1",
+      "x": 749,
+      "z": 1719,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "motinagar_res_s1_2",
+      "x": 900,
+      "z": 1621,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "motinagar_res_s2_2",
+      "x": 900,
+      "z": 1721,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "motinagar_res_s1_3",
+      "x": 1050,
+      "z": 1619,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "motinagar_res_s2_3",
+      "x": 1050,
+      "z": 1719,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "motinagar_res_s1_4",
+      "x": 1200,
+      "z": 1619,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "motinagar_res_s2_4",
+      "x": 1200,
+      "z": 1719,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "motinagar_alley_nw_mid",
+      "x": 675,
+      "z": 1330,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "motinagar_alley_ne_gate",
+      "x": 975,
+      "z": 1250,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "motinagar_alley_sc_mid",
+      "x": 825,
+      "z": 1670,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "motinagar_alley_se_deadend",
+      "x": 1125,
+      "z": 1690,
+      "kind": "deadEnd"
+    }
+  ],
+  "segments": [
+    {
+      "segmentId": "S_motinagar_1",
+      "startNodeId": "motinagar_art_n_0",
+      "endNodeId": "motinagar_art_n_1",
+      "width": 12,
+      "surfaceCondition": 0.95,
+      "trafficDensity": 0.9,
+      "speedLimit": 45,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": true,
+      "divided": true,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "motinagar",
+      "tags": [
+        "arterial"
+      ]
+    },
+    {
+      "segmentId": "S_motinagar_2",
+      "startNodeId": "motinagar_art_s_1",
+      "endNodeId": "motinagar_art_s_0",
+      "width": 12,
+      "surfaceCondition": 0.95,
+      "trafficDensity": 0.9,
+      "speedLimit": 45,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": true,
+      "divided": true,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "motinagar",
+      "tags": [
+        "arterial"
+      ]
+    },
+    {
+      "segmentId": "S_motinagar_3",
+      "startNodeId": "motinagar_art_n_1",
+      "endNodeId": "motinagar_art_n_2",
+      "width": 12,
+      "surfaceCondition": 0.95,
+      "trafficDensity": 0.9,
+      "speedLimit": 45,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": true,
+      "divided": true,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "motinagar",
+      "tags": [
+        "arterial"
+      ]
+    },
+    {
+      "segmentId": "S_motinagar_4",
+      "startNodeId": "motinagar_art_s_2",
+      "endNodeId": "motinagar_art_s_1",
+      "width": 12,
+      "surfaceCondition": 0.95,
+      "trafficDensity": 0.9,
+      "speedLimit": 45,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": true,
+      "divided": true,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "motinagar",
+      "tags": [
+        "arterial"
+      ]
+    },
+    {
+      "segmentId": "S_motinagar_5",
+      "startNodeId": "motinagar_art_n_2",
+      "endNodeId": "motinagar_art_n_3",
+      "width": 12,
+      "surfaceCondition": 0.95,
+      "trafficDensity": 0.9,
+      "speedLimit": 45,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": true,
+      "divided": true,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "motinagar",
+      "tags": [
+        "arterial"
+      ]
+    },
+    {
+      "segmentId": "S_motinagar_6",
+      "startNodeId": "motinagar_art_s_3",
+      "endNodeId": "motinagar_art_s_2",
+      "width": 12,
+      "surfaceCondition": 0.95,
+      "trafficDensity": 0.9,
+      "speedLimit": 45,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": true,
+      "divided": true,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "motinagar",
+      "tags": [
+        "arterial"
+      ]
+    },
+    {
+      "segmentId": "S_motinagar_7",
+      "startNodeId": "motinagar_art_n_3",
+      "endNodeId": "motinagar_art_n_4",
+      "width": 12,
+      "surfaceCondition": 0.95,
+      "trafficDensity": 0.9,
+      "speedLimit": 45,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": true,
+      "divided": true,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "motinagar",
+      "tags": [
+        "arterial"
+      ]
+    },
+    {
+      "segmentId": "S_motinagar_8",
+      "startNodeId": "motinagar_art_s_4",
+      "endNodeId": "motinagar_art_s_3",
+      "width": 12,
+      "surfaceCondition": 0.95,
+      "trafficDensity": 0.9,
+      "speedLimit": 45,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": true,
+      "divided": true,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "motinagar",
+      "tags": [
+        "arterial"
+      ]
+    },
+    {
+      "segmentId": "S_motinagar_9",
+      "startNodeId": "motinagar_art_n_0",
+      "endNodeId": "motinagar_art_s_0",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 25,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "motinagar",
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "segmentId": "S_motinagar_10",
+      "startNodeId": "motinagar_art_n_1",
+      "endNodeId": "motinagar_art_s_1",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 25,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "motinagar",
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "segmentId": "S_motinagar_11",
+      "startNodeId": "motinagar_art_n_2",
+      "endNodeId": "motinagar_art_s_2",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 25,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.6,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "motinagar",
+      "tags": [
+        "crossing",
+        "footbridge"
+      ]
+    },
+    {
+      "segmentId": "S_motinagar_12",
+      "startNodeId": "motinagar_art_n_3",
+      "endNodeId": "motinagar_art_s_3",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 25,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "motinagar",
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "segmentId": "S_motinagar_13",
+      "startNodeId": "motinagar_art_n_4",
+      "endNodeId": "motinagar_art_s_4",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 25,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "motinagar",
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "segmentId": "S_motinagar_14",
+      "startNodeId": "motinagar_res_n1_0",
+      "endNodeId": "motinagar_res_n1_1",
+      "width": 7,
+      "surfaceCondition": 0.6,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.85,
+      "pickupPractical": true,
+      "district": "motinagar",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_motinagar_15",
+      "startNodeId": "motinagar_res_n2_0",
+      "endNodeId": "motinagar_res_n2_1",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "motinagar",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_motinagar_16",
+      "startNodeId": "motinagar_res_n1_1",
+      "endNodeId": "motinagar_res_n1_2",
+      "width": 7,
+      "surfaceCondition": 0.85,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "motinagar",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_motinagar_17",
+      "startNodeId": "motinagar_res_n2_1",
+      "endNodeId": "motinagar_res_n2_2",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "motinagar",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_motinagar_18",
+      "startNodeId": "motinagar_res_n1_2",
+      "endNodeId": "motinagar_res_n1_3",
+      "width": 7,
+      "surfaceCondition": 0.85,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "motinagar",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_motinagar_19",
+      "startNodeId": "motinagar_res_n2_2",
+      "endNodeId": "motinagar_res_n2_3",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "motinagar",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_motinagar_20",
+      "startNodeId": "motinagar_res_n1_3",
+      "endNodeId": "motinagar_res_n1_4",
+      "width": 7,
+      "surfaceCondition": 0.85,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "motinagar",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_motinagar_21",
+      "startNodeId": "motinagar_res_n2_3",
+      "endNodeId": "motinagar_res_n2_4",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "motinagar",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_motinagar_22",
+      "startNodeId": "motinagar_res_n1_0",
+      "endNodeId": "motinagar_res_n2_0",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "motinagar",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_motinagar_23",
+      "startNodeId": "motinagar_res_n2_0",
+      "endNodeId": "motinagar_art_n_0",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 35,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "motinagar",
+      "tags": []
+    },
+    {
+      "segmentId": "S_motinagar_24",
+      "startNodeId": "motinagar_res_n1_1",
+      "endNodeId": "motinagar_res_n2_1",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "motinagar",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_motinagar_25",
+      "startNodeId": "motinagar_res_n2_1",
+      "endNodeId": "motinagar_art_n_1",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 35,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "motinagar",
+      "tags": []
+    },
+    {
+      "segmentId": "S_motinagar_26",
+      "startNodeId": "motinagar_res_n1_2",
+      "endNodeId": "motinagar_res_n2_2",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "motinagar",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_motinagar_27",
+      "startNodeId": "motinagar_res_n2_2",
+      "endNodeId": "motinagar_art_n_2",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 35,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "motinagar",
+      "tags": []
+    },
+    {
+      "segmentId": "S_motinagar_28",
+      "startNodeId": "motinagar_res_n1_3",
+      "endNodeId": "motinagar_res_n2_3",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "motinagar",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_motinagar_29",
+      "startNodeId": "motinagar_res_n2_3",
+      "endNodeId": "motinagar_art_n_3",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 35,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "motinagar",
+      "tags": []
+    },
+    {
+      "segmentId": "S_motinagar_30",
+      "startNodeId": "motinagar_res_n1_4",
+      "endNodeId": "motinagar_res_n2_4",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "motinagar",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_motinagar_31",
+      "startNodeId": "motinagar_res_n2_4",
+      "endNodeId": "motinagar_art_n_4",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 35,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "motinagar",
+      "tags": []
+    },
+    {
+      "segmentId": "S_motinagar_32",
+      "startNodeId": "motinagar_res_s1_0",
+      "endNodeId": "motinagar_res_s1_1",
+      "width": 9,
+      "surfaceCondition": 0.65,
+      "trafficDensity": 0.7,
+      "speedLimit": 25,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.85,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "motinagar",
+      "tags": [
+        "market"
+      ]
+    },
+    {
+      "segmentId": "S_motinagar_33",
+      "startNodeId": "motinagar_res_s2_0",
+      "endNodeId": "motinagar_res_s2_1",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "motinagar",
+      "tags": []
+    },
+    {
+      "segmentId": "S_motinagar_34",
+      "startNodeId": "motinagar_res_s1_1",
+      "endNodeId": "motinagar_res_s1_2",
+      "width": 9,
+      "surfaceCondition": 0.65,
+      "trafficDensity": 0.7,
+      "speedLimit": 25,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.85,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "motinagar",
+      "tags": [
+        "market"
+      ]
+    },
+    {
+      "segmentId": "S_motinagar_35",
+      "startNodeId": "motinagar_res_s2_1",
+      "endNodeId": "motinagar_res_s2_2",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "motinagar",
+      "tags": []
+    },
+    {
+      "segmentId": "S_motinagar_36",
+      "startNodeId": "motinagar_res_s1_2",
+      "endNodeId": "motinagar_res_s1_3",
+      "width": 9,
+      "surfaceCondition": 0.65,
+      "trafficDensity": 0.7,
+      "speedLimit": 25,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.85,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "motinagar",
+      "tags": [
+        "market"
+      ]
+    },
+    {
+      "segmentId": "S_motinagar_37",
+      "startNodeId": "motinagar_res_s2_2",
+      "endNodeId": "motinagar_res_s2_3",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "motinagar",
+      "tags": []
+    },
+    {
+      "segmentId": "S_motinagar_38",
+      "startNodeId": "motinagar_res_s1_3",
+      "endNodeId": "motinagar_res_s1_4",
+      "width": 9,
+      "surfaceCondition": 0.65,
+      "trafficDensity": 0.7,
+      "speedLimit": 25,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.85,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "motinagar",
+      "tags": [
+        "market"
+      ]
+    },
+    {
+      "segmentId": "S_motinagar_39",
+      "startNodeId": "motinagar_res_s2_3",
+      "endNodeId": "motinagar_res_s2_4",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "motinagar",
+      "tags": []
+    },
+    {
+      "segmentId": "S_motinagar_40",
+      "startNodeId": "motinagar_art_s_0",
+      "endNodeId": "motinagar_res_s1_0",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 35,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "motinagar",
+      "tags": []
+    },
+    {
+      "segmentId": "S_motinagar_41",
+      "startNodeId": "motinagar_res_s1_0",
+      "endNodeId": "motinagar_res_s2_0",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "motinagar",
+      "tags": []
+    },
+    {
+      "segmentId": "S_motinagar_42",
+      "startNodeId": "motinagar_art_s_1",
+      "endNodeId": "motinagar_res_s1_1",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 35,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "motinagar",
+      "tags": []
+    },
+    {
+      "segmentId": "S_motinagar_43",
+      "startNodeId": "motinagar_res_s1_1",
+      "endNodeId": "motinagar_res_s2_1",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "motinagar",
+      "tags": []
+    },
+    {
+      "segmentId": "S_motinagar_44",
+      "startNodeId": "motinagar_art_s_2",
+      "endNodeId": "motinagar_res_s1_2",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 35,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "motinagar",
+      "tags": []
+    },
+    {
+      "segmentId": "S_motinagar_45",
+      "startNodeId": "motinagar_res_s1_2",
+      "endNodeId": "motinagar_res_s2_2",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "motinagar",
+      "tags": []
+    },
+    {
+      "segmentId": "S_motinagar_46",
+      "startNodeId": "motinagar_art_s_3",
+      "endNodeId": "motinagar_res_s1_3",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 35,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "motinagar",
+      "tags": []
+    },
+    {
+      "segmentId": "S_motinagar_47",
+      "startNodeId": "motinagar_res_s1_3",
+      "endNodeId": "motinagar_res_s2_3",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "motinagar",
+      "tags": []
+    },
+    {
+      "segmentId": "S_motinagar_48",
+      "startNodeId": "motinagar_art_s_4",
+      "endNodeId": "motinagar_res_s1_4",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 35,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "motinagar",
+      "tags": []
+    },
+    {
+      "segmentId": "S_motinagar_49",
+      "startNodeId": "motinagar_res_s1_4",
+      "endNodeId": "motinagar_res_s2_4",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "motinagar",
+      "tags": []
+    },
+    {
+      "segmentId": "S_motinagar_50",
+      "startNodeId": "motinagar_res_n1_0",
+      "endNodeId": "motinagar_alley_nw_mid",
+      "width": 3.5,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 20,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "alley",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "motinagar",
+      "tags": [
+        "alley"
+      ]
+    },
+    {
+      "segmentId": "S_motinagar_51",
+      "startNodeId": "motinagar_alley_nw_mid",
+      "endNodeId": "motinagar_res_n2_1",
+      "width": 3.5,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 20,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "alley",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "motinagar",
+      "tags": [
+        "alley"
+      ]
+    },
+    {
+      "segmentId": "S_motinagar_52",
+      "startNodeId": "motinagar_res_n1_2",
+      "endNodeId": "motinagar_alley_ne_gate",
+      "width": 2.5,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 15,
+      "turnRestrictions": [],
+      "motorcycleAccessible": false,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "alley",
+      "floodSensitivity": 0.2,
+      "pickupPractical": false,
+      "district": "motinagar",
+      "tags": [
+        "alley",
+        "pedestrian_only"
+      ]
+    },
+    {
+      "segmentId": "S_motinagar_53",
+      "startNodeId": "motinagar_alley_ne_gate",
+      "endNodeId": "motinagar_res_n1_3",
+      "width": 2.5,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 15,
+      "turnRestrictions": [],
+      "motorcycleAccessible": false,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "alley",
+      "floodSensitivity": 0.2,
+      "pickupPractical": false,
+      "district": "motinagar",
+      "tags": [
+        "alley",
+        "pedestrian_only"
+      ]
+    },
+    {
+      "segmentId": "S_motinagar_54",
+      "startNodeId": "motinagar_res_s1_1",
+      "endNodeId": "motinagar_alley_sc_mid",
+      "width": 3.5,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 20,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "alley",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "motinagar",
+      "tags": [
+        "alley"
+      ]
+    },
+    {
+      "segmentId": "S_motinagar_55",
+      "startNodeId": "motinagar_alley_sc_mid",
+      "endNodeId": "motinagar_res_s2_2",
+      "width": 3.5,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 20,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "alley",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "motinagar",
+      "tags": [
+        "alley"
+      ]
+    },
+    {
+      "segmentId": "S_motinagar_56",
+      "startNodeId": "motinagar_res_s2_3",
+      "endNodeId": "motinagar_alley_se_deadend",
+      "width": 2.5,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 15,
+      "turnRestrictions": [],
+      "motorcycleAccessible": false,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "alley",
+      "floodSensitivity": 0.2,
+      "pickupPractical": false,
+      "district": "motinagar",
+      "tags": [
+        "alley",
+        "deadend"
+      ]
+    }
+  ],
+  "pois": [
+    {
+      "id": "poi_motinagar_bank_square",
+      "kind": "officeGate",
+      "nodeId": "motinagar_res_n2_1",
+      "nameKey": "poi.motinagar.bank_square"
+    },
+    {
+      "id": "poi_motinagar_shapla_circle",
+      "kind": "crossing",
+      "nodeId": "motinagar_art_n_2",
+      "nameKey": "poi.motinagar.shapla_circle"
+    },
+    {
+      "id": "poi_motinagar_stock_exchange",
+      "kind": "officeGate",
+      "nodeId": "motinagar_res_s1_2",
+      "nameKey": "poi.motinagar.stock_exchange"
+    },
+    {
+      "id": "poi_motinagar_stadium_gate",
+      "kind": "crossing",
+      "nodeId": "motinagar_res_n1_3",
+      "nameKey": "poi.motinagar.stadium_gate"
+    },
+    {
+      "id": "poi_motinagar_press_club",
+      "kind": "officeGate",
+      "nodeId": "motinagar_res_s2_0",
+      "nameKey": "poi.motinagar.press_club"
+    },
+    {
+      "id": "poi_motinagar_fuel",
+      "kind": "fuel",
+      "nodeId": "motinagar_art_s_1",
+      "nameKey": "poi.motinagar.fuel"
+    }
+  ],
+  "lots": [
+    {
+      "lotId": "lot_motinagar_1",
+      "x": 675,
+      "z": 1483,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5707963267948966,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_2",
+      "x": 675,
+      "z": 1517,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": -1.5707963267948966,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_3",
+      "x": 825,
+      "z": 1483,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5707963267948966,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_4",
+      "x": 825,
+      "z": 1517,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": -1.5707963267948966,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_5",
+      "x": 975,
+      "z": 1483,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5707963267948966,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_6",
+      "x": 975,
+      "z": 1517,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": -1.5707963267948966,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_7",
+      "x": 1125,
+      "z": 1483,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5707963267948966,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_8",
+      "x": 1125,
+      "z": 1517,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": -1.5707963267948966,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_9",
+      "x": 612,
+      "z": 1500,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_10",
+      "x": 762,
+      "z": 1500,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_11",
+      "x": 912,
+      "z": 1500,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_12",
+      "x": 1062,
+      "z": 1500,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_13",
+      "x": 1212,
+      "z": 1500,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_14",
+      "x": 675,
+      "z": 1269,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5707963267948966,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_15",
+      "x": 675,
+      "z": 1369,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5707963267948966,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_16",
+      "x": 825,
+      "z": 1269,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5707963267948966,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_17",
+      "x": 825,
+      "z": 1369,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5707963267948966,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_18",
+      "x": 974,
+      "z": 1268,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5842183395349878,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_19",
+      "x": 974,
+      "z": 1368,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5842183395349878,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_20",
+      "x": 1125,
+      "z": 1268,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5575520681301676,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_21",
+      "x": 1125,
+      "z": 1368,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5575520681301676,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_22",
+      "x": 612,
+      "z": 1331,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_23",
+      "x": 612,
+      "z": 1438,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_24",
+      "x": 761,
+      "z": 1331,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_25",
+      "x": 761,
+      "z": 1438,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0.008771704844442806,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_26",
+      "x": 912,
+      "z": 1331,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_27",
+      "x": 912,
+      "z": 1438,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_28",
+      "x": 1061,
+      "z": 1329,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_29",
+      "x": 1061,
+      "z": 1437,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0.008620476112136321,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_30",
+      "x": 1212,
+      "z": 1331,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_31",
+      "x": 1212,
+      "z": 1438,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_32",
+      "x": 675,
+      "z": 1607,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5707963267948966,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_motinagar_33",
+      "x": 675,
+      "z": 1707,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5707963267948966,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_34",
+      "x": 825,
+      "z": 1608,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5575520681301676,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_motinagar_35",
+      "x": 825,
+      "z": 1708,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5575520681301676,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_36",
+      "x": 975,
+      "z": 1608,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5841288700890424,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_motinagar_37",
+      "x": 975,
+      "z": 1708,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5841288700890424,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_38",
+      "x": 1125,
+      "z": 1607,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5707963267948966,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_motinagar_39",
+      "x": 1125,
+      "z": 1707,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5707963267948966,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_40",
+      "x": 612,
+      "z": 1562,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_41",
+      "x": 612,
+      "z": 1669,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_42",
+      "x": 761,
+      "z": 1562,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": -0.008771704844442806,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_43",
+      "x": 761,
+      "z": 1669,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_44",
+      "x": 912,
+      "z": 1563,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_45",
+      "x": 912,
+      "z": 1671,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_46",
+      "x": 1062,
+      "z": 1562,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_47",
+      "x": 1062,
+      "z": 1669,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_48",
+      "x": 1212,
+      "z": 1562,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_49",
+      "x": 1212,
+      "z": 1669,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_50",
+      "x": 644,
+      "z": 1295,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0.9920813818816976,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_51",
+      "x": 719,
+      "z": 1346,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0.9673628493566343,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_52",
+      "x": 794,
+      "z": 1635,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0.9797634294924663,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_53",
+      "x": 869,
+      "z": 1686,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0.973619668702219,
+      "zone": "residential"
+    }
+  ]
+}

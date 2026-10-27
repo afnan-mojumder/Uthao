@@ -1,0 +1,2261 @@
+{
+  "districtId": "mohakhal",
+  "name": {
+    "bn": "মহাখাল",
+    "en": "Mohakhal"
+  },
+  "nodes": [
+    {
+      "nodeId": "mohakhal_art_n_0",
+      "x": 600,
+      "z": 895,
+      "kind": "uturn",
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "nodeId": "mohakhal_art_s_0",
+      "x": 600,
+      "z": 905,
+      "kind": "uturn",
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "nodeId": "mohakhal_art_n_1",
+      "x": 750,
+      "z": 895,
+      "kind": "uturn",
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "nodeId": "mohakhal_art_s_1",
+      "x": 750,
+      "z": 905,
+      "kind": "uturn",
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "nodeId": "mohakhal_art_n_2",
+      "x": 900,
+      "z": 895,
+      "kind": "junction",
+      "tags": [
+        "crossing"
+      ]
+    },
+    {
+      "nodeId": "mohakhal_art_s_2",
+      "x": 900,
+      "z": 905,
+      "kind": "junction",
+      "tags": [
+        "crossing"
+      ]
+    },
+    {
+      "nodeId": "mohakhal_art_n_3",
+      "x": 1050,
+      "z": 895,
+      "kind": "uturn",
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "nodeId": "mohakhal_art_s_3",
+      "x": 1050,
+      "z": 905,
+      "kind": "uturn",
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "nodeId": "mohakhal_art_n_4",
+      "x": 1200,
+      "z": 895,
+      "kind": "uturn",
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "nodeId": "mohakhal_art_s_4",
+      "x": 1200,
+      "z": 905,
+      "kind": "uturn",
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "nodeId": "mohakhal_res_n1_0",
+      "x": 600,
+      "z": 683,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "mohakhal_res_n2_0",
+      "x": 600,
+      "z": 783,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "mohakhal_res_n1_1",
+      "x": 754,
+      "z": 681,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "mohakhal_res_n2_1",
+      "x": 754,
+      "z": 781,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "mohakhal_res_n1_2",
+      "x": 898,
+      "z": 680,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "mohakhal_res_n2_2",
+      "x": 898,
+      "z": 780,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "mohakhal_res_n1_3",
+      "x": 1046,
+      "z": 682,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "mohakhal_res_n2_3",
+      "x": 1046,
+      "z": 782,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "mohakhal_res_n1_4",
+      "x": 1200,
+      "z": 680,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "mohakhal_res_n2_4",
+      "x": 1200,
+      "z": 780,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "mohakhal_res_s1_0",
+      "x": 600,
+      "z": 1018,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "mohakhal_res_s2_0",
+      "x": 600,
+      "z": 1118,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "mohakhal_res_s1_1",
+      "x": 746,
+      "z": 1023,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "mohakhal_res_s2_1",
+      "x": 746,
+      "z": 1123,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "mohakhal_res_s1_2",
+      "x": 901,
+      "z": 1022,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "mohakhal_res_s2_2",
+      "x": 901,
+      "z": 1122,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "mohakhal_res_s1_3",
+      "x": 1050,
+      "z": 1020,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "mohakhal_res_s2_3",
+      "x": 1050,
+      "z": 1120,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "mohakhal_res_s1_4",
+      "x": 1200,
+      "z": 1023,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "mohakhal_res_s2_4",
+      "x": 1200,
+      "z": 1123,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "mohakhal_alley_nw_mid",
+      "x": 675,
+      "z": 730,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "mohakhal_alley_ne_gate",
+      "x": 975,
+      "z": 650,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "mohakhal_alley_sc_mid",
+      "x": 825,
+      "z": 1070,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "mohakhal_alley_se_deadend",
+      "x": 1125,
+      "z": 1090,
+      "kind": "deadEnd"
+    },
+    {
+      "nodeId": "mohakhal_fly_w",
+      "x": 650,
+      "z": 900,
+      "kind": "junction",
+      "tags": [
+        "flyover"
+      ]
+    },
+    {
+      "nodeId": "mohakhal_fly_mid",
+      "x": 900,
+      "z": 900,
+      "kind": "junction",
+      "tags": [
+        "flyover"
+      ]
+    },
+    {
+      "nodeId": "mohakhal_fly_e",
+      "x": 1150,
+      "z": 900,
+      "kind": "junction",
+      "tags": [
+        "flyover"
+      ]
+    }
+  ],
+  "segments": [
+    {
+      "segmentId": "S_mohakhal_1",
+      "startNodeId": "mohakhal_art_n_0",
+      "endNodeId": "mohakhal_art_n_1",
+      "width": 12,
+      "surfaceCondition": 0.95,
+      "trafficDensity": 0.85,
+      "speedLimit": 45,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.12,
+      "oneWay": true,
+      "divided": true,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": [
+        "arterial"
+      ]
+    },
+    {
+      "segmentId": "S_mohakhal_2",
+      "startNodeId": "mohakhal_art_s_1",
+      "endNodeId": "mohakhal_art_s_0",
+      "width": 12,
+      "surfaceCondition": 0.95,
+      "trafficDensity": 0.85,
+      "speedLimit": 45,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.12,
+      "oneWay": true,
+      "divided": true,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": [
+        "arterial"
+      ]
+    },
+    {
+      "segmentId": "S_mohakhal_3",
+      "startNodeId": "mohakhal_art_n_1",
+      "endNodeId": "mohakhal_art_n_2",
+      "width": 12,
+      "surfaceCondition": 0.95,
+      "trafficDensity": 0.85,
+      "speedLimit": 45,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.12,
+      "oneWay": true,
+      "divided": true,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": [
+        "arterial"
+      ]
+    },
+    {
+      "segmentId": "S_mohakhal_4",
+      "startNodeId": "mohakhal_art_s_2",
+      "endNodeId": "mohakhal_art_s_1",
+      "width": 12,
+      "surfaceCondition": 0.95,
+      "trafficDensity": 0.85,
+      "speedLimit": 45,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.12,
+      "oneWay": true,
+      "divided": true,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": [
+        "arterial"
+      ]
+    },
+    {
+      "segmentId": "S_mohakhal_5",
+      "startNodeId": "mohakhal_art_n_2",
+      "endNodeId": "mohakhal_art_n_3",
+      "width": 12,
+      "surfaceCondition": 0.95,
+      "trafficDensity": 0.85,
+      "speedLimit": 45,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.12,
+      "oneWay": true,
+      "divided": true,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": [
+        "arterial"
+      ]
+    },
+    {
+      "segmentId": "S_mohakhal_6",
+      "startNodeId": "mohakhal_art_s_3",
+      "endNodeId": "mohakhal_art_s_2",
+      "width": 12,
+      "surfaceCondition": 0.95,
+      "trafficDensity": 0.85,
+      "speedLimit": 45,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.12,
+      "oneWay": true,
+      "divided": true,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": [
+        "arterial"
+      ]
+    },
+    {
+      "segmentId": "S_mohakhal_7",
+      "startNodeId": "mohakhal_art_n_3",
+      "endNodeId": "mohakhal_art_n_4",
+      "width": 12,
+      "surfaceCondition": 0.95,
+      "trafficDensity": 0.85,
+      "speedLimit": 45,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.12,
+      "oneWay": true,
+      "divided": true,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": [
+        "arterial"
+      ]
+    },
+    {
+      "segmentId": "S_mohakhal_8",
+      "startNodeId": "mohakhal_art_s_4",
+      "endNodeId": "mohakhal_art_s_3",
+      "width": 12,
+      "surfaceCondition": 0.95,
+      "trafficDensity": 0.85,
+      "speedLimit": 45,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.12,
+      "oneWay": true,
+      "divided": true,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": [
+        "arterial"
+      ]
+    },
+    {
+      "segmentId": "S_mohakhal_9",
+      "startNodeId": "mohakhal_art_n_0",
+      "endNodeId": "mohakhal_art_s_0",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 25,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.12,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "segmentId": "S_mohakhal_10",
+      "startNodeId": "mohakhal_art_n_1",
+      "endNodeId": "mohakhal_art_s_1",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 25,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.12,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "segmentId": "S_mohakhal_11",
+      "startNodeId": "mohakhal_art_n_2",
+      "endNodeId": "mohakhal_art_s_2",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 25,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.6,
+      "riskLevel": 0.12,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": [
+        "crossing",
+        "footbridge"
+      ]
+    },
+    {
+      "segmentId": "S_mohakhal_12",
+      "startNodeId": "mohakhal_art_n_3",
+      "endNodeId": "mohakhal_art_s_3",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 25,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.12,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "segmentId": "S_mohakhal_13",
+      "startNodeId": "mohakhal_art_n_4",
+      "endNodeId": "mohakhal_art_s_4",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 25,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.12,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "segmentId": "S_mohakhal_14",
+      "startNodeId": "mohakhal_res_n1_0",
+      "endNodeId": "mohakhal_res_n1_1",
+      "width": 7,
+      "surfaceCondition": 0.6,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.12,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.85,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_mohakhal_15",
+      "startNodeId": "mohakhal_res_n2_0",
+      "endNodeId": "mohakhal_res_n2_1",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.12,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_mohakhal_16",
+      "startNodeId": "mohakhal_res_n1_1",
+      "endNodeId": "mohakhal_res_n1_2",
+      "width": 7,
+      "surfaceCondition": 0.85,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.12,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_mohakhal_17",
+      "startNodeId": "mohakhal_res_n2_1",
+      "endNodeId": "mohakhal_res_n2_2",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.12,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_mohakhal_18",
+      "startNodeId": "mohakhal_res_n1_2",
+      "endNodeId": "mohakhal_res_n1_3",
+      "width": 7,
+      "surfaceCondition": 0.85,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.12,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_mohakhal_19",
+      "startNodeId": "mohakhal_res_n2_2",
+      "endNodeId": "mohakhal_res_n2_3",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.12,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_mohakhal_20",
+      "startNodeId": "mohakhal_res_n1_3",
+      "endNodeId": "mohakhal_res_n1_4",
+      "width": 7,
+      "surfaceCondition": 0.85,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.12,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_mohakhal_21",
+      "startNodeId": "mohakhal_res_n2_3",
+      "endNodeId": "mohakhal_res_n2_4",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.12,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_mohakhal_22",
+      "startNodeId": "mohakhal_res_n1_0",
+      "endNodeId": "mohakhal_res_n2_0",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.12,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_mohakhal_23",
+      "startNodeId": "mohakhal_res_n2_0",
+      "endNodeId": "mohakhal_art_n_0",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 35,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.12,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": []
+    },
+    {
+      "segmentId": "S_mohakhal_24",
+      "startNodeId": "mohakhal_res_n1_1",
+      "endNodeId": "mohakhal_res_n2_1",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.12,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_mohakhal_25",
+      "startNodeId": "mohakhal_res_n2_1",
+      "endNodeId": "mohakhal_art_n_1",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 35,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.12,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": []
+    },
+    {
+      "segmentId": "S_mohakhal_26",
+      "startNodeId": "mohakhal_res_n1_2",
+      "endNodeId": "mohakhal_res_n2_2",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.12,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_mohakhal_27",
+      "startNodeId": "mohakhal_res_n2_2",
+      "endNodeId": "mohakhal_art_n_2",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 35,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.12,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": []
+    },
+    {
+      "segmentId": "S_mohakhal_28",
+      "startNodeId": "mohakhal_res_n1_3",
+      "endNodeId": "mohakhal_res_n2_3",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.12,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_mohakhal_29",
+      "startNodeId": "mohakhal_res_n2_3",
+      "endNodeId": "mohakhal_art_n_3",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 35,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.12,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": []
+    },
+    {
+      "segmentId": "S_mohakhal_30",
+      "startNodeId": "mohakhal_res_n1_4",
+      "endNodeId": "mohakhal_res_n2_4",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.12,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_mohakhal_31",
+      "startNodeId": "mohakhal_res_n2_4",
+      "endNodeId": "mohakhal_art_n_4",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 35,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.12,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": []
+    },
+    {
+      "segmentId": "S_mohakhal_32",
+      "startNodeId": "mohakhal_res_s1_0",
+      "endNodeId": "mohakhal_res_s1_1",
+      "width": 9,
+      "surfaceCondition": 0.65,
+      "trafficDensity": 0.7,
+      "speedLimit": 25,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.85,
+      "riskLevel": 0.12,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": [
+        "market"
+      ]
+    },
+    {
+      "segmentId": "S_mohakhal_33",
+      "startNodeId": "mohakhal_res_s2_0",
+      "endNodeId": "mohakhal_res_s2_1",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.12,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": []
+    },
+    {
+      "segmentId": "S_mohakhal_34",
+      "startNodeId": "mohakhal_res_s1_1",
+      "endNodeId": "mohakhal_res_s1_2",
+      "width": 9,
+      "surfaceCondition": 0.65,
+      "trafficDensity": 0.7,
+      "speedLimit": 25,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.85,
+      "riskLevel": 0.12,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": [
+        "market"
+      ]
+    },
+    {
+      "segmentId": "S_mohakhal_35",
+      "startNodeId": "mohakhal_res_s2_1",
+      "endNodeId": "mohakhal_res_s2_2",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.12,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": []
+    },
+    {
+      "segmentId": "S_mohakhal_36",
+      "startNodeId": "mohakhal_res_s1_2",
+      "endNodeId": "mohakhal_res_s1_3",
+      "width": 9,
+      "surfaceCondition": 0.65,
+      "trafficDensity": 0.7,
+      "speedLimit": 25,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.85,
+      "riskLevel": 0.12,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": [
+        "market"
+      ]
+    },
+    {
+      "segmentId": "S_mohakhal_37",
+      "startNodeId": "mohakhal_res_s2_2",
+      "endNodeId": "mohakhal_res_s2_3",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.12,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": []
+    },
+    {
+      "segmentId": "S_mohakhal_38",
+      "startNodeId": "mohakhal_res_s1_3",
+      "endNodeId": "mohakhal_res_s1_4",
+      "width": 9,
+      "surfaceCondition": 0.65,
+      "trafficDensity": 0.7,
+      "speedLimit": 25,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.85,
+      "riskLevel": 0.12,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": [
+        "market"
+      ]
+    },
+    {
+      "segmentId": "S_mohakhal_39",
+      "startNodeId": "mohakhal_res_s2_3",
+      "endNodeId": "mohakhal_res_s2_4",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.12,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": []
+    },
+    {
+      "segmentId": "S_mohakhal_40",
+      "startNodeId": "mohakhal_art_s_0",
+      "endNodeId": "mohakhal_res_s1_0",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 35,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.12,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": []
+    },
+    {
+      "segmentId": "S_mohakhal_41",
+      "startNodeId": "mohakhal_res_s1_0",
+      "endNodeId": "mohakhal_res_s2_0",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.12,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": []
+    },
+    {
+      "segmentId": "S_mohakhal_42",
+      "startNodeId": "mohakhal_art_s_1",
+      "endNodeId": "mohakhal_res_s1_1",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 35,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.12,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": []
+    },
+    {
+      "segmentId": "S_mohakhal_43",
+      "startNodeId": "mohakhal_res_s1_1",
+      "endNodeId": "mohakhal_res_s2_1",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.12,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": []
+    },
+    {
+      "segmentId": "S_mohakhal_44",
+      "startNodeId": "mohakhal_art_s_2",
+      "endNodeId": "mohakhal_res_s1_2",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 35,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.12,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": []
+    },
+    {
+      "segmentId": "S_mohakhal_45",
+      "startNodeId": "mohakhal_res_s1_2",
+      "endNodeId": "mohakhal_res_s2_2",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.12,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": []
+    },
+    {
+      "segmentId": "S_mohakhal_46",
+      "startNodeId": "mohakhal_art_s_3",
+      "endNodeId": "mohakhal_res_s1_3",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 35,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.12,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": []
+    },
+    {
+      "segmentId": "S_mohakhal_47",
+      "startNodeId": "mohakhal_res_s1_3",
+      "endNodeId": "mohakhal_res_s2_3",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.12,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": []
+    },
+    {
+      "segmentId": "S_mohakhal_48",
+      "startNodeId": "mohakhal_art_s_4",
+      "endNodeId": "mohakhal_res_s1_4",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 35,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.12,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": []
+    },
+    {
+      "segmentId": "S_mohakhal_49",
+      "startNodeId": "mohakhal_res_s1_4",
+      "endNodeId": "mohakhal_res_s2_4",
+      "width": 7,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.12,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": []
+    },
+    {
+      "segmentId": "S_mohakhal_50",
+      "startNodeId": "mohakhal_res_n1_0",
+      "endNodeId": "mohakhal_alley_nw_mid",
+      "width": 3.5,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 20,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.12,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "alley",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": [
+        "alley"
+      ]
+    },
+    {
+      "segmentId": "S_mohakhal_51",
+      "startNodeId": "mohakhal_alley_nw_mid",
+      "endNodeId": "mohakhal_res_n2_1",
+      "width": 3.5,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 20,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.12,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "alley",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": [
+        "alley"
+      ]
+    },
+    {
+      "segmentId": "S_mohakhal_52",
+      "startNodeId": "mohakhal_res_n1_2",
+      "endNodeId": "mohakhal_alley_ne_gate",
+      "width": 2.5,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 15,
+      "turnRestrictions": [],
+      "motorcycleAccessible": false,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.12,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "alley",
+      "floodSensitivity": 0.2,
+      "pickupPractical": false,
+      "district": "mohakhal",
+      "tags": [
+        "alley",
+        "pedestrian_only"
+      ]
+    },
+    {
+      "segmentId": "S_mohakhal_53",
+      "startNodeId": "mohakhal_alley_ne_gate",
+      "endNodeId": "mohakhal_res_n1_3",
+      "width": 2.5,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 15,
+      "turnRestrictions": [],
+      "motorcycleAccessible": false,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.12,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "alley",
+      "floodSensitivity": 0.2,
+      "pickupPractical": false,
+      "district": "mohakhal",
+      "tags": [
+        "alley",
+        "pedestrian_only"
+      ]
+    },
+    {
+      "segmentId": "S_mohakhal_54",
+      "startNodeId": "mohakhal_res_s1_1",
+      "endNodeId": "mohakhal_alley_sc_mid",
+      "width": 3.5,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 20,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.12,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "alley",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": [
+        "alley"
+      ]
+    },
+    {
+      "segmentId": "S_mohakhal_55",
+      "startNodeId": "mohakhal_alley_sc_mid",
+      "endNodeId": "mohakhal_res_s2_2",
+      "width": 3.5,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 20,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.12,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "alley",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": [
+        "alley"
+      ]
+    },
+    {
+      "segmentId": "S_mohakhal_56",
+      "startNodeId": "mohakhal_res_s2_3",
+      "endNodeId": "mohakhal_alley_se_deadend",
+      "width": 2.5,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 15,
+      "turnRestrictions": [],
+      "motorcycleAccessible": false,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.12,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "alley",
+      "floodSensitivity": 0.2,
+      "pickupPractical": false,
+      "district": "mohakhal",
+      "tags": [
+        "alley",
+        "deadend"
+      ]
+    },
+    {
+      "segmentId": "S_mohakhal_fly_eb1",
+      "startNodeId": "mohakhal_fly_w",
+      "endNodeId": "mohakhal_fly_mid",
+      "width": 10,
+      "surfaceCondition": 0.98,
+      "trafficDensity": 0.6,
+      "speedLimit": 60,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0,
+      "riskLevel": 0.05,
+      "oneWay": true,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "flyover",
+      "floodSensitivity": 0,
+      "pickupPractical": false,
+      "district": "mohakhal",
+      "tags": [
+        "flyover"
+      ]
+    },
+    {
+      "segmentId": "S_mohakhal_fly_eb2",
+      "startNodeId": "mohakhal_fly_mid",
+      "endNodeId": "mohakhal_fly_e",
+      "width": 10,
+      "surfaceCondition": 0.98,
+      "trafficDensity": 0.6,
+      "speedLimit": 60,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0,
+      "riskLevel": 0.05,
+      "oneWay": true,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "flyover",
+      "floodSensitivity": 0,
+      "pickupPractical": false,
+      "district": "mohakhal",
+      "tags": [
+        "flyover"
+      ]
+    },
+    {
+      "segmentId": "S_mohakhal_fly_wb1",
+      "startNodeId": "mohakhal_fly_e",
+      "endNodeId": "mohakhal_fly_mid",
+      "width": 10,
+      "surfaceCondition": 0.98,
+      "trafficDensity": 0.6,
+      "speedLimit": 60,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0,
+      "riskLevel": 0.05,
+      "oneWay": true,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "flyover",
+      "floodSensitivity": 0,
+      "pickupPractical": false,
+      "district": "mohakhal",
+      "tags": [
+        "flyover"
+      ]
+    },
+    {
+      "segmentId": "S_mohakhal_fly_wb2",
+      "startNodeId": "mohakhal_fly_mid",
+      "endNodeId": "mohakhal_fly_w",
+      "width": 10,
+      "surfaceCondition": 0.98,
+      "trafficDensity": 0.6,
+      "speedLimit": 60,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0,
+      "riskLevel": 0.05,
+      "oneWay": true,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "flyover",
+      "floodSensitivity": 0,
+      "pickupPractical": false,
+      "district": "mohakhal",
+      "tags": [
+        "flyover"
+      ]
+    },
+    {
+      "segmentId": "S_mohakhal_ramp_eb_on",
+      "startNodeId": "mohakhal_art_n_0",
+      "endNodeId": "mohakhal_fly_w",
+      "width": 8,
+      "surfaceCondition": 0.95,
+      "trafficDensity": 0.5,
+      "speedLimit": 45,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0,
+      "riskLevel": 0.05,
+      "oneWay": true,
+      "divided": false,
+      "lanes": 1,
+      "roadType": "flyover",
+      "floodSensitivity": 0,
+      "pickupPractical": false,
+      "district": "mohakhal",
+      "tags": [
+        "flyover",
+        "ramp"
+      ]
+    },
+    {
+      "segmentId": "S_mohakhal_ramp_eb_off",
+      "startNodeId": "mohakhal_fly_e",
+      "endNodeId": "mohakhal_art_n_4",
+      "width": 8,
+      "surfaceCondition": 0.95,
+      "trafficDensity": 0.5,
+      "speedLimit": 45,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0,
+      "riskLevel": 0.05,
+      "oneWay": true,
+      "divided": false,
+      "lanes": 1,
+      "roadType": "flyover",
+      "floodSensitivity": 0,
+      "pickupPractical": false,
+      "district": "mohakhal",
+      "tags": [
+        "flyover",
+        "ramp"
+      ]
+    },
+    {
+      "segmentId": "S_mohakhal_ramp_wb_on",
+      "startNodeId": "mohakhal_art_s_4",
+      "endNodeId": "mohakhal_fly_e",
+      "width": 8,
+      "surfaceCondition": 0.95,
+      "trafficDensity": 0.5,
+      "speedLimit": 45,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0,
+      "riskLevel": 0.05,
+      "oneWay": true,
+      "divided": false,
+      "lanes": 1,
+      "roadType": "flyover",
+      "floodSensitivity": 0,
+      "pickupPractical": false,
+      "district": "mohakhal",
+      "tags": [
+        "flyover",
+        "ramp"
+      ]
+    },
+    {
+      "segmentId": "S_mohakhal_ramp_wb_off",
+      "startNodeId": "mohakhal_fly_w",
+      "endNodeId": "mohakhal_art_s_0",
+      "width": 8,
+      "surfaceCondition": 0.95,
+      "trafficDensity": 0.5,
+      "speedLimit": 45,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0,
+      "riskLevel": 0.05,
+      "oneWay": true,
+      "divided": false,
+      "lanes": 1,
+      "roadType": "flyover",
+      "floodSensitivity": 0,
+      "pickupPractical": false,
+      "district": "mohakhal",
+      "tags": [
+        "flyover",
+        "ramp"
+      ]
+    }
+  ],
+  "pois": [
+    {
+      "id": "poi_mohakhal_intercity_terminal",
+      "kind": "busStop",
+      "nodeId": "mohakhal_res_n1_2",
+      "nameKey": "poi.mohakhal.intercity_terminal"
+    },
+    {
+      "id": "poi_mohakhal_wireless_gate",
+      "kind": "crossing",
+      "nodeId": "mohakhal_res_s1_1",
+      "nameKey": "poi.mohakhal.wireless_gate"
+    },
+    {
+      "id": "poi_mohakhal_icddr",
+      "kind": "hospital",
+      "nodeId": "mohakhal_res_n2_0",
+      "nameKey": "poi.mohakhal.icddr"
+    },
+    {
+      "id": "poi_mohakhal_rail_gate",
+      "kind": "crossing",
+      "nodeId": "mohakhal_art_n_3",
+      "nameKey": "poi.mohakhal.rail_gate"
+    },
+    {
+      "id": "poi_mohakhal_garage",
+      "kind": "garage",
+      "nodeId": "mohakhal_res_s2_2",
+      "nameKey": "poi.mohakhal.garage"
+    },
+    {
+      "id": "poi_mohakhal_fuel",
+      "kind": "fuel",
+      "nodeId": "mohakhal_art_s_1",
+      "nameKey": "poi.mohakhal.fuel"
+    }
+  ],
+  "lots": [
+    {
+      "lotId": "lot_mohakhal_1",
+      "x": 675,
+      "z": 883,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5707963267948966,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_2",
+      "x": 675,
+      "z": 917,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": -1.5707963267948966,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_3",
+      "x": 825,
+      "z": 883,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5707963267948966,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_4",
+      "x": 825,
+      "z": 917,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": -1.5707963267948966,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_5",
+      "x": 975,
+      "z": 883,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5707963267948966,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_6",
+      "x": 975,
+      "z": 917,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": -1.5707963267948966,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_7",
+      "x": 1125,
+      "z": 883,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5707963267948966,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_8",
+      "x": 1125,
+      "z": 917,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": -1.5707963267948966,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_9",
+      "x": 612,
+      "z": 900,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_10",
+      "x": 762,
+      "z": 900,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_11",
+      "x": 912,
+      "z": 900,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_12",
+      "x": 1062,
+      "z": 900,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_13",
+      "x": 1212,
+      "z": 900,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_14",
+      "x": 677,
+      "z": 670,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5837826097150691,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_15",
+      "x": 677,
+      "z": 770,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5837826097150691,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_16",
+      "x": 826,
+      "z": 669,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5777406596099122,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_17",
+      "x": 826,
+      "z": 769,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5777406596099122,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_18",
+      "x": 972,
+      "z": 669,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5572836357815685,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_19",
+      "x": 972,
+      "z": 769,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5572836357815685,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_20",
+      "x": 1123,
+      "z": 669,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5837826097150691,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_21",
+      "x": 1123,
+      "z": 769,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5837826097150691,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_22",
+      "x": 612,
+      "z": 733,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_23",
+      "x": 612,
+      "z": 839,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_24",
+      "x": 766,
+      "z": 731,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_25",
+      "x": 764,
+      "z": 838,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": -0.035073330533225366,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_26",
+      "x": 910,
+      "z": 730,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_27",
+      "x": 911,
+      "z": 837,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0.017389551289330653,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_28",
+      "x": 1058,
+      "z": 732,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_29",
+      "x": 1060,
+      "z": 838,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0.03538345612415131,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_30",
+      "x": 1212,
+      "z": 730,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_31",
+      "x": 1212,
+      "z": 838,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_32",
+      "x": 673,
+      "z": 1009,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5365631304855158,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_mohakhal_33",
+      "x": 673,
+      "z": 1109,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5365631304855158,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_34",
+      "x": 823,
+      "z": 1011,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5772478501878653,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_mohakhal_35",
+      "x": 823,
+      "z": 1111,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5772478501878653,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_36",
+      "x": 975,
+      "z": 1009,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5842183395349878,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_mohakhal_37",
+      "x": 975,
+      "z": 1109,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5842183395349878,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_38",
+      "x": 1125,
+      "z": 1010,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.550798992821746,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_mohakhal_39",
+      "x": 1125,
+      "z": 1110,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.550798992821746,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_40",
+      "x": 612,
+      "z": 962,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_41",
+      "x": 612,
+      "z": 1068,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_42",
+      "x": 760,
+      "z": 964,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": -0.033885329904117606,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_43",
+      "x": 758,
+      "z": 1073,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_44",
+      "x": 912,
+      "z": 963,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0.008546800432611483,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_45",
+      "x": 913,
+      "z": 1072,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_46",
+      "x": 1062,
+      "z": 963,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_47",
+      "x": 1062,
+      "z": 1070,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_48",
+      "x": 1212,
+      "z": 964,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_49",
+      "x": 1212,
+      "z": 1073,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_50",
+      "x": 644,
+      "z": 696,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.0109994072334723,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_51",
+      "x": 721,
+      "z": 745,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0.9975419164019239,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_52",
+      "x": 792,
+      "z": 1036,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.0341081524909712,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_53",
+      "x": 870,
+      "z": 1086,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0.9707461133931431,
+      "zone": "residential"
+    }
+  ]
+}

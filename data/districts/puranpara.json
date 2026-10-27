@@ -1,0 +1,2046 @@
+{
+  "districtId": "puranpara",
+  "name": {
+    "bn": "পুরানপাড়া",
+    "en": "Puran Para"
+  },
+  "nodes": [
+    {
+      "nodeId": "puranpara_art_n_0",
+      "x": 0,
+      "z": 1495,
+      "kind": "uturn",
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "nodeId": "puranpara_art_s_0",
+      "x": 0,
+      "z": 1505,
+      "kind": "uturn",
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "nodeId": "puranpara_art_n_1",
+      "x": 150,
+      "z": 1495,
+      "kind": "uturn",
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "nodeId": "puranpara_art_s_1",
+      "x": 150,
+      "z": 1505,
+      "kind": "uturn",
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "nodeId": "puranpara_art_n_2",
+      "x": 300,
+      "z": 1495,
+      "kind": "junction",
+      "tags": [
+        "crossing"
+      ]
+    },
+    {
+      "nodeId": "puranpara_art_s_2",
+      "x": 300,
+      "z": 1505,
+      "kind": "junction",
+      "tags": [
+        "crossing"
+      ]
+    },
+    {
+      "nodeId": "puranpara_art_n_3",
+      "x": 450,
+      "z": 1495,
+      "kind": "uturn",
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "nodeId": "puranpara_art_s_3",
+      "x": 450,
+      "z": 1505,
+      "kind": "uturn",
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "nodeId": "puranpara_art_n_4",
+      "x": 600,
+      "z": 1495,
+      "kind": "uturn",
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "nodeId": "puranpara_art_s_4",
+      "x": 600,
+      "z": 1505,
+      "kind": "uturn",
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "nodeId": "puranpara_res_n1_0",
+      "x": 0,
+      "z": 1275,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "puranpara_res_n2_0",
+      "x": 0,
+      "z": 1375,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "puranpara_res_n1_1",
+      "x": 154,
+      "z": 1274,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "puranpara_res_n2_1",
+      "x": 154,
+      "z": 1374,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "puranpara_res_n1_2",
+      "x": 308,
+      "z": 1276,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "puranpara_res_n2_2",
+      "x": 308,
+      "z": 1376,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "puranpara_res_n1_3",
+      "x": 452,
+      "z": 1285,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "puranpara_res_n2_3",
+      "x": 452,
+      "z": 1385,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "puranpara_res_n1_4",
+      "x": 600,
+      "z": 1285,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "puranpara_res_n2_4",
+      "x": 600,
+      "z": 1385,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "puranpara_res_s1_0",
+      "x": 0,
+      "z": 1612,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "puranpara_res_s2_0",
+      "x": 0,
+      "z": 1712,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "puranpara_res_s1_1",
+      "x": 140,
+      "z": 1622,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "puranpara_res_s2_1",
+      "x": 140,
+      "z": 1722,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "puranpara_res_s1_2",
+      "x": 312,
+      "z": 1614,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "puranpara_res_s2_2",
+      "x": 312,
+      "z": 1714,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "puranpara_res_s1_3",
+      "x": 449,
+      "z": 1614,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "puranpara_res_s2_3",
+      "x": 449,
+      "z": 1714,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "puranpara_res_s1_4",
+      "x": 600,
+      "z": 1622,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "puranpara_res_s2_4",
+      "x": 600,
+      "z": 1722,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "puranpara_alley_nw_mid",
+      "x": 75,
+      "z": 1330,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "puranpara_alley_ne_gate",
+      "x": 375,
+      "z": 1250,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "puranpara_alley_sc_mid",
+      "x": 225,
+      "z": 1670,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "puranpara_alley_se_deadend",
+      "x": 525,
+      "z": 1690,
+      "kind": "deadEnd"
+    }
+  ],
+  "segments": [
+    {
+      "segmentId": "S_puranpara_1",
+      "startNodeId": "puranpara_art_n_0",
+      "endNodeId": "puranpara_art_n_1",
+      "width": 8.5,
+      "surfaceCondition": 0.95,
+      "trafficDensity": 0.75,
+      "speedLimit": 35,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.22,
+      "oneWay": true,
+      "divided": true,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "puranpara",
+      "tags": [
+        "arterial"
+      ]
+    },
+    {
+      "segmentId": "S_puranpara_2",
+      "startNodeId": "puranpara_art_s_1",
+      "endNodeId": "puranpara_art_s_0",
+      "width": 8.5,
+      "surfaceCondition": 0.95,
+      "trafficDensity": 0.75,
+      "speedLimit": 35,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.22,
+      "oneWay": true,
+      "divided": true,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "puranpara",
+      "tags": [
+        "arterial"
+      ]
+    },
+    {
+      "segmentId": "S_puranpara_3",
+      "startNodeId": "puranpara_art_n_1",
+      "endNodeId": "puranpara_art_n_2",
+      "width": 8.5,
+      "surfaceCondition": 0.95,
+      "trafficDensity": 0.75,
+      "speedLimit": 35,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.22,
+      "oneWay": true,
+      "divided": true,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "puranpara",
+      "tags": [
+        "arterial"
+      ]
+    },
+    {
+      "segmentId": "S_puranpara_4",
+      "startNodeId": "puranpara_art_s_2",
+      "endNodeId": "puranpara_art_s_1",
+      "width": 8.5,
+      "surfaceCondition": 0.95,
+      "trafficDensity": 0.75,
+      "speedLimit": 35,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.22,
+      "oneWay": true,
+      "divided": true,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "puranpara",
+      "tags": [
+        "arterial"
+      ]
+    },
+    {
+      "segmentId": "S_puranpara_5",
+      "startNodeId": "puranpara_art_n_2",
+      "endNodeId": "puranpara_art_n_3",
+      "width": 8.5,
+      "surfaceCondition": 0.95,
+      "trafficDensity": 0.75,
+      "speedLimit": 35,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.22,
+      "oneWay": true,
+      "divided": true,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "puranpara",
+      "tags": [
+        "arterial"
+      ]
+    },
+    {
+      "segmentId": "S_puranpara_6",
+      "startNodeId": "puranpara_art_s_3",
+      "endNodeId": "puranpara_art_s_2",
+      "width": 8.5,
+      "surfaceCondition": 0.95,
+      "trafficDensity": 0.75,
+      "speedLimit": 35,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.22,
+      "oneWay": true,
+      "divided": true,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "puranpara",
+      "tags": [
+        "arterial"
+      ]
+    },
+    {
+      "segmentId": "S_puranpara_7",
+      "startNodeId": "puranpara_art_n_3",
+      "endNodeId": "puranpara_art_n_4",
+      "width": 8.5,
+      "surfaceCondition": 0.95,
+      "trafficDensity": 0.75,
+      "speedLimit": 35,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.22,
+      "oneWay": true,
+      "divided": true,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "puranpara",
+      "tags": [
+        "arterial"
+      ]
+    },
+    {
+      "segmentId": "S_puranpara_8",
+      "startNodeId": "puranpara_art_s_4",
+      "endNodeId": "puranpara_art_s_3",
+      "width": 8.5,
+      "surfaceCondition": 0.95,
+      "trafficDensity": 0.75,
+      "speedLimit": 35,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.22,
+      "oneWay": true,
+      "divided": true,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "puranpara",
+      "tags": [
+        "arterial"
+      ]
+    },
+    {
+      "segmentId": "S_puranpara_9",
+      "startNodeId": "puranpara_art_n_0",
+      "endNodeId": "puranpara_art_s_0",
+      "width": 6.8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 25,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.22,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "puranpara",
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "segmentId": "S_puranpara_10",
+      "startNodeId": "puranpara_art_n_1",
+      "endNodeId": "puranpara_art_s_1",
+      "width": 6.8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 25,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.22,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "puranpara",
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "segmentId": "S_puranpara_11",
+      "startNodeId": "puranpara_art_n_2",
+      "endNodeId": "puranpara_art_s_2",
+      "width": 6.8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 25,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.6,
+      "riskLevel": 0.22,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "puranpara",
+      "tags": [
+        "crossing",
+        "footbridge"
+      ]
+    },
+    {
+      "segmentId": "S_puranpara_12",
+      "startNodeId": "puranpara_art_n_3",
+      "endNodeId": "puranpara_art_s_3",
+      "width": 6.8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 25,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.22,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "puranpara",
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "segmentId": "S_puranpara_13",
+      "startNodeId": "puranpara_art_n_4",
+      "endNodeId": "puranpara_art_s_4",
+      "width": 6.8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 25,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.22,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "puranpara",
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "segmentId": "S_puranpara_14",
+      "startNodeId": "puranpara_res_n1_0",
+      "endNodeId": "puranpara_res_n1_1",
+      "width": 5.95,
+      "surfaceCondition": 0.6,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.22,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.85,
+      "pickupPractical": true,
+      "district": "puranpara",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_puranpara_15",
+      "startNodeId": "puranpara_res_n2_0",
+      "endNodeId": "puranpara_res_n2_1",
+      "width": 5.95,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.22,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "puranpara",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_puranpara_16",
+      "startNodeId": "puranpara_res_n1_1",
+      "endNodeId": "puranpara_res_n1_2",
+      "width": 5.95,
+      "surfaceCondition": 0.85,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.22,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "puranpara",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_puranpara_17",
+      "startNodeId": "puranpara_res_n2_1",
+      "endNodeId": "puranpara_res_n2_2",
+      "width": 5.95,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.22,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "puranpara",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_puranpara_18",
+      "startNodeId": "puranpara_res_n1_2",
+      "endNodeId": "puranpara_res_n1_3",
+      "width": 5.95,
+      "surfaceCondition": 0.85,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.22,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "puranpara",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_puranpara_19",
+      "startNodeId": "puranpara_res_n2_2",
+      "endNodeId": "puranpara_res_n2_3",
+      "width": 5.95,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.22,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "puranpara",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_puranpara_20",
+      "startNodeId": "puranpara_res_n1_3",
+      "endNodeId": "puranpara_res_n1_4",
+      "width": 5.95,
+      "surfaceCondition": 0.85,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.22,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "puranpara",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_puranpara_21",
+      "startNodeId": "puranpara_res_n2_3",
+      "endNodeId": "puranpara_res_n2_4",
+      "width": 5.95,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.22,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "puranpara",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_puranpara_22",
+      "startNodeId": "puranpara_res_n1_0",
+      "endNodeId": "puranpara_res_n2_0",
+      "width": 5.95,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.22,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "puranpara",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_puranpara_23",
+      "startNodeId": "puranpara_res_n2_0",
+      "endNodeId": "puranpara_art_n_0",
+      "width": 6.8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 35,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.22,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "puranpara",
+      "tags": []
+    },
+    {
+      "segmentId": "S_puranpara_24",
+      "startNodeId": "puranpara_res_n1_1",
+      "endNodeId": "puranpara_res_n2_1",
+      "width": 5.95,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.22,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "puranpara",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_puranpara_25",
+      "startNodeId": "puranpara_res_n2_1",
+      "endNodeId": "puranpara_art_n_1",
+      "width": 6.8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 35,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.22,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "puranpara",
+      "tags": []
+    },
+    {
+      "segmentId": "S_puranpara_26",
+      "startNodeId": "puranpara_res_n1_2",
+      "endNodeId": "puranpara_res_n2_2",
+      "width": 5.95,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.22,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "puranpara",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_puranpara_27",
+      "startNodeId": "puranpara_res_n2_2",
+      "endNodeId": "puranpara_art_n_2",
+      "width": 6.8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 35,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.22,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "puranpara",
+      "tags": []
+    },
+    {
+      "segmentId": "S_puranpara_28",
+      "startNodeId": "puranpara_res_n1_3",
+      "endNodeId": "puranpara_res_n2_3",
+      "width": 5.95,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.22,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "puranpara",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_puranpara_29",
+      "startNodeId": "puranpara_res_n2_3",
+      "endNodeId": "puranpara_art_n_3",
+      "width": 6.8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 35,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.22,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "puranpara",
+      "tags": []
+    },
+    {
+      "segmentId": "S_puranpara_30",
+      "startNodeId": "puranpara_res_n1_4",
+      "endNodeId": "puranpara_res_n2_4",
+      "width": 5.95,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.22,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "puranpara",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_puranpara_31",
+      "startNodeId": "puranpara_res_n2_4",
+      "endNodeId": "puranpara_art_n_4",
+      "width": 6.8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 35,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.22,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "puranpara",
+      "tags": []
+    },
+    {
+      "segmentId": "S_puranpara_32",
+      "startNodeId": "puranpara_res_s1_0",
+      "endNodeId": "puranpara_res_s1_1",
+      "width": 7.6499999999999995,
+      "surfaceCondition": 0.65,
+      "trafficDensity": 0.7,
+      "speedLimit": 25,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.85,
+      "riskLevel": 0.22,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "puranpara",
+      "tags": [
+        "market"
+      ]
+    },
+    {
+      "segmentId": "S_puranpara_33",
+      "startNodeId": "puranpara_res_s2_0",
+      "endNodeId": "puranpara_res_s2_1",
+      "width": 5.95,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.22,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "puranpara",
+      "tags": []
+    },
+    {
+      "segmentId": "S_puranpara_34",
+      "startNodeId": "puranpara_res_s1_1",
+      "endNodeId": "puranpara_res_s1_2",
+      "width": 7.6499999999999995,
+      "surfaceCondition": 0.65,
+      "trafficDensity": 0.7,
+      "speedLimit": 25,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.85,
+      "riskLevel": 0.22,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "puranpara",
+      "tags": [
+        "market"
+      ]
+    },
+    {
+      "segmentId": "S_puranpara_35",
+      "startNodeId": "puranpara_res_s2_1",
+      "endNodeId": "puranpara_res_s2_2",
+      "width": 5.95,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.22,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "puranpara",
+      "tags": []
+    },
+    {
+      "segmentId": "S_puranpara_36",
+      "startNodeId": "puranpara_res_s1_2",
+      "endNodeId": "puranpara_res_s1_3",
+      "width": 7.6499999999999995,
+      "surfaceCondition": 0.65,
+      "trafficDensity": 0.7,
+      "speedLimit": 25,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.85,
+      "riskLevel": 0.22,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "puranpara",
+      "tags": [
+        "market"
+      ]
+    },
+    {
+      "segmentId": "S_puranpara_37",
+      "startNodeId": "puranpara_res_s2_2",
+      "endNodeId": "puranpara_res_s2_3",
+      "width": 5.95,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.22,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "puranpara",
+      "tags": []
+    },
+    {
+      "segmentId": "S_puranpara_38",
+      "startNodeId": "puranpara_res_s1_3",
+      "endNodeId": "puranpara_res_s1_4",
+      "width": 7.6499999999999995,
+      "surfaceCondition": 0.65,
+      "trafficDensity": 0.7,
+      "speedLimit": 25,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.85,
+      "riskLevel": 0.22,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "puranpara",
+      "tags": [
+        "market"
+      ]
+    },
+    {
+      "segmentId": "S_puranpara_39",
+      "startNodeId": "puranpara_res_s2_3",
+      "endNodeId": "puranpara_res_s2_4",
+      "width": 5.95,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.22,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "puranpara",
+      "tags": []
+    },
+    {
+      "segmentId": "S_puranpara_40",
+      "startNodeId": "puranpara_art_s_0",
+      "endNodeId": "puranpara_res_s1_0",
+      "width": 6.8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 35,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.22,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "puranpara",
+      "tags": []
+    },
+    {
+      "segmentId": "S_puranpara_41",
+      "startNodeId": "puranpara_res_s1_0",
+      "endNodeId": "puranpara_res_s2_0",
+      "width": 5.95,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.22,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "puranpara",
+      "tags": []
+    },
+    {
+      "segmentId": "S_puranpara_42",
+      "startNodeId": "puranpara_art_s_1",
+      "endNodeId": "puranpara_res_s1_1",
+      "width": 6.8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 35,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.22,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "puranpara",
+      "tags": []
+    },
+    {
+      "segmentId": "S_puranpara_43",
+      "startNodeId": "puranpara_res_s1_1",
+      "endNodeId": "puranpara_res_s2_1",
+      "width": 5.95,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.22,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "puranpara",
+      "tags": []
+    },
+    {
+      "segmentId": "S_puranpara_44",
+      "startNodeId": "puranpara_art_s_2",
+      "endNodeId": "puranpara_res_s1_2",
+      "width": 6.8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 35,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.22,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "puranpara",
+      "tags": []
+    },
+    {
+      "segmentId": "S_puranpara_45",
+      "startNodeId": "puranpara_res_s1_2",
+      "endNodeId": "puranpara_res_s2_2",
+      "width": 5.95,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.22,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "puranpara",
+      "tags": []
+    },
+    {
+      "segmentId": "S_puranpara_46",
+      "startNodeId": "puranpara_art_s_3",
+      "endNodeId": "puranpara_res_s1_3",
+      "width": 6.8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 35,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.22,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "puranpara",
+      "tags": []
+    },
+    {
+      "segmentId": "S_puranpara_47",
+      "startNodeId": "puranpara_res_s1_3",
+      "endNodeId": "puranpara_res_s2_3",
+      "width": 5.95,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.22,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "puranpara",
+      "tags": []
+    },
+    {
+      "segmentId": "S_puranpara_48",
+      "startNodeId": "puranpara_art_s_4",
+      "endNodeId": "puranpara_res_s1_4",
+      "width": 6.8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 35,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.22,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "puranpara",
+      "tags": []
+    },
+    {
+      "segmentId": "S_puranpara_49",
+      "startNodeId": "puranpara_res_s1_4",
+      "endNodeId": "puranpara_res_s2_4",
+      "width": 5.95,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.22,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "puranpara",
+      "tags": []
+    },
+    {
+      "segmentId": "S_puranpara_50",
+      "startNodeId": "puranpara_res_n1_0",
+      "endNodeId": "puranpara_alley_nw_mid",
+      "width": 2.975,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 20,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.22,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "alley",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "puranpara",
+      "tags": [
+        "alley"
+      ]
+    },
+    {
+      "segmentId": "S_puranpara_51",
+      "startNodeId": "puranpara_alley_nw_mid",
+      "endNodeId": "puranpara_res_n2_1",
+      "width": 2.975,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 20,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.22,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "alley",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "puranpara",
+      "tags": [
+        "alley"
+      ]
+    },
+    {
+      "segmentId": "S_puranpara_52",
+      "startNodeId": "puranpara_res_n1_2",
+      "endNodeId": "puranpara_alley_ne_gate",
+      "width": 2.125,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 15,
+      "turnRestrictions": [],
+      "motorcycleAccessible": false,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.22,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "alley",
+      "floodSensitivity": 0.2,
+      "pickupPractical": false,
+      "district": "puranpara",
+      "tags": [
+        "alley",
+        "pedestrian_only"
+      ]
+    },
+    {
+      "segmentId": "S_puranpara_53",
+      "startNodeId": "puranpara_alley_ne_gate",
+      "endNodeId": "puranpara_res_n1_3",
+      "width": 2.125,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 15,
+      "turnRestrictions": [],
+      "motorcycleAccessible": false,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.22,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "alley",
+      "floodSensitivity": 0.2,
+      "pickupPractical": false,
+      "district": "puranpara",
+      "tags": [
+        "alley",
+        "pedestrian_only"
+      ]
+    },
+    {
+      "segmentId": "S_puranpara_54",
+      "startNodeId": "puranpara_res_s1_1",
+      "endNodeId": "puranpara_alley_sc_mid",
+      "width": 2.975,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 20,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.22,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "alley",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "puranpara",
+      "tags": [
+        "alley"
+      ]
+    },
+    {
+      "segmentId": "S_puranpara_55",
+      "startNodeId": "puranpara_alley_sc_mid",
+      "endNodeId": "puranpara_res_s2_2",
+      "width": 2.975,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 20,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.22,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "alley",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "puranpara",
+      "tags": [
+        "alley"
+      ]
+    },
+    {
+      "segmentId": "S_puranpara_56",
+      "startNodeId": "puranpara_res_s2_3",
+      "endNodeId": "puranpara_alley_se_deadend",
+      "width": 2.125,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 15,
+      "turnRestrictions": [],
+      "motorcycleAccessible": false,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.22,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "alley",
+      "floodSensitivity": 0.2,
+      "pickupPractical": false,
+      "district": "puranpara",
+      "tags": [
+        "alley",
+        "deadend"
+      ]
+    }
+  ],
+  "pois": [
+    {
+      "id": "poi_puranpara_lalbagh_gate",
+      "kind": "officeGate",
+      "nodeId": "puranpara_res_n1_1",
+      "nameKey": "poi.puranpara.lalbagh_gate"
+    },
+    {
+      "id": "poi_puranpara_spicemarket",
+      "kind": "market",
+      "nodeId": "puranpara_res_s1_2",
+      "nameKey": "poi.puranpara.spicemarket"
+    },
+    {
+      "id": "poi_puranpara_bakarkhani",
+      "kind": "market",
+      "nodeId": "puranpara_res_n2_0",
+      "nameKey": "poi.puranpara.bakarkhani"
+    },
+    {
+      "id": "poi_puranpara_ghat",
+      "kind": "market",
+      "nodeId": "puranpara_res_s2_3",
+      "nameKey": "poi.puranpara.ghat"
+    },
+    {
+      "id": "poi_puranpara_morod",
+      "kind": "crossing",
+      "nodeId": "puranpara_art_n_2",
+      "nameKey": "poi.puranpara.morod"
+    },
+    {
+      "id": "poi_puranpara_tea_stall",
+      "kind": "teaStall",
+      "nodeId": "puranpara_res_s1_0",
+      "nameKey": "poi.puranpara.tea_stall"
+    }
+  ],
+  "lots": [
+    {
+      "lotId": "lot_puranpara_1",
+      "x": 75,
+      "z": 1483,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5707963267948966,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_puranpara_2",
+      "x": 75,
+      "z": 1517,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": -1.5707963267948966,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_puranpara_3",
+      "x": 225,
+      "z": 1483,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5707963267948966,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_puranpara_4",
+      "x": 225,
+      "z": 1517,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": -1.5707963267948966,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_puranpara_5",
+      "x": 375,
+      "z": 1483,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5707963267948966,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_puranpara_6",
+      "x": 375,
+      "z": 1517,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": -1.5707963267948966,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_puranpara_7",
+      "x": 525,
+      "z": 1483,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5707963267948966,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_puranpara_8",
+      "x": 525,
+      "z": 1517,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": -1.5707963267948966,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_puranpara_9",
+      "x": 12,
+      "z": 1500,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_puranpara_10",
+      "x": 162,
+      "z": 1500,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_puranpara_11",
+      "x": 312,
+      "z": 1500,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_puranpara_12",
+      "x": 462,
+      "z": 1500,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_puranpara_13",
+      "x": 612,
+      "z": 1500,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_puranpara_14",
+      "x": 77,
+      "z": 1263,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5772897420231222,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_puranpara_15",
+      "x": 77,
+      "z": 1363,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5772897420231222,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_puranpara_16",
+      "x": 231,
+      "z": 1263,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5578100438747242,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_puranpara_17",
+      "x": 231,
+      "z": 1363,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5578100438747242,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_puranpara_18",
+      "x": 381,
+      "z": 1269,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5083775167989393,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_puranpara_19",
+      "x": 381,
+      "z": 1369,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5083775167989393,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_puranpara_20",
+      "x": 526,
+      "z": 1273,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5707963267948966,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_puranpara_21",
+      "x": 526,
+      "z": 1373,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5707963267948966,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_puranpara_22",
+      "x": 12,
+      "z": 1325,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_puranpara_23",
+      "x": 12,
+      "z": 1435,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_puranpara_24",
+      "x": 166,
+      "z": 1324,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_puranpara_25",
+      "x": 164,
+      "z": 1435,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": -0.03304581701892995,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_puranpara_26",
+      "x": 320,
+      "z": 1326,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_puranpara_27",
+      "x": 316,
+      "z": 1436,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": -0.0671258882021007,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_puranpara_28",
+      "x": 464,
+      "z": 1335,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_puranpara_29",
+      "x": 463,
+      "z": 1440,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": -0.018179815072978278,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_puranpara_30",
+      "x": 612,
+      "z": 1335,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_puranpara_31",
+      "x": 612,
+      "z": 1440,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_puranpara_32",
+      "x": 71,
+      "z": 1605,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.4994888620096063,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_puranpara_33",
+      "x": 71,
+      "z": 1705,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.4994888620096063,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_puranpara_34",
+      "x": 225,
+      "z": 1606,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.6172744581458998,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_puranpara_35",
+      "x": 225,
+      "z": 1706,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.6172744581458998,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_puranpara_36",
+      "x": 381,
+      "z": 1602,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5707963267948966,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_puranpara_37",
+      "x": 381,
+      "z": 1702,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5707963267948966,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_puranpara_38",
+      "x": 525,
+      "z": 1606,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5178656809087625,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_puranpara_39",
+      "x": 525,
+      "z": 1706,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5178656809087625,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_puranpara_40",
+      "x": 12,
+      "z": 1559,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_puranpara_41",
+      "x": 12,
+      "z": 1662,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_puranpara_42",
+      "x": 157,
+      "z": 1565,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": -0.08526286944052945,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_puranpara_43",
+      "x": 152,
+      "z": 1672,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_puranpara_44",
+      "x": 318,
+      "z": 1558,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0.10965017216891002,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_puranpara_45",
+      "x": 324,
+      "z": 1664,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_puranpara_46",
+      "x": 461,
+      "z": 1560,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": -0.009174054545109998,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_puranpara_47",
+      "x": 461,
+      "z": 1664,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_puranpara_48",
+      "x": 612,
+      "z": 1564,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_puranpara_49",
+      "x": 612,
+      "z": 1672,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_puranpara_50",
+      "x": 45,
+      "z": 1293,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0.9380474917927134,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_puranpara_51",
+      "x": 120,
+      "z": 1342,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.0626237089595665,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_puranpara_52",
+      "x": 188,
+      "z": 1636,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.0567327609052695,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_puranpara_53",
+      "x": 274,
+      "z": 1681,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.1025615940046931,
+      "zone": "residential"
+    }
+  ]
+}

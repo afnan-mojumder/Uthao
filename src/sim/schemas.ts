@@ -10,6 +10,17 @@ export const RoadNodeSchema = z.object({
   tags: z.array(z.string()).optional(),
 });
 
+export const DistrictIdSchema = z.enum([
+  'mirpara',
+  'fulgate',
+  'dhanbagh',
+  'mohakhal',
+  'gulbari',
+  'puranpara',
+  'motinagar',
+  'testloop',
+]);
+
 export const RoadSegmentSchema = z.object({
   segmentId: z.string(),
   startNodeId: z.string(),
@@ -35,7 +46,7 @@ export const RoadSegmentSchema = z.object({
   ]),
   floodSensitivity: z.number().min(0).max(1),
   pickupPractical: z.boolean(),
-  district: z.string(),
+  district: DistrictIdSchema,
   tags: z.array(z.string()),
 });
 
@@ -72,7 +83,7 @@ export const BuildingLotSchema = z.object({
 export type BuildingLot = z.infer<typeof BuildingLotSchema>;
 
 export const DistrictSchema = z.object({
-  districtId: z.string(),
+  districtId: DistrictIdSchema,
   name: z.object({
     bn: z.string(),
     en: z.string(),
@@ -82,6 +93,41 @@ export const DistrictSchema = z.object({
   pois: z.array(PoiSchema).default([]),
   lots: z.array(BuildingLotSchema).default([]),
 });
+
+export const WorldDistrictRefSchema = z.object({
+  districtId: DistrictIdSchema,
+  name: z.object({
+    bn: z.string(),
+    en: z.string(),
+  }),
+  file: z.string(),
+  bounds: z.object({
+    minX: z.number(),
+    minZ: z.number(),
+    maxX: z.number(),
+    maxZ: z.number(),
+  }),
+});
+
+export const FlyoverDefSchema = z.object({
+  flyoverId: z.string(),
+  name: z.object({
+    bn: z.string(),
+    en: z.string(),
+  }),
+  district: DistrictIdSchema,
+  segmentIds: z.array(z.string()),
+});
+
+export const WorldDataSchema = z.object({
+  districts: z.array(WorldDistrictRefSchema),
+  connectors: z.array(RoadSegmentSchema).optional().default([]),
+  flyovers: z.array(FlyoverDefSchema).optional().default([]),
+});
+
+export type WorldData = z.infer<typeof WorldDataSchema>;
+export type WorldDistrictRef = z.infer<typeof WorldDistrictRefSchema>;
+export type FlyoverDef = z.infer<typeof FlyoverDefSchema>;
 
 export interface Poi {
   id: string;

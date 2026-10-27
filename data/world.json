@@ -1,0 +1,500 @@
+{
+  "districts": [
+    {
+      "districtId": "mirpara",
+      "name": {
+        "bn": "মিরপাড়া",
+        "en": "Mirpara"
+      },
+      "file": "data/districts/mirpara.json",
+      "bounds": {
+        "minX": 0,
+        "minZ": 0,
+        "maxX": 600,
+        "maxZ": 600
+      }
+    },
+    {
+      "districtId": "fulgate",
+      "name": {
+        "bn": "ফার্মগেট",
+        "en": "Fulgate"
+      },
+      "file": "data/districts/fulgate.json",
+      "bounds": {
+        "minX": 600,
+        "minZ": 0,
+        "maxX": 1200,
+        "maxZ": 600
+      }
+    },
+    {
+      "districtId": "dhanbagh",
+      "name": {
+        "bn": "ধানবাগ",
+        "en": "Dhanbagh"
+      },
+      "file": "data/districts/dhanbagh.json",
+      "bounds": {
+        "minX": 0,
+        "minZ": 600,
+        "maxX": 600,
+        "maxZ": 1200
+      }
+    },
+    {
+      "districtId": "mohakhal",
+      "name": {
+        "bn": "মহাখাল",
+        "en": "Mohakhal"
+      },
+      "file": "data/districts/mohakhal.json",
+      "bounds": {
+        "minX": 600,
+        "minZ": 600,
+        "maxX": 1200,
+        "maxZ": 1200
+      }
+    },
+    {
+      "districtId": "gulbari",
+      "name": {
+        "bn": "গুলবাড়ি",
+        "en": "Gulbari"
+      },
+      "file": "data/districts/gulbari.json",
+      "bounds": {
+        "minX": 1200,
+        "minZ": 600,
+        "maxX": 1800,
+        "maxZ": 1200
+      }
+    },
+    {
+      "districtId": "puranpara",
+      "name": {
+        "bn": "পুরানপাড়া",
+        "en": "Puran Para"
+      },
+      "file": "data/districts/puranpara.json",
+      "bounds": {
+        "minX": 0,
+        "minZ": 1200,
+        "maxX": 600,
+        "maxZ": 1800
+      }
+    },
+    {
+      "districtId": "motinagar",
+      "name": {
+        "bn": "মতিনগর",
+        "en": "Motinagar"
+      },
+      "file": "data/districts/motinagar.json",
+      "bounds": {
+        "minX": 600,
+        "minZ": 1200,
+        "maxX": 1200,
+        "maxZ": 1800
+      }
+    }
+  ],
+  "connectors": [
+    {
+      "segmentId": "CONN_mirpara_fulgate_n",
+      "startNodeId": "art_n_4",
+      "endNodeId": "fulgate_art_n_0",
+      "width": 12,
+      "surfaceCondition": 0.95,
+      "trafficDensity": 0.7,
+      "speedLimit": 50,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.1,
+      "riskLevel": 0.1,
+      "oneWay": true,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.1,
+      "pickupPractical": true,
+      "district": "fulgate",
+      "tags": [
+        "arterial",
+        "connector"
+      ]
+    },
+    {
+      "segmentId": "CONN_fulgate_mirpara_s",
+      "startNodeId": "fulgate_art_s_0",
+      "endNodeId": "art_s_4",
+      "width": 12,
+      "surfaceCondition": 0.95,
+      "trafficDensity": 0.7,
+      "speedLimit": 50,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.1,
+      "riskLevel": 0.1,
+      "oneWay": true,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.1,
+      "pickupPractical": true,
+      "district": "mirpara",
+      "tags": [
+        "arterial",
+        "connector"
+      ]
+    },
+    {
+      "segmentId": "CONN_mirpara_dhanbagh_1",
+      "startNodeId": "res_s2_1",
+      "endNodeId": "dhanbagh_res_n1_1",
+      "width": 8,
+      "surfaceCondition": 0.85,
+      "trafficDensity": 0.5,
+      "speedLimit": 35,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.3,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.3,
+      "pickupPractical": true,
+      "district": "dhanbagh",
+      "tags": [
+        "connector"
+      ]
+    },
+    {
+      "segmentId": "CONN_mirpara_dhanbagh_2",
+      "startNodeId": "res_s2_2",
+      "endNodeId": "dhanbagh_res_n1_2",
+      "width": 8,
+      "surfaceCondition": 0.85,
+      "trafficDensity": 0.5,
+      "speedLimit": 35,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.3,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.3,
+      "pickupPractical": true,
+      "district": "dhanbagh",
+      "tags": [
+        "connector"
+      ]
+    },
+    {
+      "segmentId": "CONN_fulgate_mohakhal_1",
+      "startNodeId": "fulgate_res_s2_1",
+      "endNodeId": "mohakhal_res_n1_1",
+      "width": 9,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.75,
+      "speedLimit": 40,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.4,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": [
+        "connector"
+      ]
+    },
+    {
+      "segmentId": "CONN_fulgate_mohakhal_2",
+      "startNodeId": "fulgate_res_s2_2",
+      "endNodeId": "mohakhal_res_n1_2",
+      "width": 9,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.75,
+      "speedLimit": 40,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.4,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": [
+        "connector"
+      ]
+    },
+    {
+      "segmentId": "CONN_dhanbagh_mohakhal_n",
+      "startNodeId": "dhanbagh_art_n_4",
+      "endNodeId": "mohakhal_art_n_0",
+      "width": 12,
+      "surfaceCondition": 0.95,
+      "trafficDensity": 0.65,
+      "speedLimit": 50,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": true,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.1,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": [
+        "arterial",
+        "connector"
+      ]
+    },
+    {
+      "segmentId": "CONN_mohakhal_dhanbagh_s",
+      "startNodeId": "mohakhal_art_s_0",
+      "endNodeId": "dhanbagh_art_s_4",
+      "width": 12,
+      "surfaceCondition": 0.95,
+      "trafficDensity": 0.65,
+      "speedLimit": 50,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.1,
+      "oneWay": true,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.1,
+      "pickupPractical": true,
+      "district": "dhanbagh",
+      "tags": [
+        "arterial",
+        "connector"
+      ]
+    },
+    {
+      "segmentId": "CONN_mohakhal_gulbari_n",
+      "startNodeId": "mohakhal_art_n_4",
+      "endNodeId": "gulbari_art_n_0",
+      "width": 14,
+      "surfaceCondition": 0.98,
+      "trafficDensity": 0.6,
+      "speedLimit": 55,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.1,
+      "riskLevel": 0.05,
+      "oneWay": true,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.05,
+      "pickupPractical": true,
+      "district": "gulbari",
+      "tags": [
+        "arterial",
+        "connector"
+      ]
+    },
+    {
+      "segmentId": "CONN_gulbari_mohakhal_s",
+      "startNodeId": "gulbari_art_s_0",
+      "endNodeId": "mohakhal_art_s_4",
+      "width": 14,
+      "surfaceCondition": 0.98,
+      "trafficDensity": 0.6,
+      "speedLimit": 55,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.1,
+      "riskLevel": 0.05,
+      "oneWay": true,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.05,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": [
+        "arterial",
+        "connector"
+      ]
+    },
+    {
+      "segmentId": "CONN_dhanbagh_puranpara_1",
+      "startNodeId": "dhanbagh_res_s2_1",
+      "endNodeId": "puranpara_res_n1_1",
+      "width": 7,
+      "surfaceCondition": 0.75,
+      "trafficDensity": 0.65,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.5,
+      "riskLevel": 0.15,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.4,
+      "pickupPractical": true,
+      "district": "puranpara",
+      "tags": [
+        "connector"
+      ]
+    },
+    {
+      "segmentId": "CONN_dhanbagh_puranpara_2",
+      "startNodeId": "dhanbagh_res_s2_2",
+      "endNodeId": "puranpara_res_n1_2",
+      "width": 7,
+      "surfaceCondition": 0.75,
+      "trafficDensity": 0.65,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.5,
+      "riskLevel": 0.15,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.4,
+      "pickupPractical": true,
+      "district": "puranpara",
+      "tags": [
+        "connector"
+      ]
+    },
+    {
+      "segmentId": "CONN_mohakhal_motinagar_1",
+      "startNodeId": "mohakhal_res_s2_1",
+      "endNodeId": "motinagar_res_n1_1",
+      "width": 9,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.8,
+      "speedLimit": 40,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.4,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "motinagar",
+      "tags": [
+        "connector"
+      ]
+    },
+    {
+      "segmentId": "CONN_mohakhal_motinagar_2",
+      "startNodeId": "mohakhal_res_s2_2",
+      "endNodeId": "motinagar_res_n1_2",
+      "width": 9,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.8,
+      "speedLimit": 40,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.4,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "motinagar",
+      "tags": [
+        "connector"
+      ]
+    },
+    {
+      "segmentId": "CONN_puranpara_motinagar_n",
+      "startNodeId": "puranpara_art_n_4",
+      "endNodeId": "motinagar_art_n_0",
+      "width": 10,
+      "surfaceCondition": 0.85,
+      "trafficDensity": 0.7,
+      "speedLimit": 45,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.3,
+      "riskLevel": 0.12,
+      "oneWay": true,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "motinagar",
+      "tags": [
+        "arterial",
+        "connector"
+      ]
+    },
+    {
+      "segmentId": "CONN_motinagar_puranpara_s",
+      "startNodeId": "motinagar_art_s_0",
+      "endNodeId": "puranpara_art_s_4",
+      "width": 10,
+      "surfaceCondition": 0.85,
+      "trafficDensity": 0.7,
+      "speedLimit": 45,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.3,
+      "riskLevel": 0.12,
+      "oneWay": true,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "puranpara",
+      "tags": [
+        "arterial",
+        "connector"
+      ]
+    }
+  ],
+  "flyovers": [
+    {
+      "flyoverId": "mohakhal_flyover",
+      "name": {
+        "bn": "মহাখালী ফ্লাইওভার",
+        "en": "Mohakhali Flyover"
+      },
+      "district": "mohakhal",
+      "segmentIds": [
+        "S_mohakhal_fly_eb1",
+        "S_mohakhal_fly_eb2",
+        "S_mohakhal_fly_wb1",
+        "S_mohakhal_fly_wb2",
+        "S_mohakhal_ramp_eb_on",
+        "S_mohakhal_ramp_eb_off",
+        "S_mohakhal_ramp_wb_on",
+        "S_mohakhal_ramp_wb_off"
+      ]
+    }
+  ]
+}

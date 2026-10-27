@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { DistrictSchema, ArchetypesDataSchema, EncounterDefSchema } from '../src/sim/schemas.ts';
+import { DistrictSchema, ArchetypesDataSchema, EncounterDefSchema, WorldDataSchema } from '../src/sim/schemas.ts';
 
 // Validate dialogue files
 const dialogueDir = path.resolve('data/dialogue');
@@ -178,6 +178,22 @@ if (fs.existsSync(districtsDir)) {
         process.exit(1);
       }
     }
+  }
+}
+
+// Validate world.json file
+const worldPath = path.resolve('data/world.json');
+if (fs.existsSync(worldPath)) {
+  try {
+    const raw = JSON.parse(fs.readFileSync(worldPath, 'utf-8'));
+    const result = WorldDataSchema.safeParse(raw);
+    if (!result.success) {
+      console.error(`Schema validation failed for ${worldPath}:`, result.error.format());
+      process.exit(1);
+    }
+  } catch (err) {
+    console.error(`Failed reading world ${worldPath}:`, err);
+    process.exit(1);
   }
 }
 
