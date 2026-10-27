@@ -12,6 +12,9 @@ import { WeatherFx } from './WeatherFx';
 import type { DistrictData } from '../sim/schemas';
 import type { PhysicsWorld } from '../physics/PhysicsWorld';
 import { CityBuilder } from './CityBuilder';
+import { PeopleRenderer } from './people';
+import type { PedestrianAgent } from '../sim/traffic/pedestrians';
+import type { TrafficAgent } from '../sim/traffic/TrafficManager';
 
 export class Renderer {
   readonly webglRenderer: THREE.WebGLRenderer;
@@ -23,6 +26,7 @@ export class Renderer {
   readonly dirLight: THREE.DirectionalLight;
   readonly hemiLight: THREE.HemisphereLight;
   readonly weatherFx: WeatherFx;
+  readonly peopleRenderer: PeopleRenderer;
   cityBuilder?: CityBuilder;
 
   private canvas: HTMLCanvasElement;
@@ -99,6 +103,9 @@ export class Renderer {
       hemiLight: this.hemiLight,
       drawDistance: this.qualityManager.config.drawDistance,
     });
+
+    this.peopleRenderer = new PeopleRenderer();
+    this.scene.add(this.peopleRenderer.root);
 
     window.addEventListener('resize', () => this.resize());
     this.resize();
@@ -306,6 +313,14 @@ export class Renderer {
 
   setPassengerVisible(visible: boolean): void {
     this.bikeMesh.setPassengerVisible(visible);
+  }
+
+  updatePeople(
+    pedestrians: PedestrianAgent[],
+    trafficAgents: TrafficAgent[],
+    timeSec = 0
+  ): void {
+    this.peopleRenderer.update(pedestrians, trafficAgents, timeSec);
   }
 
   getFps(): number {

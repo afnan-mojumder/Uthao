@@ -2,11 +2,12 @@ import type { RoadNetwork } from '../road/RoadNetwork';
 import { buildLanes, type Lane, type LaneGraph } from '../road/lanes';
 import { stepCarFollowing } from './idm';
 import { SignalController } from './signals';
+import { PedestrianManager } from './pedestrians';
 import { Rng } from '../../core/rng';
 import { distance2d, angleDiff, clamp } from '../../core/math';
 import { BALANCE } from '../../config/balance';
 
-export type TrafficVehicleKind = 'car' | 'bus' | 'motorcycle' | 'cng';
+export type TrafficVehicleKind = 'car' | 'bus' | 'motorcycle' | 'cng' | 'rickshaw';
 
 export interface VehicleDimensions {
   length: number;
@@ -19,6 +20,7 @@ export const VEHICLE_CONFIGS: Record<TrafficVehicleKind, VehicleDimensions> = {
   bus: { length: 8.0, width: 2.4, desiredSpeedMs: 40 / 3.6 },
   motorcycle: { length: 2.0, width: 0.8, desiredSpeedMs: 55 / 3.6 },
   cng: { length: 2.8, width: 1.3, desiredSpeedMs: 43 / 3.6 },
+  rickshaw: { length: 2.2, width: 1.1, desiredSpeedMs: 3.5 }, // slow 3-4 m/s per GDD §11
 };
 
 export interface TrafficAgent {
@@ -34,6 +36,10 @@ export interface TrafficAgent {
   width: number;
   desiredSpeed: number;
   lod: 'near' | 'mid' | 'far';
+  dwellTimer?: number;
+  lastDwellPoiId?: string;
+  isDwelling?: boolean;
+  yieldTimer?: number;
 }
 
 export interface CameraViewInfo {
@@ -95,10 +101,19 @@ export function isSpawnPositionAllowed(
   return true;
 }
 
+export interface BusStopLocation {
+  id: string;
+  nodeId: string;
+  x: number;
+  z: number;
+}
+
 export class TrafficManager {
   readonly network: RoadNetwork;
   readonly laneGraph: LaneGraph;
   readonly signals: SignalController;
+  readonly pedestrians: PedestrianManager;
+  readonly busStops: BusStopLocation[] = [];
   readonly agents: Map<string, TrafficAgent> = new Map();
   private rng: Rng;
   private nextAgentSeq = 0;
@@ -107,7 +122,25 @@ export class TrafficManager {
     this.network = network;
     this.laneGraph = buildLanes(network);
     this.signals = new SignalController(network.getAllNodes());
+    this.pedestrians = new PedestrianManager(network, seed);
     this.rng = new Rng(seed);
+
+    // Index bus stop POIs
+    for (const poi of network.getPois()) {
+      if (poi.kind === 'busStop') {
+        const node = network.getNode(poi.nodeId);
+        this.busStops.push({
+          id: poi.id,
+          nodeId: poi.nodeId,
+          x: node?.x ?? 0,
+          z: node?.z ?? 0,
+        });
+      }
+    }
+  }
+
+  addBusStop(stop: BusStopLocation): void {
+    this.busStops.push(stop);
   }
 
   getAgents(): TrafficAgent[] {
@@ -116,13 +149,14 @@ export class TrafficManager {
 
   /**
    * Samples a vehicle kind according to typical Dhaka modal share:
-   * 40% CNG, 30% Car, 20% Motorcycle, 10% Bus
+   * 35% CNG, 25% Car, 20% Rickshaw, 12% Motorcycle, 8% Bus
    */
   sampleVehicleKind(): TrafficVehicleKind {
     const roll = this.rng.next();
-    if (roll < 0.4) return 'cng';
-    if (roll < 0.7) return 'car';
-    if (roll < 0.9) return 'motorcycle';
+    if (roll < 0.35) return 'cng';
+    if (roll < 0.6) return 'car';
+    if (roll < 0.8) return 'rickshaw';
+    if (roll < 0.92) return 'motorcycle';
     return 'bus';
   }
 
@@ -136,6 +170,9 @@ export class TrafficManager {
   ): void {
     const timeMult = getTimeOfDayTrafficMultiplier(currentMinute);
     const targetCount = Math.round(baseTargetDensity * timeMult);
+
+    // Maintain pedestrians density too
+    this.pedestrians.maintainDensity(camera, currentMinute);
 
     // Despawn agents too far from camera (> 450 m)
     for (const [id, agent] of this.agents.entries()) {
@@ -214,8 +251,38 @@ export class TrafficManager {
     return Math.atan2(p2.x - p1.x, p2.z - p1.z);
   }
 
-  update(dt: number, camera?: CameraViewInfo): void {
+  /**
+   * Triggers horn yield on both pedestrians and nearby vehicles (rickshaws/motorcycles).
+   * Actors within radius yield slightly.
+   */
+  triggerHorn(
+    hornPos: { x: number; z: number },
+    radius = 15
+  ): { pedsYielded: number; rickshawsYielded: number } {
+    const pedsYielded = this.pedestrians.triggerHorn(hornPos, radius);
+    let rickshawsYielded = 0;
+
+    for (const agent of this.agents.values()) {
+      if (agent.kind === 'rickshaw' || agent.kind === 'motorcycle') {
+        const dist = distance2d(hornPos.x, hornPos.z, agent.x, agent.z);
+        if (dist <= radius) {
+          agent.yieldTimer = 2.5;
+          agent.speed *= 0.6;
+          rickshawsYielded++;
+        }
+      }
+    }
+
+    return { pedsYielded, rickshawsYielded };
+  }
+
+  update(
+    dt: number,
+    camera?: CameraViewInfo,
+    player?: { x: number; z: number; speed: number }
+  ): void {
     this.signals.update(dt);
+    this.pedestrians.update(dt, player, camera);
 
     // Group agents by lane to identify leader-follower pairs
     const agentsByLane = new Map<string, TrafficAgent[]>();
@@ -240,25 +307,68 @@ export class TrafficManager {
       const myIdx = laneAgents.findIndex((a) => a.id === agent.id);
       const leader = myIdx > 0 ? laneAgents[myIdx - 1] : null;
 
-      const followerItem = {
-        pos: agent.distAlongLane,
-        speed: agent.speed,
-        length: agent.length,
-      };
+      // 1. Bus dwell at bus stops (10-20s, blocks the lane)
+      if (agent.kind === 'bus') {
+        if (agent.dwellTimer !== undefined && agent.dwellTimer > 0) {
+          agent.dwellTimer -= dt;
+          agent.speed = 0;
+          agent.isDwelling = true;
+          if (agent.dwellTimer <= 0) {
+            agent.dwellTimer = 0;
+            agent.isDwelling = false;
+          }
+        } else {
+          for (const stop of this.busStops) {
+            if (agent.lastDwellPoiId === stop.id) continue;
+            const distToStop = distance2d(agent.x, agent.z, stop.x, stop.z);
+            if (distToStop < 8.0) {
+              agent.dwellTimer = this.rng.range(10, 20);
+              agent.lastDwellPoiId = stop.id;
+              agent.speed = 0;
+              agent.isDwelling = true;
+              break;
+            }
+          }
+        }
+      }
 
-      const leaderItem = leader
-        ? { pos: leader.distAlongLane, speed: leader.speed, length: leader.length }
-        : null;
+      // 2. Horn yield slowdown
+      if (agent.yieldTimer !== undefined && agent.yieldTimer > 0) {
+        agent.yieldTimer -= dt;
+        agent.desiredSpeed = VEHICLE_CONFIGS[agent.kind].desiredSpeedMs * 0.5;
+        if (agent.yieldTimer <= 0) {
+          agent.yieldTimer = 0;
+          agent.desiredSpeed = Math.min(
+            VEHICLE_CONFIGS[agent.kind].desiredSpeedMs,
+            lane.speedLimitMs
+          );
+        }
+      }
 
-      const step = stepCarFollowing(
-        followerItem,
-        leaderItem,
-        agent.desiredSpeed,
-        dt
-      );
+      // 3. Position update via IDM or dwell
+      if (agent.isDwelling) {
+        agent.speed = 0;
+      } else {
+        const followerItem = {
+          pos: agent.distAlongLane,
+          speed: agent.speed,
+          length: agent.length,
+        };
 
-      agent.distAlongLane = step.newPos;
-      agent.speed = step.newSpeed;
+        const leaderItem = leader
+          ? { pos: leader.distAlongLane, speed: leader.speed, length: leader.length }
+          : null;
+
+        const step = stepCarFollowing(
+          followerItem,
+          leaderItem,
+          agent.desiredSpeed,
+          dt
+        );
+
+        agent.distAlongLane = step.newPos;
+        agent.speed = step.newSpeed;
+      }
 
       // Check if reached end of lane
       if (agent.distAlongLane >= lane.lengthM) {
@@ -278,12 +388,20 @@ export class TrafficManager {
         }
       }
 
-      // Update position and heading
+      // Update position and heading (rickshaws turn slowly)
       const updatedLane = this.laneGraph.lanes.get(agent.laneId) ?? lane;
       const pos = this.computeLanePosition(updatedLane, agent.distAlongLane);
       agent.x = pos.x;
       agent.z = pos.z;
-      agent.heading = this.computeLaneHeading(updatedLane);
+
+      const targetHeading = this.computeLaneHeading(updatedLane);
+      if (agent.kind === 'rickshaw') {
+        const diff = angleDiff(agent.heading, targetHeading);
+        const maxTurnThisFrame = 1.2 * dt; // turn rate ~1.2 rad/s
+        agent.heading += clamp(diff, -maxTurnThisFrame, maxTurnThisFrame);
+      } else {
+        agent.heading = targetHeading;
+      }
 
       if (camera) {
         const d = distance2d(camera.x, camera.z, agent.x, agent.z);

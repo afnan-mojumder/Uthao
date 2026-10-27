@@ -11,6 +11,7 @@ import {
 } from './physics/bikeModel';
 import { RoadNetwork } from './sim/road/RoadNetwork';
 import { RideManager } from './sim/ride/RideManager';
+import { TrafficManager } from './sim/traffic/TrafficManager';
 import { AutopilotController } from './debug/autopilot';
 import { Hud } from './ui/hud/Hud';
 import { InputManager } from './input';
@@ -121,12 +122,14 @@ if (typeof document !== 'undefined') {
 
 const hud = typeof document !== 'undefined' ? new Hud() : undefined;
 const autopilot = new AutopilotController(roadNetwork);
+const trafficManager = new TrafficManager(roadNetwork, 42);
 const inputManager = new InputManager();
 
 initDebugApi(gm, {
   renderer,
   autopilot,
   rideManager,
+  trafficManager,
 });
 
 // Create initial test ride request
@@ -228,6 +231,25 @@ function frame(now: number) {
     env.conditionPct = gm.economy.motorcycleCondition;
     bikeState = stepBike(bikeState, input, bikeSpec, env, SIM_DT);
 
+    // Horn & traffic update
+    const rawInput = inputManager.read();
+    if (rawInput.horn) {
+      trafficManager.triggerHorn({ x: bikeState.x, z: bikeState.z });
+    }
+
+    const camView = {
+      x: bikeState.x,
+      z: bikeState.z,
+      heading: bikeState.heading,
+      fovRad: (60 * Math.PI) / 180,
+    };
+    trafficManager.maintainDensity(camView, gm.clock.minutes);
+    trafficManager.update(SIM_DT, camView, {
+      x: bikeState.x,
+      z: bikeState.z,
+      speed: bikeState.speed,
+    });
+
     // Update RideManager
     rideManager.update(
       { x: bikeState.x, z: bikeState.z, speed: bikeState.speed },
@@ -252,6 +274,12 @@ function frame(now: number) {
       renderer.markers.setDropoff(0, 0, false);
       renderer.setPassengerVisible(false);
     }
+
+    renderer.updatePeople(
+      trafficManager.pedestrians.getPedestrians(),
+      trafficManager.getAgents(),
+      now / 1000
+    );
 
     renderer.setBikeState(bikeState);
     const alpha = gm.accumulator / SIM_DT;

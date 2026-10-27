@@ -10,6 +10,7 @@ export interface DebugApi {
   renderer?: Renderer;
   rideManager?: RideManager;
   autopilotController?: AutopilotController;
+  trafficManager?: import('../sim/traffic/TrafficManager').TrafficManager;
   eventLog: string[];
   lastReceipt?: TripReceipt;
   dispatch: (cmd: Command) => CommandResult;
@@ -19,6 +20,7 @@ export interface DebugApi {
   setTime: (hhmm: string) => void;
   setWeather: (w: WeatherKind) => void;
   autopilot: (on: boolean) => void;
+  horn: (pos?: { x: number; z: number }) => void;
   getFps: () => number;
   getDrawCalls: () => number;
   getTriangles: () => number;
@@ -35,6 +37,7 @@ export interface DebugApiOptions {
   renderer?: Renderer;
   autopilot?: AutopilotController;
   rideManager?: RideManager;
+  trafficManager?: import('../sim/traffic/TrafficManager').TrafficManager;
 }
 
 export function initDebugApi(
@@ -73,6 +76,7 @@ export function initDebugApi(
     renderer: options.renderer,
     rideManager: options.rideManager,
     autopilotController: options.autopilot,
+    trafficManager: options.trafficManager,
     eventLog,
     get lastReceipt() {
       return lastReceipt;
@@ -102,6 +106,10 @@ export function initDebugApi(
     autopilot: (on: boolean) => {
       options.autopilot?.setEnabled(on);
       console.log(`[DebugApi] autopilot: ${on}`);
+    },
+    horn: (pos?: { x: number; z: number }) => {
+      const p = pos ?? { x: 0, z: 0 };
+      options.trafficManager?.triggerHorn(p);
     },
     getFps: () => options.renderer?.getFps() ?? 60,
     getDrawCalls: () => options.renderer?.getDrawCalls() ?? 0,
