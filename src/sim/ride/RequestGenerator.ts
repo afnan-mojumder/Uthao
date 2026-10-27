@@ -11,6 +11,7 @@ import type {
 import { distance2d } from '../../core/math';
 import { generateProfile } from '../passenger/profiles';
 import { fairFare, surgeAt } from '../negotiation/fare';
+import type { ReputationSystem } from '../reputation/ReputationSystem';
 
 export function getTimeOfDayDemandMultiplier(minute: number): number {
   const m = ((minute % 1440) + 1440) % 1440;
@@ -54,13 +55,17 @@ export function samplePoisson(lambda: number, rng: Rng): number {
 
 export interface RequestGeneratorOptions {
   baseArrivalRatePerMinute?: number; // average requests per game minute
+  requestRateMultiplier?: number;
+  reputationSystem?: ReputationSystem;
 }
 
 export class RequestGenerator {
   readonly network: RoadNetwork;
   readonly rng: Rng;
   readonly baseArrivalRate: number;
+  readonly reputationSystem?: ReputationSystem;
 
+  private requestRateMultiplier: number = 1.0;
   private eligibleNodeIds: string[] = [];
   private profiles: Map<string, PassengerProfile> = new Map();
 
@@ -72,7 +77,20 @@ export class RequestGenerator {
     this.network = network;
     this.rng = rng;
     this.baseArrivalRate = opts.baseArrivalRatePerMinute ?? 0.5;
+    this.reputationSystem = opts.reputationSystem;
+    this.requestRateMultiplier = opts.requestRateMultiplier ?? 1.0;
     this.computeEligibleNodes();
+  }
+
+  setRequestRateMultiplier(mult: number): void {
+    this.requestRateMultiplier = Math.max(0, mult);
+  }
+
+  getRequestRateMultiplier(): number {
+    if (this.reputationSystem) {
+      return this.reputationSystem.getRequestRateMultiplier();
+    }
+    return this.requestRateMultiplier;
   }
 
   private computeEligibleNodes(): void {
@@ -218,12 +236,15 @@ export class RequestGenerator {
     dtMinutes: number,
     currentMinute: number,
     weather: WeatherKind,
-    playerPose?: { x: number; z: number }
+    playerPose?: { x: number; z: number },
+    rateMultiplier?: number
   ): RideRequest[] {
     const weatherMult =
       weather === 'lightRain' ? 1.35 : weather === 'heavyRain' ? 1.5 : 1.0;
     const timeMult = getTimeOfDayDemandMultiplier(currentMinute);
-    const lambda = this.baseArrivalRate * timeMult * weatherMult * dtMinutes;
+    const demandMultiplier = rateMultiplier ?? this.getRequestRateMultiplier();
+    const lambda =
+      this.baseArrivalRate * timeMult * weatherMult * demandMultiplier * dtMinutes;
 
     const count = samplePoisson(lambda, this.rng);
     const requests: RideRequest[] = [];

@@ -22,6 +22,8 @@ import routeEncounters from '../../data/encounters/route.json';
 import pickupEncounters from '../../data/encounters/pickup.json';
 import paymentEncounters from '../../data/encounters/payment.json';
 import bikeEncounters from '../../data/encounters/bike.json';
+import { ReputationSystem } from './reputation/ReputationSystem';
+import type { SafetyRecord } from '../core/types';
 
 const DEFAULT_ENCOUNTERS: EncounterDef[] = [
   ...routeEncounters,
@@ -58,6 +60,13 @@ export interface SimSnapshot {
   story: StoryState;
   weather: WeatherKind;
   waypointNodeId: string | null;
+  reputation?: {
+    rating: number;
+    localTrust: number;
+    safetyRecord: SafetyRecord;
+    riskScore: number;
+    promises: { kept: number; broken: number };
+  };
 }
 
 export class GameManager {
@@ -71,6 +80,7 @@ export class GameManager {
   readonly weatherSystem: WeatherSystem;
   readonly economyManager: EconomyManager;
   readonly eventDirector: EventDirector;
+  readonly reputationSystem: ReputationSystem;
 
   paused: boolean = false;
   accumulator: number = 0;
@@ -118,6 +128,12 @@ export class GameManager {
     this.clock = new GameClock(1, 7 * 60);
     this.weatherSystem = new WeatherSystem({ initialWeather: this.weather });
     this.economyManager = new EconomyManager(this.bus, this.economy);
+    this.reputationSystem = new ReputationSystem({
+      bus: this.bus,
+      initialRating: this.economy.reputation,
+      initialLocalTrust: 30,
+      initialRelationships: this.story.characterRelationships,
+    });
 
     const encounterDefs =
       (this.data.encounters as EncounterDef[] | undefined) ?? DEFAULT_ENCOUNTERS;
@@ -129,6 +145,11 @@ export class GameManager {
 
     this.bus.on('day/started', () => {
       this.eventDirector.resetDaily();
+    });
+
+    this.bus.on('reputation/changed', () => {
+      this.economy.reputation = this.reputationSystem.getAppRating();
+      this.economyManager.reputation = this.economy.reputation;
     });
   }
 
@@ -248,6 +269,13 @@ export class GameManager {
       },
       weather: this.weather,
       waypointNodeId: this.waypointNodeId,
+      reputation: {
+        rating: this.reputationSystem.getAppRating(),
+        localTrust: this.reputationSystem.getLocalTrust(),
+        safetyRecord: this.reputationSystem.getSafetyRecord(),
+        riskScore: this.reputationSystem.getRiskScore(),
+        promises: this.reputationSystem.getPromisesRecord(),
+      },
     };
   }
 }

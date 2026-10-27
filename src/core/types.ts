@@ -211,11 +211,21 @@ export interface DaySummary {
   relationshipsDelta: Record<string, number>;
 }
 
+export interface SafetyRecord {
+  nearMisses: number;
+  bumps: number;
+  crashes: number;
+  infractions: number;
+}
+
 export interface ReputationDelta {
   rating?: number;
   localTrust?: number;
   relationship?: { characterId: string; delta: number };
   reason?: string;
+  riskScore?: number;
+  promisesKept?: number;
+  promisesBroken?: number;
 }
 
 export interface EncounterChoice {

@@ -120,6 +120,33 @@ export const BALANCE = {
     workshopDeposit: 25000,
     betterBike: 20000,
   },
+  RATING: {
+    start: 5.0,
+    rollingWindow: 50,
+    latePenaltyPer5Min: 0.5,
+    nearMissPenalty: 0.3,
+    carefulNearMissMult: 2.0,
+    bumpPenalty: 1.0,
+    crashRating: 1.0,
+    helpfulChoiceBonus: 0.3,
+    lowRatingThreshold: 4.0,
+    lowRatingRequestRateMult: 0.7,
+    warningThreshold: 3.5,
+    suspensionThreshold: 3.0,
+  },
+  TIP: {
+    baseChance: 0.1,
+    ratingSlope: 0.3,
+    minAmount: 10,
+    maxAmount: 40,
+  },
+  TRUST: {
+    localTrustStart: 30,
+    localTrustMin: 0,
+    localTrustMax: 100,
+    relationshipMin: -100,
+    relationshipMax: 100,
+  },
   BOT: {
     shiftMinutes: 600,
     reckless: {
