@@ -6,7 +6,7 @@ import { getRoadWidth } from '../../render/roadMesh';
 import { BALANCE } from '../../config/balance';
 import type { CameraViewInfo } from './TrafficManager';
 
-export type PedestrianState = 'sidewalk' | 'crossing' | 'jaywalking' | 'yielding';
+export type PedestrianState = 'sidewalk' | 'crossing' | 'jaywalking' | 'yielding' | 'road_worker';
 
 export interface PedestrianAgent {
   id: string;
@@ -26,6 +26,7 @@ export interface PedestrianAgent {
   crossingToOffset?: number;
   yieldTimer?: number;
   lod: 'near' | 'mid' | 'far';
+  isRoadWorker?: boolean;
 }
 
 /**
@@ -185,6 +186,52 @@ export class PedestrianManager {
   }
 
   /**
+   * Spawns road construction workers stationed on a segment.
+   */
+  spawnRoadWorkers(segmentId: string, count = 2): PedestrianAgent[] {
+    const seg = this.network.getSegment(segmentId);
+    if (!seg) return [];
+    const sNode = this.network.getNode(seg.startNodeId);
+    const eNode = this.network.getNode(seg.endNodeId);
+    if (!sNode || !eNode) return [];
+
+    const workers: PedestrianAgent[] = [];
+    const segLen = distance2d(sNode.x, sNode.z, eNode.x, eNode.z);
+    const roadW = getRoadWidth(seg);
+
+    for (let i = 0; i < count; i++) {
+      const id = `ped_worker_${++this.nextPedSeq}`;
+      const distAlong = clamp(segLen * (0.3 + 0.4 * (i / Math.max(1, count - 1))), 2, segLen - 2);
+      const lateralOffset = (roadW / 4) * (i % 2 === 0 ? 1 : -1);
+      const pos = this.computePosition(sNode, eNode, distAlong, lateralOffset);
+      const dx = eNode.x - sNode.x;
+      const dz = eNode.z - sNode.z;
+      const heading = Math.atan2(dx, dz);
+
+      const worker: PedestrianAgent = {
+        id,
+        x: pos.x,
+        z: pos.z,
+        heading,
+        speed: 0.2,
+        state: 'road_worker',
+        segmentId,
+        distAlongSegment: distAlong,
+        lateralOffset,
+        side: i % 2 === 0 ? 'left' : 'right',
+        direction: 1,
+        lod: 'near',
+        isRoadWorker: true,
+      };
+
+      this.pedestrians.set(id, worker);
+      workers.push(worker);
+    }
+
+    return workers;
+  }
+
+  /**
    * When horn is blown, pedestrians within radius yield slightly.
    */
   triggerHorn(hornPos: { x: number; z: number }, radius = 15): number {
@@ -296,6 +343,15 @@ export class PedestrianManager {
           ped.crossingFromOffset = undefined;
           ped.crossingToOffset = undefined;
           ped.heading = ped.direction === 1 ? baseHeading : baseHeading + Math.PI;
+        }
+      } else if (ped.state === 'road_worker') {
+        ped.distAlongSegment += ped.direction * ped.speed * dt;
+        if (ped.distAlongSegment > segLen - 2) {
+          ped.direction = -1;
+          ped.heading = baseHeading + Math.PI;
+        } else if (ped.distAlongSegment < 2) {
+          ped.direction = 1;
+          ped.heading = baseHeading;
         }
       }
 

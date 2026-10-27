@@ -24,4 +24,5 @@ One line per finished task: `YYYY-MM-DD Tx.y done — note`
 2026-10-27 T3.4 done — PedestrianManager with fairness-bounded jaywalking (1.5x stopping distance), bus stop dwelling (10-20s), rickshaws (3.5 m/s, slow turns), horn yield, and PeopleRenderer instanced rendering
 2026-10-27 T4.2 done — ReputationSystem with rolling 50 ratings, localTrust (0-100), character relationships, safetyRecord, riskScore, promises, and low rating request rate reduction
 2026-10-27 T4.6 done — Crime and suspicious-pickup system: per-segment encounter probability, outcome split (60% harmless / 30% suspicious / 10% dangerous), flee resolution, robbery cash-on-hand loss rules (savings untouched), and turn-around choices
+2026-10-27 T5.3 done — Authentic Dhaka traffic types (minibus/leguna, delivery van, night-only trucks, bicycles, scooters, ride-hailing cars, vendor carts, road workers), signature behaviors (bus racing to stops, bounded CNG weaving [-0.6m, +0.6m], wrong-way residential rickshaws), and RoadEvents system with closures, construction, diversions, market congestion, speed caps, and routing avoidance
 

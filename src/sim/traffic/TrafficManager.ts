@@ -6,8 +6,22 @@ import { PedestrianManager } from './pedestrians';
 import { Rng } from '../../core/rng';
 import { distance2d, angleDiff, clamp } from '../../core/math';
 import { BALANCE } from '../../config/balance';
+import type { RoadType } from '../../core/types';
+import type { RoadEventManager } from '../world/RoadEvents';
 
-export type TrafficVehicleKind = 'car' | 'bus' | 'motorcycle' | 'cng' | 'rickshaw';
+export type TrafficVehicleKind =
+  | 'car'
+  | 'bus'
+  | 'motorcycle'
+  | 'cng'
+  | 'rickshaw'
+  | 'minibus'
+  | 'delivery_van'
+  | 'truck'
+  | 'bicycle'
+  | 'scooter'
+  | 'ride_hailing_car'
+  | 'vendor_cart';
 
 export interface VehicleDimensions {
   length: number;
@@ -21,6 +35,13 @@ export const VEHICLE_CONFIGS: Record<TrafficVehicleKind, VehicleDimensions> = {
   motorcycle: { length: 2.0, width: 0.8, desiredSpeedMs: 55 / 3.6 },
   cng: { length: 2.8, width: 1.3, desiredSpeedMs: 43 / 3.6 },
   rickshaw: { length: 2.2, width: 1.1, desiredSpeedMs: 3.5 }, // slow 3-4 m/s per GDD §11
+  minibus: { length: 4.8, width: 1.8, desiredSpeedMs: 42 / 3.6 }, // leguna
+  delivery_van: { length: 5.0, width: 1.9, desiredSpeedMs: 45 / 3.6 },
+  truck: { length: 9.5, width: 2.5, desiredSpeedMs: 35 / 3.6 }, // night only
+  bicycle: { length: 1.8, width: 0.6, desiredSpeedMs: 16 / 3.6 },
+  scooter: { length: 1.9, width: 0.7, desiredSpeedMs: 45 / 3.6 },
+  ride_hailing_car: { length: 4.5, width: 1.8, desiredSpeedMs: 48 / 3.6 },
+  vendor_cart: { length: 2.2, width: 1.3, desiredSpeedMs: 7.2 / 3.6 }, // 2.0 m/s
 };
 
 export interface TrafficAgent {
@@ -40,6 +61,10 @@ export interface TrafficAgent {
   lastDwellPoiId?: string;
   isDwelling?: boolean;
   yieldTimer?: number;
+  lateralOffset?: number;
+  weavePhase?: number;
+  isRacingToStop?: boolean;
+  isWrongWay?: boolean;
 }
 
 export interface CameraViewInfo {
@@ -69,6 +94,14 @@ export function getTimeOfDayTrafficMultiplier(minute: number): number {
   }
   // Shoulder hours
   return 1.2;
+}
+
+/**
+ * Checks whether trucks are permitted in Dhaka (night hours: 21:00 to 06:00).
+ */
+export function isTruckAllowedTime(minute: number): boolean {
+  const m = ((minute % 1440) + 1440) % 1440;
+  return m >= 1260 || m < 360;
 }
 
 /**
@@ -115,11 +148,17 @@ export class TrafficManager {
   readonly pedestrians: PedestrianManager;
   readonly busStops: BusStopLocation[] = [];
   readonly agents: Map<string, TrafficAgent> = new Map();
+  readonly roadEvents?: RoadEventManager;
   private rng: Rng;
   private nextAgentSeq = 0;
 
-  constructor(network: RoadNetwork, seed = 12345) {
+  constructor(
+    network: RoadNetwork,
+    seed = 12345,
+    roadEvents?: RoadEventManager
+  ) {
     this.network = network;
+    this.roadEvents = roadEvents;
     this.laneGraph = buildLanes(network);
     this.signals = new SignalController(network.getAllNodes());
     this.pedestrians = new PedestrianManager(network, seed);
@@ -148,15 +187,51 @@ export class TrafficManager {
   }
 
   /**
-   * Samples a vehicle kind according to typical Dhaka modal share:
-   * 35% CNG, 25% Car, 20% Rickshaw, 12% Motorcycle, 8% Bus
+   * Samples a vehicle kind according to authentic Dhaka modal share,
+   * respecting time of day (trucks night-only) and road type.
    */
-  sampleVehicleKind(): TrafficVehicleKind {
+  sampleVehicleKind(opts?: { minute?: number; roadType?: RoadType }): TrafficVehicleKind {
+    const minute = opts?.minute ?? 720;
+    const roadType = opts?.roadType;
+    const isNight = isTruckAllowedTime(minute);
+
+    // 1. Market roads: high vendor carts, rickshaws, and bicycles
+    if (roadType === 'market') {
+      const roll = this.rng.next();
+      if (roll < 0.20) return 'vendor_cart';
+      if (roll < 0.45) return 'rickshaw';
+      if (roll < 0.60) return 'cng';
+      if (roll < 0.72) return 'bicycle';
+      if (roll < 0.82) return 'motorcycle';
+      if (roll < 0.92) return 'minibus';
+      return 'delivery_van';
+    }
+
+    // 2. Night traffic on main roads: trucks permitted
+    if (isNight && (roadType === 'main' || roadType === undefined)) {
+      const roll = this.rng.next();
+      if (roll < 0.15) return 'truck';
+      if (roll < 0.35) return 'cng';
+      if (roll < 0.50) return 'car';
+      if (roll < 0.60) return 'ride_hailing_car';
+      if (roll < 0.70) return 'delivery_van';
+      if (roll < 0.80) return 'motorcycle';
+      if (roll < 0.90) return 'minibus';
+      return 'bus';
+    }
+
+    // 3. Standard daytime modal share (Dhaka traffic distribution):
+    // Trucks strictly disallowed during daytime
     const roll = this.rng.next();
-    if (roll < 0.35) return 'cng';
-    if (roll < 0.6) return 'car';
-    if (roll < 0.8) return 'rickshaw';
-    if (roll < 0.92) return 'motorcycle';
+    if (roll < 0.26) return 'cng';
+    if (roll < 0.42) return 'car';
+    if (roll < 0.54) return 'rickshaw';
+    if (roll < 0.64) return 'motorcycle';
+    if (roll < 0.72) return 'scooter';
+    if (roll < 0.80) return 'ride_hailing_car';
+    if (roll < 0.88) return 'minibus';
+    if (roll < 0.94) return 'delivery_van';
+    if (roll < 0.97) return 'bicycle';
     return 'bus';
   }
 
@@ -190,6 +265,12 @@ export class TrafficManager {
     while (this.agents.size < targetCount && attempts < 50) {
       attempts++;
       const lane = this.rng.pick(allLanes);
+
+      // Never spawn on closed segments
+      if (this.roadEvents?.isSegmentClosed(lane.segmentId)) {
+        continue;
+      }
+
       const sPos = this.rng.range(5, Math.max(6, lane.lengthM - 5));
 
       const pos = this.computeLanePosition(lane, sPos);
@@ -203,7 +284,11 @@ export class TrafficManager {
       );
       if (conflict) continue;
 
-      const kind = this.sampleVehicleKind();
+      const seg = this.network.getSegment(lane.segmentId);
+      const kind = this.sampleVehicleKind({
+        minute: currentMinute,
+        roadType: seg?.roadType,
+      });
       const cfg = VEHICLE_CONFIGS[kind];
       const heading = this.computeLaneHeading(lane);
 
@@ -216,32 +301,64 @@ export class TrafficManager {
             ? 'mid'
             : 'far';
 
+      // Check speed cap from road events
+      const speedCapKmh = this.roadEvents?.getSpeedCap(lane.segmentId);
+      const speedCapMs = speedCapKmh !== undefined ? speedCapKmh / 3.6 : Infinity;
+      const effectiveLaneSpeedLimit = Math.min(lane.speedLimitMs, speedCapMs);
+
+      // Rare wrong-way rickshaw on residential lanes
+      const isWrongWay =
+        kind === 'rickshaw' &&
+        seg?.roadType === 'residential' &&
+        this.rng.next() < 0.08;
+
       this.agents.set(agentId, {
         id: agentId,
         kind,
         laneId: lane.laneId,
         distAlongLane: sPos,
-        speed: Math.min(cfg.desiredSpeedMs, lane.speedLimitMs) * 0.8,
+        speed: Math.min(cfg.desiredSpeedMs, effectiveLaneSpeedLimit) * 0.8,
         x: pos.x,
         z: pos.z,
-        heading,
+        heading: isWrongWay ? heading + Math.PI : heading,
         length: cfg.length,
         width: cfg.width,
-        desiredSpeed: Math.min(cfg.desiredSpeedMs, lane.speedLimitMs),
+        desiredSpeed: Math.min(cfg.desiredSpeedMs, effectiveLaneSpeedLimit),
         lod,
+        lateralOffset: isWrongWay ? 0.4 : 0,
+        weavePhase: kind === 'cng' ? this.rng.range(0, Math.PI * 2) : undefined,
+        isWrongWay,
       });
     }
   }
 
-  computeLanePosition(lane: Lane, distAlongLane: number): { x: number; z: number } {
+  computeLanePosition(
+    lane: Lane,
+    distAlongLane: number,
+    lateralOffset = 0
+  ): { x: number; z: number } {
     if (lane.points.length < 2) return { x: 0, z: 0 };
     const p1 = lane.points[0]!;
     const p2 = lane.points[1]!;
     const t = clamp(distAlongLane / Math.max(0.1, lane.lengthM), 0, 1);
-    return {
-      x: p1.x + (p2.x - p1.x) * t,
-      z: p1.z + (p2.z - p1.z) * t,
-    };
+    const baseX = p1.x + (p2.x - p1.x) * t;
+    const baseZ = p1.z + (p2.z - p1.z) * t;
+
+    if (Math.abs(lateralOffset) > 0.001) {
+      const dx = p2.x - p1.x;
+      const dz = p2.z - p1.z;
+      const len = Math.hypot(dx, dz);
+      if (len > 0) {
+        const leftX = dz / len;
+        const leftZ = -dx / len;
+        return {
+          x: baseX + leftX * lateralOffset,
+          z: baseZ + leftZ * lateralOffset,
+        };
+      }
+    }
+
+    return { x: baseX, z: baseZ };
   }
 
   computeLaneHeading(lane: Lane): number {
@@ -252,8 +369,7 @@ export class TrafficManager {
   }
 
   /**
-   * Triggers horn yield on both pedestrians and nearby vehicles (rickshaws/motorcycles).
-   * Actors within radius yield slightly.
+   * Triggers horn yield on pedestrians, rickshaws, bicycles, motorcycles, and carts.
    */
   triggerHorn(
     hornPos: { x: number; z: number },
@@ -263,7 +379,12 @@ export class TrafficManager {
     let rickshawsYielded = 0;
 
     for (const agent of this.agents.values()) {
-      if (agent.kind === 'rickshaw' || agent.kind === 'motorcycle') {
+      if (
+        agent.kind === 'rickshaw' ||
+        agent.kind === 'motorcycle' ||
+        agent.kind === 'bicycle' ||
+        agent.kind === 'vendor_cart'
+      ) {
         const dist = distance2d(hornPos.x, hornPos.z, agent.x, agent.z);
         if (dist <= radius) {
           agent.yieldTimer = 2.5;
@@ -303,36 +424,107 @@ export class TrafficManager {
       const lane = this.laneGraph.lanes.get(agent.laneId);
       if (!lane) continue;
 
+      // Handle wrong-way rickshaw separately
+      if (agent.isWrongWay) {
+        agent.speed = 2.5; // slow ~9 km/h along kerb
+        agent.distAlongLane -= agent.speed * dt;
+        if (agent.distAlongLane <= 0) {
+          this.agents.delete(agent.id);
+          continue;
+        }
+
+        const pos = this.computeLanePosition(
+          lane,
+          agent.distAlongLane,
+          agent.lateralOffset ?? 0.4
+        );
+        agent.x = pos.x;
+        agent.z = pos.z;
+        const normalHeading = this.computeLaneHeading(lane);
+        agent.heading = normalHeading + Math.PI;
+
+        if (camera) {
+          const d = distance2d(camera.x, camera.z, agent.x, agent.z);
+          agent.lod =
+            d <= BALANCE.TRAFFIC.lod.near
+              ? 'near'
+              : d <= BALANCE.TRAFFIC.lod.mid
+                ? 'mid'
+                : 'far';
+        }
+        continue;
+      }
+
       const laneAgents = agentsByLane.get(agent.laneId) ?? [];
       const myIdx = laneAgents.findIndex((a) => a.id === agent.id);
       const leader = myIdx > 0 ? laneAgents[myIdx - 1] : null;
 
-      // 1. Bus dwell at bus stops (10-20s, blocks the lane)
-      if (agent.kind === 'bus') {
+      // Speed limit including active road event speed caps
+      const speedCapKmh = this.roadEvents?.getSpeedCap(lane.segmentId);
+      const speedCapMs = speedCapKmh !== undefined ? speedCapKmh / 3.6 : Infinity;
+      const effectiveLaneSpeedLimit = Math.min(lane.speedLimitMs, speedCapMs);
+
+      // 1. Bus and minibus dwell at bus stops & racing to stops
+      if (agent.kind === 'bus' || agent.kind === 'minibus') {
         if (agent.dwellTimer !== undefined && agent.dwellTimer > 0) {
           agent.dwellTimer -= dt;
           agent.speed = 0;
           agent.isDwelling = true;
+          agent.isRacingToStop = false;
           if (agent.dwellTimer <= 0) {
             agent.dwellTimer = 0;
             agent.isDwelling = false;
           }
         } else {
+          let nearestStop: BusStopLocation | null = null;
+          let nearestStopDist = Infinity;
+
           for (const stop of this.busStops) {
             if (agent.lastDwellPoiId === stop.id) continue;
             const distToStop = distance2d(agent.x, agent.z, stop.x, stop.z);
-            if (distToStop < 8.0) {
-              agent.dwellTimer = this.rng.range(10, 20);
-              agent.lastDwellPoiId = stop.id;
-              agent.speed = 0;
-              agent.isDwelling = true;
-              break;
+            if (distToStop < nearestStopDist) {
+              nearestStopDist = distToStop;
+              nearestStop = stop;
             }
+          }
+
+          if (nearestStop && nearestStopDist < 8.0) {
+            // Arrived at bus stop -> dwell
+            agent.dwellTimer = this.rng.range(10, 20);
+            agent.lastDwellPoiId = nearestStop.id;
+            agent.speed = 0;
+            agent.isDwelling = true;
+            agent.isRacingToStop = false;
+          } else if (
+            nearestStop &&
+            nearestStopDist >= 20.0 &&
+            nearestStopDist <= 120.0 &&
+            (!leader || (leader.distAlongLane - agent.distAlongLane) > 25.0)
+          ) {
+            // Approaching stop with clear road ahead -> race to the stop!
+            agent.isRacingToStop = true;
+            agent.desiredSpeed = Math.min(
+              VEHICLE_CONFIGS[agent.kind].desiredSpeedMs * 1.25,
+              effectiveLaneSpeedLimit * 1.25
+            );
+          } else {
+            agent.isRacingToStop = false;
+            agent.desiredSpeed = Math.min(
+              VEHICLE_CONFIGS[agent.kind].desiredSpeedMs,
+              effectiveLaneSpeedLimit
+            );
           }
         }
       }
 
-      // 2. Horn yield slowdown
+      // 2. CNG weaving (strictly bounded within [-0.6m, +0.6m])
+      if (agent.kind === 'cng') {
+        agent.weavePhase = (agent.weavePhase ?? 0) + 2.0 * dt;
+        const rawWeave = Math.sin(agent.weavePhase) * 0.5;
+        agent.lateralOffset = clamp(rawWeave, -0.6, 0.6);
+      }
+
+      // 3. Horn yield slowdown
       if (agent.yieldTimer !== undefined && agent.yieldTimer > 0) {
         agent.yieldTimer -= dt;
         agent.desiredSpeed = VEHICLE_CONFIGS[agent.kind].desiredSpeedMs * 0.5;
@@ -340,12 +532,12 @@ export class TrafficManager {
           agent.yieldTimer = 0;
           agent.desiredSpeed = Math.min(
             VEHICLE_CONFIGS[agent.kind].desiredSpeedMs,
-            lane.speedLimitMs
+            effectiveLaneSpeedLimit
           );
         }
       }
 
-      // 3. Position update via IDM or dwell
+      // 4. Position update via IDM or dwell
       if (agent.isDwelling) {
         agent.speed = 0;
       } else {
@@ -372,30 +564,44 @@ export class TrafficManager {
 
       // Check if reached end of lane
       if (agent.distAlongLane >= lane.lengthM) {
-        const nextLanes = this.laneGraph.outgoingLanes.get(lane.laneId) ?? [];
+        const outgoing = this.laneGraph.outgoingLanes.get(lane.laneId) ?? [];
+        // Filter out any outgoing lanes on closed segments
+        const nextLanes = outgoing.filter(
+          (nl) => !this.roadEvents?.isSegmentClosed(nl.segmentId)
+        );
+
         if (nextLanes.length > 0) {
           const nextLane = this.rng.pick(nextLanes);
           agent.laneId = nextLane.laneId;
           agent.distAlongLane = 0;
+          const nextSpeedCap = this.roadEvents?.getSpeedCap(nextLane.segmentId);
+          const nextLimit =
+            nextSpeedCap !== undefined
+              ? Math.min(nextLane.speedLimitMs, nextSpeedCap / 3.6)
+              : nextLane.speedLimitMs;
           agent.desiredSpeed = Math.min(
             VEHICLE_CONFIGS[agent.kind].desiredSpeedMs,
-            nextLane.speedLimitMs
+            nextLimit
           );
         } else {
-          // No outgoing lane -> recycle/remove
+          // No open outgoing lane -> recycle/remove
           this.agents.delete(agent.id);
           continue;
         }
       }
 
-      // Update position and heading (rickshaws turn slowly)
+      // Update position and heading (rickshaws and vendor carts turn slowly)
       const updatedLane = this.laneGraph.lanes.get(agent.laneId) ?? lane;
-      const pos = this.computeLanePosition(updatedLane, agent.distAlongLane);
+      const pos = this.computeLanePosition(
+        updatedLane,
+        agent.distAlongLane,
+        agent.lateralOffset ?? 0
+      );
       agent.x = pos.x;
       agent.z = pos.z;
 
       const targetHeading = this.computeLaneHeading(updatedLane);
-      if (agent.kind === 'rickshaw') {
+      if (agent.kind === 'rickshaw' || agent.kind === 'vendor_cart') {
         const diff = angleDiff(agent.heading, targetHeading);
         const maxTurnThisFrame = 1.2 * dt; // turn rate ~1.2 rad/s
         agent.heading += clamp(diff, -maxTurnThisFrame, maxTurnThisFrame);

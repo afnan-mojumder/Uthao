@@ -25,6 +25,7 @@ import bikeEncounters from '../../data/encounters/bike.json';
 import crimeEncounters from '../../data/encounters/crime.json';
 import { ReputationSystem } from './reputation/ReputationSystem';
 import type { SafetyRecord } from '../core/types';
+import { RoadEventManager, type ActiveRoadEvent } from './world/RoadEvents';
 
 const DEFAULT_ENCOUNTERS: EncounterDef[] = [
   ...routeEncounters,
@@ -69,6 +70,7 @@ export interface SimSnapshot {
     riskScore: number;
     promises: { kept: number; broken: number };
   };
+  roadEvents?: ActiveRoadEvent[];
 }
 
 export class GameManager {
@@ -83,6 +85,7 @@ export class GameManager {
   readonly economyManager: EconomyManager;
   readonly eventDirector: EventDirector;
   readonly reputationSystem: ReputationSystem;
+  readonly roadEvents: RoadEventManager;
 
   paused: boolean = false;
   accumulator: number = 0;
@@ -136,6 +139,10 @@ export class GameManager {
       initialLocalTrust: 30,
       initialRelationships: this.story.characterRelationships,
     });
+    this.roadEvents = new RoadEventManager({
+      bus: this.bus,
+      seed: this.seed,
+    });
 
     const encounterDefs =
       (this.data.encounters as EncounterDef[] | undefined) ?? DEFAULT_ENCOUNTERS;
@@ -169,6 +176,7 @@ export class GameManager {
     const dtMinutes = (dt * TIME_SCALE) / 60;
     this.weatherSystem.update(dtMinutes);
     this.weather = this.weatherSystem.weather;
+    this.roadEvents.tick(dtMinutes, this.clock.minutes);
 
     if (currHour !== prevHour) {
       this.bus.emit('clock/hour', { hour: currHour % 24 });
@@ -278,6 +286,7 @@ export class GameManager {
         riskScore: this.reputationSystem.getRiskScore(),
         promises: this.reputationSystem.getPromisesRecord(),
       },
+      roadEvents: this.roadEvents.getActiveEvents(),
     };
   }
 }

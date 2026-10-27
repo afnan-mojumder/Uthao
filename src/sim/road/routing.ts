@@ -5,6 +5,7 @@ import { DISTANCE_SCALE } from '../../config/constants';
 export interface RouteOptions {
   mode: 'motorcycle' | 'walk';
   avoid?: string[]; // segmentIds to avoid
+  roadEvents?: { getClosedSegmentIds: () => string[] };
   weather?: WeatherKind;
   minute?: number;
   isFlooded?: (segment: RoadSegment) => boolean;
@@ -93,6 +94,11 @@ export class RoutingGraph {
     }
 
     const avoidSet = new Set(opts.avoid ?? []);
+    if (opts.roadEvents) {
+      for (const id of opts.roadEvents.getClosedSegmentIds()) {
+        avoidSet.add(id);
+      }
+    }
     const isWalk = opts.mode === 'walk';
 
     // Min-priority queue node for A*
