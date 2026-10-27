@@ -56,7 +56,7 @@ Format: `- [ ] **<id>** <title> (<points>), deps: <ids>`. Tick by changing only 
 - [x] **T5.3** More traffic types and road events (5), deps: T3.4
 - [ ] **T5.5** All five endings (5), deps: T4.7, T4.8 (T)
 - [x] **T5.1** Remaining six districts (8), deps: T3.3
-- [ ] **T5.2** District streaming and LOD (8), deps: T5.1
+- [x] **T5.2** District streaming and LOD (8), deps: T5.1
 - [ ] **T5.9** Performance optimisation and PWA (8), deps: T5.2, T5.3
 - [ ] **T6.2** Balance pass (5), deps: T5.4 (T), T5.5
 
