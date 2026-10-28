@@ -7,6 +7,7 @@ import {
 } from '../vehicles';
 
 export type TrafficType = 'cng' | 'rickshaw' | 'bus' | 'car' | 'motorcycle';
+export type TrafficState = 'cruising' | 'following' | 'yielding';
 
 export interface TrafficAgent {
   id: string;
@@ -17,6 +18,9 @@ export interface TrafficAgent {
   speed: number; // m/s
   targetSpeed: number; // m/s
   laneOffset: number; // lateral offset from road centerline (-2.5 or +2.5)
+  baseLaneOffset: number;
+  state: TrafficState;
+  yieldTimer: number;
   isParked: boolean;
   length: number;
   width: number;
@@ -121,6 +125,9 @@ export class TrafficManager {
         speed: spec.targetSpeed,
         targetSpeed: spec.targetSpeed,
         laneOffset,
+        baseLaneOffset: laneOffset,
+        state: 'cruising',
+        yieldTimer: 0,
         isParked: false,
         length: spec.length,
         width: spec.width,
@@ -140,6 +147,31 @@ export class TrafficManager {
     parkedCng.position.set(88, 0, 5);
     parkedCng.rotation.y = -Math.PI / 6;
     this.root.add(parkedCng);
+  }
+
+  /**
+   * Reacts to player's horn: vehicles ahead swerve slightly or respond.
+   */
+  public onPlayerHorn(playerPos: { x: number; z: number }): { responded: boolean; type?: TrafficType } {
+    let nearestAgent: TrafficAgent | null = null;
+    let minDistance = 22.0;
+
+    for (const agent of this.agents) {
+      if (agent.isParked) continue;
+      const dist = Math.hypot(agent.mesh.position.x - playerPos.x, agent.mesh.position.z - playerPos.z);
+      if (dist < minDistance) {
+        minDistance = dist;
+        nearestAgent = agent;
+      }
+    }
+
+    if (nearestAgent) {
+      nearestAgent.state = 'yielding';
+      nearestAgent.yieldTimer = 3.0;
+      return { responded: true, type: nearestAgent.type };
+    }
+
+    return { responded: false };
   }
 
   update(dt: number, playerPos: { x: number; z: number }): { collision: boolean; otherType?: TrafficType } {
@@ -163,7 +195,21 @@ export class TrafficManager {
       const segLength = Math.hypot(dx, dz);
       const angle = Math.atan2(dx, dz);
 
-      // Simple following distance behavior: check if someone is ahead in the same lane
+      // Handle FSM states
+      if (agent.state === 'yielding') {
+        agent.yieldTimer -= dt;
+        // Swerve towards the road edge
+        const targetOffset = agent.baseLaneOffset > 0 ? agent.baseLaneOffset + 0.6 : agent.baseLaneOffset - 0.6;
+        agent.laneOffset += (targetOffset - agent.laneOffset) * Math.min(1.0, dt * 2.5);
+        if (agent.yieldTimer <= 0) {
+          agent.state = 'cruising';
+        }
+      } else {
+        // Return smoothly to base lane
+        agent.laneOffset += (agent.baseLaneOffset - agent.laneOffset) * Math.min(1.0, dt * 2.0);
+      }
+
+      // Following distance behavior: check if someone is ahead in the same lane
       let desiredSpeed = agent.targetSpeed;
       for (let j = 0; j < this.agents.length; j++) {
         if (i === j) continue;
@@ -176,6 +222,9 @@ export class TrafficManager {
         ) {
           // Brake smoothly behind leader
           desiredSpeed = Math.min(desiredSpeed, other.speed * 0.85);
+          if (agent.state !== 'yielding') {
+            agent.state = 'following';
+          }
         }
       }
 

@@ -163,6 +163,84 @@ export class AudioManager {
   }
 
   /**
+   * Play authentic Dhaka cycle rickshaw double-ring ("tring tring").
+   */
+  public playRickshawBell(): void {
+    if (!this.audioContext) return;
+    try {
+      const bellNotes = [2093, 2093, 2349, 2349]; // C7, D7
+      bellNotes.forEach((freq, idx) => {
+        if (!this.audioContext) return;
+        const osc = this.audioContext.createOscillator();
+        const gain = this.audioContext.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, this.audioContext.currentTime);
+
+        const startTime = this.audioContext.currentTime + idx * 0.09;
+        const vol = 0.2 * this.volumes.master * this.volumes.sfx;
+        gain.gain.setValueAtTime(vol, startTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.12);
+
+        osc.connect(gain);
+        gain.connect(this.audioContext.destination);
+        osc.start(startTime);
+        osc.stop(startTime + 0.12);
+      });
+    } catch {
+      // Ignore
+    }
+  }
+
+  /**
+   * Play collision bump / impact sound.
+   */
+  public playCrashImpact(): void {
+    if (!this.audioContext) return;
+    try {
+      const osc = this.audioContext.createOscillator();
+      const gain = this.audioContext.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(120, this.audioContext.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(30, this.audioContext.currentTime + 0.22);
+
+      const vol = 0.6 * this.volumes.master * this.volumes.sfx;
+      gain.gain.setValueAtTime(vol, this.audioContext.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.25);
+
+      osc.connect(gain);
+      gain.connect(this.audioContext.destination);
+      osc.start();
+      osc.stop(this.audioContext.currentTime + 0.25);
+    } catch {
+      // Ignore
+    }
+  }
+
+  /**
+   * Play CNG counter-beep when traffic responds to horn.
+   */
+  public playCounterHorn(): void {
+    if (!this.audioContext) return;
+    try {
+      const osc = this.audioContext.createOscillator();
+      const gain = this.audioContext.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(587.33, this.audioContext.currentTime); // D5
+
+      const vol = 0.25 * this.volumes.master * this.volumes.sfx;
+      gain.gain.setValueAtTime(vol, this.audioContext.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.18);
+
+      osc.connect(gain);
+      gain.connect(this.audioContext.destination);
+      osc.start();
+      osc.stop(this.audioContext.currentTime + 0.18);
+    } catch {
+      // Ignore
+    }
+  }
+
+  /**
    * Updates ambient city murmur and rain loop volumes.
    */
   public setAmbience(districtDensity: number, isRaining: boolean): void {

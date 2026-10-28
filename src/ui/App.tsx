@@ -31,6 +31,7 @@ import { ConsequenceJournal } from './journal/ConsequenceJournal';
 import { DaySummaryModal } from './menus/DaySummaryModal';
 import { StoryRelationshipsModal } from './story/StoryRelationshipsModal';
 import { ComponentShowcaseModal } from './showcase/ComponentShowcaseModal';
+import { VirtualTouchControls } from './touch/VirtualTouchControls';
 import { PoliceEncounterSystem } from '../sim/darkChoices/PoliceEncounterSystem';
 import { CrimeEncounterSystem } from '../sim/darkChoices/CrimeEncounterSystem';
 import { AccidentManager } from '../sim/darkChoices/AccidentManager';
@@ -121,6 +122,16 @@ export function App(): JSX.Element {
         }}
         onOpenPhone={() => {
           isPhoneOpenSignal.value = true;
+        }}
+      />
+
+      {/* Mobile & Touch On-Screen Controls */}
+      <VirtualTouchControls
+        onHorn={() => {
+          if (typeof window !== 'undefined') {
+            const win = window as unknown as { __uthao?: Record<string, () => void> };
+            win.__uthao?.soundHorn?.();
+          }
         }}
       />
 

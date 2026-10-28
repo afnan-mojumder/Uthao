@@ -29,6 +29,8 @@ export class Renderer {
   private lastRenderTime: number = performance.now();
   private hemiLight: THREE.HemisphereLight;
   private dirLight: THREE.DirectionalLight;
+  private bikePos = new THREE.Vector3();
+  private exhaustTimer = 0;
 
   onTrafficCollision?: (trafficType: string) => void;
 
@@ -196,19 +198,42 @@ export class Renderer {
     // Update ride markers animation
     this.markers.update(dt);
 
-    // Update Living Dhaka World (Traffic, Pedestrians, Weather)
+    // Update Living Dhaka World (Traffic, Pedestrians, Particles, Weather)
     if (this.world) {
       const worldResult = this.world.update(dt, { x, z });
       if (worldResult.collisionWithTraffic && this.onTrafficCollision) {
         this.onTrafficCollision('traffic_vehicle');
       }
+
+      // Exhaust smoke particles when accelerating
+      this.exhaustTimer += dt;
+      if (this.exhaustTimer > 0.08 && this.bikeSpeed > 1.5) {
+        this.exhaustTimer = 0;
+        const rearX = x - Math.sin(heading) * 1.1;
+        const rearZ = z - Math.cos(heading) * 1.1;
+        this.world.particlePool.spawn(
+          rearX,
+          0.26,
+          rearZ,
+          -Math.sin(heading) * 0.8 + (Math.random() - 0.5) * 0.3,
+          0.3 + Math.random() * 0.3,
+          -Math.cos(heading) * 0.8 + (Math.random() - 0.5) * 0.3,
+          'smoke',
+          0.7
+        );
+      }
     }
 
-    // Update Camera Rig
-    const bikePos = new THREE.Vector3(x, 0, z);
-    this.cameraRig.update(bikePos, heading, this.bikeSpeed, this.colliders);
+    // Update Camera Rig (zero-allocation vector reuse)
+    this.bikePos.set(x, 0, z);
+    this.cameraRig.update(this.bikePos, heading, this.bikeSpeed, this.colliders);
 
     this.webglRenderer.render(this.scene, this.cameraRig.camera);
+  }
+
+  triggerHorn(playerPos?: { x: number; z: number }): { responded: boolean; type?: string } {
+    const pos = playerPos ?? { x: this.currBikePose.x, z: this.currBikePose.z };
+    return this.world?.onPlayerHorn(pos) ?? { responded: false };
   }
 
   setTimeOfDay(time: TimeOfDay): void {

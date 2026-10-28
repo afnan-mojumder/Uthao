@@ -1,6 +1,6 @@
+/* eslint-disable no-undef */
 import { chromium } from 'playwright';
 import path from 'node:path';
-import fs from 'node:fs';
 
 async function capture() {
   const browser = await chromium.launch({

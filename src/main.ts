@@ -118,6 +118,10 @@ const hud = typeof document !== 'undefined' ? new Hud() : undefined;
 const autopilot = new AutopilotController(roadNetwork);
 const inputManager = new InputManager();
 
+if (typeof window !== 'undefined') {
+  (window as unknown as { __uthaoInput?: InputManager }).__uthaoInput = inputManager;
+}
+
 initDebugApi(gm, {
   renderer,
   autopilot,
@@ -128,6 +132,21 @@ initDebugApi(gm, {
 const debugPolice = new PoliceEncounterSystem();
 const debugCrime = new CrimeEncounterSystem();
 const debugAccident = new AccidentManager();
+
+function executeHorn(): void {
+  audioManager.unlock();
+  audioManager.startHorn();
+  setTimeout(() => audioManager.stopHorn(), 320);
+
+  const reaction = renderer?.triggerHorn({ x: bikeState.x, z: bikeState.z });
+  if (reaction?.responded) {
+    if (reaction.type === 'rickshaw') {
+      setTimeout(() => audioManager.playRickshawBell(), 420);
+    } else if (reaction.type === 'cng') {
+      setTimeout(() => audioManager.playCounterHorn(), 380);
+    }
+  }
+}
 
 if (typeof window !== 'undefined') {
   const win = window as unknown as {
@@ -144,9 +163,7 @@ if (typeof window !== 'undefined') {
       renderer?.cameraRig.toggleMode();
     };
     win.__uthao.soundHorn = () => {
-      audioManager.unlock();
-      audioManager.startHorn();
-      setTimeout(() => audioManager.stopHorn(), 350);
+      executeHorn();
     };
     win.__uthao.openStory = () => {
       isStoryModalOpenSignal.value = true;
@@ -204,6 +221,7 @@ if (typeof window !== 'undefined') {
 if (renderer) {
   renderer.onTrafficCollision = (trafficType: string) => {
     console.log(`Traffic collision with ${trafficType}`);
+    audioManager.playCrashImpact();
     env.conditionPct = Math.max(10, env.conditionPct - 15);
     const activeReq = rideManager.getActiveRequest();
     if (activeReq?.status === 'OnTrip') {
@@ -230,9 +248,7 @@ if (typeof window !== 'undefined') {
     } else if (e.key === 'c' || e.key === 'C') {
       renderer?.cameraRig.toggleMode();
     } else if (e.key === 'h' || e.key === 'H') {
-      audioManager.unlock();
-      audioManager.startHorn();
-      setTimeout(() => audioManager.stopHorn(), 350);
+      executeHorn();
     }
   });
 }

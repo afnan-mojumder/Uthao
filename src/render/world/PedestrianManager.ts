@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 
+export type PedestrianState = 'walking' | 'idling' | 'alarmed';
+
 export interface PedestrianNPC {
   id: string;
   mesh: THREE.Group;
@@ -11,6 +13,8 @@ export interface PedestrianNPC {
   speed: number;
   walkRadius: number;
   isIdling: boolean;
+  state: PedestrianState;
+  alarmTimer: number;
   legL: THREE.Mesh;
   legR: THREE.Mesh;
   walkCycle: number;
@@ -91,6 +95,8 @@ export class PedestrianManager {
         speed: 1.1 + (i % 3) * 0.2,
         walkRadius: 15.0,
         isIdling: false,
+        state: 'walking',
+        alarmTimer: 0,
         legL,
         legR,
         walkCycle: i * 0.6,
@@ -120,6 +126,8 @@ export class PedestrianManager {
         speed: 0,
         walkRadius: 0,
         isIdling: true,
+        state: 'idling',
+        alarmTimer: 0,
         legL,
         legR,
         walkCycle: 0,
@@ -143,10 +151,28 @@ export class PedestrianManager {
       speed: 0,
       walkRadius: 0,
       isIdling: true,
+      state: 'idling',
+      alarmTimer: 0,
       legL: pL,
       legR: pR,
       walkCycle: 0,
     });
+  }
+
+  /**
+   * Reacts to player horn: pedestrians within 16m enter alarmed state.
+   */
+  public onPlayerHorn(playerPos: { x: number; z: number }): boolean {
+    let triggered = false;
+    for (const npc of this.npcs) {
+      const dist = Math.hypot(npc.currentX - playerPos.x, npc.currentZ - playerPos.z);
+      if (dist < 16.0) {
+        npc.state = 'alarmed';
+        npc.alarmTimer = 2.5;
+        triggered = true;
+      }
+    }
+    return triggered;
   }
 
   update(dt: number, playerPos: { x: number; z: number }): void {
@@ -156,20 +182,35 @@ export class PedestrianManager {
       // Only update within 60m radius for performance
       if (distToPlayer > 60.0) continue;
 
-      // Reactive dodge behavior: if player is too close (< 2.5m)
-      if (distToPlayer < 2.5) {
+      // Handle alarmed timer
+      if (npc.alarmTimer > 0) {
+        npc.alarmTimer -= dt;
+        if (npc.alarmTimer <= 0) {
+          npc.state = npc.isIdling ? 'idling' : 'walking';
+        }
+      }
+
+      // Reactive dodge behavior: if player is too close (< 2.5m) or alarmed
+      if (distToPlayer < 2.5 || npc.state === 'alarmed') {
         const awayX = npc.currentX - playerPos.x;
         const awayZ = npc.currentZ - playerPos.z;
         const len = Math.hypot(awayX, awayZ) || 1;
-        npc.currentX += (awayX / len) * dt * 2.5;
-        npc.currentZ += (awayZ / len) * dt * 2.5;
+        const dodgeSpeed = npc.state === 'alarmed' ? 3.2 : 2.2;
+        npc.currentX += (awayX / len) * dt * dodgeSpeed;
+        npc.currentZ += (awayZ / len) * dt * dodgeSpeed;
+
+        // Animate panicked fast leg walk
+        npc.walkCycle += dt * 14.0;
+        npc.legL.rotation.x = Math.sin(npc.walkCycle) * 0.6;
+        npc.legR.rotation.x = -Math.sin(npc.walkCycle) * 0.6;
+
         npc.mesh.position.set(npc.currentX, 0, npc.currentZ);
         continue;
       }
 
       if (npc.isIdling) continue;
 
-      // Walking animation cycle
+      // Regular walking animation cycle
       npc.walkCycle += dt * npc.speed * 4.0;
       npc.legL.rotation.x = Math.sin(npc.walkCycle) * 0.45;
       npc.legR.rotation.x = -Math.sin(npc.walkCycle) * 0.45;

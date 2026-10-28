@@ -14,6 +14,7 @@ import {
 } from './DhakaBuildingPrefabs';
 import { TrafficManager } from './TrafficManager';
 import { PedestrianManager } from './PedestrianManager';
+import { ParticlePool } from '../particles/ParticlePool';
 import { EnvironmentController, type TimeOfDay, type WeatherType } from './EnvironmentController';
 
 export class DhakaWorld {
@@ -21,6 +22,7 @@ export class DhakaWorld {
   readonly roadMesh: DhakaRoadNetworkMesh;
   readonly trafficManager: TrafficManager;
   readonly pedestrianManager: PedestrianManager;
+  readonly particlePool: ParticlePool;
   readonly environmentController: EnvironmentController;
   readonly colliders: THREE.Object3D[] = [];
 
@@ -48,7 +50,11 @@ export class DhakaWorld {
     this.pedestrianManager = new PedestrianManager();
     this.root.add(this.pedestrianManager.root);
 
-    // 5. Environment Controller (Lighting, rain, weather)
+    // 5. Object-Pooled Particle System (Exhaust, Dust, Sparks)
+    this.particlePool = new ParticlePool(120);
+    this.root.add(this.particlePool.root);
+
+    // 6. Environment Controller (Lighting, rain, weather)
     this.environmentController = new EnvironmentController(scene, hemiLight, dirLight);
     this.environmentController.setTimeOfDay('day');
   }
@@ -183,6 +189,18 @@ export class DhakaWorld {
     this.colliders.push(apt3);
   }
 
+  /**
+   * Propagates player horn to traffic and pedestrians.
+   */
+  public onPlayerHorn(playerPos: { x: number; z: number }): { responded: boolean; type?: string } {
+    const pedReacted = this.pedestrianManager.onPlayerHorn(playerPos);
+    const trafficReacted = this.trafficManager.onPlayerHorn(playerPos);
+    return {
+      responded: pedReacted || trafficReacted.responded,
+      type: trafficReacted.type,
+    };
+  }
+
   update(dt: number, playerPos: { x: number; z: number }): { collisionWithTraffic: boolean } {
     // 1. Update Traffic AI & collision detection
     const trafficResult = this.trafficManager.update(dt, playerPos);
@@ -190,8 +208,21 @@ export class DhakaWorld {
     // 2. Update Pedestrians AI & reactive avoidance
     this.pedestrianManager.update(dt, playerPos);
 
-    // 3. Update Weather & lighting
+    // 3. Update Pooled Particles
+    this.particlePool.update(dt);
+
+    // 4. Update Weather & lighting
     this.environmentController.update(dt, playerPos);
+
+    // Spawn collision sparks if hit
+    if (trafficResult.collision) {
+      for (let i = 0; i < 8; i++) {
+        const vx = (Math.random() - 0.5) * 6;
+        const vy = Math.random() * 3 + 1;
+        const vz = (Math.random() - 0.5) * 6;
+        this.particlePool.spawn(playerPos.x, 0.6, playerPos.z, vx, vy, vz, 'spark', 0.5);
+      }
+    }
 
     return {
       collisionWithTraffic: trafficResult.collision,
