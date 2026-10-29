@@ -1,36 +1,19 @@
 import type { JSX } from 'preact';
 import { useEffect } from 'preact/hooks';
-import { choiceSignal, onChooseCallback } from '../store';
+import { choiceSignal, onChooseCallback, type ChoiceState } from '../store';
 import { t } from '../i18n';
 
 export interface ChoiceCardProps {
   onChoose?: (choiceId: string, instanceId: string) => void;
 }
 
-export function ChoiceCard({ onChoose }: ChoiceCardProps): JSX.Element | null {
-  const choice = choiceSignal.value;
-  const chooseHandler = onChoose ?? onChooseCallback ?? undefined;
-
-  useEffect(() => {
-    if (!choice.active) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const keyNum = parseInt(e.key, 10);
-      if (keyNum >= 1 && keyNum <= choice.options.length) {
-        const selected = choice.options[keyNum - 1];
-        if (selected && choice.instanceId) {
-          e.preventDefault();
-          chooseHandler?.(String(selected.id), choice.instanceId);
-        }
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [choice, chooseHandler]);
-
+export function ChoiceCardView({
+  choice,
+  onChoose,
+}: {
+  choice: ChoiceState;
+  onChoose?: (choiceId: string, instanceId: string) => void;
+}): JSX.Element | null {
   if (!choice.active || !choice.instanceId) {
     return null;
   }
@@ -40,11 +23,13 @@ export function ChoiceCard({ onChoose }: ChoiceCardProps): JSX.Element | null {
       data-testid="choice-card"
       style={{
         position: 'fixed',
-        top: '20px',
+        top: 'calc(16px + env(safe-area-inset-top, 0px))',
         left: '50%',
         transform: 'translateX(-50%)',
         width: '92%',
         maxWidth: '560px',
+        maxHeight: 'calc(100vh - 180px)',
+        overflowY: 'auto',
         background: 'rgba(15, 23, 42, 0.95)',
         backdropFilter: 'blur(16px)',
         border: '1px solid rgba(56, 189, 248, 0.4)',
@@ -96,56 +81,75 @@ export function ChoiceCard({ onChoose }: ChoiceCardProps): JSX.Element | null {
           <button
             key={String(opt.id)}
             data-testid={`choice-btn-${idx + 1}`}
-            onClick={() => {
-              if (choice.instanceId) {
-                chooseHandler?.(String(opt.id), choice.instanceId);
-              }
-            }}
+            onClick={() => onChoose?.(String(opt.id), choice.instanceId!)}
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '12px',
+              justifyContent: 'space-between',
               padding: '12px 16px',
-              backgroundColor: 'rgba(30, 41, 59, 0.85)',
-              border: '1px solid rgba(71, 85, 105, 0.6)',
-              borderRadius: '10px',
-              color: '#f8fafc',
-              fontSize: '0.95rem',
-              fontWeight: 600,
+              backgroundColor: 'rgba(30, 41, 59, 0.8)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              borderRadius: '8px',
+              color: '#e2e8f0',
               cursor: 'pointer',
-              textAlign: 'left',
+              fontSize: '0.95rem',
+              fontWeight: 500,
               transition: 'all 0.15s ease',
+              textAlign: 'left',
+              gap: '8px',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'rgba(56, 189, 248, 0.2)';
-              e.currentTarget.style.borderColor = '#38bdf8';
+              (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(56, 189, 248, 0.2)';
+              (e.currentTarget as HTMLElement).style.borderColor = '#38bdf8';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'rgba(30, 41, 59, 0.85)';
-              e.currentTarget.style.borderColor = 'rgba(71, 85, 105, 0.6)';
+              (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(30, 41, 59, 0.8)';
+              (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255, 255, 255, 0.1)';
             }}
           >
+            <span>{t(opt.text)}</span>
             <span
               style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '24px',
-                height: '24px',
-                borderRadius: '6px',
-                backgroundColor: 'rgba(56, 189, 248, 0.2)',
-                color: '#38bdf8',
-                fontSize: '0.85rem',
-                fontWeight: 700,
-                flexShrink: 0,
+                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                padding: '2px 8px',
+                borderRadius: '4px',
+                fontSize: '0.8rem',
+                fontFamily: 'monospace',
+                color: '#94a3b8',
               }}
             >
-              {idx + 1}
+              [{idx + 1}]
             </span>
-            <span style={{ flex: 1 }}>{t(opt.text)}</span>
           </button>
         ))}
       </div>
     </div>
   );
+}
+
+export function ChoiceCard({ onChoose }: ChoiceCardProps): JSX.Element | null {
+  const choice = choiceSignal.value;
+  const chooseHandler = onChoose ?? onChooseCallback ?? undefined;
+
+  useEffect(() => {
+    if (!choice.active) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const keyNum = parseInt(e.key, 10);
+      if (keyNum >= 1 && keyNum <= choice.options.length) {
+        const selected = choice.options[keyNum - 1];
+        if (selected && choice.instanceId) {
+          e.preventDefault();
+          chooseHandler?.(String(selected.id), choice.instanceId);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [choice, chooseHandler]);
+
+  return <ChoiceCardView choice={choice} onChoose={chooseHandler} />;
 }

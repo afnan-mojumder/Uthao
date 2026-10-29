@@ -12,5 +12,6 @@
   "hud.passenger.waiting": "Looking for fares...",
   "hud.passenger.pickup": "Go to pickup point",
   "hud.passenger.ontrip": "Drop off at destination",
-  "hud.passenger.none": "Free Roam"
+  "hud.passenger.none": "Free Roam",
+  "hud.fullscreen": "Fullscreen"
 }

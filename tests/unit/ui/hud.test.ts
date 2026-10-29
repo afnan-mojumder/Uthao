@@ -1,14 +1,20 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { Hud, type HudState } from '../../../src/ui/hud/Hud';
+import { Hud, HudView, type HudState } from '../../../src/ui/hud/Hud';
+import { ChoiceCardView } from '../../../src/ui/choice/ChoiceCard';
+import { choiceSignal } from '../../../src/ui/store';
 import { t, setLanguage } from '../../../src/ui/i18n';
 
-describe('T2.8 Rider HUD v1', () => {
+describe('T2.8 & T4.10 Rider HUD and Mobile Polish', () => {
   beforeEach(() => {
     setLanguage('bn');
+    choiceSignal.value = {
+      active: false,
+      prompt: '',
+      options: [],
+    };
   });
 
   it('initializes Hud with default state', () => {
-    // In node environment, document is mocked or not present
     const hud = new Hud({ appendChild: () => {}, removeChild: () => {} } as unknown as HTMLElement);
     const state = hud.getState();
 
@@ -70,11 +76,72 @@ describe('T2.8 Rider HUD v1', () => {
     expect(t('hud.speed_unit')).toBe('কিমি/ঘণ্টা');
     expect(t('hud.fuel')).toBe('জ্বালানি');
     expect(t('hud.earnings', { amount: 250 })).toBe('আজকের আয়: ৳250');
+    expect(t('hud.fullscreen')).toBe('পূর্ণপর্দা');
 
     setLanguage('en');
     expect(t('hud.objective')).toBe('Objective');
     expect(t('hud.speed_unit')).toBe('KM / H');
     expect(t('hud.fuel')).toBe('Fuel');
     expect(t('hud.earnings', { amount: 250 })).toBe("Today's Net: ৳250");
+    expect(t('hud.fullscreen')).toBe('Fullscreen');
+  });
+
+  it('T4.10: applies safe-area insets to standard HudView', () => {
+    const vnode = HudView({
+      state: {
+        speedKmh: 30,
+        fuelL: 5.5,
+        fuelMaxL: 8.0,
+        objectiveText: 'Head to Fulgate',
+        todayNetEarnings: 200,
+        shiftClock: '08:00',
+        shiftDay: 1,
+        rating: 5.0,
+      },
+    });
+
+    expect(vnode).not.toBeNull();
+    const style = vnode.props.style as Record<string, unknown>;
+    expect(style.padding).toContain('env(safe-area-inset-top, 0px)');
+    expect(style.padding).toContain('env(safe-area-inset-bottom, 0px)');
+  });
+
+  it('T4.10: applies safe-area insets to first-person HudView', () => {
+    const vnode = HudView({
+      state: {
+        speedKmh: 30,
+        fuelL: 5.5,
+        fuelMaxL: 8.0,
+        objectiveText: 'Head to Fulgate',
+        todayNetEarnings: 200,
+        shiftClock: '08:00',
+        shiftDay: 1,
+        rating: 5.0,
+        isFirstPerson: true,
+      },
+    });
+
+    expect(vnode).not.toBeNull();
+    const style = vnode.props.style as Record<string, unknown>;
+    expect(style.padding).toContain('env(safe-area-inset-top, 0px)');
+    expect(style.padding).toContain('env(safe-area-inset-bottom, 0px)');
+  });
+
+  it('T4.10: ChoiceCard satisfies safe area and thumb clearance constraints', () => {
+    choiceSignal.value = {
+      active: true,
+      instanceId: 'event-1',
+      prompt: 'Narrow road blocked by cattle truck',
+      options: [
+        { id: 'short', text: 'Take footpath shortcut' },
+        { id: 'wait', text: 'Wait for clearance' },
+      ],
+    };
+
+    const vnode = ChoiceCardView({ choice: choiceSignal.value, onChoose: () => {} });
+    expect(vnode).not.toBeNull();
+    const style = vnode?.props.style as Record<string, unknown>;
+    expect(style.top).toContain('env(safe-area-inset-top, 0px)');
+    expect(style.maxHeight).toBe('calc(100vh - 180px)');
   });
 });

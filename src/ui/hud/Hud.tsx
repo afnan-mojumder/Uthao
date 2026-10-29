@@ -45,6 +45,30 @@ export interface HudState {
   fare?: number;
 }
 
+async function handleToggleFullscreenAndLock(): Promise<void> {
+  try {
+    if (typeof document === 'undefined') return;
+    if (!document.fullscreenElement) {
+      if (document.documentElement.requestFullscreen) {
+        await document.documentElement.requestFullscreen();
+      }
+      try {
+        if (typeof screen !== 'undefined' && 'orientation' in screen && screen.orientation) {
+          await (screen.orientation as unknown as { lock: (mode: string) => Promise<void> }).lock('landscape');
+        }
+      } catch {
+        // screen orientation lock optional or rejected on unsupported platforms
+      }
+    } else {
+      if (document.exitFullscreen) {
+        await document.exitFullscreen();
+      }
+    }
+  } catch {
+    // fullscreen request optional
+  }
+}
+
 export function HudView({ state }: { state: HudState }): JSX.Element {
   const fuelPct = Math.max(0, Math.min(100, Math.round((state.fuelL / (state.fuelMaxL || 8)) * 100)));
   const isLowFuel = fuelPct <= 20;
@@ -63,7 +87,7 @@ export function HudView({ state }: { state: HudState }): JSX.Element {
           flexDirection: 'column',
           justifyContent: 'flex-end',
           alignItems: 'center',
-          padding: '16px',
+          padding: 'calc(16px + env(safe-area-inset-top, 0px)) calc(16px + env(safe-area-inset-right, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) calc(16px + env(safe-area-inset-left, 0px))',
           boxSizing: 'border-box',
           fontFamily: "'Segoe UI', Roboto, system-ui, sans-serif",
           color: '#f8fafc',
@@ -78,10 +102,10 @@ export function HudView({ state }: { state: HudState }): JSX.Element {
         {/* Compact Instrument Pod on Handlebars */}
         <div
           style={{
-            background: 'rgba(15, 23, 42, 0.88)',
+            background: 'rgba(15, 23, 42, 0.92)',
             border: '2px solid rgba(56, 189, 248, 0.4)',
             borderRadius: '20px',
-            padding: '10px 24px',
+            padding: '12px 24px',
             display: 'flex',
             alignItems: 'center',
             gap: '24px',
@@ -103,7 +127,7 @@ export function HudView({ state }: { state: HudState }): JSX.Element {
             >
               {Math.round(state.speedKmh)}
             </div>
-            <div style={{ fontSize: '10px', color: '#94a3b8', letterSpacing: '1px', fontWeight: 700 }}>
+            <div style={{ fontSize: '14px', color: '#94a3b8', letterSpacing: '1px', fontWeight: 700 }}>
               {t('hud.speed_unit')}
             </div>
           </div>
@@ -111,12 +135,12 @@ export function HudView({ state }: { state: HudState }): JSX.Element {
           <div style={{ width: '1px', height: '36px', background: 'rgba(255, 255, 255, 0.15)' }} />
 
           {/* Compact Fuel Pod */}
-          <div style={{ minWidth: '80px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', fontWeight: 700, color: isLowFuel ? '#ef4444' : '#94a3b8' }}>
+          <div style={{ minWidth: '90px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', fontWeight: 700, color: isLowFuel ? '#ef4444' : '#94a3b8' }}>
               <span>⛽ {t('hud.fuel')}</span>
               <span>{fuelPct}%</span>
             </div>
-            <div style={{ height: '6px', width: '100%', background: 'rgba(255, 255, 255, 0.15)', borderRadius: '3px', marginTop: '4px', overflow: 'hidden' }}>
+            <div style={{ height: '8px', width: '100%', background: 'rgba(255, 255, 255, 0.15)', borderRadius: '4px', marginTop: '4px', overflow: 'hidden' }}>
               <div
                 style={{
                   height: '100%',
@@ -132,7 +156,7 @@ export function HudView({ state }: { state: HudState }): JSX.Element {
           {state.nextTurn && (
             <>
               <div style={{ width: '1px', height: '36px', background: 'rgba(255, 255, 255, 0.15)' }} />
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 700, color: '#38bdf8' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: 700, color: '#38bdf8' }}>
                 <span style={{ fontSize: '18px' }}>
                   {state.nextTurn.direction === 'left' ? '↰' : state.nextTurn.direction === 'right' ? '↱' : '↑'}
                 </span>
@@ -143,10 +167,10 @@ export function HudView({ state }: { state: HudState }): JSX.Element {
 
           {/* Earnings */}
           <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: '14px', fontWeight: 800, color: '#10b981' }}>
+            <div style={{ fontSize: '15px', fontWeight: 800, color: '#10b981' }}>
               ৳{Math.round(state.todayNetEarnings)}
             </div>
-            <div style={{ fontSize: '10px', color: '#94a3b8' }}>
+            <div style={{ fontSize: '14px', color: '#94a3b8' }}>
               {state.shiftClock}
             </div>
           </div>
@@ -167,16 +191,16 @@ export function HudView({ state }: { state: HudState }): JSX.Element {
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
-        padding: '20px',
+        padding: 'calc(16px + env(safe-area-inset-top, 0px)) calc(16px + env(safe-area-inset-right, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) calc(16px + env(safe-area-inset-left, 0px))',
         boxSizing: 'border-box',
-        fontFamily: "'Segoe UI', Roboto, system-ui, sans-serif",
+        fontFamily: "'Hind Siliguri', 'Segoe UI', Roboto, system-ui, sans-serif",
         color: '#f8fafc',
         userSelect: 'none',
       }}
     >
-      {/* Top Header Bar: Minimap Anchor (Left), Objective (Center), Earnings & Stats (Right) */}
+      {/* Top Header Bar: Minimap Anchor (Left), Objective (Center), Earnings, Clock & Fullscreen (Right) */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%' }}>
-        {/* Top-Left: Minimap Container Anchor */}
+        {/* Top-Left: Minimap Container Anchor & Next Turn */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           <div
             id="minimap-container"
@@ -194,21 +218,21 @@ export function HudView({ state }: { state: HudState }): JSX.Element {
             <div
               style={{
                 alignSelf: 'flex-start',
-                background: 'rgba(15, 23, 42, 0.85)',
-                border: '1px solid rgba(56, 189, 248, 0.3)',
+                background: 'rgba(15, 23, 42, 0.88)',
+                border: '1px solid rgba(56, 189, 248, 0.4)',
                 backdropFilter: 'blur(8px)',
                 borderRadius: '12px',
-                padding: '6px 14px',
+                padding: '8px 14px',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
-                fontSize: '12px',
+                fontSize: '14px',
                 fontWeight: 700,
                 color: '#38bdf8',
                 boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)',
               }}
             >
-              <span style={{ fontSize: '16px' }}>
+              <span style={{ fontSize: '18px' }}>
                 {state.nextTurn.direction === 'left' ? '↰' : state.nextTurn.direction === 'right' ? '↱' : '↑'}
               </span>
               <span>{state.nextTurn.text}</span>
@@ -220,10 +244,10 @@ export function HudView({ state }: { state: HudState }): JSX.Element {
         <div
           style={{
             alignSelf: 'center',
-            background: 'rgba(15, 23, 42, 0.85)',
+            background: 'rgba(15, 23, 42, 0.9)',
             border: '1px solid rgba(16, 185, 129, 0.6)',
             borderRadius: '16px',
-            padding: '10px 24px',
+            padding: '12px 24px',
             color: '#ffffff',
             boxShadow: '0 8px 24px rgba(0, 0, 0, 0.5)',
             textAlign: 'center',
@@ -233,9 +257,9 @@ export function HudView({ state }: { state: HudState }): JSX.Element {
         >
           <div
             style={{
-              fontSize: '11px',
+              fontSize: '14px',
               textTransform: 'uppercase',
-              letterSpacing: '1.5px',
+              letterSpacing: '1px',
               color: '#10b981',
               fontWeight: 800,
               marginBottom: '2px',
@@ -247,19 +271,45 @@ export function HudView({ state }: { state: HudState }): JSX.Element {
             {state.objectiveText}
           </div>
           {state.fare !== undefined && (
-            <div style={{ fontSize: '13px', color: '#fbbf24', marginTop: '3px', fontWeight: 700 }}>
+            <div style={{ fontSize: '14px', color: '#fbbf24', marginTop: '3px', fontWeight: 700 }}>
               {t('hud.fare', { fare: state.fare })}
             </div>
           )}
         </div>
 
-        {/* Top-Right: Earnings, Rating & Shift Clock */}
+        {/* Top-Right: Fullscreen button, Earnings, Rating & Shift Clock */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
+          {/* Fullscreen & Orientation Lock Button */}
+          <button
+            data-testid="hud-btn-fullscreen"
+            onClick={handleToggleFullscreenAndLock}
+            style={{
+              pointerEvents: 'auto',
+              background: 'rgba(15, 23, 42, 0.88)',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              borderRadius: '12px',
+              color: '#f8fafc',
+              padding: '8px 14px',
+              fontSize: '14px',
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              backdropFilter: 'blur(8px)',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)',
+              minHeight: '40px',
+            }}
+            title="Fullscreen & Landscape Lock"
+          >
+            <span>⛶</span> {t('hud.fullscreen') || 'পূর্ণপর্দা'}
+          </button>
+
           {/* Earnings Badge */}
           <div
             data-testid="hud-earnings"
             style={{
-              background: 'rgba(15, 23, 42, 0.85)',
+              background: 'rgba(15, 23, 42, 0.88)',
               border: '1px solid rgba(255, 255, 255, 0.1)',
               backdropFilter: 'blur(8px)',
               borderRadius: '12px',
@@ -268,10 +318,10 @@ export function HudView({ state }: { state: HudState }): JSX.Element {
               boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)',
             }}
           >
-            <div style={{ fontSize: '10px', textTransform: 'uppercase', color: '#94a3b8', fontWeight: 700 }}>
+            <div style={{ fontSize: '14px', textTransform: 'uppercase', color: '#94a3b8', fontWeight: 700 }}>
               {t('hud.earnings', { amount: '' }).replace(/: ৳/, '')}
             </div>
-            <div style={{ fontSize: '18px', fontWeight: 900, color: '#10b981', lineHeight: 1.2 }}>
+            <div style={{ fontSize: '20px', fontWeight: 900, color: '#10b981', lineHeight: 1.2 }}>
               ৳{Math.round(state.todayNetEarnings)}
             </div>
           </div>
@@ -279,15 +329,15 @@ export function HudView({ state }: { state: HudState }): JSX.Element {
           {/* Rating & Shift Clock Badge */}
           <div
             style={{
-              background: 'rgba(15, 23, 42, 0.85)',
+              background: 'rgba(15, 23, 42, 0.88)',
               border: '1px solid rgba(255, 255, 255, 0.1)',
               backdropFilter: 'blur(8px)',
               borderRadius: '12px',
-              padding: '6px 14px',
+              padding: '8px 14px',
               display: 'flex',
               alignItems: 'center',
               gap: '12px',
-              fontSize: '12px',
+              fontSize: '14px',
               fontWeight: 700,
             }}
           >
@@ -308,11 +358,11 @@ export function HudView({ state }: { state: HudState }): JSX.Element {
         <div
           data-testid="hud-passenger-status"
           style={{
-            background: 'rgba(15, 23, 42, 0.85)',
+            background: 'rgba(15, 23, 42, 0.88)',
             border: '1px solid rgba(255, 255, 255, 0.1)',
             backdropFilter: 'blur(8px)',
             borderRadius: '16px',
-            padding: '10px 18px',
+            padding: '12px 20px',
             display: 'flex',
             alignItems: 'center',
             gap: '12px',
@@ -321,24 +371,24 @@ export function HudView({ state }: { state: HudState }): JSX.Element {
         >
           <div
             style={{
-              width: '36px',
-              height: '36px',
+              width: '40px',
+              height: '40px',
               borderRadius: '50%',
               background: '#334155',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '18px',
+              fontSize: '20px',
               border: '2px solid #38bdf8',
             }}
           >
             {state.passengerStatus?.status === 'OnTrip' ? '🧑' : '🛵'}
           </div>
           <div>
-            <div style={{ fontSize: '13px', fontWeight: 800, color: '#f8fafc' }}>
+            <div style={{ fontSize: '15px', fontWeight: 800, color: '#f8fafc' }}>
               {state.passengerStatus?.name || (state.passengerStatus?.status === 'OnTrip' ? 'Passenger on Bike' : t('hud.passenger.waiting'))}
             </div>
-            <div style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 600 }}>
+            <div style={{ fontSize: '14px', color: '#94a3b8', fontWeight: 600 }}>
               {state.passengerStatus?.status === 'OnTrip'
                 ? t('hud.passenger.ontrip')
                 : state.passengerStatus?.status === 'WaitingForPickup'
@@ -352,14 +402,14 @@ export function HudView({ state }: { state: HudState }): JSX.Element {
         {/* Bottom-Right: Speedometer, Gear & Fuel Gauge Pod */}
         <div
           style={{
-            background: 'rgba(15, 23, 42, 0.85)',
+            background: 'rgba(15, 23, 42, 0.9)',
             border: '1px solid rgba(51, 65, 85, 0.8)',
             borderRadius: '18px',
-            padding: '14px 22px',
+            padding: '16px 24px',
             color: '#ffffff',
             boxShadow: '0 8px 30px rgba(0, 0, 0, 0.6)',
             textAlign: 'right',
-            minWidth: '150px',
+            minWidth: '160px',
             backdropFilter: 'blur(8px)',
             display: 'flex',
             flexDirection: 'column',
@@ -370,11 +420,11 @@ export function HudView({ state }: { state: HudState }): JSX.Element {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '16px' }}>
             <span
               style={{
-                fontSize: '14px',
+                fontSize: '15px',
                 fontWeight: 800,
                 color: '#38bdf8',
                 background: 'rgba(56, 189, 248, 0.15)',
-                padding: '2px 8px',
+                padding: '3px 10px',
                 borderRadius: '6px',
               }}
             >
@@ -395,8 +445,8 @@ export function HudView({ state }: { state: HudState }): JSX.Element {
               </div>
               <div
                 style={{
-                  fontSize: '11px',
-                  letterSpacing: '1.2px',
+                  fontSize: '14px',
+                  letterSpacing: '1px',
                   color: '#94a3b8',
                   fontWeight: 700,
                   marginTop: '2px',
@@ -409,15 +459,15 @@ export function HudView({ state }: { state: HudState }): JSX.Element {
 
           {/* Fuel Level Bar */}
           <div style={{ width: '100%', marginTop: '4px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: isLowFuel ? '#ef4444' : '#94a3b8', fontWeight: 700 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: isLowFuel ? '#ef4444' : '#94a3b8', fontWeight: 700 }}>
               <span>{isLowFuel ? `⚠️ ${t('hud.fuel_low')}` : `⛽ ${t('hud.fuel')}`}</span>
               <span>{fuelPct}% ({state.fuelL.toFixed(1)}L)</span>
             </div>
             <div
               style={{
-                height: '7px',
+                height: '8px',
                 width: '100%',
-                background: 'rgba(255, 255, 255, 0.1)',
+                background: 'rgba(255, 255, 255, 0.15)',
                 borderRadius: '4px',
                 overflow: 'hidden',
                 marginTop: '4px',

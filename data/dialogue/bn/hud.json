@@ -12,5 +12,6 @@
   "hud.passenger.waiting": "যাত্রী খোঁজা হচ্ছে...",
   "hud.passenger.pickup": "পিকআপ পয়েন্টে যান",
   "hud.passenger.ontrip": "গন্তব্যে নামিয়ে দিন",
-  "hud.passenger.none": "ফ্রি রাইড"
+  "hud.passenger.none": "ফ্রি রাইড",
+  "hud.fullscreen": "পূর্ণপর্দা"
 }
