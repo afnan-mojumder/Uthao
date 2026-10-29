@@ -28,6 +28,10 @@ import {
   onResumeGameCallback,
   onSetWaypointCallback,
   tutorialSignal,
+  endingSignal,
+  onSelectCareerChoiceCallback,
+  onRestartCareerCallback,
+  onEnterEndlessCallback,
 } from './store';
 import { RotateOverlay } from './overlays/RotateOverlay';
 import { Unsupported } from './overlays/Unsupported';
@@ -36,6 +40,7 @@ import { ChoiceCard } from './choice/ChoiceCard';
 import { Phone } from './phone/Phone';
 import { NegotiationPanel } from './negotiation/NegotiationPanel';
 import { DayEnd } from './menus/DayEnd';
+import { Ending } from './menus/Ending';
 import { Garage } from './garage/Garage';
 import { MainMenu } from './menus/MainMenu';
 import { Settings } from './menus/Settings';
@@ -221,6 +226,30 @@ export function App(): JSX.Element {
           onSleep={() => onSleepCallback?.()}
           onDelayRent={() => onDelayRentCallback?.()}
           onAskAdvance={(from, amount) => onAskAdvanceCallback?.(from, amount)}
+        />
+      )}
+
+      {/* T5.5 Ending Screen */}
+      {endingSignal.value.active && endingSignal.value.result && (
+        <Ending
+          result={endingSignal.value.result}
+          choices={endingSignal.value.choices}
+          onSelectChoice={(choice) => onSelectCareerChoiceCallback?.(choice)}
+          onRestartCareer={() => {
+            endingSignal.value = { ...endingSignal.value, active: false };
+            onRestartCareerCallback?.();
+          }}
+          onEnterEndless={() => {
+            endingSignal.value = { ...endingSignal.value, active: false };
+            onEnterEndlessCallback?.();
+          }}
+          onMainMenu={() => {
+            endingSignal.value = { ...endingSignal.value, active: false };
+            screenSignal.value = 'title';
+          }}
+          onClose={() => {
+            endingSignal.value = { ...endingSignal.value, active: false };
+          }}
         />
       )}
 

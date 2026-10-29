@@ -10,5 +10,11 @@
   "ending_fast_money_title": "Fast Money, High Stakes",
   "ending_fast_money_desc": "You chased the big cash and walked the razor's edge. The money was fast, but the streets never forget.",
   "ending_fresh_start_title": "A Hard Lesson",
-  "ending_fresh_start_desc": "Low ratings and unpaid debts caught up with you. Time to regroup, repair, and start fresh."
+  "ending_fresh_start_desc": "Low ratings and unpaid debts caught up with you. Time to regroup, repair, and start fresh.",
+  "choice_workshop_title": "Partner with Kamal Bhai (Workshop)",
+  "choice_workshop_desc": "Invest ৳25,000 into a permanent motorcycle workshop with Kamal bhai.",
+  "choice_bike_title": "Buy Used 125cc Bike (Independent)",
+  "choice_bike_desc": "Upgrade to a reliable 125cc bike for ৳15,000 after trading in your old motorcycle.",
+  "choice_continue_title": "Continue as Neighborhood Regular",
+  "choice_continue_desc": "Keep riding independently with existing gear, supported by community trust."
 }

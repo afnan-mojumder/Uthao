@@ -8,6 +8,8 @@ import type {
   NegotiationResult,
   NegotiationAction,
 } from '../sim/negotiation/NegotiationSystem';
+import type { EndingResult, CareerChoiceOption, CareerChoice } from '../sim/mission/endings';
+import type { EndingId } from '../core/types';
 
 export type ScreenId = 'title' | 'game' | 'garage' | 'map' | 'pause';
 
@@ -190,6 +192,18 @@ export const choiceSignal = signal<ChoiceState>({
   options: [],
 });
 
+export interface EndingUiState {
+  active: boolean;
+  result: EndingResult | null;
+  choices?: CareerChoiceOption[];
+}
+
+export const endingSignal = signal<EndingUiState>({
+  active: false,
+  result: null,
+  choices: undefined,
+});
+
 if (typeof window !== 'undefined') {
   (window as unknown as { __uthaoUi?: unknown }).__uthaoUi = {
     garageSignal,
@@ -203,6 +217,7 @@ if (typeof window !== 'undefined') {
     negotiationSignal,
     choiceSignal,
     tutorialSignal,
+    endingSignal,
     unsupportedSignal,
     rotateOverlaySignal,
   };
@@ -222,6 +237,19 @@ export let onContinueCareerCallback: (() => void) | null = null;
 export let onStartEndlessCallback: (() => void) | null = null;
 export let onResumeGameCallback: (() => void) | null = null;
 export let onSetWaypointCallback: ((nodeId: string | null) => void) | null = null;
+export let onSelectCareerChoiceCallback: ((choice: CareerChoice) => void) | null = null;
+export let onRestartCareerCallback: (() => void) | null = null;
+export let onEnterEndlessCallback: (() => void) | null = null;
+
+export function setEndingDispatchers(
+  selectChoiceFn?: (choice: CareerChoice) => void,
+  restartCareerFn?: () => void,
+  enterEndlessFn?: () => void
+): void {
+  if (selectChoiceFn) onSelectCareerChoiceCallback = selectChoiceFn;
+  if (restartCareerFn) onRestartCareerCallback = restartCareerFn;
+  if (enterEndlessFn) onEnterEndlessCallback = enterEndlessFn;
+}
 
 export function setMenuDispatchers(
   newCareerFn?: () => void,
@@ -448,6 +476,41 @@ export function bindEventBusToStore(
     };
   });
   unsubscribers.push(unsubDayStarted);
+
+  const unsubEnding = bus.on('ending/reached', (ev) => {
+    const res = (ev as { endingId: EndingId; result?: EndingResult }).result;
+    if (res) {
+      endingSignal.value = {
+        active: true,
+        result: res,
+      };
+    } else {
+      endingSignal.value = {
+        active: true,
+        result: {
+          endingId: ev.endingId,
+          titleKey: `ending_${ev.endingId}_title`,
+          descKey: `ending_${ev.endingId}_desc`,
+          dominantIdentity: 'regular',
+          tendencies: {
+            professional: 25,
+            negotiator: 25,
+            hustler: 25,
+            regular: 25,
+          },
+          summary: {
+            cash: 0,
+            savings: 0,
+            debt: 0,
+            rating: 5.0,
+            localTrust: 50,
+            completedMissions: 0,
+          },
+        },
+      };
+    }
+  });
+  unsubscribers.push(unsubEnding);
 
   return () => {
     for (const unsub of unsubscribers) {
