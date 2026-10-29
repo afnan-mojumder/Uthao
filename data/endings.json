@@ -1,0 +1,33 @@
+[
+  {
+    "id": "ending_v1_first_week",
+    "titleKey": "ending_v1_first_week_title",
+    "descKey": "ending_v1_first_week_desc",
+    "tendencySummary": true
+  },
+  {
+    "id": "independent_rider",
+    "titleKey": "ending_independent_rider_title",
+    "descKey": "ending_independent_rider_desc"
+  },
+  {
+    "id": "workshop_owner",
+    "titleKey": "ending_workshop_owner_title",
+    "descKey": "ending_workshop_owner_desc"
+  },
+  {
+    "id": "trusted_local",
+    "titleKey": "ending_trusted_local_title",
+    "descKey": "ending_trusted_local_desc"
+  },
+  {
+    "id": "fast_money",
+    "titleKey": "ending_fast_money_title",
+    "descKey": "ending_fast_money_desc"
+  },
+  {
+    "id": "fresh_start",
+    "titleKey": "ending_fresh_start_title",
+    "descKey": "ending_fresh_start_desc"
+  }
+]

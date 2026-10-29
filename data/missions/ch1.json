@@ -1,0 +1,138 @@
+[
+  {
+    "id": "m1_first_ride",
+    "chapter": 1,
+    "day": 1,
+    "titleKey": "mission_m1_first_ride_title",
+    "descKey": "mission_m1_first_ride_desc",
+    "prerequisites": [],
+    "objectives": [
+      {
+        "id": "obj_m1_nabila_pickup",
+        "descKey": "obj_m1_nabila_pickup_desc",
+        "type": "completeRides",
+        "count": 1
+      }
+    ],
+    "rewards": [
+      {
+        "type": "money",
+        "amount": 100,
+        "kind": "fare"
+      },
+      {
+        "type": "relationship",
+        "characterId": "nabila",
+        "delta": 10
+      },
+      {
+        "type": "flag",
+        "key": "tutorial_ride_done",
+        "value": true
+      }
+    ],
+    "unlocks": ["m1_fill_up"]
+  },
+  {
+    "id": "m1_fill_up",
+    "chapter": 1,
+    "day": 1,
+    "titleKey": "mission_m1_fill_up_title",
+    "descKey": "mission_m1_fill_up_desc",
+    "prerequisites": ["m1_first_ride"],
+    "objectives": [
+      {
+        "id": "obj_m1_fuel",
+        "descKey": "obj_m1_fuel_desc",
+        "type": "payExpense",
+        "expenseId": "fuel"
+      },
+      {
+        "id": "obj_m1_rides",
+        "descKey": "obj_m1_rides_desc",
+        "type": "completeRides",
+        "count": 3
+      }
+    ],
+    "rewards": [
+      {
+        "type": "money",
+        "amount": 250,
+        "kind": "reward"
+      },
+      {
+        "type": "relationship",
+        "characterId": "kamal_bhai",
+        "delta": 5
+      },
+      {
+        "type": "flag",
+        "key": "day1_complete",
+        "value": true
+      }
+    ],
+    "unlocks": ["m1_household"]
+  },
+  {
+    "id": "m1_household",
+    "chapter": 1,
+    "day": 2,
+    "titleKey": "mission_m1_household_title",
+    "descKey": "mission_m1_household_desc",
+    "prerequisites": ["m1_fill_up"],
+    "objectives": [
+      {
+        "id": "obj_m1_earn",
+        "descKey": "obj_m1_earn_desc",
+        "type": "earnNet",
+        "amount": 1500,
+        "byDay": 3
+      },
+      {
+        "id": "obj_m1_pay_ma",
+        "descKey": "obj_m1_pay_ma_desc",
+        "type": "payExpense",
+        "expenseId": "family",
+        "amount": 1200
+      }
+    ],
+    "failConditions": [
+      {
+        "id": "obj_m1_earn_fail",
+        "descKey": "obj_m1_earn_desc",
+        "type": "earnNet",
+        "amount": 1500,
+        "byDay": 3
+      }
+    ],
+    "rewards": [
+      {
+        "type": "relationship",
+        "characterId": "ma",
+        "delta": 15
+      },
+      {
+        "type": "flag",
+        "key": "ch1_completed",
+        "value": true
+      },
+      {
+        "type": "localTrust",
+        "delta": 10
+      }
+    ],
+    "onFail": [
+      {
+        "type": "relationship",
+        "characterId": "ma",
+        "delta": -10
+      },
+      {
+        "type": "flag",
+        "key": "ma_payment_missed",
+        "value": true
+      }
+    ],
+    "unlocks": ["m2_rush_hustle"]
+  }
+]

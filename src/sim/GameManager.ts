@@ -14,6 +14,7 @@ import type {
   PlayerEconomy,
   StoryState,
   WeatherKind,
+  TransactionKind,
 } from '../core/types';
 import { EventDirector } from './events/EventDirector';
 import { EconomyManager } from './economy/EconomyManager';
@@ -30,6 +31,12 @@ import type { SafetyRecord } from '../core/types';
 import { RoadEventManager, type ActiveRoadEvent } from './world/RoadEvents';
 import defaultUpgrades from '../../data/upgrades.json';
 import type { RepairItem, UpgradeDef } from './economy/maintenance';
+import { MissionManager } from './mission/MissionManager';
+import type { MissionDef, EndingDef } from './schemas';
+import ch1Missions from '../../data/missions/ch1.json';
+import ch2Missions from '../../data/missions/ch2.json';
+import ch4Missions from '../../data/missions/ch4.json';
+import endingsData from '../../data/endings.json';
 
 const DEFAULT_ENCOUNTERS: EncounterDef[] = [
   ...routeEncounters,
@@ -90,6 +97,7 @@ export class GameManager {
   readonly eventDirector: EventDirector;
   readonly reputationSystem: ReputationSystem;
   readonly roadEvents: RoadEventManager;
+  readonly missionManager: MissionManager;
 
   paused: boolean = false;
   accumulator: number = 0;
@@ -169,8 +177,35 @@ export class GameManager {
       pauseOnDecisions: true,
     });
 
+    const missionDefs =
+      (this.data.missions as MissionDef[] | undefined) ?? [
+        ...ch1Missions,
+        ...ch2Missions,
+        ...ch4Missions,
+      ] as MissionDef[];
+    const endingDefs =
+      (this.data.endings as EndingDef[] | undefined) ?? (endingsData as EndingDef[]);
+
+    this.missionManager = new MissionManager({
+      bus: this.bus,
+      missions: missionDefs,
+      endings: endingDefs,
+      storyState: this.story,
+      getEffectContext: () => ({
+        gameManager: this,
+        economyManager: this.economyManager,
+        eventBus: this.bus,
+      }),
+    });
+
     this.bus.on('day/started', () => {
       this.eventDirector.resetDaily();
+    });
+
+    this.bus.on('ending/reached', ({ endingId }) => {
+      if (endingId in this.story.endingEligibility) {
+        this.story.endingEligibility[endingId as keyof typeof this.story.endingEligibility] = true;
+      }
     });
 
     this.bus.on('reputation/changed', () => {
@@ -420,6 +455,22 @@ export class GameManager {
         this.economyManager.askAdvance(cmd.from, cmd.amount, this.clock.day, this.clock.minutes);
         this.syncEconomy();
         this.reputationSystem.changeRelationship(cmd.from, -5);
+        return { success: true };
+      }
+      case 'payExpense': {
+        const amount = cmd.amount ?? 100;
+        const kind: TransactionKind =
+          cmd.expenseId === 'family' || cmd.expenseId === 'rent' || cmd.expenseId === 'food' || cmd.expenseId === 'fuel'
+            ? cmd.expenseId
+            : 'family';
+        this.economyManager.post({
+          id: `tx_exp_${this.clock.day}_${Math.floor(this.clock.minutes)}_${cmd.expenseId}`,
+          day: this.clock.day,
+          minute: this.clock.minutes,
+          kind,
+          amount: -amount,
+        });
+        this.syncEconomy();
         return { success: true };
       }
       default:

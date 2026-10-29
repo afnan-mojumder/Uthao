@@ -314,3 +314,98 @@ export const EncounterDefSchema = z.object({
 
 export type EncounterDef = z.infer<typeof EncounterDefSchema>;
 
+export const ObjectiveDefSchema = z.discriminatedUnion('type', [
+  z.object({
+    type: z.literal('earnNet'),
+    amount: z.number(),
+    byDay: z.number().optional(),
+    byMinute: z.number().optional(),
+  }),
+  z.object({
+    type: z.literal('completeRides'),
+    count: z.number().int().positive(),
+    district: DistrictIdSchema.optional(),
+    zoneTag: z.string().optional(),
+    distinctDistricts: z.number().int().optional(),
+    beforeMinute: z.number().optional(),
+    weather: z.enum(['clear', 'cloudy', 'lightRain', 'heavyRain']).optional(),
+    noCrash: z.boolean().optional(),
+  }),
+  z.object({
+    type: z.literal('rideWith'),
+    characterId: z.string(),
+  }),
+  z.object({
+    type: z.literal('reach'),
+    poiId: z.string(),
+  }),
+  z.object({
+    type: z.literal('payExpense'),
+    expenseId: z.string(),
+    amount: z.number().optional(),
+  }),
+  z.object({
+    type: z.literal('choose'),
+    encounterId: z.string(),
+    choiceIds: z.array(z.string()).optional(),
+  }),
+  z.object({
+    type: z.literal('relationship'),
+    characterId: z.string(),
+    min: z.number(),
+  }),
+  z.object({
+    type: z.literal('flag'),
+    key: z.string(),
+    value: z.union([z.boolean(), z.number(), z.string()]),
+  }),
+  z.object({
+    type: z.literal('buy'),
+    target: z.enum(['upgrade', 'bike']),
+    targetId: z.string(),
+  }),
+  z.object({
+    type: z.literal('survive'),
+    encounterId: z.string(),
+  }),
+]);
+
+export type ObjectiveDef = z.infer<typeof ObjectiveDefSchema>;
+
+export const MissionObjectiveSchema = z.intersection(
+  z.object({
+    id: z.string(),
+    descKey: z.string(),
+    optional: z.boolean().optional(),
+  }),
+  ObjectiveDefSchema
+);
+
+export type MissionObjective = z.infer<typeof MissionObjectiveSchema>;
+
+export const MissionDefSchema = z.object({
+  id: z.string(),
+  chapter: z.number().int().positive(),
+  day: z.number().int().positive(),
+  titleKey: z.string(),
+  descKey: z.string(),
+  prerequisites: z.array(z.string()).default([]),
+  objectives: z.array(MissionObjectiveSchema).min(1),
+  rewards: z.array(EffectSchema).default([]),
+  failConditions: z.array(MissionObjectiveSchema).optional(),
+  onFail: z.array(EffectSchema).optional(),
+  unlocks: z.array(z.string()).default([]),
+});
+
+export type MissionDef = z.infer<typeof MissionDefSchema>;
+
+export const EndingDefSchema = z.object({
+  id: z.string(),
+  titleKey: z.string(),
+  descKey: z.string(),
+  conditions: ConditionSchema.optional(),
+  tendencySummary: z.boolean().optional(),
+});
+
+export type EndingDef = z.infer<typeof EndingDefSchema>;
+

@@ -11,7 +11,7 @@ export type Command =
   | { type: 'buyFuel'; liters: number }
   | { type: 'repair'; item: string }
   | { type: 'buyUpgrade'; upgradeId: string }
-  | { type: 'payExpense'; expenseId: string }
+  | { type: 'payExpense'; expenseId: string; amount?: number }
   | { type: 'chargePhone'; location?: 'home' | 'teaStall'; cost?: number }
   | { type: 'delayRent' }
   | { type: 'askAdvance'; from: 'mintu' | 'ma'; amount: number }

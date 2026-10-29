@@ -1,0 +1,20 @@
+{
+  "mission_m1_first_ride_title": "First Ride: Campus Gate",
+  "mission_m1_first_ride_desc": "Your first ride on Uthao. Pick up university student Nabila and take her safely to campus gate.",
+  "obj_m1_nabila_pickup_desc": "Complete the ride with Nabila to campus gate",
+  "mission_m1_fill_up_title": "Fill the Tank",
+  "mission_m1_fill_up_desc": "Visit a fuel station to top up your tank and complete 3 rides across Mirpara.",
+  "obj_m1_fuel_desc": "Refuel your motorcycle at any station",
+  "obj_m1_rides_desc": "Complete 3 passenger rides",
+  "mission_m1_household_title": "Household Obligation",
+  "mission_m1_household_desc": "Ma needs ৳1,200 for groceries and household expenses by Day 3. Earn ৳1,500 net.",
+  "obj_m1_earn_desc": "Earn ৳1,500 net before the end of Day 3",
+  "obj_m1_pay_ma_desc": "Pay Ma ৳1,200 family expense",
+  "mission_m2_rush_hustle_title": "Morning Rush Hustle",
+  "mission_m2_rush_hustle_desc": "Beat the morning traffic. Complete 4 trips around the bustling Mirpara market before 10:00 AM.",
+  "obj_m2_rush_rides_desc": "Complete 4 market trips during morning rush (before 10:00 AM)",
+  "mission_m4_wrong_pickup_title": "Wrong Turn at Night",
+  "mission_m4_wrong_pickup_desc": "A lucrative late-night request from Jamil leads into a dark dead-end lane. Keep your wits sharp.",
+  "obj_m4_survive_desc": "Handle the suspicious encounter safely without robbery",
+  "obj_m4_police_desc": "Cooperate with SI Morshed at the traffic checkpoint"
+}

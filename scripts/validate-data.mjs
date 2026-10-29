@@ -1,6 +1,13 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { DistrictSchema, ArchetypesDataSchema, EncounterDefSchema, WorldDataSchema } from '../src/sim/schemas.ts';
+import {
+  DistrictSchema,
+  ArchetypesDataSchema,
+  EncounterDefSchema,
+  WorldDataSchema,
+  MissionDefSchema,
+  EndingDefSchema,
+} from '../src/sim/schemas.ts';
 
 // Validate dialogue files
 const dialogueDir = path.resolve('data/dialogue');
@@ -292,7 +299,7 @@ if (fs.existsSync(upgradesPath)) {
   }
 }
 
-// Validate missions: no mission must require an upgrade
+// Validate missions: schema, dialogue keys, and no mission must require an upgrade
 const missionsDir = path.resolve('data/missions');
 if (fs.existsSync(missionsDir)) {
   const files = fs.readdirSync(missionsDir);
@@ -303,16 +310,41 @@ if (fs.existsSync(missionsDir)) {
         const raw = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
         const missions = Array.isArray(raw) ? raw : [raw];
         for (const m of missions) {
-          if (m?.prerequisites?.requiresUpgrade || m?.requiresUpgrade) {
-            console.error(`Mission ${m.id} in ${filePath} illegally requires an upgrade for story progress!`);
+          const res = MissionDefSchema.safeParse(m);
+          if (!res.success) {
+            console.error(`Mission schema error in ${filePath} (${m?.id}):`, res.error.format());
             process.exit(1);
           }
-          if (Array.isArray(m?.objectives)) {
-            for (const obj of m.objectives) {
-              if (obj?.type === 'requireUpgrade') {
-                console.error(`Mission ${m.id} objective in ${filePath} illegally requires an upgrade!`);
-                process.exit(1);
-              }
+
+          if (typeof dicts.en[m.titleKey] === 'undefined') {
+            console.error(`Mission ${m.id} in ${filePath}: titleKey '${m.titleKey}' missing in en dialogue`);
+            process.exit(1);
+          }
+          if (typeof dicts.bn[m.titleKey] === 'undefined') {
+            console.error(`Mission ${m.id} in ${filePath}: titleKey '${m.titleKey}' missing in bn dialogue`);
+            process.exit(1);
+          }
+          if (typeof dicts.en[m.descKey] === 'undefined') {
+            console.error(`Mission ${m.id} in ${filePath}: descKey '${m.descKey}' missing in en dialogue`);
+            process.exit(1);
+          }
+          if (typeof dicts.bn[m.descKey] === 'undefined') {
+            console.error(`Mission ${m.id} in ${filePath}: descKey '${m.descKey}' missing in bn dialogue`);
+            process.exit(1);
+          }
+
+          for (const obj of m.objectives) {
+            if (typeof dicts.en[obj.descKey] === 'undefined') {
+              console.error(`Mission ${m.id} objective ${obj.id}: descKey '${obj.descKey}' missing in en dialogue`);
+              process.exit(1);
+            }
+            if (typeof dicts.bn[obj.descKey] === 'undefined') {
+              console.error(`Mission ${m.id} objective ${obj.id}: descKey '${obj.descKey}' missing in bn dialogue`);
+              process.exit(1);
+            }
+            if (obj.type === 'buy' && obj.target === 'upgrade') {
+              console.error(`Mission ${m.id} objective ${obj.id} in ${filePath} illegally requires an upgrade!`);
+              process.exit(1);
             }
           }
         }
@@ -321,6 +353,44 @@ if (fs.existsSync(missionsDir)) {
         process.exit(1);
       }
     }
+  }
+}
+
+// Validate endings.json
+const endingsPath = path.resolve('data/endings.json');
+if (fs.existsSync(endingsPath)) {
+  try {
+    const raw = JSON.parse(fs.readFileSync(endingsPath, 'utf-8'));
+    if (!Array.isArray(raw)) {
+      console.error(`Expected array of endings in ${endingsPath}`);
+      process.exit(1);
+    }
+    for (const ending of raw) {
+      const res = EndingDefSchema.safeParse(ending);
+      if (!res.success) {
+        console.error(`Ending schema error in ${endingsPath} (${ending?.id}):`, res.error.format());
+        process.exit(1);
+      }
+      if (typeof dicts.en[ending.titleKey] === 'undefined') {
+        console.error(`Ending ${ending.id}: titleKey '${ending.titleKey}' missing in en dialogue`);
+        process.exit(1);
+      }
+      if (typeof dicts.bn[ending.titleKey] === 'undefined') {
+        console.error(`Ending ${ending.id}: titleKey '${ending.titleKey}' missing in bn dialogue`);
+        process.exit(1);
+      }
+      if (typeof dicts.en[ending.descKey] === 'undefined') {
+        console.error(`Ending ${ending.id}: descKey '${ending.descKey}' missing in en dialogue`);
+        process.exit(1);
+      }
+      if (typeof dicts.bn[ending.descKey] === 'undefined') {
+        console.error(`Ending ${ending.id}: descKey '${ending.descKey}' missing in bn dialogue`);
+        process.exit(1);
+      }
+    }
+  } catch (err) {
+    console.error(`Failed reading endings file ${endingsPath}:`, err);
+    process.exit(1);
   }
 }
 

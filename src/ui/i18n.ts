@@ -6,12 +6,16 @@ import bnPhone from '../../data/dialogue/bn/phone.json';
 import enPhone from '../../data/dialogue/en/phone.json';
 import bnHud from '../../data/dialogue/bn/hud.json';
 import enHud from '../../data/dialogue/en/hud.json';
+import bnMissions from '../../data/dialogue/bn/missions.json';
+import enMissions from '../../data/dialogue/en/missions.json';
+import bnEndings from '../../data/dialogue/bn/endings.json';
+import enEndings from '../../data/dialogue/en/endings.json';
 
 export type Language = 'bn' | 'en';
 
 const dictionaries: Record<Language, Record<string, string>> = {
-  bn: { ...bnUi, ...bnNegotiation, ...bnPhone, ...bnHud },
-  en: { ...enUi, ...enNegotiation, ...enPhone, ...enHud },
+  bn: { ...bnUi, ...bnNegotiation, ...bnPhone, ...bnHud, ...bnMissions, ...bnEndings },
+  en: { ...enUi, ...enNegotiation, ...enPhone, ...enHud, ...enMissions, ...enEndings },
 };
 
 let currentLanguage: Language = 'bn'; // Default to Bangla for authentic Dhaka experience

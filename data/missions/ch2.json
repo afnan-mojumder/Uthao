@@ -1,0 +1,37 @@
+[
+  {
+    "id": "m2_rush_hustle",
+    "chapter": 2,
+    "day": 4,
+    "titleKey": "mission_m2_rush_hustle_title",
+    "descKey": "mission_m2_rush_hustle_desc",
+    "prerequisites": ["m1_household"],
+    "objectives": [
+      {
+        "id": "obj_m2_rush_rides",
+        "descKey": "obj_m2_rush_rides_desc",
+        "type": "completeRides",
+        "count": 4,
+        "zoneTag": "market",
+        "beforeMinute": 600
+      }
+    ],
+    "rewards": [
+      {
+        "type": "money",
+        "amount": 400,
+        "kind": "reward"
+      },
+      {
+        "type": "localTrust",
+        "delta": 15
+      },
+      {
+        "type": "flag",
+        "key": "ch2_rush_done",
+        "value": true
+      }
+    ],
+    "unlocks": ["m4_wrong_pickup"]
+  }
+]
