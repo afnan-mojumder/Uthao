@@ -39,7 +39,23 @@ Requirements: git, bash (Linux/macOS/WSL/Git Bash), Node.js LTS ≥ 20, and push
 - `npm run balance`: Run headless simulation balance tests.
 - `npm run assets`: Fetch and optimize CC0 game assets.
 
-## Deployment (v1.0 Static Hosting)
+## Deployment & Release (v2.0.0 Static Single-Page App / PWA)
+
+The game compiles to a zero-backend static single-page application and progressive web app (PWA) under `dist/`.
+
+### Production Build
+```bash
+npm run build
+```
+Generates optimized, bundled, and tree-shaken static assets with full ServiceWorker offline caching in `dist/`.
+
+Supported static hosting platforms:
+- **Cloudflare Pages (Recommended):** Connect repository or deploy static directory `dist/` directly with build command `npm run build`. Free global edge distribution and fast asset delivery.
+- **GitHub Pages:** Deploy `dist/` using standard GitHub Pages static deployment workflow or an automated GitHub Actions step.
+- **Netlify:** Set publish directory to `dist/` and build command to `npm run build`.
+
+> **Note on Public Deployment:** Always consult and ask the human user / project lead for confirmation before executing the first public production release.
+
 
 The game compiles to a zero-backend static single-page application and progressive web app (PWA) under `dist/`.
 

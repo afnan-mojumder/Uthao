@@ -141,4 +141,21 @@ describe('T3.10 Menus & Settings Store', () => {
     expect(vnode).not.toBeNull();
     expect(vnode?.props['data-testid']).toBe('pause-menu');
   });
+  it('renders Credits modal with CC0 assets, OFL typography, and engine attributions (T6.4)', () => {
+    const vnode = MainMenu({
+      hasSave: false,
+      showCredits: true,
+    });
+
+    expect(vnode).not.toBeNull();
+    const json = JSON.stringify(vnode);
+    expect(json).toContain('credits-modal');
+    expect(json).toContain('Public Domain Assets (CC0-1.0)');
+    expect(json).toContain('Kenney');
+    expect(json).toContain('OpenGameArt');
+    expect(json).toContain('Open Font License (OFL-1.1)');
+    expect(json).toContain('Hind Siliguri');
+    expect(json).toContain('Three.js');
+    expect(json).toContain('Rapier');
+  });
 });

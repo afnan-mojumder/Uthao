@@ -59,3 +59,12 @@ One line per finished task: `YYYY-MM-DD Tx.y done — note`
 ## 2026-10-29 T6.1 Full test matrix
 - Created docs/PLAYTEST.md mapping all 21 verification questions from GDD §17 across driving, negotiation, economy, narrative, and performance to automated tests and manual playtest protocols.
 - Implemented automated test suite tests/unit/qa/testMatrix.test.ts verifying complete question coverage and existence of all referenced test files (3 tests passed, 351 total tests green).
+## 2026-10-30 T6.4 Branding, credits, deploy
+- Verified title branding in index.html, vite.config.ts, MainMenu.tsx, and README.md.
+- Added trademark search & legal clearance notice in docs/QUESTIONS.md (GDD §2 human task requirement).
+- Polished Credits modal in MainMenu.tsx with complete attributions: CC0-1.0 assets (Kenney, OpenGameArt), Open Font License OFL-1.1 (Hind Siliguri), engine & physics (Three.js, Rapier), and development team.
+- Added automated unit test in tests/unit/ui/menus.test.ts verifying Credits modal content.
+- Verified production build generation (npm run build) producing optimized SPA and PWA bundle in dist/.
+- Documented deployment options and release instructions in README.md.
+- Bumped package.json to v2.0.0.
+- All 23 tasks in Tafsirul's queue are 100% complete!

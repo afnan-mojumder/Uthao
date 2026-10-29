@@ -14,3 +14,8 @@ Please have a native speaker review the following files for natural colloquial D
 - [ ] `data/dialogue/bn/missions.json`: Campaign chapters 1-6 and 8 side missions titles and objectives.
 - [ ] `data/dialogue/bn/encounters.json`: 13 signature encounter events, options, and outcomes.
 - [ ] `data/dialogue/bn/ui.json`: HUD, menus, garage, settings, and phone UI strings.
+## T6.4 Trademark Search & Branding Clearance Note (Human Task)
+- [ ] **Title & Trademark Clearance (GDD §2)**: The provisional title is **"Dhaka Bike Rider: Meter Chole Na"** (in-game short title / app slug: **"Uthao"**).
+  - **Trademark search is a human task**: Before commercial release or publishing on app stores (Google Play, iOS App Store, Steam), human project leads must perform a trademark and trade name clearance search in relevant jurisdictions (notably Bangladesh Department of Patents, Designs and Trademarks - DPDT, and international app store registries) to ensure no conflict with existing ride-hailing brands (e.g. *Pathao*, *Uber*, etc.).
+  - **Fallback / Alternative Titles**: If clearance issues arise, consider alternative titles such as *"Dhaka Rider"*, *"Meter Chole Na"*, or *"Cholo Dhaka"*.
+- [ ] **Production Deployment Approval (v2.0.0)**: Production build `dist/` is verified and ready. Awaiting human confirmation before public CDN / domain deployment.

@@ -308,10 +308,22 @@ export function MainMenu({
               <div>
                 <strong style={{ color: '#f8fafc' }}>Public Domain Assets (CC0-1.0):</strong>
                 <ul style={{ margin: '4px 0 0 18px', padding: 0 }}>
-                  <li>Kenney (City Kit Roads, Commercial, Cars, UI Audio, Impact Sounds)</li>
-                  <li>OpenGameArt CC0 (Dhaka City Ambience, Monsoon Rain Audio)</li>
+                  <li>Kenney (City Kit Roads, Commercial, Suburban, Car Kit, UI Audio, Impact Sounds)</li>
+                  <li>OpenGameArt CC0 (Dhaka City Ambience, Monsoon Rain Audio, Horns)</li>
                   <li>Authentic Dhaka Procedural Models (CNGs, Rickshaws, Buses, Tea Stalls, Kamal Bhai Garage)</li>
                 </ul>
+              </div>
+
+              <div>
+                <strong style={{ color: '#f8fafc' }}>Open Font License (OFL-1.1):</strong>
+                <ul style={{ margin: '4px 0 0 18px', padding: 0 }}>
+                  <li>Hind Siliguri (SIL Open Font License 1.1, Google Fonts / Lipi Design & Ekushey)</li>
+                </ul>
+              </div>
+
+              <div>
+                <strong style={{ color: '#f8fafc' }}>Open Source Engine & Physics:</strong>
+                <p style={{ margin: '4px 0 0 0' }}>Three.js (MIT), Rapier Physics / @dimforge/rapier3d-compat (Apache-2.0), Preact (MIT), Vite</p>
               </div>
 
               <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.1)', paddingTop: '12px', fontSize: '0.8rem', color: '#64748b' }}>
