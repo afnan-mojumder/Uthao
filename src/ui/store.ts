@@ -55,6 +55,27 @@ export const dayEndSignal = signal<DayEndState>({
   summary: null,
 });
 
+export interface GarageState {
+  open: boolean;
+  atKamalBhai: boolean;
+  kamalRelationship: number;
+  cash?: number;
+  engineCondition?: number;
+  tiresCondition?: number;
+  brakesCondition?: number;
+  kmSinceOilChange?: number;
+  ownedUpgrades?: string[];
+  installedCosmetics?: { paint?: string; seatCover?: string };
+}
+
+export const garageSignal = signal<GarageState>({
+  open: false,
+  atKamalBhai: true,
+  kamalRelationship: 0,
+});
+
+export const garageTabSignal = signal<'repairs' | 'upgrades' | 'cosmetics'>('repairs');
+
 export const screenSignal = signal<ScreenId>('game');
 export const pausedSignal = signal<boolean>(false);
 export const rotateOverlaySignal = signal<boolean>(false);
@@ -90,6 +111,18 @@ export const choiceSignal = signal<ChoiceState>({
   options: [],
 });
 
+if (typeof window !== 'undefined') {
+  (window as unknown as { __uthaoUi?: unknown }).__uthaoUi = {
+    garageSignal,
+    screenSignal,
+    hudSignal,
+    phoneSignal,
+    dayEndSignal,
+    negotiationSignal,
+    choiceSignal,
+  };
+}
+
 export let onChooseCallback: ((choiceId: string, instanceId: string) => void) | null = null;
 export let onAcceptRequestCallback: ((requestId: string) => void) | null = null;
 export let onDeclineRequestCallback: ((requestId: string) => void) | null = null;
@@ -97,6 +130,8 @@ export let onNegotiationActionCallback: ((action: NegotiationAction) => void) | 
 export let onSleepCallback: (() => void) | null = null;
 export let onDelayRentCallback: (() => void) | null = null;
 export let onAskAdvanceCallback: ((from: 'mintu' | 'ma', amount: number) => void) | null = null;
+export let onRepairCallback: ((item: string) => void) | null = null;
+export let onBuyUpgradeCallback: ((upgradeId: string) => void) | null = null;
 
 export function setChoiceDispatcher(fn: (choiceId: string, instanceId: string) => void): void {
   onChooseCallback = fn;
@@ -124,6 +159,14 @@ export function setDayEndDispatchers(
   if (askAdvanceFn) onAskAdvanceCallback = askAdvanceFn;
 }
 
+export function setGarageDispatchers(
+  repairFn: (item: string) => void,
+  buyUpgradeFn: (upgradeId: string) => void
+): void {
+  onRepairCallback = repairFn;
+  onBuyUpgradeCallback = buyUpgradeFn;
+}
+
 /**
  * Subscribes to simulation event bus and mirrors updates to reactive Preact signals.
  */
@@ -143,6 +186,10 @@ export function bindEventBusToStore(
       () => dispatch({ type: 'sleep' }),
       () => dispatch({ type: 'delayRent' }),
       (from, amount) => dispatch({ type: 'askAdvance', from, amount })
+    );
+    setGarageDispatchers(
+      (item) => dispatch({ type: 'repair', item }),
+      (upgradeId) => dispatch({ type: 'buyUpgrade', upgradeId })
     );
   }
   const unsubscribers: Array<() => void> = [];
@@ -285,6 +332,16 @@ export function initPwaInstall(): void {
       deferredInstallPrompt = null;
       installPromptSignal.value = false;
     });
+
+    (window as unknown as { __uthaoUi?: unknown }).__uthaoUi = {
+      garageSignal,
+      screenSignal,
+      hudSignal,
+      phoneSignal,
+      dayEndSignal,
+      negotiationSignal,
+      choiceSignal,
+    };
   }
 }
 

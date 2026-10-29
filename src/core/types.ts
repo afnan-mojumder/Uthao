@@ -124,6 +124,15 @@ export interface PlayerEconomy {
   reputation: number; // mirror of rating
   savings: number;
   phoneBattery: number; // 0-100
+  engineCondition?: number; // 0-100
+  tiresCondition?: number; // 0-100
+  brakesCondition?: number; // 0-100
+  kmSinceOilChange?: number;
+  ownedUpgrades?: string[];
+  installedCosmetics?: {
+    paint?: string;
+    seatCover?: string;
+  };
 }
 
 export interface StoryPromise {

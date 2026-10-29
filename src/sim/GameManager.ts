@@ -28,6 +28,8 @@ import crimeEncounters from '../../data/encounters/crime.json';
 import { ReputationSystem } from './reputation/ReputationSystem';
 import type { SafetyRecord } from '../core/types';
 import { RoadEventManager, type ActiveRoadEvent } from './world/RoadEvents';
+import defaultUpgrades from '../../data/upgrades.json';
+import type { RepairItem, UpgradeDef } from './economy/maintenance';
 
 const DEFAULT_ENCOUNTERS: EncounterDef[] = [
   ...routeEncounters,
@@ -99,10 +101,15 @@ export class GameManager {
   shiftEnded: boolean = false;
   homeNodeId: string = 'res_n2_0';
   playerNodeId: string = 'res_n2_0';
+  atKamalBhai: boolean = false;
   playerDistFromHomeM: number = 0;
   todayCompletedRides: number = 0;
   todayStartRating: number = 5.0;
   todayRelationshipsStart: Record<string, number> = {};
+
+  isNearKamalBhai(): boolean {
+    return this.atKamalBhai || this.playerNodeId === 'poi_mirpara_garage';
+  }
 
   economy: PlayerEconomy = {
     cash: 600,
@@ -261,6 +268,37 @@ export class GameManager {
         this.economy.fuelLevel += cmd.liters;
         this.economyManager.fuelLevel = this.economy.fuelLevel;
         return { success: true };
+      case 'repair': {
+        const atKamal = this.isNearKamalBhai();
+        const kamalRel = this.reputationSystem.getRelationship('kamal_bhai');
+        const res = this.economyManager.repair(
+          cmd.item as RepairItem,
+          atKamal,
+          kamalRel,
+          this.clock.day,
+          this.clock.minutes
+        );
+        this.syncEconomy();
+        return res;
+      }
+      case 'buyUpgrade': {
+        const upgrades = (this.data.upgrades as UpgradeDef[] | undefined) ?? (defaultUpgrades as UpgradeDef[]);
+        const upgrade = upgrades.find((u) => u.id === cmd.upgradeId);
+        if (!upgrade) {
+          return { success: false, reason: `Unknown upgrade: ${cmd.upgradeId}` };
+        }
+        const atKamal = this.isNearKamalBhai();
+        const kamalRel = this.reputationSystem.getRelationship('kamal_bhai');
+        const res = this.economyManager.buyUpgrade(
+          upgrade,
+          atKamal,
+          kamalRel,
+          this.clock.day,
+          this.clock.minutes
+        );
+        this.syncEconomy();
+        return res;
+      }
       case 'chooseEncounterOption': {
         const effectCtx: EffectContext = {
           gameManager: this,

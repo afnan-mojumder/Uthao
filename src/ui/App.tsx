@@ -18,6 +18,10 @@ import {
   onSleepCallback,
   onDelayRentCallback,
   onAskAdvanceCallback,
+  garageSignal,
+  screenSignal,
+  onRepairCallback,
+  onBuyUpgradeCallback,
 } from './store';
 import { RotateOverlay } from './overlays/RotateOverlay';
 import { Unsupported } from './overlays/Unsupported';
@@ -26,6 +30,7 @@ import { ChoiceCard } from './choice/ChoiceCard';
 import { Phone } from './phone/Phone';
 import { NegotiationPanel } from './negotiation/NegotiationPanel';
 import { DayEnd } from './menus/DayEnd';
+import { Garage } from './garage/Garage';
 import { t } from './i18n';
 
 export function App(): JSX.Element {
@@ -43,6 +48,12 @@ export function App(): JSX.Element {
         phoneSignal.value = {
           ...phoneSignal.value,
           open: !phoneSignal.value.open,
+        };
+      }
+      if (e.key === 'g' || e.key === 'G') {
+        garageSignal.value = {
+          ...garageSignal.value,
+          open: !garageSignal.value.open,
         };
       }
     };
@@ -174,6 +185,30 @@ export function App(): JSX.Element {
           onSleep={() => onSleepCallback?.()}
           onDelayRent={() => onDelayRentCallback?.()}
           onAskAdvance={(from, amount) => onAskAdvanceCallback?.(from, amount)}
+        />
+      )}
+
+      {/* T4.4 Garage Screen */}
+      {(garageSignal.value.open || screenSignal.value === 'garage') && (
+        <Garage
+          isOpen={true}
+          atKamalBhai={garageSignal.value.atKamalBhai}
+          kamalRelationship={garageSignal.value.kamalRelationship}
+          cash={garageSignal.value.cash}
+          engineCondition={garageSignal.value.engineCondition}
+          tiresCondition={garageSignal.value.tiresCondition}
+          brakesCondition={garageSignal.value.brakesCondition}
+          kmSinceOilChange={garageSignal.value.kmSinceOilChange}
+          ownedUpgrades={garageSignal.value.ownedUpgrades}
+          installedCosmetics={garageSignal.value.installedCosmetics}
+          onRepair={(item) => onRepairCallback?.(item)}
+          onBuyUpgrade={(upgradeId) => onBuyUpgradeCallback?.(upgradeId)}
+          onClose={() => {
+            garageSignal.value = { ...garageSignal.value, open: false };
+            if (screenSignal.value === 'garage') {
+              screenSignal.value = 'game';
+            }
+          }}
         />
       )}
 

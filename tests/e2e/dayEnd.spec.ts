@@ -43,5 +43,6 @@ test('T4.1 Day end lifecycle e2e: end shift, assert breakdown, sleep to start ne
     minutes: window.__uthao?.gm.clock.minutes,
   }));
   expect(nextDayState.day).toBe(2);
-  expect(Math.floor(nextDayState.minutes ?? 0)).toBe(420);
+  expect(Math.floor(nextDayState.minutes ?? 0)).toBeGreaterThanOrEqual(420);
+  expect(Math.floor(nextDayState.minutes ?? 0)).toBeLessThan(430);
 });

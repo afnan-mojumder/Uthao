@@ -18,7 +18,7 @@ test('page loads, canvas visible, no console errors', async ({ page }) => {
 });
 
 test('pauses on hidden', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/?district=testloop');
   await page.waitForFunction(() => (window as unknown as { __uthao?: unknown }).__uthao !== undefined);
 
   // Emulate visibilitychange -> hidden

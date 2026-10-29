@@ -259,4 +259,69 @@ if (fs.existsSync(encountersDir)) {
   }
 }
 
+// Validate upgrades.json
+const upgradesPath = path.resolve('data/upgrades.json');
+if (fs.existsSync(upgradesPath)) {
+  try {
+    const raw = JSON.parse(fs.readFileSync(upgradesPath, 'utf-8'));
+    if (!Array.isArray(raw)) {
+      console.error(`Expected array of upgrades in ${upgradesPath}`);
+      process.exit(1);
+    }
+    for (const upg of raw) {
+      if (typeof dicts.en[upg.nameKey] === 'undefined') {
+        console.error(`Upgrade ${upg.id}: nameKey '${upg.nameKey}' missing in en dialogue`);
+        process.exit(1);
+      }
+      if (typeof dicts.bn[upg.nameKey] === 'undefined') {
+        console.error(`Upgrade ${upg.id}: nameKey '${upg.nameKey}' missing in bn dialogue`);
+        process.exit(1);
+      }
+      if (typeof dicts.en[upg.descKey] === 'undefined') {
+        console.error(`Upgrade ${upg.id}: descKey '${upg.descKey}' missing in en dialogue`);
+        process.exit(1);
+      }
+      if (typeof dicts.bn[upg.descKey] === 'undefined') {
+        console.error(`Upgrade ${upg.id}: descKey '${upg.descKey}' missing in bn dialogue`);
+        process.exit(1);
+      }
+    }
+  } catch (err) {
+    console.error(`Failed reading upgrades file ${upgradesPath}:`, err);
+    process.exit(1);
+  }
+}
+
+// Validate missions: no mission must require an upgrade
+const missionsDir = path.resolve('data/missions');
+if (fs.existsSync(missionsDir)) {
+  const files = fs.readdirSync(missionsDir);
+  for (const file of files) {
+    if (file.endsWith('.json')) {
+      const filePath = path.join(missionsDir, file);
+      try {
+        const raw = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+        const missions = Array.isArray(raw) ? raw : [raw];
+        for (const m of missions) {
+          if (m?.prerequisites?.requiresUpgrade || m?.requiresUpgrade) {
+            console.error(`Mission ${m.id} in ${filePath} illegally requires an upgrade for story progress!`);
+            process.exit(1);
+          }
+          if (Array.isArray(m?.objectives)) {
+            for (const obj of m.objectives) {
+              if (obj?.type === 'requireUpgrade') {
+                console.error(`Mission ${m.id} objective in ${filePath} illegally requires an upgrade!`);
+                process.exit(1);
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.error(`Failed reading mission file ${filePath}:`, err);
+        process.exit(1);
+      }
+    }
+  }
+}
+
 console.log('Data validation passed.');

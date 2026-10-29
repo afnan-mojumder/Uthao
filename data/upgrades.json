@@ -1,0 +1,118 @@
+[
+  {
+    "id": "upgrade_good_tires",
+    "category": "mechanical",
+    "nameKey": "upgrade.good_tires.name",
+    "descKey": "upgrade.good_tires.desc",
+    "cost": 1200,
+    "icon": "🛞",
+    "effects": {
+      "goodTires": true,
+      "punctureReduction": 0.5,
+      "wetGripBonus": 0.18
+    }
+  },
+  {
+    "id": "upgrade_engine_tune",
+    "category": "mechanical",
+    "nameKey": "upgrade.engine_tune.name",
+    "descKey": "upgrade.engine_tune.desc",
+    "cost": 800,
+    "icon": "⚙️",
+    "effects": {
+      "engineTune": true,
+      "fuelPerKmReduction": 0.15
+    }
+  },
+  {
+    "id": "upgrade_disc_brakes",
+    "category": "mechanical",
+    "nameKey": "upgrade.disc_brakes.name",
+    "descKey": "upgrade.disc_brakes.desc",
+    "cost": 1500,
+    "icon": "🛑",
+    "effects": {
+      "brakeUpgrade": true,
+      "stoppingDistanceReduction": 0.20
+    }
+  },
+  {
+    "id": "upgrade_luggage_carrier",
+    "category": "mechanical",
+    "nameKey": "upgrade.luggage_carrier.name",
+    "descKey": "upgrade.luggage_carrier.desc",
+    "cost": 600,
+    "icon": "📦",
+    "effects": {
+      "unlocksLuggage": true,
+      "unlocksDeliveries": true
+    }
+  },
+  {
+    "id": "upgrade_led_headlight",
+    "category": "mechanical",
+    "nameKey": "upgrade.led_headlight.name",
+    "descKey": "upgrade.led_headlight.desc",
+    "cost": 500,
+    "icon": "💡",
+    "effects": {
+      "ledHeadlight": true
+    }
+  },
+  {
+    "id": "upgrade_phone_mount",
+    "category": "mechanical",
+    "nameKey": "upgrade.phone_mount.name",
+    "descKey": "upgrade.phone_mount.desc",
+    "cost": 350,
+    "icon": "📱",
+    "effects": {
+      "batteryDrainReduction": 0.5
+    }
+  },
+  {
+    "id": "cosmetic_paint_crimson",
+    "category": "cosmetic",
+    "nameKey": "cosmetic.paint_crimson.name",
+    "descKey": "cosmetic.paint_crimson.desc",
+    "cost": 250,
+    "icon": "🎨",
+    "color": "#dc2626"
+  },
+  {
+    "id": "cosmetic_paint_emerald",
+    "category": "cosmetic",
+    "nameKey": "cosmetic.paint_emerald.name",
+    "descKey": "cosmetic.paint_emerald.desc",
+    "cost": 250,
+    "icon": "🎨",
+    "color": "#059669"
+  },
+  {
+    "id": "cosmetic_paint_royal_blue",
+    "category": "cosmetic",
+    "nameKey": "cosmetic.paint_royal_blue.name",
+    "descKey": "cosmetic.paint_royal_blue.desc",
+    "cost": 250,
+    "icon": "🎨",
+    "color": "#2563eb"
+  },
+  {
+    "id": "cosmetic_seat_leather",
+    "category": "cosmetic",
+    "nameKey": "cosmetic.seat_leather.name",
+    "descKey": "cosmetic.seat_leather.desc",
+    "cost": 200,
+    "icon": "💺",
+    "type": "leather"
+  },
+  {
+    "id": "cosmetic_seat_mesh",
+    "category": "cosmetic",
+    "nameKey": "cosmetic.seat_mesh.name",
+    "descKey": "cosmetic.seat_mesh.desc",
+    "cost": 150,
+    "icon": "💺",
+    "type": "mesh"
+  }
+]

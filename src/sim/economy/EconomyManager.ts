@@ -2,6 +2,12 @@ import type { EventBus } from '../../core/events';
 import type { GameEvents } from '../../core/events';
 import type { PlayerEconomy, Transaction } from '../../core/types';
 import { BALANCE } from '../../config/balance';
+import {
+  type RepairItem,
+  type UpgradeDef,
+  calculateRepairCost,
+  calculateUpgradeCost,
+} from './maintenance';
 
 export class EconomyManager {
   private readonly bus: EventBus<GameEvents>;
@@ -17,6 +23,12 @@ export class EconomyManager {
   reputation: number;
   phoneBattery: number;
   rentMissedCount: number = 0;
+  engineCondition: number = 85;
+  tiresCondition: number = 80;
+  brakesCondition: number = 85;
+  kmSinceOilChange: number = 15;
+  ownedUpgrades: string[] = [];
+  installedCosmetics: { paint?: string; seatCover?: string } = {};
 
   constructor(
     bus: EventBus<GameEvents>,
@@ -33,6 +45,13 @@ export class EconomyManager {
     this.savings = initial?.savings ?? 0;
     this.reputation = initial?.reputation ?? 5.0;
     this.phoneBattery = initial?.phoneBattery ?? 100;
+    this.engineCondition = initial?.engineCondition ?? 85;
+    this.tiresCondition = initial?.tiresCondition ?? 80;
+    this.brakesCondition = initial?.brakesCondition ?? 85;
+    this.kmSinceOilChange = initial?.kmSinceOilChange ?? 15;
+    this.ownedUpgrades = initial?.ownedUpgrades ? [...initial.ownedUpgrades] : [];
+    this.installedCosmetics = initial?.installedCosmetics ? { ...initial.installedCosmetics } : {};
+    this.motorcycleCondition = this.getOverallCondition();
 
     // Normalize any invalid initial state
     if (!Number.isFinite(this.cash)) this.cash = 0;
@@ -243,6 +262,106 @@ export class EconomyManager {
     });
   }
 
+  getOverallCondition(): number {
+    const oilFreshness = Math.max(
+      0,
+      100 - (this.kmSinceOilChange / BALANCE.WEAR.oilEveryKm) * 100
+    );
+    return Math.round(
+      (this.engineCondition +
+        this.tiresCondition +
+        this.brakesCondition +
+        oilFreshness) /
+        4
+    );
+  }
+
+  hasUpgrade(upgradeId: string): boolean {
+    return this.ownedUpgrades.includes(upgradeId);
+  }
+
+  repair(
+    item: RepairItem,
+    atKamalBhai = false,
+    kamalRelationship = 0,
+    day = 1,
+    minute = 0
+  ): { success: boolean; cost: number; reason?: string } {
+    const cost = calculateRepairCost(item, atKamalBhai, kamalRelationship);
+    if (this.cash < cost) {
+      return { success: false, cost, reason: 'Insufficient funds' };
+    }
+
+    this.post({
+      id: `tx_repair_${item}_${day}_${minute}_${++this.txSeq}`,
+      day,
+      minute,
+      kind: 'repair',
+      amount: -cost,
+    });
+
+    switch (item) {
+      case 'engine':
+        this.engineCondition = 100;
+        break;
+      case 'tires':
+        this.tiresCondition = 100;
+        break;
+      case 'brakes':
+        this.brakesCondition = 100;
+        break;
+      case 'oil':
+        this.kmSinceOilChange = 0;
+        break;
+      case 'full':
+        this.engineCondition = 100;
+        this.tiresCondition = 100;
+        this.brakesCondition = 100;
+        this.kmSinceOilChange = 0;
+        break;
+    }
+    this.motorcycleCondition = this.getOverallCondition();
+    return { success: true, cost };
+  }
+
+  buyUpgrade(
+    upgrade: UpgradeDef,
+    atKamalBhai = false,
+    kamalRelationship = 0,
+    day = 1,
+    minute = 0
+  ): { success: boolean; cost: number; reason?: string } {
+    if (this.ownedUpgrades.includes(upgrade.id)) {
+      return { success: false, cost: 0, reason: 'Already owned' };
+    }
+
+    const cost = calculateUpgradeCost(upgrade.cost, atKamalBhai, kamalRelationship);
+    if (this.cash < cost) {
+      return { success: false, cost, reason: 'Insufficient funds' };
+    }
+
+    this.post({
+      id: `tx_upgrade_${upgrade.id}_${day}_${minute}_${++this.txSeq}`,
+      day,
+      minute,
+      kind: 'upgrade',
+      amount: -cost,
+    });
+
+    this.ownedUpgrades.push(upgrade.id);
+
+    if (upgrade.category === 'cosmetic') {
+      if (upgrade.color) {
+        this.installedCosmetics.paint = upgrade.color;
+      }
+      if (upgrade.type) {
+        this.installedCosmetics.seatCover = upgrade.type;
+      }
+    }
+
+    return { success: true, cost };
+  }
+
   resetDaily(): void {
     this.dailyRevenue = 0;
     this.dailyExpenses = 0;
@@ -260,6 +379,12 @@ export class EconomyManager {
       savings: this.savings,
       reputation: this.reputation,
       phoneBattery: Math.round(this.phoneBattery),
+      engineCondition: Math.round(this.engineCondition),
+      tiresCondition: Math.round(this.tiresCondition),
+      brakesCondition: Math.round(this.brakesCondition),
+      kmSinceOilChange: Math.round(this.kmSinceOilChange),
+      ownedUpgrades: [...this.ownedUpgrades],
+      installedCosmetics: { ...this.installedCosmetics },
     };
   }
 }
