@@ -1,0 +1,278 @@
+[
+  {
+    "id": "char_ma",
+    "nameKey": "character.ma.name",
+    "roleKey": "character.ma.role",
+    "bioKey": "character.ma.bio",
+    "phone": "+880 1711-000001",
+    "archetype": "careful",
+    "homeNodeId": "res_n2_0",
+    "preferredTimes": [
+      { "startMinute": 420, "endMinute": 1200 }
+    ],
+    "fixedTraits": {
+      "luggage": false,
+      "child": false,
+      "walkTolerance": 0.1
+    },
+    "budget": 1.0,
+    "patience": 1.0,
+    "urgency": 0.2,
+    "bargainingTendency": 0.0,
+    "safetySensitivity": 0.9,
+    "trustInRider": 1.0,
+    "localKnowledge": 0.9,
+    "paymentReliability": 1.0,
+    "initialRelationship": 80,
+    "canRide": false
+  },
+  {
+    "id": "char_mintu",
+    "nameKey": "character.mintu.name",
+    "roleKey": "character.mintu.role",
+    "bioKey": "character.mintu.bio",
+    "phone": "+880 1819-000002",
+    "archetype": "regular",
+    "homeNodeId": "res_n2_1",
+    "preferredTimes": [
+      { "startMinute": 420, "endMinute": 1380 }
+    ],
+    "fixedTraits": {
+      "luggage": false,
+      "child": false,
+      "walkTolerance": 0.8
+    },
+    "budget": 0.9,
+    "patience": 0.9,
+    "urgency": 0.3,
+    "bargainingTendency": 0.2,
+    "safetySensitivity": 0.3,
+    "trustInRider": 0.9,
+    "localKnowledge": 0.9,
+    "paymentReliability": 0.9,
+    "initialRelationship": 35,
+    "canRide": true
+  },
+  {
+    "id": "char_kamal",
+    "nameKey": "character.kamal.name",
+    "roleKey": "character.kamal.role",
+    "bioKey": "character.kamal.bio",
+    "phone": "+880 1912-000003",
+    "archetype": "regular",
+    "homeNodeId": "res_s1_0",
+    "preferredTimes": [
+      { "startMinute": 540, "endMinute": 1260 }
+    ],
+    "fixedTraits": {
+      "luggage": true,
+      "child": false,
+      "walkTolerance": 0.5
+    },
+    "budget": 1.0,
+    "patience": 0.7,
+    "urgency": 0.4,
+    "bargainingTendency": 0.3,
+    "safetySensitivity": 0.5,
+    "trustInRider": 0.8,
+    "localKnowledge": 0.8,
+    "paymentReliability": 1.0,
+    "initialRelationship": 25,
+    "canRide": true
+  },
+  {
+    "id": "char_nabila",
+    "nameKey": "character.nabila.name",
+    "roleKey": "character.nabila.role",
+    "bioKey": "character.nabila.bio",
+    "phone": "+880 1515-000004",
+    "archetype": "bargainer",
+    "homeNodeId": "res_n1_1",
+    "preferredTimes": [
+      { "startMinute": 480, "endMinute": 600 },
+      { "startMinute": 960, "endMinute": 1080 }
+    ],
+    "fixedTraits": {
+      "luggage": false,
+      "child": false,
+      "walkTolerance": 0.6
+    },
+    "budget": 0.85,
+    "patience": 0.8,
+    "urgency": 0.5,
+    "bargainingTendency": 0.7,
+    "safetySensitivity": 0.6,
+    "trustInRider": 0.7,
+    "localKnowledge": 0.5,
+    "paymentReliability": 1.0,
+    "initialRelationship": 10,
+    "canRide": true
+  },
+  {
+    "id": "char_tanvir",
+    "nameKey": "character.tanvir.name",
+    "roleKey": "character.tanvir.role",
+    "bioKey": "character.tanvir.bio",
+    "phone": "+880 1713-000005",
+    "archetype": "commuter",
+    "homeNodeId": "res_n2_3",
+    "preferredTimes": [
+      { "startMinute": 480, "endMinute": 600 },
+      { "startMinute": 1020, "endMinute": 1200 }
+    ],
+    "fixedTraits": {
+      "luggage": false,
+      "child": false,
+      "walkTolerance": 0.3
+    },
+    "budget": 1.2,
+    "patience": 0.4,
+    "urgency": 0.9,
+    "bargainingTendency": 0.1,
+    "safetySensitivity": 0.5,
+    "trustInRider": 0.6,
+    "localKnowledge": 0.6,
+    "paymentReliability": 1.0,
+    "initialRelationship": 5,
+    "canRide": true
+  },
+  {
+    "id": "char_rahim",
+    "nameKey": "character.rahim.name",
+    "roleKey": "character.rahim.role",
+    "bioKey": "character.rahim.bio",
+    "phone": "+880 1817-000006",
+    "archetype": "regular",
+    "homeNodeId": "res_s1_1",
+    "preferredTimes": [
+      { "startMinute": 540, "endMinute": 840 },
+      { "startMinute": 960, "endMinute": 1260 }
+    ],
+    "fixedTraits": {
+      "luggage": false,
+      "child": false,
+      "walkTolerance": 0.7
+    },
+    "budget": 0.95,
+    "patience": 0.8,
+    "urgency": 0.3,
+    "bargainingTendency": 0.4,
+    "safetySensitivity": 0.4,
+    "trustInRider": 0.7,
+    "localKnowledge": 0.95,
+    "paymentReliability": 0.95,
+    "initialRelationship": 10,
+    "canRide": true
+  },
+  {
+    "id": "char_ferdousi",
+    "nameKey": "character.ferdousi.name",
+    "roleKey": "character.ferdousi.role",
+    "bioKey": "character.ferdousi.bio",
+    "phone": "+880 1612-000007",
+    "archetype": "careful",
+    "homeNodeId": "res_n1_2",
+    "preferredTimes": [
+      { "startMinute": 450, "endMinute": 540 },
+      { "startMinute": 720, "endMinute": 840 }
+    ],
+    "fixedTraits": {
+      "luggage": false,
+      "child": true,
+      "walkTolerance": 0.2
+    },
+    "budget": 1.1,
+    "patience": 0.9,
+    "urgency": 0.4,
+    "bargainingTendency": 0.2,
+    "safetySensitivity": 0.95,
+    "trustInRider": 0.5,
+    "localKnowledge": 0.6,
+    "paymentReliability": 1.0,
+    "initialRelationship": 5,
+    "canRide": true
+  },
+  {
+    "id": "char_jamil",
+    "nameKey": "character.jamil.name",
+    "roleKey": "character.jamil.role",
+    "bioKey": "character.jamil.bio",
+    "phone": "+880 1919-000008",
+    "archetype": "risky",
+    "homeNodeId": "art_s_3",
+    "preferredTimes": [
+      { "startMinute": 1260, "endMinute": 1440 },
+      { "startMinute": 0, "endMinute": 240 }
+    ],
+    "fixedTraits": {
+      "luggage": true,
+      "child": false,
+      "walkTolerance": 0.4
+    },
+    "budget": 1.8,
+    "patience": 0.3,
+    "urgency": 0.85,
+    "bargainingTendency": 0.0,
+    "safetySensitivity": 0.1,
+    "trustInRider": 0.4,
+    "localKnowledge": 0.8,
+    "paymentReliability": 0.8,
+    "initialRelationship": 0,
+    "canRide": true
+  },
+  {
+    "id": "char_morshed",
+    "nameKey": "character.morshed.name",
+    "roleKey": "character.morshed.role",
+    "bioKey": "character.morshed.bio",
+    "phone": "+880 1715-000009",
+    "archetype": "commuter",
+    "homeNodeId": "art_n_2",
+    "preferredTimes": [
+      { "startMinute": 480, "endMinute": 1200 }
+    ],
+    "fixedTraits": {
+      "luggage": false,
+      "child": false,
+      "walkTolerance": 0.5
+    },
+    "budget": 1.0,
+    "patience": 0.6,
+    "urgency": 0.7,
+    "bargainingTendency": 0.0,
+    "safetySensitivity": 0.9,
+    "trustInRider": 0.5,
+    "localKnowledge": 0.9,
+    "paymentReliability": 1.0,
+    "initialRelationship": 5,
+    "canRide": true
+  },
+  {
+    "id": "char_bablu",
+    "nameKey": "character.bablu.name",
+    "roleKey": "character.bablu.role",
+    "bioKey": "character.bablu.bio",
+    "phone": "+880 1812-000010",
+    "archetype": "regular",
+    "homeNodeId": "res_s1_1",
+    "preferredTimes": [
+      { "startMinute": 360, "endMinute": 660 },
+      { "startMinute": 960, "endMinute": 1260 }
+    ],
+    "fixedTraits": {
+      "luggage": true,
+      "child": false,
+      "walkTolerance": 0.9
+    },
+    "budget": 0.9,
+    "patience": 0.7,
+    "urgency": 0.6,
+    "bargainingTendency": 0.6,
+    "safetySensitivity": 0.4,
+    "trustInRider": 0.7,
+    "localKnowledge": 0.85,
+    "paymentReliability": 0.95,
+    "initialRelationship": 10,
+    "canRide": true
+  }
+]

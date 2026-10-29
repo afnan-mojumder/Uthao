@@ -43,7 +43,7 @@ Format: `- [ ] **<id>** <title> (<points>), deps: <ids>`. Tick by changing only 
 - [x] **T3.10** Menus, settings, pause/map screen (3), deps: T0.4, T3.3 (A)
 - [x] **T3.7** Vertical-slice encounters, 5 (5), deps: T3.6 (A), T2.5 (A)
 - [x] **T3.8** Opening sequence "First Ride" plus mission v0 (5), deps: T3.7, T2.4, T3.3 (A)
-- [ ] **T4.3** Recurring passengers and direct bookings (3), deps: T4.2 (A), T2.2 (A)
+- [x] **T4.3** Recurring passengers and direct bookings (3), deps: T4.2 (A), T2.2 (A)
 - [ ] **T4.5** Remaining signature situations (5), deps: T3.6 (A), T2.5 (A)
 - [ ] **T4.8** Identity tendencies (2), deps: T4.2 (A)
 - [ ] **T4.9** SaveSystem (5), deps: T4.2 (A), T4.7 (A)

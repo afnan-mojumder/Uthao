@@ -7,6 +7,7 @@ import {
   WorldDataSchema,
   MissionDefSchema,
   EndingDefSchema,
+  CharactersDataSchema,
 } from '../src/sim/schemas.ts';
 
 // Validate dialogue files
@@ -390,6 +391,50 @@ if (fs.existsSync(endingsPath)) {
     }
   } catch (err) {
     console.error(`Failed reading endings file ${endingsPath}:`, err);
+    process.exit(1);
+  }
+}
+
+// Validate characters.json
+const charactersPath = path.resolve('data/characters.json');
+if (fs.existsSync(charactersPath)) {
+  try {
+    const raw = JSON.parse(fs.readFileSync(charactersPath, 'utf-8'));
+    const res = CharactersDataSchema.safeParse(raw);
+    if (!res.success) {
+      console.error(`Characters schema error in ${charactersPath}:`, res.error.format());
+      process.exit(1);
+    }
+    for (const char of res.data) {
+      if (typeof dicts.en[char.nameKey] === 'undefined') {
+        console.error(`Character ${char.id}: nameKey '${char.nameKey}' missing in en dialogue`);
+        process.exit(1);
+      }
+      if (typeof dicts.bn[char.nameKey] === 'undefined') {
+        console.error(`Character ${char.id}: nameKey '${char.nameKey}' missing in bn dialogue`);
+        process.exit(1);
+      }
+      if (typeof dicts.en[char.roleKey] === 'undefined') {
+        console.error(`Character ${char.id}: roleKey '${char.roleKey}' missing in en dialogue`);
+        process.exit(1);
+      }
+      if (typeof dicts.bn[char.roleKey] === 'undefined') {
+        console.error(`Character ${char.id}: roleKey '${char.roleKey}' missing in bn dialogue`);
+        process.exit(1);
+      }
+      if (char.bioKey) {
+        if (typeof dicts.en[char.bioKey] === 'undefined') {
+          console.error(`Character ${char.id}: bioKey '${char.bioKey}' missing in en dialogue`);
+          process.exit(1);
+        }
+        if (typeof dicts.bn[char.bioKey] === 'undefined') {
+          console.error(`Character ${char.id}: bioKey '${char.bioKey}' missing in bn dialogue`);
+          process.exit(1);
+        }
+      }
+    }
+  } catch (err) {
+    console.error(`Failed reading characters file ${charactersPath}:`, err);
     process.exit(1);
   }
 }

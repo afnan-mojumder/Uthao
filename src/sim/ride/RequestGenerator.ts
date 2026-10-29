@@ -3,6 +3,7 @@ import type { Rng } from '../../core/rng';
 import type {
   ArchetypeId,
   BookingType,
+  CharacterDef,
   PassengerProfile,
   RideRequest,
   SpecialCircumstance,
@@ -10,6 +11,11 @@ import type {
 } from '../../core/types';
 import { distance2d } from '../../core/math';
 import { generateProfile } from '../passenger/profiles';
+import {
+  CHARACTERS,
+  generateCharacterProfile,
+  isWithinPreferredTimes,
+} from '../passenger/PassengerAI';
 import { fairFare, surgeAt } from '../negotiation/fare';
 import type { ReputationSystem } from '../reputation/ReputationSystem';
 
@@ -57,6 +63,8 @@ export interface RequestGeneratorOptions {
   baseArrivalRatePerMinute?: number; // average requests per game minute
   requestRateMultiplier?: number;
   reputationSystem?: ReputationSystem;
+  relationshipsProvider?: () => Record<string, number>;
+  characters?: CharacterDef[];
   phoneBattery?: number;
   phoneBatteryProvider?: () => number;
 }
@@ -66,6 +74,8 @@ export class RequestGenerator {
   readonly rng: Rng;
   readonly baseArrivalRate: number;
   readonly reputationSystem?: ReputationSystem;
+  readonly relationshipsProvider?: () => Record<string, number>;
+  readonly characters: CharacterDef[];
 
   private requestRateMultiplier: number = 1.0;
   private eligibleNodeIds: string[] = [];
@@ -82,10 +92,41 @@ export class RequestGenerator {
     this.rng = rng;
     this.baseArrivalRate = opts.baseArrivalRatePerMinute ?? 0.5;
     this.reputationSystem = opts.reputationSystem;
+    this.relationshipsProvider = opts.relationshipsProvider;
+    this.characters = opts.characters ?? CHARACTERS;
     this.requestRateMultiplier = opts.requestRateMultiplier ?? 1.0;
     this.phoneBattery = opts.phoneBattery ?? 100;
     this.phoneBatteryProvider = opts.phoneBatteryProvider;
     this.computeEligibleNodes();
+  }
+
+  getRelationship(characterId: string): number {
+    if (this.reputationSystem) {
+      return this.reputationSystem.getRelationship(characterId);
+    }
+    if (this.relationshipsProvider) {
+      return this.relationshipsProvider()[characterId] ?? 0;
+    }
+    return 0;
+  }
+
+  canEmitRecurringRequest(characterId: string, currentMinute?: number): boolean {
+    const def = this.characters.find((c) => c.id === characterId);
+    if (!def || def.canRide === false) {
+      return false;
+    }
+    // GDD §6 / T4.3: regular requests appear only after threshold (relationship >= 15)
+    const rel = this.getRelationship(characterId);
+    if (rel < 15) {
+      return false;
+    }
+    if (
+      currentMinute !== undefined &&
+      !isWithinPreferredTimes(def, currentMinute)
+    ) {
+      return false;
+    }
+    return true;
   }
 
   setPhoneBattery(battery: number): void {
@@ -163,10 +204,20 @@ export class RequestGenerator {
     currentMinute: number,
     weather: WeatherKind,
     bookingType: BookingType = 'app',
-    forcedPickupNodeId?: string
+    forcedPickupNodeId?: string,
+    characterId?: string
   ): { request: RideRequest; profile: PassengerProfile } | null {
     if (this.eligibleNodeIds.length < 2) {
       return null;
+    }
+
+    if (characterId) {
+      return this.sampleRecurringRequest(
+        currentMinute,
+        weather,
+        characterId,
+        bookingType
+      );
     }
 
     if (bookingType === 'app' && this.getPhoneBattery() <= 0) {
@@ -237,6 +288,106 @@ export class RequestGenerator {
     return null;
   }
 
+  sampleRecurringRequest(
+    currentMinute: number,
+    weather: WeatherKind,
+    forcedCharacterId?: string,
+    bookingType: BookingType = 'direct'
+  ): { request: RideRequest; profile: PassengerProfile } | null {
+    if (this.eligibleNodeIds.length < 2) {
+      return null;
+    }
+
+    let charDef: CharacterDef | undefined;
+    if (forcedCharacterId) {
+      if (!this.canEmitRecurringRequest(forcedCharacterId, currentMinute)) {
+        return null;
+      }
+      charDef = this.characters.find((c) => c.id === forcedCharacterId);
+    } else {
+      const eligible = this.characters.filter((c) =>
+        this.canEmitRecurringRequest(c.id, currentMinute)
+      );
+      if (eligible.length === 0) {
+        return null;
+      }
+      charDef = this.rng.pick(eligible);
+    }
+
+    if (!charDef) {
+      return null;
+    }
+
+    const rel = this.getRelationship(charDef.id);
+    const profile = generateCharacterProfile(charDef, rel);
+
+    // Home node as preferred pickup if present in network, else pick an eligible node
+    const homeNodeExists =
+      this.network.getNode(charDef.homeNodeId) !== undefined &&
+      this.eligibleNodeIds.includes(charDef.homeNodeId);
+    const pickupNodeId = homeNodeExists
+      ? charDef.homeNodeId
+      : this.rng.pick(this.eligibleNodeIds);
+
+    for (let tryCount = 0; tryCount < 20; tryCount++) {
+      const destNodeId = this.rng.pick(this.eligibleNodeIds);
+      if (destNodeId === pickupNodeId) continue;
+
+      const r = this.network.route(pickupNodeId, destNodeId, {
+        mode: 'motorcycle',
+        weather,
+      });
+
+      if (r && r.nodeIds.length > 0) {
+        const surge =
+          bookingType === 'direct'
+            ? 1.0
+            : surgeAt(undefined, currentMinute, weather);
+        const fare = fairFare(r.virtualKm, r.etaMin, surge);
+        const reqId = `req_${charDef.id}_${this.rng.int(1000, 9999)}`;
+
+        let special: SpecialCircumstance | undefined;
+        if (weather === 'lightRain' || weather === 'heavyRain') {
+          special = 'rain';
+        } else if (profile.traits.luggage) {
+          special = 'luggage';
+        } else if (profile.traits.child) {
+          special = 'child';
+        } else if (profile.urgency > 0.8) {
+          special = 'urgent';
+        }
+
+        const requestedArrivalTime =
+          profile.urgency > 0.6
+            ? Math.round(
+                currentMinute + r.etaMin * (1.1 - profile.urgency * 0.2)
+              )
+            : null;
+
+        const request: RideRequest = {
+          requestId: reqId,
+          passengerId: profile.passengerId,
+          characterId: charDef.id,
+          pickupNodeId,
+          destinationNodeId: destNodeId,
+          initialFare: fare,
+          estimatedDistance: r.virtualKm,
+          estimatedDuration: r.etaMin,
+          requestedArrivalTime,
+          bookingType,
+          status: 'WaitingForPickup',
+          surge,
+          specialCircumstance: special,
+        };
+
+        this.profiles.set(profile.passengerId, profile);
+        return { request, profile };
+      }
+    }
+
+    return null;
+  }
+
   sampleStreetHail(
     playerPose: { x: number; z: number },
     currentMinute: number,
@@ -271,6 +422,19 @@ export class RequestGenerator {
     const requests: RideRequest[] = [];
 
     if (this.getPhoneBattery() > 0) {
+      // Direct bookings from recurring regulars (threshold relationship >= 15)
+      if (this.rng.chance(0.08 * dtMinutes)) {
+        const direct = this.sampleRecurringRequest(
+          currentMinute,
+          weather,
+          undefined,
+          'direct'
+        );
+        if (direct) {
+          requests.push(direct.request);
+        }
+      }
+
       for (let i = 0; i < count; i++) {
         const result = this.sampleRequest(currentMinute, weather, 'app');
         if (result) {

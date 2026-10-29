@@ -1,8 +1,9 @@
 import type { JSX } from 'preact';
-import { useState } from 'preact/hooks';
 import type { RideRequest } from '../../core/types';
 import { RequestCard } from './RequestCard';
+import { Contacts } from './Contacts';
 import { t } from '../i18n';
+import { phoneTabSignal } from '../store';
 
 export interface TripHistoryItem {
   requestId: string;
@@ -20,8 +21,12 @@ export interface PhoneProps {
   timeoutRemaining?: number;
   tripHistory?: TripHistoryItem[];
   navigationTurn?: { direction: string; text: string } | null;
+  relationships?: Record<string, number>;
+  activeTab?: 'requests' | 'history' | 'contacts';
+  onSelectTab?: (tab: 'requests' | 'history' | 'contacts') => void;
   onAcceptRequest?: (requestId: string) => void;
   onDeclineRequest?: (requestId: string) => void;
+  onCallContact?: (characterId: string) => void;
 }
 
 export function Phone({
@@ -31,10 +36,19 @@ export function Phone({
   timeoutRemaining = 15,
   tripHistory = [],
   navigationTurn,
+  relationships = {},
+  activeTab: propActiveTab,
+  onSelectTab,
   onAcceptRequest,
   onDeclineRequest,
+  onCallContact,
 }: PhoneProps): JSX.Element | null {
-  const [activeTab, setActiveTab] = useState<'requests' | 'history'>('requests');
+  const activeTab = propActiveTab ?? phoneTabSignal.value ?? 'requests';
+
+  const handleSelectTab = (tab: 'requests' | 'history' | 'contacts') => {
+    phoneTabSignal.value = tab;
+    onSelectTab?.(tab);
+  };
 
   if (!isOpen) return null;
 
@@ -163,7 +177,7 @@ export function Phone({
           <button
             type="button"
             data-testid="phone-tab-requests"
-            onClick={() => setActiveTab('requests')}
+            onClick={() => handleSelectTab('requests')}
             style={{
               flex: 1,
               padding: '12px',
@@ -200,7 +214,7 @@ export function Phone({
           <button
             type="button"
             data-testid="phone-tab-history"
-            onClick={() => setActiveTab('history')}
+            onClick={() => handleSelectTab('history')}
             style={{
               flex: 1,
               padding: '12px',
@@ -215,6 +229,25 @@ export function Phone({
           >
             {t('phone.tabs.history')}
           </button>
+
+          <button
+            type="button"
+            data-testid="phone-tab-contacts"
+            onClick={() => handleSelectTab('contacts')}
+            style={{
+              flex: 1,
+              padding: '12px',
+              border: 'none',
+              borderBottom: activeTab === 'contacts' ? '2px solid #22c55e' : '2px solid transparent',
+              background: 'none',
+              color: activeTab === 'contacts' ? '#22c55e' : '#94a3b8',
+              fontWeight: 700,
+              fontSize: '13px',
+              cursor: 'pointer',
+            }}
+          >
+            {t('phone.tabs.contacts')}
+          </button>
         </div>
 
         {/* Tab Content Area */}
@@ -222,12 +255,17 @@ export function Phone({
           style={{
             flex: 1,
             overflowY: 'auto',
-            padding: '16px',
+            padding: activeTab === 'contacts' ? '0px' : '16px',
             display: 'flex',
             flexDirection: 'column',
           }}
         >
-          {activeTab === 'requests' ? (
+          {activeTab === 'contacts' ? (
+            <Contacts
+              relationships={relationships}
+              onCallContact={onCallContact}
+            />
+          ) : activeTab === 'requests' ? (
             incomingRequest ? (
               <RequestCard
                 request={incomingRequest}

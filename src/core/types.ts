@@ -57,9 +57,42 @@ export interface PassengerProfile {
   personalBias: number; // [-0.1, 0.1], fixed per passenger
 }
 
+export interface CharacterPreferredTime {
+  startMinute: number;
+  endMinute: number;
+}
+
+export interface CharacterDef {
+  id: string;
+  nameKey: string;
+  roleKey: string;
+  bioKey?: string;
+  phone: string;
+  archetype: ArchetypeId;
+  homeNodeId: string;
+  destinationNodeIds?: string[];
+  preferredTimes: CharacterPreferredTime[];
+  fixedTraits: {
+    luggage: boolean;
+    child: boolean;
+    walkTolerance: number;
+  };
+  budget: number;
+  patience: number;
+  urgency: number;
+  bargainingTendency: number;
+  safetySensitivity: number;
+  trustInRider: number;
+  localKnowledge: number;
+  paymentReliability: number;
+  initialRelationship: number;
+  canRide?: boolean;
+}
+
 export interface RideRequest {
   requestId: string;
   passengerId: string;
+  characterId?: string;
   pickupNodeId: string;
   destinationNodeId: string;
   initialFare: number;

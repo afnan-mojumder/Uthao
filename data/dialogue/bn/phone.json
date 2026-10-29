@@ -25,5 +25,16 @@
   "phone.circumstance.urgent": "জরুরি দরকার",
   "phone.pickup": "পিকআপ",
   "phone.destination": "গন্তব্য",
-  "phone.net_earned": "আয়"
+  "phone.net_earned": "আয়",
+  "phone.tabs.contacts": "পরিচিতি",
+  "phone.contacts.title": "পরিচিতি ও নিয়মিত যাত্রী",
+  "phone.contacts.call": "সরাসরি কল",
+  "phone.contacts.direct_booking": "ডিরেক্ট বুকিং",
+  "phone.contacts.zero_commission": "০% কমিশন",
+  "phone.contacts.relationship": "সম্পর্ক",
+  "phone.contacts.hours": "যাতায়াতের সময়",
+  "phone.contacts.locked": "অচেনা নিয়মিত যাত্রী",
+  "phone.contacts.locked_desc": "নম্বর পেতে সম্পর্ক ১৫ বা তার বেশি করুন",
+  "phone.contacts.incoming_call": "সরাসরি কল আসছে...",
+  "phone.contacts.regular_badge": "নিয়মিত যাত্রী"
 }

@@ -27,6 +27,7 @@ import {
   onStartEndlessCallback,
   onResumeGameCallback,
   onSetWaypointCallback,
+  onCallContactCallback,
   tutorialSignal,
   endingSignal,
   onSelectCareerChoiceCallback,
@@ -201,8 +202,10 @@ export function App(): JSX.Element {
         timeoutRemaining={phoneSignal.value.timeoutRemaining}
         tripHistory={phoneSignal.value.tripHistory}
         navigationTurn={phoneSignal.value.navigationTurn}
+        relationships={phoneSignal.value.relationships}
         onAcceptRequest={(id) => onAcceptRequestCallback?.(id)}
         onDeclineRequest={(id) => onDeclineRequestCallback?.(id)}
+        onCallContact={(charId) => onCallContactCallback?.(charId)}
       />
 
       {/* T2.4 Negotiation Panel (Opens when stopped at pickup) */}

@@ -25,5 +25,16 @@
   "phone.circumstance.urgent": "Urgent Emergency",
   "phone.pickup": "Pickup",
   "phone.destination": "Destination",
-  "phone.net_earned": "Net Earned"
+  "phone.net_earned": "Net Earned",
+  "phone.tabs.contacts": "Contacts",
+  "phone.contacts.title": "Contacts & Regulars",
+  "phone.contacts.call": "Direct Call",
+  "phone.contacts.direct_booking": "Direct Booking",
+  "phone.contacts.zero_commission": "0% Commission",
+  "phone.contacts.relationship": "Relationship",
+  "phone.contacts.hours": "Preferred Hours",
+  "phone.contacts.locked": "Unknown Regular",
+  "phone.contacts.locked_desc": "Reach 15 relationship to exchange numbers",
+  "phone.contacts.incoming_call": "Incoming Direct Call",
+  "phone.contacts.regular_badge": "Regular Passengers"
 }

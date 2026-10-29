@@ -56,6 +56,7 @@ export interface GameEvents extends Record<string, unknown> {
   'bike/fuelEmpty': Record<string, never>;
   'bike/puncture': Record<string, never>;
   'story/flag': { key: string; value: boolean | number | string };
+  'character/contactAdded': { characterId: string };
   'ending/reached': { endingId: EndingId };
 }
 

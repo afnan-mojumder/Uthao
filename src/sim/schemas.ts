@@ -409,3 +409,40 @@ export const EndingDefSchema = z.object({
 
 export type EndingDef = z.infer<typeof EndingDefSchema>;
 
+export const CharacterPreferredTimeSchema = z.object({
+  startMinute: z.number(),
+  endMinute: z.number(),
+});
+
+export const CharacterDefSchema = z.object({
+  id: z.string(),
+  nameKey: z.string(),
+  roleKey: z.string(),
+  bioKey: z.string().optional(),
+  phone: z.string(),
+  archetype: z.enum(['commuter', 'bargainer', 'careful', 'regular', 'risky']),
+  homeNodeId: z.string(),
+  destinationNodeIds: z.array(z.string()).optional(),
+  preferredTimes: z.array(CharacterPreferredTimeSchema),
+  fixedTraits: z.object({
+    luggage: z.boolean(),
+    child: z.boolean(),
+    walkTolerance: z.number(),
+  }),
+  budget: z.number(),
+  patience: z.number(),
+  urgency: z.number(),
+  bargainingTendency: z.number(),
+  safetySensitivity: z.number(),
+  trustInRider: z.number(),
+  localKnowledge: z.number(),
+  paymentReliability: z.number(),
+  initialRelationship: z.number(),
+  canRide: z.boolean().optional(),
+});
+
+export type CharacterData = z.infer<typeof CharacterDefSchema>;
+
+export const CharactersDataSchema = z.array(CharacterDefSchema);
+export type CharactersData = z.infer<typeof CharactersDataSchema>;
+

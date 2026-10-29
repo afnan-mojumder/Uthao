@@ -18,6 +18,7 @@ export function RequestCard({
   const timeoutPct = Math.max(0, Math.min(100, (timeoutRemaining / 15) * 100));
 
   const getArchetypeIcon = () => {
+    if (request.bookingType === 'direct') return '📞';
     // Archetype hint icon
     if (request.specialCircumstance === 'rain') return '🌧️';
     if (request.specialCircumstance === 'luggage') return '🧳';
@@ -26,6 +27,8 @@ export function RequestCard({
     return '💼';
   };
 
+  const isDirect = request.bookingType === 'direct';
+
   return (
     <div
       data-testid="request-card"
@@ -33,11 +36,15 @@ export function RequestCard({
         background: 'rgba(15, 23, 42, 0.88)',
         backdropFilter: 'blur(16px)',
         WebkitBackdropFilter: 'blur(16px)',
-        border: '1px solid rgba(56, 189, 248, 0.25)',
+        border: isDirect
+          ? '2px solid rgba(34, 197, 94, 0.6)'
+          : '1px solid rgba(56, 189, 248, 0.25)',
         borderRadius: '16px',
         padding: '16px',
         color: '#f8fafc',
-        boxShadow: '0 10px 30px rgba(0, 0, 0, 0.6)',
+        boxShadow: isDirect
+          ? '0 10px 30px rgba(34, 197, 94, 0.25)'
+          : '0 10px 30px rgba(0, 0, 0, 0.6)',
         display: 'flex',
         flexDirection: 'column',
         gap: '12px',
@@ -50,9 +57,32 @@ export function RequestCard({
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span style={{ fontSize: '20px' }}>{getArchetypeIcon()}</span>
-          <span style={{ fontSize: '12px', fontWeight: 700, color: '#38bdf8', textTransform: 'uppercase' }}>
-            {t('phone.incoming_request')}
+          <span
+            style={{
+              fontSize: '12px',
+              fontWeight: 700,
+              color: isDirect ? '#22c55e' : '#38bdf8',
+              textTransform: 'uppercase',
+            }}
+          >
+            {isDirect
+              ? t('phone.contacts.incoming_call')
+              : t('phone.incoming_request')}
           </span>
+          {isDirect && (
+            <span
+              style={{
+                fontSize: '10px',
+                fontWeight: 800,
+                color: '#15803d',
+                background: '#86efac',
+                padding: '2px 6px',
+                borderRadius: '6px',
+              }}
+            >
+              {t('phone.contacts.zero_commission')}
+            </span>
+          )}
         </div>
 
         {/* 15s Countdown Badge */}

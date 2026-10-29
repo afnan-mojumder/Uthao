@@ -1,7 +1,62 @@
-import type { PassengerProfile } from '../../core/types';
+import type { CharacterDef, PassengerProfile } from '../../core/types';
 import { clamp } from '../../core/math';
 import { Rng, hashSeed } from '../../core/rng';
 import { BALANCE } from '../../config/balance';
+import charactersRaw from '../../../data/characters.json';
+
+export const CHARACTERS: CharacterDef[] = charactersRaw as CharacterDef[];
+
+export function getCharacter(id: string): CharacterDef | undefined {
+  return CHARACTERS.find((c) => c.id === id);
+}
+
+export function getAllCharacters(): CharacterDef[] {
+  return [...CHARACTERS];
+}
+
+export function isContactUnlocked(
+  characterId: string,
+  relationshipLevel: number
+): boolean {
+  const def = getCharacter(characterId);
+  if (!def) return false;
+  return relationshipLevel >= 15 || def.initialRelationship >= 15;
+}
+
+export function isWithinPreferredTimes(
+  def: CharacterDef,
+  currentMinute: number
+): boolean {
+  const m = ((currentMinute % 1440) + 1440) % 1440;
+  return def.preferredTimes.some((t) => m >= t.startMinute && m <= t.endMinute);
+}
+
+export function generateCharacterProfile(
+  charDef: CharacterDef,
+  currentRelationship: number
+): PassengerProfile {
+  return {
+    passengerId: `pass_${charDef.id}`,
+    characterId: charDef.id,
+    archetype: charDef.archetype,
+    budget: charDef.budget,
+    patience: charDef.patience,
+    urgency: charDef.urgency,
+    bargainingTendency: charDef.bargainingTendency,
+    safetySensitivity: charDef.safetySensitivity,
+    trustInRider: charDef.trustInRider,
+    localKnowledge: charDef.localKnowledge,
+    paymentReliability: charDef.paymentReliability,
+    relationshipLevel: currentRelationship,
+    nameKey: charDef.nameKey,
+    traits: {
+      luggage: charDef.fixedTraits.luggage,
+      child: charDef.fixedTraits.child,
+      walkTolerance: charDef.fixedTraits.walkTolerance,
+    },
+    personalBias: 0,
+  };
+}
 
 export function getDailyMoodOffset(passengerId: string, day: number): number {
   const seed = hashSeed(passengerId, day, 'daily_mood');

@@ -39,6 +39,7 @@ export interface PhoneState {
   timeoutRemaining: number;
   tripHistory: TripHistoryItem[];
   navigationTurn: { direction: string; text: string } | null;
+  relationships?: Record<string, number>;
 }
 
 export interface NegotiationUiState {
@@ -178,7 +179,11 @@ export const phoneSignal = signal<PhoneState>({
   timeoutRemaining: 15,
   tripHistory: [],
   navigationTurn: null,
+  relationships: {},
 });
+
+export const phoneTabSignal = signal<'requests' | 'history' | 'contacts'>('requests');
+export const contactsSelectedSignal = signal<string | null>(null);
 
 export const negotiationSignal = signal<NegotiationUiState>({
   active: false,
@@ -275,6 +280,13 @@ export function setRequestDispatchers(
 ): void {
   onAcceptRequestCallback = acceptFn;
   onDeclineRequestCallback = declineFn;
+}
+
+export let onCallContactCallback: ((characterId: string) => void) | null = null;
+export function setPhoneContactDispatcher(
+  callFn: (characterId: string) => void
+): void {
+  onCallContactCallback = callFn;
 }
 
 export let onTutorialAdvanceCallback: ((nextStep: TutorialStep) => void) | null = null;

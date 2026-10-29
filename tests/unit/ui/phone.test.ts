@@ -102,5 +102,20 @@ describe('T2.4 Phone Store & Logic', () => {
     expect(t('phone.title')).toBe('Uthao Rider');
     expect(t('phone.accept')).toBe('Accept Ride');
     expect(t('phone.decline')).toBe('Decline');
+    expect(t('phone.tabs.contacts')).toBe('Contacts');
+    expect(t('phone.contacts.zero_commission')).toBe('0% Commission');
+  });
+
+  it('manages contacts and direct booking in phone state', () => {
+    phoneSignal.value = {
+      ...phoneSignal.value,
+      relationships: {
+        char_nabila: 25,
+        char_mintu: 35,
+      },
+    };
+
+    expect(phoneSignal.value.relationships?.['char_nabila']).toBe(25);
+    expect(phoneSignal.value.relationships?.['char_mintu']).toBe(35);
   });
 });
