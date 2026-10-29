@@ -24,6 +24,13 @@ export interface GameEvents extends Record<string, unknown> {
   'ride/arrivedPickup': { requestId: string };
   'ride/started': { requestId: string };
   'ride/completed': { requestId: string; receipt: TripReceipt };
+  'passenger/dialogue': {
+    requestId?: string;
+    key: string;
+    text: string;
+    phase: 'greeting' | 'offer' | 'counter' | 'accept' | 'reject' | 'small_talk' | 'drop_off';
+    speaker?: string;
+  };
   'ride/cancelled': {
     requestId: string;
     by: 'rider' | 'passenger' | 'system';

@@ -40,6 +40,13 @@ export interface HudState {
   shiftDay: number;
   rating: number;
 
+  // Dialogue Subtitles / Chatter
+  dialogueSubtitle?: {
+    speaker?: string;
+    text: string;
+    phase?: string;
+  } | null;
+
   // Status & Fare
   statusText?: string;
   fare?: number;

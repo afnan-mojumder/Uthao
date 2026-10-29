@@ -5,7 +5,7 @@ import type {
   NegotiationAction,
   NegotiationResult,
 } from '../../sim/negotiation/NegotiationSystem';
-import { t, getLanguage } from '../i18n';
+import { t, getLanguage, getDictionary } from '../i18n';
 import bnDialogue from '../../../data/dialogue/bn/negotiation.json';
 import enDialogue from '../../../data/dialogue/en/negotiation.json';
 
@@ -65,11 +65,22 @@ export function NegotiationPanel({
   // Passenger lines: Bangla-first with English subtitle, or vice-versa
   const rawKey = lastResult?.passengerLine ?? 'dialogue.negotiation.opening';
   const currentLang = getLanguage();
-  const primaryLine = t(rawKey, { fare: session.currentPassengerOffer });
-  const subtitleLine =
-    currentLang === 'bn'
-      ? (enDialogue as Record<string, string>)[rawKey]?.replace('{fare}', String(session.currentPassengerOffer)) ?? ''
-      : (bnDialogue as Record<string, string>)[rawKey]?.replace('{fare}', String(session.currentPassengerOffer)) ?? '';
+  const vars: Record<string, string | number> = {
+    fare: session.currentPassengerOffer,
+    offer: session.currentPassengerOffer,
+    counter: counterAmount,
+    destination: session.req.destinationNodeId ?? 'destination',
+  };
+  const primaryLine = t(rawKey, vars);
+  const otherLang = currentLang === 'bn' ? 'en' : 'bn';
+  const otherDict = getDictionary(otherLang);
+  const subtitleTemplate =
+    otherDict[rawKey] ??
+    (currentLang === 'bn'
+      ? (enDialogue as Record<string, string>)[rawKey]
+      : (bnDialogue as Record<string, string>)[rawKey]) ??
+    '';
+  const subtitleLine = subtitleTemplate.replace(/\{(\w+)\}/g, (_: string, k: string) => String(vars[k] ?? ''));
 
   const patiencePct = Math.max(0, Math.min(100, session.currentPatience * 100));
 

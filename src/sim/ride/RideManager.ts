@@ -16,6 +16,8 @@ import type { Route, PickupOptionsResult } from '../road/routing';
 import type { Rng } from '../../core/rng';
 import { BALANCE } from '../../config/balance';
 import { receipt } from '../economy/fuel';
+import { defaultDialogueManager } from '../dialogue/DialogueManager';
+import { getCharacter } from '../passenger/PassengerAI';
 
 export interface RideManagerOptions {
   roadNetwork: RoadNetwork;
@@ -36,6 +38,8 @@ export class RideManager {
   enableNegotiation: boolean = false;
   activeBikeId: BikeId = 'old100';
   hasEngineTune: boolean = false;
+  rideElapsedSec: number = 0;
+  smallTalkTriggered: boolean = false;
 
   constructor(opts: RideManagerOptions) {
     this.roadNetwork = opts.roadNetwork;
@@ -179,9 +183,9 @@ export class RideManager {
 
   update(
     bikePose: { x: number; z: number; speed: number },
-    _dt: number
+    dt: number
   ): void {
-    void _dt;
+    void dt;
     if (!this.activeRequest || !this.fsm) {
       return;
     }
@@ -218,6 +222,29 @@ export class RideManager {
         }
       }
     } else if (state === 'OnTrip') {
+      this.rideElapsedSec += dt;
+      if (!this.smallTalkTriggered && this.rideElapsedSec >= 4.0) {
+        this.smallTalkTriggered = true;
+        const charDef = this.activeRequest.characterId ? getCharacter(this.activeRequest.characterId) : undefined;
+        const dialogue = defaultDialogueManager.getSmallTalk({
+          archetype: charDef?.archetype ?? 'commuter',
+          characterId: this.activeRequest.characterId,
+          relationshipLevel: charDef?.initialRelationship ?? 10,
+          vars: {
+            destination: this.activeRequest.destinationNodeId ?? 'destination',
+            fare: this.activeRequest.initialFare,
+          },
+        });
+        if (dialogue) {
+          this.bus.emit('passenger/dialogue', {
+            requestId: this.activeRequest.requestId,
+            key: dialogue.key,
+            text: dialogue.text,
+            phase: 'small_talk',
+            speaker: charDef?.nameKey ?? this.activeRequest.passengerId,
+          });
+        }
+      }
       const destNode = this.roadNetwork.getNode(
         this.activeRequest.destinationNodeId
       );
@@ -246,6 +273,26 @@ export class RideManager {
             },
           });
 
+          const charDef = this.activeRequest.characterId ? getCharacter(this.activeRequest.characterId) : undefined;
+          const dropOffDialogue = defaultDialogueManager.getDropOff({
+            archetype: charDef?.archetype ?? 'commuter',
+            characterId: this.activeRequest.characterId,
+            relationshipLevel: charDef?.initialRelationship ?? 10,
+            vars: {
+              fare: this.activeRequest.initialFare,
+              destination: this.activeRequest.destinationNodeId ?? 'destination',
+            },
+          });
+          if (dropOffDialogue) {
+            this.bus.emit('passenger/dialogue', {
+              requestId: this.activeRequest.requestId,
+              key: dropOffDialogue.key,
+              text: dropOffDialogue.text,
+              phase: 'drop_off',
+              speaker: charDef?.nameKey ?? this.activeRequest.passengerId,
+            });
+          }
+
           this.bus.emit('ride/completed', {
             requestId: this.activeRequest.requestId,
             receipt: tripReceipt,
@@ -264,6 +311,8 @@ export class RideManager {
           this.fsm.send('paidAndRated'); // enters 'Reviewed'
           this.activeRequest.status = this.fsm.state;
           this.activeRequest = null;
+          this.rideElapsedSec = 0;
+          this.smallTalkTriggered = false;
         }
       }
     }

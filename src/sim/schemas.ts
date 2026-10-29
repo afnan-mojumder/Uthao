@@ -488,3 +488,35 @@ export const DeliveryJobSchema = z.object({
 });
 
 export type DeliveryJobDef = z.infer<typeof DeliveryJobSchema>;
+
+export type DialoguePhase =
+  | 'greeting'
+  | 'offer'
+  | 'counter'
+  | 'accept'
+  | 'reject'
+  | 'small_talk'
+  | 'drop_off';
+
+export const DialogueLineSchema = z.object({
+  id: z.string(),
+  archetype: z.enum(['bargainer', 'commuter', 'careful', 'regular', 'risky']).optional(),
+  characterId: z.string().optional(),
+  phase: z.enum(['greeting', 'offer', 'counter', 'accept', 'reject', 'small_talk', 'drop_off']),
+  key: z.string(),
+  category: z.enum(['cricket', 'exams', 'jam', 'rain', 'family', 'general', 'humour']).optional(),
+  requires: z
+    .object({
+      minRelationship: z.number().optional(),
+      flags: z.record(z.string(), z.union([z.boolean(), z.string(), z.number()])).optional(),
+      weather: z.enum(['clear', 'overcast', 'rain', 'monsoon']).optional(),
+      minDistance: z.number().optional(),
+      timeOfDay: z.enum(['morning', 'rush_morning', 'midday', 'rush_evening', 'night']).optional(),
+    })
+    .optional(),
+  speaker: z.enum(['passenger', 'rider', 'contact']).optional(),
+});
+
+export type DialogueLineDef = z.infer<typeof DialogueLineSchema>;
+export const DialogueDataSchema = z.array(DialogueLineSchema);
+export type DialogueData = z.infer<typeof DialogueDataSchema>;

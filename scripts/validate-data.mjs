@@ -9,6 +9,7 @@ import {
   EndingDefSchema,
   CharactersDataSchema,
   BikesDataSchema,
+  DialogueDataSchema,
 } from '../src/sim/schemas.ts';
 
 // Validate dialogue files
@@ -471,6 +472,52 @@ if (fs.existsSync(bikesPath)) {
     }
   } catch (err) {
     console.error(`Failed reading bikes file ${bikesPath}:`, err);
+    process.exit(1);
+  }
+}
+
+
+// Validate dialogue_lines.json (T5.7 Richer Dialogue)
+const dialogueLinesPath = path.resolve('data/dialogue_lines.json');
+if (fs.existsSync(dialogueLinesPath)) {
+  try {
+    const raw = JSON.parse(fs.readFileSync(dialogueLinesPath, 'utf-8'));
+    const res = DialogueDataSchema.safeParse(raw);
+    if (!res.success) {
+      console.error(`Dialogue lines schema error in ${dialogueLinesPath}:`, res.error.format());
+      process.exit(1);
+    }
+    const lines = res.data;
+
+    // Check 1: Every line key exists in en and bn
+    for (const line of lines) {
+      if (typeof dicts.en[line.key] === 'undefined') {
+        console.error(`DialogueLine ${line.id}: key '${line.key}' missing in en dialogue`);
+        process.exit(1);
+      }
+      if (typeof dicts.bn[line.key] === 'undefined') {
+        console.error(`DialogueLine ${line.id}: key '${line.key}' missing in bn dialogue`);
+        process.exit(1);
+      }
+    }
+
+    // Check 2: >= 15 lines per archetype per phase
+    const archetypes = ['bargainer', 'commuter', 'careful', 'regular', 'risky'];
+    const phases = ['greeting', 'offer', 'counter', 'accept', 'reject', 'small_talk', 'drop_off'];
+
+    for (const arch of archetypes) {
+      for (const ph of phases) {
+        const matching = lines.filter((l) => l.archetype === arch && l.phase === ph);
+        if (matching.length < 15) {
+          console.error(
+            `DialogueLine validation failed: Archetype '${arch}' phase '${ph}' has ${matching.length} lines, required >= 15!`
+          );
+          process.exit(1);
+        }
+      }
+    }
+  } catch (err) {
+    console.error(`Failed reading dialogue_lines.json ${dialogueLinesPath}:`, err);
     process.exit(1);
   }
 }

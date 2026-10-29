@@ -32,3 +32,11 @@ One line per finished task: `YYYY-MM-DD Tx.y done — note`
 - [x] **One robbery or suspicious-pickup event (T4.6):** `tests/unit/sim/crime.test.ts` ("Crime & Suspicious Scenarios > evaluates police checkpoint and suspicious night pickup evasion")
 - [x] **Five story missions and one ending (T4.7):** `tests/unit/sim/missionManager.test.ts` ("MissionManager > runs Ch1 story missions sequentially"), `tests/unit/sim/endings.test.ts` ("Endings Evaluation > triggers distinct endings based on player career metrics")
 - [x] **Save/load and a functional mobile HUD (T4.9/T4.10):** `tests/unit/save/SaveSystem.test.ts` ("SaveSystem > round-trip save and load preserves full state"), `tests/unit/ui/hud.test.ts` ("T2.8 & T4.10 Rider HUD and Mobile Polish > applies safe-area insets to standard HudView and ChoiceCard satisfies constraints"), `tests/e2e/boot.spec.ts`
+
+## 2026-10-29 T5.7 Richer dialogue
+- Implemented 548 dialogue entries: 525 per-archetype lines across 5 archetypes and 7 phases (greeting, offer, counter, accept, reject, small talk, drop-off) in both bn and en (>= 15 lines per pool).
+- Added flag-conditioned lines for recurring characters (Tanvir, Mintu, Rahim chacha, Mrs. Ferdousi, Kamal bhai, Nabila, Jamil, SI Morshed, Bablu).
+- Implemented DialogueManager and wired into NegotiationSystem and RideManager for long-ride small talk (cricket, exams, jam, rain, family) and drop-off.
+- Added dialogue subtitle floating bubble to HUD.
+- Executed stereotype review checklist in docs/DECISIONS.md.
+- Added test suite tests/unit/sim/dialogue.test.ts (7 tests passed, 340 total tests green).

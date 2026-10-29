@@ -10,6 +10,7 @@ import { Rng, hashSeed } from '../../core/rng';
 import { BALANCE } from '../../config/balance';
 import { fairFare } from './fare';
 import { expectedBudget, openingOffer } from '../passenger/PassengerAI';
+import { defaultDialogueManager } from '../dialogue/DialogueManager';
 
 export interface NegotiationContext {
   traffic: number;
@@ -248,7 +249,13 @@ export function respond(
     };
     return {
       session: updatedSession,
-      passengerLine: 'dialogue.negotiation.accept_ok',
+      passengerLine: defaultDialogueManager.getAccept({
+        archetype: session.profile.archetype,
+        characterId: session.profile.characterId,
+        relationshipLevel: session.profile.relationshipLevel,
+        rng: new Rng(hashSeed(session.req.requestId, session.round, 'dialogue')),
+        vars: { fare: finalFare },
+      })?.key ?? 'dialogue.negotiation.accept_ok',
       outcome: { kind: 'accepted', fare: finalFare },
       topFactor: 'FAIR_PRICE',
     };
@@ -413,7 +420,13 @@ export function respond(
       currentPassengerOffer: F,
       status: 'accepted',
     };
-    let line = 'dialogue.negotiation.counter_accepted';
+    let line = defaultDialogueManager.getAccept({
+        archetype: session.profile.archetype,
+        characterId: session.profile.characterId,
+        relationshipLevel: session.profile.relationshipLevel,
+        rng: new Rng(hashSeed(session.req.requestId, session.round, 'dialogue')),
+        vars: { fare: F },
+      })?.key ?? 'dialogue.negotiation.counter_accepted';
     if (action.kind === 'discount') {
       line = 'dialogue.negotiation.discount_accepted';
     } else if (action.kind === 'offApp') {
@@ -447,7 +460,12 @@ export function respond(
     };
     return {
       session: updatedSession,
-      passengerLine: 'dialogue.negotiation.walked_away',
+      passengerLine: defaultDialogueManager.getReject({
+        archetype: session.profile.archetype,
+        characterId: session.profile.characterId,
+        relationshipLevel: session.profile.relationshipLevel,
+        rng: new Rng(hashSeed(session.req.requestId, session.round, 'dialogue')),
+      })?.key ?? 'dialogue.negotiation.walked_away',
       outcome: { kind: 'walkedAway', reason: walkAwayReason },
       topFactor: walkAwayReason,
     };
@@ -493,7 +511,13 @@ export function respond(
 
   return {
     session: updatedSession,
-    passengerLine: 'dialogue.negotiation.counter_rejected',
+    passengerLine: defaultDialogueManager.getCounter({
+      archetype: session.profile.archetype,
+      characterId: session.profile.characterId,
+      relationshipLevel: session.profile.relationshipLevel,
+      rng: new Rng(hashSeed(session.req.requestId, session.round, 'dialogue')),
+      vars: { fare: F, counter: nextPassengerOffer },
+    })?.key ?? 'dialogue.negotiation.counter_rejected',
     outcome: { kind: 'rejected', reason: factors.topFactor },
     topFactor: factors.topFactor,
   };

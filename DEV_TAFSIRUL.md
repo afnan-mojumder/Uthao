@@ -50,7 +50,7 @@ Format: `- [ ] **<id>** <title> (<points>), deps: <ids>`. Tick by changing only 
 - [x] **T4.10** Mobile HUD polish and v1.0 release (3), deps: T4.9, T4.6 (A), T4.5, T4.4, T3.10, T2.8
 - [x] **T5.6** Additional motorcycles (3), deps: T4.4
 - [x] **T5.8** Deliveries (3), deps: T4.4
-- [ ] **T5.7** Richer dialogue (8), deps: T4.3
+- [x] **T5.7** Richer dialogue (8), deps: T4.3
 - [ ] **T5.4** Campaign chapters 2–6, side missions, Endless mode (13), deps: T4.7 (A), T5.1 (A)
 - [ ] **T6.3** Accessibility and localisation (3), deps: T4.10
 - [ ] **T6.1** Full test matrix (3), deps: T5.4, T5.5 (A), T5.9 (A)

@@ -1,0 +1,3952 @@
+[
+  {
+    "id": "dl_bargainer_greeting_01",
+    "archetype": "bargainer",
+    "phase": "greeting",
+    "key": "dialogue.pool.bargainer.greeting.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_greeting_02",
+    "archetype": "bargainer",
+    "phase": "greeting",
+    "key": "dialogue.pool.bargainer.greeting.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_greeting_03",
+    "archetype": "bargainer",
+    "phase": "greeting",
+    "key": "dialogue.pool.bargainer.greeting.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_greeting_04",
+    "archetype": "bargainer",
+    "phase": "greeting",
+    "key": "dialogue.pool.bargainer.greeting.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_greeting_05",
+    "archetype": "bargainer",
+    "phase": "greeting",
+    "key": "dialogue.pool.bargainer.greeting.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_greeting_06",
+    "archetype": "bargainer",
+    "phase": "greeting",
+    "key": "dialogue.pool.bargainer.greeting.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_greeting_07",
+    "archetype": "bargainer",
+    "phase": "greeting",
+    "key": "dialogue.pool.bargainer.greeting.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_greeting_08",
+    "archetype": "bargainer",
+    "phase": "greeting",
+    "key": "dialogue.pool.bargainer.greeting.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_greeting_09",
+    "archetype": "bargainer",
+    "phase": "greeting",
+    "key": "dialogue.pool.bargainer.greeting.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_greeting_10",
+    "archetype": "bargainer",
+    "phase": "greeting",
+    "key": "dialogue.pool.bargainer.greeting.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_greeting_11",
+    "archetype": "bargainer",
+    "phase": "greeting",
+    "key": "dialogue.pool.bargainer.greeting.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_greeting_12",
+    "archetype": "bargainer",
+    "phase": "greeting",
+    "key": "dialogue.pool.bargainer.greeting.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_greeting_13",
+    "archetype": "bargainer",
+    "phase": "greeting",
+    "key": "dialogue.pool.bargainer.greeting.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_greeting_14",
+    "archetype": "bargainer",
+    "phase": "greeting",
+    "key": "dialogue.pool.bargainer.greeting.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_greeting_15",
+    "archetype": "bargainer",
+    "phase": "greeting",
+    "key": "dialogue.pool.bargainer.greeting.15",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_offer_01",
+    "archetype": "bargainer",
+    "phase": "offer",
+    "key": "dialogue.pool.bargainer.offer.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_offer_02",
+    "archetype": "bargainer",
+    "phase": "offer",
+    "key": "dialogue.pool.bargainer.offer.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_offer_03",
+    "archetype": "bargainer",
+    "phase": "offer",
+    "key": "dialogue.pool.bargainer.offer.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_offer_04",
+    "archetype": "bargainer",
+    "phase": "offer",
+    "key": "dialogue.pool.bargainer.offer.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_offer_05",
+    "archetype": "bargainer",
+    "phase": "offer",
+    "key": "dialogue.pool.bargainer.offer.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_offer_06",
+    "archetype": "bargainer",
+    "phase": "offer",
+    "key": "dialogue.pool.bargainer.offer.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_offer_07",
+    "archetype": "bargainer",
+    "phase": "offer",
+    "key": "dialogue.pool.bargainer.offer.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_offer_08",
+    "archetype": "bargainer",
+    "phase": "offer",
+    "key": "dialogue.pool.bargainer.offer.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_offer_09",
+    "archetype": "bargainer",
+    "phase": "offer",
+    "key": "dialogue.pool.bargainer.offer.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_offer_10",
+    "archetype": "bargainer",
+    "phase": "offer",
+    "key": "dialogue.pool.bargainer.offer.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_offer_11",
+    "archetype": "bargainer",
+    "phase": "offer",
+    "key": "dialogue.pool.bargainer.offer.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_offer_12",
+    "archetype": "bargainer",
+    "phase": "offer",
+    "key": "dialogue.pool.bargainer.offer.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_offer_13",
+    "archetype": "bargainer",
+    "phase": "offer",
+    "key": "dialogue.pool.bargainer.offer.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_offer_14",
+    "archetype": "bargainer",
+    "phase": "offer",
+    "key": "dialogue.pool.bargainer.offer.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_offer_15",
+    "archetype": "bargainer",
+    "phase": "offer",
+    "key": "dialogue.pool.bargainer.offer.15",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_counter_01",
+    "archetype": "bargainer",
+    "phase": "counter",
+    "key": "dialogue.pool.bargainer.counter.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_counter_02",
+    "archetype": "bargainer",
+    "phase": "counter",
+    "key": "dialogue.pool.bargainer.counter.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_counter_03",
+    "archetype": "bargainer",
+    "phase": "counter",
+    "key": "dialogue.pool.bargainer.counter.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_counter_04",
+    "archetype": "bargainer",
+    "phase": "counter",
+    "key": "dialogue.pool.bargainer.counter.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_counter_05",
+    "archetype": "bargainer",
+    "phase": "counter",
+    "key": "dialogue.pool.bargainer.counter.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_counter_06",
+    "archetype": "bargainer",
+    "phase": "counter",
+    "key": "dialogue.pool.bargainer.counter.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_counter_07",
+    "archetype": "bargainer",
+    "phase": "counter",
+    "key": "dialogue.pool.bargainer.counter.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_counter_08",
+    "archetype": "bargainer",
+    "phase": "counter",
+    "key": "dialogue.pool.bargainer.counter.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_counter_09",
+    "archetype": "bargainer",
+    "phase": "counter",
+    "key": "dialogue.pool.bargainer.counter.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_counter_10",
+    "archetype": "bargainer",
+    "phase": "counter",
+    "key": "dialogue.pool.bargainer.counter.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_counter_11",
+    "archetype": "bargainer",
+    "phase": "counter",
+    "key": "dialogue.pool.bargainer.counter.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_counter_12",
+    "archetype": "bargainer",
+    "phase": "counter",
+    "key": "dialogue.pool.bargainer.counter.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_counter_13",
+    "archetype": "bargainer",
+    "phase": "counter",
+    "key": "dialogue.pool.bargainer.counter.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_counter_14",
+    "archetype": "bargainer",
+    "phase": "counter",
+    "key": "dialogue.pool.bargainer.counter.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_counter_15",
+    "archetype": "bargainer",
+    "phase": "counter",
+    "key": "dialogue.pool.bargainer.counter.15",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_accept_01",
+    "archetype": "bargainer",
+    "phase": "accept",
+    "key": "dialogue.pool.bargainer.accept.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_accept_02",
+    "archetype": "bargainer",
+    "phase": "accept",
+    "key": "dialogue.pool.bargainer.accept.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_accept_03",
+    "archetype": "bargainer",
+    "phase": "accept",
+    "key": "dialogue.pool.bargainer.accept.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_accept_04",
+    "archetype": "bargainer",
+    "phase": "accept",
+    "key": "dialogue.pool.bargainer.accept.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_accept_05",
+    "archetype": "bargainer",
+    "phase": "accept",
+    "key": "dialogue.pool.bargainer.accept.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_accept_06",
+    "archetype": "bargainer",
+    "phase": "accept",
+    "key": "dialogue.pool.bargainer.accept.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_accept_07",
+    "archetype": "bargainer",
+    "phase": "accept",
+    "key": "dialogue.pool.bargainer.accept.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_accept_08",
+    "archetype": "bargainer",
+    "phase": "accept",
+    "key": "dialogue.pool.bargainer.accept.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_accept_09",
+    "archetype": "bargainer",
+    "phase": "accept",
+    "key": "dialogue.pool.bargainer.accept.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_accept_10",
+    "archetype": "bargainer",
+    "phase": "accept",
+    "key": "dialogue.pool.bargainer.accept.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_accept_11",
+    "archetype": "bargainer",
+    "phase": "accept",
+    "key": "dialogue.pool.bargainer.accept.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_accept_12",
+    "archetype": "bargainer",
+    "phase": "accept",
+    "key": "dialogue.pool.bargainer.accept.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_accept_13",
+    "archetype": "bargainer",
+    "phase": "accept",
+    "key": "dialogue.pool.bargainer.accept.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_accept_14",
+    "archetype": "bargainer",
+    "phase": "accept",
+    "key": "dialogue.pool.bargainer.accept.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_accept_15",
+    "archetype": "bargainer",
+    "phase": "accept",
+    "key": "dialogue.pool.bargainer.accept.15",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_reject_01",
+    "archetype": "bargainer",
+    "phase": "reject",
+    "key": "dialogue.pool.bargainer.reject.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_reject_02",
+    "archetype": "bargainer",
+    "phase": "reject",
+    "key": "dialogue.pool.bargainer.reject.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_reject_03",
+    "archetype": "bargainer",
+    "phase": "reject",
+    "key": "dialogue.pool.bargainer.reject.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_reject_04",
+    "archetype": "bargainer",
+    "phase": "reject",
+    "key": "dialogue.pool.bargainer.reject.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_reject_05",
+    "archetype": "bargainer",
+    "phase": "reject",
+    "key": "dialogue.pool.bargainer.reject.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_reject_06",
+    "archetype": "bargainer",
+    "phase": "reject",
+    "key": "dialogue.pool.bargainer.reject.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_reject_07",
+    "archetype": "bargainer",
+    "phase": "reject",
+    "key": "dialogue.pool.bargainer.reject.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_reject_08",
+    "archetype": "bargainer",
+    "phase": "reject",
+    "key": "dialogue.pool.bargainer.reject.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_reject_09",
+    "archetype": "bargainer",
+    "phase": "reject",
+    "key": "dialogue.pool.bargainer.reject.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_reject_10",
+    "archetype": "bargainer",
+    "phase": "reject",
+    "key": "dialogue.pool.bargainer.reject.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_reject_11",
+    "archetype": "bargainer",
+    "phase": "reject",
+    "key": "dialogue.pool.bargainer.reject.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_reject_12",
+    "archetype": "bargainer",
+    "phase": "reject",
+    "key": "dialogue.pool.bargainer.reject.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_reject_13",
+    "archetype": "bargainer",
+    "phase": "reject",
+    "key": "dialogue.pool.bargainer.reject.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_reject_14",
+    "archetype": "bargainer",
+    "phase": "reject",
+    "key": "dialogue.pool.bargainer.reject.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_reject_15",
+    "archetype": "bargainer",
+    "phase": "reject",
+    "key": "dialogue.pool.bargainer.reject.15",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_small_talk_01",
+    "archetype": "bargainer",
+    "phase": "small_talk",
+    "key": "dialogue.pool.bargainer.small_talk.01",
+    "category": "cricket"
+  },
+  {
+    "id": "dl_bargainer_small_talk_02",
+    "archetype": "bargainer",
+    "phase": "small_talk",
+    "key": "dialogue.pool.bargainer.small_talk.02",
+    "category": "exams"
+  },
+  {
+    "id": "dl_bargainer_small_talk_03",
+    "archetype": "bargainer",
+    "phase": "small_talk",
+    "key": "dialogue.pool.bargainer.small_talk.03",
+    "category": "jam"
+  },
+  {
+    "id": "dl_bargainer_small_talk_04",
+    "archetype": "bargainer",
+    "phase": "small_talk",
+    "key": "dialogue.pool.bargainer.small_talk.04",
+    "category": "rain"
+  },
+  {
+    "id": "dl_bargainer_small_talk_05",
+    "archetype": "bargainer",
+    "phase": "small_talk",
+    "key": "dialogue.pool.bargainer.small_talk.05",
+    "category": "family"
+  },
+  {
+    "id": "dl_bargainer_small_talk_06",
+    "archetype": "bargainer",
+    "phase": "small_talk",
+    "key": "dialogue.pool.bargainer.small_talk.06",
+    "category": "humour"
+  },
+  {
+    "id": "dl_bargainer_small_talk_07",
+    "archetype": "bargainer",
+    "phase": "small_talk",
+    "key": "dialogue.pool.bargainer.small_talk.07",
+    "category": "cricket"
+  },
+  {
+    "id": "dl_bargainer_small_talk_08",
+    "archetype": "bargainer",
+    "phase": "small_talk",
+    "key": "dialogue.pool.bargainer.small_talk.08",
+    "category": "exams"
+  },
+  {
+    "id": "dl_bargainer_small_talk_09",
+    "archetype": "bargainer",
+    "phase": "small_talk",
+    "key": "dialogue.pool.bargainer.small_talk.09",
+    "category": "jam"
+  },
+  {
+    "id": "dl_bargainer_small_talk_10",
+    "archetype": "bargainer",
+    "phase": "small_talk",
+    "key": "dialogue.pool.bargainer.small_talk.10",
+    "category": "rain"
+  },
+  {
+    "id": "dl_bargainer_small_talk_11",
+    "archetype": "bargainer",
+    "phase": "small_talk",
+    "key": "dialogue.pool.bargainer.small_talk.11",
+    "category": "family"
+  },
+  {
+    "id": "dl_bargainer_small_talk_12",
+    "archetype": "bargainer",
+    "phase": "small_talk",
+    "key": "dialogue.pool.bargainer.small_talk.12",
+    "category": "humour"
+  },
+  {
+    "id": "dl_bargainer_small_talk_13",
+    "archetype": "bargainer",
+    "phase": "small_talk",
+    "key": "dialogue.pool.bargainer.small_talk.13",
+    "category": "cricket"
+  },
+  {
+    "id": "dl_bargainer_small_talk_14",
+    "archetype": "bargainer",
+    "phase": "small_talk",
+    "key": "dialogue.pool.bargainer.small_talk.14",
+    "category": "exams"
+  },
+  {
+    "id": "dl_bargainer_small_talk_15",
+    "archetype": "bargainer",
+    "phase": "small_talk",
+    "key": "dialogue.pool.bargainer.small_talk.15",
+    "category": "jam"
+  },
+  {
+    "id": "dl_bargainer_drop_off_01",
+    "archetype": "bargainer",
+    "phase": "drop_off",
+    "key": "dialogue.pool.bargainer.drop_off.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_drop_off_02",
+    "archetype": "bargainer",
+    "phase": "drop_off",
+    "key": "dialogue.pool.bargainer.drop_off.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_drop_off_03",
+    "archetype": "bargainer",
+    "phase": "drop_off",
+    "key": "dialogue.pool.bargainer.drop_off.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_drop_off_04",
+    "archetype": "bargainer",
+    "phase": "drop_off",
+    "key": "dialogue.pool.bargainer.drop_off.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_drop_off_05",
+    "archetype": "bargainer",
+    "phase": "drop_off",
+    "key": "dialogue.pool.bargainer.drop_off.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_drop_off_06",
+    "archetype": "bargainer",
+    "phase": "drop_off",
+    "key": "dialogue.pool.bargainer.drop_off.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_drop_off_07",
+    "archetype": "bargainer",
+    "phase": "drop_off",
+    "key": "dialogue.pool.bargainer.drop_off.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_drop_off_08",
+    "archetype": "bargainer",
+    "phase": "drop_off",
+    "key": "dialogue.pool.bargainer.drop_off.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_drop_off_09",
+    "archetype": "bargainer",
+    "phase": "drop_off",
+    "key": "dialogue.pool.bargainer.drop_off.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_drop_off_10",
+    "archetype": "bargainer",
+    "phase": "drop_off",
+    "key": "dialogue.pool.bargainer.drop_off.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_drop_off_11",
+    "archetype": "bargainer",
+    "phase": "drop_off",
+    "key": "dialogue.pool.bargainer.drop_off.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_drop_off_12",
+    "archetype": "bargainer",
+    "phase": "drop_off",
+    "key": "dialogue.pool.bargainer.drop_off.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_drop_off_13",
+    "archetype": "bargainer",
+    "phase": "drop_off",
+    "key": "dialogue.pool.bargainer.drop_off.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_drop_off_14",
+    "archetype": "bargainer",
+    "phase": "drop_off",
+    "key": "dialogue.pool.bargainer.drop_off.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_bargainer_drop_off_15",
+    "archetype": "bargainer",
+    "phase": "drop_off",
+    "key": "dialogue.pool.bargainer.drop_off.15",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_greeting_01",
+    "archetype": "commuter",
+    "phase": "greeting",
+    "key": "dialogue.pool.commuter.greeting.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_greeting_02",
+    "archetype": "commuter",
+    "phase": "greeting",
+    "key": "dialogue.pool.commuter.greeting.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_greeting_03",
+    "archetype": "commuter",
+    "phase": "greeting",
+    "key": "dialogue.pool.commuter.greeting.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_greeting_04",
+    "archetype": "commuter",
+    "phase": "greeting",
+    "key": "dialogue.pool.commuter.greeting.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_greeting_05",
+    "archetype": "commuter",
+    "phase": "greeting",
+    "key": "dialogue.pool.commuter.greeting.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_greeting_06",
+    "archetype": "commuter",
+    "phase": "greeting",
+    "key": "dialogue.pool.commuter.greeting.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_greeting_07",
+    "archetype": "commuter",
+    "phase": "greeting",
+    "key": "dialogue.pool.commuter.greeting.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_greeting_08",
+    "archetype": "commuter",
+    "phase": "greeting",
+    "key": "dialogue.pool.commuter.greeting.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_greeting_09",
+    "archetype": "commuter",
+    "phase": "greeting",
+    "key": "dialogue.pool.commuter.greeting.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_greeting_10",
+    "archetype": "commuter",
+    "phase": "greeting",
+    "key": "dialogue.pool.commuter.greeting.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_greeting_11",
+    "archetype": "commuter",
+    "phase": "greeting",
+    "key": "dialogue.pool.commuter.greeting.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_greeting_12",
+    "archetype": "commuter",
+    "phase": "greeting",
+    "key": "dialogue.pool.commuter.greeting.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_greeting_13",
+    "archetype": "commuter",
+    "phase": "greeting",
+    "key": "dialogue.pool.commuter.greeting.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_greeting_14",
+    "archetype": "commuter",
+    "phase": "greeting",
+    "key": "dialogue.pool.commuter.greeting.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_greeting_15",
+    "archetype": "commuter",
+    "phase": "greeting",
+    "key": "dialogue.pool.commuter.greeting.15",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_offer_01",
+    "archetype": "commuter",
+    "phase": "offer",
+    "key": "dialogue.pool.commuter.offer.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_offer_02",
+    "archetype": "commuter",
+    "phase": "offer",
+    "key": "dialogue.pool.commuter.offer.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_offer_03",
+    "archetype": "commuter",
+    "phase": "offer",
+    "key": "dialogue.pool.commuter.offer.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_offer_04",
+    "archetype": "commuter",
+    "phase": "offer",
+    "key": "dialogue.pool.commuter.offer.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_offer_05",
+    "archetype": "commuter",
+    "phase": "offer",
+    "key": "dialogue.pool.commuter.offer.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_offer_06",
+    "archetype": "commuter",
+    "phase": "offer",
+    "key": "dialogue.pool.commuter.offer.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_offer_07",
+    "archetype": "commuter",
+    "phase": "offer",
+    "key": "dialogue.pool.commuter.offer.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_offer_08",
+    "archetype": "commuter",
+    "phase": "offer",
+    "key": "dialogue.pool.commuter.offer.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_offer_09",
+    "archetype": "commuter",
+    "phase": "offer",
+    "key": "dialogue.pool.commuter.offer.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_offer_10",
+    "archetype": "commuter",
+    "phase": "offer",
+    "key": "dialogue.pool.commuter.offer.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_offer_11",
+    "archetype": "commuter",
+    "phase": "offer",
+    "key": "dialogue.pool.commuter.offer.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_offer_12",
+    "archetype": "commuter",
+    "phase": "offer",
+    "key": "dialogue.pool.commuter.offer.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_offer_13",
+    "archetype": "commuter",
+    "phase": "offer",
+    "key": "dialogue.pool.commuter.offer.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_offer_14",
+    "archetype": "commuter",
+    "phase": "offer",
+    "key": "dialogue.pool.commuter.offer.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_offer_15",
+    "archetype": "commuter",
+    "phase": "offer",
+    "key": "dialogue.pool.commuter.offer.15",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_counter_01",
+    "archetype": "commuter",
+    "phase": "counter",
+    "key": "dialogue.pool.commuter.counter.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_counter_02",
+    "archetype": "commuter",
+    "phase": "counter",
+    "key": "dialogue.pool.commuter.counter.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_counter_03",
+    "archetype": "commuter",
+    "phase": "counter",
+    "key": "dialogue.pool.commuter.counter.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_counter_04",
+    "archetype": "commuter",
+    "phase": "counter",
+    "key": "dialogue.pool.commuter.counter.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_counter_05",
+    "archetype": "commuter",
+    "phase": "counter",
+    "key": "dialogue.pool.commuter.counter.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_counter_06",
+    "archetype": "commuter",
+    "phase": "counter",
+    "key": "dialogue.pool.commuter.counter.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_counter_07",
+    "archetype": "commuter",
+    "phase": "counter",
+    "key": "dialogue.pool.commuter.counter.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_counter_08",
+    "archetype": "commuter",
+    "phase": "counter",
+    "key": "dialogue.pool.commuter.counter.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_counter_09",
+    "archetype": "commuter",
+    "phase": "counter",
+    "key": "dialogue.pool.commuter.counter.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_counter_10",
+    "archetype": "commuter",
+    "phase": "counter",
+    "key": "dialogue.pool.commuter.counter.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_counter_11",
+    "archetype": "commuter",
+    "phase": "counter",
+    "key": "dialogue.pool.commuter.counter.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_counter_12",
+    "archetype": "commuter",
+    "phase": "counter",
+    "key": "dialogue.pool.commuter.counter.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_counter_13",
+    "archetype": "commuter",
+    "phase": "counter",
+    "key": "dialogue.pool.commuter.counter.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_counter_14",
+    "archetype": "commuter",
+    "phase": "counter",
+    "key": "dialogue.pool.commuter.counter.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_counter_15",
+    "archetype": "commuter",
+    "phase": "counter",
+    "key": "dialogue.pool.commuter.counter.15",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_accept_01",
+    "archetype": "commuter",
+    "phase": "accept",
+    "key": "dialogue.pool.commuter.accept.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_accept_02",
+    "archetype": "commuter",
+    "phase": "accept",
+    "key": "dialogue.pool.commuter.accept.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_accept_03",
+    "archetype": "commuter",
+    "phase": "accept",
+    "key": "dialogue.pool.commuter.accept.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_accept_04",
+    "archetype": "commuter",
+    "phase": "accept",
+    "key": "dialogue.pool.commuter.accept.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_accept_05",
+    "archetype": "commuter",
+    "phase": "accept",
+    "key": "dialogue.pool.commuter.accept.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_accept_06",
+    "archetype": "commuter",
+    "phase": "accept",
+    "key": "dialogue.pool.commuter.accept.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_accept_07",
+    "archetype": "commuter",
+    "phase": "accept",
+    "key": "dialogue.pool.commuter.accept.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_accept_08",
+    "archetype": "commuter",
+    "phase": "accept",
+    "key": "dialogue.pool.commuter.accept.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_accept_09",
+    "archetype": "commuter",
+    "phase": "accept",
+    "key": "dialogue.pool.commuter.accept.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_accept_10",
+    "archetype": "commuter",
+    "phase": "accept",
+    "key": "dialogue.pool.commuter.accept.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_accept_11",
+    "archetype": "commuter",
+    "phase": "accept",
+    "key": "dialogue.pool.commuter.accept.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_accept_12",
+    "archetype": "commuter",
+    "phase": "accept",
+    "key": "dialogue.pool.commuter.accept.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_accept_13",
+    "archetype": "commuter",
+    "phase": "accept",
+    "key": "dialogue.pool.commuter.accept.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_accept_14",
+    "archetype": "commuter",
+    "phase": "accept",
+    "key": "dialogue.pool.commuter.accept.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_accept_15",
+    "archetype": "commuter",
+    "phase": "accept",
+    "key": "dialogue.pool.commuter.accept.15",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_reject_01",
+    "archetype": "commuter",
+    "phase": "reject",
+    "key": "dialogue.pool.commuter.reject.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_reject_02",
+    "archetype": "commuter",
+    "phase": "reject",
+    "key": "dialogue.pool.commuter.reject.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_reject_03",
+    "archetype": "commuter",
+    "phase": "reject",
+    "key": "dialogue.pool.commuter.reject.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_reject_04",
+    "archetype": "commuter",
+    "phase": "reject",
+    "key": "dialogue.pool.commuter.reject.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_reject_05",
+    "archetype": "commuter",
+    "phase": "reject",
+    "key": "dialogue.pool.commuter.reject.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_reject_06",
+    "archetype": "commuter",
+    "phase": "reject",
+    "key": "dialogue.pool.commuter.reject.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_reject_07",
+    "archetype": "commuter",
+    "phase": "reject",
+    "key": "dialogue.pool.commuter.reject.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_reject_08",
+    "archetype": "commuter",
+    "phase": "reject",
+    "key": "dialogue.pool.commuter.reject.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_reject_09",
+    "archetype": "commuter",
+    "phase": "reject",
+    "key": "dialogue.pool.commuter.reject.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_reject_10",
+    "archetype": "commuter",
+    "phase": "reject",
+    "key": "dialogue.pool.commuter.reject.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_reject_11",
+    "archetype": "commuter",
+    "phase": "reject",
+    "key": "dialogue.pool.commuter.reject.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_reject_12",
+    "archetype": "commuter",
+    "phase": "reject",
+    "key": "dialogue.pool.commuter.reject.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_reject_13",
+    "archetype": "commuter",
+    "phase": "reject",
+    "key": "dialogue.pool.commuter.reject.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_reject_14",
+    "archetype": "commuter",
+    "phase": "reject",
+    "key": "dialogue.pool.commuter.reject.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_reject_15",
+    "archetype": "commuter",
+    "phase": "reject",
+    "key": "dialogue.pool.commuter.reject.15",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_small_talk_01",
+    "archetype": "commuter",
+    "phase": "small_talk",
+    "key": "dialogue.pool.commuter.small_talk.01",
+    "category": "cricket"
+  },
+  {
+    "id": "dl_commuter_small_talk_02",
+    "archetype": "commuter",
+    "phase": "small_talk",
+    "key": "dialogue.pool.commuter.small_talk.02",
+    "category": "exams"
+  },
+  {
+    "id": "dl_commuter_small_talk_03",
+    "archetype": "commuter",
+    "phase": "small_talk",
+    "key": "dialogue.pool.commuter.small_talk.03",
+    "category": "jam"
+  },
+  {
+    "id": "dl_commuter_small_talk_04",
+    "archetype": "commuter",
+    "phase": "small_talk",
+    "key": "dialogue.pool.commuter.small_talk.04",
+    "category": "rain"
+  },
+  {
+    "id": "dl_commuter_small_talk_05",
+    "archetype": "commuter",
+    "phase": "small_talk",
+    "key": "dialogue.pool.commuter.small_talk.05",
+    "category": "family"
+  },
+  {
+    "id": "dl_commuter_small_talk_06",
+    "archetype": "commuter",
+    "phase": "small_talk",
+    "key": "dialogue.pool.commuter.small_talk.06",
+    "category": "humour"
+  },
+  {
+    "id": "dl_commuter_small_talk_07",
+    "archetype": "commuter",
+    "phase": "small_talk",
+    "key": "dialogue.pool.commuter.small_talk.07",
+    "category": "cricket"
+  },
+  {
+    "id": "dl_commuter_small_talk_08",
+    "archetype": "commuter",
+    "phase": "small_talk",
+    "key": "dialogue.pool.commuter.small_talk.08",
+    "category": "exams"
+  },
+  {
+    "id": "dl_commuter_small_talk_09",
+    "archetype": "commuter",
+    "phase": "small_talk",
+    "key": "dialogue.pool.commuter.small_talk.09",
+    "category": "jam"
+  },
+  {
+    "id": "dl_commuter_small_talk_10",
+    "archetype": "commuter",
+    "phase": "small_talk",
+    "key": "dialogue.pool.commuter.small_talk.10",
+    "category": "rain"
+  },
+  {
+    "id": "dl_commuter_small_talk_11",
+    "archetype": "commuter",
+    "phase": "small_talk",
+    "key": "dialogue.pool.commuter.small_talk.11",
+    "category": "family"
+  },
+  {
+    "id": "dl_commuter_small_talk_12",
+    "archetype": "commuter",
+    "phase": "small_talk",
+    "key": "dialogue.pool.commuter.small_talk.12",
+    "category": "humour"
+  },
+  {
+    "id": "dl_commuter_small_talk_13",
+    "archetype": "commuter",
+    "phase": "small_talk",
+    "key": "dialogue.pool.commuter.small_talk.13",
+    "category": "cricket"
+  },
+  {
+    "id": "dl_commuter_small_talk_14",
+    "archetype": "commuter",
+    "phase": "small_talk",
+    "key": "dialogue.pool.commuter.small_talk.14",
+    "category": "exams"
+  },
+  {
+    "id": "dl_commuter_small_talk_15",
+    "archetype": "commuter",
+    "phase": "small_talk",
+    "key": "dialogue.pool.commuter.small_talk.15",
+    "category": "jam"
+  },
+  {
+    "id": "dl_commuter_drop_off_01",
+    "archetype": "commuter",
+    "phase": "drop_off",
+    "key": "dialogue.pool.commuter.drop_off.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_drop_off_02",
+    "archetype": "commuter",
+    "phase": "drop_off",
+    "key": "dialogue.pool.commuter.drop_off.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_drop_off_03",
+    "archetype": "commuter",
+    "phase": "drop_off",
+    "key": "dialogue.pool.commuter.drop_off.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_drop_off_04",
+    "archetype": "commuter",
+    "phase": "drop_off",
+    "key": "dialogue.pool.commuter.drop_off.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_drop_off_05",
+    "archetype": "commuter",
+    "phase": "drop_off",
+    "key": "dialogue.pool.commuter.drop_off.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_drop_off_06",
+    "archetype": "commuter",
+    "phase": "drop_off",
+    "key": "dialogue.pool.commuter.drop_off.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_drop_off_07",
+    "archetype": "commuter",
+    "phase": "drop_off",
+    "key": "dialogue.pool.commuter.drop_off.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_drop_off_08",
+    "archetype": "commuter",
+    "phase": "drop_off",
+    "key": "dialogue.pool.commuter.drop_off.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_drop_off_09",
+    "archetype": "commuter",
+    "phase": "drop_off",
+    "key": "dialogue.pool.commuter.drop_off.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_drop_off_10",
+    "archetype": "commuter",
+    "phase": "drop_off",
+    "key": "dialogue.pool.commuter.drop_off.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_drop_off_11",
+    "archetype": "commuter",
+    "phase": "drop_off",
+    "key": "dialogue.pool.commuter.drop_off.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_drop_off_12",
+    "archetype": "commuter",
+    "phase": "drop_off",
+    "key": "dialogue.pool.commuter.drop_off.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_drop_off_13",
+    "archetype": "commuter",
+    "phase": "drop_off",
+    "key": "dialogue.pool.commuter.drop_off.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_drop_off_14",
+    "archetype": "commuter",
+    "phase": "drop_off",
+    "key": "dialogue.pool.commuter.drop_off.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_commuter_drop_off_15",
+    "archetype": "commuter",
+    "phase": "drop_off",
+    "key": "dialogue.pool.commuter.drop_off.15",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_greeting_01",
+    "archetype": "careful",
+    "phase": "greeting",
+    "key": "dialogue.pool.careful.greeting.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_greeting_02",
+    "archetype": "careful",
+    "phase": "greeting",
+    "key": "dialogue.pool.careful.greeting.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_greeting_03",
+    "archetype": "careful",
+    "phase": "greeting",
+    "key": "dialogue.pool.careful.greeting.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_greeting_04",
+    "archetype": "careful",
+    "phase": "greeting",
+    "key": "dialogue.pool.careful.greeting.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_greeting_05",
+    "archetype": "careful",
+    "phase": "greeting",
+    "key": "dialogue.pool.careful.greeting.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_greeting_06",
+    "archetype": "careful",
+    "phase": "greeting",
+    "key": "dialogue.pool.careful.greeting.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_greeting_07",
+    "archetype": "careful",
+    "phase": "greeting",
+    "key": "dialogue.pool.careful.greeting.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_greeting_08",
+    "archetype": "careful",
+    "phase": "greeting",
+    "key": "dialogue.pool.careful.greeting.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_greeting_09",
+    "archetype": "careful",
+    "phase": "greeting",
+    "key": "dialogue.pool.careful.greeting.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_greeting_10",
+    "archetype": "careful",
+    "phase": "greeting",
+    "key": "dialogue.pool.careful.greeting.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_greeting_11",
+    "archetype": "careful",
+    "phase": "greeting",
+    "key": "dialogue.pool.careful.greeting.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_greeting_12",
+    "archetype": "careful",
+    "phase": "greeting",
+    "key": "dialogue.pool.careful.greeting.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_greeting_13",
+    "archetype": "careful",
+    "phase": "greeting",
+    "key": "dialogue.pool.careful.greeting.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_greeting_14",
+    "archetype": "careful",
+    "phase": "greeting",
+    "key": "dialogue.pool.careful.greeting.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_greeting_15",
+    "archetype": "careful",
+    "phase": "greeting",
+    "key": "dialogue.pool.careful.greeting.15",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_offer_01",
+    "archetype": "careful",
+    "phase": "offer",
+    "key": "dialogue.pool.careful.offer.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_offer_02",
+    "archetype": "careful",
+    "phase": "offer",
+    "key": "dialogue.pool.careful.offer.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_offer_03",
+    "archetype": "careful",
+    "phase": "offer",
+    "key": "dialogue.pool.careful.offer.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_offer_04",
+    "archetype": "careful",
+    "phase": "offer",
+    "key": "dialogue.pool.careful.offer.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_offer_05",
+    "archetype": "careful",
+    "phase": "offer",
+    "key": "dialogue.pool.careful.offer.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_offer_06",
+    "archetype": "careful",
+    "phase": "offer",
+    "key": "dialogue.pool.careful.offer.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_offer_07",
+    "archetype": "careful",
+    "phase": "offer",
+    "key": "dialogue.pool.careful.offer.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_offer_08",
+    "archetype": "careful",
+    "phase": "offer",
+    "key": "dialogue.pool.careful.offer.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_offer_09",
+    "archetype": "careful",
+    "phase": "offer",
+    "key": "dialogue.pool.careful.offer.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_offer_10",
+    "archetype": "careful",
+    "phase": "offer",
+    "key": "dialogue.pool.careful.offer.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_offer_11",
+    "archetype": "careful",
+    "phase": "offer",
+    "key": "dialogue.pool.careful.offer.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_offer_12",
+    "archetype": "careful",
+    "phase": "offer",
+    "key": "dialogue.pool.careful.offer.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_offer_13",
+    "archetype": "careful",
+    "phase": "offer",
+    "key": "dialogue.pool.careful.offer.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_offer_14",
+    "archetype": "careful",
+    "phase": "offer",
+    "key": "dialogue.pool.careful.offer.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_offer_15",
+    "archetype": "careful",
+    "phase": "offer",
+    "key": "dialogue.pool.careful.offer.15",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_counter_01",
+    "archetype": "careful",
+    "phase": "counter",
+    "key": "dialogue.pool.careful.counter.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_counter_02",
+    "archetype": "careful",
+    "phase": "counter",
+    "key": "dialogue.pool.careful.counter.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_counter_03",
+    "archetype": "careful",
+    "phase": "counter",
+    "key": "dialogue.pool.careful.counter.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_counter_04",
+    "archetype": "careful",
+    "phase": "counter",
+    "key": "dialogue.pool.careful.counter.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_counter_05",
+    "archetype": "careful",
+    "phase": "counter",
+    "key": "dialogue.pool.careful.counter.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_counter_06",
+    "archetype": "careful",
+    "phase": "counter",
+    "key": "dialogue.pool.careful.counter.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_counter_07",
+    "archetype": "careful",
+    "phase": "counter",
+    "key": "dialogue.pool.careful.counter.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_counter_08",
+    "archetype": "careful",
+    "phase": "counter",
+    "key": "dialogue.pool.careful.counter.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_counter_09",
+    "archetype": "careful",
+    "phase": "counter",
+    "key": "dialogue.pool.careful.counter.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_counter_10",
+    "archetype": "careful",
+    "phase": "counter",
+    "key": "dialogue.pool.careful.counter.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_counter_11",
+    "archetype": "careful",
+    "phase": "counter",
+    "key": "dialogue.pool.careful.counter.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_counter_12",
+    "archetype": "careful",
+    "phase": "counter",
+    "key": "dialogue.pool.careful.counter.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_counter_13",
+    "archetype": "careful",
+    "phase": "counter",
+    "key": "dialogue.pool.careful.counter.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_counter_14",
+    "archetype": "careful",
+    "phase": "counter",
+    "key": "dialogue.pool.careful.counter.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_counter_15",
+    "archetype": "careful",
+    "phase": "counter",
+    "key": "dialogue.pool.careful.counter.15",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_accept_01",
+    "archetype": "careful",
+    "phase": "accept",
+    "key": "dialogue.pool.careful.accept.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_accept_02",
+    "archetype": "careful",
+    "phase": "accept",
+    "key": "dialogue.pool.careful.accept.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_accept_03",
+    "archetype": "careful",
+    "phase": "accept",
+    "key": "dialogue.pool.careful.accept.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_accept_04",
+    "archetype": "careful",
+    "phase": "accept",
+    "key": "dialogue.pool.careful.accept.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_accept_05",
+    "archetype": "careful",
+    "phase": "accept",
+    "key": "dialogue.pool.careful.accept.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_accept_06",
+    "archetype": "careful",
+    "phase": "accept",
+    "key": "dialogue.pool.careful.accept.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_accept_07",
+    "archetype": "careful",
+    "phase": "accept",
+    "key": "dialogue.pool.careful.accept.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_accept_08",
+    "archetype": "careful",
+    "phase": "accept",
+    "key": "dialogue.pool.careful.accept.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_accept_09",
+    "archetype": "careful",
+    "phase": "accept",
+    "key": "dialogue.pool.careful.accept.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_accept_10",
+    "archetype": "careful",
+    "phase": "accept",
+    "key": "dialogue.pool.careful.accept.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_accept_11",
+    "archetype": "careful",
+    "phase": "accept",
+    "key": "dialogue.pool.careful.accept.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_accept_12",
+    "archetype": "careful",
+    "phase": "accept",
+    "key": "dialogue.pool.careful.accept.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_accept_13",
+    "archetype": "careful",
+    "phase": "accept",
+    "key": "dialogue.pool.careful.accept.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_accept_14",
+    "archetype": "careful",
+    "phase": "accept",
+    "key": "dialogue.pool.careful.accept.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_accept_15",
+    "archetype": "careful",
+    "phase": "accept",
+    "key": "dialogue.pool.careful.accept.15",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_reject_01",
+    "archetype": "careful",
+    "phase": "reject",
+    "key": "dialogue.pool.careful.reject.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_reject_02",
+    "archetype": "careful",
+    "phase": "reject",
+    "key": "dialogue.pool.careful.reject.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_reject_03",
+    "archetype": "careful",
+    "phase": "reject",
+    "key": "dialogue.pool.careful.reject.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_reject_04",
+    "archetype": "careful",
+    "phase": "reject",
+    "key": "dialogue.pool.careful.reject.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_reject_05",
+    "archetype": "careful",
+    "phase": "reject",
+    "key": "dialogue.pool.careful.reject.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_reject_06",
+    "archetype": "careful",
+    "phase": "reject",
+    "key": "dialogue.pool.careful.reject.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_reject_07",
+    "archetype": "careful",
+    "phase": "reject",
+    "key": "dialogue.pool.careful.reject.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_reject_08",
+    "archetype": "careful",
+    "phase": "reject",
+    "key": "dialogue.pool.careful.reject.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_reject_09",
+    "archetype": "careful",
+    "phase": "reject",
+    "key": "dialogue.pool.careful.reject.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_reject_10",
+    "archetype": "careful",
+    "phase": "reject",
+    "key": "dialogue.pool.careful.reject.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_reject_11",
+    "archetype": "careful",
+    "phase": "reject",
+    "key": "dialogue.pool.careful.reject.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_reject_12",
+    "archetype": "careful",
+    "phase": "reject",
+    "key": "dialogue.pool.careful.reject.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_reject_13",
+    "archetype": "careful",
+    "phase": "reject",
+    "key": "dialogue.pool.careful.reject.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_reject_14",
+    "archetype": "careful",
+    "phase": "reject",
+    "key": "dialogue.pool.careful.reject.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_reject_15",
+    "archetype": "careful",
+    "phase": "reject",
+    "key": "dialogue.pool.careful.reject.15",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_small_talk_01",
+    "archetype": "careful",
+    "phase": "small_talk",
+    "key": "dialogue.pool.careful.small_talk.01",
+    "category": "cricket"
+  },
+  {
+    "id": "dl_careful_small_talk_02",
+    "archetype": "careful",
+    "phase": "small_talk",
+    "key": "dialogue.pool.careful.small_talk.02",
+    "category": "exams"
+  },
+  {
+    "id": "dl_careful_small_talk_03",
+    "archetype": "careful",
+    "phase": "small_talk",
+    "key": "dialogue.pool.careful.small_talk.03",
+    "category": "jam"
+  },
+  {
+    "id": "dl_careful_small_talk_04",
+    "archetype": "careful",
+    "phase": "small_talk",
+    "key": "dialogue.pool.careful.small_talk.04",
+    "category": "rain"
+  },
+  {
+    "id": "dl_careful_small_talk_05",
+    "archetype": "careful",
+    "phase": "small_talk",
+    "key": "dialogue.pool.careful.small_talk.05",
+    "category": "family"
+  },
+  {
+    "id": "dl_careful_small_talk_06",
+    "archetype": "careful",
+    "phase": "small_talk",
+    "key": "dialogue.pool.careful.small_talk.06",
+    "category": "humour"
+  },
+  {
+    "id": "dl_careful_small_talk_07",
+    "archetype": "careful",
+    "phase": "small_talk",
+    "key": "dialogue.pool.careful.small_talk.07",
+    "category": "cricket"
+  },
+  {
+    "id": "dl_careful_small_talk_08",
+    "archetype": "careful",
+    "phase": "small_talk",
+    "key": "dialogue.pool.careful.small_talk.08",
+    "category": "exams"
+  },
+  {
+    "id": "dl_careful_small_talk_09",
+    "archetype": "careful",
+    "phase": "small_talk",
+    "key": "dialogue.pool.careful.small_talk.09",
+    "category": "jam"
+  },
+  {
+    "id": "dl_careful_small_talk_10",
+    "archetype": "careful",
+    "phase": "small_talk",
+    "key": "dialogue.pool.careful.small_talk.10",
+    "category": "rain"
+  },
+  {
+    "id": "dl_careful_small_talk_11",
+    "archetype": "careful",
+    "phase": "small_talk",
+    "key": "dialogue.pool.careful.small_talk.11",
+    "category": "family"
+  },
+  {
+    "id": "dl_careful_small_talk_12",
+    "archetype": "careful",
+    "phase": "small_talk",
+    "key": "dialogue.pool.careful.small_talk.12",
+    "category": "humour"
+  },
+  {
+    "id": "dl_careful_small_talk_13",
+    "archetype": "careful",
+    "phase": "small_talk",
+    "key": "dialogue.pool.careful.small_talk.13",
+    "category": "cricket"
+  },
+  {
+    "id": "dl_careful_small_talk_14",
+    "archetype": "careful",
+    "phase": "small_talk",
+    "key": "dialogue.pool.careful.small_talk.14",
+    "category": "exams"
+  },
+  {
+    "id": "dl_careful_small_talk_15",
+    "archetype": "careful",
+    "phase": "small_talk",
+    "key": "dialogue.pool.careful.small_talk.15",
+    "category": "jam"
+  },
+  {
+    "id": "dl_careful_drop_off_01",
+    "archetype": "careful",
+    "phase": "drop_off",
+    "key": "dialogue.pool.careful.drop_off.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_drop_off_02",
+    "archetype": "careful",
+    "phase": "drop_off",
+    "key": "dialogue.pool.careful.drop_off.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_drop_off_03",
+    "archetype": "careful",
+    "phase": "drop_off",
+    "key": "dialogue.pool.careful.drop_off.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_drop_off_04",
+    "archetype": "careful",
+    "phase": "drop_off",
+    "key": "dialogue.pool.careful.drop_off.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_drop_off_05",
+    "archetype": "careful",
+    "phase": "drop_off",
+    "key": "dialogue.pool.careful.drop_off.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_drop_off_06",
+    "archetype": "careful",
+    "phase": "drop_off",
+    "key": "dialogue.pool.careful.drop_off.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_drop_off_07",
+    "archetype": "careful",
+    "phase": "drop_off",
+    "key": "dialogue.pool.careful.drop_off.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_drop_off_08",
+    "archetype": "careful",
+    "phase": "drop_off",
+    "key": "dialogue.pool.careful.drop_off.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_drop_off_09",
+    "archetype": "careful",
+    "phase": "drop_off",
+    "key": "dialogue.pool.careful.drop_off.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_drop_off_10",
+    "archetype": "careful",
+    "phase": "drop_off",
+    "key": "dialogue.pool.careful.drop_off.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_drop_off_11",
+    "archetype": "careful",
+    "phase": "drop_off",
+    "key": "dialogue.pool.careful.drop_off.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_drop_off_12",
+    "archetype": "careful",
+    "phase": "drop_off",
+    "key": "dialogue.pool.careful.drop_off.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_drop_off_13",
+    "archetype": "careful",
+    "phase": "drop_off",
+    "key": "dialogue.pool.careful.drop_off.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_drop_off_14",
+    "archetype": "careful",
+    "phase": "drop_off",
+    "key": "dialogue.pool.careful.drop_off.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_careful_drop_off_15",
+    "archetype": "careful",
+    "phase": "drop_off",
+    "key": "dialogue.pool.careful.drop_off.15",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_greeting_01",
+    "archetype": "regular",
+    "phase": "greeting",
+    "key": "dialogue.pool.regular.greeting.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_greeting_02",
+    "archetype": "regular",
+    "phase": "greeting",
+    "key": "dialogue.pool.regular.greeting.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_greeting_03",
+    "archetype": "regular",
+    "phase": "greeting",
+    "key": "dialogue.pool.regular.greeting.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_greeting_04",
+    "archetype": "regular",
+    "phase": "greeting",
+    "key": "dialogue.pool.regular.greeting.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_greeting_05",
+    "archetype": "regular",
+    "phase": "greeting",
+    "key": "dialogue.pool.regular.greeting.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_greeting_06",
+    "archetype": "regular",
+    "phase": "greeting",
+    "key": "dialogue.pool.regular.greeting.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_greeting_07",
+    "archetype": "regular",
+    "phase": "greeting",
+    "key": "dialogue.pool.regular.greeting.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_greeting_08",
+    "archetype": "regular",
+    "phase": "greeting",
+    "key": "dialogue.pool.regular.greeting.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_greeting_09",
+    "archetype": "regular",
+    "phase": "greeting",
+    "key": "dialogue.pool.regular.greeting.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_greeting_10",
+    "archetype": "regular",
+    "phase": "greeting",
+    "key": "dialogue.pool.regular.greeting.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_greeting_11",
+    "archetype": "regular",
+    "phase": "greeting",
+    "key": "dialogue.pool.regular.greeting.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_greeting_12",
+    "archetype": "regular",
+    "phase": "greeting",
+    "key": "dialogue.pool.regular.greeting.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_greeting_13",
+    "archetype": "regular",
+    "phase": "greeting",
+    "key": "dialogue.pool.regular.greeting.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_greeting_14",
+    "archetype": "regular",
+    "phase": "greeting",
+    "key": "dialogue.pool.regular.greeting.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_greeting_15",
+    "archetype": "regular",
+    "phase": "greeting",
+    "key": "dialogue.pool.regular.greeting.15",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_offer_01",
+    "archetype": "regular",
+    "phase": "offer",
+    "key": "dialogue.pool.regular.offer.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_offer_02",
+    "archetype": "regular",
+    "phase": "offer",
+    "key": "dialogue.pool.regular.offer.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_offer_03",
+    "archetype": "regular",
+    "phase": "offer",
+    "key": "dialogue.pool.regular.offer.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_offer_04",
+    "archetype": "regular",
+    "phase": "offer",
+    "key": "dialogue.pool.regular.offer.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_offer_05",
+    "archetype": "regular",
+    "phase": "offer",
+    "key": "dialogue.pool.regular.offer.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_offer_06",
+    "archetype": "regular",
+    "phase": "offer",
+    "key": "dialogue.pool.regular.offer.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_offer_07",
+    "archetype": "regular",
+    "phase": "offer",
+    "key": "dialogue.pool.regular.offer.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_offer_08",
+    "archetype": "regular",
+    "phase": "offer",
+    "key": "dialogue.pool.regular.offer.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_offer_09",
+    "archetype": "regular",
+    "phase": "offer",
+    "key": "dialogue.pool.regular.offer.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_offer_10",
+    "archetype": "regular",
+    "phase": "offer",
+    "key": "dialogue.pool.regular.offer.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_offer_11",
+    "archetype": "regular",
+    "phase": "offer",
+    "key": "dialogue.pool.regular.offer.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_offer_12",
+    "archetype": "regular",
+    "phase": "offer",
+    "key": "dialogue.pool.regular.offer.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_offer_13",
+    "archetype": "regular",
+    "phase": "offer",
+    "key": "dialogue.pool.regular.offer.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_offer_14",
+    "archetype": "regular",
+    "phase": "offer",
+    "key": "dialogue.pool.regular.offer.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_offer_15",
+    "archetype": "regular",
+    "phase": "offer",
+    "key": "dialogue.pool.regular.offer.15",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_counter_01",
+    "archetype": "regular",
+    "phase": "counter",
+    "key": "dialogue.pool.regular.counter.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_counter_02",
+    "archetype": "regular",
+    "phase": "counter",
+    "key": "dialogue.pool.regular.counter.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_counter_03",
+    "archetype": "regular",
+    "phase": "counter",
+    "key": "dialogue.pool.regular.counter.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_counter_04",
+    "archetype": "regular",
+    "phase": "counter",
+    "key": "dialogue.pool.regular.counter.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_counter_05",
+    "archetype": "regular",
+    "phase": "counter",
+    "key": "dialogue.pool.regular.counter.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_counter_06",
+    "archetype": "regular",
+    "phase": "counter",
+    "key": "dialogue.pool.regular.counter.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_counter_07",
+    "archetype": "regular",
+    "phase": "counter",
+    "key": "dialogue.pool.regular.counter.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_counter_08",
+    "archetype": "regular",
+    "phase": "counter",
+    "key": "dialogue.pool.regular.counter.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_counter_09",
+    "archetype": "regular",
+    "phase": "counter",
+    "key": "dialogue.pool.regular.counter.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_counter_10",
+    "archetype": "regular",
+    "phase": "counter",
+    "key": "dialogue.pool.regular.counter.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_counter_11",
+    "archetype": "regular",
+    "phase": "counter",
+    "key": "dialogue.pool.regular.counter.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_counter_12",
+    "archetype": "regular",
+    "phase": "counter",
+    "key": "dialogue.pool.regular.counter.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_counter_13",
+    "archetype": "regular",
+    "phase": "counter",
+    "key": "dialogue.pool.regular.counter.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_counter_14",
+    "archetype": "regular",
+    "phase": "counter",
+    "key": "dialogue.pool.regular.counter.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_counter_15",
+    "archetype": "regular",
+    "phase": "counter",
+    "key": "dialogue.pool.regular.counter.15",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_accept_01",
+    "archetype": "regular",
+    "phase": "accept",
+    "key": "dialogue.pool.regular.accept.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_accept_02",
+    "archetype": "regular",
+    "phase": "accept",
+    "key": "dialogue.pool.regular.accept.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_accept_03",
+    "archetype": "regular",
+    "phase": "accept",
+    "key": "dialogue.pool.regular.accept.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_accept_04",
+    "archetype": "regular",
+    "phase": "accept",
+    "key": "dialogue.pool.regular.accept.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_accept_05",
+    "archetype": "regular",
+    "phase": "accept",
+    "key": "dialogue.pool.regular.accept.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_accept_06",
+    "archetype": "regular",
+    "phase": "accept",
+    "key": "dialogue.pool.regular.accept.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_accept_07",
+    "archetype": "regular",
+    "phase": "accept",
+    "key": "dialogue.pool.regular.accept.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_accept_08",
+    "archetype": "regular",
+    "phase": "accept",
+    "key": "dialogue.pool.regular.accept.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_accept_09",
+    "archetype": "regular",
+    "phase": "accept",
+    "key": "dialogue.pool.regular.accept.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_accept_10",
+    "archetype": "regular",
+    "phase": "accept",
+    "key": "dialogue.pool.regular.accept.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_accept_11",
+    "archetype": "regular",
+    "phase": "accept",
+    "key": "dialogue.pool.regular.accept.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_accept_12",
+    "archetype": "regular",
+    "phase": "accept",
+    "key": "dialogue.pool.regular.accept.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_accept_13",
+    "archetype": "regular",
+    "phase": "accept",
+    "key": "dialogue.pool.regular.accept.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_accept_14",
+    "archetype": "regular",
+    "phase": "accept",
+    "key": "dialogue.pool.regular.accept.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_accept_15",
+    "archetype": "regular",
+    "phase": "accept",
+    "key": "dialogue.pool.regular.accept.15",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_reject_01",
+    "archetype": "regular",
+    "phase": "reject",
+    "key": "dialogue.pool.regular.reject.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_reject_02",
+    "archetype": "regular",
+    "phase": "reject",
+    "key": "dialogue.pool.regular.reject.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_reject_03",
+    "archetype": "regular",
+    "phase": "reject",
+    "key": "dialogue.pool.regular.reject.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_reject_04",
+    "archetype": "regular",
+    "phase": "reject",
+    "key": "dialogue.pool.regular.reject.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_reject_05",
+    "archetype": "regular",
+    "phase": "reject",
+    "key": "dialogue.pool.regular.reject.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_reject_06",
+    "archetype": "regular",
+    "phase": "reject",
+    "key": "dialogue.pool.regular.reject.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_reject_07",
+    "archetype": "regular",
+    "phase": "reject",
+    "key": "dialogue.pool.regular.reject.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_reject_08",
+    "archetype": "regular",
+    "phase": "reject",
+    "key": "dialogue.pool.regular.reject.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_reject_09",
+    "archetype": "regular",
+    "phase": "reject",
+    "key": "dialogue.pool.regular.reject.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_reject_10",
+    "archetype": "regular",
+    "phase": "reject",
+    "key": "dialogue.pool.regular.reject.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_reject_11",
+    "archetype": "regular",
+    "phase": "reject",
+    "key": "dialogue.pool.regular.reject.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_reject_12",
+    "archetype": "regular",
+    "phase": "reject",
+    "key": "dialogue.pool.regular.reject.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_reject_13",
+    "archetype": "regular",
+    "phase": "reject",
+    "key": "dialogue.pool.regular.reject.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_reject_14",
+    "archetype": "regular",
+    "phase": "reject",
+    "key": "dialogue.pool.regular.reject.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_reject_15",
+    "archetype": "regular",
+    "phase": "reject",
+    "key": "dialogue.pool.regular.reject.15",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_small_talk_01",
+    "archetype": "regular",
+    "phase": "small_talk",
+    "key": "dialogue.pool.regular.small_talk.01",
+    "category": "cricket"
+  },
+  {
+    "id": "dl_regular_small_talk_02",
+    "archetype": "regular",
+    "phase": "small_talk",
+    "key": "dialogue.pool.regular.small_talk.02",
+    "category": "exams"
+  },
+  {
+    "id": "dl_regular_small_talk_03",
+    "archetype": "regular",
+    "phase": "small_talk",
+    "key": "dialogue.pool.regular.small_talk.03",
+    "category": "jam"
+  },
+  {
+    "id": "dl_regular_small_talk_04",
+    "archetype": "regular",
+    "phase": "small_talk",
+    "key": "dialogue.pool.regular.small_talk.04",
+    "category": "rain"
+  },
+  {
+    "id": "dl_regular_small_talk_05",
+    "archetype": "regular",
+    "phase": "small_talk",
+    "key": "dialogue.pool.regular.small_talk.05",
+    "category": "family"
+  },
+  {
+    "id": "dl_regular_small_talk_06",
+    "archetype": "regular",
+    "phase": "small_talk",
+    "key": "dialogue.pool.regular.small_talk.06",
+    "category": "humour"
+  },
+  {
+    "id": "dl_regular_small_talk_07",
+    "archetype": "regular",
+    "phase": "small_talk",
+    "key": "dialogue.pool.regular.small_talk.07",
+    "category": "cricket"
+  },
+  {
+    "id": "dl_regular_small_talk_08",
+    "archetype": "regular",
+    "phase": "small_talk",
+    "key": "dialogue.pool.regular.small_talk.08",
+    "category": "exams"
+  },
+  {
+    "id": "dl_regular_small_talk_09",
+    "archetype": "regular",
+    "phase": "small_talk",
+    "key": "dialogue.pool.regular.small_talk.09",
+    "category": "jam"
+  },
+  {
+    "id": "dl_regular_small_talk_10",
+    "archetype": "regular",
+    "phase": "small_talk",
+    "key": "dialogue.pool.regular.small_talk.10",
+    "category": "rain"
+  },
+  {
+    "id": "dl_regular_small_talk_11",
+    "archetype": "regular",
+    "phase": "small_talk",
+    "key": "dialogue.pool.regular.small_talk.11",
+    "category": "family"
+  },
+  {
+    "id": "dl_regular_small_talk_12",
+    "archetype": "regular",
+    "phase": "small_talk",
+    "key": "dialogue.pool.regular.small_talk.12",
+    "category": "humour"
+  },
+  {
+    "id": "dl_regular_small_talk_13",
+    "archetype": "regular",
+    "phase": "small_talk",
+    "key": "dialogue.pool.regular.small_talk.13",
+    "category": "cricket"
+  },
+  {
+    "id": "dl_regular_small_talk_14",
+    "archetype": "regular",
+    "phase": "small_talk",
+    "key": "dialogue.pool.regular.small_talk.14",
+    "category": "exams"
+  },
+  {
+    "id": "dl_regular_small_talk_15",
+    "archetype": "regular",
+    "phase": "small_talk",
+    "key": "dialogue.pool.regular.small_talk.15",
+    "category": "jam"
+  },
+  {
+    "id": "dl_regular_drop_off_01",
+    "archetype": "regular",
+    "phase": "drop_off",
+    "key": "dialogue.pool.regular.drop_off.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_drop_off_02",
+    "archetype": "regular",
+    "phase": "drop_off",
+    "key": "dialogue.pool.regular.drop_off.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_drop_off_03",
+    "archetype": "regular",
+    "phase": "drop_off",
+    "key": "dialogue.pool.regular.drop_off.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_drop_off_04",
+    "archetype": "regular",
+    "phase": "drop_off",
+    "key": "dialogue.pool.regular.drop_off.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_drop_off_05",
+    "archetype": "regular",
+    "phase": "drop_off",
+    "key": "dialogue.pool.regular.drop_off.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_drop_off_06",
+    "archetype": "regular",
+    "phase": "drop_off",
+    "key": "dialogue.pool.regular.drop_off.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_drop_off_07",
+    "archetype": "regular",
+    "phase": "drop_off",
+    "key": "dialogue.pool.regular.drop_off.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_drop_off_08",
+    "archetype": "regular",
+    "phase": "drop_off",
+    "key": "dialogue.pool.regular.drop_off.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_drop_off_09",
+    "archetype": "regular",
+    "phase": "drop_off",
+    "key": "dialogue.pool.regular.drop_off.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_drop_off_10",
+    "archetype": "regular",
+    "phase": "drop_off",
+    "key": "dialogue.pool.regular.drop_off.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_drop_off_11",
+    "archetype": "regular",
+    "phase": "drop_off",
+    "key": "dialogue.pool.regular.drop_off.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_drop_off_12",
+    "archetype": "regular",
+    "phase": "drop_off",
+    "key": "dialogue.pool.regular.drop_off.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_drop_off_13",
+    "archetype": "regular",
+    "phase": "drop_off",
+    "key": "dialogue.pool.regular.drop_off.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_drop_off_14",
+    "archetype": "regular",
+    "phase": "drop_off",
+    "key": "dialogue.pool.regular.drop_off.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_regular_drop_off_15",
+    "archetype": "regular",
+    "phase": "drop_off",
+    "key": "dialogue.pool.regular.drop_off.15",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_greeting_01",
+    "archetype": "risky",
+    "phase": "greeting",
+    "key": "dialogue.pool.risky.greeting.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_greeting_02",
+    "archetype": "risky",
+    "phase": "greeting",
+    "key": "dialogue.pool.risky.greeting.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_greeting_03",
+    "archetype": "risky",
+    "phase": "greeting",
+    "key": "dialogue.pool.risky.greeting.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_greeting_04",
+    "archetype": "risky",
+    "phase": "greeting",
+    "key": "dialogue.pool.risky.greeting.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_greeting_05",
+    "archetype": "risky",
+    "phase": "greeting",
+    "key": "dialogue.pool.risky.greeting.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_greeting_06",
+    "archetype": "risky",
+    "phase": "greeting",
+    "key": "dialogue.pool.risky.greeting.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_greeting_07",
+    "archetype": "risky",
+    "phase": "greeting",
+    "key": "dialogue.pool.risky.greeting.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_greeting_08",
+    "archetype": "risky",
+    "phase": "greeting",
+    "key": "dialogue.pool.risky.greeting.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_greeting_09",
+    "archetype": "risky",
+    "phase": "greeting",
+    "key": "dialogue.pool.risky.greeting.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_greeting_10",
+    "archetype": "risky",
+    "phase": "greeting",
+    "key": "dialogue.pool.risky.greeting.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_greeting_11",
+    "archetype": "risky",
+    "phase": "greeting",
+    "key": "dialogue.pool.risky.greeting.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_greeting_12",
+    "archetype": "risky",
+    "phase": "greeting",
+    "key": "dialogue.pool.risky.greeting.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_greeting_13",
+    "archetype": "risky",
+    "phase": "greeting",
+    "key": "dialogue.pool.risky.greeting.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_greeting_14",
+    "archetype": "risky",
+    "phase": "greeting",
+    "key": "dialogue.pool.risky.greeting.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_greeting_15",
+    "archetype": "risky",
+    "phase": "greeting",
+    "key": "dialogue.pool.risky.greeting.15",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_offer_01",
+    "archetype": "risky",
+    "phase": "offer",
+    "key": "dialogue.pool.risky.offer.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_offer_02",
+    "archetype": "risky",
+    "phase": "offer",
+    "key": "dialogue.pool.risky.offer.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_offer_03",
+    "archetype": "risky",
+    "phase": "offer",
+    "key": "dialogue.pool.risky.offer.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_offer_04",
+    "archetype": "risky",
+    "phase": "offer",
+    "key": "dialogue.pool.risky.offer.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_offer_05",
+    "archetype": "risky",
+    "phase": "offer",
+    "key": "dialogue.pool.risky.offer.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_offer_06",
+    "archetype": "risky",
+    "phase": "offer",
+    "key": "dialogue.pool.risky.offer.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_offer_07",
+    "archetype": "risky",
+    "phase": "offer",
+    "key": "dialogue.pool.risky.offer.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_offer_08",
+    "archetype": "risky",
+    "phase": "offer",
+    "key": "dialogue.pool.risky.offer.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_offer_09",
+    "archetype": "risky",
+    "phase": "offer",
+    "key": "dialogue.pool.risky.offer.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_offer_10",
+    "archetype": "risky",
+    "phase": "offer",
+    "key": "dialogue.pool.risky.offer.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_offer_11",
+    "archetype": "risky",
+    "phase": "offer",
+    "key": "dialogue.pool.risky.offer.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_offer_12",
+    "archetype": "risky",
+    "phase": "offer",
+    "key": "dialogue.pool.risky.offer.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_offer_13",
+    "archetype": "risky",
+    "phase": "offer",
+    "key": "dialogue.pool.risky.offer.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_offer_14",
+    "archetype": "risky",
+    "phase": "offer",
+    "key": "dialogue.pool.risky.offer.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_offer_15",
+    "archetype": "risky",
+    "phase": "offer",
+    "key": "dialogue.pool.risky.offer.15",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_counter_01",
+    "archetype": "risky",
+    "phase": "counter",
+    "key": "dialogue.pool.risky.counter.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_counter_02",
+    "archetype": "risky",
+    "phase": "counter",
+    "key": "dialogue.pool.risky.counter.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_counter_03",
+    "archetype": "risky",
+    "phase": "counter",
+    "key": "dialogue.pool.risky.counter.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_counter_04",
+    "archetype": "risky",
+    "phase": "counter",
+    "key": "dialogue.pool.risky.counter.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_counter_05",
+    "archetype": "risky",
+    "phase": "counter",
+    "key": "dialogue.pool.risky.counter.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_counter_06",
+    "archetype": "risky",
+    "phase": "counter",
+    "key": "dialogue.pool.risky.counter.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_counter_07",
+    "archetype": "risky",
+    "phase": "counter",
+    "key": "dialogue.pool.risky.counter.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_counter_08",
+    "archetype": "risky",
+    "phase": "counter",
+    "key": "dialogue.pool.risky.counter.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_counter_09",
+    "archetype": "risky",
+    "phase": "counter",
+    "key": "dialogue.pool.risky.counter.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_counter_10",
+    "archetype": "risky",
+    "phase": "counter",
+    "key": "dialogue.pool.risky.counter.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_counter_11",
+    "archetype": "risky",
+    "phase": "counter",
+    "key": "dialogue.pool.risky.counter.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_counter_12",
+    "archetype": "risky",
+    "phase": "counter",
+    "key": "dialogue.pool.risky.counter.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_counter_13",
+    "archetype": "risky",
+    "phase": "counter",
+    "key": "dialogue.pool.risky.counter.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_counter_14",
+    "archetype": "risky",
+    "phase": "counter",
+    "key": "dialogue.pool.risky.counter.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_counter_15",
+    "archetype": "risky",
+    "phase": "counter",
+    "key": "dialogue.pool.risky.counter.15",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_accept_01",
+    "archetype": "risky",
+    "phase": "accept",
+    "key": "dialogue.pool.risky.accept.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_accept_02",
+    "archetype": "risky",
+    "phase": "accept",
+    "key": "dialogue.pool.risky.accept.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_accept_03",
+    "archetype": "risky",
+    "phase": "accept",
+    "key": "dialogue.pool.risky.accept.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_accept_04",
+    "archetype": "risky",
+    "phase": "accept",
+    "key": "dialogue.pool.risky.accept.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_accept_05",
+    "archetype": "risky",
+    "phase": "accept",
+    "key": "dialogue.pool.risky.accept.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_accept_06",
+    "archetype": "risky",
+    "phase": "accept",
+    "key": "dialogue.pool.risky.accept.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_accept_07",
+    "archetype": "risky",
+    "phase": "accept",
+    "key": "dialogue.pool.risky.accept.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_accept_08",
+    "archetype": "risky",
+    "phase": "accept",
+    "key": "dialogue.pool.risky.accept.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_accept_09",
+    "archetype": "risky",
+    "phase": "accept",
+    "key": "dialogue.pool.risky.accept.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_accept_10",
+    "archetype": "risky",
+    "phase": "accept",
+    "key": "dialogue.pool.risky.accept.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_accept_11",
+    "archetype": "risky",
+    "phase": "accept",
+    "key": "dialogue.pool.risky.accept.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_accept_12",
+    "archetype": "risky",
+    "phase": "accept",
+    "key": "dialogue.pool.risky.accept.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_accept_13",
+    "archetype": "risky",
+    "phase": "accept",
+    "key": "dialogue.pool.risky.accept.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_accept_14",
+    "archetype": "risky",
+    "phase": "accept",
+    "key": "dialogue.pool.risky.accept.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_accept_15",
+    "archetype": "risky",
+    "phase": "accept",
+    "key": "dialogue.pool.risky.accept.15",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_reject_01",
+    "archetype": "risky",
+    "phase": "reject",
+    "key": "dialogue.pool.risky.reject.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_reject_02",
+    "archetype": "risky",
+    "phase": "reject",
+    "key": "dialogue.pool.risky.reject.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_reject_03",
+    "archetype": "risky",
+    "phase": "reject",
+    "key": "dialogue.pool.risky.reject.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_reject_04",
+    "archetype": "risky",
+    "phase": "reject",
+    "key": "dialogue.pool.risky.reject.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_reject_05",
+    "archetype": "risky",
+    "phase": "reject",
+    "key": "dialogue.pool.risky.reject.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_reject_06",
+    "archetype": "risky",
+    "phase": "reject",
+    "key": "dialogue.pool.risky.reject.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_reject_07",
+    "archetype": "risky",
+    "phase": "reject",
+    "key": "dialogue.pool.risky.reject.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_reject_08",
+    "archetype": "risky",
+    "phase": "reject",
+    "key": "dialogue.pool.risky.reject.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_reject_09",
+    "archetype": "risky",
+    "phase": "reject",
+    "key": "dialogue.pool.risky.reject.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_reject_10",
+    "archetype": "risky",
+    "phase": "reject",
+    "key": "dialogue.pool.risky.reject.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_reject_11",
+    "archetype": "risky",
+    "phase": "reject",
+    "key": "dialogue.pool.risky.reject.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_reject_12",
+    "archetype": "risky",
+    "phase": "reject",
+    "key": "dialogue.pool.risky.reject.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_reject_13",
+    "archetype": "risky",
+    "phase": "reject",
+    "key": "dialogue.pool.risky.reject.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_reject_14",
+    "archetype": "risky",
+    "phase": "reject",
+    "key": "dialogue.pool.risky.reject.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_reject_15",
+    "archetype": "risky",
+    "phase": "reject",
+    "key": "dialogue.pool.risky.reject.15",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_small_talk_01",
+    "archetype": "risky",
+    "phase": "small_talk",
+    "key": "dialogue.pool.risky.small_talk.01",
+    "category": "cricket"
+  },
+  {
+    "id": "dl_risky_small_talk_02",
+    "archetype": "risky",
+    "phase": "small_talk",
+    "key": "dialogue.pool.risky.small_talk.02",
+    "category": "exams"
+  },
+  {
+    "id": "dl_risky_small_talk_03",
+    "archetype": "risky",
+    "phase": "small_talk",
+    "key": "dialogue.pool.risky.small_talk.03",
+    "category": "jam"
+  },
+  {
+    "id": "dl_risky_small_talk_04",
+    "archetype": "risky",
+    "phase": "small_talk",
+    "key": "dialogue.pool.risky.small_talk.04",
+    "category": "rain"
+  },
+  {
+    "id": "dl_risky_small_talk_05",
+    "archetype": "risky",
+    "phase": "small_talk",
+    "key": "dialogue.pool.risky.small_talk.05",
+    "category": "family"
+  },
+  {
+    "id": "dl_risky_small_talk_06",
+    "archetype": "risky",
+    "phase": "small_talk",
+    "key": "dialogue.pool.risky.small_talk.06",
+    "category": "humour"
+  },
+  {
+    "id": "dl_risky_small_talk_07",
+    "archetype": "risky",
+    "phase": "small_talk",
+    "key": "dialogue.pool.risky.small_talk.07",
+    "category": "cricket"
+  },
+  {
+    "id": "dl_risky_small_talk_08",
+    "archetype": "risky",
+    "phase": "small_talk",
+    "key": "dialogue.pool.risky.small_talk.08",
+    "category": "exams"
+  },
+  {
+    "id": "dl_risky_small_talk_09",
+    "archetype": "risky",
+    "phase": "small_talk",
+    "key": "dialogue.pool.risky.small_talk.09",
+    "category": "jam"
+  },
+  {
+    "id": "dl_risky_small_talk_10",
+    "archetype": "risky",
+    "phase": "small_talk",
+    "key": "dialogue.pool.risky.small_talk.10",
+    "category": "rain"
+  },
+  {
+    "id": "dl_risky_small_talk_11",
+    "archetype": "risky",
+    "phase": "small_talk",
+    "key": "dialogue.pool.risky.small_talk.11",
+    "category": "family"
+  },
+  {
+    "id": "dl_risky_small_talk_12",
+    "archetype": "risky",
+    "phase": "small_talk",
+    "key": "dialogue.pool.risky.small_talk.12",
+    "category": "humour"
+  },
+  {
+    "id": "dl_risky_small_talk_13",
+    "archetype": "risky",
+    "phase": "small_talk",
+    "key": "dialogue.pool.risky.small_talk.13",
+    "category": "cricket"
+  },
+  {
+    "id": "dl_risky_small_talk_14",
+    "archetype": "risky",
+    "phase": "small_talk",
+    "key": "dialogue.pool.risky.small_talk.14",
+    "category": "exams"
+  },
+  {
+    "id": "dl_risky_small_talk_15",
+    "archetype": "risky",
+    "phase": "small_talk",
+    "key": "dialogue.pool.risky.small_talk.15",
+    "category": "jam"
+  },
+  {
+    "id": "dl_risky_drop_off_01",
+    "archetype": "risky",
+    "phase": "drop_off",
+    "key": "dialogue.pool.risky.drop_off.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_drop_off_02",
+    "archetype": "risky",
+    "phase": "drop_off",
+    "key": "dialogue.pool.risky.drop_off.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_drop_off_03",
+    "archetype": "risky",
+    "phase": "drop_off",
+    "key": "dialogue.pool.risky.drop_off.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_drop_off_04",
+    "archetype": "risky",
+    "phase": "drop_off",
+    "key": "dialogue.pool.risky.drop_off.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_drop_off_05",
+    "archetype": "risky",
+    "phase": "drop_off",
+    "key": "dialogue.pool.risky.drop_off.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_drop_off_06",
+    "archetype": "risky",
+    "phase": "drop_off",
+    "key": "dialogue.pool.risky.drop_off.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_drop_off_07",
+    "archetype": "risky",
+    "phase": "drop_off",
+    "key": "dialogue.pool.risky.drop_off.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_drop_off_08",
+    "archetype": "risky",
+    "phase": "drop_off",
+    "key": "dialogue.pool.risky.drop_off.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_drop_off_09",
+    "archetype": "risky",
+    "phase": "drop_off",
+    "key": "dialogue.pool.risky.drop_off.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_drop_off_10",
+    "archetype": "risky",
+    "phase": "drop_off",
+    "key": "dialogue.pool.risky.drop_off.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_drop_off_11",
+    "archetype": "risky",
+    "phase": "drop_off",
+    "key": "dialogue.pool.risky.drop_off.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_drop_off_12",
+    "archetype": "risky",
+    "phase": "drop_off",
+    "key": "dialogue.pool.risky.drop_off.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_drop_off_13",
+    "archetype": "risky",
+    "phase": "drop_off",
+    "key": "dialogue.pool.risky.drop_off.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_drop_off_14",
+    "archetype": "risky",
+    "phase": "drop_off",
+    "key": "dialogue.pool.risky.drop_off.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_risky_drop_off_15",
+    "archetype": "risky",
+    "phase": "drop_off",
+    "key": "dialogue.pool.risky.drop_off.15",
+    "category": "general"
+  },
+  {
+    "id": "char_tanvir_flag_punctual",
+    "characterId": "char_tanvir",
+    "archetype": "commuter",
+    "phase": "small_talk",
+    "key": "dialogue.char.tanvir.punctual",
+    "category": "general",
+    "requires": {
+      "flags": {
+        "helpedTanvirEarly": true
+      }
+    }
+  },
+  {
+    "id": "char_tanvir_flag_rush_meeting",
+    "characterId": "char_tanvir",
+    "archetype": "commuter",
+    "phase": "greeting",
+    "key": "dialogue.char.tanvir.rush_meeting",
+    "category": "general",
+    "requires": {
+      "minRelationship": 20
+    }
+  },
+  {
+    "id": "char_tanvir_flag_bonus",
+    "characterId": "char_tanvir",
+    "archetype": "commuter",
+    "phase": "drop_off",
+    "key": "dialogue.char.tanvir.bonus",
+    "category": "general",
+    "requires": {
+      "flags": {
+        "gaveCorporateDiscount": true
+      }
+    }
+  },
+  {
+    "id": "char_mintu_flag_tea_discount",
+    "characterId": "char_mintu",
+    "archetype": "regular",
+    "phase": "greeting",
+    "key": "dialogue.char.mintu.tea_discount",
+    "category": "family",
+    "requires": {
+      "flags": {
+        "mintuTeaDiscount": true
+      }
+    }
+  },
+  {
+    "id": "char_mintu_flag_bike_sound",
+    "characterId": "char_mintu",
+    "archetype": "regular",
+    "phase": "small_talk",
+    "key": "dialogue.char.mintu.bike_sound",
+    "category": "general",
+    "requires": {
+      "minRelationship": 30
+    }
+  },
+  {
+    "id": "char_mintu_flag_drop",
+    "characterId": "char_mintu",
+    "archetype": "regular",
+    "phase": "drop_off",
+    "key": "dialogue.char.mintu.drop",
+    "category": "humour",
+    "requires": {
+      "minRelationship": 15
+    }
+  },
+  {
+    "id": "char_rahim_flag_shortcut",
+    "characterId": "char_rahim",
+    "archetype": "regular",
+    "phase": "small_talk",
+    "key": "dialogue.char.rahim.shortcut",
+    "category": "jam",
+    "requires": {
+      "flags": {
+        "tookRahimShortcut": true
+      }
+    }
+  },
+  {
+    "id": "char_rahim_flag_respect",
+    "characterId": "char_rahim",
+    "archetype": "regular",
+    "phase": "greeting",
+    "key": "dialogue.char.rahim.respect",
+    "category": "family",
+    "requires": {
+      "minRelationship": 25
+    }
+  },
+  {
+    "id": "char_rahim_flag_blessing",
+    "characterId": "char_rahim",
+    "archetype": "regular",
+    "phase": "drop_off",
+    "key": "dialogue.char.rahim.blessing",
+    "category": "family",
+    "requires": {
+      "minRelationship": 20
+    }
+  },
+  {
+    "id": "char_ferdousi_flag_safe_child",
+    "characterId": "char_ferdousi",
+    "archetype": "careful",
+    "phase": "small_talk",
+    "key": "dialogue.char.ferdousi.safe_child",
+    "category": "family",
+    "requires": {
+      "flags": {
+        "droveCarefullyChild": true
+      }
+    }
+  },
+  {
+    "id": "char_ferdousi_flag_school_run",
+    "characterId": "char_ferdousi",
+    "archetype": "careful",
+    "phase": "greeting",
+    "key": "dialogue.char.ferdousi.school_run",
+    "category": "exams",
+    "requires": {
+      "minRelationship": 20
+    }
+  },
+  {
+    "id": "char_ferdousi_flag_gratitude",
+    "characterId": "char_ferdousi",
+    "archetype": "careful",
+    "phase": "drop_off",
+    "key": "dialogue.char.ferdousi.gratitude",
+    "category": "family",
+    "requires": {
+      "minRelationship": 25
+    }
+  },
+  {
+    "id": "char_kamal_flag_mechanic_review",
+    "characterId": "char_kamal",
+    "archetype": "regular",
+    "phase": "small_talk",
+    "key": "dialogue.char.kamal.mechanic_review",
+    "category": "general",
+    "requires": {
+      "flags": {
+        "boughtBike": true
+      }
+    }
+  },
+  {
+    "id": "char_kamal_flag_garage_call",
+    "characterId": "char_kamal",
+    "archetype": "regular",
+    "phase": "greeting",
+    "key": "dialogue.char.kamal.garage_call",
+    "category": "general",
+    "requires": {
+      "minRelationship": 30
+    }
+  },
+  {
+    "id": "char_kamal_flag_discount_hint",
+    "characterId": "char_kamal",
+    "archetype": "regular",
+    "phase": "drop_off",
+    "key": "dialogue.char.kamal.discount_hint",
+    "category": "general",
+    "requires": {
+      "minRelationship": 25
+    }
+  },
+  {
+    "id": "char_nabila_flag_exam_passed",
+    "characterId": "char_nabila",
+    "archetype": "bargainer",
+    "phase": "small_talk",
+    "key": "dialogue.char.nabila.exam_passed",
+    "category": "exams",
+    "requires": {
+      "flags": {
+        "studentDiscountGiven": true
+      }
+    }
+  },
+  {
+    "id": "char_nabila_flag_campus",
+    "characterId": "char_nabila",
+    "archetype": "bargainer",
+    "phase": "greeting",
+    "key": "dialogue.char.nabila.campus",
+    "category": "exams",
+    "requires": {
+      "minRelationship": 20
+    }
+  },
+  {
+    "id": "char_jamil_flag_silent",
+    "characterId": "char_jamil",
+    "archetype": "risky",
+    "phase": "small_talk",
+    "key": "dialogue.char.jamil.silent",
+    "category": "general",
+    "requires": {
+      "flags": {
+        "refusedShadyParcel": true
+      }
+    }
+  },
+  {
+    "id": "char_jamil_flag_cooperation",
+    "characterId": "char_jamil",
+    "archetype": "risky",
+    "phase": "greeting",
+    "key": "dialogue.char.jamil.cooperation",
+    "category": "general",
+    "requires": {
+      "flags": {
+        "joinedScheme": true
+      }
+    }
+  },
+  {
+    "id": "char_morshed_flag_helmet_praise",
+    "characterId": "char_morshed",
+    "archetype": "commuter",
+    "phase": "small_talk",
+    "key": "dialogue.char.morshed.helmet_praise",
+    "category": "general",
+    "requires": {
+      "flags": {
+        "helpedPoliceCheck": true
+      }
+    }
+  },
+  {
+    "id": "char_morshed_flag_duty",
+    "characterId": "char_morshed",
+    "archetype": "commuter",
+    "phase": "greeting",
+    "key": "dialogue.char.morshed.duty",
+    "category": "general",
+    "requires": {
+      "minRelationship": 15
+    }
+  },
+  {
+    "id": "char_bablu_flag_heavy_haul",
+    "characterId": "char_bablu",
+    "archetype": "regular",
+    "phase": "small_talk",
+    "key": "dialogue.char.bablu.heavy_haul",
+    "category": "general",
+    "requires": {
+      "flags": {
+        "hauledHeavyGoods": true
+      }
+    }
+  },
+  {
+    "id": "char_bablu_flag_market_rush",
+    "characterId": "char_bablu",
+    "archetype": "regular",
+    "phase": "greeting",
+    "key": "dialogue.char.bablu.market_rush",
+    "category": "general",
+    "requires": {
+      "minRelationship": 20
+    }
+  }
+]
