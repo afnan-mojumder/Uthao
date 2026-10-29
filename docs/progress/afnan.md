@@ -29,4 +29,5 @@ One line per finished task: `YYYY-MM-DD Tx.y done — note`
 2026-10-27 T5.2 done — Multi-district streaming (400m load, 700m hysteresis unload), time-sliced building task queue (<= 4ms/frame), low-poly silhouette instancing, and e2e cross-district drive passing at 49 FPS on Pixel 7 low (<= 111 draw calls)
 2026-10-27 T5.9 done — Performance optimisation (zero-allocation physics vectors/character movement, stepBike pooling, traffic agent lane map reuse, rickshaw loop culling, weather particle tiering) and PWA (manifest, service worker offline cache, install prompt handling) passing all budgets
 2026-10-30 T4.7 done — MissionManager, chapters 1-2 missions, v1 crime mission (m4_wrong_pickup), First Week v1 ending, bilingual dialogue, and Journal UI
+2026-10-30 T5.5 done — All five endings evaluation engine, identity tendencies (professional/negotiator/hustler/regular), career choice options, bilingual ending screen, and unit tests
 

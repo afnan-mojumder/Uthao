@@ -54,7 +54,7 @@ Format: `- [ ] **<id>** <title> (<points>), deps: <ids>`. Tick by changing only 
 - [x] **T4.6** Crime and suspicious-pickup system (5), deps: T3.6
 - [x] **T4.7** MissionManager, chapters 1–2, v1 crime mission, v1 ending (8), deps: T3.8 (T), T4.1 (T)
 - [x] **T5.3** More traffic types and road events (5), deps: T3.4
-- [ ] **T5.5** All five endings (5), deps: T4.7, T4.8 (T)
+- [x] **T5.5** All five endings (5), deps: T4.7, T4.8 (T)
 - [x] **T5.1** Remaining six districts (8), deps: T3.3
 - [x] **T5.2** District streaming and LOD (8), deps: T5.1
 - [x] **T5.9** Performance optimisation and PWA (8), deps: T5.2, T5.3
