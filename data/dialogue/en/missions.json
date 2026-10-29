@@ -1,7 +1,10 @@
 {
   "mission_m1_first_ride_title": "First Ride: Campus Gate",
   "mission_m1_first_ride_desc": "Your first ride on Uthao. Pick up university student Nabila and take her safely to campus gate.",
-  "obj_m1_nabila_pickup_desc": "Complete the ride with Nabila to campus gate",
+  "obj_m1_morning_prep_desc": "Wake up to your 07:00 AM alarm, check finances, inspect fuel (1.2 L), and start the engine",
+  "obj_m1_tea_stall_desc": "Visit Mintu at the tea stall for morning tips on demand zones",
+  "obj_m1_negotiate_nabila_desc": "Negotiate fare with university student Nabila (offers ৳80 vs ৳100 fair)",
+  "obj_m1_nabila_pickup_desc": "Complete the ride with Nabila to campus gate and review trip receipt",
   "mission_m1_fill_up_title": "Fill the Tank",
   "mission_m1_fill_up_desc": "Visit a fuel station to top up your tank and complete 3 rides across Mirpara.",
   "obj_m1_fuel_desc": "Refuel your motorcycle at any station",

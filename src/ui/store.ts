@@ -76,6 +76,30 @@ export const garageSignal = signal<GarageState>({
 
 export const garageTabSignal = signal<'repairs' | 'upgrades' | 'cosmetics'>('repairs');
 
+export type TutorialStep =
+  | 'idle'
+  | 'alarm'
+  | 'ma_reminder'
+  | 'wallet_check'
+  | 'bike_inspection'
+  | 'tea_stall'
+  | 'open_app'
+  | 'negotiation'
+  | 'riding'
+  | 'receipt'
+  | 'completed';
+
+export interface TutorialState {
+  active: boolean;
+  step: TutorialStep;
+  agreedFare?: number;
+}
+
+export const tutorialSignal = signal<TutorialState>({
+  active: false,
+  step: 'idle',
+});
+
 export const screenSignal = signal<ScreenId>('game');
 export const pausedSignal = signal<boolean>(false);
 export const rotateOverlaySignal = signal<boolean>(false);
@@ -178,6 +202,7 @@ if (typeof window !== 'undefined') {
     dayEndSignal,
     negotiationSignal,
     choiceSignal,
+    tutorialSignal,
     unsupportedSignal,
     rotateOverlaySignal,
   };
@@ -222,6 +247,20 @@ export function setRequestDispatchers(
 ): void {
   onAcceptRequestCallback = acceptFn;
   onDeclineRequestCallback = declineFn;
+}
+
+export let onTutorialAdvanceCallback: ((nextStep: TutorialStep) => void) | null = null;
+export let onTutorialNegotiateCallback: ((fare: number) => void) | null = null;
+export let onTutorialCompleteCallback: (() => void) | null = null;
+
+export function setTutorialDispatchers(dispatchers: {
+  advance?: (nextStep: TutorialStep) => void;
+  negotiate?: (fare: number) => void;
+  complete?: () => void;
+}): void {
+  if (dispatchers.advance) onTutorialAdvanceCallback = dispatchers.advance;
+  if (dispatchers.negotiate) onTutorialNegotiateCallback = dispatchers.negotiate;
+  if (dispatchers.complete) onTutorialCompleteCallback = dispatchers.complete;
 }
 
 export function setNegotiationActionDispatcher(fn: (action: NegotiationAction) => void): void {

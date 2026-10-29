@@ -27,6 +27,10 @@ import {
   negotiationSignal,
   phoneSignal,
   hudSignal,
+  tutorialSignal,
+  screenSignal,
+  setMenuDispatchers,
+  setTutorialDispatchers,
 } from './ui/store';
 import { startNegotiation, respond } from './sim/negotiation/NegotiationSystem';
 import { Minimap } from './render/minimap';
@@ -215,6 +219,86 @@ setNegotiationActionDispatcher((action) => {
     rideManager.completeNegotiation(result.outcome.fare);
   } else if (result.outcome?.kind === 'walkedAway') {
     rideManager.walkAwayNegotiation();
+  }
+});
+
+// T3.10 Main Menu & Pause Dispatchers
+setMenuDispatchers(
+  () => {
+    // onNewCareer: reset story & economy and start opening sequence tutorial
+    gm.clock.day = 1;
+    gm.clock.minutes = 7 * 60;
+    gm.economy.cash = 600;
+    gm.economyManager.cash = 600;
+    gm.economy.fuelLevel = 1.2;
+    gm.economyManager.fuelLevel = 1.2;
+    gm.story.branchFlags = {};
+    gm.story.completedMissions = [];
+    gm.story.activeMissions = ['m1_first_ride'];
+    gm.missionManager.activateMission('m1_first_ride');
+    tutorialSignal.value = { active: true, step: 'alarm', agreedFare: 100 };
+  },
+  () => {
+    // onContinue
+    screenSignal.value = 'game';
+  },
+  () => {
+    // onEndless
+    screenSignal.value = 'game';
+    tutorialSignal.value = { active: false, step: 'idle' };
+  },
+  () => {
+    // onResume
+    pausedSignal.value = false;
+  }
+);
+
+// T3.8 Opening Sequence First Ride Tutorial Dispatchers
+setTutorialDispatchers({
+  advance: (nextStep) => {
+    tutorialSignal.value = { ...tutorialSignal.value, step: nextStep };
+    if (nextStep === 'bike_inspection') {
+      gm.bus.emit('story/flag', { key: 'tutorial_bike_started', value: true });
+    } else if (nextStep === 'tea_stall') {
+      gm.bus.emit('story/flag', { key: 'tutorial_mintu_advice', value: true });
+    } else if (nextStep === 'receipt') {
+      const fare = tutorialSignal.value.agreedFare ?? 100;
+      const commission = Math.round(fare * 0.15);
+      const net = fare - commission;
+      gm.economyManager.post({
+        id: `tx_first_ride_${Date.now()}`,
+        day: gm.clock.day,
+        minute: gm.clock.minutes,
+        kind: 'fare',
+        amount: net,
+      });
+      gm.economy.cash = gm.economyManager.cash;
+      gm.bus.emit('ride/completed', {
+        requestId: 'req_tutorial_01',
+        receipt: {
+          requestId: 'req_tutorial_01',
+          fare,
+          tip: 0,
+          commission,
+          fuelCost: 5,
+          otherCosts: 0,
+          net,
+          durationMin: 3,
+          distanceKm: 0.1,
+          rating: 5,
+          consequences: [],
+        },
+      });
+    }
+  },
+  negotiate: (fare) => {
+    tutorialSignal.value = { ...tutorialSignal.value, agreedFare: fare };
+    gm.bus.emit('story/flag', { key: 'tutorial_nabila_negotiated', value: true });
+    rideManager.completeNegotiation(fare);
+  },
+  complete: () => {
+    tutorialSignal.value = { active: false, step: 'completed' };
+    gm.bus.emit('story/flag', { key: 'tutorial_ride_done', value: true });
   }
 });
 

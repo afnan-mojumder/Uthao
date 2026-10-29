@@ -27,6 +27,7 @@ import {
   onStartEndlessCallback,
   onResumeGameCallback,
   onSetWaypointCallback,
+  tutorialSignal,
 } from './store';
 import { RotateOverlay } from './overlays/RotateOverlay';
 import { Unsupported } from './overlays/Unsupported';
@@ -40,6 +41,7 @@ import { MainMenu } from './menus/MainMenu';
 import { Settings } from './menus/Settings';
 import { Pause } from './menus/Pause';
 import { MapScreen } from './map/MapScreen';
+import { FirstRideTutorial } from './tutorial/FirstRideTutorial';
 import { t } from './i18n';
 
 export function App(): JSX.Element {
@@ -180,6 +182,9 @@ export function App(): JSX.Element {
 
       {/* Choice Card Overlay for Encounters */}
       <ChoiceCard />
+
+      {/* T3.8 Opening Sequence First Ride Tutorial */}
+      {tutorialSignal.value.active && <FirstRideTutorial />}
 
       {/* T2.4 Uthao Phone & RequestCard */}
       <Phone
