@@ -250,5 +250,8 @@
   "delivery.fragile": "ভঙ্গুর পার্সেল",
   "delivery.damaged": "পার্সেল ক্ষতিগ্রস্ত (-৳{penalty})",
   "delivery.completed": "ডেলিভারি সম্পন্ন (+৳{amount})",
-  "delivery.luggage_full": "ক্যারিয়ার ভর্তি (সর্বোচ্চ {max})"
+  "delivery.luggage_full": "ক্যারিয়ার ভর্তি (সর্বোচ্চ {max})",
+  "settings.reduce_motion": "কম ঝাঁকুনি মোড (ক্যামেরা শেক ও এফওভি কিক বন্ধ)",
+  "settings.auto_cruise": "অটো-ক্রুজ মোড (মোবাইলে গতি ধরে রাখতে এক চাপ)",
+  "settings.colorblind_palette": "উচ্চ-কন্ট্রাস্ট কালারব্লাইন্ড রুট প্যালেট"
 }

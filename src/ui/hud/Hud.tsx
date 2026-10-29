@@ -1,6 +1,7 @@
 import { render } from 'preact';
 import type { JSX } from 'preact';
 import { t } from '../i18n';
+import { settingsSignal } from '../store';
 import type { PassengerState } from '../../core/types';
 
 export interface HudPassengerInfo {
@@ -358,6 +359,46 @@ export function HudView({ state }: { state: HudState }): JSX.Element {
           </div>
         </div>
       </div>
+
+      {/* Passenger Dialogue Subtitle Bubble */}
+      {state.dialogueSubtitle && (
+        <div
+          data-testid="hud-dialogue-subtitle"
+          style={{
+            alignSelf: 'center',
+            marginBottom: '16px',
+            background: 'rgba(15, 23, 42, 0.92)',
+            border: '1px solid rgba(56, 189, 248, 0.4)',
+            borderRadius: '16px',
+            padding: '10px 20px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.6)',
+            maxWidth: '650px',
+            pointerEvents: 'auto',
+            backdropFilter: 'blur(10px)',
+          }}
+        >
+          <span style={{ fontSize: '20px' }}>💬</span>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            {state.dialogueSubtitle.speaker && (
+              <span style={{ fontSize: '12px', color: '#38bdf8', fontWeight: 800 }}>
+                {t(state.dialogueSubtitle.speaker)}
+              </span>
+            )}
+            <span
+              style={{
+                fontSize: settingsSignal.value.subtitlesSize === 'large' ? '18px' : '15px',
+                color: '#f8fafc',
+                fontWeight: 600,
+              }}
+            >
+              {state.dialogueSubtitle.text}
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Bottom Bar: Passenger Chip (Left) & Speedometer / Fuel Cluster (Right) */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', width: '100%' }}>

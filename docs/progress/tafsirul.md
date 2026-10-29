@@ -48,3 +48,10 @@ One line per finished task: `YYYY-MM-DD Tx.y done — note`
 - Implemented progressive district unlocking by chapter in MissionManager.getUnlockedDistricts().
 - Added full bilingual title and description strings in data/dialogue/{bn,en}/missions.json.
 - Added unit tests in tests/unit/sim/campaignChapters.test.ts (4 tests passed, 344 total tests green).
+
+## 2026-10-29 T6.3 Accessibility and localisation
+- Added accessibility options in GameSettings and Settings UI: reduceMotion, autoCruise (hold-to-accelerate alternative for mobile), and high-contrast colorblind route.
+- Implemented large subtitles scaling in HUD speech bubble.
+- Added ARIA labels and full keyboard/gamepad navigation support.
+- Logged Native-Speaker Review Checklist in docs/QUESTIONS.md.
+- Added unit tests in tests/unit/ui/accessibility.test.ts (4 tests passed, 348 total tests green).

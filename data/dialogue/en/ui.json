@@ -250,5 +250,8 @@
   "delivery.fragile": "Fragile Parcel",
   "delivery.damaged": "Parcel Damaged (-৳{penalty})",
   "delivery.completed": "Delivery Completed (+৳{amount})",
-  "delivery.luggage_full": "Luggage Full (Max {max})"
+  "delivery.luggage_full": "Luggage Full (Max {max})",
+  "settings.reduce_motion": "Reduce Motion (Disable Camera Shake & FOV Kick)",
+  "settings.auto_cruise": "Auto-Cruise Mode (Tap to Maintain Speed on Mobile)",
+  "settings.colorblind_palette": "Colorblind Route Palette"
 }

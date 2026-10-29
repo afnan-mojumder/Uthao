@@ -119,6 +119,9 @@ export interface GameSettings {
   quality: 'low' | 'medium' | 'high';
   subtitlesSize: 'normal' | 'large';
   colorblindRoute: boolean;
+  colorblindPalette?: 'standard' | 'high_contrast' | 'deuteranopia';
+  reduceMotion: boolean;
+  autoCruise: boolean;
   pauseOnDecisions: boolean;
   tiltControls: boolean;
   masterVolume: number;
@@ -131,6 +134,9 @@ export const DEFAULT_SETTINGS: GameSettings = {
   quality: 'medium',
   subtitlesSize: 'normal',
   colorblindRoute: false,
+  colorblindPalette: 'standard',
+  reduceMotion: false,
+  autoCruise: false,
   pauseOnDecisions: false,
   tiltControls: false,
   masterVolume: 0.8,

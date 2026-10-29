@@ -287,6 +287,7 @@ export function Settings({
                   <span style={{ fontSize: '0.9rem', color: '#cbd5e1' }}>{t('settings.colorblind_route')}</span>
                   <input
                     data-testid="settings-colorblind-toggle"
+                    aria-label={t('settings.colorblind_route')}
                     type="checkbox"
                     checked={localSettings.colorblindRoute}
                     onChange={(e) => setLocalSettings((prev) => ({ ...prev, colorblindRoute: e.currentTarget.checked }))}
@@ -298,12 +299,37 @@ export function Settings({
                   <span style={{ fontSize: '0.9rem', color: '#cbd5e1' }}>{t('settings.pause_on_decisions')}</span>
                   <input
                     data-testid="settings-pause-decisions-toggle"
+                    aria-label={t('settings.pause_on_decisions')}
                     type="checkbox"
                     checked={localSettings.pauseOnDecisions}
                     onChange={(e) => setLocalSettings((prev) => ({ ...prev, pauseOnDecisions: e.currentTarget.checked }))}
                     style={{ width: '18px', height: '18px', accentColor: '#38bdf8', cursor: 'pointer' }}
                   />
                 </label>
+                <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
+                  <span style={{ fontSize: '0.9rem', color: '#cbd5e1' }}>{t('settings.reduce_motion')}</span>
+                  <input
+                    data-testid="settings-reduce-motion-toggle"
+                    type="checkbox"
+                    aria-label={t('settings.reduce_motion')}
+                    checked={localSettings.reduceMotion}
+                    onChange={(e) => setLocalSettings((prev) => ({ ...prev, reduceMotion: e.currentTarget.checked }))}
+                    style={{ width: '18px', height: '18px', accentColor: '#38bdf8', cursor: 'pointer' }}
+                  />
+                </label>
+
+                <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
+                  <span style={{ fontSize: '0.9rem', color: '#cbd5e1' }}>{t('settings.auto_cruise')}</span>
+                  <input
+                    data-testid="settings-auto-cruise-toggle"
+                    type="checkbox"
+                    aria-label={t('settings.auto_cruise')}
+                    checked={localSettings.autoCruise}
+                    onChange={(e) => setLocalSettings((prev) => ({ ...prev, autoCruise: e.currentTarget.checked }))}
+                    style={{ width: '18px', height: '18px', accentColor: '#38bdf8', cursor: 'pointer' }}
+                  />
+                </label>
+
               </div>
             </div>
           )}
