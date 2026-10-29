@@ -22,6 +22,8 @@ import {
   screenSignal,
   onRepairCallback,
   onBuyUpgradeCallback,
+  onBuyBikeCallback,
+  onSwitchBikeCallback,
   onStartNewCareerCallback,
   onContinueCareerCallback,
   onStartEndlessCallback,
@@ -269,6 +271,9 @@ export function App(): JSX.Element {
           atKamalBhai={garageSignal.value.atKamalBhai}
           kamalRelationship={garageSignal.value.kamalRelationship}
           cash={garageSignal.value.cash}
+          savings={garageSignal.value.savings}
+          currentBikeId={garageSignal.value.currentBikeId}
+          ownedBikes={garageSignal.value.ownedBikes}
           engineCondition={garageSignal.value.engineCondition}
           tiresCondition={garageSignal.value.tiresCondition}
           brakesCondition={garageSignal.value.brakesCondition}
@@ -277,6 +282,8 @@ export function App(): JSX.Element {
           installedCosmetics={garageSignal.value.installedCosmetics}
           onRepair={(item) => onRepairCallback?.(item)}
           onBuyUpgrade={(upgradeId) => onBuyUpgradeCallback?.(upgradeId)}
+          onBuyBike={(bikeId, useTradeIn) => onBuyBikeCallback?.(bikeId, useTradeIn)}
+          onSwitchBike={(bikeId) => onSwitchBikeCallback?.(bikeId)}
           onClose={() => {
             garageSignal.value = { ...garageSignal.value, open: false };
             if (screenSignal.value === 'garage') {

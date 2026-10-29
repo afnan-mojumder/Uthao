@@ -1,3 +1,4 @@
+import type { BikeId } from '../core/types';
 import { BALANCE } from '../config/balance';
 import { clamp, degToRad, lerp, angleDiff } from '../core/math';
 
@@ -42,9 +43,14 @@ export interface BikeEnvironment {
 }
 
 export function createDefaultBikeSpec(): BikeSpec {
+  return createBikeSpec('old100', false);
+}
+
+export function createBikeSpec(bikeId: BikeId = 'old100', brakeUpgrade: boolean = false): BikeSpec {
+  const base = BALANCE.BIKE[bikeId] ?? BALANCE.BIKE.old100;
   return {
-    ...BALANCE.BIKE.old100,
-    brakeUpgrade: false,
+    ...base,
+    brakeUpgrade,
   };
 }
 

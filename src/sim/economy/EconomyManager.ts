@@ -1,6 +1,7 @@
 import type { EventBus } from '../../core/events';
 import type { GameEvents } from '../../core/events';
-import type { PlayerEconomy, Transaction } from '../../core/types';
+import type { PlayerEconomy, Transaction, BikeId } from '../../core/types';
+import { getBikeDef, calculateNetBikePurchaseCost } from './bikes';
 import { BALANCE } from '../../config/balance';
 import {
   type RepairItem,
@@ -29,6 +30,8 @@ export class EconomyManager {
   kmSinceOilChange: number = 15;
   ownedUpgrades: string[] = [];
   installedCosmetics: { paint?: string; seatCover?: string } = {};
+  currentBikeId: BikeId = 'old100';
+  ownedBikes: BikeId[] = ['old100'];
 
   constructor(
     bus: EventBus<GameEvents>,
@@ -51,6 +54,11 @@ export class EconomyManager {
     this.kmSinceOilChange = initial?.kmSinceOilChange ?? 15;
     this.ownedUpgrades = initial?.ownedUpgrades ? [...initial.ownedUpgrades] : [];
     this.installedCosmetics = initial?.installedCosmetics ? { ...initial.installedCosmetics } : {};
+    this.currentBikeId = initial?.currentBikeId ?? 'old100';
+    this.ownedBikes = initial?.ownedBikes ? [...initial.ownedBikes] : ['old100'];
+    if (!this.ownedBikes.includes(this.currentBikeId)) {
+      this.ownedBikes.push(this.currentBikeId);
+    }
     this.motorcycleCondition = this.getOverallCondition();
 
     // Normalize any invalid initial state
@@ -367,6 +375,85 @@ export class EconomyManager {
     this.dailyExpenses = 0;
   }
 
+
+  buyBike(
+    targetBikeId: BikeId,
+    useTradeIn: boolean = true,
+    atKamalBhai = false,
+    kamalRelationship = 0,
+    day = 1,
+    minute = 0
+  ): { success: boolean; netCost: number; reason?: string } {
+    if (this.currentBikeId === targetBikeId) {
+      return { success: false, netCost: 0, reason: 'Already riding this bike' };
+    }
+
+    const currentDef = getBikeDef(this.currentBikeId);
+    const targetDef = getBikeDef(targetBikeId);
+    const hasKamalDiscount = atKamalBhai && kamalRelationship >= 20;
+
+    const netCost = useTradeIn
+      ? calculateNetBikePurchaseCost(targetDef, currentDef, this.motorcycleCondition, hasKamalDiscount)
+      : (hasKamalDiscount ? Math.round(targetDef.price * 0.95) : targetDef.price);
+
+    const availableMoney = this.cash + this.savings;
+    if (availableMoney < netCost) {
+      return { success: false, netCost, reason: 'Insufficient funds' };
+    }
+
+    if (this.cash >= netCost) {
+      this.cash -= netCost;
+    } else {
+      const remainder = netCost - this.cash;
+      this.cash = 0;
+      this.savings -= remainder;
+    }
+
+    this.dailyExpenses += netCost;
+    this.post({
+      id: `tx_bike_${targetBikeId}_${day}_${minute}_${++this.txSeq}`,
+      day,
+      minute,
+      kind: 'bike_purchase',
+      amount: -netCost,
+    });
+
+    const prevBikeId = this.currentBikeId;
+    if (useTradeIn) {
+      this.ownedBikes = this.ownedBikes.filter((id) => id !== prevBikeId);
+    }
+    if (!this.ownedBikes.includes(targetBikeId)) {
+      this.ownedBikes.push(targetBikeId);
+    }
+    this.currentBikeId = targetBikeId;
+
+    if (targetBikeId === 'new150') {
+      this.engineCondition = 100;
+      this.tiresCondition = 100;
+      this.brakesCondition = 100;
+      this.kmSinceOilChange = 0;
+    } else if (targetBikeId === 'used125') {
+      this.engineCondition = Math.max(this.engineCondition, 90);
+      this.tiresCondition = Math.max(this.tiresCondition, 85);
+      this.brakesCondition = Math.max(this.brakesCondition, 90);
+      this.kmSinceOilChange = 5;
+    }
+    this.motorcycleCondition = this.getOverallCondition();
+
+    this.bus.emit('bike/swapped', { bikeId: targetBikeId, prevBikeId });
+    return { success: true, netCost };
+  }
+
+  switchBike(targetBikeId: BikeId): { success: boolean; reason?: string } {
+    if (!this.ownedBikes.includes(targetBikeId)) {
+      return { success: false, reason: 'Bike not owned' };
+    }
+    const prevBikeId = this.currentBikeId;
+    this.currentBikeId = targetBikeId;
+    this.bus.emit('bike/swapped', { bikeId: targetBikeId, prevBikeId });
+    return { success: true };
+  }
+
   getSnapshot(): PlayerEconomy {
     return {
       cash: this.cash,
@@ -385,6 +472,8 @@ export class EconomyManager {
       kmSinceOilChange: Math.round(this.kmSinceOilChange),
       ownedUpgrades: [...this.ownedUpgrades],
       installedCosmetics: { ...this.installedCosmetics },
+      currentBikeId: this.currentBikeId,
+      ownedBikes: [...this.ownedBikes],
     };
   }
 
@@ -404,6 +493,8 @@ export class EconomyManager {
     if (econ.phoneBattery !== undefined) this.phoneBattery = econ.phoneBattery;
     if (econ.ownedUpgrades) this.ownedUpgrades = [...econ.ownedUpgrades];
     if (econ.installedCosmetics) this.installedCosmetics = { ...econ.installedCosmetics };
+    if (econ.currentBikeId) this.currentBikeId = econ.currentBikeId;
+    if (econ.ownedBikes) this.ownedBikes = [...econ.ownedBikes];
     if (econ.motorcycleCondition !== undefined) {
       this.motorcycleCondition = econ.motorcycleCondition;
     } else {

@@ -230,5 +230,20 @@
   "tutorial.riding.tip": "Follow the navigation arrow to Campus Gate. Keep an eye on traffic.",
   "tutorial.receipt.title": "Trip Complete — Receipt Explained",
   "tutorial.receipt.desc": "Gross Fare collected in cash. Uthao 15% platform commission deducted. Net earnings added to wallet. Future tips appear contextually.",
-  "tutorial.receipt.btn": "Complete First Ride"
+  "tutorial.receipt.btn": "Complete First Ride",
+  "garage.tab_bikes": "Bikes & Dealership",
+  "garage.trade_in_value": "Trade-In: ৳{amount}",
+  "garage.net_cost": "Net Cost: ৳{amount}",
+  "garage.current_bike": "Current Bike",
+  "garage.btn_trade_in": "Buy with Trade-In",
+  "garage.btn_switch": "Ride This Bike",
+  "garage.efficiency": "Efficiency: {kmPerL} km/L",
+  "garage.vmax": "Top Speed: {speed} km/h",
+  "garage.insurance": "Insurance: ৳{cost}/day",
+  "bike.old100.name": "Runner Dayang 100cc",
+  "bike.old100.desc": "Your trustworthy, battle-scarred workhorse. Rattles at top speed, but reliable in narrow alleys.",
+  "bike.used125.name": "Bajaj Discover 125cc (Used)",
+  "bike.used125.desc": "Clean second-hand commuter with snappy acceleration and superior 45 km/L mileage.",
+  "bike.new150.name": "Yamaha FZS 150cc (Brand New)",
+  "bike.new150.desc": "High-powered streetfighter with front & rear disc brakes and 100 km/h top speed. Requires ৳50/day insurance."
 }

@@ -7,6 +7,14 @@ import {
   calculateUpgradeCost,
 } from '../../sim/economy/maintenance';
 import { t } from '../i18n';
+import type { BikeId } from '../../core/types';
+import {
+  BIKES,
+  calculateTradeInValue,
+  calculateNetBikePurchaseCost,
+  getBikeDef,
+} from '../../sim/economy/bikes';
+import { onBuyBikeCallback, onSwitchBikeCallback } from '../store';
 import { garageTabSignal } from '../store';
 
 export interface GarageProps {
@@ -20,10 +28,15 @@ export interface GarageProps {
   kmSinceOilChange?: number;
   ownedUpgrades?: string[];
   installedCosmetics?: { paint?: string; seatCover?: string };
-  activeTab?: 'repairs' | 'upgrades' | 'cosmetics';
-  onSelectTab?: (tab: 'repairs' | 'upgrades' | 'cosmetics') => void;
+  currentBikeId?: BikeId;
+  ownedBikes?: BikeId[];
+  savings?: number;
+  activeTab?: 'repairs' | 'upgrades' | 'cosmetics' | 'bikes';
+  onSelectTab?: (tab: 'repairs' | 'upgrades' | 'cosmetics' | 'bikes') => void;
   onRepair?: (item: RepairItem) => void;
   onBuyUpgrade?: (upgradeId: string) => void;
+  onBuyBike?: (bikeId: string, useTradeIn?: boolean) => void;
+  onSwitchBike?: (bikeId: string) => void;
   onClose?: () => void;
 }
 
@@ -37,20 +50,27 @@ export function Garage({
   brakesCondition = 85,
   kmSinceOilChange = 15,
   ownedUpgrades = [],
+  currentBikeId = 'old100',
+  ownedBikes = ['old100'],
+  savings = 0,
   activeTab: propActiveTab,
   onSelectTab,
   onRepair,
   onBuyUpgrade,
+  onBuyBike: propBuyBike,
+  onSwitchBike: propSwitchBike,
   onClose,
 }: GarageProps): JSX.Element | null {
   if (!isOpen) return null;
 
-  const activeTab: 'repairs' | 'upgrades' | 'cosmetics' = propActiveTab ?? garageTabSignal.value;
-  const setActiveTab = (tab: 'repairs' | 'upgrades' | 'cosmetics') => {
+  const activeTab: 'repairs' | 'upgrades' | 'cosmetics' | 'bikes' = propActiveTab ?? garageTabSignal.value;
+  const setActiveTab = (tab: 'repairs' | 'upgrades' | 'cosmetics' | 'bikes') => {
     garageTabSignal.value = tab;
     onSelectTab?.(tab);
   };
   const hasKamalDiscount = atKamalBhai && kamalRelationship >= 20;
+  const onBuyBike = propBuyBike ?? onBuyBikeCallback ?? undefined;
+  const onSwitchBike = propSwitchBike ?? onSwitchBikeCallback ?? undefined;
   const upgrades = defaultUpgrades as UpgradeDef[];
   const mechanicalUpgrades = upgrades.filter((u) => u.category === 'mechanical');
   const cosmeticUpgrades = upgrades.filter((u) => u.category === 'cosmetic');
@@ -208,6 +228,23 @@ export function Garage({
             }}
           >
             🎨 {t('garage.tab_cosmetics')}
+          </button>
+          <button
+            data-testid="garage-tab-bikes"
+            onClick={() => setActiveTab('bikes')}
+            style={{
+              flex: 1,
+              padding: '12px',
+              border: 'none',
+              background: activeTab === 'bikes' ? 'rgba(56, 189, 248, 0.15)' : 'transparent',
+              borderBottom: activeTab === 'bikes' ? '2px solid #38bdf8' : '2px solid transparent',
+              color: activeTab === 'bikes' ? '#38bdf8' : '#94a3b8',
+              fontWeight: 700,
+              fontSize: '0.85rem',
+              cursor: 'pointer',
+            }}
+          >
+            🛵 {t('garage.tab_bikes')}
           </button>
         </div>
 
@@ -540,6 +577,183 @@ export function Garage({
             </div>
           )}
         </div>
+
+
+          {/* Tab 4: Bikes Dealership */}
+          {activeTab === 'bikes' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {BIKES.map((bike) => {
+                const isCurrent = bike.id === currentBikeId;
+                const isOwned = ownedBikes.includes(bike.id);
+                const currentDef = getBikeDef(currentBikeId);
+                const overallCond = Math.round(
+                  (engineCondition + tiresCondition + brakesCondition + oilFreshness) / 4
+                );
+                const tradeInVal = calculateTradeInValue(currentDef, overallCond);
+                const netCost = calculateNetBikePurchaseCost(
+                  bike,
+                  currentDef,
+                  overallCond,
+                  hasKamalDiscount
+                );
+                const canAfford = cash + savings >= netCost;
+
+                return (
+                  <div
+                    key={bike.id}
+                    data-testid={`bike-card-${bike.id}`}
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '10px',
+                      background: isCurrent ? 'rgba(56, 189, 248, 0.08)' : 'rgba(255, 255, 255, 0.03)',
+                      border: isCurrent ? '1px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.08)',
+                      borderRadius: '12px',
+                      padding: '14px 18px',
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <span style={{ fontSize: '1.4rem' }}>
+                          {bike.id === 'new150' ? '🏍️' : '🛵'}
+                        </span>
+                        <div>
+                          <div style={{ fontWeight: 800, fontSize: '0.95rem', color: '#f8fafc' }}>
+                            {t(bike.nameKey)}
+                          </div>
+                          <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+                            {t(bike.descKey)}
+                          </div>
+                        </div>
+                      </div>
+                      <div
+                        style={{
+                          background: 'rgba(56, 189, 248, 0.15)',
+                          color: '#38bdf8',
+                          padding: '4px 10px',
+                          borderRadius: '8px',
+                          fontWeight: 800,
+                          fontSize: '0.8rem',
+                        }}
+                      >
+                        {bike.displacementCc}cc
+                      </div>
+                    </div>
+
+                    {/* Stats Specs */}
+                    <div
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(3, 1fr)',
+                        gap: '8px',
+                        fontSize: '0.75rem',
+                        background: 'rgba(15, 23, 42, 0.4)',
+                        padding: '8px 12px',
+                        borderRadius: '8px',
+                      }}
+                    >
+                      <div>
+                        <span style={{ color: '#94a3b8' }}>Top Speed: </span>
+                        <span style={{ color: '#f8fafc', fontWeight: 700 }}>
+                          {Math.round(bike.vmax * 3.6)} km/h
+                        </span>
+                      </div>
+                      <div>
+                        <span style={{ color: '#94a3b8' }}>Mileage: </span>
+                        <span style={{ color: '#34d399', fontWeight: 700 }}>
+                          {bike.efficiencyKmPerL} km/L
+                        </span>
+                      </div>
+                      <div>
+                        <span style={{ color: '#94a3b8' }}>Insurance: </span>
+                        <span style={{ color: bike.dailyInsuranceCost > 0 ? '#f59e0b' : '#34d399', fontWeight: 700 }}>
+                          {bike.dailyInsuranceCost > 0 ? `৳${bike.dailyInsuranceCost}/day` : 'None'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Trade-in & Action */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '2px' }}>
+                      <div>
+                        {isCurrent ? (
+                          <span style={{ color: '#38bdf8', fontWeight: 700, fontSize: '0.85rem' }}>
+                            ★ {t('garage.current_bike')}
+                          </span>
+                        ) : isOwned ? (
+                          <span style={{ color: '#34d399', fontWeight: 700, fontSize: '0.85rem' }}>
+                            ✓ In Your Garage
+                          </span>
+                        ) : (
+                          <div style={{ fontSize: '0.8rem' }}>
+                            <span style={{ color: '#94a3b8' }}>
+                              {t('garage.trade_in_value', { amount: tradeInVal })} •{' '}
+                            </span>
+                            <span style={{ color: '#34d399', fontWeight: 800 }}>
+                              {t('garage.net_cost', { amount: netCost })}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      <div>
+                        {isCurrent ? (
+                          <span
+                            style={{
+                              padding: '6px 14px',
+                              background: 'rgba(56, 189, 248, 0.2)',
+                              color: '#38bdf8',
+                              borderRadius: '8px',
+                              fontSize: '0.8rem',
+                              fontWeight: 700,
+                            }}
+                          >
+                            Active
+                          </span>
+                        ) : isOwned ? (
+                          <button
+                            data-testid={`bike-switch-${bike.id}`}
+                            onClick={() => onSwitchBike?.(bike.id)}
+                            style={{
+                              padding: '8px 16px',
+                              borderRadius: '8px',
+                              background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                              border: 'none',
+                              color: '#ffffff',
+                              fontWeight: 700,
+                              fontSize: '0.8rem',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            {t('garage.btn_switch')}
+                          </button>
+                        ) : (
+                          <button
+                            data-testid={`bike-buy-${bike.id}`}
+                            disabled={!canAfford}
+                            onClick={() => onBuyBike?.(bike.id, true)}
+                            style={{
+                              padding: '8px 16px',
+                              borderRadius: '8px',
+                              background: canAfford
+                                ? 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)'
+                                : 'rgba(100, 116, 139, 0.3)',
+                              border: 'none',
+                              color: canAfford ? '#ffffff' : '#64748b',
+                              fontWeight: 700,
+                              fontSize: '0.8rem',
+                              cursor: canAfford ? 'pointer' : 'not-allowed',
+                            }}
+                          >
+                            {t('garage.btn_trade_in')} (৳{netCost})
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
 
         {/* Footer with Exit button */}
         <div

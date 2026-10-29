@@ -8,6 +8,7 @@ import {
   MissionDefSchema,
   EndingDefSchema,
   CharactersDataSchema,
+  BikesDataSchema,
 } from '../src/sim/schemas.ts';
 
 // Validate dialogue files
@@ -435,6 +436,41 @@ if (fs.existsSync(charactersPath)) {
     }
   } catch (err) {
     console.error(`Failed reading characters file ${charactersPath}:`, err);
+    process.exit(1);
+  }
+}
+
+
+// Validate bikes file
+const bikesPath = path.resolve('data/bikes.json');
+if (fs.existsSync(bikesPath)) {
+  try {
+    const raw = JSON.parse(fs.readFileSync(bikesPath, 'utf-8'));
+    const res = BikesDataSchema.safeParse(raw);
+    if (!res.success) {
+      console.error(`Bikes schema error in ${bikesPath}:`, res.error.format());
+      process.exit(1);
+    }
+    for (const bike of res.data) {
+      if (typeof dicts.en[bike.nameKey] === 'undefined') {
+        console.error(`Bike ${bike.id}: nameKey '${bike.nameKey}' missing in en dialogue`);
+        process.exit(1);
+      }
+      if (typeof dicts.bn[bike.nameKey] === 'undefined') {
+        console.error(`Bike ${bike.id}: nameKey '${bike.nameKey}' missing in bn dialogue`);
+        process.exit(1);
+      }
+      if (typeof dicts.en[bike.descKey] === 'undefined') {
+        console.error(`Bike ${bike.id}: descKey '${bike.descKey}' missing in en dialogue`);
+        process.exit(1);
+      }
+      if (typeof dicts.bn[bike.descKey] === 'undefined') {
+        console.error(`Bike ${bike.id}: descKey '${bike.descKey}' missing in bn dialogue`);
+        process.exit(1);
+      }
+    }
+  } catch (err) {
+    console.error(`Failed reading bikes file ${bikesPath}:`, err);
     process.exit(1);
   }
 }

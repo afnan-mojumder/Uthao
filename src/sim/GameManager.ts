@@ -28,6 +28,7 @@ import bikeEncounters from '../../data/encounters/bike.json';
 import crimeEncounters from '../../data/encounters/crime.json';
 import passengerEncounters from '../../data/encounters/passenger.json';
 import { ReputationSystem } from './reputation/ReputationSystem';
+import { getBikeDef } from './economy/bikes';
 import type { SafetyRecord } from '../core/types';
 import { RoadEventManager, type ActiveRoadEvent } from './world/RoadEvents';
 import defaultUpgrades from '../../data/upgrades.json';
@@ -301,6 +302,25 @@ export class GameManager {
       case 'setWaypoint':
         this.waypointNodeId = cmd.nodeId;
         return { success: true };
+      case 'buyBike': {
+        const atKamal = this.isNearKamalBhai();
+        const kamalRel = this.reputationSystem.getRelationship('kamal_bhai');
+        const res = this.economyManager.buyBike(
+          cmd.bikeId,
+          cmd.useTradeIn ?? true,
+          atKamal,
+          kamalRel,
+          this.clock.day,
+          this.clock.minutes
+        );
+        this.syncEconomy();
+        return res;
+      }
+      case 'switchBike': {
+        const res = this.economyManager.switchBike(cmd.bikeId);
+        this.syncEconomy();
+        return res;
+      }
       case 'buyFuel':
         this.economy.fuelLevel += cmd.liters;
         this.economyManager.fuelLevel = this.economy.fuelLevel;
@@ -362,11 +382,24 @@ export class GameManager {
 
         // Commute home if > 1.5 km (1500m)
         if (this.playerDistFromHomeM > 1500) {
-          const kmPerL = BALANCE.FUEL.kmPerL.old100 ?? 40;
+          const kmPerL = BALANCE.FUEL.kmPerL[this.economyManager.currentBikeId] ?? 40;
           const fuelNeeded = (this.playerDistFromHomeM / 1000) / kmPerL;
           this.economyManager.consumeFuel(fuelNeeded);
           this.playerDistFromHomeM = 0;
           this.playerNodeId = this.homeNodeId;
+        }
+
+        // Post bike daily insurance if applicable
+        const activeBike = getBikeDef(this.economyManager.currentBikeId);
+        if (activeBike.dailyInsuranceCost > 0) {
+          this.economyManager.post({
+            id: `tx_insurance_${this.clock.day}_${Math.floor(this.clock.minutes)}`,
+            day: this.clock.day,
+            minute: this.clock.minutes,
+            kind: 'maintenance',
+            amount: -activeBike.dailyInsuranceCost,
+          });
+          this.economyManager.dailyExpenses += activeBike.dailyInsuranceCost;
         }
 
         // Post living expenses

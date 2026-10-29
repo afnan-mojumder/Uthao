@@ -146,6 +146,8 @@ export interface RoadSegment {
   tags: string[];
 }
 
+export type BikeId = 'old100' | 'used125' | 'new150';
+
 export interface PlayerEconomy {
   cash: number;
   dailyRevenue: number;
@@ -166,6 +168,8 @@ export interface PlayerEconomy {
     paint?: string;
     seatCover?: string;
   };
+  currentBikeId?: BikeId;
+  ownedBikes?: BikeId[];
 }
 
 export interface StoryPromise {
@@ -204,7 +208,8 @@ export type TransactionKind =
   | 'reward'
   | 'robbery'
   | 'delivery'
-  | 'medical';
+  | 'medical'
+  | 'bike_purchase';
 
 export interface Transaction {
   id: string;

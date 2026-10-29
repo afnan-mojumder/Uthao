@@ -446,3 +446,26 @@ export type CharacterData = z.infer<typeof CharacterDefSchema>;
 export const CharactersDataSchema = z.array(CharacterDefSchema);
 export type CharactersData = z.infer<typeof CharactersDataSchema>;
 
+
+export const BikeDefSchema = z.object({
+  id: z.enum(['old100', 'used125', 'new150']),
+  nameKey: z.string(),
+  descKey: z.string(),
+  displacementCc: z.number().int().positive(),
+  price: z.number().nonnegative(),
+  tradeInBase: z.number().nonnegative(),
+  vmax: z.number().positive(),
+  accel: z.number().positive(),
+  brakeDecelDry: z.number().positive(),
+  brakeDecelWet: z.number().positive(),
+  efficiencyKmPerL: z.number().positive(),
+  tankCapacityL: z.number().positive(),
+  dailyInsuranceCost: z.number().nonnegative(),
+  audioPitch: z.number().positive(),
+  modelVariant: z.string(),
+});
+
+export type BikeDef = z.infer<typeof BikeDefSchema>;
+
+export const BikesDataSchema = z.array(BikeDefSchema);
+export type BikesData = z.infer<typeof BikesDataSchema>;

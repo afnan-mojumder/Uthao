@@ -16,6 +16,11 @@ export class MotorcycleMesh {
   private frontWheel: THREE.Mesh;
   private rearWheel: THREE.Mesh;
   private passengerGroup: THREE.Group;
+  private frame: THREE.Mesh;
+  private tank: THREE.Mesh;
+  private exhaust: THREE.Mesh;
+  private headlight: THREE.Mesh;
+  currentVariant: 'old100' | 'used125' | 'new150' = 'old100';
 
   constructor() {
     this.root = new THREE.Group();
@@ -29,9 +34,9 @@ export class MotorcycleMesh {
       roughness: 0.4,
       metalness: 0.6,
     });
-    const frame = new THREE.Mesh(frameGeo, frameMat);
-    frame.position.y = 0.5;
-    this.leanGroup.add(frame);
+    this.frame = new THREE.Mesh(frameGeo, frameMat);
+    this.frame.position.y = 0.5;
+    this.leanGroup.add(this.frame);
 
     // Fuel tank
     const tankGeo = new THREE.BoxGeometry(0.32, 0.22, 0.45);
@@ -39,9 +44,9 @@ export class MotorcycleMesh {
       color: 0x00cc44, // Green accent
       roughness: 0.3,
     });
-    const tank = new THREE.Mesh(tankGeo, tankMat);
-    tank.position.set(0, 0.65, 0.1);
-    this.leanGroup.add(tank);
+    this.tank = new THREE.Mesh(tankGeo, tankMat);
+    this.tank.position.set(0, 0.65, 0.1);
+    this.leanGroup.add(this.tank);
 
     // Seat
     const seatGeo = new THREE.BoxGeometry(0.28, 0.12, 0.55);
@@ -60,10 +65,10 @@ export class MotorcycleMesh {
       metalness: 0.9,
       roughness: 0.2,
     });
-    const exhaust = new THREE.Mesh(exhaustGeo, exhaustMat);
-    exhaust.rotation.x = Math.PI / 2;
-    exhaust.position.set(0.18, 0.25, -0.35);
-    this.leanGroup.add(exhaust);
+    this.exhaust = new THREE.Mesh(exhaustGeo, exhaustMat);
+    this.exhaust.rotation.x = Math.PI / 2;
+    this.exhaust.position.set(0.18, 0.25, -0.35);
+    this.leanGroup.add(this.exhaust);
 
     // Wheels
     const wheelGeo = new THREE.CylinderGeometry(0.32, 0.32, 0.12, 16);
@@ -103,10 +108,10 @@ export class MotorcycleMesh {
       emissive: 0xffffaa,
       emissiveIntensity: 0.8,
     });
-    const headlight = new THREE.Mesh(lightGeo, lightMat);
-    headlight.rotation.x = Math.PI / 2;
-    headlight.position.set(0, 0.45, 0.12);
-    this.forkGroup.add(headlight);
+    this.headlight = new THREE.Mesh(lightGeo, lightMat);
+    this.headlight.rotation.x = Math.PI / 2;
+    this.headlight.position.set(0, 0.45, 0.12);
+    this.forkGroup.add(this.headlight);
 
     // Rider
     const riderGroup = new THREE.Group();
@@ -163,6 +168,35 @@ export class MotorcycleMesh {
     const pHelmet = new THREE.Mesh(pHelmetGeo, pHelmetMat);
     pHelmet.position.set(0, 1.25, -0.38);
     this.passengerGroup.add(pHelmet);
+  }
+
+
+  setVariant(variant: 'old100' | 'used125' | 'new150'): void {
+    this.currentVariant = variant;
+    const frameMat = this.frame.material as THREE.MeshStandardMaterial;
+    const tankMat = this.tank.material as THREE.MeshStandardMaterial;
+    const exhaustMat = this.exhaust.material as THREE.MeshStandardMaterial;
+    const headMat = this.headlight.material as THREE.MeshStandardMaterial;
+
+    if (variant === 'old100') {
+      frameMat.color.setHex(0x1a459c); // Uthao classic commuter blue
+      tankMat.color.setHex(0x00cc44); // Green accent
+      exhaustMat.color.setHex(0x888888);
+      this.tank.scale.set(1.0, 1.0, 1.0);
+      headMat.emissive.setHex(0xffffaa);
+    } else if (variant === 'used125') {
+      frameMat.color.setHex(0x2d3748); // Gunmetal roadster
+      tankMat.color.setHex(0xd97706); // Amber metallic
+      exhaustMat.color.setHex(0x4a5568);
+      this.tank.scale.set(1.12, 1.08, 1.0);
+      headMat.emissive.setHex(0xfff5e6);
+    } else if (variant === 'new150') {
+      frameMat.color.setHex(0x0f172a); // Midnight stealth sport
+      tankMat.color.setHex(0x0284c7); // Vibrant cyan-blue sport
+      exhaustMat.color.setHex(0x1e293b); // Carbon black finish
+      this.tank.scale.set(1.22, 1.15, 1.08);
+      headMat.emissive.setHex(0x38bdf8); // Twin high-power LED cyan tint
+    }
   }
 
   setPassengerVisible(visible: boolean): void {

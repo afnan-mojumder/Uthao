@@ -1,5 +1,6 @@
 import type {
   BikeCollisionSeverity,
+  BikeId,
   BikeInfractionKind,
   DaySummary,
   EncounterInstance,
@@ -27,6 +28,7 @@ export interface GameEvents extends Record<string, unknown> {
     by: 'rider' | 'passenger' | 'system';
     reason: string;
   };
+  'negotiation/started': { requestId: string; initialFare: number };
   'negotiation/round': {
     requestId: string;
     round: number;
@@ -55,6 +57,7 @@ export interface GameEvents extends Record<string, unknown> {
   'bike/infraction': { kind: BikeInfractionKind; segmentId: string };
   'bike/fuelEmpty': Record<string, never>;
   'bike/puncture': Record<string, never>;
+  'bike/swapped': { bikeId: BikeId; prevBikeId: BikeId };
   'story/flag': { key: string; value: boolean | number | string };
   'character/contactAdded': { characterId: string };
   'ending/reached': { endingId: EndingId };
@@ -72,19 +75,30 @@ export class EventBus<M extends Record<string, unknown>> {
     if (!this.listeners[key]) {
       this.listeners[key] = new Set();
     }
-    this.listeners[key]!.add(fn);
+    this.listeners[key]!.add(fn as (payload: unknown) => void);
+    return () => this.off(key, fn);
+  }
 
-    return () => {
-      this.listeners[key]?.delete(fn);
-    };
+  off<K extends keyof M & string>(
+    key: K,
+    fn: (payload: M[K]) => void
+  ): void {
+    this.listeners[key]?.delete(fn as (payload: unknown) => void);
   }
 
   emit<K extends keyof M & string>(key: K, payload: M[K]): void {
-    const handlers = this.listeners[key];
-    if (handlers) {
-      for (const fn of handlers) {
+    const set = this.listeners[key];
+    if (!set) return;
+    for (const fn of Array.from(set)) {
+      try {
         fn(payload);
+      } catch (err) {
+        console.error(`Error in event listener for ${key}:`, err);
       }
     }
+  }
+
+  clear(): void {
+    this.listeners = {};
   }
 }

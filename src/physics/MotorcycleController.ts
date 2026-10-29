@@ -198,4 +198,7 @@ export class MotorcycleController {
 
     return this.state;
   }
+  public setSpec(newSpec: BikeSpec): void {
+    Object.assign(this.spec, newSpec);
+  }
 }

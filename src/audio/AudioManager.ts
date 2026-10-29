@@ -24,6 +24,7 @@ export class AudioManager {
   private hornGain: GainNode | null = null;
   private cityBedGain: GainNode | null = null;
   private rainBedGain: GainNode | null = null;
+  private enginePitchMult: number = 1.0;
 
   constructor() {
     if (typeof window !== 'undefined') {
@@ -80,13 +81,17 @@ export class AudioManager {
    * Updates dynamic engine pitch and volume based on speed and throttle.
    * speed in m/s, throttle 0..1
    */
+  public setEnginePitch(mult: number): void {
+    this.enginePitchMult = Math.max(0.5, Math.min(2.0, mult));
+  }
+
   public updateEngine(speed: number, throttle: number): void {
     if (!this.audioContext || !this.engineOsc || !this.engineGain) return;
 
     // Pitch scales with speed (approx 50 Hz idle to 240 Hz top gear)
-    const baseFreq = 55;
+    const baseFreq = 55 * this.enginePitchMult;
     const speedFactor = Math.min(speed / 25, 1.2);
-    const targetFreq = baseFreq + speedFactor * 180 + throttle * 25;
+    const targetFreq = (baseFreq + speedFactor * 180 + throttle * 25) * this.enginePitchMult;
 
     this.engineOsc.frequency.setTargetAtTime(targetFreq, this.audioContext.currentTime, 0.05);
 

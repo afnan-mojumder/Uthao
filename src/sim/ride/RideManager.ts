@@ -8,6 +8,7 @@ import type {
   RideRequest,
   Transaction,
   PassengerState,
+  BikeId,
 } from '../../core/types';
 import { distance2d } from '../../core/math';
 import type { Fsm } from '../../core/fsm';
@@ -33,10 +34,15 @@ export class RideManager {
   appSuspendedUntilDay: number = 0;
   readonly directContacts: Set<string> = new Set();
   enableNegotiation: boolean = false;
+  activeBikeId: BikeId = 'old100';
+  hasEngineTune: boolean = false;
 
   constructor(opts: RideManagerOptions) {
     this.roadNetwork = opts.roadNetwork;
     this.bus = opts.bus;
+    this.bus.on('bike/swapped', ({ bikeId }) => {
+      this.activeBikeId = bikeId;
+    });
   }
 
   getActiveRequest(): RideRequest | null {
@@ -234,6 +240,10 @@ export class RideManager {
             durationMin: this.activeRequest.estimatedDuration,
             distanceKm: this.activeRequest.estimatedDistance,
             rating: 5,
+            spec: {
+              model: this.activeBikeId,
+              engineTune: this.hasEngineTune,
+            },
           });
 
           this.bus.emit('ride/completed', {

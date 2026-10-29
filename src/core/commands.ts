@@ -1,3 +1,5 @@
+import type { BikeId } from './types';
+
 export type Command =
   | { type: 'acceptRequest'; requestId: string }
   | { type: 'declineRequest'; requestId: string }
@@ -11,6 +13,8 @@ export type Command =
   | { type: 'buyFuel'; liters: number }
   | { type: 'repair'; item: string }
   | { type: 'buyUpgrade'; upgradeId: string }
+  | { type: 'buyBike'; bikeId: BikeId; useTradeIn?: boolean }
+  | { type: 'switchBike'; bikeId: BikeId }
   | { type: 'payExpense'; expenseId: string; amount?: number }
   | { type: 'chargePhone'; location?: 'home' | 'teaStall'; cost?: number }
   | { type: 'delayRent' }

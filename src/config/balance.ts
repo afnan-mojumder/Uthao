@@ -102,6 +102,34 @@ export const BALANCE = {
       conditionPenaltyThreshold: 40,
       conditionPenaltyMult: 0.75,
     },
+    used125: {
+      vmax: 25, // m/s (90 km/h)
+      accel: 3.3, // m/s^2 (0 -> 11 m/s in 3.3s)
+      brakeDecelDry: 6.8, // m/s^2
+      brakeDecelWet: 4.8, // m/s^2
+      steerMaxDegAt0: 35,
+      steerMaxDegAtVmax: 8,
+      leanMaxDeg: 35,
+      dryLateralGrip: 1.05,
+      wetLateralGrip: 0.75,
+      passengerAccelMult: 0.92,
+      conditionPenaltyThreshold: 40,
+      conditionPenaltyMult: 0.75,
+    },
+    new150: {
+      vmax: 28, // m/s (~101 km/h)
+      accel: 3.8, // m/s^2 (0 -> 11 m/s in 2.9s)
+      brakeDecelDry: 7.5, // m/s^2
+      brakeDecelWet: 5.5, // m/s^2
+      steerMaxDegAt0: 35,
+      steerMaxDegAtVmax: 8,
+      leanMaxDeg: 35,
+      dryLateralGrip: 1.15,
+      wetLateralGrip: 0.85,
+      passengerAccelMult: 0.95,
+      conditionPenaltyThreshold: 40,
+      conditionPenaltyMult: 0.75,
+    },
   },
   UPGRADES: {
     tires: 3000,

@@ -64,6 +64,9 @@ export interface GarageState {
   atKamalBhai: boolean;
   kamalRelationship: number;
   cash?: number;
+  savings?: number;
+  currentBikeId?: import('../core/types').BikeId;
+  ownedBikes?: import('../core/types').BikeId[];
   engineCondition?: number;
   tiresCondition?: number;
   brakesCondition?: number;
@@ -78,7 +81,7 @@ export const garageSignal = signal<GarageState>({
   kamalRelationship: 0,
 });
 
-export const garageTabSignal = signal<'repairs' | 'upgrades' | 'cosmetics'>('repairs');
+export const garageTabSignal = signal<'repairs' | 'upgrades' | 'cosmetics' | 'bikes'>('repairs');
 
 export type TutorialStep =
   | 'idle'
@@ -371,6 +374,10 @@ export function bindEventBusToStore(
       (item) => dispatch({ type: 'repair', item }),
       (upgradeId) => dispatch({ type: 'buyUpgrade', upgradeId })
     );
+    setBikeDispatchers(
+      (bikeId, useTradeIn) => dispatch({ type: 'buyBike', bikeId: bikeId as import('../core/types').BikeId, useTradeIn }),
+      (bikeId) => dispatch({ type: 'switchBike', bikeId: bikeId as import('../core/types').BikeId })
+    );
     setMenuDispatchers(
       () => {
         screenSignal.value = 'game';
@@ -495,6 +502,14 @@ export function bindEventBusToStore(
   });
   unsubscribers.push(unsubEncounterEnd);
 
+  const unsubBikeSwapped = bus.on('bike/swapped', (ev) => {
+    garageSignal.value = {
+      ...garageSignal.value,
+      currentBikeId: ev.bikeId,
+    };
+  });
+  unsubscribers.push(unsubBikeSwapped);
+
   const unsubDayEnded = bus.on('day/ended', (ev) => {
     dayEndSignal.value = {
       active: true,
@@ -588,4 +603,15 @@ export async function promptPwaInstall(): Promise<boolean> {
     installPromptSignal.value = false;
     return false;
   }
+}
+
+export let onBuyBikeCallback: ((bikeId: string, useTradeIn?: boolean) => void) | null = null;
+export let onSwitchBikeCallback: ((bikeId: string) => void) | null = null;
+
+export function setBikeDispatchers(
+  onBuy: (bikeId: string, useTradeIn?: boolean) => void,
+  onSwitch: (bikeId: string) => void
+): void {
+  onBuyBikeCallback = onBuy;
+  onSwitchBikeCallback = onSwitch;
 }
