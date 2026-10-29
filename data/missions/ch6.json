@@ -1,0 +1,100 @@
+[
+  {
+    "id": "m6_kamal_offer",
+    "chapter": 6,
+    "day": 17,
+    "titleKey": "mission_m6_kamal_offer_title",
+    "descKey": "mission_m6_kamal_offer_desc",
+    "prerequisites": [
+      "m5_linked_jobs"
+    ],
+    "objectives": [
+      {
+        "id": "obj_m6_kamal_rel",
+        "descKey": "obj_m6_kamal_rel_desc",
+        "type": "relationship",
+        "characterId": "kamal_bhai",
+        "min": 15
+      }
+    ],
+    "rewards": [
+      {
+        "type": "relationship",
+        "characterId": "kamal_bhai",
+        "delta": 15
+      },
+      {
+        "type": "flag",
+        "key": "workshop_offered",
+        "value": true
+      }
+    ],
+    "unlocks": [
+      "m6_test_ride"
+    ]
+  },
+  {
+    "id": "m6_test_ride",
+    "chapter": 6,
+    "day": 18,
+    "titleKey": "mission_m6_test_ride_title",
+    "descKey": "mission_m6_test_ride_desc",
+    "prerequisites": [
+      "m6_kamal_offer"
+    ],
+    "objectives": [
+      {
+        "id": "obj_m6_test_course",
+        "descKey": "obj_m6_test_course_desc",
+        "type": "completeRides",
+        "count": 2
+      }
+    ],
+    "rewards": [
+      {
+        "type": "money",
+        "amount": 600,
+        "kind": "fare"
+      },
+      {
+        "type": "flag",
+        "key": "test_ride_done",
+        "value": true
+      }
+    ],
+    "unlocks": [
+      "m6_decision"
+    ]
+  },
+  {
+    "id": "m6_decision",
+    "chapter": 6,
+    "day": 20,
+    "titleKey": "mission_m6_decision_title",
+    "descKey": "mission_m6_decision_desc",
+    "prerequisites": [
+      "m6_test_ride"
+    ],
+    "objectives": [
+      {
+        "id": "obj_m6_career_decision",
+        "descKey": "obj_m6_career_decision_desc",
+        "type": "flag",
+        "key": "ch6_decision_made",
+        "value": true
+      }
+    ],
+    "rewards": [
+      {
+        "type": "localTrust",
+        "delta": 20
+      },
+      {
+        "type": "flag",
+        "key": "campaign_completed",
+        "value": true
+      }
+    ],
+    "unlocks": []
+  }
+]

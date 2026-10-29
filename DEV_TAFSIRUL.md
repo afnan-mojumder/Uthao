@@ -51,7 +51,7 @@ Format: `- [ ] **<id>** <title> (<points>), deps: <ids>`. Tick by changing only 
 - [x] **T5.6** Additional motorcycles (3), deps: T4.4
 - [x] **T5.8** Deliveries (3), deps: T4.4
 - [x] **T5.7** Richer dialogue (8), deps: T4.3
-- [ ] **T5.4** Campaign chapters 2–6, side missions, Endless mode (13), deps: T4.7 (A), T5.1 (A)
+- [x] **T5.4** Campaign chapters 2–6, side missions, Endless mode (13), deps: T4.7 (A), T5.1 (A)
 - [ ] **T6.3** Accessibility and localisation (3), deps: T4.10
 - [ ] **T6.1** Full test matrix (3), deps: T5.4, T5.5 (A), T5.9 (A)
 - [ ] **T6.4** Branding, credits, final build (2), deps: T6.1, T6.2 (A), T6.3

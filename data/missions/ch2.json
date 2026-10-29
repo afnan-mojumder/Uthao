@@ -5,7 +5,9 @@
     "day": 4,
     "titleKey": "mission_m2_rush_hustle_title",
     "descKey": "mission_m2_rush_hustle_desc",
-    "prerequisites": ["m1_household"],
+    "prerequisites": [
+      "m1_household"
+    ],
     "objectives": [
       {
         "id": "obj_m2_rush_rides",
@@ -20,7 +22,7 @@
       {
         "type": "money",
         "amount": 400,
-        "kind": "reward"
+        "kind": "fare"
       },
       {
         "type": "localTrust",
@@ -32,6 +34,124 @@
         "value": true
       }
     ],
-    "unlocks": ["m4_wrong_pickup"]
+    "unlocks": [
+      "m2_profit_lesson"
+    ]
+  },
+  {
+    "id": "m2_profit_lesson",
+    "chapter": 2,
+    "day": 4,
+    "titleKey": "mission_m2_profit_lesson_title",
+    "descKey": "mission_m2_profit_lesson_desc",
+    "prerequisites": [
+      "m2_rush_hustle"
+    ],
+    "objectives": [
+      {
+        "id": "obj_m2_profit_rides",
+        "descKey": "obj_m2_profit_rides_desc",
+        "type": "completeRides",
+        "count": 2
+      },
+      {
+        "id": "obj_m2_profit_flag",
+        "descKey": "obj_m2_profit_flag_desc",
+        "type": "flag",
+        "key": "profit_lesson_done",
+        "value": true
+      }
+    ],
+    "rewards": [
+      {
+        "type": "money",
+        "amount": 350,
+        "kind": "reward"
+      },
+      {
+        "type": "localTrust",
+        "delta": 10
+      }
+    ],
+    "unlocks": [
+      "m2_regular_faces"
+    ]
+  },
+  {
+    "id": "m2_regular_faces",
+    "chapter": 2,
+    "day": 5,
+    "titleKey": "mission_m2_regular_faces_title",
+    "descKey": "mission_m2_regular_faces_desc",
+    "prerequisites": [
+      "m2_profit_lesson"
+    ],
+    "objectives": [
+      {
+        "id": "obj_m2_regular_rel",
+        "descKey": "obj_m2_regular_rel_desc",
+        "type": "relationship",
+        "characterId": "tanvir",
+        "min": 10
+      }
+    ],
+    "rewards": [
+      {
+        "type": "money",
+        "amount": 300,
+        "kind": "fare"
+      },
+      {
+        "type": "localTrust",
+        "delta": 15
+      },
+      {
+        "type": "flag",
+        "key": "ch2_regulars_known",
+        "value": true
+      }
+    ],
+    "unlocks": [
+      "m2_evening_rush"
+    ]
+  },
+  {
+    "id": "m2_evening_rush",
+    "chapter": 2,
+    "day": 6,
+    "titleKey": "mission_m2_evening_rush_title",
+    "descKey": "mission_m2_evening_rush_desc",
+    "prerequisites": [
+      "m2_regular_faces"
+    ],
+    "objectives": [
+      {
+        "id": "obj_m2_evening_rides",
+        "descKey": "obj_m2_evening_rides_desc",
+        "type": "completeRides",
+        "count": 5,
+        "distinctDistricts": 3,
+        "beforeMinute": 1050
+      }
+    ],
+    "rewards": [
+      {
+        "type": "money",
+        "amount": 800,
+        "kind": "reward"
+      },
+      {
+        "type": "localTrust",
+        "delta": 20
+      },
+      {
+        "type": "flag",
+        "key": "ch2_completed",
+        "value": true
+      }
+    ],
+    "unlocks": [
+      "m3_first_monsoon"
+    ]
   }
 ]

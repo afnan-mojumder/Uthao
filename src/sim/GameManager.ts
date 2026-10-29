@@ -38,7 +38,11 @@ import { MissionManager } from './mission/MissionManager';
 import type { MissionDef, EndingDef } from './schemas';
 import ch1Missions from '../../data/missions/ch1.json';
 import ch2Missions from '../../data/missions/ch2.json';
+import ch3Missions from '../../data/missions/ch3.json';
 import ch4Missions from '../../data/missions/ch4.json';
+import ch5Missions from '../../data/missions/ch5.json';
+import ch6Missions from '../../data/missions/ch6.json';
+import sideMissions from '../../data/missions/side.json';
 import endingsData from '../../data/endings.json';
 
 const DEFAULT_ENCOUNTERS: EncounterDef[] = [
@@ -182,12 +186,25 @@ export class GameManager {
       pauseOnDecisions: true,
     });
 
+    const allCampaignMissions = [
+      ...ch1Missions,
+      ...ch2Missions,
+      ...ch3Missions,
+      ...ch4Missions,
+      ...ch5Missions,
+      ...ch6Missions,
+      ...sideMissions,
+    ] as MissionDef[];
+
     const missionDefs =
-      (this.data.missions as MissionDef[] | undefined) ?? [
-        ...ch1Missions,
-        ...ch2Missions,
-        ...ch4Missions,
-      ] as MissionDef[];
+      this.mode === 'endless'
+        ? []
+        : ((this.data.missions as MissionDef[] | undefined) ?? allCampaignMissions);
+
+    if (this.mode === 'endless') {
+      this.story.currentChapter = 6;
+      this.story.activeMissions = [];
+    }
     const endingDefs =
       (this.data.endings as EndingDef[] | undefined) ?? (endingsData as EndingDef[]);
 

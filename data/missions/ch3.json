@@ -1,0 +1,130 @@
+[
+  {
+    "id": "m3_first_monsoon",
+    "chapter": 3,
+    "day": 7,
+    "titleKey": "mission_m3_first_monsoon_title",
+    "descKey": "mission_m3_first_monsoon_desc",
+    "prerequisites": [
+      "m2_evening_rush"
+    ],
+    "objectives": [
+      {
+        "id": "obj_m3_rain_rides",
+        "descKey": "obj_m3_rain_rides_desc",
+        "type": "completeRides",
+        "count": 3,
+        "weather": "heavyRain",
+        "noCrash": true
+      }
+    ],
+    "rewards": [
+      {
+        "type": "money",
+        "amount": 500,
+        "kind": "fare"
+      },
+      {
+        "type": "localTrust",
+        "delta": 15
+      },
+      {
+        "type": "flag",
+        "key": "monsoon_survived",
+        "value": true
+      }
+    ],
+    "unlocks": [
+      "m3_faster_bhai"
+    ]
+  },
+  {
+    "id": "m3_faster_bhai",
+    "chapter": 3,
+    "day": 8,
+    "titleKey": "mission_m3_faster_bhai_title",
+    "descKey": "mission_m3_faster_bhai_desc",
+    "prerequisites": [
+      "m3_first_monsoon"
+    ],
+    "objectives": [
+      {
+        "id": "obj_m3_pressure_ride",
+        "descKey": "obj_m3_pressure_ride_desc",
+        "type": "completeRides",
+        "count": 1
+      },
+      {
+        "id": "obj_m3_pressure_flag",
+        "descKey": "obj_m3_pressure_flag_desc",
+        "type": "flag",
+        "key": "pressuredSpeeding",
+        "value": "refused"
+      }
+    ],
+    "rewards": [
+      {
+        "type": "money",
+        "amount": 450,
+        "kind": "reward"
+      },
+      {
+        "type": "localTrust",
+        "delta": 15
+      },
+      {
+        "type": "flag",
+        "key": "speeding_pressure_handled",
+        "value": true
+      }
+    ],
+    "unlocks": [
+      "m3_hospital_run"
+    ]
+  },
+  {
+    "id": "m3_hospital_run",
+    "chapter": 3,
+    "day": 9,
+    "titleKey": "mission_m3_hospital_run_title",
+    "descKey": "mission_m3_hospital_run_desc",
+    "prerequisites": [
+      "m3_faster_bhai"
+    ],
+    "objectives": [
+      {
+        "id": "obj_m3_hospital_dest",
+        "descKey": "obj_m3_hospital_dest_desc",
+        "type": "completeRides",
+        "count": 1,
+        "district": "dhanbagh"
+      },
+      {
+        "id": "obj_m3_hospital_flag",
+        "descKey": "obj_m3_hospital_flag_desc",
+        "type": "flag",
+        "key": "helpedHospitalFree",
+        "value": true
+      }
+    ],
+    "rewards": [
+      {
+        "type": "localTrust",
+        "delta": 30
+      },
+      {
+        "type": "flag",
+        "key": "ch3_completed",
+        "value": true
+      },
+      {
+        "type": "money",
+        "amount": 600,
+        "kind": "reward"
+      }
+    ],
+    "unlocks": [
+      "m4_unfamiliar_ground"
+    ]
+  }
+]

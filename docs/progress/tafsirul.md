@@ -40,3 +40,11 @@ One line per finished task: `YYYY-MM-DD Tx.y done — note`
 - Added dialogue subtitle floating bubble to HUD.
 - Executed stereotype review checklist in docs/DECISIONS.md.
 - Added test suite tests/unit/sim/dialogue.test.ts (7 tests passed, 340 total tests green).
+
+## 2026-10-29 T5.4 Campaign chapters 2-6, side missions, Endless mode
+- Implemented full campaign chapters 2 through 6 in data/missions/ch2.json ... ch6.json with sequential unlock progression.
+- Created 8 side missions in data/missions/side.json.
+- Implemented Endless Ride mode with all 8 districts unlocked and no mandatory missions.
+- Implemented progressive district unlocking by chapter in MissionManager.getUnlockedDistricts().
+- Added full bilingual title and description strings in data/dialogue/{bn,en}/missions.json.
+- Added unit tests in tests/unit/sim/campaignChapters.test.ts (4 tests passed, 344 total tests green).

@@ -1,0 +1,158 @@
+[
+  {
+    "id": "m5_calls",
+    "chapter": 5,
+    "day": 13,
+    "titleKey": "mission_m5_calls_title",
+    "descKey": "mission_m5_calls_desc",
+    "prerequisites": [
+      "m4_home_safe"
+    ],
+    "objectives": [
+      {
+        "id": "obj_m5_call_rides",
+        "descKey": "obj_m5_call_rides_desc",
+        "type": "completeRides",
+        "count": 3
+      }
+    ],
+    "rewards": [
+      {
+        "type": "money",
+        "amount": 700,
+        "kind": "fare"
+      },
+      {
+        "type": "localTrust",
+        "delta": 20
+      },
+      {
+        "type": "flag",
+        "key": "ch5_calls_done",
+        "value": true
+      }
+    ],
+    "unlocks": [
+      "m5_promise"
+    ]
+  },
+  {
+    "id": "m5_promise",
+    "chapter": 5,
+    "day": 14,
+    "titleKey": "mission_m5_promise_title",
+    "descKey": "mission_m5_promise_desc",
+    "prerequisites": [
+      "m5_calls"
+    ],
+    "objectives": [
+      {
+        "id": "obj_m5_promise_ride",
+        "descKey": "obj_m5_promise_ride_desc",
+        "type": "completeRides",
+        "count": 1,
+        "beforeMinute": 540
+      },
+      {
+        "id": "obj_m5_promise_char",
+        "descKey": "obj_m5_promise_char_desc",
+        "type": "rideWith",
+        "characterId": "char_ferdousi"
+      }
+    ],
+    "rewards": [
+      {
+        "type": "relationship",
+        "characterId": "ferdousi",
+        "delta": 20
+      },
+      {
+        "type": "localTrust",
+        "delta": 20
+      },
+      {
+        "type": "flag",
+        "key": "m5_promise_kept",
+        "value": true
+      }
+    ],
+    "unlocks": [
+      "m5_package"
+    ]
+  },
+  {
+    "id": "m5_package",
+    "chapter": 5,
+    "day": 15,
+    "titleKey": "mission_m5_package_title",
+    "descKey": "mission_m5_package_desc",
+    "prerequisites": [
+      "m5_promise"
+    ],
+    "objectives": [
+      {
+        "id": "obj_m5_mintu_package",
+        "descKey": "obj_m5_mintu_package_desc",
+        "type": "rideWith",
+        "characterId": "char_mintu"
+      }
+    ],
+    "rewards": [
+      {
+        "type": "money",
+        "amount": 500,
+        "kind": "fare"
+      },
+      {
+        "type": "relationship",
+        "characterId": "mintu",
+        "delta": 20
+      },
+      {
+        "type": "flag",
+        "key": "m5_package_delivered",
+        "value": true
+      }
+    ],
+    "unlocks": [
+      "m5_linked_jobs"
+    ]
+  },
+  {
+    "id": "m5_linked_jobs",
+    "chapter": 5,
+    "day": 16,
+    "titleKey": "mission_m5_linked_jobs_title",
+    "descKey": "mission_m5_linked_jobs_desc",
+    "prerequisites": [
+      "m5_package"
+    ],
+    "objectives": [
+      {
+        "id": "obj_m5_chained_rides",
+        "descKey": "obj_m5_chained_rides_desc",
+        "type": "completeRides",
+        "count": 4
+      }
+    ],
+    "rewards": [
+      {
+        "type": "money",
+        "amount": 1200,
+        "kind": "reward"
+      },
+      {
+        "type": "localTrust",
+        "delta": 25
+      },
+      {
+        "type": "flag",
+        "key": "ch5_completed",
+        "value": true
+      }
+    ],
+    "unlocks": [
+      "m6_kamal_offer"
+    ]
+  }
+]

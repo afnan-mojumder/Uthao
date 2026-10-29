@@ -1,0 +1,248 @@
+[
+  {
+    "id": "side_lost_phone",
+    "chapter": 2,
+    "day": 4,
+    "titleKey": "mission_side_lost_phone_title",
+    "descKey": "mission_side_lost_phone_desc",
+    "prerequisites": [
+      "m1_first_ride"
+    ],
+    "objectives": [
+      {
+        "id": "obj_side_lost_phone_ride",
+        "descKey": "obj_side_lost_phone_desc",
+        "type": "completeRides",
+        "count": 1
+      }
+    ],
+    "rewards": [
+      {
+        "type": "money",
+        "amount": 200,
+        "kind": "reward"
+      },
+      {
+        "type": "localTrust",
+        "delta": 15
+      }
+    ],
+    "unlocks": []
+  },
+  {
+    "id": "side_school_run",
+    "chapter": 3,
+    "day": 7,
+    "titleKey": "mission_side_school_run_title",
+    "descKey": "mission_side_school_run_desc",
+    "prerequisites": [
+      "m2_rush_hustle"
+    ],
+    "objectives": [
+      {
+        "id": "obj_side_school_run_ride",
+        "descKey": "obj_side_school_run_desc",
+        "type": "completeRides",
+        "count": 2,
+        "beforeMinute": 510
+      }
+    ],
+    "rewards": [
+      {
+        "type": "relationship",
+        "characterId": "ferdousi",
+        "delta": 15
+      },
+      {
+        "type": "localTrust",
+        "delta": 10
+      }
+    ],
+    "unlocks": []
+  },
+  {
+    "id": "side_bablu_supplies",
+    "chapter": 3,
+    "day": 8,
+    "titleKey": "mission_side_bablu_supplies_title",
+    "descKey": "mission_side_bablu_supplies_desc",
+    "prerequisites": [
+      "m2_rush_hustle"
+    ],
+    "objectives": [
+      {
+        "id": "obj_side_bablu_rides",
+        "descKey": "obj_side_bablu_desc",
+        "type": "completeRides",
+        "count": 2,
+        "zoneTag": "market"
+      }
+    ],
+    "rewards": [
+      {
+        "type": "money",
+        "amount": 450,
+        "kind": "fare"
+      },
+      {
+        "type": "relationship",
+        "characterId": "bablu",
+        "delta": 15
+      }
+    ],
+    "unlocks": []
+  },
+  {
+    "id": "side_night_delivery",
+    "chapter": 4,
+    "day": 10,
+    "titleKey": "mission_side_night_delivery_title",
+    "descKey": "mission_side_night_delivery_desc",
+    "prerequisites": [
+      "m3_hospital_run"
+    ],
+    "objectives": [
+      {
+        "id": "obj_side_night_delivery_rides",
+        "descKey": "obj_side_night_delivery_desc",
+        "type": "completeRides",
+        "count": 3
+      }
+    ],
+    "rewards": [
+      {
+        "type": "money",
+        "amount": 650,
+        "kind": "reward"
+      },
+      {
+        "type": "localTrust",
+        "delta": 10
+      }
+    ],
+    "unlocks": []
+  },
+  {
+    "id": "side_rain_shelter",
+    "chapter": 4,
+    "day": 11,
+    "titleKey": "mission_side_rain_shelter_title",
+    "descKey": "mission_side_rain_shelter_desc",
+    "prerequisites": [
+      "m3_first_monsoon"
+    ],
+    "objectives": [
+      {
+        "id": "obj_side_rain_shelter_ride",
+        "descKey": "obj_side_rain_shelter_desc",
+        "type": "completeRides",
+        "count": 1
+      }
+    ],
+    "rewards": [
+      {
+        "type": "relationship",
+        "characterId": "mintu",
+        "delta": 10
+      },
+      {
+        "type": "money",
+        "amount": 150,
+        "kind": "reward"
+      }
+    ],
+    "unlocks": []
+  },
+  {
+    "id": "side_rahim_shortcuts",
+    "chapter": 5,
+    "day": 13,
+    "titleKey": "mission_side_rahim_shortcuts_title",
+    "descKey": "mission_side_rahim_shortcuts_desc",
+    "prerequisites": [
+      "m4_unfamiliar_ground"
+    ],
+    "objectives": [
+      {
+        "id": "obj_side_rahim_ride",
+        "descKey": "obj_side_rahim_desc",
+        "type": "rideWith",
+        "characterId": "char_rahim"
+      }
+    ],
+    "rewards": [
+      {
+        "type": "relationship",
+        "characterId": "rahim",
+        "delta": 25
+      },
+      {
+        "type": "flag",
+        "key": "tookRahimShortcut",
+        "value": true
+      }
+    ],
+    "unlocks": []
+  },
+  {
+    "id": "side_eid_rush",
+    "chapter": 5,
+    "day": 14,
+    "titleKey": "mission_side_eid_rush_title",
+    "descKey": "mission_side_eid_rush_desc",
+    "prerequisites": [
+      "m4_home_safe"
+    ],
+    "objectives": [
+      {
+        "id": "obj_side_eid_rush_rides",
+        "descKey": "obj_side_eid_rush_desc",
+        "type": "completeRides",
+        "count": 4
+      }
+    ],
+    "rewards": [
+      {
+        "type": "money",
+        "amount": 900,
+        "kind": "fare"
+      },
+      {
+        "type": "localTrust",
+        "delta": 20
+      }
+    ],
+    "unlocks": []
+  },
+  {
+    "id": "side_garage_helper",
+    "chapter": 6,
+    "day": 17,
+    "titleKey": "mission_side_garage_helper_title",
+    "descKey": "mission_side_garage_helper_desc",
+    "prerequisites": [
+      "m5_linked_jobs"
+    ],
+    "objectives": [
+      {
+        "id": "obj_side_garage_helper_ride",
+        "descKey": "obj_side_garage_helper_desc",
+        "type": "rideWith",
+        "characterId": "char_kamal"
+      }
+    ],
+    "rewards": [
+      {
+        "type": "relationship",
+        "characterId": "kamal_bhai",
+        "delta": 20
+      },
+      {
+        "type": "money",
+        "amount": 300,
+        "kind": "fare"
+      }
+    ],
+    "unlocks": []
+  }
+]

@@ -1,11 +1,51 @@
 [
   {
+    "id": "m4_unfamiliar_ground",
+    "chapter": 4,
+    "day": 10,
+    "titleKey": "mission_m4_unfamiliar_ground_title",
+    "descKey": "mission_m4_unfamiliar_ground_desc",
+    "prerequisites": [
+      "m3_hospital_run"
+    ],
+    "objectives": [
+      {
+        "id": "obj_m4_puran_ride",
+        "descKey": "obj_m4_puran_ride_desc",
+        "type": "completeRides",
+        "count": 1,
+        "district": "puranpara"
+      }
+    ],
+    "rewards": [
+      {
+        "type": "money",
+        "amount": 600,
+        "kind": "fare"
+      },
+      {
+        "type": "localTrust",
+        "delta": 15
+      },
+      {
+        "type": "flag",
+        "key": "puran_para_mastered",
+        "value": true
+      }
+    ],
+    "unlocks": [
+      "m4_wrong_pickup"
+    ]
+  },
+  {
     "id": "m4_wrong_pickup",
     "chapter": 4,
-    "day": 5,
+    "day": 11,
     "titleKey": "mission_m4_wrong_pickup_title",
     "descKey": "mission_m4_wrong_pickup_desc",
-    "prerequisites": ["m2_rush_hustle"],
+    "prerequisites": [
+      "m4_unfamiliar_ground"
+    ],
     "objectives": [
       {
         "id": "obj_m4_survive",
@@ -18,7 +58,9 @@
         "descKey": "obj_m4_police_desc",
         "type": "choose",
         "encounterId": "police_checkpoint",
-        "choiceIds": ["cooperatedPolice"]
+        "choiceIds": [
+          "cooperatedPolice"
+        ]
       }
     ],
     "rewards": [
@@ -37,6 +79,46 @@
         "value": true
       }
     ],
-    "unlocks": []
+    "unlocks": [
+      "m4_home_safe"
+    ]
+  },
+  {
+    "id": "m4_home_safe",
+    "chapter": 4,
+    "day": 12,
+    "titleKey": "mission_m4_home_safe_title",
+    "descKey": "mission_m4_home_safe_desc",
+    "prerequisites": [
+      "m4_wrong_pickup"
+    ],
+    "objectives": [
+      {
+        "id": "obj_m4_safe_flag",
+        "descKey": "obj_m4_safe_flag_desc",
+        "type": "flag",
+        "key": "cooperatedPolice",
+        "value": true
+      }
+    ],
+    "rewards": [
+      {
+        "type": "localTrust",
+        "delta": 25
+      },
+      {
+        "type": "relationship",
+        "characterId": "si_morshed",
+        "delta": 15
+      },
+      {
+        "type": "flag",
+        "key": "ch4_completed",
+        "value": true
+      }
+    ],
+    "unlocks": [
+      "m5_calls"
+    ]
   }
 ]

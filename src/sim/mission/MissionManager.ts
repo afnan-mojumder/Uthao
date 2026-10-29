@@ -9,7 +9,7 @@ import {
   evaluateFlagChanged,
   evaluateRelationshipChanged,
 } from './objectives';
-import type { StoryState, EndingId } from '../../core/types';
+import type { StoryState, EndingId, DistrictId } from '../../core/types';
 import type { EffectContext } from '../events/effects';
 import { applyEffect } from '../events/effects';
 
@@ -284,6 +284,22 @@ export class MissionManager {
 
     this.bus.emit('mission/completed', { missionId });
 
+    // Chapter progression on final missions
+    if (missionId === 'm1_household') {
+      this.storyState.currentChapter = Math.max(this.storyState.currentChapter, 2);
+    } else if (missionId === 'm2_evening_rush') {
+      this.storyState.currentChapter = Math.max(this.storyState.currentChapter, 3);
+    } else if (missionId === 'm3_hospital_run') {
+      this.storyState.currentChapter = Math.max(this.storyState.currentChapter, 4);
+    } else if (missionId === 'm4_home_safe') {
+      this.storyState.currentChapter = Math.max(this.storyState.currentChapter, 5);
+    } else if (missionId === 'm5_linked_jobs') {
+      this.storyState.currentChapter = Math.max(this.storyState.currentChapter, 6);
+    } else if (missionId === 'm6_decision') {
+      this.storyState.branchFlags['campaign_completed'] = true;
+    }
+
+
     for (const nextId of def.unlocks) {
       this.activateMission(nextId);
     }
@@ -363,6 +379,36 @@ export class MissionManager {
 
   getCompletedMissions(): string[] {
     return Array.from(this.completedMissionIds);
+  }
+
+
+  getUnlockedDistricts(chapter?: number): DistrictId[] {
+    const ch = chapter ?? this.storyState.currentChapter;
+    if (ch <= 1) {
+      return ['mirpara'];
+    }
+    if (ch === 2) {
+      return ['mirpara', 'fulgate', 'motinagar'];
+    }
+    if (ch === 3) {
+      return ['mirpara', 'fulgate', 'motinagar', 'dhanbagh'];
+    }
+    if (ch === 4) {
+      return ['mirpara', 'fulgate', 'motinagar', 'dhanbagh', 'puranpara'];
+    }
+    if (ch === 5) {
+      return ['mirpara', 'fulgate', 'motinagar', 'dhanbagh', 'puranpara', 'gulbari', 'mohakhal'];
+    }
+    return [
+      'mirpara',
+      'fulgate',
+      'motinagar',
+      'dhanbagh',
+      'puranpara',
+      'gulbari',
+      'mohakhal',
+      'testloop',
+    ];
   }
 
   getObjectiveStates(missionId: string): ObjectiveState[] {
