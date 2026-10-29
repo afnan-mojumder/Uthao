@@ -20,6 +20,7 @@ export interface IdentityMetrics {
   countersAcceptedCount?: number;
   totalTripsCount?: number;
   fareNetRatio?: number;
+  helpChoicesCount?: number;
   joinedScheme?: boolean;
 }
 
@@ -34,6 +35,8 @@ export function calculateIdentityTendencies(metrics: IdentityMetrics): IdentityT
     relationships,
     offAppTripsCount = 0,
     countersAcceptedCount = 0,
+    fareNetRatio,
+    helpChoicesCount = 0,
     joinedScheme = false,
   } = metrics;
 
@@ -43,12 +46,18 @@ export function calculateIdentityTendencies(metrics: IdentityMetrics): IdentityT
   const safetyPenalty = safetyRecord.crashes * 30 + safetyRecord.bumps * 5 + safetyRecord.infractions * 10;
   const professional = Math.round(clamp(ratingBase + safetyBonus - safetyPenalty, 0, 100));
 
-  // 2. Negotiator (bargaining, net fare ratio, promises kept)
+  // 2. Negotiator (bargaining, avg net/fare ratio, successful counters, promises kept)
   const negBase = 30;
   const counterBonus = Math.min(35, countersAcceptedCount * 6);
+  const fareRatioBonus =
+    fareNetRatio !== undefined
+      ? Math.min(25, Math.max(-20, (fareNetRatio - 1.0) * 100))
+      : 0;
   const promiseBonus = Math.min(20, promisesKept * 5);
   const promisePenalty = promisesBroken * 15;
-  const negotiator = Math.round(clamp(negBase + counterBonus + promiseBonus - promisePenalty, 0, 100));
+  const negotiator = Math.round(
+    clamp(negBase + counterBonus + fareRatioBonus + promiseBonus - promisePenalty, 0, 100)
+  );
 
   // 3. Hustler (riskScore, infractions, off-app count, illicit scheme)
   const riskBase = riskScore * 10;
@@ -57,16 +66,19 @@ export function calculateIdentityTendencies(metrics: IdentityMetrics): IdentityT
   const schemeBonus = joinedScheme ? 40 : 0;
   const hustler = Math.round(clamp(riskBase + infractionBonus + offAppBonus + schemeBonus, 0, 100));
 
-  // 4. Regular (relationships, localTrust, community promises)
+  // 4. Regular (relationships, localTrust, help choices, community promises)
   const trustBase = localTrust * 0.6;
   const positiveRelSum = Object.values(relationships).reduce(
     (sum, val) => (val > 0 ? sum + Math.min(15, val * 0.5) : sum),
     0
   );
   const relBonus = Math.min(30, positiveRelSum);
+  const helpBonus = Math.min(15, helpChoicesCount * 5);
   const regPromiseBonus = Math.min(20, promisesKept * 4);
   const regPromisePenalty = promisesBroken * 10;
-  const regular = Math.round(clamp(trustBase + relBonus + regPromiseBonus - regPromisePenalty, 0, 100));
+  const regular = Math.round(
+    clamp(trustBase + relBonus + helpBonus + regPromiseBonus - regPromisePenalty, 0, 100)
+  );
 
   return {
     professional,
@@ -74,6 +86,35 @@ export function calculateIdentityTendencies(metrics: IdentityMetrics): IdentityT
     hustler,
     regular,
   };
+}
+
+export interface SnapshotLikeForIdentity {
+  reputation?: {
+    rating: number;
+    localTrust: number;
+    safetyRecord: SafetyRecord;
+    riskScore: number;
+    promises: { kept: number; broken: number };
+  };
+  story?: {
+    characterRelationships: Record<string, number>;
+    branchFlags: Record<string, boolean | number | string>;
+  };
+}
+
+export function calculateTendenciesFromSnapshot(snapshot: SnapshotLikeForIdentity): IdentityTendencies {
+  const rep = snapshot.reputation;
+  const story = snapshot.story;
+  return calculateIdentityTendencies({
+    rating: rep?.rating ?? 5.0,
+    safetyRecord: rep?.safetyRecord ?? { nearMisses: 0, bumps: 0, crashes: 0, infractions: 0 },
+    riskScore: rep?.riskScore ?? 0,
+    localTrust: rep?.localTrust ?? 30,
+    promisesKept: rep?.promises?.kept ?? 0,
+    promisesBroken: rep?.promises?.broken ?? 0,
+    relationships: story?.characterRelationships ?? {},
+    joinedScheme: story?.branchFlags?.['joinedScheme'] === true,
+  });
 }
 
 export function getDominantIdentity(tendencies: IdentityTendencies): keyof IdentityTendencies {

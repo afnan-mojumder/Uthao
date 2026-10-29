@@ -45,7 +45,7 @@ Format: `- [ ] **<id>** <title> (<points>), deps: <ids>`. Tick by changing only 
 - [x] **T3.8** Opening sequence "First Ride" plus mission v0 (5), deps: T3.7, T2.4, T3.3 (A)
 - [x] **T4.3** Recurring passengers and direct bookings (3), deps: T4.2 (A), T2.2 (A)
 - [x] **T4.5** Remaining signature situations (5), deps: T3.6 (A), T2.5 (A)
-- [ ] **T4.8** Identity tendencies (2), deps: T4.2 (A)
+- [x] **T4.8** Identity tendencies (2), deps: T4.2 (A)
 - [ ] **T4.9** SaveSystem (5), deps: T4.2 (A), T4.7 (A)
 - [ ] **T4.10** Mobile HUD polish and v1.0 release (3), deps: T4.9, T4.6 (A), T4.5, T4.4, T3.10, T2.8
 - [ ] **T5.6** Additional motorcycles (3), deps: T4.4

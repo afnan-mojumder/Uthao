@@ -3,6 +3,7 @@ import { t } from '../i18n';
 import type { SimSnapshot } from '../../sim/GameManager';
 import type { MissionDef } from '../../sim/schemas';
 import type { ObjectiveState } from '../../sim/mission/objectives';
+import { calculateTendenciesFromSnapshot } from '../../sim/reputation/identity';
 
 export interface JournalProps {
   snapshot: SimSnapshot;
@@ -21,16 +22,16 @@ export function Journal({
 
   const { story, reputation } = snapshot;
 
-  // Derive identity tendencies (0-100)
+  // Derive identity tendencies (0-100) using the centralized identity calculator
   const rating = reputation?.rating ?? 5.0;
   const safety = reputation?.safetyRecord ?? { nearMisses: 0, bumps: 0, crashes: 0, infractions: 0 };
-  const riskScore = reputation?.riskScore ?? 0;
   const localTrust = reputation?.localTrust ?? 30;
 
-  const proScore = Math.min(100, Math.max(0, Math.round((rating / 5.0) * 80 - (safety.crashes * 20 + safety.bumps * 5))));
-  const negScore = Math.min(100, Math.max(0, Math.round(50 + (reputation?.promises?.kept ?? 0) * 10 - (reputation?.promises?.broken ?? 0) * 15)));
-  const hustlerScore = Math.min(100, Math.max(0, Math.round(riskScore * 15 + safety.infractions * 10)));
-  const regularScore = Math.min(100, Math.max(0, Math.round(localTrust * 0.8 + Object.values(story.characterRelationships).reduce((a, b) => a + (b > 10 ? 10 : 0), 0))));
+  const tendencies = calculateTendenciesFromSnapshot(snapshot);
+  const proScore = tendencies.professional;
+  const negScore = tendencies.negotiator;
+  const hustlerScore = tendencies.hustler;
+  const regularScore = tendencies.regular;
 
   return (
     <div
