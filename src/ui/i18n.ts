@@ -4,12 +4,14 @@ import bnNegotiation from '../../data/dialogue/bn/negotiation.json';
 import enNegotiation from '../../data/dialogue/en/negotiation.json';
 import bnPhone from '../../data/dialogue/bn/phone.json';
 import enPhone from '../../data/dialogue/en/phone.json';
+import bnHud from '../../data/dialogue/bn/hud.json';
+import enHud from '../../data/dialogue/en/hud.json';
 
 export type Language = 'bn' | 'en';
 
 const dictionaries: Record<Language, Record<string, string>> = {
-  bn: { ...bnUi, ...bnNegotiation, ...bnPhone },
-  en: { ...enUi, ...enNegotiation, ...enPhone },
+  bn: { ...bnUi, ...bnNegotiation, ...bnPhone, ...bnHud },
+  en: { ...enUi, ...enNegotiation, ...enPhone, ...enHud },
 };
 
 let currentLanguage: Language = 'bn'; // Default to Bangla for authentic Dhaka experience

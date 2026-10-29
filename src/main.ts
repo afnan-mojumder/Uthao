@@ -25,8 +25,12 @@ import {
   setRequestDispatchers,
   setNegotiationActionDispatcher,
   negotiationSignal,
+  phoneSignal,
+  hudSignal,
 } from './ui/store';
 import { startNegotiation, respond } from './sim/negotiation/NegotiationSystem';
+import { Minimap } from './render/minimap';
+import { BALANCE } from './config/balance';
 import { generateProfile } from './sim/passenger/profiles';
 import { Rng } from './core/rng';
 import type { RideRequest } from './core/types';
@@ -180,6 +184,7 @@ if (typeof document !== 'undefined') {
 }
 
 const hud = typeof document !== 'undefined' ? new Hud() : undefined;
+const minimap = typeof document !== 'undefined' ? new Minimap(roadNetwork) : undefined;
 const autopilot = new AutopilotController(roadNetwork);
 const trafficManager = new TrafficManager(roadNetwork, 42);
 const inputManager = new InputManager();
@@ -388,6 +393,23 @@ function frame(now: number) {
     renderer.render(gm.snapshot(), alpha);
   }
 
+  // Update Minimap
+  if (minimap) {
+    if (!minimap.canvas.parentElement && typeof document !== 'undefined') {
+      const container = document.getElementById('minimap-container');
+      if (container) {
+        container.appendChild(minimap.canvas);
+      }
+    }
+    const pNodePos = activeReq && activeReq.status === 'WaitingForPickup' ? pNode : null;
+    const dNodePos = activeReq && activeReq.status === 'OnTrip' ? dNode : null;
+    minimap.update(
+      { x: bikeState.x, z: bikeState.z, heading: bikeState.heading },
+      rideManager.currentRoute,
+      { pickup: pNodePos, dropoff: dNodePos }
+    );
+  }
+
   // Update HUD
   if (hud) {
     let objective = 'Free roam';
@@ -404,11 +426,42 @@ function frame(now: number) {
       objective = 'Trip complete! Looking for fares...';
     }
 
+    const currentSpeedKmh = bikeState.speed * 3.6;
+    const fuelL = gm.economy.fuelLevel;
+    const fuelMaxL = BALANCE.FUEL.tankL;
+    const todayNetEarnings = gm.economy.dailyRevenue - gm.economy.dailyExpenses;
+    const shiftClock = gm.clock.hhmm();
+    const shiftDay = gm.clock.day;
+    const rating = gm.reputationSystem.getAppRating();
+    const isFirstPerson = renderer ? renderer.cameraRig.mode === 'firstPerson' : false;
+
     hud.update({
-      speedKmh: bikeState.speed * 3.6,
+      speedKmh: currentSpeedKmh,
       objectiveText: objective,
       fare,
+      fuelL,
+      fuelMaxL,
+      todayNetEarnings,
+      shiftClock,
+      shiftDay,
+      rating,
+      isFirstPerson,
+      nextTurn: phoneSignal.value.navigationTurn,
+      passengerStatus: activeReq
+        ? {
+            status: activeReq.status,
+            name: 'Passenger',
+          }
+        : undefined,
+      etaMinutes: activeReq ? activeReq.estimatedDuration : undefined,
     });
+
+    hudSignal.value = {
+      ...hudSignal.value,
+      speedKmh: currentSpeedKmh,
+      fuel: (fuelL / fuelMaxL) * 100,
+      objectiveText: objective,
+    };
   }
 
   if (typeof requestAnimationFrame !== 'undefined') {

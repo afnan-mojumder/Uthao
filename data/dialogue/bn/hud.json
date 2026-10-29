@@ -1,0 +1,16 @@
+{
+  "hud.objective": "উদ্দেশ্য",
+  "hud.speed_unit": "কিমি/ঘণ্টা",
+  "hud.earnings": "আজকের আয়: ৳{amount}",
+  "hud.fuel": "জ্বালানি",
+  "hud.fuel_low": "জ্বালানি কম!",
+  "hud.rating": "রেটিং",
+  "hud.day": "দিন {day}",
+  "hud.shift": "শিফট",
+  "hud.fare": "ভাড়া: ৳{fare}",
+  "hud.eta": "{min} মি.",
+  "hud.passenger.waiting": "যাত্রী খোঁজা হচ্ছে...",
+  "hud.passenger.pickup": "পিকআপ পয়েন্টে যান",
+  "hud.passenger.ontrip": "গন্তব্যে নামিয়ে দিন",
+  "hud.passenger.none": "ফ্রি রাইড"
+}

@@ -1,0 +1,16 @@
+{
+  "hud.objective": "Objective",
+  "hud.speed_unit": "KM / H",
+  "hud.earnings": "Today's Net: ৳{amount}",
+  "hud.fuel": "Fuel",
+  "hud.fuel_low": "Low Fuel!",
+  "hud.rating": "Rating",
+  "hud.day": "Day {day}",
+  "hud.shift": "Shift",
+  "hud.fare": "Fare: ৳{fare}",
+  "hud.eta": "{min} min",
+  "hud.passenger.waiting": "Looking for fares...",
+  "hud.passenger.pickup": "Go to pickup point",
+  "hud.passenger.ontrip": "Drop off at destination",
+  "hud.passenger.none": "Free Roam"
+}
