@@ -1,9 +1,11 @@
 import type { GameManager, SimSnapshot } from '../sim/GameManager';
 import type { Command, CommandResult } from '../core/commands';
-import type { TripReceipt, WeatherKind } from '../core/types';
+import type { RideRequest, TripReceipt, WeatherKind } from '../core/types';
 import type { Renderer } from '../render/Renderer';
 import type { AutopilotController } from './autopilot';
 import type { RideManager } from '../sim/ride/RideManager';
+import { generateProfile } from '../sim/passenger/profiles';
+import { Rng } from '../core/rng';
 
 export interface DebugApi {
   gm: GameManager;
@@ -25,6 +27,7 @@ export interface DebugApi {
   getDrawCalls: () => number;
   getTriangles: () => number;
   toggleCamera: () => void;
+  spawnBargainer: (fare?: number) => RideRequest;
 }
 
 declare global {
@@ -115,5 +118,30 @@ export function initDebugApi(
     getDrawCalls: () => options.renderer?.getDrawCalls() ?? 0,
     getTriangles: () => options.renderer?.getTriangles() ?? 0,
     toggleCamera: () => options.renderer?.cameraRig.toggleMode(),
+    spawnBargainer: (fare = 100) => {
+      const allNodes = options.rideManager?.roadNetwork.getAllNodes() ?? [];
+      const pNodeId = allNodes[0]?.nodeId ?? 'N1';
+      const dNodeId = allNodes[1]?.nodeId ?? 'N2';
+      const bargainerProfile = generateProfile('bargainer', new Rng(123), 'p_bargainer');
+      const req: RideRequest = {
+        requestId: 'req_bargain_test',
+        passengerId: bargainerProfile.passengerId,
+        pickupNodeId: pNodeId,
+        destinationNodeId: dNodeId,
+        initialFare: fare,
+        estimatedDistance: 2.5,
+        estimatedDuration: 10,
+        requestedArrivalTime: null,
+        bookingType: 'app',
+        status: 'WaitingForPickup',
+        surge: 1.0,
+      };
+      if (options.rideManager) {
+        options.rideManager.enableNegotiation = true;
+        options.rideManager.offer(req);
+        options.rideManager.accept(req.requestId);
+      }
+      return req;
+    },
   };
 }

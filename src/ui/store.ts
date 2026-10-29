@@ -1,6 +1,13 @@
 import { signal } from '@preact/signals';
 import type { EventBus, GameEvents } from '../core/events';
 import type { Command } from '../core/commands';
+import type { RideRequest } from '../core/types';
+import type { TripHistoryItem } from './phone/Phone';
+import type {
+  NegotiationSession,
+  NegotiationResult,
+  NegotiationAction,
+} from '../sim/negotiation/NegotiationSystem';
 
 export type ScreenId = 'title' | 'game' | 'garage' | 'map' | 'pause';
 
@@ -23,6 +30,21 @@ export interface ChoiceState {
   instanceId?: string;
 }
 
+export interface PhoneState {
+  open: boolean;
+  unreadCount: number;
+  incomingRequest: RideRequest | null;
+  timeoutRemaining: number;
+  tripHistory: TripHistoryItem[];
+  navigationTurn: { direction: string; text: string } | null;
+}
+
+export interface NegotiationUiState {
+  active: boolean;
+  session: NegotiationSession | null;
+  lastResult: NegotiationResult | null;
+}
+
 export const screenSignal = signal<ScreenId>('game');
 export const pausedSignal = signal<boolean>(false);
 export const rotateOverlaySignal = signal<boolean>(false);
@@ -37,15 +59,19 @@ export const hudSignal = signal<HudState>({
   fuel: 100,
 });
 
-export const phoneSignal = signal<{ open: boolean; unreadCount: number }>({
+export const phoneSignal = signal<PhoneState>({
   open: false,
   unreadCount: 0,
+  incomingRequest: null,
+  timeoutRemaining: 15,
+  tripHistory: [],
+  navigationTurn: null,
 });
 
-export const negotiationSignal = signal<{ active: boolean; fare: number; passengerOffer: number }>({
+export const negotiationSignal = signal<NegotiationUiState>({
   active: false,
-  fare: 0,
-  passengerOffer: 0,
+  session: null,
+  lastResult: null,
 });
 
 export const choiceSignal = signal<ChoiceState>({
@@ -55,9 +81,24 @@ export const choiceSignal = signal<ChoiceState>({
 });
 
 export let onChooseCallback: ((choiceId: string, instanceId: string) => void) | null = null;
+export let onAcceptRequestCallback: ((requestId: string) => void) | null = null;
+export let onDeclineRequestCallback: ((requestId: string) => void) | null = null;
+export let onNegotiationActionCallback: ((action: NegotiationAction) => void) | null = null;
 
 export function setChoiceDispatcher(fn: (choiceId: string, instanceId: string) => void): void {
   onChooseCallback = fn;
+}
+
+export function setRequestDispatchers(
+  acceptFn: (requestId: string) => void,
+  declineFn: (requestId: string) => void
+): void {
+  onAcceptRequestCallback = acceptFn;
+  onDeclineRequestCallback = declineFn;
+}
+
+export function setNegotiationActionDispatcher(fn: (action: NegotiationAction) => void): void {
+  onNegotiationActionCallback = fn;
 }
 
 /**
@@ -71,8 +112,31 @@ export function bindEventBusToStore(
     setChoiceDispatcher((choiceId, instanceId) => {
       dispatch({ type: 'chooseEncounterOption', choiceId, instanceId });
     });
+    setRequestDispatchers(
+      (requestId) => dispatch({ type: 'acceptRequest', requestId }),
+      (requestId) => dispatch({ type: 'declineRequest', requestId })
+    );
   }
   const unsubscribers: Array<() => void> = [];
+
+  const unsubRideRequested = bus.on('ride/requested', (ev) => {
+    phoneSignal.value = {
+      ...phoneSignal.value,
+      incomingRequest: ev.request,
+      unreadCount: phoneSignal.value.unreadCount + 1,
+      timeoutRemaining: 15,
+    };
+  });
+  unsubscribers.push(unsubRideRequested);
+
+  const unsubRideAccepted = bus.on('ride/accepted', () => {
+    phoneSignal.value = {
+      ...phoneSignal.value,
+      incomingRequest: null,
+      unreadCount: 0,
+    };
+  });
+  unsubscribers.push(unsubRideAccepted);
 
   const unsubRide = bus.on('ride/arrivedPickup', (ev) => {
     hudSignal.value = {
@@ -87,8 +151,46 @@ export function bindEventBusToStore(
       ...hudSignal.value,
       objectiveText: `Ride completed! Earned ৳${ev.receipt.fare}`,
     };
+
+    const newHistoryItem: TripHistoryItem = {
+      requestId: ev.requestId,
+      passengerName: 'Passenger',
+      fare: ev.receipt.fare,
+      net: ev.receipt.net,
+      rating: 5,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    };
+
+    phoneSignal.value = {
+      ...phoneSignal.value,
+      tripHistory: [newHistoryItem, ...phoneSignal.value.tripHistory],
+      navigationTurn: null,
+    };
   });
   unsubscribers.push(unsubComplete);
+
+  const unsubNegRound = bus.on('negotiation/round', (ev) => {
+    hudSignal.value = {
+      ...hudSignal.value,
+      objectiveText: `Negotiation round ${ev.round}: Offer ৳${ev.offer}`,
+    };
+  });
+  unsubscribers.push(unsubNegRound);
+
+  const unsubNegResult = bus.on('negotiation/result', (ev) => {
+    if (ev.outcome.kind === 'accepted') {
+      negotiationSignal.value = {
+        ...negotiationSignal.value,
+        active: false,
+      };
+    } else {
+      negotiationSignal.value = {
+        ...negotiationSignal.value,
+        active: false,
+      };
+    }
+  });
+  unsubscribers.push(unsubNegResult);
 
   const unsubEncounterStart = bus.on('encounter/started', (ev) => {
     choiceSignal.value = {
@@ -129,16 +231,17 @@ export const installPromptSignal = signal<boolean>(false);
 let deferredInstallPrompt: BeforeInstallPromptEvent | null = null;
 
 export function initPwaInstall(): void {
-  if (typeof window === 'undefined') return;
-  window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferredInstallPrompt = e as BeforeInstallPromptEvent;
-    installPromptSignal.value = true;
-  });
-  window.addEventListener('appinstalled', () => {
-    deferredInstallPrompt = null;
-    installPromptSignal.value = false;
-  });
+  if (typeof window !== 'undefined') {
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredInstallPrompt = e as BeforeInstallPromptEvent;
+      installPromptSignal.value = true;
+    });
+    window.addEventListener('appinstalled', () => {
+      deferredInstallPrompt = null;
+      installPromptSignal.value = false;
+    });
+  }
 }
 
 export async function promptPwaInstall(): Promise<boolean> {
@@ -155,4 +258,3 @@ export async function promptPwaInstall(): Promise<boolean> {
     return false;
   }
 }
-

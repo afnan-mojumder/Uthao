@@ -19,5 +19,22 @@
   "reason.TRUSTS_YOU": "Trusts you",
   "reason.BAD_TRAFFIC": "Bad traffic",
   "reason.WALK_TOO_FAR": "Too far to walk",
-  "reason.FAIR_PRICE": "Fair price"
+  "reason.FAIR_PRICE": "Fair price",
+  "negotiation.title": "Fare Negotiation",
+  "negotiation.passenger_offer": "Passenger Offer: ৳{fare}",
+  "negotiation.fair_fare": "Fair Fare: ৳{fare}",
+  "negotiation.round": "Round {current}/{max}",
+  "negotiation.patience": "Patience",
+  "negotiation.accept": "Accept ৳{fare}",
+  "negotiation.counter": "Counter ৳{fare}",
+  "negotiation.discount": "Discount ৳{fare}",
+  "negotiation.cross": "Cross to other side",
+  "negotiation.refuse_alley": "Not entering the alley",
+  "negotiation.explain_detour": "Explain Detour (+{min}m)",
+  "negotiation.off_app": "Off-app (৳{fare})",
+  "negotiation.decline": "Decline Ride",
+  "negotiation.stepper.minus5": "-৳5",
+  "negotiation.stepper.plus5": "+৳5",
+  "negotiation.stepper.minus10": "-৳10",
+  "negotiation.stepper.plus10": "+৳10"
 }

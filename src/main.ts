@@ -22,7 +22,13 @@ import {
   contextLostSignal,
   unsupportedSignal,
   initPwaInstall,
+  setRequestDispatchers,
+  setNegotiationActionDispatcher,
+  negotiationSignal,
 } from './ui/store';
+import { startNegotiation, respond } from './sim/negotiation/NegotiationSystem';
+import { generateProfile } from './sim/passenger/profiles';
+import { Rng } from './core/rng';
 import type { RideRequest } from './core/types';
 import type { Command } from './core/commands';
 import type { DistrictData, WorldData } from './sim/schemas';
@@ -183,6 +189,49 @@ initDebugApi(gm, {
   autopilot,
   rideManager,
   trafficManager,
+});
+
+// T2.4 Negotiation & Phone UI Dispatchers
+setRequestDispatchers(
+  (requestId) => rideManager.accept(requestId),
+  (requestId) => rideManager.cancel(requestId, 'rider', 'declined')
+);
+
+setNegotiationActionDispatcher((action) => {
+  const currentSession = negotiationSignal.value.session;
+  if (!currentSession) return;
+  const result = respond(currentSession, action);
+  negotiationSignal.value = {
+    active: result.session.status === 'active',
+    session: result.session,
+    lastResult: result,
+  };
+  if (result.outcome?.kind === 'accepted') {
+    rideManager.completeNegotiation(result.outcome.fare);
+  } else if (result.outcome?.kind === 'walkedAway') {
+    rideManager.walkAwayNegotiation();
+  }
+});
+
+gm.bus.on('ride/arrivedPickup', (ev) => {
+  if (rideManager.enableNegotiation) {
+    const activeReq = rideManager.getActiveRequest();
+    if (activeReq && activeReq.requestId === ev.requestId) {
+      const profile = generateProfile('bargainer', new Rng(123), activeReq.passengerId);
+      profile.patience = 0.8;
+      const session = startNegotiation(activeReq, profile, {
+        traffic: 0.5,
+        day: gm.clock.day,
+        walkM: 0,
+        rng: new Rng(123),
+      });
+      negotiationSignal.value = {
+        active: true,
+        session,
+        lastResult: null,
+      };
+    }
+  }
 });
 
 // Create initial test ride request

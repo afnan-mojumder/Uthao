@@ -19,5 +19,22 @@
   "reason.TRUSTS_YOU": "আস্থা আছে",
   "reason.BAD_TRAFFIC": "প্রচণ্ড জ্যাম",
   "reason.WALK_TOO_FAR": "অনেকটা হাঁটা",
-  "reason.FAIR_PRICE": "উচিত ভাড়া"
+  "reason.FAIR_PRICE": "উচিত ভাড়া",
+  "negotiation.title": "ভাড়া দরকষাকষি",
+  "negotiation.passenger_offer": "যাত্রীর প্রস্তাব: ৳{fare}",
+  "negotiation.fair_fare": "উচিত ভাড়া: ৳{fare}",
+  "negotiation.round": "ধাপ {current}/{max}",
+  "negotiation.patience": "ধৈর্য",
+  "negotiation.accept": "মেনে নিন ৳{fare}",
+  "negotiation.counter": "পাল্টা প্রস্তাব ৳{fare}",
+  "negotiation.discount": "ছাড় দিন ৳{fare}",
+  "negotiation.cross": "ওপারে হেঁটে আসুন",
+  "negotiation.refuse_alley": "গলির ভেতরে যাব না",
+  "negotiation.explain_detour": "ঘুরে যাওয়ার কারণ (+{min}মি)",
+  "negotiation.off_app": "অ্যাপ ছাড়া (৳{fare})",
+  "negotiation.decline": "প্রত্যাখ্যান করুন",
+  "negotiation.stepper.minus5": "-৳৫",
+  "negotiation.stepper.plus5": "+৳৫",
+  "negotiation.stepper.minus10": "-৳১০",
+  "negotiation.stepper.plus10": "+৳১০"
 }

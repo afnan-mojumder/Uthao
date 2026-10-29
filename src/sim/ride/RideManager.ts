@@ -32,6 +32,7 @@ export class RideManager {
   offAppStrikes: number = 0;
   appSuspendedUntilDay: number = 0;
   readonly directContacts: Set<string> = new Set();
+  enableNegotiation: boolean = false;
 
   constructor(opts: RideManagerOptions) {
     this.roadNetwork = opts.roadNetwork;
@@ -144,6 +145,32 @@ export class RideManager {
     this.bus.emit('ride/cancelled', { requestId, by, reason });
   }
 
+  completeNegotiation(finalFare: number): void {
+    if (this.activeRequest && this.fsm && this.fsm.state === 'Negotiating') {
+      this.activeRequest.initialFare = finalFare;
+      this.fsm.send('fareAccepted');
+      this.activeRequest.status = this.fsm.state;
+      this.bus.emit('ride/started', {
+        requestId: this.activeRequest.requestId,
+      });
+      this.bus.emit('negotiation/result', {
+        requestId: this.activeRequest.requestId,
+        outcome: { kind: 'accepted', fare: finalFare },
+      });
+    }
+  }
+
+  walkAwayNegotiation(): void {
+    if (this.activeRequest && this.fsm && this.fsm.state === 'Negotiating') {
+      const reqId = this.activeRequest.requestId;
+      this.cancel(reqId, 'passenger', 'walkedAway');
+      this.bus.emit('negotiation/result', {
+        requestId: reqId,
+        outcome: { kind: 'walkedAway', reason: 'OUT_OF_PATIENCE' },
+      });
+    }
+  }
+
   update(
     bikePose: { x: number; z: number; speed: number },
     _dt: number
@@ -174,12 +201,14 @@ export class RideManager {
             requestId: this.activeRequest.requestId,
           });
 
-          // In M1, negotiation is auto-accept
-          this.fsm.send('fareAccepted'); // enters 'OnTrip'
-          this.activeRequest.status = this.fsm.state;
-          this.bus.emit('ride/started', {
-            requestId: this.activeRequest.requestId,
-          });
+          if (!this.enableNegotiation) {
+            // In M1, negotiation is auto-accept
+            this.fsm.send('fareAccepted'); // enters 'OnTrip'
+            this.activeRequest.status = this.fsm.state;
+            this.bus.emit('ride/started', {
+              requestId: this.activeRequest.requestId,
+            });
+          }
         }
       }
     } else if (state === 'OnTrip') {

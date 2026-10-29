@@ -8,11 +8,19 @@ import {
   pausedSignal,
   installPromptSignal,
   promptPwaInstall,
+  phoneSignal,
+  negotiationSignal,
+  hudSignal,
+  onAcceptRequestCallback,
+  onDeclineRequestCallback,
+  onNegotiationActionCallback,
 } from './store';
 import { RotateOverlay } from './overlays/RotateOverlay';
 import { Unsupported } from './overlays/Unsupported';
 import { Loading } from './overlays/Loading';
 import { ChoiceCard } from './choice/ChoiceCard';
+import { Phone } from './phone/Phone';
+import { NegotiationPanel } from './negotiation/NegotiationPanel';
 import { t } from './i18n';
 
 export function App(): JSX.Element {
@@ -24,13 +32,25 @@ export function App(): JSX.Element {
       rotateOverlaySignal.value = isPortrait;
     };
 
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        phoneSignal.value = {
+          ...phoneSignal.value,
+          open: !phoneSignal.value.open,
+        };
+      }
+    };
+
     checkOrientation();
     window.addEventListener('resize', checkOrientation);
     window.addEventListener('orientationchange', checkOrientation);
+    window.addEventListener('keydown', handleKeyDown);
 
     return () => {
       window.removeEventListener('resize', checkOrientation);
       window.removeEventListener('orientationchange', checkOrientation);
+      window.removeEventListener('keydown', handleKeyDown);
     };
   }, []);
 
@@ -113,6 +133,34 @@ export function App(): JSX.Element {
 
       {/* Choice Card Overlay for Encounters */}
       <ChoiceCard />
+
+      {/* T2.4 Uthao Phone & RequestCard */}
+      <Phone
+        isOpen={phoneSignal.value.open}
+        onClose={() => {
+          phoneSignal.value = { ...phoneSignal.value, open: false };
+        }}
+        incomingRequest={phoneSignal.value.incomingRequest}
+        timeoutRemaining={phoneSignal.value.timeoutRemaining}
+        tripHistory={phoneSignal.value.tripHistory}
+        navigationTurn={phoneSignal.value.navigationTurn}
+        onAcceptRequest={(id) => onAcceptRequestCallback?.(id)}
+        onDeclineRequest={(id) => onDeclineRequestCallback?.(id)}
+      />
+
+      {/* T2.4 Negotiation Panel (Opens when stopped at pickup) */}
+      {negotiationSignal.value.active && negotiationSignal.value.session && (
+        <NegotiationPanel
+          active={negotiationSignal.value.active}
+          bikeSpeed={hudSignal.value.speedKmh / 3.6}
+          session={negotiationSignal.value.session}
+          lastResult={negotiationSignal.value.lastResult}
+          onAction={(action) => onNegotiationActionCallback?.(action)}
+          onClose={() => {
+            negotiationSignal.value = { ...negotiationSignal.value, active: false };
+          }}
+        />
+      )}
 
       {/* PWA Install Button for Android / Chrome */}
       {installPromptSignal.value && (
