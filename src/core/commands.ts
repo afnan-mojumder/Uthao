@@ -15,6 +15,9 @@ export type Command =
   | { type: 'buyUpgrade'; upgradeId: string }
   | { type: 'buyBike'; bikeId: BikeId; useTradeIn?: boolean }
   | { type: 'switchBike'; bikeId: BikeId }
+  | { type: 'acceptDelivery'; deliveryId: string }
+  | { type: 'pickupDelivery'; deliveryId: string }
+  | { type: 'completeDelivery'; deliveryId: string }
   | { type: 'payExpense'; expenseId: string; amount?: number }
   | { type: 'chargePhone'; location?: 'home' | 'teaStall'; cost?: number }
   | { type: 'delayRent' }

@@ -29,6 +29,7 @@ import crimeEncounters from '../../data/encounters/crime.json';
 import passengerEncounters from '../../data/encounters/passenger.json';
 import { ReputationSystem } from './reputation/ReputationSystem';
 import { getBikeDef } from './economy/bikes';
+import { DeliveryManager } from './delivery/DeliveryManager';
 import type { SafetyRecord } from '../core/types';
 import { RoadEventManager, type ActiveRoadEvent } from './world/RoadEvents';
 import defaultUpgrades from '../../data/upgrades.json';
@@ -101,6 +102,7 @@ export class GameManager {
   readonly reputationSystem: ReputationSystem;
   readonly roadEvents: RoadEventManager;
   readonly missionManager: MissionManager;
+  readonly deliveryManager: DeliveryManager;
 
   paused: boolean = false;
   accumulator: number = 0;
@@ -199,6 +201,11 @@ export class GameManager {
         economyManager: this.economyManager,
         eventBus: this.bus,
       }),
+    });
+
+    this.deliveryManager = new DeliveryManager({
+      bus: this.bus,
+      economyManager: this.economyManager,
     });
 
     this.bus.on('day/started', () => {
@@ -302,6 +309,19 @@ export class GameManager {
       case 'setWaypoint':
         this.waypointNodeId = cmd.nodeId;
         return { success: true };
+      case 'acceptDelivery':
+        return this.deliveryManager.accept(cmd.deliveryId, this.clock.minutes);
+      case 'pickupDelivery':
+        return this.deliveryManager.pickup(cmd.deliveryId, this.clock.minutes);
+      case 'completeDelivery': {
+        const res = this.deliveryManager.complete(
+          cmd.deliveryId,
+          this.clock.minutes,
+          this.clock.day
+        );
+        this.syncEconomy();
+        return res;
+      }
       case 'buyBike': {
         const atKamal = this.isNearKamalBhai();
         const kamalRel = this.reputationSystem.getRelationship('kamal_bhai');

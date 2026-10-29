@@ -469,3 +469,22 @@ export type BikeDef = z.infer<typeof BikeDefSchema>;
 
 export const BikesDataSchema = z.array(BikeDefSchema);
 export type BikesData = z.infer<typeof BikesDataSchema>;
+
+export const DeliveryJobSchema = z.object({
+  id: z.string(),
+  senderNameKey: z.string(),
+  pickupPoiId: z.string(),
+  pickupNodeId: z.string(),
+  dropoffNodeId: z.string(),
+  itemType: z.enum(['food', 'document', 'medicine', 'fragile_electronics', 'parcel']),
+  fragile: z.boolean(),
+  basePayout: z.number().positive(),
+  timeLimitMinutes: z.number().positive(),
+  pickupDeadlineMinute: z.number().optional(),
+  dropoffDeadlineMinute: z.number().optional(),
+  status: z.enum(['offered', 'accepted', 'in_transit', 'delivered', 'failed']),
+  damaged: z.boolean().optional(),
+  damagePenalty: z.number().optional(),
+});
+
+export type DeliveryJobDef = z.infer<typeof DeliveryJobSchema>;

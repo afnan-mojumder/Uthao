@@ -3,6 +3,7 @@ import type {
   BikeId,
   BikeInfractionKind,
   DaySummary,
+  DeliveryJob,
   EncounterInstance,
   EndingId,
   NegotiationOutcome,
@@ -58,6 +59,11 @@ export interface GameEvents extends Record<string, unknown> {
   'bike/fuelEmpty': Record<string, never>;
   'bike/puncture': Record<string, never>;
   'bike/swapped': { bikeId: BikeId; prevBikeId: BikeId };
+  'delivery/offered': { delivery: DeliveryJob };
+  'delivery/accepted': { deliveryId: string };
+  'delivery/pickedUp': { deliveryId: string };
+  'delivery/completed': { deliveryId: string; payout: number; damageDeduction: number };
+  'delivery/damaged': { deliveryId: string; reason: string };
   'story/flag': { key: string; value: boolean | number | string };
   'character/contactAdded': { characterId: string };
   'ending/reached': { endingId: EndingId };

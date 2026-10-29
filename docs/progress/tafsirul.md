@@ -19,6 +19,7 @@ One line per finished task: `YYYY-MM-DD Tx.y done — note`
 2026-10-30 T4.9 done — SaveSystem (serialize/deserialize SaveV1 with full snapshot equality, 3 manual slots + auto, localStorage adapter with memory fallback, corrupt JSON backup to .corrupt, SaveSlots.tsx UI modal, autosave on trip complete, day end, and hidden visibilitychange e2e)
 2026-10-30 T4.10 done — Mobile HUD polish and v1.0 release (safe-area insets, font sizes >= 14px, choice card thumb clearance, fullscreen and landscape lock, static build verification, and GDD §16 checklist verified)
 2026-10-30 T5.6 done — Additional motorcycles (data/bikes.json with old100, used125, new150, trade-in value calculations, Kamal Bhai trust discount, BikeSpec updates in physics and fuel models, daily insurance for new150, procedural 3D model variants, engine sound pitch scaling, Garage Dealership tab, unit tests)
+2026-10-30 T5.8 done — Deliveries (DeliveryManager, shop POI pickups, address drop-offs, time windows, fragile parcel damage on collision bumps, luggage carrier 1->3 capacity expansion, EconomyManager payouts, unit tests)
 
 ## v1.0 Release Checklist (GDD § 16)
 - [x] **One playable protagonist and motorcycle (T1):** `tests/unit/physics/MotorcycleController.test.ts` ("driving into wall at 30 km/h emits crash"), `tests/unit/physics/bikeModel.test.ts`

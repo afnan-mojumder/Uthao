@@ -245,5 +245,10 @@
   "bike.used125.name": "Bajaj Discover 125cc (Used)",
   "bike.used125.desc": "Clean second-hand commuter with snappy acceleration and superior 45 km/L mileage.",
   "bike.new150.name": "Yamaha FZS 150cc (Brand New)",
-  "bike.new150.desc": "High-powered streetfighter with front & rear disc brakes and 100 km/h top speed. Requires ৳50/day insurance."
+  "bike.new150.desc": "High-powered streetfighter with front & rear disc brakes and 100 km/h top speed. Requires ৳50/day insurance.",
+  "delivery.tab": "Deliveries",
+  "delivery.fragile": "Fragile Parcel",
+  "delivery.damaged": "Parcel Damaged (-৳{penalty})",
+  "delivery.completed": "Delivery Completed (+৳{amount})",
+  "delivery.luggage_full": "Luggage Full (Max {max})"
 }

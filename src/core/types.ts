@@ -322,3 +322,20 @@ export interface RoadEvent {
 export type BikeCollisionSeverity = 'scuff' | 'bump' | 'crash';
 
 export type BikeInfractionKind = 'speeding' | 'wrongWay' | 'redLight';
+
+export interface DeliveryJob {
+  id: string;
+  senderNameKey: string;
+  pickupPoiId: string;
+  pickupNodeId: string;
+  dropoffNodeId: string;
+  itemType: 'food' | 'document' | 'medicine' | 'fragile_electronics' | 'parcel';
+  fragile: boolean;
+  basePayout: number;
+  timeLimitMinutes: number;
+  pickupDeadlineMinute?: number;
+  dropoffDeadlineMinute?: number;
+  status: 'offered' | 'accepted' | 'in_transit' | 'delivered' | 'failed';
+  damaged?: boolean;
+  damagePenalty?: number;
+}
