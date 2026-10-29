@@ -9,6 +9,7 @@ import type {
   NegotiationAction,
 } from '../sim/negotiation/NegotiationSystem';
 import type { EndingResult, CareerChoiceOption, CareerChoice } from '../sim/mission/endings';
+import type { SaveSlot } from '../sim/save/migrations';
 import type { EndingId } from '../core/types';
 
 export type ScreenId = 'title' | 'game' | 'garage' | 'map' | 'pause';
@@ -209,6 +210,16 @@ export const endingSignal = signal<EndingUiState>({
   choices: undefined,
 });
 
+export interface SaveSlotsState {
+  isOpen: boolean;
+  mode: 'save' | 'load';
+}
+
+export const saveSlotsSignal = signal<SaveSlotsState>({
+  isOpen: false,
+  mode: 'save',
+});
+
 if (typeof window !== 'undefined') {
   (window as unknown as { __uthaoUi?: unknown }).__uthaoUi = {
     garageSignal,
@@ -323,6 +334,17 @@ export function setGarageDispatchers(
 ): void {
   onRepairCallback = repairFn;
   onBuyUpgradeCallback = buyUpgradeFn;
+}
+
+export let onSaveGameCallback: ((slot: SaveSlot) => void) | null = null;
+export let onLoadGameCallback: ((slot: SaveSlot) => void) | null = null;
+
+export function setSaveDispatchers(
+  saveFn?: (slot: SaveSlot) => void,
+  loadFn?: (slot: SaveSlot) => void
+): void {
+  if (saveFn) onSaveGameCallback = saveFn;
+  if (loadFn) onLoadGameCallback = loadFn;
 }
 
 /**

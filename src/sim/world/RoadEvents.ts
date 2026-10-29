@@ -119,6 +119,10 @@ export class RoadEventManager {
     return true;
   }
 
+  clearEvents(): void {
+    this.activeEvents.clear();
+  }
+
   /**
    * Closes a road segment completely for a duration.
    */

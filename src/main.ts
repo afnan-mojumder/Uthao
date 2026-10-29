@@ -31,7 +31,9 @@ import {
   screenSignal,
   setMenuDispatchers,
   setTutorialDispatchers,
+  setSaveDispatchers,
 } from './ui/store';
+import { SaveSystem } from './sim/save/SaveSystem';
 import { startNegotiation, respond } from './sim/negotiation/NegotiationSystem';
 import { Minimap } from './render/minimap';
 import { BALANCE } from './config/balance';
@@ -87,6 +89,7 @@ function hasWebGL2Support(): boolean {
   }
 }
 
+export let saveSystem: SaveSystem | undefined;
 const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
 const isMapTool = urlParams?.get('tool') === 'map';
 
@@ -177,7 +180,11 @@ if (isMapTool) {
     });
   }
 
-// Mobile/desktop tab visibility lifecycle handling
+// T4.9 SaveSystem and tab visibility lifecycle handling
+const activeSaveSystem = new SaveSystem();
+saveSystem = activeSaveSystem;
+activeSaveSystem.bindAutosave(gm, typeof document !== 'undefined' ? document : undefined);
+
 if (typeof document !== 'undefined') {
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
@@ -239,7 +246,13 @@ setMenuDispatchers(
     tutorialSignal.value = { active: true, step: 'alarm', agreedFare: 100 };
   },
   () => {
-    // onContinue
+    // onContinue: load auto save if present
+    if (saveSystem) {
+      const res = saveSystem.loadGame('auto');
+      if (res.success) {
+        gm.applySnapshot(res.gm.snapshot(), res.save.rngState);
+      }
+    }
     screenSignal.value = 'game';
   },
   () => {
@@ -250,6 +263,20 @@ setMenuDispatchers(
   () => {
     // onResume
     pausedSignal.value = false;
+  }
+);
+
+setSaveDispatchers(
+  (slot) => {
+    saveSystem?.save(gm, slot);
+  },
+  (slot) => {
+    if (saveSystem) {
+      const res = saveSystem.loadGame(slot);
+      if (res.success) {
+        gm.applySnapshot(res.gm.snapshot(), res.save.rngState);
+      }
+    }
   }
 );
 

@@ -33,6 +33,33 @@ test('pauses on hidden', async ({ page }) => {
   expect(isPaused).toBe(true);
 });
 
+test('autosaves on hidden', async ({ page }) => {
+  await page.goto('/?district=testloop');
+  await page.waitForFunction(() => (window as unknown as { __uthao?: unknown }).__uthao !== undefined);
+
+  // Clear previous storage
+  await page.evaluate(() => {
+    localStorage.removeItem('uthao.save.auto');
+  });
+
+  // Emulate visibilitychange -> hidden
+  await page.evaluate(() => {
+    Object.defineProperty(document, 'visibilityState', { value: 'hidden', writable: true });
+    Object.defineProperty(document, 'hidden', { value: true, writable: true });
+    document.dispatchEvent(new Event('visibilitychange'));
+  });
+
+  // Verify that uthao.save.auto was stored in localStorage
+  const savedData = await page.evaluate(() => {
+    return localStorage.getItem('uthao.save.auto');
+  });
+
+  expect(savedData).not.toBeNull();
+  const parsed = JSON.parse(savedData!);
+  expect(parsed.version).toBe(1);
+  expect(parsed.slot).toBe('auto');
+});
+
 test('portrait shows rotate overlay on pixel7 portrait', async ({ page }) => {
   // Set viewport to mobile portrait
   await page.setViewportSize({ width: 412, height: 915 });

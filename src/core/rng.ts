@@ -17,6 +17,16 @@ export class Rng {
     this.s = (seed >>> 0) || 1;
   }
 
+  /** Returns internal RNG state for save serialization */
+  getState(): number {
+    return this.s;
+  }
+
+  /** Restores internal RNG state from save serialization */
+  setState(state: number): void {
+    this.s = (state >>> 0) || 1;
+  }
+
   /** Returns pseudo-random float in [0, 1) using Mulberry32 */
   next(): number {
     let t = (this.s += 0x6d2b79f5);

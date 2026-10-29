@@ -6,6 +6,8 @@ export interface PauseProps {
   onResume?: () => void;
   onOpenMap?: () => void;
   onOpenSettings?: () => void;
+  onOpenSave?: () => void;
+  onOpenLoad?: () => void;
   onExitToMainMenu?: () => void;
 }
 
@@ -14,6 +16,8 @@ export function Pause({
   onResume,
   onOpenMap,
   onOpenSettings,
+  onOpenSave,
+  onOpenLoad,
   onExitToMainMenu,
 }: PauseProps): JSX.Element | null {
   if (!isOpen) return null;
@@ -130,6 +134,50 @@ export function Pause({
             }}
           >
             <span>🗺️</span> {t('pause.map')}
+          </button>
+
+          <button
+            data-testid="pause-btn-save"
+            onClick={onOpenSave}
+            style={{
+              width: '100%',
+              padding: '13px',
+              borderRadius: '12px',
+              border: '1px solid rgba(245, 158, 11, 0.3)',
+              background: 'rgba(245, 158, 11, 0.12)',
+              color: '#f59e0b',
+              fontSize: '0.95rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+            }}
+          >
+            <span>💾</span> {t('pause.save') || 'গেম সেভ করুন (Save Game)'}
+          </button>
+
+          <button
+            data-testid="pause-btn-load"
+            onClick={onOpenLoad}
+            style={{
+              width: '100%',
+              padding: '13px',
+              borderRadius: '12px',
+              border: '1px solid rgba(56, 189, 248, 0.3)',
+              background: 'rgba(56, 189, 248, 0.12)',
+              color: '#38bdf8',
+              fontSize: '0.95rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+            }}
+          >
+            <span>📂</span> {t('pause.load') || 'গেম লোড করুন (Load Game)'}
           </button>
 
           <button

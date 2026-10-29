@@ -387,4 +387,27 @@ export class EconomyManager {
       installedCosmetics: { ...this.installedCosmetics },
     };
   }
+
+  restoreState(econ: Partial<PlayerEconomy>): void {
+    if (econ.cash !== undefined) this.cash = econ.cash;
+    if (econ.savings !== undefined) this.savings = econ.savings;
+    if (econ.debt !== undefined) this.debt = econ.debt;
+    if (econ.dailyRevenue !== undefined) this.dailyRevenue = econ.dailyRevenue;
+    if (econ.dailyExpenses !== undefined) this.dailyExpenses = econ.dailyExpenses;
+    if (econ.fuelLevel !== undefined) this.fuelLevel = econ.fuelLevel;
+    if (econ.engineCondition !== undefined) this.engineCondition = econ.engineCondition;
+    if (econ.tiresCondition !== undefined) this.tiresCondition = econ.tiresCondition;
+    if (econ.brakesCondition !== undefined) this.brakesCondition = econ.brakesCondition;
+    if (econ.kmSinceOilChange !== undefined) this.kmSinceOilChange = econ.kmSinceOilChange;
+    if (econ.appBalance !== undefined) this.appBalance = econ.appBalance;
+    if (econ.reputation !== undefined) this.reputation = econ.reputation;
+    if (econ.phoneBattery !== undefined) this.phoneBattery = econ.phoneBattery;
+    if (econ.ownedUpgrades) this.ownedUpgrades = [...econ.ownedUpgrades];
+    if (econ.installedCosmetics) this.installedCosmetics = { ...econ.installedCosmetics };
+    if (econ.motorcycleCondition !== undefined) {
+      this.motorcycleCondition = econ.motorcycleCondition;
+    } else {
+      this.motorcycleCondition = this.getOverallCondition();
+    }
+  }
 }

@@ -492,7 +492,7 @@ export class GameManager {
         hhmm: this.clock.hhmm(),
         isRushHour: this.clock.isRushHour(),
       },
-      economy: { ...this.economy },
+      economy: this.economyManager.getSnapshot(),
       story: {
         currentChapter: this.story.currentChapter,
         completedMissions: [...this.story.completedMissions],
@@ -513,6 +513,53 @@ export class GameManager {
       },
       roadEvents: this.roadEvents.getActiveEvents(),
     };
+  }
+
+  applySnapshot(snap: SimSnapshot, rngState?: number): void {
+    this.ticks = snap.ticks;
+    this.paused = snap.paused;
+    this.clock.day = snap.clock.day;
+    this.clock.minutes = snap.clock.minutes;
+    this.weather = snap.weather;
+    this.weatherSystem.setWeather(snap.weather);
+    this.waypointNodeId = snap.waypointNodeId;
+
+    if (rngState !== undefined) {
+      this.rng.setState(rngState);
+    }
+
+    // Restore economy
+    this.economyManager.restoreState(snap.economy);
+    this.syncEconomy();
+
+    // Restore story
+    this.story.currentChapter = snap.story.currentChapter;
+    this.story.completedMissions = [...snap.story.completedMissions];
+    this.story.activeMissions = [...snap.story.activeMissions];
+    this.story.characterRelationships = { ...snap.story.characterRelationships };
+    this.story.promises = [...snap.story.promises];
+    this.story.branchFlags = { ...snap.story.branchFlags };
+    this.story.endingEligibility = { ...snap.story.endingEligibility };
+
+    // Restore reputation
+    if (snap.reputation) {
+      this.reputationSystem.restoreState({
+        rating: snap.reputation.rating,
+        localTrust: snap.reputation.localTrust,
+        safetyRecord: snap.reputation.safetyRecord,
+        riskScore: snap.reputation.riskScore,
+        promises: snap.reputation.promises,
+        relationships: snap.story.characterRelationships,
+      });
+    }
+
+    // Restore road events
+    this.roadEvents.clearEvents();
+    if (snap.roadEvents) {
+      for (const ev of snap.roadEvents) {
+        this.roadEvents.addEvent(ev);
+      }
+    }
   }
 }
 

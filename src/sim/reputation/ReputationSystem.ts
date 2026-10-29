@@ -452,4 +452,30 @@ export class ReputationSystem {
     this.activeTrip = null;
     return rating;
   }
+
+  restoreState(opts: {
+    rating?: number;
+    ratingsHistory?: number[];
+    localTrust?: number;
+    relationships?: Record<string, number>;
+    safetyRecord?: Partial<SafetyRecord>;
+    riskScore?: number;
+    promises?: { kept?: number; broken?: number };
+  }): void {
+    if (opts.rating !== undefined) this.defaultRating = opts.rating;
+    if (opts.ratingsHistory) this.ratings = [...opts.ratingsHistory];
+    if (opts.localTrust !== undefined) this.localTrust = opts.localTrust;
+    if (opts.relationships) this.characterRelationships = { ...opts.relationships };
+    if (opts.safetyRecord) {
+      this.safetyRecord = {
+        nearMisses: opts.safetyRecord.nearMisses ?? this.safetyRecord.nearMisses,
+        bumps: opts.safetyRecord.bumps ?? this.safetyRecord.bumps,
+        crashes: opts.safetyRecord.crashes ?? this.safetyRecord.crashes,
+        infractions: opts.safetyRecord.infractions ?? this.safetyRecord.infractions,
+      };
+    }
+    if (opts.riskScore !== undefined) this.riskScore = opts.riskScore;
+    if (opts.promises?.kept !== undefined) this.promisesKept = opts.promises.kept;
+    if (opts.promises?.broken !== undefined) this.promisesBroken = opts.promises.broken;
+  }
 }

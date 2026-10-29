@@ -47,6 +47,12 @@ import { MainMenu } from './menus/MainMenu';
 import { Settings } from './menus/Settings';
 import { Pause } from './menus/Pause';
 import { MapScreen } from './map/MapScreen';
+import { SaveSlots } from './menus/SaveSlots';
+import {
+  saveSlotsSignal,
+  onSaveGameCallback,
+  onLoadGameCallback,
+} from './store';
 import { FirstRideTutorial } from './tutorial/FirstRideTutorial';
 import { t } from './i18n';
 
@@ -312,6 +318,12 @@ export function App(): JSX.Element {
             screenSignal.value = 'map';
           }}
           onOpenSettings={() => setShowSettings(true)}
+          onOpenSave={() => {
+            saveSlotsSignal.value = { isOpen: true, mode: 'save' };
+          }}
+          onOpenLoad={() => {
+            saveSlotsSignal.value = { isOpen: true, mode: 'load' };
+          }}
           onExitToMainMenu={() => {
             screenSignal.value = 'title';
             pausedSignal.value = false;
@@ -326,6 +338,27 @@ export function App(): JSX.Element {
           onSetWaypoint={(nodeId) => onSetWaypointCallback?.(nodeId)}
           onClose={() => {
             screenSignal.value = 'game';
+          }}
+        />
+      )}
+
+      {/* T4.9 Save Slots Modal */}
+      {saveSlotsSignal.value.isOpen && (
+        <SaveSlots
+          isOpen={true}
+          mode={saveSlotsSignal.value.mode}
+          onClose={() => {
+            saveSlotsSignal.value = { ...saveSlotsSignal.value, isOpen: false };
+          }}
+          onSelectSlot={(slot) => {
+            if (saveSlotsSignal.value.mode === 'save') {
+              onSaveGameCallback?.(slot);
+            } else {
+              onLoadGameCallback?.(slot);
+              screenSignal.value = 'game';
+              pausedSignal.value = false;
+            }
+            saveSlotsSignal.value = { ...saveSlotsSignal.value, isOpen: false };
           }}
         />
       )}

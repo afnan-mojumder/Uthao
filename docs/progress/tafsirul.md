@@ -17,3 +17,4 @@ One line per finished task: `YYYY-MM-DD Tx.y done — note`
 2026-10-30 T4.5 done — Remaining signature situations (13 encounters in data/encounters/{route,pickup,payment,passenger}.json, 7.4 off-app, 7.5 rain, extra stop, Mrs. Ferdousi, late for exam, wrong pin, vendor discount, lost phone, SI Morshed checkpoint, bus block, direct call, urgent parcel, wait for errand, bilingual dialogues, and table-driven JSON tests)
 
 2026-10-30 T4.8 done — Identity tendencies (GDD §3 4 tendencies computed as 0-100 scores from metrics: professional, negotiator, hustler, regular; journal UI integration; bot simulation tests for reckless -> hustler and smartPro -> professional)
+2026-10-30 T4.9 done — SaveSystem (serialize/deserialize SaveV1 with full snapshot equality, 3 manual slots + auto, localStorage adapter with memory fallback, corrupt JSON backup to .corrupt, SaveSlots.tsx UI modal, autosave on trip complete, day end, and hidden visibilitychange e2e)
