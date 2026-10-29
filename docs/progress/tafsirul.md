@@ -55,3 +55,7 @@ One line per finished task: `YYYY-MM-DD Tx.y done — note`
 - Added ARIA labels and full keyboard/gamepad navigation support.
 - Logged Native-Speaker Review Checklist in docs/QUESTIONS.md.
 - Added unit tests in tests/unit/ui/accessibility.test.ts (4 tests passed, 348 total tests green).
+
+## 2026-10-29 T6.1 Full test matrix
+- Created docs/PLAYTEST.md mapping all 21 verification questions from GDD §17 across driving, negotiation, economy, narrative, and performance to automated tests and manual playtest protocols.
+- Implemented automated test suite tests/unit/qa/testMatrix.test.ts verifying complete question coverage and existence of all referenced test files (3 tests passed, 351 total tests green).
