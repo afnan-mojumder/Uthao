@@ -24,14 +24,16 @@
         "id": "wait",
         "labelKey": "encounter.no_change.choice.wait",
         "effects": [
-          { "type": "time", "min": 5 }
+          { "type": "time", "min": 5 },
+          { "type": "mood", "delta": -0.05 }
         ]
       },
       {
         "id": "digital",
         "labelKey": "encounter.no_change.choice.digital",
         "effects": [
-          { "type": "money", "amount": 0, "kind": "fare" }
+          { "type": "money", "amount": 0, "kind": "fare" },
+          { "type": "mood", "delta": 0.05 }
         ]
       }
     ]

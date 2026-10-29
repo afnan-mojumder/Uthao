@@ -14,21 +14,24 @@
         "id": "ask_cross",
         "labelKey": "encounter.uturn_cross.choice.cross",
         "effects": [
-          { "type": "mood", "delta": -0.05 }
+          { "type": "mood", "delta": -0.05 },
+          { "type": "flag", "key": "pickup_adjusted_cross", "value": true }
         ]
       },
       {
         "id": "uturn",
         "labelKey": "encounter.uturn_cross.choice.uturn",
         "effects": [
-          { "type": "time", "min": 3 }
+          { "type": "time", "min": 3 },
+          { "type": "money", "amount": -15, "kind": "fuel" }
         ]
       },
       {
         "id": "cancel",
         "labelKey": "encounter.uturn_cross.choice.cancel",
         "effects": [
-          { "type": "rating", "delta": -0.05 }
+          { "type": "flag", "key": "rider_cancelled_uturn", "value": true },
+          { "type": "endTrip", "paid": false }
         ]
       }
     ]
@@ -49,7 +52,15 @@
         "id": "refuse_politely",
         "labelKey": "encounter.alley_pickup.choice.walk",
         "effects": [
-          { "type": "mood", "delta": -0.1 }
+          { "type": "mood", "delta": -0.05 }
+        ]
+      },
+      {
+        "id": "stop_safe_spot",
+        "labelKey": "encounter.alley_pickup.choice.safe_spot",
+        "effects": [
+          { "type": "mood", "delta": 0 },
+          { "type": "trust", "delta": 2 }
         ]
       },
       {

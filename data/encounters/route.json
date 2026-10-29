@@ -25,15 +25,32 @@
       {
         "id": "explain",
         "labelKey": "encounter.market_detour.choice.explain",
+        "requires": {
+          "minTrust": 40
+        },
         "effects": [
-          { "type": "mood", "delta": 0 }
+          { "type": "mood", "delta": 0 },
+          { "type": "trust", "delta": 2 }
+        ]
+      },
+      {
+        "id": "explain_skeptical",
+        "labelKey": "encounter.market_detour.choice.explain_skeptical",
+        "requires": {
+          "maxTrust": 39
+        },
+        "effects": [
+          { "type": "mood", "delta": -0.1 },
+          { "type": "trust", "delta": -2 }
         ]
       },
       {
         "id": "own_route",
         "labelKey": "encounter.market_detour.choice.own",
         "effects": [
-          { "type": "mood", "delta": -0.15 }
+          { "type": "mood", "delta": -0.15 },
+          { "type": "trust", "delta": -5 },
+          { "type": "flag", "key": "market_detour_ignored", "value": true }
         ]
       }
     ]

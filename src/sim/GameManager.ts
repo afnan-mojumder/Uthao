@@ -162,7 +162,7 @@ export class GameManager {
     });
 
     const encounterDefs =
-      (this.data.encounters as EncounterDef[] | undefined) ?? DEFAULT_ENCOUNTERS;
+      (this.data?.encounters as EncounterDef[] | undefined) ?? DEFAULT_ENCOUNTERS;
     this.eventDirector = new EventDirector({
       definitions: encounterDefs,
       seed: this.seed,
