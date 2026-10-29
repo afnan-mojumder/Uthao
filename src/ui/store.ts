@@ -83,6 +83,61 @@ export const unsupportedSignal = signal<string | null>(null);
 export const loadingSignal = signal<boolean>(false);
 export const contextLostSignal = signal<boolean>(false);
 
+export interface GameSettings {
+  language: 'bn' | 'en';
+  quality: 'low' | 'medium' | 'high';
+  subtitlesSize: 'normal' | 'large';
+  colorblindRoute: boolean;
+  pauseOnDecisions: boolean;
+  tiltControls: boolean;
+  masterVolume: number;
+  sfxVolume: number;
+  ambientVolume: number;
+}
+
+export const DEFAULT_SETTINGS: GameSettings = {
+  language: 'bn',
+  quality: 'medium',
+  subtitlesSize: 'normal',
+  colorblindRoute: false,
+  pauseOnDecisions: false,
+  tiltControls: false,
+  masterVolume: 0.8,
+  sfxVolume: 0.9,
+  ambientVolume: 0.7,
+};
+
+export const SETTINGS_STORAGE_KEY = 'uthao_user_settings';
+let memorySettings: GameSettings | null = null;
+
+export function loadSettings(): GameSettings {
+  if (typeof localStorage !== 'undefined') {
+    try {
+      const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
+      if (raw) {
+        return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
+      }
+    } catch {
+      // fallback
+    }
+  }
+  return memorySettings ? { ...memorySettings } : { ...DEFAULT_SETTINGS };
+}
+
+export function saveSettings(settings: GameSettings): void {
+  memorySettings = { ...settings };
+  settingsSignal.value = settings;
+  if (typeof localStorage !== 'undefined') {
+    try {
+      localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+    } catch {
+      // ignore
+    }
+  }
+}
+
+export const settingsSignal = signal<GameSettings>(loadSettings());
+
 export const hudSignal = signal<HudState>({
   speedKmh: 0,
   objectiveText: '',
@@ -114,12 +169,17 @@ export const choiceSignal = signal<ChoiceState>({
 if (typeof window !== 'undefined') {
   (window as unknown as { __uthaoUi?: unknown }).__uthaoUi = {
     garageSignal,
+    garageTabSignal,
     screenSignal,
+    pausedSignal,
+    settingsSignal,
     hudSignal,
     phoneSignal,
     dayEndSignal,
     negotiationSignal,
     choiceSignal,
+    unsupportedSignal,
+    rotateOverlaySignal,
   };
 }
 
@@ -132,6 +192,25 @@ export let onDelayRentCallback: (() => void) | null = null;
 export let onAskAdvanceCallback: ((from: 'mintu' | 'ma', amount: number) => void) | null = null;
 export let onRepairCallback: ((item: string) => void) | null = null;
 export let onBuyUpgradeCallback: ((upgradeId: string) => void) | null = null;
+export let onStartNewCareerCallback: (() => void) | null = null;
+export let onContinueCareerCallback: (() => void) | null = null;
+export let onStartEndlessCallback: (() => void) | null = null;
+export let onResumeGameCallback: (() => void) | null = null;
+export let onSetWaypointCallback: ((nodeId: string | null) => void) | null = null;
+
+export function setMenuDispatchers(
+  newCareerFn?: () => void,
+  continueFn?: () => void,
+  endlessFn?: () => void,
+  resumeFn?: () => void,
+  setWaypointFn?: (nodeId: string | null) => void
+): void {
+  if (newCareerFn) onStartNewCareerCallback = newCareerFn;
+  if (continueFn) onContinueCareerCallback = continueFn;
+  if (endlessFn) onStartEndlessCallback = endlessFn;
+  if (resumeFn) onResumeGameCallback = resumeFn;
+  if (setWaypointFn) onSetWaypointCallback = setWaypointFn;
+}
 
 export function setChoiceDispatcher(fn: (choiceId: string, instanceId: string) => void): void {
   onChooseCallback = fn;
@@ -190,6 +269,31 @@ export function bindEventBusToStore(
     setGarageDispatchers(
       (item) => dispatch({ type: 'repair', item }),
       (upgradeId) => dispatch({ type: 'buyUpgrade', upgradeId })
+    );
+    setMenuDispatchers(
+      () => {
+        screenSignal.value = 'game';
+        pausedSignal.value = false;
+        dispatch({ type: 'resume' });
+      },
+      () => {
+        screenSignal.value = 'game';
+        pausedSignal.value = false;
+        dispatch({ type: 'resume' });
+      },
+      () => {
+        screenSignal.value = 'game';
+        pausedSignal.value = false;
+        dispatch({ type: 'resume' });
+      },
+      () => {
+        screenSignal.value = 'game';
+        pausedSignal.value = false;
+        dispatch({ type: 'resume' });
+      },
+      (nodeId) => {
+        dispatch({ type: 'setWaypoint', nodeId });
+      }
     );
   }
   const unsubscribers: Array<() => void> = [];
@@ -332,16 +436,6 @@ export function initPwaInstall(): void {
       deferredInstallPrompt = null;
       installPromptSignal.value = false;
     });
-
-    (window as unknown as { __uthaoUi?: unknown }).__uthaoUi = {
-      garageSignal,
-      screenSignal,
-      hudSignal,
-      phoneSignal,
-      dayEndSignal,
-      negotiationSignal,
-      choiceSignal,
-    };
   }
 }
 

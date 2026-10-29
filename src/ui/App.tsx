@@ -1,5 +1,5 @@
 import type { JSX } from 'preact';
-import { useEffect } from 'preact/hooks';
+import { useState, useEffect } from 'preact/hooks';
 import {
   rotateOverlaySignal,
   unsupportedSignal,
@@ -22,6 +22,11 @@ import {
   screenSignal,
   onRepairCallback,
   onBuyUpgradeCallback,
+  onStartNewCareerCallback,
+  onContinueCareerCallback,
+  onStartEndlessCallback,
+  onResumeGameCallback,
+  onSetWaypointCallback,
 } from './store';
 import { RotateOverlay } from './overlays/RotateOverlay';
 import { Unsupported } from './overlays/Unsupported';
@@ -31,9 +36,14 @@ import { Phone } from './phone/Phone';
 import { NegotiationPanel } from './negotiation/NegotiationPanel';
 import { DayEnd } from './menus/DayEnd';
 import { Garage } from './garage/Garage';
+import { MainMenu } from './menus/MainMenu';
+import { Settings } from './menus/Settings';
+import { Pause } from './menus/Pause';
+import { MapScreen } from './map/MapScreen';
 import { t } from './i18n';
 
 export function App(): JSX.Element {
+  const [showSettings, setShowSettings] = useState(false);
   useEffect(() => {
     const checkOrientation = () => {
       if (typeof window === 'undefined') return;
@@ -55,6 +65,27 @@ export function App(): JSX.Element {
           ...garageSignal.value,
           open: !garageSignal.value.open,
         };
+      }
+      if (e.key === 'm' || e.key === 'M') {
+        if (screenSignal.value === 'map') {
+          screenSignal.value = 'game';
+        } else if (screenSignal.value === 'game') {
+          screenSignal.value = 'map';
+        }
+      }
+      if (e.key === 'Escape') {
+        if (showSettings) {
+          setShowSettings(false);
+        } else if (screenSignal.value === 'map') {
+          screenSignal.value = 'game';
+        } else if (screenSignal.value === 'pause') {
+          screenSignal.value = 'game';
+          pausedSignal.value = false;
+          onResumeGameCallback?.();
+        } else if (screenSignal.value === 'game') {
+          screenSignal.value = 'pause';
+          pausedSignal.value = true;
+        }
       }
     };
 
@@ -209,6 +240,64 @@ export function App(): JSX.Element {
               screenSignal.value = 'game';
             }
           }}
+        />
+      )}
+
+      {/* T3.10 Main Menu */}
+      {screenSignal.value === 'title' && (
+        <MainMenu
+          onNewCareer={() => {
+            screenSignal.value = 'game';
+            onStartNewCareerCallback?.();
+          }}
+          onContinue={() => {
+            screenSignal.value = 'game';
+            onContinueCareerCallback?.();
+          }}
+          onEndless={() => {
+            screenSignal.value = 'game';
+            onStartEndlessCallback?.();
+          }}
+          onOpenSettings={() => setShowSettings(true)}
+        />
+      )}
+
+      {/* T3.10 Pause Screen */}
+      {screenSignal.value === 'pause' && (
+        <Pause
+          isOpen={true}
+          onResume={() => {
+            screenSignal.value = 'game';
+            pausedSignal.value = false;
+            onResumeGameCallback?.();
+          }}
+          onOpenMap={() => {
+            screenSignal.value = 'map';
+          }}
+          onOpenSettings={() => setShowSettings(true)}
+          onExitToMainMenu={() => {
+            screenSignal.value = 'title';
+            pausedSignal.value = false;
+          }}
+        />
+      )}
+
+      {/* T3.10 Dhaka Map Screen */}
+      {screenSignal.value === 'map' && (
+        <MapScreen
+          isOpen={true}
+          onSetWaypoint={(nodeId) => onSetWaypointCallback?.(nodeId)}
+          onClose={() => {
+            screenSignal.value = 'game';
+          }}
+        />
+      )}
+
+      {/* T3.10 Settings Modal */}
+      {showSettings && (
+        <Settings
+          isOpen={true}
+          onClose={() => setShowSettings(false)}
         />
       )}
 
