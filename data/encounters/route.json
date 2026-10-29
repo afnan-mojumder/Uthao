@@ -54,5 +54,235 @@
         ]
       }
     ]
+  },
+  {
+    "id": "enc_sudden_rain",
+    "category": "route",
+    "trigger": {
+      "phase": "onTrip",
+      "weather": ["lightRain", "heavyRain"]
+    },
+    "weight": 12,
+    "cooldownMin": 60,
+    "oncePerDay": false,
+    "lineKey": "encounter.sudden_rain.title",
+    "choices": [
+      {
+        "id": "cautious",
+        "labelKey": "encounter.sudden_rain.choice.cautious",
+        "effects": [
+          { "type": "time", "min": 4 },
+          { "type": "mood", "delta": 0.05 },
+          { "type": "trust", "delta": 3 }
+        ]
+      },
+      {
+        "id": "shelter",
+        "labelKey": "encounter.sudden_rain.choice.shelter",
+        "effects": [
+          { "type": "time", "min": 12 },
+          { "type": "mood", "delta": -0.15 }
+        ]
+      },
+      {
+        "id": "push_fast",
+        "labelKey": "encounter.sudden_rain.choice.push_fast",
+        "effects": [
+          { "type": "time", "min": -2 },
+          { "type": "injury", "severity": 10 },
+          { "type": "money", "amount": 30, "kind": "tip" }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "enc_extra_stop",
+    "category": "route",
+    "trigger": {
+      "phase": "onTrip"
+    },
+    "weight": 8,
+    "cooldownMin": 60,
+    "oncePerDay": false,
+    "lineKey": "encounter.extra_stop.title",
+    "choices": [
+      {
+        "id": "agree",
+        "labelKey": "encounter.extra_stop.choice.agree",
+        "effects": [
+          { "type": "time", "min": 4 },
+          { "type": "mood", "delta": 0.15 },
+          { "type": "rating", "delta": 0.1 }
+        ]
+      },
+      {
+        "id": "fee",
+        "labelKey": "encounter.extra_stop.choice.fee",
+        "effects": [
+          { "type": "time", "min": 3 },
+          { "type": "money", "amount": 30, "kind": "fare" },
+          { "type": "mood", "delta": -0.05 }
+        ]
+      },
+      {
+        "id": "refuse",
+        "labelKey": "encounter.extra_stop.choice.refuse",
+        "effects": [
+          { "type": "mood", "delta": -0.1 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "enc_urgent_exam",
+    "category": "route",
+    "trigger": {
+      "phase": "onTrip"
+    },
+    "weight": 8,
+    "cooldownMin": 60,
+    "oncePerDay": false,
+    "lineKey": "encounter.urgent_exam.title",
+    "choices": [
+      {
+        "id": "speed",
+        "labelKey": "encounter.urgent_exam.choice.speed",
+        "effects": [
+          { "type": "time", "min": -3 },
+          { "type": "money", "amount": 50, "kind": "tip" },
+          { "type": "mood", "delta": 0.2 },
+          { "type": "localTrust", "delta": 2 }
+        ]
+      },
+      {
+        "id": "steady",
+        "labelKey": "encounter.urgent_exam.choice.steady",
+        "effects": [
+          { "type": "mood", "delta": 0.05 }
+        ]
+      },
+      {
+        "id": "refuse",
+        "labelKey": "encounter.urgent_exam.choice.refuse",
+        "effects": [
+          { "type": "mood", "delta": -0.15 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "enc_traffic_checkpoint",
+    "category": "route",
+    "trigger": {
+      "phase": "onTrip"
+    },
+    "weight": 6,
+    "cooldownMin": 90,
+    "oncePerDay": false,
+    "lineKey": "encounter.traffic_checkpoint.title",
+    "choices": [
+      {
+        "id": "cooperate",
+        "labelKey": "encounter.traffic_checkpoint.choice.cooperate",
+        "effects": [
+          { "type": "time", "min": 3 },
+          { "type": "relationship", "characterId": "char_morshed", "delta": 3 }
+        ]
+      },
+      {
+        "id": "explain_rush",
+        "labelKey": "encounter.traffic_checkpoint.choice.explain_rush",
+        "effects": [
+          { "type": "time", "min": 1 },
+          { "type": "relationship", "characterId": "char_morshed", "delta": 1 }
+        ]
+      },
+      {
+        "id": "fine",
+        "labelKey": "encounter.traffic_checkpoint.choice.fine",
+        "effects": [
+          { "type": "time", "min": 4 },
+          { "type": "money", "amount": -500, "kind": "fine" },
+          { "type": "relationship", "characterId": "char_morshed", "delta": -2 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "enc_bus_block",
+    "category": "route",
+    "trigger": {
+      "phase": "onTrip"
+    },
+    "weight": 8,
+    "cooldownMin": 60,
+    "oncePerDay": false,
+    "lineKey": "encounter.bus_block.title",
+    "choices": [
+      {
+        "id": "sidewalk",
+        "labelKey": "encounter.bus_block.choice.sidewalk",
+        "effects": [
+          { "type": "injury", "severity": 5 },
+          { "type": "mood", "delta": 0.1 }
+        ]
+      },
+      {
+        "id": "wait",
+        "labelKey": "encounter.bus_block.choice.wait",
+        "effects": [
+          { "type": "time", "min": 6 },
+          { "type": "mood", "delta": -0.05 }
+        ]
+      },
+      {
+        "id": "honk",
+        "labelKey": "encounter.bus_block.choice.honk",
+        "effects": [
+          { "type": "time", "min": 2 },
+          { "type": "mood", "delta": 0.05 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "enc_wait_errand",
+    "category": "route",
+    "trigger": {
+      "phase": "onTrip"
+    },
+    "weight": 8,
+    "cooldownMin": 60,
+    "oncePerDay": false,
+    "lineKey": "encounter.wait_errand.title",
+    "choices": [
+      {
+        "id": "fee",
+        "labelKey": "encounter.wait_errand.choice.fee",
+        "effects": [
+          { "type": "time", "min": 5 },
+          { "type": "money", "amount": 30, "kind": "fare" },
+          { "type": "mood", "delta": 0.1 }
+        ]
+      },
+      {
+        "id": "free",
+        "labelKey": "encounter.wait_errand.choice.free",
+        "effects": [
+          { "type": "time", "min": 5 },
+          { "type": "mood", "delta": 0.2 },
+          { "type": "rating", "delta": 0.2 },
+          { "type": "relationship", "characterId": "char_rahim", "delta": 5 }
+        ]
+      },
+      {
+        "id": "end",
+        "labelKey": "encounter.wait_errand.choice.end",
+        "effects": [
+          { "type": "endTrip", "paid": true },
+          { "type": "mood", "delta": -0.05 }
+        ]
+      }
+    ]
   }
 ]

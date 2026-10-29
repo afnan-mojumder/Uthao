@@ -37,5 +37,83 @@
         ]
       }
     ]
+  },
+  {
+    "id": "enc_vendor_discount",
+    "category": "payment",
+    "trigger": {
+      "phase": "dropOff"
+    },
+    "weight": 8,
+    "cooldownMin": 60,
+    "oncePerDay": false,
+    "lineKey": "encounter.vendor_discount.title",
+    "choices": [
+      {
+        "id": "grant",
+        "labelKey": "encounter.vendor_discount.choice.grant",
+        "effects": [
+          { "type": "money", "amount": -20, "kind": "fare" },
+          { "type": "relationship", "characterId": "char_bablu", "delta": 10 },
+          { "type": "localTrust", "delta": 5 }
+        ]
+      },
+      {
+        "id": "standard",
+        "labelKey": "encounter.vendor_discount.choice.standard",
+        "effects": [
+          { "type": "mood", "delta": 0 }
+        ]
+      },
+      {
+        "id": "tea_favor",
+        "labelKey": "encounter.vendor_discount.choice.tea_favor",
+        "effects": [
+          { "type": "money", "amount": -15, "kind": "fare" },
+          { "type": "relationship", "characterId": "char_bablu", "delta": 5 },
+          { "type": "relationship", "characterId": "char_mintu", "delta": 3 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "enc_phone_left",
+    "category": "payment",
+    "trigger": {
+      "phase": "dropOff"
+    },
+    "weight": 8,
+    "cooldownMin": 120,
+    "oncePerDay": false,
+    "lineKey": "encounter.phone_left.title",
+    "choices": [
+      {
+        "id": "return",
+        "labelKey": "encounter.phone_left.choice.return",
+        "effects": [
+          { "type": "time", "min": 10 },
+          { "type": "localTrust", "delta": 10 },
+          { "type": "rating", "delta": 0.3 },
+          { "type": "money", "amount": 100, "kind": "tip" }
+        ]
+      },
+      {
+        "id": "police",
+        "labelKey": "encounter.phone_left.choice.police",
+        "effects": [
+          { "type": "time", "min": 5 },
+          { "type": "relationship", "characterId": "char_morshed", "delta": 10 },
+          { "type": "localTrust", "delta": 8 }
+        ]
+      },
+      {
+        "id": "keep",
+        "labelKey": "encounter.phone_left.choice.keep",
+        "effects": [
+          { "type": "flag", "key": "kept_lost_phone", "value": true },
+          { "type": "money", "amount": 1500, "kind": "tip" }
+        ]
+      }
+    ]
   }
 ]

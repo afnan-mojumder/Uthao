@@ -72,5 +72,123 @@
         ]
       }
     ]
+  },
+  {
+    "id": "enc_off_app",
+    "category": "pickup",
+    "trigger": {
+      "phase": "atPickup"
+    },
+    "weight": 8,
+    "cooldownMin": 90,
+    "oncePerDay": false,
+    "lineKey": "encounter.off_app.title",
+    "choices": [
+      {
+        "id": "accept",
+        "labelKey": "encounter.off_app.choice.accept",
+        "effects": [
+          { "type": "flag", "key": "ride_off_app", "value": true },
+          { "type": "money", "amount": 80, "kind": "fare" },
+          { "type": "localTrust", "delta": 2 }
+        ]
+      },
+      {
+        "id": "stay_app",
+        "labelKey": "encounter.off_app.choice.stay_app",
+        "effects": [
+          { "type": "mood", "delta": -0.05 },
+          { "type": "localTrust", "delta": 2 }
+        ]
+      },
+      {
+        "id": "negotiate",
+        "labelKey": "encounter.off_app.choice.negotiate",
+        "effects": [
+          { "type": "flag", "key": "off_app_negotiated", "value": true },
+          { "type": "money", "amount": 110, "kind": "fare" },
+          { "type": "mood", "delta": 0.1 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "enc_wrong_pickup_pin",
+    "category": "pickup",
+    "trigger": {
+      "phase": "atPickup"
+    },
+    "weight": 8,
+    "cooldownMin": 60,
+    "oncePerDay": false,
+    "lineKey": "encounter.wrong_pickup_pin.title",
+    "choices": [
+      {
+        "id": "drive",
+        "labelKey": "encounter.wrong_pickup_pin.choice.drive",
+        "effects": [
+          { "type": "time", "min": 3 },
+          { "type": "money", "amount": -10, "kind": "fuel" },
+          { "type": "mood", "delta": 0.15 },
+          { "type": "rating", "delta": 0.1 }
+        ]
+      },
+      {
+        "id": "walk",
+        "labelKey": "encounter.wrong_pickup_pin.choice.walk",
+        "effects": [
+          { "type": "time", "min": 2 },
+          { "type": "mood", "delta": -0.15 }
+        ]
+      },
+      {
+        "id": "cancel",
+        "labelKey": "encounter.wrong_pickup_pin.choice.cancel",
+        "effects": [
+          { "type": "flag", "key": "cancelled_wrong_pin", "value": true },
+          { "type": "endTrip", "paid": false }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "enc_parent_child",
+    "category": "pickup",
+    "trigger": {
+      "phase": "atPickup"
+    },
+    "weight": 10,
+    "cooldownMin": 90,
+    "oncePerDay": false,
+    "lineKey": "encounter.parent_child.title",
+    "choices": [
+      {
+        "id": "smooth",
+        "labelKey": "encounter.parent_child.choice.smooth",
+        "effects": [
+          { "type": "time", "min": 3 },
+          { "type": "relationship", "characterId": "char_ferdousi", "delta": 5 },
+          { "type": "trust", "delta": 5 },
+          { "type": "rating", "delta": 0.2 }
+        ]
+      },
+      {
+        "id": "helmet",
+        "labelKey": "encounter.parent_child.choice.helmet",
+        "effects": [
+          { "type": "time", "min": 2 },
+          { "type": "relationship", "characterId": "char_ferdousi", "delta": 10 },
+          { "type": "localTrust", "delta": 3 }
+        ]
+      },
+      {
+        "id": "standard",
+        "labelKey": "encounter.parent_child.choice.standard",
+        "effects": [
+          { "type": "mood", "delta": -0.2 },
+          { "type": "relationship", "characterId": "char_ferdousi", "delta": -5 }
+        ]
+      }
+    ]
   }
 ]

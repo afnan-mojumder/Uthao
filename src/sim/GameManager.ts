@@ -26,6 +26,7 @@ import pickupEncounters from '../../data/encounters/pickup.json';
 import paymentEncounters from '../../data/encounters/payment.json';
 import bikeEncounters from '../../data/encounters/bike.json';
 import crimeEncounters from '../../data/encounters/crime.json';
+import passengerEncounters from '../../data/encounters/passenger.json';
 import { ReputationSystem } from './reputation/ReputationSystem';
 import type { SafetyRecord } from '../core/types';
 import { RoadEventManager, type ActiveRoadEvent } from './world/RoadEvents';
@@ -43,6 +44,7 @@ const DEFAULT_ENCOUNTERS: EncounterDef[] = [
   ...pickupEncounters,
   ...paymentEncounters,
   ...bikeEncounters,
+  ...passengerEncounters,
   ...crimeEncounters,
 ] as EncounterDef[];
 

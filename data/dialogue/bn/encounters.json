@@ -1,0 +1,65 @@
+{
+  "encounter.off_app.title": "যাত্রী ফিসফিসিয়ে বলল: 'ভাই, অ্যাপটা ক্যান্সেল করেন, বাইরে বাইরে যাই। ভাড়া পুরা ক্যাশ দিয়ে দিমুনে।'",
+  "encounter.off_app.choice.accept": "অ্যাপের বাইরে যেতে রাজি হন (০% কমিশন, পুরা টাকা নিজের)",
+  "encounter.off_app.choice.stay_app": "ভদ্রভাবে না বলুন এবং উধাও অ্যাপেই ট্রিপ চালু রাখুন",
+  "encounter.off_app.choice.negotiate": "বেশি ভাড়ার শর্তে দরদাম করে অফ-অ্যাপে রাজি হন",
+
+  "encounter.sudden_rain.title": "হঠাৎ আকাশ ভেঙে মুষলধারে বৃষ্টি নামল! ঢাকার রাস্তা পিচ্ছিল ও বিপজ্জনক হয়ে উঠেছে।",
+  "encounter.sudden_rain.choice.cautious": "গতি কমিয়ে অত্যন্ত সাবধানে বাইক চালান (নিরাপদ ও ধীর)",
+  "encounter.sudden_rain.choice.shelter": "বৃষ্টি কমার জন্য চায়ের দোকানের ছাউনিতে আশ্রয় নিন",
+  "encounter.sudden_rain.choice.push_fast": "ভালো টিপসের আশায় দ্রুত টানুন (চরম পিছলে পড়ার ঝুঁকি)",
+
+  "encounter.extra_stop.title": "যাত্রী আবদার করল: 'ভাই, রাস্তার পাশের দোকানটায় একটু ২ মিনিট থামবেন? ওষুধটা নিয়া আসি...'",
+  "encounter.extra_stop.choice.agree": "কোনো অতিরিক্ত টাকা না চেয়ে হাসিমুখে রাজি হন",
+  "encounter.extra_stop.choice.fee": "অতিরিক্ত অপেক্ষার জন্য ৩০ টাকা চেয়ে নিন",
+  "encounter.extra_stop.choice.refuse": "সময়ের টানাটানির কারণে ভদ্রভাবে অপারগতা জানান",
+
+  "encounter.parent_child.title": "মিসেস ফেরদৌসী বাচ্চার হাত ধরে বললেন: 'ভাই, সাথে ছোট বাচ্চা, একদম সাবধানে ধীরে টানবেন কিন্তু!'",
+  "encounter.parent_child.choice.smooth": "আশ্বস্ত করে ফাঁকা ও নিরাপদ রাস্তা দিয়ে মসৃণভাবে চালান",
+  "encounter.parent_child.choice.helmet": "বাচ্চার হেলমেট ও ফুটরেস্ট ঠিক করে বসতে সাহায্য করুন",
+  "encounter.parent_child.choice.standard": "স্বাভাবিক গতিতে যাত্রা অব্যাহত রাখুন",
+
+  "encounter.urgent_exam.title": "পরীক্ষার্থী যাত্রী আঁতকে উঠে বলল: 'ভাই! আর ১০ মিনিটে পরীক্ষা শুরু! একটু জোরে টান দেন প্লিজ!'",
+  "encounter.urgent_exam.choice.speed": "জ্যাম কাটিয়ে মসৃণ গতিতে দ্রুত পৌঁছানোর চেষ্টা করুন",
+  "encounter.urgent_exam.choice.steady": "নিরাপদ গতি বজায় রাখুন এবং যাত্রীকে শান্ত হতে বলুন",
+  "encounter.urgent_exam.choice.refuse": "বেপরোয়া গতিতে চালাতে অস্বীকৃতি জানান (নিরাপত্তাই আগে)",
+
+  "encounter.wrong_pickup_pin.title": "যাত্রী ফোন দিল: 'ভাই সরি, পিনটা গলির ভেতরে পড়ে গেছে! আমি কিন্তু বড় রাস্তার মোড়ে দাঁড়ানো!'",
+  "encounter.wrong_pickup_pin.choice.drive": "ঘুরে গিয়ে বড় রাস্তার মোড় থেকেই যাত্রীকে তুলে নিন",
+  "encounter.wrong_pickup_pin.choice.walk": "যাত্রীকে হেঁটে ম্যাপে দেওয়া পিন পয়েন্টে আসতে বলুন",
+  "encounter.wrong_pickup_pin.choice.cancel": "ভুল লোকেশনের কারণে রাইড বাতিল করুন",
+
+  "encounter.vendor_discount.title": "হকার বাবলু ভাই হাসিমুখে বললেন: 'আজকে বাজারে বেচাবিক্রি মন্দা ভাই, ২০টা টাকা কম রাখবা?'",
+  "encounter.vendor_discount.choice.grant": "মেহনতি মানুষের খাতিরে ২০ টাকা ছাড় দিন",
+  "encounter.vendor_discount.choice.standard": "তেলের খরচের কথা বুঝিয়ে পুরো ভাড়া বজায় রাখুন",
+  "encounter.vendor_discount.choice.tea_favor": "ছাড়ের বিনিময়ে চায়ের দোকানের দাওয়াত কবুল করুন",
+
+  "encounter.phone_left.title": "পেছনের সিটে তাকিয়ে দেখলেন যাত্রী একটা দামী স্মার্টফোন ফেলে চলে গেছেন!",
+  "encounter.phone_left.choice.return": "তক্ষুনি ঘুরে গিয়ে যাত্রীকে ফোনটি ফিরিয়ে দিন",
+  "encounter.phone_left.choice.police": "ট্রাফিক মোড়ে এসআই মোর্শেদের পুলিশ বক্সে জমা দিন",
+  "encounter.phone_left.choice.keep": "ফোনটা নিজের পকেটে রেখে দিন (উচ্চ ঝুঁকি ও অনৈতিক)",
+
+  "encounter.traffic_checkpoint.title": "সামনে পুলিশের চেকপোস্ট! এসআই মোর্শেদ কাগজপত্র চেক করার জন্য হাত তুলে থামতে বলছেন।",
+  "encounter.traffic_checkpoint.choice.cooperate": "শ্রদ্ধার সাথে থেমে লাইসেন্স ও গাড়ির কাগজপত্র দেখান",
+  "encounter.traffic_checkpoint.choice.explain_rush": "যাত্রীর জরুরি তাড়ার কথা বুঝিয়ে ছাড় চেয়ে নিন",
+  "encounter.traffic_checkpoint.choice.fine": "নিয়ম লঙ্ঘনের জরিমানা ৫০০ টাকা পরিশোধ করুন",
+
+  "encounter.bus_block.title": "একটা বেপরোয়া লোকাল বাস আড়াআড়ি দাঁড়িয়ে পুরো রাস্তা পুরোপুরি আটকে রেখেছে!",
+  "encounter.bus_block.choice.sidewalk": "ফুটপাত আর আইল্যান্ডের ফাঁক গলে বের হয়ে যান",
+  "encounter.bus_block.choice.wait": "ধৈর্য ধরে জ্যাম ছাড়ার জন্য অপেক্ষা করুন",
+  "encounter.bus_block.choice.honk": "হর্ন বাজিয়ে বাসের হেলপারকে রাস্তা ফাঁকা করতে বলুন",
+
+  "encounter.regular_direct_call.title": "আপনার ফোন বেজে উঠল — একজন নিয়মিত যাত্রী সরাসরি রাইডের জন্য কল করেছেন!",
+  "encounter.regular_direct_call.choice.accept": "সরাসরি রাইড গ্রহণ করুন (০% কমিশন, পুরো আয় নিজের)",
+  "encounter.regular_direct_call.choice.decline": "ব্যস্ততার কারণে ভদ্রভাবে অপারগতা প্রকাশ করুন",
+  "encounter.regular_direct_call.choice.mintu": "বন্ধু মিন্টুকে কল করতে বলুন",
+
+  "encounter.friend_package.title": "চায়ের দোকান থেকে মিন্টু ডাক দিল: 'দোস্ত, এই জরুরি পার্সেলটা একটু ফার্মগেটে দিয়া আসবি?'",
+  "encounter.friend_package.choice.accept": "বন্ধুর জরুরি পার্সেল ডেলিভারির ট্রিপ গ্রহণ করুন",
+  "encounter.friend_package.choice.decline": "যাত্রীর চাপ থাকায় ডেলিভারি নিতে অপারগতা জানান",
+
+  "encounter.wait_errand.title": "যাত্রী বলল: 'ফার্মেসী থেকে ওষুধটা নিয়া আসি, ৫ মিনিট একটু দাঁড়াবেন ভাই?'",
+  "encounter.wait_errand.choice.fee": "৩০ টাকা ওয়েটিং চার্জের শর্তে অপেক্ষা করতে রাজি হন",
+  "encounter.wait_errand.choice.free": "কোনো অতিরিক্ত টাকা না চেয়ে মন খুলে অপেক্ষা করুন",
+  "encounter.wait_errand.choice.end": "এখানেই ট্রিপ শেষ করে দিন যাতে পরে আবার বুক করতে পারে"
+}

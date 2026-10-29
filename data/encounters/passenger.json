@@ -1,0 +1,67 @@
+[
+  {
+    "id": "enc_regular_direct_call",
+    "category": "passenger",
+    "trigger": {
+      "phase": "roaming"
+    },
+    "weight": 8,
+    "cooldownMin": 90,
+    "oncePerDay": false,
+    "lineKey": "encounter.regular_direct_call.title",
+    "choices": [
+      {
+        "id": "accept",
+        "labelKey": "encounter.regular_direct_call.choice.accept",
+        "effects": [
+          { "type": "flag", "key": "direct_trip_accepted", "value": true },
+          { "type": "money", "amount": 150, "kind": "fare" },
+          { "type": "relationship", "characterId": "char_tanvir", "delta": 5 }
+        ]
+      },
+      {
+        "id": "decline",
+        "labelKey": "encounter.regular_direct_call.choice.decline",
+        "effects": [
+          { "type": "mood", "delta": 0 }
+        ]
+      },
+      {
+        "id": "mintu",
+        "labelKey": "encounter.regular_direct_call.choice.mintu",
+        "effects": [
+          { "type": "relationship", "characterId": "char_mintu", "delta": 3 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "enc_friend_package",
+    "category": "passenger",
+    "trigger": {
+      "phase": "roaming"
+    },
+    "weight": 8,
+    "cooldownMin": 120,
+    "oncePerDay": false,
+    "lineKey": "encounter.friend_package.title",
+    "choices": [
+      {
+        "id": "accept",
+        "labelKey": "encounter.friend_package.choice.accept",
+        "effects": [
+          { "type": "time", "min": 12 },
+          { "type": "money", "amount": 120, "kind": "fare" },
+          { "type": "relationship", "characterId": "char_mintu", "delta": 5 }
+        ]
+      },
+      {
+        "id": "decline",
+        "labelKey": "encounter.friend_package.choice.decline",
+        "effects": [
+          { "type": "mood", "delta": 0 }
+        ]
+      }
+    ]
+  }
+]

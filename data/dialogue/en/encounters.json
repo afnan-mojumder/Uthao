@@ -1,0 +1,65 @@
+{
+  "encounter.off_app.title": "A passenger leans in: 'Bro, want to do this trip outside the app? I will give you full cash.'",
+  "encounter.off_app.choice.accept": "Accept off-app trip (No commission, full cash)",
+  "encounter.off_app.choice.stay_app": "Politely decline and stay on Uthao app",
+  "encounter.off_app.choice.negotiate": "Negotiate a higher private cash fare",
+
+  "encounter.sudden_rain.title": "Sky turns dark and torrential Dhaka rain pours down! Roads are slick and hazardous.",
+  "encounter.sudden_rain.choice.cautious": "Drive cautiously at lower speed (Safe & steady)",
+  "encounter.sudden_rain.choice.shelter": "Take shelter under a tea stall canopy until it lightens",
+  "encounter.sudden_rain.choice.push_fast": "Push through at full speed for a rush tip (High slip risk)",
+
+  "encounter.extra_stop.title": "Passenger asks: 'Bhai, could you stop at that shop for 2 minutes on the way?'",
+  "encounter.extra_stop.choice.agree": "Agree cheerfully without asking for extra money",
+  "encounter.extra_stop.choice.fee": "Request a small ৳30 waiting compensation",
+  "encounter.extra_stop.choice.refuse": "Politely decline due to tight schedule",
+
+  "encounter.parent_child.title": "Mrs. Ferdousi holds her child's hand: 'Please ride very gently, I have my child with me.'",
+  "encounter.parent_child.choice.smooth": "Reassure her and ride smoothly on calm roads",
+  "encounter.parent_child.choice.helmet": "Help secure helmet and adjust footpegs",
+  "encounter.parent_child.choice.standard": "Ride at normal standard pace",
+
+  "encounter.urgent_exam.title": "Student panics: 'Bhai! Exam starts in 10 minutes! Please get me there fast!'",
+  "encounter.urgent_exam.choice.speed": "Weave through traffic smoothly to arrive in time",
+  "encounter.urgent_exam.choice.steady": "Maintain safe steady pace and calm the student",
+  "encounter.urgent_exam.choice.refuse": "Refuse to overspeed (Safety first)",
+
+  "encounter.wrong_pickup_pin.title": "Passenger calls: 'Sorry bhai, the pin went to the alley, I am waiting by the main junction!'",
+  "encounter.wrong_pickup_pin.choice.drive": "Drive around to pick them up at the junction",
+  "encounter.wrong_pickup_pin.choice.walk": "Ask them to walk over to the pinned location",
+  "encounter.wrong_pickup_pin.choice.cancel": "Cancel the ride due to misplaced pin",
+
+  "encounter.vendor_discount.title": "Bablu the street vendor smiles: 'Sales were dry today bhai, could you take ৳20 less?'",
+  "encounter.vendor_discount.choice.grant": "Give ৳20 discount to support a fellow worker",
+  "encounter.vendor_discount.choice.standard": "Politely explain you need to cover fuel costs",
+  "encounter.vendor_discount.choice.tea_favor": "Trade discount for a tea stall token",
+
+  "encounter.phone_left.title": "You notice an expensive smartphone left behind on the pillion seat!",
+  "encounter.phone_left.choice.return": "Rush back immediately to return the phone",
+  "encounter.phone_left.choice.police": "Hand over to SI Morshed at traffic police booth",
+  "encounter.phone_left.choice.keep": "Keep the phone (High risk, morally questionable)",
+
+  "encounter.traffic_checkpoint.title": "Police checkpoint ahead! SI Morshed is waving bikes over for inspection.",
+  "encounter.traffic_checkpoint.choice.cooperate": "Stop politely and present valid license and registration",
+  "encounter.traffic_checkpoint.choice.explain_rush": "Explain you have a passenger in a hurry",
+  "encounter.traffic_checkpoint.choice.fine": "Accept citation and pay accumulated infraction fine",
+
+  "encounter.bus_block.title": "A reckless local bus is stranded sideways, completely blocking the carriageway!",
+  "encounter.bus_block.choice.sidewalk": "Squeeze along the curb / narrow sidewalk alley",
+  "encounter.bus_block.choice.wait": "Wait patiently for the gridlock to unravel",
+  "encounter.bus_block.choice.honk": "Honk and guide the bus helper to clear space",
+
+  "encounter.regular_direct_call.title": "Your phone rings — a regular passenger is calling for a direct booking!",
+  "encounter.regular_direct_call.choice.accept": "Accept direct booking (0% commission, full earnings)",
+  "encounter.regular_direct_call.choice.decline": "Decline politely as you are occupied",
+  "encounter.regular_direct_call.choice.mintu": "Recommend your friend Mintu instead",
+
+  "encounter.friend_package.title": "Mintu calls from his tea stall: 'Dosto, can you rush this spare parts package to Farmgate?'",
+  "encounter.friend_package.choice.accept": "Accept the urgent parcel delivery",
+  "encounter.friend_package.choice.decline": "Decline due to passenger commitments",
+
+  "encounter.wait_errand.title": "Passenger asks: 'Wait here 5 minutes while I buy medicine, okay?'",
+  "encounter.wait_errand.choice.fee": "Agree with a ৳30 waiting fee",
+  "encounter.wait_errand.choice.free": "Wait generously without extra charge",
+  "encounter.wait_errand.choice.end": "End the trip here so they can book another later"
+}
