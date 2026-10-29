@@ -14,6 +14,10 @@ import {
   onAcceptRequestCallback,
   onDeclineRequestCallback,
   onNegotiationActionCallback,
+  dayEndSignal,
+  onSleepCallback,
+  onDelayRentCallback,
+  onAskAdvanceCallback,
 } from './store';
 import { RotateOverlay } from './overlays/RotateOverlay';
 import { Unsupported } from './overlays/Unsupported';
@@ -21,6 +25,7 @@ import { Loading } from './overlays/Loading';
 import { ChoiceCard } from './choice/ChoiceCard';
 import { Phone } from './phone/Phone';
 import { NegotiationPanel } from './negotiation/NegotiationPanel';
+import { DayEnd } from './menus/DayEnd';
 import { t } from './i18n';
 
 export function App(): JSX.Element {
@@ -159,6 +164,16 @@ export function App(): JSX.Element {
           onClose={() => {
             negotiationSignal.value = { ...negotiationSignal.value, active: false };
           }}
+        />
+      )}
+
+      {/* T4.1 Day End Screen */}
+      {dayEndSignal.value.active && (
+        <DayEnd
+          summary={dayEndSignal.value.summary}
+          onSleep={() => onSleepCallback?.()}
+          onDelayRent={() => onDelayRentCallback?.()}
+          onAskAdvance={(from, amount) => onAskAdvanceCallback?.(from, amount)}
         />
       )}
 

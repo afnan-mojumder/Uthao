@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test('ride completes via autopilot', async ({ page }) => {
   test.setTimeout(60000);
 
-  await page.goto('/?debug=1');
+  await page.goto('/?debug=1&district=testloop');
   await page.waitForSelector('#game-canvas');
   await expect(page.locator('#hud')).toBeVisible();
 

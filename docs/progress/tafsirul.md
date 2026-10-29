@@ -8,3 +8,4 @@ One line per finished task: `YYYY-MM-DD Tx.y done — note`
 2026-10-26 T3.9 done — AudioManager implemented with WebAudio/THREE.AudioListener, engine pitch scaling, horn, clicks, cash register, and city/rain ambient audio
 2026-10-29 T2.4 done — NegotiationPanel and Phone UI implemented with bilingual dialogues, reactive signals store, and Playwright e2e verification
 2026-10-29 T2.8 done — Rider HUD v1 (speed, fuel gauge, earnings, rating, shift clock, navigation instructions, passenger status, first-person collapsed mode) and 2D canvas Minimap with route polyline and orientation
+2026-10-29 T4.1 done — Day lifecycle & living expenses (07:00 home start, endShift >= 12:00, forced 23:00, commute fuel/teleport, food/data/rent/family living expenses, rent debt/eviction warning flags, battery drainage & charging, DayEnd modal, recovery advances)

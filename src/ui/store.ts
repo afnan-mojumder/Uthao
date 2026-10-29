@@ -1,7 +1,7 @@
 import { signal } from '@preact/signals';
 import type { EventBus, GameEvents } from '../core/events';
 import type { Command } from '../core/commands';
-import type { RideRequest } from '../core/types';
+import type { DaySummary, RideRequest } from '../core/types';
 import type { TripHistoryItem } from './phone/Phone';
 import type {
   NegotiationSession,
@@ -45,6 +45,16 @@ export interface NegotiationUiState {
   lastResult: NegotiationResult | null;
 }
 
+export interface DayEndState {
+  active: boolean;
+  summary: DaySummary | null;
+}
+
+export const dayEndSignal = signal<DayEndState>({
+  active: false,
+  summary: null,
+});
+
 export const screenSignal = signal<ScreenId>('game');
 export const pausedSignal = signal<boolean>(false);
 export const rotateOverlaySignal = signal<boolean>(false);
@@ -84,6 +94,9 @@ export let onChooseCallback: ((choiceId: string, instanceId: string) => void) | 
 export let onAcceptRequestCallback: ((requestId: string) => void) | null = null;
 export let onDeclineRequestCallback: ((requestId: string) => void) | null = null;
 export let onNegotiationActionCallback: ((action: NegotiationAction) => void) | null = null;
+export let onSleepCallback: (() => void) | null = null;
+export let onDelayRentCallback: (() => void) | null = null;
+export let onAskAdvanceCallback: ((from: 'mintu' | 'ma', amount: number) => void) | null = null;
 
 export function setChoiceDispatcher(fn: (choiceId: string, instanceId: string) => void): void {
   onChooseCallback = fn;
@@ -101,6 +114,16 @@ export function setNegotiationActionDispatcher(fn: (action: NegotiationAction) =
   onNegotiationActionCallback = fn;
 }
 
+export function setDayEndDispatchers(
+  sleepFn: () => void,
+  delayRentFn?: () => void,
+  askAdvanceFn?: (from: 'mintu' | 'ma', amount: number) => void
+): void {
+  onSleepCallback = sleepFn;
+  if (delayRentFn) onDelayRentCallback = delayRentFn;
+  if (askAdvanceFn) onAskAdvanceCallback = askAdvanceFn;
+}
+
 /**
  * Subscribes to simulation event bus and mirrors updates to reactive Preact signals.
  */
@@ -115,6 +138,11 @@ export function bindEventBusToStore(
     setRequestDispatchers(
       (requestId) => dispatch({ type: 'acceptRequest', requestId }),
       (requestId) => dispatch({ type: 'declineRequest', requestId })
+    );
+    setDayEndDispatchers(
+      () => dispatch({ type: 'sleep' }),
+      () => dispatch({ type: 'delayRent' }),
+      (from, amount) => dispatch({ type: 'askAdvance', from, amount })
     );
   }
   const unsubscribers: Array<() => void> = [];
@@ -214,6 +242,22 @@ export function bindEventBusToStore(
     };
   });
   unsubscribers.push(unsubEncounterEnd);
+
+  const unsubDayEnded = bus.on('day/ended', (ev) => {
+    dayEndSignal.value = {
+      active: true,
+      summary: ev.summary,
+    };
+  });
+  unsubscribers.push(unsubDayEnded);
+
+  const unsubDayStarted = bus.on('day/started', () => {
+    dayEndSignal.value = {
+      active: false,
+      summary: null,
+    };
+  });
+  unsubscribers.push(unsubDayStarted);
 
   return () => {
     for (const unsub of unsubscribers) {

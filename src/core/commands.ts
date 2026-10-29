@@ -12,6 +12,9 @@ export type Command =
   | { type: 'repair'; item: string }
   | { type: 'buyUpgrade'; upgradeId: string }
   | { type: 'payExpense'; expenseId: string }
+  | { type: 'chargePhone'; location?: 'home' | 'teaStall'; cost?: number }
+  | { type: 'delayRent' }
+  | { type: 'askAdvance'; from: 'mintu' | 'ma'; amount: number }
   | { type: 'endShift' }
   | { type: 'sleep' }
   | { type: 'setWaypoint'; nodeId: string | null }

@@ -57,6 +57,8 @@ export interface RequestGeneratorOptions {
   baseArrivalRatePerMinute?: number; // average requests per game minute
   requestRateMultiplier?: number;
   reputationSystem?: ReputationSystem;
+  phoneBattery?: number;
+  phoneBatteryProvider?: () => number;
 }
 
 export class RequestGenerator {
@@ -68,6 +70,8 @@ export class RequestGenerator {
   private requestRateMultiplier: number = 1.0;
   private eligibleNodeIds: string[] = [];
   private profiles: Map<string, PassengerProfile> = new Map();
+  private phoneBattery: number = 100;
+  private phoneBatteryProvider?: () => number;
 
   constructor(
     network: RoadNetwork,
@@ -79,7 +83,20 @@ export class RequestGenerator {
     this.baseArrivalRate = opts.baseArrivalRatePerMinute ?? 0.5;
     this.reputationSystem = opts.reputationSystem;
     this.requestRateMultiplier = opts.requestRateMultiplier ?? 1.0;
+    this.phoneBattery = opts.phoneBattery ?? 100;
+    this.phoneBatteryProvider = opts.phoneBatteryProvider;
     this.computeEligibleNodes();
+  }
+
+  setPhoneBattery(battery: number): void {
+    this.phoneBattery = battery;
+  }
+
+  getPhoneBattery(): number {
+    if (this.phoneBatteryProvider) {
+      return this.phoneBatteryProvider();
+    }
+    return this.phoneBattery;
   }
 
   setRequestRateMultiplier(mult: number): void {
@@ -149,6 +166,10 @@ export class RequestGenerator {
     forcedPickupNodeId?: string
   ): { request: RideRequest; profile: PassengerProfile } | null {
     if (this.eligibleNodeIds.length < 2) {
+      return null;
+    }
+
+    if (bookingType === 'app' && this.getPhoneBattery() <= 0) {
       return null;
     }
 
@@ -249,10 +270,12 @@ export class RequestGenerator {
     const count = samplePoisson(lambda, this.rng);
     const requests: RideRequest[] = [];
 
-    for (let i = 0; i < count; i++) {
-      const result = this.sampleRequest(currentMinute, weather, 'app');
-      if (result) {
-        requests.push(result.request);
+    if (this.getPhoneBattery() > 0) {
+      for (let i = 0; i < count; i++) {
+        const result = this.sampleRequest(currentMinute, weather, 'app');
+        if (result) {
+          requests.push(result.request);
+        }
       }
     }
 

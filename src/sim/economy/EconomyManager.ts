@@ -16,6 +16,7 @@ export class EconomyManager {
   savings: number;
   reputation: number;
   phoneBattery: number;
+  rentMissedCount: number = 0;
 
   constructor(
     bus: EventBus<GameEvents>,
@@ -113,6 +114,133 @@ export class EconomyManager {
     });
     this.fuelLevel = Math.min(BALANCE.FUEL.tankL, this.fuelLevel + 1.0);
     return { fuelAdded: 1.0, timeCostMin: 20 };
+  }
+
+  drainBattery(percent: number): void {
+    if (!Number.isFinite(percent) || percent <= 0) return;
+    this.phoneBattery = Math.max(0, this.phoneBattery - percent);
+  }
+
+  chargeBattery(amount: number = 100, cost: number = 10, day = 1, minute = 0): void {
+    this.phoneBattery = Math.min(100, Math.max(0, this.phoneBattery + amount));
+    if (cost > 0) {
+      this.post({
+        id: `tx_charge_${day}_${minute}_${++this.txSeq}`,
+        day,
+        minute,
+        kind: 'phoneData',
+        amount: -cost,
+      });
+    }
+  }
+
+  isPhoneDead(): boolean {
+    return this.phoneBattery <= 0;
+  }
+
+  postDailyLivingExpenses(
+    day: number,
+    minute = 0,
+    options?: { delayRent?: boolean }
+  ): {
+    food: number;
+    phoneData: number;
+    rent: number;
+    family: number;
+    total: number;
+    rentDelayed?: boolean;
+    evictionWarning?: boolean;
+  } {
+    const food = BALANCE.LIVING.foodPerDay;
+    const phoneData = BALANCE.LIVING.phoneDataPerDay;
+    let rent = 0;
+    let family = 0;
+    let rentDelayed = false;
+    let evictionWarning = false;
+
+    // 1. Food
+    this.post({
+      id: `tx_food_${day}_${minute}_${++this.txSeq}`,
+      day,
+      minute,
+      kind: 'food',
+      amount: -food,
+    });
+
+    // 2. Phone data
+    this.post({
+      id: `tx_data_${day}_${minute}_${++this.txSeq}`,
+      day,
+      minute,
+      kind: 'phoneData',
+      amount: -phoneData,
+    });
+
+    // 3. Family payment (e.g. Day 3)
+    if (day === 3 && BALANCE.LIVING.familyPaymentDay3 > 0) {
+      family = BALANCE.LIVING.familyPaymentDay3;
+      this.post({
+        id: `tx_family_${day}_${minute}_${++this.txSeq}`,
+        day,
+        minute,
+        kind: 'family',
+        amount: -family,
+      });
+    }
+
+    // 4. Rent (on rent days: 7, 14, 20)
+    if (BALANCE.LIVING.rentDueDays.includes(day)) {
+      const rentAmount = BALANCE.LIVING.rentAmount;
+      rent = rentAmount;
+
+      if (options?.delayRent || this.cash < rentAmount) {
+        this.rentMissedCount++;
+        if (this.rentMissedCount === 1) {
+          rentDelayed = true;
+        } else if (this.rentMissedCount >= 2) {
+          evictionWarning = true;
+        }
+      }
+
+      this.post({
+        id: `tx_rent_${day}_${minute}_${++this.txSeq}`,
+        day,
+        minute,
+        kind: 'rent',
+        amount: -rentAmount,
+      });
+    }
+
+    const total = food + phoneData + rent + family;
+    return {
+      food,
+      phoneData,
+      rent,
+      family,
+      total,
+      rentDelayed,
+      evictionWarning,
+    };
+  }
+
+  askAdvance(
+    from: 'mintu' | 'ma',
+    amount: number,
+    day = 1,
+    minute = 0
+  ): void {
+    if (!Number.isFinite(amount) || amount <= 0) return;
+    this.cash += amount;
+    this.debt += amount;
+    this.bus.emit('economy/transaction', {
+      tx: {
+        id: `tx_advance_${from}_${day}_${minute}_${++this.txSeq}`,
+        day,
+        minute,
+        kind: 'family',
+        amount,
+      },
+    });
   }
 
   resetDaily(): void {

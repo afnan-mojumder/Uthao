@@ -7,8 +7,10 @@ import {
   MAX_FRAME_DT,
   MAX_SIM_STEPS_PER_FRAME,
 } from '../config/constants';
+import { BALANCE } from '../config/balance';
 import type { Command, CommandResult } from '../core/commands';
 import type {
+  DaySummary,
   PlayerEconomy,
   StoryState,
   WeatherKind,
@@ -93,6 +95,14 @@ export class GameManager {
 
   weather: WeatherKind = 'clear';
   waypointNodeId: string | null = null;
+  isNavigating: boolean = false;
+  shiftEnded: boolean = false;
+  homeNodeId: string = 'res_n2_0';
+  playerNodeId: string = 'res_n2_0';
+  playerDistFromHomeM: number = 0;
+  todayCompletedRides: number = 0;
+  todayStartRating: number = 5.0;
+  todayRelationshipsStart: Record<string, number> = {};
 
   economy: PlayerEconomy = {
     cash: 600,
@@ -160,6 +170,30 @@ export class GameManager {
       this.economy.reputation = this.reputationSystem.getAppRating();
       this.economyManager.reputation = this.economy.reputation;
     });
+
+    this.bus.on('ride/accepted', () => {
+      this.isNavigating = true;
+    });
+
+    this.bus.on('ride/completed', () => {
+      this.todayCompletedRides++;
+      this.isNavigating = false;
+    });
+
+    this.bus.on('ride/cancelled', () => {
+      this.isNavigating = false;
+    });
+
+    this.bus.on('economy/transaction', () => {
+      this.syncEconomy();
+    });
+
+    this.todayStartRating = this.reputationSystem.getAppRating();
+    this.todayRelationshipsStart = { ...this.story.characterRelationships };
+  }
+
+  private syncEconomy(): void {
+    this.economy = this.economyManager.getSnapshot();
   }
 
   tick(dt: number = SIM_DT): void {
@@ -180,6 +214,17 @@ export class GameManager {
 
     if (currHour !== prevHour) {
       this.bus.emit('clock/hour', { hour: currHour % 24 });
+    }
+
+    // Phone battery drain while navigating: 3% per game hour
+    if (this.isNavigating) {
+      this.economyManager.drainBattery((dtMinutes / 60) * 3);
+      this.economy.phoneBattery = this.economyManager.phoneBattery;
+    }
+
+    // Forced shift end at 23:00 (1380 minutes)
+    if (this.clock.minutes >= 23 * 60 && !this.shiftEnded) {
+      this.dispatch({ type: 'endShift' });
     }
 
     // Evaluate encounters (once per game minute or on phase change)
@@ -233,21 +278,110 @@ export class GameManager {
         return { success: ok };
       }
       case 'endShift': {
-        const prevDay = this.clock.day;
-        this.clock.endShift();
-        this.bus.emit('day/ended', {
-          day: prevDay,
-          summary: {
-            day: prevDay,
-            revenue: this.economy.dailyRevenue,
-            expenses: this.economy.dailyExpenses,
-            net: this.economy.dailyRevenue - this.economy.dailyExpenses,
-            ratingDelta: 0,
-            completedRides: 0,
-            relationshipsDelta: {},
+        if (this.clock.minutes < 12 * 60 && !this.shiftEnded) {
+          return { success: false, reason: 'Shift cannot end before 12:00' };
+        }
+        if (this.shiftEnded) {
+          return { success: false, reason: 'Shift already ended' };
+        }
+
+        // Commute home if > 1.5 km (1500m)
+        if (this.playerDistFromHomeM > 1500) {
+          const kmPerL = BALANCE.FUEL.kmPerL.old100 ?? 40;
+          const fuelNeeded = (this.playerDistFromHomeM / 1000) / kmPerL;
+          this.economyManager.consumeFuel(fuelNeeded);
+          this.playerDistFromHomeM = 0;
+          this.playerNodeId = this.homeNodeId;
+        }
+
+        // Post living expenses
+        const living = this.economyManager.postDailyLivingExpenses(
+          this.clock.day,
+          this.clock.minutes
+        );
+
+        if (living.rentDelayed) {
+          this.story.branchFlags['rentDelayedOnce'] = true;
+          this.reputationSystem.changeRelationship('ma', -10);
+        }
+        if (living.evictionWarning) {
+          this.story.branchFlags['rentEvictionWarning'] = true;
+          this.reputationSystem.changeRelationship('ma', -25);
+        }
+
+        const currentRating = this.reputationSystem.getAppRating();
+        const ratingDelta = Math.round((currentRating - this.todayStartRating) * 100) / 100;
+        const relationshipsDelta: Record<string, number> = {};
+        for (const [charId, rel] of Object.entries(this.story.characterRelationships)) {
+          const start = this.todayRelationshipsStart[charId] ?? 0;
+          if (rel !== start) {
+            relationshipsDelta[charId] = rel - start;
+          }
+        }
+
+        this.syncEconomy();
+        const summary: DaySummary = {
+          day: this.clock.day,
+          revenue: this.economyManager.dailyRevenue,
+          expenses: this.economyManager.dailyExpenses,
+          net: this.economyManager.dailyRevenue - this.economyManager.dailyExpenses,
+          ratingDelta,
+          completedRides: this.todayCompletedRides,
+          relationshipsDelta,
+          breakdown: {
+            food: living.food,
+            phoneData: living.phoneData,
+            rent: living.rent,
+            family: living.family,
           },
-        });
+          livingExpenses: living,
+          cash: this.economyManager.cash,
+          debt: this.economyManager.debt,
+        };
+
+        this.shiftEnded = true;
+        this.bus.emit('day/ended', { day: this.clock.day, summary });
+        return { success: true, data: summary };
+      }
+      case 'sleep': {
+        if (!this.shiftEnded) {
+          this.dispatch({ type: 'endShift' });
+        }
+        this.clock.endShift();
+        this.economyManager.resetDaily();
+        this.economyManager.phoneBattery = 100;
+        this.syncEconomy();
+        this.shiftEnded = false;
+        this.todayCompletedRides = 0;
+        this.todayStartRating = this.reputationSystem.getAppRating();
+        this.todayRelationshipsStart = { ...this.story.characterRelationships };
         this.bus.emit('day/started', { day: this.clock.day });
+        return { success: true };
+      }
+      case 'chargePhone': {
+        const cost = cmd.cost ?? (cmd.location === 'home' ? 0 : 10);
+        this.economyManager.chargeBattery(100, cost, this.clock.day, this.clock.minutes);
+        this.syncEconomy();
+        return { success: true };
+      }
+      case 'delayRent': {
+        if (!BALANCE.LIVING.rentDueDays.includes(this.clock.day)) {
+          return { success: false, reason: 'Rent is not due today' };
+        }
+        if (!this.story.branchFlags['rentDelayedOnce']) {
+          this.story.branchFlags['rentDelayedOnce'] = true;
+          this.reputationSystem.changeRelationship('ma', -10);
+          return { success: true };
+        } else {
+          this.story.branchFlags['rentEvictionWarning'] = true;
+          this.reputationSystem.changeRelationship('ma', -25);
+          return { success: false, reason: 'Rent cannot be delayed more than once' };
+        }
+      }
+      case 'askAdvance': {
+        this.economyManager.askAdvance(cmd.from, cmd.amount, this.clock.day, this.clock.minutes);
+        this.syncEconomy();
+        this.reputationSystem.changeRelationship(cmd.from, -5);
         return { success: true };
       }
       default:

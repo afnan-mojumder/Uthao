@@ -209,6 +209,29 @@ export interface DaySummary {
   ratingDelta: number;
   completedRides: number;
   relationshipsDelta: Record<string, number>;
+  breakdown?: {
+    fares?: number;
+    tips?: number;
+    fuel?: number;
+    food?: number;
+    phoneData?: number;
+    rent?: number;
+    family?: number;
+    repairs?: number;
+    fines?: number;
+    other?: number;
+  };
+  livingExpenses?: {
+    food: number;
+    phoneData: number;
+    rent: number;
+    family: number;
+    total: number;
+    rentDelayed?: boolean;
+    evictionWarning?: boolean;
+  };
+  cash?: number;
+  debt?: number;
 }
 
 export interface SafetyRecord {

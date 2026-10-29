@@ -38,7 +38,7 @@ Format: `- [ ] **<id>** <title> (<points>), deps: <ids>`. Tick by changing only 
 - [x] **T3.9** Audio (3), deps: T1.3 (A)
 - [x] **T2.4** Negotiation and phone UI (5), deps: T2.3 (A), T0.4
 - [x] **T2.8** Rider HUD v1 and minimap (3), deps: T1.6 (A), T2.6 (A), T0.4
-- [ ] **T4.1** Day lifecycle and living expenses (3), deps: T2.6 (A)
+- [x] **T4.1** Day lifecycle and living expenses (3), deps: T2.6 (A)
 - [ ] **T4.4** Upgrades, repairs, garage screen (5), deps: T2.6 (A), T0.4
 - [ ] **T3.10** Menus, settings, pause/map screen (3), deps: T0.4, T3.3 (A)
 - [ ] **T3.7** Vertical-slice encounters, 5 (5), deps: T3.6 (A), T2.5 (A)
