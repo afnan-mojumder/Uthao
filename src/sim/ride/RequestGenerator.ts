@@ -82,6 +82,8 @@ export class RequestGenerator {
   private profiles: Map<string, PassengerProfile> = new Map();
   private phoneBattery: number = 100;
   private phoneBatteryProvider?: () => number;
+  // Reused each tick() call so the common zero-request case allocates nothing.
+  private readonly tickScratch: RideRequest[] = [];
 
   constructor(
     network: RoadNetwork,
@@ -419,7 +421,8 @@ export class RequestGenerator {
       this.baseArrivalRate * timeMult * weatherMult * demandMultiplier * dtMinutes;
 
     const count = samplePoisson(lambda, this.rng);
-    const requests: RideRequest[] = [];
+    const requests = this.tickScratch;
+    requests.length = 0;
 
     if (this.getPhoneBattery() > 0) {
       // Direct bookings from recurring regulars (threshold relationship >= 15)
