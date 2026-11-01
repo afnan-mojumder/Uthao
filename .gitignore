@@ -5,3 +5,7 @@ assets-src/
 test-results/
 playwright-report/
 .DS_Store
+
+# Raw debug screenshots written by e2e tests for manual inspection (page.screenshot(),
+# not a toHaveScreenshot baseline) -- bytes differ non-deterministically every run.
+tests/e2e/__screenshots__/
