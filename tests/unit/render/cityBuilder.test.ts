@@ -4,7 +4,7 @@ import { SignageAtlas } from '../../../src/render/signage';
 import { RoadMeshBuilder, getRoadWidth } from '../../../src/render/roadMesh';
 import { BuildingBuilder } from '../../../src/render/buildings';
 import { LodManager } from '../../../src/render/lod';
-import { CityBuilder } from '../../../src/render/CityBuilder';
+import { CityBuilder, kerbEndTrim } from '../../../src/render/CityBuilder';
 import { PhysicsWorld } from '../../../src/physics/PhysicsWorld';
 import mirparaData from '../../../data/districts/mirpara.json';
 import testloopData from '../../../data/districts/testloop.json';
@@ -157,5 +157,19 @@ describe('CityBuilder, Roads, Buildings and LOD (T3.3)', () => {
       city.update({ x: 300, z: 300 }, 250);
       expect(city.lodManager.getVisibleChunkCount()).toBeGreaterThan(0);
     });
+  });
+});
+
+describe('kerbEndTrim (T9.1)', () => {
+  const nodes = new Map(testloopData.nodes.map((n) => [n.nodeId, n]));
+  const segs = testloopData.segments as DistrictData['segments'];
+
+  it('opens the N1 junction: kerbs of N1-N4 and N1-N2 stop short of the cross road', () => {
+    const s1 = segs.find((s) => s.startNodeId === 'N1' && s.endNodeId === 'N2')!;
+    const s4 = segs.find((s) => [s.startNodeId, s.endNodeId].sort().join() === 'N1,N4')!;
+    // N1 is where N1-N2 (width 10) meets the N1-N4 road (width 8): the N1-N2 kerb
+    // must clear half of N1-N4 so the bike can turn into it, and vice versa.
+    expect(kerbEndTrim(s1, true, segs, nodes)).toBeGreaterThanOrEqual(4);
+    expect(kerbEndTrim(s4, s4.startNodeId === 'N1', segs, nodes)).toBeGreaterThanOrEqual(5);
   });
 });

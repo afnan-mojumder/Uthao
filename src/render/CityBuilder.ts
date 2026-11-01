@@ -19,6 +19,48 @@ export interface CityBuilderOptions {
   chunkSize?: number;
 }
 
+type KerbSeg = DistrictData['segments'][number];
+
+/**
+ * T9.1: metres to cut off the kerb collider at one end of `seg` so it does not
+ * wall off roads that join at that node (a kerb running past a junction made
+ * the cross-road impassable to the Rapier bike controller).
+ * ponytail: setback = joining road's half-width / sin(angle); collinear
+ * continuations are ignored. Exact kerb-return curves if junctions need polish.
+ */
+export function kerbEndTrim(
+  seg: KerbSeg,
+  atStart: boolean,
+  segments: readonly KerbSeg[],
+  nodeMap: ReadonlyMap<string, { x: number; z: number }>
+): number {
+  const nodeId = atStart ? seg.startNodeId : seg.endNodeId;
+  const otherId = atStart ? seg.endNodeId : seg.startNodeId;
+  const here = nodeMap.get(nodeId);
+  const far = nodeMap.get(otherId);
+  if (!here || !far) return 0;
+  const ax = far.x - here.x;
+  const az = far.z - here.z;
+  const aLen = Math.hypot(ax, az);
+  if (aLen < 0.1) return 0;
+  let trim = 0;
+  for (const o of segments) {
+    if (o === seg) continue;
+    const oFarId =
+      o.startNodeId === nodeId ? o.endNodeId : o.endNodeId === nodeId ? o.startNodeId : null;
+    const oFar = oFarId ? nodeMap.get(oFarId) : undefined;
+    if (!oFar) continue;
+    const bx = oFar.x - here.x;
+    const bz = oFar.z - here.z;
+    const bLen = Math.hypot(bx, bz);
+    if (bLen < 0.1) continue;
+    const sin = Math.abs(ax * bz - az * bx) / (aLen * bLen);
+    if (sin < 0.2) continue; // (near-)collinear continuation, kerb carries on
+    trim = Math.max(trim, getRoadWidth(o) / 2 / Math.max(sin, 0.3));
+  }
+  return Math.min(trim, aLen / 2 - 0.05);
+}
+
 export interface StaticBoxDesc {
   x: number;
   y: number;
@@ -247,8 +289,13 @@ export class CityBuilder {
           const nz = dx / len;
           const width = getRoadWidth(seg);
           const rotY = Math.atan2(dx, dz);
-          const midX = (sNode.x + eNode.x) / 2;
-          const midZ = (sNode.z + eNode.z) / 2;
+          // T9.1: leave junction mouths open; slide the kerb centre accordingly.
+          const trimS = kerbEndTrim(seg, true, segments, nodeMap);
+          const trimE = kerbEndTrim(seg, false, segments, nodeMap);
+          const kerbLen = len - trimS - trimE;
+          const mid = (len + trimS - trimE) / 2;
+          const midX = sNode.x + (dx / len) * mid;
+          const midZ = sNode.z + (dz / len) * mid;
 
           const kerbW = 0.28;
           const kerbH = 0.18;
@@ -260,7 +307,7 @@ export class CityBuilder {
             midZ - nz * (width / 2 + kerbW / 2),
             kerbW / 2,
             kerbH / 2,
-            len / 2,
+            kerbLen / 2,
             rotY
           );
           task.physicsColliders.push(leftCol);
@@ -272,7 +319,7 @@ export class CityBuilder {
             midZ + nz * (width / 2 + kerbW / 2),
             kerbW / 2,
             kerbH / 2,
-            len / 2,
+            kerbLen / 2,
             rotY
           );
           task.physicsColliders.push(rightCol);
@@ -280,9 +327,9 @@ export class CityBuilder {
           // Median
           if (seg.divided) {
             const medCol = task.physicsWorld.addStaticBox(
-              midX,
+              (sNode.x + eNode.x) / 2,
               0.11,
-              midZ,
+              (sNode.z + eNode.z) / 2,
               0.45,
               0.11,
               len / 2,
