@@ -362,4 +362,16 @@ export class Renderer {
   getTriangles(): number {
     return this.webglRenderer.info.render.triangles;
   }
+
+  /** T7.3: debug/e2e check that CameraRig's anti-clip raycast pull-in is
+   * actually keeping the camera out of every collider, not just close to it. */
+  isCameraClipping(): boolean {
+    const camPos = this.cameraRig.camera.position;
+    const box = new THREE.Box3();
+    for (const collider of this.colliders) {
+      box.setFromObject(collider);
+      if (box.containsPoint(camPos)) return true;
+    }
+    return false;
+  }
 }

@@ -4,6 +4,7 @@ import { RequestGenerator } from './ride/RequestGenerator';
 import { TrafficManager } from './traffic/TrafficManager';
 import type { RoadNetwork } from './road/RoadNetwork';
 import type { PhysicsWorld } from '../physics/PhysicsWorld';
+import { MotorcycleController } from '../physics/MotorcycleController';
 import {
   createDefaultBikeSpec,
   createDefaultBikeState,
@@ -15,6 +16,14 @@ import {
 } from '../physics/bikeModel';
 import { SIM_DT } from '../config/constants';
 import { TIME_SCALE } from '../core/clock';
+import { clamp } from '../core/math';
+import type { BikeCollisionSeverity } from '../core/types';
+
+// ponytail: proximity thresholds, not measured against real bike/vehicle
+// hitboxes — revisit with real collider shapes if this reads as too lenient/strict.
+const TRAFFIC_COLLISION_MARGIN_M = 0.6;
+const TRAFFIC_NEAR_MISS_MARGIN_M = 1.5;
+const TRAFFIC_NEAR_MISS_MIN_SPEED_MS = 20 / 3.6;
 
 export interface GameSessionOptions {
   gm: GameManager;
@@ -41,6 +50,10 @@ export class GameSession {
 
   bike: BikeState;
 
+  /** Set when `physics` is provided: real Rapier-backed stepping and static
+   * collider collisions replace the direct `stepBike` call. */
+  private readonly controller?: MotorcycleController;
+
   private autoRequests: boolean;
   private readonly bikeSpec: BikeSpec;
   private readonly env: BikeEnvironment;
@@ -62,10 +75,117 @@ export class GameSession {
     });
 
     this.bikeSpec = createDefaultBikeSpec();
-    this.bike = createDefaultBikeState();
+
+    if (this.physics) {
+      this.controller = new MotorcycleController({
+        world: this.physics,
+        bus: this.gm.bus,
+        spec: this.bikeSpec,
+      });
+      this.bike = this.controller.state;
+    } else {
+      this.bike = createDefaultBikeState();
+    }
+
     this.env = { wet: false, surface: 1.0, hasPassenger: false, conditionPct: 100 };
     this.camView = { x: 0, z: 0, heading: 0, fovRad: (60 * Math.PI) / 180 };
     this.pose = { x: 0, z: 0, speed: 0 };
+  }
+
+  /** T7.3: places the bike on the road network at `gm.homeNodeId`, aligned
+   * to the nearest segment's direction, instead of the old off-road
+   * `activeDistrict.nodes[0].x - 9` offset. Falls back to the network's
+   * first node if the configured home node isn't in this road network
+   * (e.g. a single-district debug boot whose district lacks that node). */
+  spawnAtHome(): void {
+    const anchor = this.road.getNode(this.gm.homeNodeId) ?? this.road.getAllNodes()[0];
+    if (!anchor) return;
+
+    const segment = this.road.segmentAt(anchor.x, anchor.z, 30);
+    const startNode = segment ? this.road.getNode(segment.startNodeId) : undefined;
+    const endNode = segment ? this.road.getNode(segment.endNodeId) : undefined;
+
+    let x = anchor.x;
+    let z = anchor.z;
+    let heading = this.bike.heading;
+
+    if (startNode && endNode) {
+      const dx = endNode.x - startNode.x;
+      const dz = endNode.z - startNode.z;
+      const lenSq = dx * dx + dz * dz;
+      const t =
+        lenSq > 0
+          ? clamp(
+              ((anchor.x - startNode.x) * dx + (anchor.z - startNode.z) * dz) / lenSq,
+              0,
+              1
+            )
+          : 0;
+      x = startNode.x + t * dx;
+      z = startNode.z + t * dz;
+      heading = Math.atan2(dx, dz);
+    }
+
+    this.bike.x = x;
+    this.bike.z = z;
+    this.bike.heading = heading;
+    this.bike.speed = 0;
+
+    if (this.controller) {
+      this.controller.body.setTranslation({ x, y: 0.5, z }, true);
+      const halfYaw = heading / 2;
+      this.controller.body.setRotation(
+        { x: 0, y: Math.sin(halfYaw), z: 0, w: Math.cos(halfYaw) },
+        true
+      );
+    }
+  }
+
+  /** T7.3: traffic agents aren't Rapier colliders, so (with or without
+   * physics) a bike/traffic hit is detected here by proximity rather than
+   * by the physics world. Runs every tick, so it must stay allocation-free:
+   * iterates the traffic Map directly instead of `getAgents()`'s array copy. */
+  private checkTrafficCollisions(): void {
+    const speedKmh = this.bike.speed * 3.6;
+    let nearestGapM = Infinity;
+
+    for (const agent of this.traffic.agents.values()) {
+      const dx = agent.x - this.bike.x;
+      const dz = agent.z - this.bike.z;
+      const dist = Math.hypot(dx, dz);
+      const touchRadius = Math.max(agent.length, agent.width) / 2 + TRAFFIC_COLLISION_MARGIN_M;
+      const gap = dist - touchRadius;
+      if (gap < nearestGapM) {
+        nearestGapM = gap;
+      }
+
+      if (gap <= 0) {
+        const relSpeedKmh = Math.abs(speedKmh - agent.speed * 3.6);
+        let severity: BikeCollisionSeverity;
+        if (relSpeedKmh > 25) {
+          severity = 'crash';
+          this.bike.speed = 0;
+        } else if (relSpeedKmh >= 8) {
+          severity = 'bump';
+          this.bike.speed *= 0.4;
+        } else {
+          severity = 'scuff';
+          this.bike.speed *= 0.95;
+        }
+        this.gm.bus.emit('bike/collision', { severity, relSpeedKmh, otherKind: 'traffic' });
+        return;
+      }
+    }
+
+    if (
+      nearestGapM < TRAFFIC_NEAR_MISS_MARGIN_M &&
+      this.bike.speed > TRAFFIC_NEAR_MISS_MIN_SPEED_MS
+    ) {
+      this.gm.bus.emit('bike/nearMiss', {
+        distanceM: Math.max(0, nearestGapM),
+        speedKmh,
+      });
+    }
   }
 
   setAutoRequests(on: boolean): void {
@@ -93,7 +213,9 @@ export class GameSession {
     this.env.hasPassenger = activeReq?.status === 'OnTrip';
     this.env.conditionPct = this.gm.economy.motorcycleCondition;
 
-    this.bike = stepBike(this.bike, input, this.bikeSpec, this.env, dt, this.bike);
+    this.bike = this.controller
+      ? this.controller.update(input, this.env, dt)
+      : stepBike(this.bike, input, this.bikeSpec, this.env, dt, this.bike);
 
     this.camView.x = this.bike.x;
     this.camView.z = this.bike.z;
@@ -104,6 +226,7 @@ export class GameSession {
 
     this.traffic.maintainDensity(this.camView, this.gm.clock.minutes);
     this.traffic.update(dt, this.camView, this.pose);
+    this.checkTrafficCollisions();
 
     this.ride.update(this.pose, dt);
 

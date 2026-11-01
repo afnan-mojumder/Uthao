@@ -27,6 +27,9 @@ export interface DebugApi {
   getDrawCalls: () => number;
   getTriangles: () => number;
   toggleCamera: () => void;
+  /** T7.3: true if the chase camera has ended up inside a collider despite
+   * CameraRig's anti-clip raycast pull-in. Used by the e2e screenshot check. */
+  isCameraClipping: () => boolean;
   spawnBargainer: (fare?: number) => RideRequest;
   /** T7.2: offers and auto-accepts a deterministic ride (first two road nodes),
    * for single-district debug/test boots that disable RequestGenerator. */
@@ -149,6 +152,7 @@ export function initDebugApi(
     getDrawCalls: () => options.renderer?.getDrawCalls() ?? 0,
     getTriangles: () => options.renderer?.getTriangles() ?? 0,
     toggleCamera: () => options.renderer?.cameraRig.toggleMode(),
+    isCameraClipping: () => options.renderer?.isCameraClipping() ?? false,
     spawnBargainer: (fare = 100) => {
       const allNodes = options.rideManager?.roadNetwork.getAllNodes() ?? [];
       const pNodeId = allNodes[0]?.nodeId ?? 'N1';

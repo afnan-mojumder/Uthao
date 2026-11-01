@@ -1,6 +1,7 @@
 import { render, h } from 'preact';
 import { GameManager } from './sim/GameManager';
 import { GameSession } from './sim/GameSession';
+import { PhysicsWorld } from './physics/PhysicsWorld';
 import { Renderer } from './render/Renderer';
 import { initDebugApi, spawnTestRequest } from './debug/debugApi';
 import { SIM_DT, MAX_FRAME_DT, MAX_SIM_STEPS_PER_FRAME } from './config/constants';
@@ -93,6 +94,13 @@ if (isMapTool) {
   const districtChoice = urlParams?.get('district') === 'testloop' ? testloopData : mirparaData;
   initMapViewer({ district: districtChoice as DistrictData });
 } else {
+  // T7.3: Rapier's WASM init is async, so the rest of boot (which constructs
+  // GameSession and loads the renderer's colliders) waits for it to finish
+  // before the first frame runs.
+  void bootGame();
+}
+
+async function bootGame(): Promise<void> {
   if (!hasWebGL2Support()) {
     unsupportedSignal.value = 'WebGL2 is required to run Uthao on this device';
   }
@@ -132,12 +140,19 @@ if (isMapTool) {
   // Bind reactive signals store to sim event bus
   bindEventBusToStore(gm.bus, (cmd: Command) => gm.dispatch(cmd));
 
+  // T7.3: real Rapier physics world, used by GameSession's MotorcycleController
+  // (collisions/near-misses against colliders) and by CityBuilder (colliders
+  // for streamed districts). Not constructed when WebGL2 is unavailable since
+  // there's nothing to collide with on screen in that case.
+  const physics = hasWebGL2Support() ? await PhysicsWorld.create() : undefined;
+
   // T7.2: single-district debug/test URLs (e.g. `?district=testloop`) get one
   // deterministic ride instead of the real RequestGenerator, so e2e specs stay
   // stable. The real game (world mode) drives rides from RequestGenerator only.
   const session = new GameSession({
     gm,
     road: roadNetwork,
+    physics,
     autoRequests: !isSingleDistrict,
   });
   const rideManager = session.ride;
@@ -149,12 +164,12 @@ if (isMapTool) {
 
   function loadRendererScene(r: Renderer) {
     if (isSingleDistrict) {
-      r.loadDistrict(activeDistrict);
+      r.loadDistrict(activeDistrict, physics);
     } else {
       r.loadWorld(
         worldDataJson as WorldData,
         (id: DistrictId) => allDistrictsMap[id],
-        undefined,
+        physics,
         { x: 300, z: 300 }
       );
     }
@@ -349,12 +364,9 @@ if (isSingleDistrict) {
   spawnTestRequest(rideManager, 120);
 }
 
-const startNode = activeDistrict.nodes[0] ?? { x: 0, z: 0 };
-// Start bike slightly before pickup node heading towards it
-session.bike.x = startNode.x - 9;
-session.bike.z = startNode.z;
-session.bike.heading = Math.PI / 2; // Facing +X
-session.bike.speed = 0;
+// T7.3: spawn on the road network at the player's home node, aligned to the
+// road, instead of the old off-road `activeDistrict.nodes[0].x - 9` offset.
+session.spawnAtHome();
 
 let lastTime = typeof performance !== 'undefined' ? performance.now() : 0;
 let roamNodeIndex = 0;
