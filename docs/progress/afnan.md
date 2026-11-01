@@ -32,3 +32,4 @@ One line per finished task: `YYYY-MM-DD Tx.y done — note`
 2026-10-30 T5.5 done — All five endings evaluation engine, identity tendencies (professional/negotiator/hustler/regular), career choice options, bilingual ending screen, and unit tests
 2026-11-01 T6.2 done — 50-seed 20-day campaign balance pass, bot strategies, ending reachability, and BALANCE.md verified
 
+2026-11-02 T7.1 done -- Smoke e2e gate: menu-first boot (screenSignal defaults to title, game screen only under ?debug=1), EventDirector.enabled gates ambient encounters off during menu/tutorial or via ?encounters=0, fixes the softlock where roaming encounters paused the sim behind dead buttons. Fixed 6 other e2e specs that were failing on encounter-card click interception. Full desktop e2e: 18 passed/1 skipped, 0 failed (was 7 failed/9 passed/1 skipped).

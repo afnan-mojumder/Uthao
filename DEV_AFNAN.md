@@ -64,7 +64,7 @@ Format: `- [ ] **<id>** <title> (<points>), deps: <ids>`. Tick by changing only 
 
 Spec: `docs/MASTER.md`. Plan with full task details: `docs/superpowers/plans/2026-11-02-master-doc-update.md`. Afnan does all of it for now.
 
-- [ ] **T7.1** Real-game gate, boot flow, softlock fix (3), deps: none
+- [x] **T7.1** Real-game gate, boot flow, softlock fix (3), deps: none
 - [ ] **T7.2** GameSession and live request loop (8), deps: T7.1
 - [ ] **T7.3** Mounted bike, spawn, collisions, camera (5), deps: T7.2
 - [ ] **T7.4** Bind every UI action, mount TripSummary and Journal (5), deps: T7.2
