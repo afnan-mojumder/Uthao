@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('T4.3 Phone Contacts and Regulars E2E', () => {
   test('opens phone modal, navigates to contacts tab, and shows locked/unlocked regulars', async ({ page }) => {
-    await page.goto('/?debug=1&district=testloop');
+    await page.goto('/?debug=1&district=testloop&encounters=0');
     await page.waitForSelector('#game-canvas');
     await expect(page.locator('#hud')).toBeVisible();
 

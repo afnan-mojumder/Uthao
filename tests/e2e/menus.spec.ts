@@ -5,7 +5,7 @@ test.describe('T3.10 Menus, Settings, Pause and Dhaka Map E2E', () => {
     page,
   }) => {
     test.setTimeout(60000);
-    await page.goto('/?debug=1&district=testloop');
+    await page.goto('/?debug=1&district=testloop&encounters=0');
     await page.waitForSelector('#game-canvas');
     await expect(page.locator('#hud')).toBeVisible();
 
@@ -74,7 +74,7 @@ test.describe('T3.10 Menus, Settings, Pause and Dhaka Map E2E', () => {
     page,
   }) => {
     test.setTimeout(60000);
-    await page.goto('/?debug=1&district=testloop');
+    await page.goto('/?debug=1&district=testloop&encounters=0');
     await page.waitForSelector('#game-canvas');
     await expect(page.locator('#hud')).toBeVisible();
 
@@ -126,7 +126,7 @@ test.describe('T3.10 Menus, Settings, Pause and Dhaka Map E2E', () => {
 
   test('webgl unsupported message overlay test', async ({ page }) => {
     test.setTimeout(60000);
-    await page.goto('/?debug=1&district=testloop');
+    await page.goto('/?debug=1&district=testloop&encounters=0');
     await page.waitForSelector('#game-canvas');
     await expect(page.locator('#hud')).toBeVisible();
 

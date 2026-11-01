@@ -5,7 +5,7 @@ test('negotiation flow: debug-spawn a bargainer, counter twice, accept, assert t
 }) => {
   test.setTimeout(60000);
 
-  await page.goto('/?debug=1&district=testloop');
+  await page.goto('/?debug=1&district=testloop&encounters=0');
   await page.waitForSelector('#game-canvas');
   await expect(page.locator('#hud')).toBeVisible();
 

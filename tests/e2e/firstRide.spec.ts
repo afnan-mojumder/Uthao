@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test.describe('T3.8 Opening Sequence First Ride E2E', () => {
   test('first ride tutorial completes via autopilot + scripted choices', async ({ page }) => {
     test.setTimeout(60000);
-    await page.goto('/?debug=1&district=testloop');
+    await page.goto('/?debug=1&district=testloop&encounters=0');
     await page.waitForSelector('#game-canvas');
     await expect(page.locator('#hud')).toBeVisible();
 

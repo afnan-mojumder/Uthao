@@ -4,7 +4,7 @@ test('T4.4 Garage and Bike Upgrades e2e: condition gauges, repair actions, tab s
   page,
 }) => {
   test.setTimeout(60000);
-  await page.goto('/?debug=1&district=testloop');
+  await page.goto('/?debug=1&district=testloop&encounters=0');
   await page.waitForSelector('#game-canvas');
   await expect(page.locator('#hud')).toBeVisible();
 

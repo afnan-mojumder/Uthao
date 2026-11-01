@@ -107,7 +107,18 @@ export const tutorialSignal = signal<TutorialState>({
   step: 'idle',
 });
 
-export const screenSignal = signal<ScreenId>('game');
+function initialScreen(): ScreenId {
+  if (typeof window === 'undefined') return 'title';
+  try {
+    return new URLSearchParams(window.location.search).get('debug') === '1' ? 'game' : 'title';
+  } catch {
+    return 'title';
+  }
+}
+
+// T7.1: boot on the main menu by default; `?debug=1` skips straight into the
+// game world (used by every other e2e spec that doesn't test the boot flow).
+export const screenSignal = signal<ScreenId>(initialScreen());
 export const pausedSignal = signal<boolean>(false);
 export const rotateOverlaySignal = signal<boolean>(false);
 export const unsupportedSignal = signal<string | null>(null);

@@ -18,6 +18,7 @@ for attempt in 1 2 3 4 5; do
   git rebase -q origin/main || { echo "CONFLICT while rebasing onto origin/main"; exit 2; }
   if [[ -f package.json ]]; then
     npm run -s check || { echo "npm run check failed after rebase; fix, commit, rerun"; exit 1; }
+    npx playwright test tests/e2e/smoke.spec.ts --project=desktop-chrome || { echo "smoke e2e spec failed after rebase; fix, commit, rerun"; exit 1; }
   fi
   git push -q --force-with-lease origin "$branch"
   git checkout -q main

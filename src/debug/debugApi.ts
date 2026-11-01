@@ -28,6 +28,9 @@ export interface DebugApi {
   getTriangles: () => number;
   toggleCamera: () => void;
   spawnBargainer: (fare?: number) => RideRequest;
+  /** T7.1: force-starts a specific encounter by id, bypassing normal eligibility. */
+  startEncounter: (encounterId: string) => boolean;
+  isPaused: () => boolean;
 }
 
 declare global {
@@ -143,5 +146,13 @@ export function initDebugApi(
       }
       return req;
     },
+    startEncounter: (encounterId: string) => {
+      const instance = gm.eventDirector.forceStart(encounterId, gm.bus);
+      if (instance && gm.eventDirector.pauseOnDecisions) {
+        gm.paused = true;
+      }
+      return instance !== null;
+    },
+    isPaused: () => gm.paused,
   };
 }

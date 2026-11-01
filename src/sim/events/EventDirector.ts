@@ -26,6 +26,9 @@ export class EventDirector {
   readonly definitions: EncounterDef[];
   private rng: Rng;
   pauseOnDecisions: boolean;
+  /** T7.1: ambient (roaming) encounters only fire while this is true — gated by
+   * the UI from the real-game screen/tutorial state, or permanently off via `?encounters=0`. */
+  enabled: boolean = true;
 
   activeEncounter: EncounterInstance | null = null;
   activeEncounterDef: EncounterDef | null = null;
@@ -148,6 +151,42 @@ export class EventDirector {
 
     this.activeEncounter = instance;
     this.activeEncounterDef = selected;
+
+    if (bus) {
+      bus.emit('encounter/started', { instance });
+    }
+
+    return instance;
+  }
+
+  /**
+   * T7.1 debug hook: force-starts a specific encounter definition by id,
+   * bypassing trigger/cooldown eligibility. Used by the debug API so tests
+   * and designers can summon a known encounter deterministically.
+   */
+  forceStart(encounterId: string, bus?: EventBus<GameEvents>): EncounterInstance | null {
+    if (this.activeEncounter !== null) {
+      return null;
+    }
+    const def = this.definitions.find((d) => d.id === encounterId);
+    if (!def) {
+      return null;
+    }
+
+    const instanceChoices: EncounterChoice[] = def.choices.map((c) => ({
+      id: c.id,
+      labelKey: c.labelKey,
+    }));
+
+    const instance: EncounterInstance = {
+      id: `inst_${def.id}_${this.rng.int(1000, 9999)}`,
+      encounterId: def.id,
+      lineKey: def.lineKey,
+      choices: instanceChoices,
+    };
+
+    this.activeEncounter = instance;
+    this.activeEncounterDef = def;
 
     if (bus) {
       bus.emit('encounter/started', { instance });

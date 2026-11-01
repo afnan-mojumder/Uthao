@@ -92,6 +92,9 @@ function hasWebGL2Support(): boolean {
 export let saveSystem: SaveSystem | undefined;
 const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
 const isMapTool = urlParams?.get('tool') === 'map';
+// T7.1: `?encounters=0` permanently disables ambient encounters (used by debug/test URLs
+// that drive the sim directly and don't want a roaming encounter card in the way).
+const encountersDisabledByUrl = urlParams?.get('encounters') === '0';
 
 if (isMapTool) {
   const districtChoice = urlParams?.get('district') === 'testloop' ? testloopData : mirparaData;
@@ -404,7 +407,13 @@ function frame(now: number) {
   const dt = (now - lastTime) / 1000;
   lastTime = now;
 
-  const steps = runFrame(gm, dt);
+  // T7.1: the sim only runs while the real game screen is active, and ambient
+  // encounters are additionally suppressed during the opening tutorial or when
+  // disabled via URL — otherwise a roaming encounter can fire behind the main
+  // menu and softlock boot.
+  const inGame = screenSignal.value === 'game';
+  gm.eventDirector.enabled = inGame && !tutorialSignal.value.active && !encountersDisabledByUrl;
+  const steps = inGame ? runFrame(gm, dt) : 0;
 
   for (let s = 0; s < steps; s++) {
     inputManager.update(SIM_DT);
