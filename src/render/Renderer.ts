@@ -125,7 +125,7 @@ export class Renderer {
     this.webglRenderer.setPixelRatio(cfg.pixelRatio * cfg.resolutionScale);
     this.webglRenderer.shadowMap.enabled = cfg.shadows;
     if (cfg.shadows) {
-      this.webglRenderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      this.webglRenderer.shadowMap.type = THREE.PCFShadowMap;
     }
   }
 
