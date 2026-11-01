@@ -12,6 +12,7 @@ import type {
   RoadEvent,
   Transaction,
   TripReceipt,
+  TripState,
   WeatherKind,
 } from './types';
 
@@ -36,6 +37,7 @@ export interface GameEvents extends Record<string, unknown> {
     by: 'rider' | 'passenger' | 'system';
     reason: string;
   };
+  'trip/state': { requestId: string | null; from: TripState; to: TripState };
   'negotiation/started': { requestId: string; initialFare: number };
   'negotiation/round': {
     requestId: string;

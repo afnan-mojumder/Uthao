@@ -1,3 +1,8 @@
+/**
+ * @deprecated T8.1: `TripFsm` (tripFsm.ts) is the single authority for ride state, and
+ * negotiation now happens before pickup. Nothing in `src/` uses this any more; it is
+ * kept only for its own test and is removed in T12.5.
+ */
 import { createFsm, type Fsm } from '../../core/fsm';
 import type { PassengerState } from '../../core/types';
 

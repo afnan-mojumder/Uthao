@@ -414,20 +414,7 @@ export function bindEventBusToStore(bus: EventBus<GameEvents>): () => void {
   });
   unsubscribers.push(unsubRideAccepted);
 
-  const unsubRide = bus.on('ride/arrivedPickup', (ev) => {
-    hudSignal.value = {
-      ...hudSignal.value,
-      objectiveText: `Pickup passenger: ${ev.requestId}`,
-    };
-  });
-  unsubscribers.push(unsubRide);
-
   const unsubComplete = bus.on('ride/completed', (ev) => {
-    hudSignal.value = {
-      ...hudSignal.value,
-      objectiveText: `Ride completed! Earned ৳${ev.receipt.fare}`,
-    };
-
     const newHistoryItem: TripHistoryItem = {
       requestId: ev.requestId,
       passengerName: 'Passenger',
@@ -451,13 +438,6 @@ export function bindEventBusToStore(bus: EventBus<GameEvents>): () => void {
   });
   unsubscribers.push(unsubComplete);
 
-  const unsubNegRound = bus.on('negotiation/round', (ev) => {
-    hudSignal.value = {
-      ...hudSignal.value,
-      objectiveText: `Negotiation round ${ev.round}: Offer ৳${ev.offer}`,
-    };
-  });
-  unsubscribers.push(unsubNegRound);
 
   const unsubNegResult = bus.on('negotiation/result', (ev) => {
     if (ev.outcome.kind === 'accepted') {

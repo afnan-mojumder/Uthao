@@ -2,10 +2,10 @@ import { render } from 'preact';
 import type { JSX } from 'preact';
 import { t } from '../i18n';
 import { settingsSignal } from '../store';
-import type { PassengerState } from '../../core/types';
+import type { PassengerStatus } from '../../core/types';
 
 export interface HudPassengerInfo {
-  status: PassengerState | 'None';
+  status: PassengerStatus | 'None';
   name?: string;
   archetype?: string;
   rating?: number;
@@ -439,7 +439,7 @@ export function HudView({ state }: { state: HudState }): JSX.Element {
             <div style={{ fontSize: '14px', color: '#94a3b8', fontWeight: 600 }}>
               {state.passengerStatus?.status === 'OnTrip'
                 ? t('hud.passenger.ontrip')
-                : state.passengerStatus?.status === 'WaitingForPickup'
+                : (state.passengerStatus?.status === 'RiderEnRoute' || state.passengerStatus?.status === 'Accepted' || state.passengerStatus?.status === 'Negotiating')
                 ? t('hud.passenger.pickup')
                 : t('hud.passenger.none')}
               {state.etaMinutes !== undefined && ` • ${t('hud.eta', { min: state.etaMinutes })}`}

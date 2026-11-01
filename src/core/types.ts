@@ -22,6 +22,8 @@ export type ArchetypeId =
   | 'regular'
   | 'risky';
 
+/** @deprecated T8.1: ride state is `TripState` (see sim/ride/tripFsm.ts). Kept so
+ * `RideRequest.status` readers keep working through `legacyStatusOf`; removed in T12.5. */
 export type PassengerState =
   | 'WaitingForPickup'
   | 'Negotiating'
@@ -30,6 +32,49 @@ export type PassengerState =
   | 'Completed'
   | 'Reviewed'
   | 'Cancelled';
+
+/** T8.1: the authoritative ride state, owned by `TripFsm`. */
+export type TripState =
+  | 'Idle'
+  | 'RequestAvailable'
+  | 'Negotiating'
+  | 'Accepted'
+  | 'EnRouteToPickup'
+  | 'PassengerOnboard'
+  | 'EnRouteToDestination'
+  | 'Completing'
+  | 'Completed'
+  | 'Declined'
+  | 'Cancelled'
+  | 'NoShow'
+  | 'Failed'
+  | 'EmergencyInterrupted';
+
+export type TripOutcome =
+  | 'disputed'
+  | 'abandonedForSafety'
+  | 'passengerCancelled'
+  | 'riderCancelled'
+  | 'accident'
+  | 'robbery';
+
+/** Player-facing passenger status derived from `TripState` by `passengerStatusOf`. */
+export type PassengerStatus =
+  | 'RequestCreated'
+  | 'Offered'
+  | 'Negotiating'
+  | 'Accepted'
+  | 'RiderEnRoute'
+  | 'AtPickup'
+  | 'OnTrip'
+  | 'AtDestination'
+  | 'Completed'
+  | 'Declined'
+  | 'Cancelled'
+  | 'NoShow'
+  | 'Disputed'
+  | 'AbandonedForSafety'
+  | 'Failed';
 
 export type BookingType = 'app' | 'direct' | 'street' | 'offApp';
 
@@ -100,6 +145,7 @@ export interface RideRequest {
   estimatedDuration: number; // game min
   requestedArrivalTime: number | null; // game min | null
   bookingType: BookingType;
+  /** @deprecated T8.1: derived from `TripState` (`legacyStatusOf`); read `RideManager.getTripState()`. */
   status: PassengerState;
   surge: number;
   specialCircumstance?: SpecialCircumstance;

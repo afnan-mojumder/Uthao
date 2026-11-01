@@ -13,5 +13,15 @@
   "hud.passenger.pickup": "Go to pickup point",
   "hud.passenger.ontrip": "Drop off at destination",
   "hud.passenger.none": "Free Roam",
-  "hud.fullscreen": "Fullscreen"
+  "hud.fullscreen": "Fullscreen",
+  "objective.idle_find_ride": "Looking for fares...",
+  "objective.ride_available": "Ride request waiting, check your phone",
+  "objective.negotiate": "Agree a fare with the passenger",
+  "objective.go_to_pickup": "Pick up passenger at {node}",
+  "objective.drop_off": "Drop off passenger at {node}",
+  "objective.completing": "Finishing the trip...",
+  "objective.emergency": "Deal with the emergency first",
+  "objective.no_show": "Passenger didn't show, look for a new ride",
+  "objective.cancelled": "Ride cancelled, look for a new ride",
+  "objective.failed": "The ride couldn't be completed, look for a new ride"
 }

@@ -13,5 +13,15 @@
   "hud.passenger.pickup": "পিকআপ পয়েন্টে যান",
   "hud.passenger.ontrip": "গন্তব্যে নামিয়ে দিন",
   "hud.passenger.none": "ফ্রি রাইড",
-  "hud.fullscreen": "পূর্ণপর্দা"
+  "hud.fullscreen": "পূর্ণপর্দা",
+  "objective.idle_find_ride": "যাত্রী খোঁজা হচ্ছে...",
+  "objective.ride_available": "নতুন রাইডের অনুরোধ এসেছে, ফোন দেখুন",
+  "objective.negotiate": "যাত্রীর সাথে ভাড়া ঠিক করুন",
+  "objective.go_to_pickup": "{node}-এ যাত্রী তুলুন",
+  "objective.drop_off": "{node}-এ যাত্রী নামিয়ে দিন",
+  "objective.completing": "ট্রিপ শেষ হচ্ছে...",
+  "objective.emergency": "আগে জরুরি অবস্থা সামলান",
+  "objective.no_show": "যাত্রী আসেননি, নতুন রাইড খুঁজুন",
+  "objective.cancelled": "রাইড বাতিল হয়েছে, নতুন রাইড খুঁজুন",
+  "objective.failed": "রাইড সম্পন্ন হয়নি, নতুন রাইড খুঁজুন"
 }

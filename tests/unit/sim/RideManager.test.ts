@@ -85,11 +85,13 @@ describe('RideManager', () => {
     // Bike is close (3m <= 8m), but speed is 10 m/s (>= 2 m/s)
     manager.update({ x: 3, z: 0, speed: 10 }, 1 / 60);
     expect(manager.getActiveRequest()?.status).toBe('WaitingForPickup');
+    expect(manager.getTripState()).toBe('EnRouteToPickup');
 
     // Once speed is low (1.5 m/s < 2 m/s)
     manager.update({ x: 3, z: 0, speed: 1.5 }, 1 / 60);
-    // In M1 auto-negotiate, transitions through arrivedPickup and starts trip
-    expect(manager.getActiveRequest()?.status).toBe('OnTrip');
+    // Negotiation already happened (auto-accepted before pickup), so arrival starts the trip
+    expect(manager.getTripState()).toBe('EnRouteToDestination');
+    expect(manager.getActiveRequest()?.status).toBe('OnTrip'); // legacy mapping
   });
 
   it('full lifecycle emits events in order', () => {

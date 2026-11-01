@@ -67,7 +67,15 @@ export class GameSession {
     this.physics = opts.physics;
     this.autoRequests = opts.autoRequests ?? true;
 
-    this.ride = new RideManager({ roadNetwork: this.road, bus: this.gm.bus });
+    // The requests profile (random or recurring) knows a passenger's payment
+    // reliability; the seeded fork keeps NoShow rolls deterministic per seed.
+    this.ride = new RideManager({
+      roadNetwork: this.road,
+      bus: this.gm.bus,
+      rng: this.gm.rng.fork('rideManager'),
+      paymentReliabilityOf: (req) =>
+        this.requests.getProfile(req.passengerId)?.paymentReliability,
+    });
     // T7.5: lets effect handlers (e.g. `endTrip`) reach the live ride state.
     this.gm.rideManager = this.ride;
     this.traffic = new TrafficManager(this.road, this.gm.seed);

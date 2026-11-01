@@ -29,6 +29,8 @@ import { bindUi } from './ui/bindings';
 import { SaveSystem } from './sim/save/SaveSystem';
 import { startNegotiation } from './sim/negotiation/NegotiationSystem';
 import { Minimap } from './render/minimap';
+import { deriveRideView } from './sim/ride/rideView';
+import { t } from './ui/i18n';
 import { BALANCE } from './config/balance';
 import { generateProfile } from './sim/passenger/profiles';
 import { Rng } from './core/rng';
@@ -225,7 +227,8 @@ initDebugApi(gm, {
 // here in one place instead of scattered across this file.
 bindUi(session, activeSaveSystem);
 
-gm.bus.on('ride/arrivedPickup', (ev) => {
+// T8.1: negotiation now happens before pickup, as soon as the rider accepts.
+gm.bus.on('negotiation/started', (ev) => {
   if (rideManager.enableNegotiation) {
     const activeReq = rideManager.getActiveRequest();
     if (activeReq && activeReq.requestId === ev.requestId) {
@@ -289,16 +292,15 @@ function frame(now: number) {
   for (let s = 0; s < steps; s++) {
     inputManager.update(SIM_DT);
     const activeReq = rideManager.getActiveRequest();
+    const driveView = deriveRideView(rideManager);
 
     // Autopilot or inputManager
     let input: BikeInput;
 
     if (autopilot.isEnabled()) {
       if (activeReq) {
-        if (activeReq.status === 'WaitingForPickup') {
-          autopilot.setDestination(session.bike.x, session.bike.z, activeReq.pickupNodeId);
-        } else if (activeReq.status === 'OnTrip') {
-          autopilot.setDestination(session.bike.x, session.bike.z, activeReq.destinationNodeId);
+        if (driveView.navTargetNodeId) {
+          autopilot.setDestination(session.bike.x, session.bike.z, driveView.navTargetNodeId);
         }
       } else if (activeDistrict.nodes.length > 0 && autopilot.isFinished()) {
         roamNodeIndex = (roamNodeIndex + 1) % activeDistrict.nodes.length;
@@ -328,25 +330,17 @@ function frame(now: number) {
   }
 
   const activeReq = rideManager.getActiveRequest();
+  // T8.1: the one place HUD, minimap and markers read ride state from.
+  const view = deriveRideView(rideManager);
   const pNode = activeReq ? roadNetwork.getNode(activeReq.pickupNodeId) : undefined;
   const dNode = activeReq ? roadNetwork.getNode(activeReq.destinationNodeId) : undefined;
 
   if (renderer) {
-    if (activeReq) {
-      if (activeReq.status === 'WaitingForPickup') {
-        if (pNode) renderer.markers.setPickup(pNode.x, pNode.z, true);
-        if (dNode) renderer.markers.setDropoff(dNode.x, dNode.z, false);
-        renderer.setPassengerVisible(false);
-      } else if (activeReq.status === 'OnTrip') {
-        if (pNode) renderer.markers.setPickup(pNode.x, pNode.z, false);
-        if (dNode) renderer.markers.setDropoff(dNode.x, dNode.z, true);
-        renderer.setPassengerVisible(true);
-      }
-    } else {
-      renderer.markers.setPickup(0, 0, false);
-      renderer.markers.setDropoff(0, 0, false);
-      renderer.setPassengerVisible(false);
-    }
+    if (pNode) renderer.markers.setPickup(pNode.x, pNode.z, view.pickupVisible);
+    else renderer.markers.setPickup(0, 0, false);
+    if (dNode) renderer.markers.setDropoff(dNode.x, dNode.z, view.dropoffVisible);
+    else renderer.markers.setDropoff(0, 0, false);
+    renderer.setPassengerVisible(view.dropoffVisible);
 
     renderer.updatePeople(
       trafficManager.pedestrians.getPedestrians(),
@@ -378,8 +372,8 @@ function frame(now: number) {
         container.appendChild(minimap.canvas);
       }
     }
-    const pNodePos = activeReq && activeReq.status === 'WaitingForPickup' ? pNode : null;
-    const dNodePos = activeReq && activeReq.status === 'OnTrip' ? dNode : null;
+    const pNodePos = view.pickupVisible ? pNode : null;
+    const dNodePos = view.dropoffVisible ? dNode : null;
     minimap.update(
       { x: session.bike.x, z: session.bike.z, heading: session.bike.heading },
       rideManager.currentRoute,
@@ -389,19 +383,8 @@ function frame(now: number) {
 
   // Update HUD
   if (hud) {
-    let objective = 'Free roam';
-    let fare: number | undefined;
-
-    if (activeReq) {
-      fare = activeReq.initialFare;
-      if (activeReq.status === 'WaitingForPickup') {
-        objective = `Pick up passenger at ${activeReq.pickupNodeId}`;
-      } else if (activeReq.status === 'OnTrip') {
-        objective = `Drop off passenger at ${activeReq.destinationNodeId}`;
-      }
-    } else {
-      objective = 'Trip complete! Looking for fares...';
-    }
+    const objective = t(view.objectiveKey, view.objectiveVars);
+    const fare = activeReq?.initialFare;
 
     const currentSpeedKmh = session.bike.speed * 3.6;
     const fuelL = gm.economy.fuelLevel;
@@ -426,7 +409,7 @@ function frame(now: number) {
       nextTurn: phoneSignal.value.navigationTurn,
       passengerStatus: activeReq
         ? {
-            status: activeReq.status,
+            status: view.passenger,
             name: 'Passenger',
           }
         : undefined,

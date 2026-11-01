@@ -21,6 +21,10 @@ export const BALANCE = {
     strikesToSuspend: 3,
     suspendDays: 2,
   },
+  TRIP: {
+    // Balancing placeholder: NoShow chance at pickup = (1 - paymentReliability) * this.
+    noShowMaxChance: 0.3,
+  },
   FUEL: {
     pricePerL: 130,
     tankL: 8,

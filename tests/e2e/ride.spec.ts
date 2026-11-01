@@ -7,10 +7,8 @@ test('ride completes via autopilot', async ({ page }) => {
   await page.waitForSelector('#game-canvas');
   await expect(page.locator('#hud')).toBeVisible();
 
-  // Initial objective
-  await expect(page.locator('#hud-objective')).toHaveText(
-    'Pick up passenger at N1'
-  );
+  // T8.1: the bike spawns on the pickup node (T7.3), so the ride can already be
+  // under way by the first assertion; the pickup objective is covered in unit tests.
 
   // Turn on autopilot
   await page.evaluate(() => {
@@ -32,7 +30,7 @@ test('ride completes via autopilot', async ({ page }) => {
 
   // Objective should update to drop off
   await expect(page.locator('#hud-objective')).toHaveText(
-    'Drop off passenger at N2'
+    'N2-এ যাত্রী নামিয়ে দিন'
   );
 
   // Wait for ride/completed
@@ -56,6 +54,6 @@ test('ride completes via autopilot', async ({ page }) => {
 
   // Verify HUD shows trip completion
   await expect(page.locator('#hud-objective')).toHaveText(
-    'Trip complete! Looking for fares...'
+    'যাত্রী খোঁজা হচ্ছে...'
   );
 });

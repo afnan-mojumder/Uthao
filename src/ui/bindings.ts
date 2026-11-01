@@ -63,7 +63,7 @@ export function bindUi(session: GameSession, saveSystem?: SaveSystem): void {
       lastResult: result,
     };
     if (result.outcome?.kind === 'accepted') {
-      rideManager.completeNegotiation(result.outcome.fare);
+      rideManager.agreeFare(result.outcome.fare);
     } else if (result.outcome?.kind === 'walkedAway') {
       rideManager.walkAwayNegotiation();
     }
@@ -155,7 +155,7 @@ export function bindUi(session: GameSession, saveSystem?: SaveSystem): void {
     negotiate: (fare) => {
       tutorialSignal.value = { ...tutorialSignal.value, agreedFare: fare };
       gm.bus.emit('story/flag', { key: 'tutorial_nabila_negotiated', value: true });
-      rideManager.completeNegotiation(fare);
+      rideManager.agreeFare(fare);
     },
     complete: () => {
       tutorialSignal.value = { active: false, step: 'completed' };
