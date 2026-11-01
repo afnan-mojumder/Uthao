@@ -125,4 +125,44 @@ describe('T5.5 Ending UI & Store Integration', () => {
     expect(vnode).not.toBeNull();
     expect(vnode.props['data-testid']).toBe('ending-screen');
   });
+
+  function findByTestId(node: unknown, testId: string): boolean {
+    if (node == null || typeof node !== 'object') return false;
+    const props = (node as { props?: Record<string, unknown> }).props;
+    if (!props) return false;
+    if (props['data-testid'] === testId) return true;
+    const children = props.children;
+    const list = Array.isArray(children) ? children : [children];
+    return list.some((child) => findByTestId(child, testId));
+  }
+
+  it('shows the career-choice prototype notice when a paid choice is offered (career_choice is not yet wired to the live ending)', () => {
+    const vnode = Ending({
+      result: mockResult,
+      choices: mockChoices, // includes workshop (cost 25000) and bike (cost 15000)
+      onSelectChoice: vi.fn(),
+    });
+
+    expect(findByTestId(vnode, 'career-choice-prototype-notice')).toBe(true);
+  });
+
+  it('omits the prototype notice when every offered choice is free', () => {
+    const freeOnly: CareerChoiceOption[] = [
+      {
+        id: 'continue',
+        titleKey: 'choice_continue_title',
+        descKey: 'choice_continue_desc',
+        cost: 0,
+        available: true,
+      },
+    ];
+
+    const vnode = Ending({
+      result: mockResult,
+      choices: freeOnly,
+      onSelectChoice: vi.fn(),
+    });
+
+    expect(findByTestId(vnode, 'career-choice-prototype-notice')).toBe(false);
+  });
 });

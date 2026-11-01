@@ -256,6 +256,21 @@ export function Ending({
             <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#e2e8f0' }}>
               আপনার ভবিষ্যতের পথ বেছে নিন (Choose Your Career Path):
             </div>
+            {choices.some((c) => c.cost > 0) && (
+              <div
+                data-testid="career-choice-prototype-notice"
+                style={{
+                  fontSize: '0.78rem',
+                  color: '#fbbf24',
+                  background: 'rgba(251, 191, 36, 0.1)',
+                  border: '1px solid rgba(251, 191, 36, 0.3)',
+                  borderRadius: '8px',
+                  padding: '8px 10px',
+                }}
+              >
+                {t('career_choice_prototype_notice')}
+              </div>
+            )}
             {choices.map((c) => (
               <button
                 key={c.id}

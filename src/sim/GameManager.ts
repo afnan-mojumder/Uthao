@@ -354,7 +354,7 @@ export class GameManager {
         if (!opt || !opt.available) {
           return { success: false, reason: opt?.disabledReason ?? 'Choice unavailable' };
         }
-        this.economyManager.savings -= opt.cost;
+        this.economyManager.spendSavings(opt.cost);
         this.syncEconomy();
         this.story.branchFlags.career_choice = cmd.choice;
         this.bus.emit('story/flag', { key: 'career_choice', value: cmd.choice });

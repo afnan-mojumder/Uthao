@@ -16,5 +16,6 @@
   "choice_bike_title": "Buy Used 125cc Bike (Independent)",
   "choice_bike_desc": "Upgrade to a reliable 125cc bike for ৳15,000 after trading in your old motorcycle.",
   "choice_continue_title": "Continue as Neighborhood Regular",
-  "choice_continue_desc": "Keep riding independently with existing gear, supported by community trust."
+  "choice_continue_desc": "Keep riding independently with existing gear, supported by community trust.",
+  "career_choice_prototype_notice": "⚠️ Prototype: this spends your money now, but does not yet affect the ending."
 }

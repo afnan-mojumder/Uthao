@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { GameManager, runFrame } from '../../../src/sim/GameManager';
 import { SIM_DT } from '../../../src/config/constants';
 import type { Command } from '../../../src/core/commands';
@@ -60,5 +60,31 @@ describe('GameManager', () => {
 
     gm.tick(SIM_DT);
     expect(gm.clock.minutes).toBeGreaterThan(initialMinutes);
+  });
+
+  it('selectCareerChoice deducts savings via EconomyManager.spendSavings, not a direct field write', () => {
+    const gm = new GameManager({ seed: 42, mode: 'career', data: {} });
+    gm.economyManager.savings = 20000;
+    gm.economy.savings = 20000;
+    const spendSpy = vi.spyOn(gm.economyManager, 'spendSavings');
+
+    const result = gm.dispatch({ type: 'selectCareerChoice', choice: 'bike' });
+
+    expect(result.success).toBe(true);
+    expect(spendSpy).toHaveBeenCalledWith(15000);
+    expect(gm.economyManager.savings).toBe(5000);
+    expect(gm.story.branchFlags.career_choice).toBe('bike');
+  });
+
+  it('selectCareerChoice rejects an unaffordable/unavailable choice without spending', () => {
+    const gm = new GameManager({ seed: 42, mode: 'career', data: {} });
+    gm.economyManager.savings = 0;
+    const spendSpy = vi.spyOn(gm.economyManager, 'spendSavings');
+
+    const result = gm.dispatch({ type: 'selectCareerChoice', choice: 'bike' });
+
+    expect(result.success).toBe(false);
+    expect(spendSpy).not.toHaveBeenCalled();
+    expect(gm.economyManager.savings).toBe(0);
   });
 });

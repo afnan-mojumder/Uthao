@@ -142,4 +142,13 @@ describe('Economy and Fuel (T2.6)', () => {
     expect(econ.fuelLevel).toBe(1.0);
     expect(econ.cash).toBe(400);
   });
+
+  it('spendSavings deducts the given amount from savings', () => {
+    const bus = new EventBus<GameEvents>();
+    const econ = new EconomyManager(bus, { savings: 20000 });
+
+    econ.spendSavings(15000);
+
+    expect(econ.savings).toBe(5000);
+  });
 });

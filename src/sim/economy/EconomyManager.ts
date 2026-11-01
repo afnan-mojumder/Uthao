@@ -288,6 +288,10 @@ export class EconomyManager {
     return this.ownedUpgrades.includes(upgradeId);
   }
 
+  spendSavings(amount: number): void {
+    this.savings -= amount;
+  }
+
   repair(
     item: RepairItem,
     atKamalBhai = false,
