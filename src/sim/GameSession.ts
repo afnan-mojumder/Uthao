@@ -259,6 +259,14 @@ export class GameSession {
     this.gm.missionManager.activateMission('m1_first_ride');
   }
 
+  /** T7.4: converts the running session to a true endless one (no missions,
+   * no ending checks), replacing the old `screenSignal.value = 'game'` UI-only
+   * hack used for both the main menu's "Endless" and post-ending "Enter
+   * Endless" buttons. */
+  enterEndless(): void {
+    this.gm.enterEndlessMode();
+  }
+
   /** T11.3: fast-forwards idle time (e.g. waiting for a request) without a
    * full per-frame render loop. Not yet implemented. */
   fastForwardTrip(opts: { idleMin?: number } = {}): void {

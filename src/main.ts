@@ -17,24 +17,21 @@ import {
   contextLostSignal,
   unsupportedSignal,
   initPwaInstall,
-  setRequestDispatchers,
-  setNegotiationActionDispatcher,
   negotiationSignal,
   phoneSignal,
   hudSignal,
   tutorialSignal,
   screenSignal,
-  setMenuDispatchers,
-  setTutorialDispatchers,
-  setSaveDispatchers,
+  journalSignal,
+  journalDataSignal,
 } from './ui/store';
+import { bindUi } from './ui/bindings';
 import { SaveSystem } from './sim/save/SaveSystem';
-import { startNegotiation, respond } from './sim/negotiation/NegotiationSystem';
+import { startNegotiation } from './sim/negotiation/NegotiationSystem';
 import { Minimap } from './render/minimap';
 import { BALANCE } from './config/balance';
 import { generateProfile } from './sim/passenger/profiles';
 import { Rng } from './core/rng';
-import type { Command } from './core/commands';
 import type { DistrictData, WorldData } from './sim/schemas';
 import type { QualityLevel } from './render/quality';
 import type { DistrictId } from './core/types';
@@ -138,7 +135,7 @@ async function bootGame(): Promise<void> {
   });
 
   // Bind reactive signals store to sim event bus
-  bindEventBusToStore(gm.bus, (cmd: Command) => gm.dispatch(cmd));
+  bindEventBusToStore(gm.bus);
 
   // T7.3: real Rapier physics world, used by GameSession's MotorcycleController
   // (collisions/near-misses against colliders) and by CityBuilder (colliders
@@ -223,118 +220,10 @@ initDebugApi(gm, {
   trafficManager,
 });
 
-// T2.4 Negotiation & Phone UI Dispatchers
-setRequestDispatchers(
-  (requestId) => rideManager.accept(requestId),
-  (requestId) => rideManager.cancel(requestId, 'rider', 'declined')
-);
-
-setNegotiationActionDispatcher((action) => {
-  const currentSession = negotiationSignal.value.session;
-  if (!currentSession) return;
-  const result = respond(currentSession, action);
-  negotiationSignal.value = {
-    active: result.session.status === 'active',
-    session: result.session,
-    lastResult: result,
-  };
-  if (result.outcome?.kind === 'accepted') {
-    rideManager.completeNegotiation(result.outcome.fare);
-  } else if (result.outcome?.kind === 'walkedAway') {
-    rideManager.walkAwayNegotiation();
-  }
-});
-
-// T3.10 Main Menu & Pause Dispatchers
-setMenuDispatchers(
-  () => {
-    // onNewCareer: reset story & economy and start opening sequence tutorial
-    session.newCareer();
-    tutorialSignal.value = { active: true, step: 'alarm', agreedFare: 100 };
-  },
-  () => {
-    // onContinue: load auto save if present
-    if (saveSystem) {
-      const res = saveSystem.loadGame('auto');
-      if (res.success) {
-        gm.applySnapshot(res.gm.snapshot(), res.save.rngState);
-      }
-    }
-    screenSignal.value = 'game';
-  },
-  () => {
-    // onEndless
-    screenSignal.value = 'game';
-    tutorialSignal.value = { active: false, step: 'idle' };
-  },
-  () => {
-    // onResume
-    pausedSignal.value = false;
-  }
-);
-
-setSaveDispatchers(
-  (slot) => {
-    saveSystem?.save(gm, slot);
-  },
-  (slot) => {
-    if (saveSystem) {
-      const res = saveSystem.loadGame(slot);
-      if (res.success) {
-        gm.applySnapshot(res.gm.snapshot(), res.save.rngState);
-      }
-    }
-  }
-);
-
-// T3.8 Opening Sequence First Ride Tutorial Dispatchers
-setTutorialDispatchers({
-  advance: (nextStep) => {
-    tutorialSignal.value = { ...tutorialSignal.value, step: nextStep };
-    if (nextStep === 'bike_inspection') {
-      gm.bus.emit('story/flag', { key: 'tutorial_bike_started', value: true });
-    } else if (nextStep === 'tea_stall') {
-      gm.bus.emit('story/flag', { key: 'tutorial_mintu_advice', value: true });
-    } else if (nextStep === 'receipt') {
-      const fare = tutorialSignal.value.agreedFare ?? 100;
-      const commission = Math.round(fare * 0.15);
-      const net = fare - commission;
-      gm.economyManager.post({
-        id: `tx_first_ride_${Date.now()}`,
-        day: gm.clock.day,
-        minute: gm.clock.minutes,
-        kind: 'fare',
-        amount: net,
-      });
-      gm.economy.cash = gm.economyManager.cash;
-      gm.bus.emit('ride/completed', {
-        requestId: 'req_tutorial_01',
-        receipt: {
-          requestId: 'req_tutorial_01',
-          fare,
-          tip: 0,
-          commission,
-          fuelCost: 5,
-          otherCosts: 0,
-          net,
-          durationMin: 3,
-          distanceKm: 0.1,
-          rating: 5,
-          consequences: [],
-        },
-      });
-    }
-  },
-  negotiate: (fare) => {
-    tutorialSignal.value = { ...tutorialSignal.value, agreedFare: fare };
-    gm.bus.emit('story/flag', { key: 'tutorial_nabila_negotiated', value: true });
-    rideManager.completeNegotiation(fare);
-  },
-  complete: () => {
-    tutorialSignal.value = { active: false, step: 'completed' };
-    gm.bus.emit('story/flag', { key: 'tutorial_ride_done', value: true });
-  }
-});
+// T7.4: every UI dispatcher slot (request accept/decline, negotiation,
+// menu, save/load, tutorial, garage, bike, ending, phone contacts) is bound
+// here in one place instead of scattered across this file.
+bindUi(session, activeSaveSystem);
 
 gm.bus.on('ride/arrivedPickup', (ev) => {
   if (rideManager.enableNegotiation) {
@@ -468,6 +357,17 @@ function frame(now: number) {
     renderer.setBikeState(session.bike);
     const alpha = gm.accumulator / SIM_DT;
     renderer.render(gm.snapshot(), alpha);
+  }
+
+  // T7.4: Journal reads a live snapshot; only built while it's actually open.
+  if (journalSignal.value) {
+    journalDataSignal.value = {
+      snapshot: gm.snapshot(),
+      activeMissions: gm.story.activeMissions
+        .map((id) => gm.missionManager.missions.get(id))
+        .filter((m): m is NonNullable<typeof m> => Boolean(m)),
+      getObjectiveStates: (missionId) => gm.missionManager.getObjectiveStates(missionId),
+    };
   }
 
   // Update Minimap

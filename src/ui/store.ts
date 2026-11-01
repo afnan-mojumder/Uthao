@@ -1,7 +1,6 @@
 import { signal } from '@preact/signals';
 import type { EventBus, GameEvents } from '../core/events';
-import type { Command } from '../core/commands';
-import type { DaySummary, RideRequest } from '../core/types';
+import type { DaySummary, RideRequest, TripReceipt } from '../core/types';
 import type { TripHistoryItem } from './phone/Phone';
 import type {
   NegotiationSession,
@@ -58,6 +57,25 @@ export const dayEndSignal = signal<DayEndState>({
   active: false,
   summary: null,
 });
+
+/** T7.4: set on `ride/completed`; cleared only by TripSummary's Continue
+ * button (its only exit). Not shown during the opening tutorial, which has
+ * its own dedicated receipt step. */
+export const tripSummarySignal = signal<TripReceipt | null>(null);
+
+/** T7.4: toggled by the 'j' keybinding, same pattern as garage ('g') and the
+ * map ('m'). */
+export const journalSignal = signal<boolean>(false);
+
+export interface JournalData {
+  snapshot: import('../sim/GameManager').SimSnapshot;
+  activeMissions: import('../sim/schemas').MissionDef[];
+  getObjectiveStates: (missionId: string) => import('../sim/mission/objectives').ObjectiveState[];
+}
+
+/** T7.4: filled by main.ts's frame loop only while `journalSignal` is open,
+ * same cost-when-closed tradeoff as the rest of the per-frame UI mirroring. */
+export const journalDataSignal = signal<JournalData | null>(null);
 
 export interface GarageState {
   open: boolean;
@@ -256,6 +274,8 @@ if (typeof window !== 'undefined') {
     endingSignal,
     unsupportedSignal,
     rotateOverlaySignal,
+    tripSummarySignal,
+    journalSignal,
   };
 }
 
@@ -369,58 +389,10 @@ export function setSaveDispatchers(
 
 /**
  * Subscribes to simulation event bus and mirrors updates to reactive Preact signals.
+ * T7.4: dispatcher wiring (turning UI actions into Commands) now lives solely in
+ * `src/ui/bindings.ts`'s `bindUi`, so this only mirrors sim events to signals.
  */
-export function bindEventBusToStore(
-  bus: EventBus<GameEvents>,
-  dispatch?: (cmd: Command) => void
-): () => void {
-  if (dispatch) {
-    setChoiceDispatcher((choiceId, instanceId) => {
-      dispatch({ type: 'chooseEncounterOption', choiceId, instanceId });
-    });
-    setRequestDispatchers(
-      (requestId) => dispatch({ type: 'acceptRequest', requestId }),
-      (requestId) => dispatch({ type: 'declineRequest', requestId })
-    );
-    setDayEndDispatchers(
-      () => dispatch({ type: 'sleep' }),
-      () => dispatch({ type: 'delayRent' }),
-      (from, amount) => dispatch({ type: 'askAdvance', from, amount })
-    );
-    setGarageDispatchers(
-      (item) => dispatch({ type: 'repair', item }),
-      (upgradeId) => dispatch({ type: 'buyUpgrade', upgradeId })
-    );
-    setBikeDispatchers(
-      (bikeId, useTradeIn) => dispatch({ type: 'buyBike', bikeId: bikeId as import('../core/types').BikeId, useTradeIn }),
-      (bikeId) => dispatch({ type: 'switchBike', bikeId: bikeId as import('../core/types').BikeId })
-    );
-    setMenuDispatchers(
-      () => {
-        screenSignal.value = 'game';
-        pausedSignal.value = false;
-        dispatch({ type: 'resume' });
-      },
-      () => {
-        screenSignal.value = 'game';
-        pausedSignal.value = false;
-        dispatch({ type: 'resume' });
-      },
-      () => {
-        screenSignal.value = 'game';
-        pausedSignal.value = false;
-        dispatch({ type: 'resume' });
-      },
-      () => {
-        screenSignal.value = 'game';
-        pausedSignal.value = false;
-        dispatch({ type: 'resume' });
-      },
-      (nodeId) => {
-        dispatch({ type: 'setWaypoint', nodeId });
-      }
-    );
-  }
+export function bindEventBusToStore(bus: EventBus<GameEvents>): () => void {
   const unsubscribers: Array<() => void> = [];
 
   const unsubRideRequested = bus.on('ride/requested', (ev) => {
@@ -470,6 +442,12 @@ export function bindEventBusToStore(
       tripHistory: [newHistoryItem, ...phoneSignal.value.tripHistory],
       navigationTurn: null,
     };
+
+    // T7.4: the opening tutorial has its own dedicated receipt step for this
+    // same event, so skip the general TripSummary overlay while it's active.
+    if (!tutorialSignal.value.active) {
+      tripSummarySignal.value = ev.receipt;
+    }
   });
   unsubscribers.push(unsubComplete);
 

@@ -35,6 +35,9 @@ import {
   onSelectCareerChoiceCallback,
   onRestartCareerCallback,
   onEnterEndlessCallback,
+  tripSummarySignal,
+  journalSignal,
+  journalDataSignal,
 } from './store';
 import { RotateOverlay } from './overlays/RotateOverlay';
 import { Unsupported } from './overlays/Unsupported';
@@ -56,6 +59,8 @@ import {
   onLoadGameCallback,
 } from './store';
 import { FirstRideTutorial } from './tutorial/FirstRideTutorial';
+import { TripSummary } from './trip/TripSummary';
+import { Journal } from './journal/Journal';
 import { t } from './i18n';
 
 export function App(): JSX.Element {
@@ -88,6 +93,9 @@ export function App(): JSX.Element {
         } else if (screenSignal.value === 'game') {
           screenSignal.value = 'map';
         }
+      }
+      if (e.key === 'j' || e.key === 'J') {
+        journalSignal.value = !journalSignal.value;
       }
       if (e.key === 'Escape') {
         if (showSettings) {
@@ -199,6 +207,28 @@ export function App(): JSX.Element {
 
       {/* T3.8 Opening Sequence First Ride Tutorial */}
       {tutorialSignal.value.active && <FirstRideTutorial />}
+
+      {/* T7.4: Trip Summary — Continue is the only way to dismiss it. */}
+      {tripSummarySignal.value && (
+        <TripSummary
+          receipt={tripSummarySignal.value}
+          onContinue={() => {
+            tripSummarySignal.value = null;
+          }}
+        />
+      )}
+
+      {/* T7.4: Rider Journal, toggled by the 'j' key */}
+      {journalSignal.value && journalDataSignal.value && (
+        <Journal
+          snapshot={journalDataSignal.value.snapshot}
+          activeMissions={journalDataSignal.value.activeMissions}
+          getObjectiveStates={journalDataSignal.value.getObjectiveStates}
+          onClose={() => {
+            journalSignal.value = false;
+          }}
+        />
+      )}
 
       {/* T2.4 Uthao Phone & RequestCard */}
       <Phone

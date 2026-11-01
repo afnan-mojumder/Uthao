@@ -35,6 +35,7 @@ import { RoadEventManager, type ActiveRoadEvent } from './world/RoadEvents';
 import defaultUpgrades from '../../data/upgrades.json';
 import type { RepairItem, UpgradeDef } from './economy/maintenance';
 import { MissionManager } from './mission/MissionManager';
+import { getAvailableCareerChoices } from './mission/endings';
 import type { MissionDef, EndingDef } from './schemas';
 import ch1Missions from '../../data/missions/ch1.json';
 import ch2Missions from '../../data/missions/ch2.json';
@@ -94,7 +95,10 @@ export interface SimSnapshot {
 
 export class GameManager {
   readonly seed: number;
-  readonly mode: 'career' | 'endless';
+  /** T7.4: mutable so `enterEndlessMode()` can convert a running career session
+   * into a true endless one (no missions/endings) instead of only flipping a
+   * UI screen signal. */
+  mode: 'career' | 'endless';
   readonly data: GameData;
 
   readonly bus: EventBus<GameEvents>;
@@ -265,6 +269,18 @@ export class GameManager {
     this.economy = this.economyManager.getSnapshot();
   }
 
+  /** T7.4: the real effect of "endless mode" — no missions to track or
+   * endings to reach, chapter capped at the final one for district unlocks.
+   * Mirrors what the constructor already does when booted with
+   * `mode: 'endless'`, so starting endless from an existing career session
+   * (main menu or post-ending) behaves the same as a fresh endless boot. */
+  enterEndlessMode(): void {
+    this.mode = 'endless';
+    this.missionManager.missions.clear();
+    this.story.activeMissions = [];
+    this.story.currentChapter = 6;
+  }
+
   tick(dt: number = SIM_DT): void {
     if (this.paused) {
       return;
@@ -330,6 +346,20 @@ export class GameManager {
       case 'setWaypoint':
         this.waypointNodeId = cmd.nodeId;
         return { success: true };
+      case 'selectCareerChoice': {
+        const kamalRel = this.reputationSystem.getRelationship('kamal_bhai');
+        const opt = getAvailableCareerChoices(this.economy.savings, kamalRel).find(
+          (o) => o.id === cmd.choice
+        );
+        if (!opt || !opt.available) {
+          return { success: false, reason: opt?.disabledReason ?? 'Choice unavailable' };
+        }
+        this.economyManager.savings -= opt.cost;
+        this.syncEconomy();
+        this.story.branchFlags.career_choice = cmd.choice;
+        this.bus.emit('story/flag', { key: 'career_choice', value: cmd.choice });
+        return { success: true };
+      }
       case 'acceptDelivery':
         return this.deliveryManager.accept(cmd.deliveryId, this.clock.minutes);
       case 'pickupDelivery':

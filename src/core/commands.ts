@@ -26,7 +26,8 @@ export type Command =
   | { type: 'sleep' }
   | { type: 'setWaypoint'; nodeId: string | null }
   | { type: 'pause' }
-  | { type: 'resume' };
+  | { type: 'resume' }
+  | { type: 'selectCareerChoice'; choice: 'workshop' | 'bike' | 'continue' };
 
 export interface CommandResult {
   success: boolean;
