@@ -66,7 +66,7 @@ Spec: `docs/MASTER.md`. Plan with full task details: `docs/superpowers/plans/202
 
 - [x] **T7.1** Real-game gate, boot flow, softlock fix (3), deps: none
 - [x] **T7.2** GameSession and live request loop (8), deps: T7.1
-- [ ] **T7.3** Mounted bike, spawn, collisions, camera (5), deps: T7.2
+- [x] **T7.3** Mounted bike, spawn, collisions, camera (5), deps: T7.2
 - [ ] **T7.4** Bind every UI action, mount TripSummary and Journal (5), deps: T7.2
 - [ ] **T7.5** One relationship store, one ID scheme, effect bugs (3), deps: T7.1
 - [ ] **T8.1** Authoritative TripFsm, negotiate before pickup (8), deps: T7.2, T7.4
