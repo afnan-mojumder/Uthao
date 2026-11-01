@@ -1,17 +1,11 @@
 import { render, h } from 'preact';
-import { GameManager, runFrame } from './sim/GameManager';
+import { GameManager } from './sim/GameManager';
+import { GameSession } from './sim/GameSession';
 import { Renderer } from './render/Renderer';
-import { initDebugApi } from './debug/debugApi';
-import { SIM_DT } from './config/constants';
-import {
-  createDefaultBikeSpec,
-  createDefaultBikeState,
-  stepBike,
-  type BikeInput,
-} from './physics/bikeModel';
+import { initDebugApi, spawnTestRequest } from './debug/debugApi';
+import { SIM_DT, MAX_FRAME_DT, MAX_SIM_STEPS_PER_FRAME } from './config/constants';
+import type { BikeInput } from './physics/bikeModel';
 import { RoadNetwork } from './sim/road/RoadNetwork';
-import { RideManager } from './sim/ride/RideManager';
-import { TrafficManager } from './sim/traffic/TrafficManager';
 import { AutopilotController } from './debug/autopilot';
 import { Hud } from './ui/hud/Hud';
 import { InputManager } from './input';
@@ -39,7 +33,6 @@ import { Minimap } from './render/minimap';
 import { BALANCE } from './config/balance';
 import { generateProfile } from './sim/passenger/profiles';
 import { Rng } from './core/rng';
-import type { RideRequest } from './core/types';
 import type { Command } from './core/commands';
 import type { DistrictData, WorldData } from './sim/schemas';
 import type { QualityLevel } from './render/quality';
@@ -139,10 +132,15 @@ if (isMapTool) {
   // Bind reactive signals store to sim event bus
   bindEventBusToStore(gm.bus, (cmd: Command) => gm.dispatch(cmd));
 
-  const rideManager = new RideManager({
-    roadNetwork,
-    bus: gm.bus,
+  // T7.2: single-district debug/test URLs (e.g. `?district=testloop`) get one
+  // deterministic ride instead of the real RequestGenerator, so e2e specs stay
+  // stable. The real game (world mode) drives rides from RequestGenerator only.
+  const session = new GameSession({
+    gm,
+    road: roadNetwork,
+    autoRequests: !isSingleDistrict,
   });
+  const rideManager = session.ride;
 
   const canvas = typeof document !== 'undefined'
     ? (document.getElementById('game-canvas') as HTMLCanvasElement)
@@ -200,7 +198,7 @@ if (typeof document !== 'undefined') {
 const hud = typeof document !== 'undefined' ? new Hud() : undefined;
 const minimap = typeof document !== 'undefined' ? new Minimap(roadNetwork) : undefined;
 const autopilot = new AutopilotController(roadNetwork);
-const trafficManager = new TrafficManager(roadNetwork, 42);
+const trafficManager = session.traffic;
 const inputManager = new InputManager();
 
 initDebugApi(gm, {
@@ -236,16 +234,7 @@ setNegotiationActionDispatcher((action) => {
 setMenuDispatchers(
   () => {
     // onNewCareer: reset story & economy and start opening sequence tutorial
-    gm.clock.day = 1;
-    gm.clock.minutes = 7 * 60;
-    gm.economy.cash = 600;
-    gm.economyManager.cash = 600;
-    gm.economy.fuelLevel = 1.2;
-    gm.economyManager.fuelLevel = 1.2;
-    gm.story.branchFlags = {};
-    gm.story.completedMissions = [];
-    gm.story.activeMissions = ['m1_first_ride'];
-    gm.missionManager.activateMission('m1_first_ride');
+    session.newCareer();
     tutorialSignal.value = { active: true, step: 'alarm', agreedFare: 100 };
   },
   () => {
@@ -353,52 +342,19 @@ gm.bus.on('ride/arrivedPickup', (ev) => {
   }
 });
 
-// Create initial test ride request
-const pNodeId = activeDistrict.nodes[0]?.nodeId ?? 'N1';
-const dNodeId = activeDistrict.nodes[1]?.nodeId ?? 'N2';
-const sampleRequest: RideRequest = {
-  requestId: 'req_tutorial_01',
-  passengerId: 'p_nabila',
-  pickupNodeId: pNodeId,
-  destinationNodeId: dNodeId,
-  initialFare: 120,
-  estimatedDistance: 0.1,
-  estimatedDuration: 2,
-  requestedArrivalTime: null,
-  bookingType: 'app',
-  status: 'WaitingForPickup',
-  surge: 1.0,
-};
-
-rideManager.offer(sampleRequest);
-rideManager.accept(sampleRequest.requestId);
-
-// Setup markers for pickup / dropoff
-const pNode = roadNetwork.getNode(sampleRequest.pickupNodeId);
-const dNode = roadNetwork.getNode(sampleRequest.destinationNodeId);
-
-if (renderer && pNode && dNode) {
-  renderer.markers.setPickup(pNode.x, pNode.z, true);
-  renderer.markers.setDropoff(dNode.x, dNode.z, false);
+// T7.2: single-district debug/test boots get one deterministic ride (the old
+// hardcoded sample ride) since `autoRequests` is off for them; the real game
+// (world mode) is offered real rides by RequestGenerator via GameSession.step.
+if (isSingleDistrict) {
+  spawnTestRequest(rideManager, 120);
 }
 
-const bikeSpec = createDefaultBikeSpec();
 const startNode = activeDistrict.nodes[0] ?? { x: 0, z: 0 };
 // Start bike slightly before pickup node heading towards it
-let bikeState = {
-  ...createDefaultBikeState(),
-  x: startNode.x - 9,
-  z: startNode.z,
-  heading: Math.PI / 2, // Facing +X
-  speed: 0,
-};
-
-const env = {
-  wet: false,
-  surface: 1.0,
-  hasPassenger: false,
-  conditionPct: 100,
-};
+session.bike.x = startNode.x - 9;
+session.bike.z = startNode.z;
+session.bike.heading = Math.PI / 2; // Facing +X
+session.bike.speed = 0;
 
 let lastTime = typeof performance !== 'undefined' ? performance.now() : 0;
 let roamNodeIndex = 0;
@@ -413,7 +369,21 @@ function frame(now: number) {
   // menu and softlock boot.
   const inGame = screenSignal.value === 'game';
   gm.eventDirector.enabled = inGame && !tutorialSignal.value.active && !encountersDisabledByUrl;
-  const steps = inGame ? runFrame(gm, dt) : 0;
+
+  // Frame-rate decoupling: convert the variable rAF dt into a whole number of
+  // fixed SIM_DT ticks, same clamp/cap as GameManager.runFrame. The clock tick
+  // itself happens once per step inside session.step(), not here.
+  let steps = 0;
+  if (inGame && !gm.paused) {
+    gm.accumulator += Math.min(dt, MAX_FRAME_DT);
+    while (gm.accumulator >= SIM_DT && steps < MAX_SIM_STEPS_PER_FRAME) {
+      gm.accumulator -= SIM_DT;
+      steps++;
+    }
+    if (gm.accumulator > SIM_DT * MAX_SIM_STEPS_PER_FRAME) {
+      gm.accumulator = 0;
+    }
+  }
 
   for (let s = 0; s < steps; s++) {
     inputManager.update(SIM_DT);
@@ -425,18 +395,18 @@ function frame(now: number) {
     if (autopilot.isEnabled()) {
       if (activeReq) {
         if (activeReq.status === 'WaitingForPickup') {
-          autopilot.setDestination(bikeState.x, bikeState.z, activeReq.pickupNodeId);
+          autopilot.setDestination(session.bike.x, session.bike.z, activeReq.pickupNodeId);
         } else if (activeReq.status === 'OnTrip') {
-          autopilot.setDestination(bikeState.x, bikeState.z, activeReq.destinationNodeId);
+          autopilot.setDestination(session.bike.x, session.bike.z, activeReq.destinationNodeId);
         }
       } else if (activeDistrict.nodes.length > 0 && autopilot.isFinished()) {
         roamNodeIndex = (roamNodeIndex + 1) % activeDistrict.nodes.length;
         const nextNode = activeDistrict.nodes[roamNodeIndex];
         if (nextNode) {
-          autopilot.setDestination(bikeState.x, bikeState.z, nextNode.nodeId);
+          autopilot.setDestination(session.bike.x, session.bike.z, nextNode.nodeId);
         }
       }
-      input = autopilot.step(bikeState);
+      input = autopilot.step(session.bike);
     } else {
       const state = inputManager.read();
       input = {
@@ -446,45 +416,20 @@ function frame(now: number) {
       };
     }
 
-    // Physics step
-    const currentSegment = roadNetwork.segmentAt(bikeState.x, bikeState.z);
-    env.wet = gm.weatherSystem.isRoadWet();
-    if (currentSegment) {
-      env.surface = gm.weatherSystem.getSurfaceModifier(currentSegment);
-    } else {
-      env.surface = env.wet ? 0.85 : 1.0;
-    }
-    env.hasPassenger = activeReq?.status === 'OnTrip';
-    env.conditionPct = gm.economy.motorcycleCondition;
-    bikeState = stepBike(bikeState, input, bikeSpec, env, SIM_DT);
-
-    // Horn & traffic update
+    // Horn (traffic reaction to the player, not part of the bike/traffic/ride
+    // step itself, so it stays here alongside the rest of the input glue).
     const rawInput = inputManager.read();
     if (rawInput.horn) {
-      trafficManager.triggerHorn({ x: bikeState.x, z: bikeState.z });
+      trafficManager.triggerHorn({ x: session.bike.x, z: session.bike.z });
     }
 
-    const camView = {
-      x: bikeState.x,
-      z: bikeState.z,
-      heading: bikeState.heading,
-      fovRad: (60 * Math.PI) / 180,
-    };
-    trafficManager.maintainDensity(camView, gm.clock.minutes);
-    trafficManager.update(SIM_DT, camView, {
-      x: bikeState.x,
-      z: bikeState.z,
-      speed: bikeState.speed,
-    });
-
-    // Update RideManager
-    rideManager.update(
-      { x: bikeState.x, z: bikeState.z, speed: bikeState.speed },
-      SIM_DT
-    );
+    session.step(input, SIM_DT);
   }
 
   const activeReq = rideManager.getActiveRequest();
+  const pNode = activeReq ? roadNetwork.getNode(activeReq.pickupNodeId) : undefined;
+  const dNode = activeReq ? roadNetwork.getNode(activeReq.destinationNodeId) : undefined;
+
   if (renderer) {
     if (activeReq) {
       if (activeReq.status === 'WaitingForPickup') {
@@ -508,7 +453,7 @@ function frame(now: number) {
       now / 1000
     );
 
-    renderer.setBikeState(bikeState);
+    renderer.setBikeState(session.bike);
     const alpha = gm.accumulator / SIM_DT;
     renderer.render(gm.snapshot(), alpha);
   }
@@ -524,9 +469,9 @@ function frame(now: number) {
     const pNodePos = activeReq && activeReq.status === 'WaitingForPickup' ? pNode : null;
     const dNodePos = activeReq && activeReq.status === 'OnTrip' ? dNode : null;
     minimap.update(
-      { x: bikeState.x, z: bikeState.z, heading: bikeState.heading },
+      { x: session.bike.x, z: session.bike.z, heading: session.bike.heading },
       rideManager.currentRoute,
-      { pickup: pNodePos, dropoff: dNodePos }
+      { pickup: pNodePos ?? null, dropoff: dNodePos ?? null }
     );
   }
 
@@ -546,7 +491,7 @@ function frame(now: number) {
       objective = 'Trip complete! Looking for fares...';
     }
 
-    const currentSpeedKmh = bikeState.speed * 3.6;
+    const currentSpeedKmh = session.bike.speed * 3.6;
     const fuelL = gm.economy.fuelLevel;
     const fuelMaxL = BALANCE.FUEL.tankL;
     const todayNetEarnings = gm.economy.dailyRevenue - gm.economy.dailyExpenses;

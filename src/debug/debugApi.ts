@@ -28,6 +28,9 @@ export interface DebugApi {
   getTriangles: () => number;
   toggleCamera: () => void;
   spawnBargainer: (fare?: number) => RideRequest;
+  /** T7.2: offers and auto-accepts a deterministic ride (first two road nodes),
+   * for single-district debug/test boots that disable RequestGenerator. */
+  spawnRequest: (fare?: number) => RideRequest;
   /** T7.1: force-starts a specific encounter by id, bypassing normal eligibility. */
   startEncounter: (encounterId: string) => boolean;
   isPaused: () => boolean;
@@ -44,6 +47,31 @@ export interface DebugApiOptions {
   autopilot?: AutopilotController;
   rideManager?: RideManager;
   trafficManager?: import('../sim/traffic/TrafficManager').TrafficManager;
+}
+
+/** T7.2: offers and auto-accepts a deterministic ride on the first two nodes
+ * of the ride manager's road network. Used by single-district debug/test
+ * boots (`autoRequests: false`) in place of the old hardcoded sample ride. */
+export function spawnTestRequest(rideManager: RideManager, fare = 120): RideRequest {
+  const allNodes = rideManager.roadNetwork.getAllNodes();
+  const pNodeId = allNodes[0]?.nodeId ?? 'N1';
+  const dNodeId = allNodes[1]?.nodeId ?? 'N2';
+  const req: RideRequest = {
+    requestId: 'req_debug_spawn',
+    passengerId: 'p_debug',
+    pickupNodeId: pNodeId,
+    destinationNodeId: dNodeId,
+    initialFare: fare,
+    estimatedDistance: 0.1,
+    estimatedDuration: 2,
+    requestedArrivalTime: null,
+    bookingType: 'app',
+    status: 'WaitingForPickup',
+    surge: 1.0,
+  };
+  rideManager.offer(req);
+  rideManager.accept(req.requestId);
+  return req;
 }
 
 export function initDebugApi(
@@ -145,6 +173,12 @@ export function initDebugApi(
         options.rideManager.accept(req.requestId);
       }
       return req;
+    },
+    spawnRequest: (fare = 120) => {
+      if (!options.rideManager) {
+        throw new Error('spawnRequest requires a rideManager');
+      }
+      return spawnTestRequest(options.rideManager, fare);
     },
     startEncounter: (encounterId: string) => {
       const instance = gm.eventDirector.forceStart(encounterId, gm.bus);
