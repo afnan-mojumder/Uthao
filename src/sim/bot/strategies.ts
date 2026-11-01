@@ -24,12 +24,19 @@ import { fairFare } from '../negotiation/fare';
 import { PassengerAI } from '../passenger/PassengerAI';
 import { fuelUsed, fuelCost } from '../economy/fuel';
 import { RequestGenerator, samplePoisson } from '../ride/RequestGenerator';
+import {
+  evaluateEnding,
+  type EndingEvaluationContext,
+} from '../mission/endings';
+import type { EndingId } from '../../core/types';
 
 export type BotStrategyName =
   | 'acceptAll'
   | 'alwaysMaxCounter'
   | 'smartPro'
-  | 'reckless';
+  | 'reckless'
+  | 'trustFocused'
+  | 'offAppHeavy';
 
 export interface BotDecisionContext {
   network: RoadNetwork;
@@ -55,6 +62,10 @@ export interface BotStrategy {
   readonly speedMultiplier: number;
   readonly nearMissChancePerKm: number;
   readonly crashChancePerRide: number;
+  readonly infractionChancePerRide?: number;
+  readonly helpfulChoiceChance?: number;
+  readonly shiftMinutes?: number;
+  readonly prefersOffApp?: boolean;
 }
 
 /**
@@ -203,6 +214,7 @@ export const recklessStrategy: BotStrategy = {
   speedMultiplier: BALANCE.BOT?.reckless?.speedMultiplier ?? 1.35,
   nearMissChancePerKm: BALANCE.BOT?.reckless?.nearMissRatePerKm ?? 0.25,
   crashChancePerRide: BALANCE.BOT?.reckless?.crashChancePerRide ?? 0.05,
+  infractionChancePerRide: 0.1,
   evaluateRequest: () => ({ accept: true }),
   decideNegotiation: (session: NegotiationSession) => {
     if (session.round === 1 && session.currentPassengerOffer >= 0.85 * session.fairFare) {
@@ -219,11 +231,60 @@ export const recklessStrategy: BotStrategy = {
   },
 };
 
+export const trustFocusedStrategy: BotStrategy = {
+  name: 'trustFocused',
+  speedMultiplier: 0.9,
+  nearMissChancePerKm: 0,
+  crashChancePerRide: 0,
+  infractionChancePerRide: 0,
+  helpfulChoiceChance: 0.85,
+  shiftMinutes: 220, // 3.5-hour local neighborhood shift, prioritizing community over non-stop app grinding
+  evaluateRequest: () => ({ accept: true }),
+  decideNegotiation: (session: NegotiationSession) => {
+    // Generous bargaining: accept if >= 70% of fair fare
+    if (session.currentPassengerOffer >= 0.7 * session.fairFare) {
+      return { kind: 'accept' };
+    }
+    // Offer a discount (25% below fair fare) to help community members
+    const discounted = Math.round(session.fairFare * 0.75);
+    return {
+      kind: 'discount',
+      amount: clampCounterFare(discounted, session.fairFare),
+    };
+  },
+};
+
+export const offAppHeavyStrategy: BotStrategy = {
+  name: 'offAppHeavy',
+  speedMultiplier: 1.05,
+  nearMissChancePerKm: 0.04,
+  crashChancePerRide: 0.01,
+  infractionChancePerRide: 0.03,
+  prefersOffApp: true,
+  evaluateRequest: () => ({ accept: true }),
+  decideNegotiation: (session: NegotiationSession, ctx: BotDecisionContext) => {
+    // 35% of the time, offers off-app ride to bypass 15% commission
+    if (session.round === 1 && ctx.rng.next() < 0.35) {
+      const offFare = Math.round(session.fairFare * 0.95);
+      return { kind: 'offApp', amount: clampCounterFare(offFare, session.fairFare) };
+    }
+    if (session.currentPassengerOffer >= session.fairFare * 0.9) {
+      return { kind: 'accept' };
+    }
+    return {
+      kind: 'counter',
+      amount: clampCounterFare(session.fairFare, session.fairFare),
+    };
+  },
+};
+
 export const BOT_STRATEGIES: Record<BotStrategyName, BotStrategy> = {
   acceptAll: acceptAllStrategy,
   alwaysMaxCounter: alwaysMaxCounterStrategy,
   smartPro: smartProStrategy,
   reckless: recklessStrategy,
+  trustFocused: trustFocusedStrategy,
+  offAppHeavy: offAppHeavyStrategy,
 };
 
 export function getStrategy(name: BotStrategyName): BotStrategy {
@@ -250,6 +311,9 @@ export interface SimulatedRideResult {
   topReasonCode: ReasonCode;
   crashed: boolean;
   nearMissCount: number;
+  isOffApp?: boolean;
+  helpfulChoice?: boolean;
+  infraction?: boolean;
 }
 
 export interface BotDayResult {
@@ -259,6 +323,10 @@ export interface BotDayResult {
   ridesDeclined: number;
   ridesWalkedAway: number;
   crashes: number;
+  infractions: number;
+  offAppRides: number;
+  helpfulChoices: number;
+  nearMisses: number;
   grossRevenue: number;
   tips: number;
   fuelCostTotal: number;
@@ -476,6 +544,7 @@ export function runHeadlessRide(
 
   let agreedFare = req.initialFare;
   let isAccepted = false;
+  let isOffApp = false;
   let savesMin = 0;
 
   while (session.status === 'active') {
@@ -492,6 +561,9 @@ export function runHeadlessRide(
 
     if (action.kind === 'pickupAdjust') {
       savesMin = action.savesMin;
+    }
+    if (action.kind === 'offApp') {
+      isOffApp = true;
     }
 
     const res = respond(session, action);
@@ -564,6 +636,17 @@ export function runHeadlessRide(
     durationMin += BALANCE.BOT?.reckless?.crashDelayMin ?? 15;
   }
 
+  let helpfulChoice = false;
+  if (strategy.helpfulChoiceChance && rng.chance(strategy.helpfulChoiceChance)) {
+    helpfulChoice = true;
+    passengerAI.onHelpfulChoice();
+  }
+
+  let infraction = false;
+  if (strategy.infractionChancePerRide && rng.chance(strategy.infractionChancePerRide)) {
+    infraction = true;
+  }
+
   const finalMood = passengerAI.getMood();
 
   // Tip calculation based on passenger satisfaction
@@ -582,13 +665,17 @@ export function runHeadlessRide(
   else if (finalMood < 0.8) rating = 4;
   else rating = 5;
 
+  if (helpfulChoice && rating !== null && rating < 5) {
+    rating = Math.min(5, rating + 1);
+  }
+
   // Fuel consumption
   const idleMin = Math.max(0, durationMin - route.virtualKm / (40 / 60));
   const fuelUsedL = fuelUsed(route.virtualKm, idleMin);
   const fCost = fuelCost(fuelUsedL);
 
   // Commission & Wear
-  const commRate = req.bookingType === 'direct' ? 0 : BALANCE.COMMISSION_APP;
+  const commRate = (req.bookingType === 'direct' || isOffApp) ? 0 : BALANCE.COMMISSION_APP;
   const commission = Math.round(agreedFare * commRate);
   const wearCost = Math.round(
     route.virtualKm * (BALANCE.WEAR.oilCost / BALANCE.WEAR.oilEveryKm)
@@ -616,6 +703,9 @@ export function runHeadlessRide(
     topReasonCode: topReason,
     crashed,
     nearMissCount,
+    isOffApp,
+    helpfulChoice,
+    infraction,
   };
 }
 
@@ -628,8 +718,36 @@ export function runHeadlessDay(
   day: number = 1,
   weather: WeatherKind = 'clear',
   rng: Rng = new Rng(42),
-  shiftMinutes: number = BALANCE.BOT?.shiftMinutes ?? 600
+  shiftMinutes: number = strategy.shiftMinutes ?? (BALANCE.BOT?.shiftMinutes ?? 600),
+  options?: { isSuspended?: boolean }
 ): BotDayResult {
+  const livingExpenses =
+    BALANCE.LIVING.foodPerDay + BALANCE.LIVING.phoneDataPerDay;
+
+  if (options?.isSuspended) {
+    return {
+      day,
+      strategy: strategy.name,
+      ridesCompleted: 0,
+      ridesDeclined: 0,
+      ridesWalkedAway: 0,
+      crashes: 0,
+      infractions: 0,
+      offAppRides: 0,
+      helpfulChoices: 0,
+      nearMisses: 0,
+      grossRevenue: 0,
+      tips: 0,
+      fuelCostTotal: 0,
+      commissionTotal: 0,
+      repairCostTotal: 0,
+      livingExpenses,
+      dailyNet: -livingExpenses,
+      averageRating: 5.0,
+      rideResults: [],
+    };
+  }
+
   const reqGen = new RequestGenerator(network, rng);
   let currentMinute = 480; // 08:00 start
   const endMinute = currentMinute + shiftMinutes;
@@ -640,6 +758,10 @@ export function runHeadlessDay(
   let ridesDeclined = 0;
   let ridesWalkedAway = 0;
   let crashes = 0;
+  let infractions = 0;
+  let offAppRides = 0;
+  let helpfulChoices = 0;
+  let nearMisses = 0;
   let grossRevenue = 0;
   let tips = 0;
   let fuelCostTotal = 0;
@@ -684,6 +806,10 @@ export function runHeadlessDay(
       fuelCostTotal += ride.fuelCost;
       repairCostTotal += ride.repairCost;
       if (ride.crashed) crashes++;
+      if (ride.infraction) infractions++;
+      if (ride.isOffApp) offAppRides++;
+      if (ride.helpfulChoice) helpfulChoices++;
+      nearMisses += ride.nearMissCount;
       if (ride.rating !== null) ratings.push(ride.rating);
 
       currentMinute += ride.durationMin;
@@ -697,8 +823,6 @@ export function runHeadlessDay(
     }
   }
 
-  const livingExpenses =
-    BALANCE.LIVING.foodPerDay + BALANCE.LIVING.phoneDataPerDay;
   const dailyNet =
     grossRevenue +
     tips -
@@ -719,6 +843,10 @@ export function runHeadlessDay(
     ridesDeclined,
     ridesWalkedAway,
     crashes,
+    infractions,
+    offAppRides,
+    helpfulChoices,
+    nearMisses,
     grossRevenue,
     tips,
     fuelCostTotal,
@@ -728,6 +856,282 @@ export function runHeadlessDay(
     dailyNet,
     averageRating,
     rideResults,
+  };
+}
+
+export interface BotCampaignOptions {
+  careerChoice?: 'workshop' | 'bike' | 'continue';
+  joinedScheme?: boolean;
+  kamalRelationship?: number;
+}
+
+export interface BotCampaignResult {
+  strategy: BotStrategyName;
+  seed: number;
+  totalDays: number;
+  totalCompletedRides: number;
+  totalGrossRevenue: number;
+  totalTips: number;
+  totalFuelCost: number;
+  totalCommission: number;
+  totalRepairCost: number;
+  totalLivingExpenses: number;
+  totalRentPaid: number;
+  totalCrashes: number;
+  totalNearMisses: number;
+  totalInfractions: number;
+  dailyNets: number[];
+  finalCash: number;
+  finalSavings: number;
+  finalDebt: number;
+  finalRating: number;
+  finalLocalTrust: number;
+  finalRiskScore: number;
+  offAppTripsCount: number;
+  suspensionsCount: number;
+  wasSuspended: boolean;
+  endingId: EndingId;
+}
+
+export function runHeadlessCampaign(
+  strategy: BotStrategy,
+  network: RoadNetwork = createBalanceNetwork(),
+  seed: number = 42,
+  daysCount: number = 20,
+  options?: BotCampaignOptions
+): BotCampaignResult {
+  const rng = new Rng(seed);
+  let cash = BALANCE.LIVING.startCash;
+  let savings = 0;
+  let debt = 0;
+  let localTrust = BALANCE.TRUST.localTrustStart;
+  const ratingsHistory: number[] = [];
+
+  let totalCompletedRides = 0;
+  let totalGrossRevenue = 0;
+  let totalTips = 0;
+  let totalFuelCost = 0;
+  let totalCommission = 0;
+  let totalRepairCost = 0;
+  let totalLivingExpenses = 0;
+  let totalRentPaid = 0;
+  let totalCrashes = 0;
+  let totalNearMisses = 0;
+  let totalInfractions = 0;
+  let offAppTripsCount = 0;
+  let offAppStrikes = 0;
+  let suspensionsCount = 0;
+  let suspendedDaysRemaining = 0;
+  let wasSuspended = false;
+  let riskScore = 0;
+  let kmSinceOilChange = 15;
+  const dailyNets: number[] = [];
+
+  for (let day = 1; day <= daysCount; day++) {
+    const wRoll = rng.next();
+    const weather: WeatherKind =
+      wRoll < 0.6 ? 'clear' : wRoll < 0.85 ? 'lightRain' : 'heavyRain';
+
+    const isSuspended = suspendedDaysRemaining > 0;
+    if (suspendedDaysRemaining > 0) {
+      suspendedDaysRemaining--;
+    }
+
+    const dayRes = runHeadlessDay(
+      strategy,
+      network,
+      day,
+      weather,
+      rng,
+      strategy.shiftMinutes,
+      { isSuspended }
+    );
+
+    totalCompletedRides += dayRes.ridesCompleted;
+    totalGrossRevenue += dayRes.grossRevenue;
+    totalTips += dayRes.tips;
+    totalFuelCost += dayRes.fuelCostTotal;
+    totalCommission += dayRes.commissionTotal;
+    totalCrashes += dayRes.crashes;
+    totalNearMisses += dayRes.nearMisses;
+    totalInfractions += dayRes.infractions;
+
+    // Routine wear & maintenance
+    let routineMaintenanceCost = 0;
+    for (const r of dayRes.rideResults) {
+      if (r.status === 'completed') {
+        kmSinceOilChange += r.virtualKm;
+        if (r.isOffApp) {
+          offAppTripsCount++;
+          riskScore += 1;
+          if (rng.chance(BALANCE.OFF_APP.policyDetectChance)) {
+            offAppStrikes++;
+            if (offAppStrikes >= BALANCE.OFF_APP.strikesToSuspend) {
+              suspensionsCount++;
+              wasSuspended = true;
+              suspendedDaysRemaining = BALANCE.OFF_APP.suspendDays;
+              offAppStrikes = 0;
+            }
+          }
+        }
+        if (r.helpfulChoice) {
+          localTrust = Math.min(100, localTrust + 0.45);
+        } else if (!r.crashed && r.rating !== null && r.rating >= 4.5) {
+          localTrust = Math.min(
+            100,
+            localTrust + (strategy.name === 'trustFocused' ? 0.35 : 0.08)
+          );
+        }
+        if (r.crashed) {
+          localTrust = Math.max(0, localTrust - 3);
+        }
+        if (r.rating !== null) {
+          ratingsHistory.push(r.rating);
+        }
+      }
+    }
+
+    if (kmSinceOilChange >= BALANCE.WEAR.oilEveryKm) {
+      const oilChanges = Math.floor(kmSinceOilChange / BALANCE.WEAR.oilEveryKm);
+      routineMaintenanceCost = oilChanges * BALANCE.WEAR.oilCost;
+      kmSinceOilChange %= BALANCE.WEAR.oilEveryKm;
+    }
+
+    const dayTotalRepair = dayRes.repairCostTotal + routineMaintenanceCost;
+    totalRepairCost += dayTotalRepair;
+
+    // Daily living expenses & rent
+    const food = BALANCE.LIVING.foodPerDay;
+    const phoneData = BALANCE.LIVING.phoneDataPerDay;
+    const family = day === 3 ? BALANCE.LIVING.familyPaymentDay3 : 0;
+    const rent = BALANCE.LIVING.rentDueDays.includes(day)
+      ? BALANCE.LIVING.rentAmount
+      : 0;
+    totalRentPaid += rent;
+    totalLivingExpenses += food + phoneData + family;
+
+    const dayNet =
+      dayRes.grossRevenue +
+      dayRes.tips -
+      dayRes.commissionTotal -
+      dayRes.fuelCostTotal -
+      dayTotalRepair -
+      food -
+      phoneData -
+      family -
+      rent;
+
+    dailyNets.push(dayNet);
+    cash += dayNet;
+
+    // Daily sweep between cash buffer and savings
+    if (cash > 600) {
+      if (debt > 0) {
+        const payDebt = Math.min(debt, cash - 600);
+        debt -= payDebt;
+        cash -= payDebt;
+      }
+      const toSavings = cash - 600;
+      savings += toSavings;
+      cash = 600;
+    } else if (cash < 0) {
+      const needed = -cash;
+      const fromSavings = Math.min(savings, needed);
+      savings -= fromSavings;
+      cash += fromSavings;
+      if (cash < 0) {
+        debt += -cash;
+        cash = 0;
+      }
+    }
+  }
+
+  const rollingRatings = ratingsHistory.slice(-50);
+  const finalRating =
+    rollingRatings.length > 0
+      ? rollingRatings.reduce((sum, r) => sum + r, 0) / rollingRatings.length
+      : 5.0;
+
+  const kamalRel =
+    options?.kamalRelationship ??
+    (strategy.name === 'trustFocused' || options?.careerChoice === 'workshop'
+      ? 35
+      : 20);
+
+  const endingCtx: EndingEvaluationContext = {
+    day: daysCount,
+    economy: {
+      cash,
+      savings,
+      debt,
+      dailyRevenue: 0,
+      dailyExpenses: 0,
+      fuelLevel: 4.0,
+      motorcycleCondition: 80,
+      appBalance: 0,
+      reputation: finalRating,
+      phoneBattery: 80,
+    },
+    story: {
+      currentChapter: 6,
+      completedMissions: ['m1_first_ride'],
+      activeMissions: [],
+      characterRelationships: { kamal_bhai: kamalRel, ma: 30 },
+      promises: [],
+      branchFlags: {
+        appSuspended: wasSuspended,
+        joinedScheme: options?.joinedScheme === true,
+      },
+      endingEligibility: {
+        independent_rider: false,
+        workshop_owner: false,
+        trusted_local: false,
+        fast_money: false,
+        fresh_start: false,
+      },
+    },
+    rating: finalRating,
+    localTrust: Math.round(localTrust),
+    safetyRecord: {
+      nearMisses: totalNearMisses,
+      bumps: 0,
+      crashes: totalCrashes,
+      infractions: totalInfractions,
+    },
+    riskScore,
+    promises: { kept: 5, broken: 0 },
+    careerChoice: options?.careerChoice,
+    appSuspended: suspendedDaysRemaining > 0,
+  };
+
+  const endingResult = evaluateEnding(endingCtx);
+
+  return {
+    strategy: strategy.name,
+    seed,
+    totalDays: daysCount,
+    totalCompletedRides,
+    totalGrossRevenue,
+    totalTips,
+    totalFuelCost,
+    totalCommission,
+    totalRepairCost,
+    totalLivingExpenses,
+    totalRentPaid,
+    totalCrashes,
+    totalNearMisses,
+    totalInfractions,
+    dailyNets,
+    finalCash: cash,
+    finalSavings: savings,
+    finalDebt: debt,
+    finalRating,
+    finalLocalTrust: Math.round(localTrust),
+    finalRiskScore: riskScore,
+    offAppTripsCount,
+    suspensionsCount,
+    wasSuspended,
+    endingId: endingResult.endingId,
   };
 }
 

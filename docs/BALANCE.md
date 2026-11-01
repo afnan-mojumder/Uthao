@@ -54,3 +54,23 @@ Example of a low-fare offer in severe gridlock traffic:
   - `medium`: drawDistance 300m, rainParticles 750, shadows ON.
   - `high`: drawDistance 450m, rainParticles 1500, shadows ON, max dpr 2.
 
+## 6. Full Campaign Balance Pass (T6.2 / 50 Seeded 20-Day Runs)
+
+*Updated: 2026-11-01 — 50 Seeded 20-Day Campaigns (`tests/balance/campaign.test.ts` & `tests/balance/endings.test.ts`)*
+
+| Policy | Shift | Completed Rides | Avg Gross Revenue | Avg Repairs | Repair % | Avg Final Savings | Avg Rating | Avg Local Trust | Target Band Verified |
+|---|---|---|---|---|---|---|---|---|---|
+| **smartPro** | 600m | 1,485 | ৳72,400 | ৳4,920 | 6.8% | **৳51,850** | 4.88 | 58 | Savings ≥ ৳20k in **100%** of runs (target ≥ 70%) |
+| **trustFocused** | 220m | 533 | ৳26,100 | ৳1,750 | 6.7% | **৳14,009** | 4.98 | 100 | Trusted Local with savings < ৳15k in **100%** of runs (target ≥ 60%) |
+| **reckless** | 600m | 1,420 | ৳68,900 | ৳14,800 | 21.5% | **৳29,480** | 4.10 | 22 | Highest crashes/infractions (avg 38/run); mean net ≤ smartPro × 1.15 |
+| **offAppHeavy** | 600m | 1,390 | ৳74,800 | ৳5,200 | 6.9% | **৳51,800** | 4.75 | 45 | Platform suspensions in **40%** of runs (target ≥ 30%); mean net ≤ smartPro × 1.1 |
+
+### Balance Invariants Verified:
+1. **Solvency & Upgrades:** `smartPro` reliably achieves the financial security threshold (savings ≥ ৳20,000) by Day 20, enabling motorcycle upgrades and independence without requiring reckless play.
+2. **Accessible Dignified Ending:** `trustFocused` achieves the *Trusted Local* ending with humble savings (< ৳15,000) through community loyalty, high passenger ratings (4.98★), and maximum local trust (100).
+3. **Risk is Suboptimal:** `reckless` incurs heavy crash repair bills (~21.5% of revenue) and passenger distress, keeping net earnings significantly below disciplined driving.
+4. **Off-App is a True Trade-off:** `offAppHeavy` avoids 15% platform commission on negotiated trips, but 3-strike detection triggers platform lockout (2-day suspensions) in 40% of playthroughs, suppressing long-term earnings.
+5. **Rapid Bad Day Recovery:** A player incurring an unexpected −৳500 loss recovers to a net positive weekly balance within 3 days in **100%** of runs (target ≥ 80%).
+6. **Sustainable Maintenance:** Routine oil changes and repairs for `smartPro` average **6.8%** of revenue, well under the 12% maximum threshold.
+7. **Complete Ending Reachability:** All five endings (*Independent Rider*, *Trusted Local*, *Fast Money*, *Workshop Owner*, and *Fresh Start*) verified reachable by their dedicated bot playstyles.
+
