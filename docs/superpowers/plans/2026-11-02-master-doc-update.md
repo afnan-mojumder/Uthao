@@ -8,7 +8,7 @@
 
 **Tech Stack:** TypeScript 6, Three.js 0.186, Rapier 0.21, Preact and signals, zod, Vitest 5, Playwright 1.64, Vite PWA.
 
-**Spec:** `docs/MASTER.md` (copied from `~/Downloads/Uthao_Story_and_Game_Logic_Master.md` in T7.1). Section numbers below refer to it.
+**Spec:** `docs/MASTER.md` (copy of `Uthao_Story_and_Game_Logic_Master.md`). Section numbers below refer to it.
 
 ## Audit: what was actually found (2026-11-02, commit 7c1fffe)
 
@@ -49,13 +49,13 @@
 | 6-7 Loop, negotiation, pickup, off-app | Logic exists, unwired; order differs | T8.1-T8.5 |
 | 8 Passenger AI | 5 of the 9 archetypes | T8.1, T8.6 |
 | 9 Economy | Partial; no ledger | T8.2, T8.3 |
-| 10 Meters | 3 of 8 | T9.1-T9.3 |
+| 10 Meters | 3 of 8 | T13.1-T13.3 |
 | 11 Robbery | Data only, no resolution | T10.1, T10.4 |
 | 12 Police, bribery | One checkpoint, no bribe | T10.2 |
 | 13 Accidents | Missing | T10.3 |
 | 14 Traffic, weather | Exists, needs live fairness checks | T10.5 |
 | 15 Mission, trip FSM | Different FSM | T8.1, T11.1 |
-| 16 UI | Partial | T7.4, T9.2, T12.1-T12.3 |
+| 16 UI | Partial | T7.4, T13.2, T12.1-T12.3 |
 | 18 Save | Partial | T11.4 |
 | 21 Acceptance | Not met | T12.5 |
 
@@ -72,6 +72,8 @@
 9. **Archetypes:** keep the five existing IDs and add six; `bargainer` is the spec's "Difficult negotiator", `careful` and `risky` stay as tendencies the spec doesn't forbid.
 10. **Bots stay fast, not separate:** they skip physics via `GameSession.fastForwardTrip` but share all negotiation, settlement, reputation and mission code. A parity test keeps them honest.
 11. **Dhaka map asset: not in the repo.** T12.3 reads `public/assets/map/dhaka.webp`; without it, the generated map renders with a visible "prototype map" label, per spec §16.
+12. **Task IDs:** M2 uses T13.x, not T9.x, because `finish-task.sh` and `AGENT_WORKFLOW.md` reserve T9.n for maintenance fixes. IDs show identity, not order; the queue in `DEV_AFNAN.md` sets the order.
+13. **Tafsirul's unmerged `origin/tafsirul/dark-choices-crime-ui`** shares no history with `main`, so it cannot be merged. It may be read as reference for T12.1 and T12.3 (it has a component library, a UI sheet and a Dhaka map). Copy ideas by hand and never push to it.
 
 ## Global Constraints
 
@@ -104,13 +106,13 @@
 |---|---|
 | **M0 Playable shell** | T7.1 (3) → T7.2 (8) → T7.3 (5) → T7.4 (5), T7.5 (3) |
 | **M1 One real ride** | T8.1 (8) → T8.2 (5) → T8.3 (3) → T8.4 (5) → T8.5 (3) → T8.6 (5) |
-| **Gate M1** | Spec's prototype success criterion, played by a human. **Stop and fix the feel before continuing** |
-| **M2 Consequences** | T9.1 (5) → T9.2 (5), T9.3 (3) |
+| **Gate M1** | T8.7 (3): spec's prototype success criterion, tested, then played by a human. **Stop and fix the feel before continuing** |
+| **M2 Consequences** | T13.1 (5) → T13.2 (5), T13.3 (3) |
 | **M3 Encounters** | T10.1 (5) → T10.2 (5), T10.3 (5), T10.4 (5), T10.5 (5) |
 | **M4 Campaign** | T11.1 (5) → T11.2 (8) → T11.3 (5), T11.4 (5) |
 | **M5 Ship** | T12.1 (5) → T12.2 (5), T12.3 (5), T12.4 (5) → T12.5 (5) |
 
-Total: 139 points.
+Total: 142 points.
 
 ---
 
@@ -125,7 +127,7 @@ Total: 139 points.
 **Interfaces:**
 - Produces: `screenSignal` starts `'menu'`, or `'game'` when the URL has `debug=1`. URL `encounters=0` disables ambient encounters. The sim is paused unless the screen is `'game'`.
 
-- [ ] **Step 1: Copy the spec, add the GDD banner, log decisions 1-4.** Add this plan's queue to `DEV_AFNAN.md` in the exact `- [ ] **Tx.y** title (pts), deps: ...` format. All tasks T7.1 to T12.5 go in this queue, including those touching Tafsirul-owned files (`AGENT_WORKFLOW.md` §5 lets a task edit any file it lists). Add a `DECISIONS.md` line saying Afnan owns this whole update for now.
+- [ ] **Step 1: Commit the handoff files first, per `CLAUDE.md` (spec copy, this plan, `CLAUDE.md`, the `DEV_AFNAN.md` queue). Add the GDD banner and log decisions 1-4 and 12-13, plus a `DECISIONS.md` line saying Afnan owns this whole update for now.**
 - [ ] **Step 2: Write the failing smoke test**
 
 ```ts
@@ -460,16 +462,16 @@ it('off-app is a trade-off', () => { /* 200 seeds: mean off-app net <= app net *
 - [ ] **Step 3: Implement.** Add the off-app choice to the live panel; call `recordOffAppRide`. Add new Bangla lines to `docs/QUESTIONS.md` for native review.
 - [ ] **Step 4: Run check and balance, commit.** `feat(T8.6): add spec archetypes and real off-app trade-offs`
 
-### Gate M1: Prototype success criterion
+### Task T8.7: Gate M1, prototype success criterion
 
 - [ ] Add `tests/e2e/prototype.spec.ts`: from the menu, accept → negotiate → ride with autopilot → one debug-started encounter → drop off → summary rows equal ledger rows → next request appears. Run on both projects.
-- [ ] Add the human protocol to `docs/PLAYTEST.md`: "Can a new player do this unaided on PC and on an Android phone, and is it enjoyable?" **Do not begin M2 until a human has signed this off in `docs/QUESTIONS.md`.** Spec §22 rule 10 exists for this reason.
+- [ ] Add the human protocol to `docs/PLAYTEST.md`: "Can a new player do this unaided on PC and on an Android phone, and is it enjoyable?" Add an unticked line `- [ ] GATE-M1 signed off by Afnan` to `docs/QUESTIONS.md`. **Do not begin M2 until Afnan has ticked it.** This overrides "never block on a human playtest" in `AGENT_WORKFLOW.md`; spec §22 rule 10 is the reason.
 
 ---
 
 ## M2: Consequences
 
-### Task T9.1: Bounded, attributed meters
+### Task T13.1: Bounded, attributed meters
 
 **Files:**
 - Modify: `src/sim/reputation/ReputationSystem.ts`, `src/core/types.ts`, `src/core/events.ts`, `src/sim/schemas.ts`, `src/sim/events/effects.ts`, `src/config/balance.ts`
@@ -501,9 +503,9 @@ it('complaints lower platformStanding; below 20 suspends the app', ...);
 
 - [ ] **Step 2: Run, expect FAIL.**
 - [ ] **Step 3: Implement.** Convert existing direct mutations.
-- [ ] **Step 4: Run check, commit.** `feat(T9.1): add bounded attributed karma meters`
+- [ ] **Step 4: Run check, commit.** `feat(T13.1): add bounded attributed karma meters`
 
-### Task T9.2: Karma panel, Story panel, UI Sheet, hotkeys
+### Task T13.2: Karma panel, Story panel, UI Sheet, hotkeys
 
 **Files:**
 - Create: `src/ui/karma/KarmaPanel.tsx`, `src/ui/sheet/UiSheet.tsx`, `tests/e2e/panels.spec.ts`
@@ -522,9 +524,9 @@ test('criminal and evidence meters stay hidden until non-zero', ...);
 
 - [ ] **Step 2: Run, expect FAIL.**
 - [ ] **Step 3: Implement.** Handle hotkeys in `App` and ignore events from `input`/`textarea`. Journal gains recent decisions and unlocked opportunities (§16). Open panels pause the sim only when the bike is stopped; while moving, they refuse with a toast.
-- [ ] **Step 4: Run check and panels spec, commit.** `feat(T9.2): add karma panel, story panel, UI sheet and hotkeys`
+- [ ] **Step 4: Run check and panels spec, commit.** `feat(T13.2): add karma panel, story panel, UI sheet and hotkeys`
 
-### Task T9.3: Exploitation and help as real choices
+### Task T13.3: Exploitation and help as real choices
 
 **Files:**
 - Modify: `data/encounters/payment.json`, `data/encounters/route.json`, `src/sim/negotiation/NegotiationSystem.ts`, `src/sim/GameSession.ts`
@@ -543,7 +545,7 @@ it('helping costs time or money, shown up front, and raises trust and repeat bus
 
 - [ ] **Step 2: Run, expect FAIL.**
 - [ ] **Step 3: Implement.** Vulnerable passengers (`urgent`, `traveler`, `family`) add a larger integrity loss.
-- [ ] **Step 4: Run check and balance, commit.** `feat(T9.3): add exploitation and help consequences`
+- [ ] **Step 4: Run check and balance, commit.** `feat(T13.3): add exploitation and help consequences`
 
 ---
 

@@ -1,3 +1,5 @@
+> **Superseded as of 2026-11-02:** `docs/MASTER.md` is the single source of truth wherever it differs from this document. See `docs/superpowers/plans/2026-11-02-master-doc-update.md`.
+
 # Dhaka Bike Rider: Meter Chole Na
 
 ## Game Design Document and Development Blueprint

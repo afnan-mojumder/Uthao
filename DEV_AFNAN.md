@@ -60,6 +60,40 @@ Format: `- [ ] **<id>** <title> (<points>), deps: <ids>`. Tick by changing only 
 - [x] **T5.9** Performance optimisation and PWA (8), deps: T5.2, T5.3
 - [x] **T6.2** Balance pass (5), deps: T5.4 (T), T5.5
 
+## Master Document update queue (work top to bottom)
+
+Spec: `docs/MASTER.md`. Plan with full task details: `docs/superpowers/plans/2026-11-02-master-doc-update.md`. Afnan does all of it for now.
+
+- [ ] **T7.1** Real-game gate, boot flow, softlock fix (3), deps: none
+- [ ] **T7.2** GameSession and live request loop (8), deps: T7.1
+- [ ] **T7.3** Mounted bike, spawn, collisions, camera (5), deps: T7.2
+- [ ] **T7.4** Bind every UI action, mount TripSummary and Journal (5), deps: T7.2
+- [ ] **T7.5** One relationship store, one ID scheme, effect bugs (3), deps: T7.1
+- [ ] **T8.1** Authoritative TripFsm, negotiate before pickup (8), deps: T7.2, T7.4
+- [ ] **T8.2** Exactly-once settlement and ledger (5), deps: T8.1
+- [ ] **T8.3** Live fuel, wear and recovery (3), deps: T8.2
+- [ ] **T8.4** Pickup validity, navigation, reroute, phone states (5), deps: T8.1
+- [ ] **T8.5** Negotiation with the real passenger (3), deps: T8.1, T7.4
+- [ ] **T8.6** Six new archetypes and live off-app rides (5), deps: T8.5, T8.2
+- [ ] **T8.7** Gate M1 prototype test and human sign-off request (3), deps: T7.3, T7.5, T8.3, T8.4, T8.6
+- [ ] **T13.1** Bounded, attributed meters (5), deps: T8.7
+- [ ] **T13.2** Karma panel, Story panel, UI Sheet, hotkeys (5), deps: T13.1
+- [ ] **T13.3** Exploitation and help as real choices (3), deps: T13.1
+- [ ] **T10.1** Encounters on real context, panel, outcome tables (5), deps: T13.1
+- [ ] **T10.2** Police, violations, fines, bribery (5), deps: T10.1
+- [ ] **T10.3** Accident system (5), deps: T10.1
+- [ ] **T10.4** Robbery and dark-alley resolution (5), deps: T10.1
+- [ ] **T10.5** Live traffic, pedestrian and weather fairness (5), deps: T10.1
+- [ ] **T11.1** Missions and real finale in live play (5), deps: T10.1, T13.1
+- [ ] **T11.2** Campaign content pass against the spec (8), deps: T11.1
+- [ ] **T11.3** Bots on real code, rebalance (5), deps: T11.1, T13.3, T10.2, T10.3, T10.4
+- [ ] **T11.4** Save v2 and safe resume (5), deps: T11.1
+- [ ] **T12.1** Design tokens and reusable components (5), deps: T7.4
+- [ ] **T12.2** HUD and phone completeness (5), deps: T12.1, T8.4
+- [ ] **T12.3** World map (5), deps: T12.1
+- [ ] **T12.4** World audit (5), deps: T7.3
+- [ ] **T12.5** Acceptance matrix, hardware, release candidate (5), deps: T10.5, T11.2, T11.3, T11.4, T12.2, T12.3, T12.4, T13.2
+
 ## Notes specific to your tasks
 
 - **T0.1:** the repo, `.gitignore`, `README.md`, `docs/GDD.md`, `docs/progress/*`, `scripts/agent/*`, `AGENT_WORKFLOW.md` and both member files already exist. Don't overwrite them. Also create `data/dialogue/{bn,en}/` with an empty `ui.json` (`{}`) so Tafsirul's T0.4 has a place to write.
