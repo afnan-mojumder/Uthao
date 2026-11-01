@@ -21,6 +21,7 @@ import { EconomyManager } from './economy/EconomyManager';
 import type { EncounterDef } from './schemas';
 import type { EncounterContext } from './events/conditions';
 import type { EffectContext } from './events/effects';
+import type { RideManager } from './ride/RideManager';
 import routeEncounters from '../../data/encounters/route.json';
 import pickupEncounters from '../../data/encounters/pickup.json';
 import paymentEncounters from '../../data/encounters/payment.json';
@@ -111,6 +112,11 @@ export class GameManager {
   readonly roadEvents: RoadEventManager;
   readonly missionManager: MissionManager;
   readonly deliveryManager: DeliveryManager;
+
+  /** T7.5: set by GameSession right after it constructs RideManager, so
+   * effect handlers (e.g. `endTrip`) can reach the live ride state. Optional
+   * because tests construct a bare GameManager with no ride loop. */
+  rideManager?: RideManager;
 
   paused: boolean = false;
   accumulator: number = 0;
@@ -220,6 +226,7 @@ export class GameManager {
       getEffectContext: () => ({
         gameManager: this,
         economyManager: this.economyManager,
+        rideManager: this.rideManager,
         eventBus: this.bus,
       }),
     });
@@ -347,7 +354,7 @@ export class GameManager {
         this.waypointNodeId = cmd.nodeId;
         return { success: true };
       case 'selectCareerChoice': {
-        const kamalRel = this.reputationSystem.getRelationship('kamal_bhai');
+        const kamalRel = this.reputationSystem.getRelationship('char_kamal');
         const opt = getAvailableCareerChoices(this.economy.savings, kamalRel).find(
           (o) => o.id === cmd.choice
         );
@@ -375,7 +382,7 @@ export class GameManager {
       }
       case 'buyBike': {
         const atKamal = this.isNearKamalBhai();
-        const kamalRel = this.reputationSystem.getRelationship('kamal_bhai');
+        const kamalRel = this.reputationSystem.getRelationship('char_kamal');
         const res = this.economyManager.buyBike(
           cmd.bikeId,
           cmd.useTradeIn ?? true,
@@ -398,7 +405,7 @@ export class GameManager {
         return { success: true };
       case 'repair': {
         const atKamal = this.isNearKamalBhai();
-        const kamalRel = this.reputationSystem.getRelationship('kamal_bhai');
+        const kamalRel = this.reputationSystem.getRelationship('char_kamal');
         const res = this.economyManager.repair(
           cmd.item as RepairItem,
           atKamal,
@@ -416,7 +423,7 @@ export class GameManager {
           return { success: false, reason: `Unknown upgrade: ${cmd.upgradeId}` };
         }
         const atKamal = this.isNearKamalBhai();
-        const kamalRel = this.reputationSystem.getRelationship('kamal_bhai');
+        const kamalRel = this.reputationSystem.getRelationship('char_kamal');
         const res = this.economyManager.buyUpgrade(
           upgrade,
           atKamal,
@@ -431,6 +438,7 @@ export class GameManager {
         const effectCtx: EffectContext = {
           gameManager: this,
           economyManager: this.economyManager,
+          rideManager: this.rideManager,
           eventBus: this.bus,
         };
         const ok = this.eventDirector.chooseOption(
@@ -470,7 +478,8 @@ export class GameManager {
             kind: 'maintenance',
             amount: -activeBike.dailyInsuranceCost,
           });
-          this.economyManager.dailyExpenses += activeBike.dailyInsuranceCost;
+          // T7.5: post() above already adds this to dailyExpenses — a
+          // second `+=` here was double-counting insurance every day.
         }
 
         // Post living expenses
@@ -481,11 +490,11 @@ export class GameManager {
 
         if (living.rentDelayed) {
           this.story.branchFlags['rentDelayedOnce'] = true;
-          this.reputationSystem.changeRelationship('ma', -10);
+          this.reputationSystem.changeRelationship('char_ma', -10);
         }
         if (living.evictionWarning) {
           this.story.branchFlags['rentEvictionWarning'] = true;
-          this.reputationSystem.changeRelationship('ma', -25);
+          this.reputationSystem.changeRelationship('char_ma', -25);
         }
 
         const currentRating = this.reputationSystem.getAppRating();
@@ -549,11 +558,11 @@ export class GameManager {
         }
         if (!this.story.branchFlags['rentDelayedOnce']) {
           this.story.branchFlags['rentDelayedOnce'] = true;
-          this.reputationSystem.changeRelationship('ma', -10);
+          this.reputationSystem.changeRelationship('char_ma', -10);
           return { success: true };
         } else {
           this.story.branchFlags['rentEvictionWarning'] = true;
-          this.reputationSystem.changeRelationship('ma', -25);
+          this.reputationSystem.changeRelationship('char_ma', -25);
           return { success: false, reason: 'Rent cannot be delayed more than once' };
         }
       }
@@ -640,7 +649,14 @@ export class GameManager {
     this.story.currentChapter = snap.story.currentChapter;
     this.story.completedMissions = [...snap.story.completedMissions];
     this.story.activeMissions = [...snap.story.activeMissions];
-    this.story.characterRelationships = { ...snap.story.characterRelationships };
+    // T7.5: mutate the existing object in place (don't reassign it) —
+    // ReputationSystem holds this exact object by reference as its own
+    // relationship store, so reassigning here would silently split them
+    // back into two stores.
+    for (const key of Object.keys(this.story.characterRelationships)) {
+      delete this.story.characterRelationships[key];
+    }
+    Object.assign(this.story.characterRelationships, snap.story.characterRelationships);
     this.story.promises = [...snap.story.promises];
     this.story.branchFlags = { ...snap.story.branchFlags };
     this.story.endingEligibility = { ...snap.story.endingEligibility };
@@ -653,7 +669,7 @@ export class GameManager {
         safetyRecord: snap.reputation.safetyRecord,
         riskScore: snap.reputation.riskScore,
         promises: snap.reputation.promises,
-        relationships: snap.story.characterRelationships,
+        relationships: this.story.characterRelationships,
       });
     }
 

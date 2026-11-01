@@ -135,9 +135,14 @@ export class ReputationSystem {
     );
 
     if (opts.initialRelationships) {
-      for (const [charId, rel] of Object.entries(opts.initialRelationships)) {
+      // T7.5: hold the SAME object the caller gave us (GameManager passes
+      // `story.characterRelationships`) instead of copying it, so this
+      // becomes the one shared store rather than a second one that can
+      // drift from it. Clamp its existing values in place.
+      this.characterRelationships = opts.initialRelationships;
+      for (const charId of Object.keys(this.characterRelationships)) {
         this.characterRelationships[charId] = clamp(
-          rel,
+          this.characterRelationships[charId] ?? 0,
           BALANCE.TRUST.relationshipMin,
           BALANCE.TRUST.relationshipMax
         );
@@ -277,6 +282,27 @@ export class ReputationSystem {
   recordCompletedTrip(params: TripRatingParams): number {
     const rating = computeTripRating(params);
     return this.recordTripRating(rating);
+  }
+
+  /**
+   * T7.5: applies a one-off rating nudge (e.g. an encounter's `rating`
+   * effect — a bonus/penalty, not a new completed trip) directly to the
+   * same storage `getAppRating()` reads, instead of a second field that
+   * GameManager's own `reputation/changed` listener (which always resyncs
+   * `economy.reputation` from `getAppRating()`) would silently clobber on
+   * the very next event. Replaces the latest sample in place (or
+   * `defaultRating` when no trips have completed yet) rather than pushing a
+   * new history entry, so the nudge isn't diluted by the rolling average.
+   */
+  adjustRating(delta: number): number {
+    const target = clamp(this.getAppRating() + delta, 1.0, 5.0);
+    if (this.ratings.length === 0) {
+      this.defaultRating = target;
+    } else {
+      this.ratings[this.ratings.length - 1] = target;
+    }
+    this.bus?.emit('reputation/changed', { delta: { rating: target } });
+    return this.getAppRating();
   }
 
   // --- Demand Impact & Thresholds ---
@@ -465,7 +491,8 @@ export class ReputationSystem {
     if (opts.rating !== undefined) this.defaultRating = opts.rating;
     if (opts.ratingsHistory) this.ratings = [...opts.ratingsHistory];
     if (opts.localTrust !== undefined) this.localTrust = opts.localTrust;
-    if (opts.relationships) this.characterRelationships = { ...opts.relationships };
+    // T7.5: keep the reference (not a copy) — see constructor note above.
+    if (opts.relationships) this.characterRelationships = opts.relationships;
     if (opts.safetyRecord) {
       this.safetyRecord = {
         nearMisses: opts.safetyRecord.nearMisses ?? this.safetyRecord.nearMisses,

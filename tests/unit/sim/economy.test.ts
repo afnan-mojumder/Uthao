@@ -7,6 +7,8 @@ import {
   EconomyManager,
 } from '../../../src/sim/economy';
 import { BALANCE } from '../../../src/config/balance';
+import { GameManager } from '../../../src/sim/GameManager';
+import type { DaySummary } from '../../../src/core/types';
 
 describe('Economy and Fuel (T2.6)', () => {
   it('net formula matches GDD', () => {
@@ -150,5 +152,50 @@ describe('Economy and Fuel (T2.6)', () => {
     econ.spendSavings(15000);
 
     expect(econ.savings).toBe(5000);
+  });
+
+  describe('T7.5: effect bug fixes', () => {
+    it('insurance counts once in dailyExpenses across a bike buy + endShift', () => {
+      const gm = new GameManager({ seed: 3, mode: 'career', data: {} });
+      gm.economyManager.cash = 100000;
+      gm.clock.minutes = 12 * 60;
+
+      const buy = gm.dispatch({ type: 'buyBike', bikeId: 'new150', useTradeIn: false });
+      expect(buy.success).toBe(true);
+
+      const expensesBeforeEndShift = gm.economyManager.dailyExpenses;
+
+      const res = gm.dispatch({ type: 'endShift' });
+      expect(res.success).toBe(true);
+      const summary = res.data as DaySummary;
+
+      // Insurance is 50/day for new150 (data/bikes.json). post() already
+      // records it once; dailyExpenses must grow by exactly insurance +
+      // living expenses, not twice over (the old bug: GameManager.endShift
+      // also did `dailyExpenses += dailyInsuranceCost` after post() had
+      // already added it, inflating the ledger every day).
+      const insuranceCost = 50;
+      const livingTotal = summary.livingExpenses!.total;
+      expect(gm.economyManager.dailyExpenses).toBe(
+        expensesBeforeEndShift + insuranceCost + livingTotal
+      );
+      expect(summary.expenses).toBe(gm.economyManager.dailyExpenses);
+    });
+
+    it('buying a bike with enough cash does not also go into debt', () => {
+      const gm = new GameManager({ seed: 4, mode: 'career', data: {} });
+      gm.economyManager.cash = 100000;
+      const cashBefore = gm.economyManager.cash;
+
+      const res = gm.dispatch({ type: 'buyBike', bikeId: 'new150', useTradeIn: false });
+      expect(res.success).toBe(true);
+
+      // new150 costs 45000 with no trade-in. Cash alone covers it, so debt
+      // must stay 0 — the old bug deducted cash twice (once manually in
+      // buyBike, once again via post()), driving cash negative and piling
+      // the shortfall onto debt even though cash alone was enough.
+      expect(gm.economyManager.cash).toBe(cashBefore - 45000);
+      expect(gm.economyManager.debt).toBe(0);
+    });
   });
 });

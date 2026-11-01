@@ -103,7 +103,7 @@ export function evaluateEnding(ctx: EndingEvaluationContext): EndingResult {
   const tendencies = calculateIdentityTendencies(identityMetrics);
   const dominantIdentity = getDominantIdentity(tendencies);
 
-  const kamalRel = story.characterRelationships['kamal_bhai'] ?? 0;
+  const kamalRel = story.characterRelationships['char_kamal'] ?? 0;
   const isSuspended = ctx.appSuspended || story.branchFlags['appSuspended'] === true;
 
   let endingId: EndingId;

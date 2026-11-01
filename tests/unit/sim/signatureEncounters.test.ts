@@ -1,7 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { EventDirector } from '../../../src/sim/events/EventDirector';
 import { GameManager } from '../../../src/sim/GameManager';
-import { EventBus, type GameEvents } from '../../../src/core/events';
 import { EconomyManager } from '../../../src/sim/economy/EconomyManager';
 import { evaluateCondition, type EncounterContext } from '../../../src/sim/events/conditions';
 import { applyEffects, type EffectContext } from '../../../src/sim/events/effects';
@@ -24,8 +23,11 @@ describe('T4.5 Remaining Signature Situations', () => {
   ];
 
   function createTestSetup(definitions: EncounterDef[]) {
-    const bus = new EventBus<GameEvents>();
     const gm = new GameManager({ seed: 100, mode: 'career', data: { encounters: [] } });
+    // T7.5: share gm's own bus so ReputationSystem (constructed inside gm)
+    // actually reacts to 'relationship'/'rating' effects applied below,
+    // matching how GameManager.dispatch wires effectCtx for real.
+    const bus = gm.bus;
     const economyManager = new EconomyManager(bus, { cash: 1000 });
     gm.economy.cash = economyManager.cash;
     gm.economy.motorcycleCondition = economyManager.motorcycleCondition;

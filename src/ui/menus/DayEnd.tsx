@@ -6,7 +6,7 @@ export interface DayEndProps {
   summary: DaySummary | null;
   onSleep?: () => void;
   onDelayRent?: () => void;
-  onAskAdvance?: (from: 'mintu' | 'ma', amount: number) => void;
+  onAskAdvance?: (from: 'char_mintu' | 'char_ma', amount: number) => void;
 }
 
 export function DayEnd({
@@ -352,7 +352,7 @@ export function DayEnd({
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
               <button
                 data-testid="day-end-advance-mintu-btn"
-                onClick={() => onAskAdvance?.('mintu', 500)}
+                onClick={() => onAskAdvance?.('char_mintu', 500)}
                 style={{
                   padding: '9px 12px',
                   borderRadius: '10px',
@@ -368,7 +368,7 @@ export function DayEnd({
               </button>
               <button
                 data-testid="day-end-advance-ma-btn"
-                onClick={() => onAskAdvance?.('ma', 500)}
+                onClick={() => onAskAdvance?.('char_ma', 500)}
                 style={{
                   padding: '9px 12px',
                   borderRadius: '10px',

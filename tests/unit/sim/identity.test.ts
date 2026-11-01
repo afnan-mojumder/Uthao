@@ -29,7 +29,7 @@ describe('Identity Tendencies (T4.8)', () => {
       localTrust: 25,
       promisesKept: 1,
       promisesBroken: 3,
-      relationships: { ma: -10, mintu: 5 },
+      relationships: { char_ma: -10, char_mintu: 5 },
       offAppTripsCount: 4,
       joinedScheme: true,
     };
@@ -52,7 +52,7 @@ describe('Identity Tendencies (T4.8)', () => {
       localTrust: 45,
       promisesKept: 3,
       promisesBroken: 0,
-      relationships: { ma: 15, mintu: 10, kamal_bhai: 10 },
+      relationships: { char_ma: 15, char_mintu: 10, char_kamal: 10 },
       offAppTripsCount: 0,
       joinedScheme: false,
     };
@@ -76,11 +76,11 @@ describe('Identity Tendencies (T4.8)', () => {
       promisesKept: 5,
       promisesBroken: 0,
       relationships: {
-        ma: 30,
-        mintu: 35,
-        kamal_bhai: 25,
-        nabila: 20,
-        si_morshed: 15,
+        char_ma: 30,
+        char_mintu: 35,
+        char_kamal: 25,
+        char_nabila: 20,
+        char_morshed: 15,
       },
       helpChoicesCount: 3,
       offAppTripsCount: 0,
@@ -105,7 +105,7 @@ describe('Identity Tendencies (T4.8)', () => {
       localTrust: 35,
       promisesKept: 6,
       promisesBroken: 0,
-      relationships: { ma: 10, mintu: 15 },
+      relationships: { char_ma: 10, char_mintu: 15 },
       countersAcceptedCount: 8,
       fareNetRatio: 1.15,
       offAppTripsCount: 1,
@@ -146,7 +146,7 @@ describe('Identity Tendencies (T4.8)', () => {
       localTrust: 40,
       promisesKept: 2,
       promisesBroken: 0,
-      relationships: { mintu: 10 },
+      relationships: { char_mintu: 10 },
     };
 
     const withoutHelp = calculateIdentityTendencies(baseMetrics);
@@ -202,7 +202,7 @@ describe('Identity Tendencies (T4.8)', () => {
       localTrust: 40,
       promisesKept: 2,
       promisesBroken: 0,
-      relationships: { mintu: 10, ma: 15 },
+      relationships: { char_mintu: 10, char_ma: 15 },
       offAppTripsCount: 0,
     };
 
@@ -222,7 +222,7 @@ describe('Identity Tendencies (T4.8)', () => {
         promises: { kept: 4, broken: 0 },
       },
       story: {
-        characterRelationships: { mintu: 25, ma: 30 },
+        characterRelationships: { char_mintu: 25, char_ma: 30 },
         branchFlags: { joinedScheme: false },
       },
     };

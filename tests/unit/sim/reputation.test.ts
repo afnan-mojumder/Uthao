@@ -8,6 +8,10 @@ import { EventBus, type GameEvents } from '../../../src/core/events';
 import { RoadNetwork } from '../../../src/sim/road/RoadNetwork';
 import { RequestGenerator } from '../../../src/sim/ride/RequestGenerator';
 import { Rng } from '../../../src/core/rng';
+import { GameManager } from '../../../src/sim/GameManager';
+import { RideManager } from '../../../src/sim/ride/RideManager';
+import { applyEffect, type EffectContext } from '../../../src/sim/events/effects';
+import type { RideRequest } from '../../../src/core/types';
 
 describe('ReputationSystem (T4.2)', () => {
   it('rating rolling window', () => {
@@ -324,5 +328,127 @@ describe('ReputationSystem (T4.2)', () => {
     expect(computeTipChance(4.0)).toBeCloseTo(0.1, 5);
     // 3.0 -> clamped to 0
     expect(computeTipChance(3.0)).toBe(0);
+  });
+});
+
+describe('T7.5: effect bug fixes', () => {
+  function makeEffectCtx(gm: GameManager, rideManager?: RideManager): EffectContext {
+    return {
+      gameManager: gm,
+      economyManager: gm.economyManager,
+      rideManager,
+      eventBus: gm.bus,
+    };
+  }
+
+  it('a relationship effect changes the value once (single store)', () => {
+    const gm = new GameManager({ seed: 1, mode: 'career', data: {} });
+    const ctx = makeEffectCtx(gm);
+    const start = gm.reputationSystem.getRelationship('char_kamal');
+
+    applyEffect({ type: 'relationship', characterId: 'char_kamal', delta: 5 }, ctx);
+
+    expect(gm.reputationSystem.getRelationship('char_kamal')).toBe(start + 5);
+    // story.characterRelationships IS reputationSystem's own store — not a
+    // second copy that can drift from it.
+    expect(gm.story.characterRelationships['char_kamal']).toBe(start + 5);
+  });
+
+  it('a rating effect applies and is not reset by a later unrelated reputation/changed event', () => {
+    const gm = new GameManager({ seed: 2, mode: 'career', data: {} });
+    const ctx = makeEffectCtx(gm);
+    const before = gm.reputationSystem.getAppRating();
+
+    applyEffect({ type: 'rating', delta: -0.5 }, ctx);
+    const afterRating = gm.economy.reputation;
+    expect(afterRating).toBeCloseTo(before - 0.5, 5);
+
+    // A later, unrelated relationship effect also emits reputation/changed.
+    // The old bug: GameManager's listener resynced economy.reputation from
+    // a stale reputationSystem rating every time *any* reputation/changed
+    // event fired, clobbering the rating effect's own change.
+    applyEffect({ type: 'relationship', characterId: 'char_kamal', delta: 5 }, ctx);
+    expect(gm.economy.reputation).toBeCloseTo(afterRating, 5);
+  });
+
+  it('endTrip effect cancels the active trip, not just emits an event', () => {
+    const testDistrict = {
+      districtId: 'testloop' as const,
+      name: { bn: 'টেস্ট', en: 'Test' },
+      nodes: [
+        { nodeId: 'N1', x: 0, z: 0, kind: 'junction' as const },
+        { nodeId: 'N2', x: 100, z: 0, kind: 'junction' as const },
+      ],
+      segments: [
+        {
+          segmentId: 'S1',
+          startNodeId: 'N1',
+          endNodeId: 'N2',
+          width: 10,
+          surfaceCondition: 1.0,
+          trafficDensity: 0.2,
+          speedLimit: 40,
+          turnRestrictions: [],
+          motorcycleAccessible: true,
+          pedestrianDensity: 0.1,
+          riskLevel: 0.1,
+          oneWay: false,
+          divided: false,
+          lanes: 2,
+          roadType: 'main' as const,
+          floodSensitivity: 0.1,
+          pickupPractical: true,
+          district: 'testloop' as const,
+          tags: [],
+        },
+      ],
+      pois: [],
+    };
+    const network = RoadNetwork.fromDistricts([testDistrict]);
+
+    const gm = new GameManager({ seed: 5, mode: 'career', data: {} });
+    const rideManager = new RideManager({ roadNetwork: network, bus: gm.bus });
+    gm.rideManager = rideManager;
+
+    const request: RideRequest = {
+      requestId: 'req_endtrip',
+      passengerId: 'p_test',
+      pickupNodeId: 'N1',
+      destinationNodeId: 'N2',
+      initialFare: 100,
+      estimatedDistance: 0.1,
+      estimatedDuration: 2,
+      requestedArrivalTime: null,
+      bookingType: 'app',
+      status: 'WaitingForPickup',
+      surge: 1.0,
+    };
+    rideManager.offer(request);
+    rideManager.accept(request.requestId);
+    expect(rideManager.getActiveRequest()).not.toBeNull();
+
+    const ctx = makeEffectCtx(gm, rideManager);
+    applyEffect({ type: 'endTrip', paid: false }, ctx);
+
+    expect(rideManager.getActiveRequest()).toBeNull();
+  });
+
+  it('injury no longer damages the bike unless target is bike', () => {
+    const gm = new GameManager({ seed: 6, mode: 'career', data: {} });
+    const ctx = makeEffectCtx(gm);
+    const startCondition = gm.economyManager.motorcycleCondition;
+
+    applyEffect({ type: 'injury', target: 'rider', severity: 50 }, ctx);
+    expect(gm.economyManager.motorcycleCondition).toBe(startCondition);
+
+    applyEffect({ type: 'injury', target: 'passenger', severity: 50 }, ctx);
+    expect(gm.economyManager.motorcycleCondition).toBe(startCondition);
+
+    applyEffect({ type: 'injury', target: 'bike', severity: 10 }, ctx);
+    expect(gm.economyManager.motorcycleCondition).toBe(startCondition - 10);
+
+    // Back-compat: no target at all still means 'bike'.
+    applyEffect({ type: 'injury', severity: 5 }, ctx);
+    expect(gm.economyManager.motorcycleCondition).toBe(startCondition - 15);
   });
 });

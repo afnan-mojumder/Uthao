@@ -1,7 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { EventDirector } from '../../../src/sim/events/EventDirector';
 import { GameManager } from '../../../src/sim/GameManager';
-import { EventBus, type GameEvents } from '../../../src/core/events';
 import { EconomyManager } from '../../../src/sim/economy/EconomyManager';
 import type { EncounterContext } from '../../../src/sim/events/conditions';
 import type { EffectContext } from '../../../src/sim/events/effects';
@@ -22,8 +21,13 @@ describe('T3.7 Vertical-Slice Signature Encounters', () => {
   ];
 
   function createTestSetup(definitions: EncounterDef[]) {
-    const bus = new EventBus<GameEvents>();
     const gm = new GameManager({ seed: 100, mode: 'career', data: { encounters: [] } });
+    // T7.5: share gm's own bus — ReputationSystem (constructed inside gm)
+    // only reacts to 'reputation/changed' on this bus, so a 'relationship'
+    // or 'rating' effect applied through effectCtx below needs it to be
+    // the same bus to actually take effect, matching how GameManager.dispatch
+    // wires effectCtx for real.
+    const bus = gm.bus;
     const economyManager = new EconomyManager(bus, { cash: 500 });
     gm.economy.cash = economyManager.cash;
     gm.economy.motorcycleCondition = economyManager.motorcycleCondition;
@@ -575,7 +579,7 @@ describe('T3.7 Vertical-Slice Signature Encounters', () => {
       const startMin = gm.clock.minutes;
       director.chooseOption(inst!.id, 'call_mintu', effectCtx);
       expect(gm.clock.minutes).toBeCloseTo(startMin + 25, 2);
-      expect(gm.story.characterRelationships['mintu']).toBe(2);
+      expect(gm.story.characterRelationships['char_mintu']).toBe(2);
     });
   });
 
@@ -629,8 +633,11 @@ describe('T3.7 Vertical-Slice Signature Encounters', () => {
     });
 
     it('waiving remainder costs 20 fare, boosts mood and rating', () => {
-      const { director, effectCtx, economyManager } = createTestSetup([def!]);
-      economyManager.reputation = 4.5;
+      const { director, effectCtx, economyManager, gm } = createTestSetup([def!]);
+      // T7.5: the 'rating' effect routes through gm.reputationSystem (the
+      // single source of truth economy.reputation resyncs from), not the
+      // test's standalone economyManager — seed the fixture there.
+      gm.reputationSystem.recordTripRating(4.5);
       effectCtx.activePassenger!.mood = 0.7;
       const inst = director.evaluate({
         phase: 'dropOff',
@@ -647,12 +654,12 @@ describe('T3.7 Vertical-Slice Signature Encounters', () => {
       });
 
       const startCash = economyManager.cash;
-      const startRep = economyManager.reputation;
+      const startRep = gm.reputationSystem.getAppRating();
       director.chooseOption(inst!.id, 'waive', effectCtx);
 
       expect(economyManager.cash).toBe(startCash - 20);
       expect(effectCtx.activePassenger?.mood).toBeCloseTo(0.85, 2);
-      expect(economyManager.reputation).toBeCloseTo(startRep + 0.1, 2);
+      expect(gm.reputationSystem.getAppRating()).toBeCloseTo(startRep + 0.1, 2);
     });
 
     it('waiting takes 5 minutes and slightly reduces mood', () => {

@@ -273,6 +273,9 @@ export const EffectSchema = z.discriminatedUnion('type', [
   }),
   z.object({
     type: z.literal('injury'),
+    // T7.5: bare (no target) is read as 'bike' for back-compat with data
+    // written before this field existed.
+    target: z.enum(['rider', 'passenger', 'bike']).optional(),
     severity: z.number().optional(),
   }),
 ]);

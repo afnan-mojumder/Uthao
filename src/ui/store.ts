@@ -285,7 +285,7 @@ export let onDeclineRequestCallback: ((requestId: string) => void) | null = null
 export let onNegotiationActionCallback: ((action: NegotiationAction) => void) | null = null;
 export let onSleepCallback: (() => void) | null = null;
 export let onDelayRentCallback: (() => void) | null = null;
-export let onAskAdvanceCallback: ((from: 'mintu' | 'ma', amount: number) => void) | null = null;
+export let onAskAdvanceCallback: ((from: 'char_mintu' | 'char_ma', amount: number) => void) | null = null;
 export let onRepairCallback: ((item: string) => void) | null = null;
 export let onBuyUpgradeCallback: ((upgradeId: string) => void) | null = null;
 export let onStartNewCareerCallback: (() => void) | null = null;
@@ -361,7 +361,7 @@ export function setNegotiationActionDispatcher(fn: (action: NegotiationAction) =
 export function setDayEndDispatchers(
   sleepFn: () => void,
   delayRentFn?: () => void,
-  askAdvanceFn?: (from: 'mintu' | 'ma', amount: number) => void
+  askAdvanceFn?: (from: 'char_mintu' | 'char_ma', amount: number) => void
 ): void {
   onSleepCallback = sleepFn;
   if (delayRentFn) onDelayRentCallback = delayRentFn;

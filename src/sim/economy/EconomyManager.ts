@@ -251,7 +251,7 @@ export class EconomyManager {
   }
 
   askAdvance(
-    from: 'mintu' | 'ma',
+    from: 'char_mintu' | 'char_ma',
     amount: number,
     day = 1,
     minute = 0
@@ -405,15 +405,17 @@ export class EconomyManager {
       return { success: false, netCost, reason: 'Insufficient funds' };
     }
 
-    if (this.cash >= netCost) {
-      this.cash -= netCost;
-    } else {
+    // T7.5: top up `cash` from `savings` for any shortfall, but leave the
+    // actual debit to `post()` below. The old code deducted `netCost` from
+    // cash here AND via `post()`'s own `-netCost` transaction — a double
+    // deduction that (when cash alone covered the purchase) drove cash
+    // negative and incorrectly piled the same amount onto debt.
+    if (this.cash < netCost) {
       const remainder = netCost - this.cash;
-      this.cash = 0;
       this.savings -= remainder;
+      this.cash += remainder;
     }
 
-    this.dailyExpenses += netCost;
     this.post({
       id: `tx_bike_${targetBikeId}_${day}_${minute}_${++this.txSeq}`,
       day,

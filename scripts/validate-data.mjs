@@ -12,6 +12,42 @@ import {
   DialogueDataSchema,
 } from '../src/sim/schemas.ts';
 
+// T7.5: load the canonical character ids up front so encounters/missions
+// below can be checked against them (catches the `kamal_bhai` vs
+// `char_kamal` split class of bug: a characterId that no character
+// actually has).
+const charactersPathForIds = path.resolve('data/characters.json');
+let validCharacterIds = new Set();
+if (fs.existsSync(charactersPathForIds)) {
+  const rawChars = JSON.parse(fs.readFileSync(charactersPathForIds, 'utf-8'));
+  validCharacterIds = new Set(rawChars.map((c) => c.id));
+}
+
+function collectCharacterIds(value, out) {
+  if (Array.isArray(value)) {
+    for (const item of value) collectCharacterIds(item, out);
+  } else if (value && typeof value === 'object') {
+    for (const [key, v] of Object.entries(value)) {
+      if (key === 'characterId' && typeof v === 'string') {
+        out.push(v);
+      } else {
+        collectCharacterIds(v, out);
+      }
+    }
+  }
+}
+
+function checkCharacterIds(value, label) {
+  const found = [];
+  collectCharacterIds(value, found);
+  for (const cid of found) {
+    if (!validCharacterIds.has(cid)) {
+      console.error(`${label}: characterId '${cid}' not found in data/characters.json`);
+      process.exit(1);
+    }
+  }
+}
+
 // Validate dialogue files
 const dialogueDir = path.resolve('data/dialogue');
 const dicts = { bn: {}, en: {} };
@@ -242,6 +278,7 @@ if (fs.existsSync(encountersDir)) {
             console.error(`Encounter schema error in ${filePath} (${enc?.id}):`, res.error.format());
             process.exit(1);
           }
+          checkCharacterIds(enc, `Encounter ${enc.id} in ${filePath}`);
           if (typeof dicts.en[enc.lineKey] === 'undefined') {
             console.error(`Encounter ${enc.id} in ${filePath}: lineKey '${enc.lineKey}' missing in en dialogue`);
             process.exit(1);
@@ -318,6 +355,7 @@ if (fs.existsSync(missionsDir)) {
             console.error(`Mission schema error in ${filePath} (${m?.id}):`, res.error.format());
             process.exit(1);
           }
+          checkCharacterIds(m, `Mission ${m.id} in ${filePath}`);
 
           if (typeof dicts.en[m.titleKey] === 'undefined') {
             console.error(`Mission ${m.id} in ${filePath}: titleKey '${m.titleKey}' missing in en dialogue`);

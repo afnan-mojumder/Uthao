@@ -21,7 +21,7 @@ export type Command =
   | { type: 'payExpense'; expenseId: string; amount?: number }
   | { type: 'chargePhone'; location?: 'home' | 'teaStall'; cost?: number }
   | { type: 'delayRent' }
-  | { type: 'askAdvance'; from: 'mintu' | 'ma'; amount: number }
+  | { type: 'askAdvance'; from: 'char_mintu' | 'char_ma'; amount: number }
   | { type: 'endShift' }
   | { type: 'sleep' }
   | { type: 'setWaypoint'; nodeId: string | null }

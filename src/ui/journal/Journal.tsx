@@ -242,12 +242,12 @@ export function Journal({
           {activeTab === 'characters' && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '16px' }}>
               {[
-                { id: 'ma', name: 'মা (Mother)', role: 'পরিবার ও দায়িত্ব' },
-                { id: 'mintu', name: 'মিন্টু (Mintu)', role: 'চা স্টল ও বন্ধু' },
-                { id: 'kamal_bhai', name: 'কামাল ভাই (Kamal Bhai)', role: 'বিশ্বস্ত মেকানিক' },
-                { id: 'nabila', name: 'নাবিলা (Nabila)', role: 'বিশ্ববিদ্যালয় শিক্ষার্থী' },
-                { id: 'si_morshed', name: 'এসআই মোর্শেদ (SI Morshed)', role: 'ট্রাফিক পুলিশ' },
-                { id: 'jamil', name: 'জামিল (Jamil)', role: 'রহস্যময় ক্লায়েন্ট' },
+                { id: 'char_ma', name: 'মা (Mother)', role: 'পরিবার ও দায়িত্ব' },
+                { id: 'char_mintu', name: 'মিন্টু (Mintu)', role: 'চা স্টল ও বন্ধু' },
+                { id: 'char_kamal', name: 'কামাল ভাই (Kamal Bhai)', role: 'বিশ্বস্ত মেকানিক' },
+                { id: 'char_nabila', name: 'নাবিলা (Nabila)', role: 'বিশ্ববিদ্যালয় শিক্ষার্থী' },
+                { id: 'char_morshed', name: 'এসআই মোর্শেদ (SI Morshed)', role: 'ট্রাফিক পুলিশ' },
+                { id: 'char_jamil', name: 'জামিল (Jamil)', role: 'রহস্যময় ক্লায়েন্ট' },
               ].map((c) => {
                 const rel = story.characterRelationships[c.id] ?? 0;
                 return (

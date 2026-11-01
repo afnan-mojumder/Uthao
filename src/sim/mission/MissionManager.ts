@@ -188,9 +188,12 @@ export class MissionManager {
 
     this.bus.on('reputation/changed', ({ delta }) => {
       if (delta.relationship) {
-        const { characterId, delta: relDelta } = delta.relationship;
-        const current = (this.storyState.characterRelationships[characterId] ?? 0) + relDelta;
-        this.storyState.characterRelationships[characterId] = current;
+        const { characterId } = delta.relationship;
+        // T7.5: ReputationSystem is the sole writer of characterRelationships
+        // (registered on the bus before MissionManager, so its listener has
+        // already applied this delta by the time ours runs) — just read the
+        // now-current value instead of applying the delta a second time.
+        const current = this.storyState.characterRelationships[characterId] ?? 0;
 
         for (const missionId of this.activeMissionIds) {
           const def = this.missions.get(missionId);

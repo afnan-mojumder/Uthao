@@ -72,8 +72,8 @@ describe('T4.1 Day End Screen & Store', () => {
     onDelayRentCallback?.();
     expect(mockDelayRent).toHaveBeenCalledTimes(1);
 
-    onAskAdvanceCallback?.('mintu', 500);
-    expect(mockAskAdvance).toHaveBeenCalledWith('mintu', 500);
+    onAskAdvanceCallback?.('char_mintu', 500);
+    expect(mockAskAdvance).toHaveBeenCalledWith('char_mintu', 500);
   });
 
   it('provides bilingual DayEnd strings in English and Bengali', () => {

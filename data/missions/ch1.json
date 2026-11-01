@@ -22,7 +22,7 @@
       },
       {
         "type": "relationship",
-        "characterId": "nabila",
+        "characterId": "char_nabila",
         "delta": 10
       },
       {
@@ -62,7 +62,7 @@
       },
       {
         "type": "relationship",
-        "characterId": "kamal_bhai",
+        "characterId": "char_kamal",
         "delta": 5
       },
       {
@@ -108,7 +108,7 @@
     "rewards": [
       {
         "type": "relationship",
-        "characterId": "ma",
+        "characterId": "char_ma",
         "delta": 15
       },
       {
@@ -124,7 +124,7 @@
     "onFail": [
       {
         "type": "relationship",
-        "characterId": "ma",
+        "characterId": "char_ma",
         "delta": -10
       },
       {

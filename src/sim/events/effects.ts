@@ -4,6 +4,7 @@ import type { EconomyManager } from '../economy/EconomyManager';
 import type { RideManager } from '../ride/RideManager';
 import type { EventBus, GameEvents } from '../../core/events';
 import { clamp } from '../../core/math';
+import { canonicalCharacterId } from '../passenger/PassengerAI';
 
 export interface EffectContext {
   gameManager: GameManager;
@@ -59,29 +60,25 @@ export function applyEffect(effect: Effect, ctx: EffectContext): void {
     }
 
     case 'rating': {
-      ctx.economyManager.reputation = clamp(
-        ctx.economyManager.reputation + effect.delta,
-        1.0,
-        5.0
-      );
-      ctx.gameManager.economy.reputation = ctx.economyManager.reputation;
-      ctx.eventBus.emit('reputation/changed', {
-        delta: {
-          rating: effect.delta,
-        },
-      });
+      // T7.5: route through ReputationSystem's own rolling history instead
+      // of poking economyManager.reputation directly — GameManager's
+      // reputation/changed listener always resyncs economy.reputation from
+      // reputationSystem.getAppRating(), so a direct write here was
+      // silently overwritten the moment the event below fired.
+      ctx.gameManager.reputationSystem.adjustRating(effect.delta);
       break;
     }
 
     case 'relationship': {
-      const current =
-        ctx.gameManager.story.characterRelationships[effect.characterId] ?? 0;
-      const updated = current + effect.delta;
-      ctx.gameManager.story.characterRelationships[effect.characterId] = updated;
+      // T7.5: ReputationSystem is the only writer of characterRelationships
+      // (it IS gameManager.story.characterRelationships by reference) —
+      // just ask for the change via the event it already listens for,
+      // instead of also writing the story object directly here.
+      const characterId = canonicalCharacterId(effect.characterId);
       ctx.eventBus.emit('reputation/changed', {
         delta: {
           relationship: {
-            characterId: effect.characterId,
+            characterId,
             delta: effect.delta,
           },
         },
@@ -127,13 +124,18 @@ export function applyEffect(effect: Effect, ctx: EffectContext): void {
     }
 
     case 'endTrip': {
+      // T7.5: actually cancel the trip through RideManager (which clears
+      // the active request and advances its FSM) instead of only emitting
+      // the notification event — the old code emitted `ride/cancelled`
+      // without ever calling `cancel()`, so nothing downstream actually
+      // ended.
       const active = ctx.rideManager?.getActiveRequest();
       if (active) {
-        ctx.eventBus.emit('ride/cancelled', {
-          requestId: active.requestId,
-          by: 'system',
-          reason: effect.paid ? 'Encounter paid partial' : 'Encounter cancelled',
-        });
+        ctx.rideManager!.cancel(
+          active.requestId,
+          'system',
+          effect.paid ? 'Encounter paid partial' : 'Encounter cancelled'
+        );
       }
       break;
     }
@@ -157,13 +159,21 @@ export function applyEffect(effect: Effect, ctx: EffectContext): void {
     }
 
     case 'injury': {
-      const severity = effect.severity ?? 15;
-      ctx.economyManager.motorcycleCondition = Math.max(
-        0,
-        ctx.economyManager.motorcycleCondition - severity
-      );
-      ctx.gameManager.economy.motorcycleCondition =
-        ctx.economyManager.motorcycleCondition;
+      // T7.5: only damage the bike when that's actually the target; bare
+      // (no target) data predates this field and is read as 'bike' for
+      // back-compat. ponytail: rider/passenger have no health stat yet, so
+      // those targets are correctly a no-op here — add a meter for them
+      // when the game needs one, don't invent it to fill this case.
+      const target = effect.target ?? 'bike';
+      if (target === 'bike') {
+        const severity = effect.severity ?? 15;
+        ctx.economyManager.motorcycleCondition = Math.max(
+          0,
+          ctx.economyManager.motorcycleCondition - severity
+        );
+        ctx.gameManager.economy.motorcycleCondition =
+          ctx.economyManager.motorcycleCondition;
+      }
       break;
     }
   }

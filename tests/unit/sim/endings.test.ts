@@ -24,7 +24,7 @@ describe('All Five Endings Evaluation (T5.5)', () => {
     currentChapter: 6,
     completedMissions: ['m1_first_ride', 'm1_fill_up', 'm1_household'],
     activeMissions: [],
-    characterRelationships: { ma: 25, mintu: 25, kamal_bhai: 20 },
+    characterRelationships: { char_ma: 25, char_mintu: 25, char_kamal: 20 },
     promises: [],
     branchFlags: {},
     endingEligibility: {
@@ -82,7 +82,7 @@ describe('All Five Endings Evaluation (T5.5)', () => {
     const ctx: EndingEvaluationContext = {
       day: 20,
       economy: { ...baseEconomy, savings: 28000 },
-      story: { ...baseStory, characterRelationships: { kamal_bhai: 35, ma: 30, mintu: 20 } },
+      story: { ...baseStory, characterRelationships: { char_kamal: 35, char_ma: 30, char_mintu: 20 } },
       rating: 4.7,
       localTrust: 55,
       safetyRecord: baseSafety,
@@ -119,11 +119,11 @@ describe('All Five Endings Evaluation (T5.5)', () => {
       story: {
         ...baseStory,
         characterRelationships: {
-          ma: 40,
-          mintu: 40,
-          kamal_bhai: 35,
-          nabila: 30,
-          si_morshed: 25,
+          char_ma: 40,
+          char_mintu: 40,
+          char_kamal: 35,
+          char_nabila: 30,
+          char_morshed: 25,
         },
       },
       rating: 4.85,

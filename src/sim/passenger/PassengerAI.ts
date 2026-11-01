@@ -6,6 +6,27 @@ import charactersRaw from '../../../data/characters.json';
 
 export const CHARACTERS: CharacterDef[] = charactersRaw as CharacterDef[];
 
+/** T7.5: the game shipped two ID schemes for the same characters (e.g.
+ * `kamal_bhai` vs the canonical `char_kamal` in data/characters.json), so
+ * data written under one scheme was silently never read back under the
+ * other. Maps every known legacy ID to its canonical `char_*` form; unknown
+ * ids (already canonical, or genuinely unrecognized) pass through unchanged. */
+const LEGACY_CHARACTER_ID_MAP: Record<string, string> = {
+  kamal_bhai: 'char_kamal',
+  mintu: 'char_mintu',
+  ma: 'char_ma',
+  si_morshed: 'char_morshed',
+  ferdousi: 'char_ferdousi',
+  tanvir: 'char_tanvir',
+  rahim: 'char_rahim',
+  nabila: 'char_nabila',
+  bablu: 'char_bablu',
+};
+
+export function canonicalCharacterId(id: string): string {
+  return LEGACY_CHARACTER_ID_MAP[id] ?? id;
+}
+
 export function getCharacter(id: string): CharacterDef | undefined {
   return CHARACTERS.find((c) => c.id === id);
 }

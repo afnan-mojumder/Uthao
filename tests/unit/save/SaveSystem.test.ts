@@ -52,7 +52,13 @@ describe('SaveSystem (T4.9)', () => {
     gm.story.currentChapter = 2;
     gm.story.completedMissions = ['m0_first_ride', 'm1_fuel_up'];
     gm.story.activeMissions = ['m2_delivery'];
-    gm.story.characterRelationships = { mintu: 25, kamal_bhai: 15, ma: 30 };
+    // T7.5: mutate in place (not reassign) — ReputationSystem holds this
+    // exact object by reference as its own relationship store.
+    Object.assign(gm.story.characterRelationships, {
+      char_mintu: 25,
+      char_kamal: 15,
+      char_ma: 30,
+    });
     gm.story.branchFlags = { joinedScheme: false, metPolice: true };
 
     gm.reputationSystem.recordTripRating(4.8);

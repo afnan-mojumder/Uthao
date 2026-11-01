@@ -13,14 +13,14 @@
         "id": "obj_m6_kamal_rel",
         "descKey": "obj_m6_kamal_rel_desc",
         "type": "relationship",
-        "characterId": "kamal_bhai",
+        "characterId": "char_kamal",
         "min": 15
       }
     ],
     "rewards": [
       {
         "type": "relationship",
-        "characterId": "kamal_bhai",
+        "characterId": "char_kamal",
         "delta": 15
       },
       {

@@ -38,7 +38,7 @@
         "labelKey": "encounter.puncture.choice.mintu",
         "effects": [
           { "type": "time", "min": 25 },
-          { "type": "relationship", "characterId": "mintu", "delta": 2 }
+          { "type": "relationship", "characterId": "char_mintu", "delta": 2 }
         ]
       }
     ]

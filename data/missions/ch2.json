@@ -91,7 +91,7 @@
         "id": "obj_m2_regular_rel",
         "descKey": "obj_m2_regular_rel_desc",
         "type": "relationship",
-        "characterId": "tanvir",
+        "characterId": "char_tanvir",
         "min": 10
       }
     ],

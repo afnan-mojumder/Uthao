@@ -68,6 +68,8 @@ export class GameSession {
     this.autoRequests = opts.autoRequests ?? true;
 
     this.ride = new RideManager({ roadNetwork: this.road, bus: this.gm.bus });
+    // T7.5: lets effect handlers (e.g. `endTrip`) reach the live ride state.
+    this.gm.rideManager = this.ride;
     this.traffic = new TrafficManager(this.road, this.gm.seed);
     this.requests = new RequestGenerator(this.road, this.gm.rng.fork('requestGenerator'), {
       reputationSystem: this.gm.reputationSystem,

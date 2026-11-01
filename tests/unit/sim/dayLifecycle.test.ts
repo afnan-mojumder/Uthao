@@ -59,7 +59,7 @@ describe('T4.1 Day lifecycle and living expenses', () => {
     // Assert: rentDelayedOnce flag set, unpaid rent converted to debt
     expect(gm.story.branchFlags['rentDelayedOnce']).toBe(true);
     expect(gm.economyManager.debt).toBeGreaterThanOrEqual(3800); // 200 cash - (150+30+4000) = -3980 converted to debt
-    expect(gm.reputationSystem.getRelationship('ma')).toBeLessThan(0); // relationship penalty
+    expect(gm.reputationSystem.getRelationship('char_ma')).toBeLessThan(0); // relationship penalty
 
     // Advance to day 14 (next rent day)
     gm.dispatch({ type: 'sleep' });
@@ -172,11 +172,11 @@ describe('T4.1 Day lifecycle and living expenses', () => {
     const initialCash = gm.economyManager.cash;
     const initialDebt = gm.economyManager.debt;
 
-    gm.dispatch({ type: 'askAdvance', from: 'mintu', amount: 500 });
+    gm.dispatch({ type: 'askAdvance', from: 'char_mintu', amount: 500 });
     expect(gm.economyManager.cash).toBe(initialCash + 500);
     expect(gm.economyManager.debt).toBe(initialDebt + 500);
 
-    gm.dispatch({ type: 'askAdvance', from: 'ma', amount: 500 });
+    gm.dispatch({ type: 'askAdvance', from: 'char_ma', amount: 500 });
     expect(gm.economyManager.cash).toBe(initialCash + 1000);
     expect(gm.economyManager.debt).toBe(initialDebt + 1000);
   });

@@ -50,7 +50,7 @@
     "rewards": [
       {
         "type": "relationship",
-        "characterId": "ferdousi",
+        "characterId": "char_ferdousi",
         "delta": 15
       },
       {
@@ -86,7 +86,7 @@
       },
       {
         "type": "relationship",
-        "characterId": "bablu",
+        "characterId": "char_bablu",
         "delta": 15
       }
     ],
@@ -142,7 +142,7 @@
     "rewards": [
       {
         "type": "relationship",
-        "characterId": "mintu",
+        "characterId": "char_mintu",
         "delta": 10
       },
       {
@@ -173,7 +173,7 @@
     "rewards": [
       {
         "type": "relationship",
-        "characterId": "rahim",
+        "characterId": "char_rahim",
         "delta": 25
       },
       {
@@ -234,7 +234,7 @@
     "rewards": [
       {
         "type": "relationship",
-        "characterId": "kamal_bhai",
+        "characterId": "char_kamal",
         "delta": 20
       },
       {

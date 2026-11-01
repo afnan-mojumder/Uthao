@@ -1076,7 +1076,7 @@ export function runHeadlessCampaign(
       currentChapter: 6,
       completedMissions: ['m1_first_ride'],
       activeMissions: [],
-      characterRelationships: { kamal_bhai: kamalRel, ma: 30 },
+      characterRelationships: { char_kamal: kamalRel, char_ma: 30 },
       promises: [],
       branchFlags: {
         appSuspended: wasSuspended,
