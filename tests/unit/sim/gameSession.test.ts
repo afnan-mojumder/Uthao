@@ -372,3 +372,31 @@ describe('T8.3 live fuel, wear and recovery', () => {
     expect(broke).toBe(0);
   });
 });
+
+describe('T8.3 fix: rescue wait runs through the real clock path', () => {
+  function rescueAt(minutes: number) {
+    const s = makeSession({ seed: 3, autoRequests: false });
+    s.gm.economyManager.fuelLevel = 0;
+    s.gm.economyManager.cash = 0;
+    s.gm.clock.minutes = minutes;
+    return s;
+  }
+
+  it('mid-day: advances exactly the wait and fires the hour event once', () => {
+    const s = rescueAt(10 * 60 + 50);
+    const hours: number[] = [];
+    s.gm.bus.on('clock/hour', (e) => hours.push(e.hour));
+    s.gm.dispatch({ type: 'callFuelRescue' });
+    expect(s.gm.clock.minutes).toBeCloseTo(10 * 60 + 70, 5);
+    expect(hours).toEqual([11]);
+  });
+
+  it('near the end of the day: forced shift end runs once and the clock never overshoots', () => {
+    const s = rescueAt(22 * 60 + 50);
+    let ended = 0;
+    s.gm.bus.on('day/ended', () => ended++);
+    s.gm.dispatch({ type: 'callFuelRescue' });
+    expect(ended).toBe(1);
+    expect(s.gm.clock.minutes).toBeLessThan(1440);
+  });
+});

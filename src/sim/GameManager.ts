@@ -297,13 +297,10 @@ export class GameManager {
     this.story.currentChapter = 6;
   }
 
-  tick(dt: number = SIM_DT): void {
-    if (this.paused) {
-      return;
-    }
-
-    this.ticks++;
-
+  /** Clock-driven side effects of `dt` real seconds: clock, weather, road events,
+   * hour event, phone drain and the forced 23:00 shift end. Shared by `tick` and
+   * waits (fuel rescue) so both are observed identically. */
+  private advanceTime(dt: number): void {
     const prevHour = Math.floor(this.clock.minutes / 60);
     this.clock.advance(dt);
     const currHour = Math.floor(this.clock.minutes / 60);
@@ -327,6 +324,28 @@ export class GameManager {
     if (this.clock.minutes >= 23 * 60 && !this.shiftEnded) {
       this.dispatch({ type: 'endShift' });
     }
+  }
+
+  /** Advances game time by `minutes` through the same path as `tick`, in
+   * one-minute chunks, without physics. Stops if the day rolls over (shift ended). */
+  private waitGameMinutes(minutes: number): void {
+    const day = this.clock.day;
+    let left = minutes;
+    while (left > 0 && this.clock.day === day) {
+      const chunk = Math.min(1, left);
+      this.advanceTime((chunk * 60) / TIME_SCALE);
+      left -= chunk;
+    }
+  }
+
+  tick(dt: number = SIM_DT): void {
+    if (this.paused) {
+      return;
+    }
+
+    this.ticks++;
+
+    this.advanceTime(dt);
 
     // Evaluate encounters (once per game minute or on phase change)
     const ctx: EncounterContext = {
@@ -431,7 +450,7 @@ export class GameManager {
         }
         const res = em.callFriendForFuel(this.clock.day, this.clock.minutes);
         // The wait is real game time: someone has to bring the fuel.
-        this.clock.minutes += res.timeCostMin;
+        this.waitGameMinutes(res.timeCostMin);
         this.syncEconomy();
         return { success: true, data: res };
       }
