@@ -71,7 +71,7 @@ Spec: `docs/MASTER.md`. Plan with full task details: `docs/superpowers/plans/202
 - [x] **T7.5** One relationship store, one ID scheme, effect bugs (3), deps: T7.1
 - [x] **T8.1** Authoritative TripFsm, negotiate before pickup (8), deps: T7.2, T7.4
 - [x] **T8.2** Exactly-once settlement and ledger (5), deps: T8.1
-- [ ] **T8.3** Live fuel, wear and recovery (3), deps: T8.2
+- [x] **T8.3** Live fuel, wear and recovery (3), deps: T8.2
 - [ ] **T8.4** Pickup validity, navigation, reroute, phone states (5), deps: T8.1
 - [ ] **T8.5** Negotiation with the real passenger (3), deps: T8.1, T7.4
 - [ ] **T8.6** Six new archetypes and live off-app rides (5), deps: T8.5, T8.2
