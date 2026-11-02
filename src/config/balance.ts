@@ -36,12 +36,32 @@ export const BALANCE = {
     },
     idleLPerGameHour: 0.3,
     engineTuneBonus: 0.15,
+    // T8.3 live burn modifiers (multiplicative on the per-km burn).
+    loadPerKg: 0.002, // 70 kg passenger -> +14%
+    passengerKg: 70,
+    roughnessMult: 0.3, // at roughness 1 (worst surface)
+    throttleStressMult: 0.5, // at throttleStress 1 (hard launch from standstill)
+    wornMult: 0.25, // at condition 0
+    idleSpeedMs: 1.5, // below this a ride/throttle counts as idling
+    // Empty tank: the bike can only be pushed.
+    pushSpeedMs: 1.4,
+    pushAccel: 0.8,
+    stationRangeM: 40, // map metres from a fuel POI node
+    lowL: 1.0, // HUD low-fuel warning
+    rescueBelowL: 0.5, // rescue is only offered below this
+    rescue: { liters: 1.0, cost: 100, waitMin: 20 }, // cost lands as debt when cash is short
   },
   WEAR: {
     conditionPerKm: 0.4,
     perfPenaltyBelow: 40,
     oilEveryKm: 60,
     oilCost: 350,
+    // T8.3 breakdowns: warn first, only risk a stall once warned.
+    warnBelow: 35,
+    breakdownBelow: 25,
+    breakdownPerKmAtZero: 0.4, // per virtual km at condition 0, linear up to breakdownBelow
+    breakdownStallSec: 8,
+    wornVmaxMult: 0.92, // below perfPenaltyBelow
   },
   PUNCTURE: {
     basePerKm: 0.004,

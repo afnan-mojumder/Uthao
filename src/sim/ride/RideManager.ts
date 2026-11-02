@@ -38,6 +38,9 @@ export interface RideManagerOptions {
   reputation?: ReputationSystem;
   /** T8.2: real day/minute for the ledger rows. */
   clock?: { day: number; minutes: number };
+  /** T8.3: fuel actually burned over the current trip. Without it the receipt falls
+   * back to a distance estimate (bare unit tests, no live riding). */
+  tripFuelLiters?: () => number;
 }
 
 export class RideManager {
@@ -54,6 +57,7 @@ export class RideManager {
   private readonly economy?: EconomyManager;
   private readonly reputation?: ReputationSystem;
   private readonly clock?: { day: number; minutes: number };
+  private readonly tripFuelLiters?: () => number;
   currentRoute: Route | null = null;
   offAppStrikes: number = 0;
   appSuspendedUntilDay: number = 0;
@@ -72,6 +76,7 @@ export class RideManager {
     this.economy = opts.economy;
     this.reputation = opts.reputation;
     this.clock = opts.clock;
+    this.tripFuelLiters = opts.tripFuelLiters;
     this.bus.on('bike/swapped', ({ bikeId }) => {
       this.activeBikeId = bikeId;
     });
@@ -406,8 +411,7 @@ export class RideManager {
 
           const rating = this.reputation?.getActiveTripRating() ?? 5;
           const spec = { model: this.activeBikeId, engineTune: this.hasEngineTune };
-          // ponytail: fuel burned is derived from distance until live burn lands (T8.3).
-          const fuelLiters = fuelUsed(req.estimatedDistance, 0, spec);
+          const fuelLiters = this.tripFuelLiters?.() ?? fuelUsed(req.estimatedDistance, 0, spec);
           const tripReceipt = this.economy
             ? this.economy.settleTrip({
                 requestId: req.requestId,

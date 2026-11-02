@@ -23,5 +23,9 @@
   "objective.emergency": "Deal with the emergency first",
   "objective.no_show": "Passenger didn't show, look for a new ride",
   "objective.cancelled": "Ride cancelled, look for a new ride",
-  "objective.failed": "The ride couldn't be completed, look for a new ride"
+  "objective.failed": "The ride couldn't be completed, look for a new ride",
+  "hud.fuel_empty": "Tank empty! Push the bike or call for help",
+  "hud.refuel": "Refuel",
+  "hud.fuel_rescue": "Call fuel rescue (৳{cost}, {min} min)",
+  "hud.bike_warn": "Bike in poor shape, visit a garage"
 }

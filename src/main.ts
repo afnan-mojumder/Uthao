@@ -387,7 +387,7 @@ function frame(now: number) {
     const fare = activeReq?.initialFare;
 
     const currentSpeedKmh = session.bike.speed * 3.6;
-    const fuelL = gm.economy.fuelLevel;
+    const fuelL = gm.economyManager.fuelLevel;
     const fuelMaxL = BALANCE.FUEL.tankL;
     const todayNetEarnings = gm.economy.dailyRevenue - gm.economy.dailyExpenses;
     const shiftClock = gm.clock.hhmm();
@@ -401,6 +401,8 @@ function frame(now: number) {
       fare,
       fuelL,
       fuelMaxL,
+      nearStation: session.nearFuelStation(),
+      conditionPct: gm.economyManager.motorcycleCondition,
       todayNetEarnings,
       shiftClock,
       shiftDay,

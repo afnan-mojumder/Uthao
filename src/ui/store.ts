@@ -580,6 +580,14 @@ export async function promptPwaInstall(): Promise<boolean> {
   }
 }
 
+export let onRefuelCallback: (() => void) | null = null;
+export let onFuelRescueCallback: (() => void) | null = null;
+
+export function setFuelDispatchers(refuel: () => void, rescue: () => void): void {
+  onRefuelCallback = refuel;
+  onFuelRescueCallback = rescue;
+}
+
 export let onBuyBikeCallback: ((bikeId: string, useTradeIn?: boolean) => void) | null = null;
 export let onSwitchBikeCallback: ((bikeId: string) => void) | null = null;
 

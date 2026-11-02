@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
+import type { VNode } from 'preact';
 import { Hud, HudView, type HudState } from '../../../src/ui/hud/Hud';
 import { ChoiceCardView } from '../../../src/ui/choice/ChoiceCard';
 import { choiceSignal } from '../../../src/ui/store';
@@ -143,5 +144,43 @@ describe('T2.8 & T4.10 Rider HUD and Mobile Polish', () => {
     const style = vnode?.props.style as Record<string, unknown>;
     expect(style.top).toContain('env(safe-area-inset-top, 0px)');
     expect(style.maxHeight).toBe('calc(100vh - 180px)');
+  });
+});
+
+describe('T8.3 fuel recovery affordances', () => {
+  const base: HudState = {
+    speedKmh: 0, fuelL: 4, fuelMaxL: 8, objectiveText: '', todayNetEarnings: 0,
+    shiftClock: '08:00', shiftDay: 1, rating: 5,
+  };
+  /** Collects data-testid values by expanding function components (no DOM available). */
+  const testIds = (s: Partial<HudState>): Set<string> => {
+    const ids = new Set<string>();
+    const walk = (n: unknown): void => {
+      if (Array.isArray(n)) return n.forEach(walk);
+      if (!n || typeof n !== 'object') return;
+      const v = n as VNode<Record<string, unknown>>;
+      const props = v.props ?? {};
+      if (typeof props['data-testid'] === 'string') ids.add(props['data-testid']);
+      if (typeof v.type === 'function') walk((v.type as (p: unknown) => unknown)(props));
+      else walk(props.children);
+    };
+    walk(HudView({ state: { ...base, ...s } }));
+    return ids;
+  };
+
+  it('shows no fuel actions with a healthy tank away from a station', () => {
+    const ids = testIds({});
+    expect(ids.has('hud-btn-refuel')).toBe(false);
+    expect(ids.has('hud-btn-fuel-rescue')).toBe(false);
+  });
+
+  it('offers refuel only at a station and rescue only on an empty tank', () => {
+    const near = testIds({ nearStation: true });
+    expect(near.has('hud-btn-refuel')).toBe(true);
+    expect(near.has('hud-btn-fuel-rescue')).toBe(false);
+
+    const empty = testIds({ fuelL: 0 });
+    expect(empty.has('hud-btn-fuel-rescue')).toBe(true);
+    expect(empty.has('hud-fuel-empty')).toBe(true);
   });
 });

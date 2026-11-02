@@ -1,7 +1,8 @@
 import { render } from 'preact';
 import type { JSX } from 'preact';
 import { t } from '../i18n';
-import { settingsSignal } from '../store';
+import { settingsSignal, onRefuelCallback, onFuelRescueCallback } from '../store';
+import { BALANCE } from '../../config/balance';
 import type { PassengerStatus } from '../../core/types';
 
 export interface HudPassengerInfo {
@@ -25,6 +26,10 @@ export interface HudState {
   // Fuel (Liters)
   fuelL: number;
   fuelMaxL: number;
+  /** Bike at a fuel station: a Refuel action exists. */
+  nearStation?: boolean;
+  /** 0-100 bike condition, for the wear warning. */
+  conditionPct?: number;
 
   // Objective & Route Navigation
   objectiveText: string;
@@ -75,6 +80,53 @@ async function handleToggleFullscreenAndLock(): Promise<void> {
   } catch {
     // fullscreen request optional
   }
+}
+
+const fuelBtnStyle = {
+  pointerEvents: 'auto' as const,
+  marginTop: '6px',
+  background: 'rgba(15, 23, 42, 0.88)',
+  border: '1px solid rgba(255, 255, 255, 0.3)',
+  borderRadius: '10px',
+  color: '#f8fafc',
+  padding: '6px 10px',
+  fontSize: '13px',
+  fontWeight: 700,
+  cursor: 'pointer',
+  minHeight: '36px',
+};
+
+/** Only renders actions that really exist right now: refuel needs a station nearby,
+ * rescue needs a (nearly) empty tank. Both dispatch Commands; the UI never mutates state. */
+function FuelActions({ state }: { state: HudState }): JSX.Element | null {
+  const canRescue = state.fuelL < BALANCE.FUEL.rescueBelowL;
+  const canRefuel = !!state.nearStation && state.fuelL < state.fuelMaxL - 0.5;
+  const worn = (state.conditionPct ?? 100) < BALANCE.WEAR.warnBelow;
+  if (!canRescue && !canRefuel && !worn) return null;
+  return (
+    <div data-testid="hud-fuel-actions" style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}>
+      {canRescue && (
+        <div data-testid="hud-fuel-empty" style={{ color: '#ef4444', fontSize: '13px', fontWeight: 700 }}>
+          {t('hud.fuel_empty')}
+        </div>
+      )}
+      {worn && (
+        <div data-testid="hud-bike-warn" style={{ color: '#f59e0b', fontSize: '13px', fontWeight: 700 }}>
+          {t('hud.bike_warn')}
+        </div>
+      )}
+      {canRefuel && (
+        <button data-testid="hud-btn-refuel" style={fuelBtnStyle} onClick={() => onRefuelCallback?.()}>
+          {t('hud.refuel')}
+        </button>
+      )}
+      {canRescue && (
+        <button data-testid="hud-btn-fuel-rescue" style={fuelBtnStyle} onClick={() => onFuelRescueCallback?.()}>
+          {t('hud.fuel_rescue', { cost: BALANCE.FUEL.rescue.cost, min: BALANCE.FUEL.rescue.waitMin })}
+        </button>
+      )}
+    </div>
+  );
 }
 
 export function HudView({ state }: { state: HudState }): JSX.Element {
@@ -158,6 +210,7 @@ export function HudView({ state }: { state: HudState }): JSX.Element {
                 }}
               />
             </div>
+            <FuelActions state={state} />
           </div>
 
           {/* Turn Guidance */}
@@ -505,6 +558,7 @@ export function HudView({ state }: { state: HudState }): JSX.Element {
             </div>
           </div>
 
+          <FuelActions state={state} />
           {/* Fuel Level Bar */}
           <div style={{ width: '100%', marginTop: '4px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: isLowFuel ? '#ef4444' : '#94a3b8', fontWeight: 700 }}>

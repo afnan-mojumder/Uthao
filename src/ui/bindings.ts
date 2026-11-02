@@ -2,6 +2,7 @@ import type { GameSession } from '../sim/GameSession';
 import type { SaveSystem } from '../sim/save/SaveSystem';
 import { respond } from '../sim/negotiation/NegotiationSystem';
 import type { BikeId } from '../core/types';
+import { BALANCE } from '../config/balance';
 import {
   setChoiceDispatcher,
   setRequestDispatchers,
@@ -10,6 +11,7 @@ import {
   setDayEndDispatchers,
   setGarageDispatchers,
   setBikeDispatchers,
+  setFuelDispatchers,
   setMenuDispatchers,
   setSaveDispatchers,
   setTutorialDispatchers,
@@ -78,6 +80,17 @@ export function bindUi(session: GameSession, saveSystem?: SaveSystem): void {
   setGarageDispatchers(
     (item) => gm.dispatch({ type: 'repair', item }),
     (upgradeId) => gm.dispatch({ type: 'buyUpgrade', upgradeId })
+  );
+
+  // T8.3: fill the tank (the command charges money and checks the station) or
+  // call a paid fuel rescue. The UI only dispatches; GameManager decides.
+  setFuelDispatchers(
+    () =>
+      void gm.dispatch({
+        type: 'refuelAtStation',
+        liters: BALANCE.FUEL.tankL - gm.economyManager.fuelLevel,
+      }),
+    () => void gm.dispatch({ type: 'callFuelRescue' })
   );
 
   setBikeDispatchers(

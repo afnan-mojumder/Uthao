@@ -9,6 +9,7 @@ import {
   type UpgradeDef,
   calculateRepairCost,
   calculateUpgradeCost,
+  conditionWear,
 } from './maintenance';
 
 export interface TripSettlement {
@@ -226,16 +227,36 @@ export class EconomyManager {
     return added;
   }
 
+  /** A favour from family: costs money (debt when cash is short) and the caller
+   * advances the clock by `timeCostMin`. Never free and never instant. */
   callFriendForFuel(day = 1, minute = 0): { fuelAdded: number; timeCostMin: number } {
+    const r = BALANCE.FUEL.rescue;
     this.post({
       id: `tx_friend_${day}_${minute}_${++this.txSeq}`,
       day,
       minute,
       kind: 'family',
-      amount: -100,
+      amount: -r.cost,
     });
-    this.fuelLevel = Math.min(BALANCE.FUEL.tankL, this.fuelLevel + 1.0);
-    return { fuelAdded: 1.0, timeCostMin: 20 };
+    this.fuelLevel = Math.min(BALANCE.FUEL.tankL, this.fuelLevel + r.liters);
+    return { fuelAdded: r.liters, timeCostMin: r.waitMin };
+  }
+
+  /** T8.3: wear per virtual km ridden. Allocation-free (runs every sim step). */
+  applyWear(virtualKm: number): void {
+    if (!(virtualKm > 0)) return;
+    const w = conditionWear(virtualKm);
+    const before = this.getOverallCondition();
+    this.engineCondition = Math.max(0, this.engineCondition - w);
+    this.tiresCondition = Math.max(0, this.tiresCondition - w);
+    this.brakesCondition = Math.max(0, this.brakesCondition - w);
+    this.kmSinceOilChange += virtualKm;
+    // Subtract only the wear delta so event/collision damage applied directly to
+    // motorcycleCondition is not wiped by a recompute from the components.
+    this.motorcycleCondition = Math.max(
+      0,
+      this.motorcycleCondition - (before - this.getOverallCondition())
+    );
   }
 
   drainBattery(percent: number): void {

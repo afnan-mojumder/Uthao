@@ -14,10 +14,12 @@ import {
   type BikeState,
   type BikeEnvironment,
 } from '../physics/bikeModel';
-import { SIM_DT } from '../config/constants';
+import { SIM_DT, DISTANCE_SCALE } from '../config/constants';
+import { BALANCE } from '../config/balance';
+import type { Rng } from '../core/rng';
 import { TIME_SCALE } from '../core/clock';
 import { clamp } from '../core/math';
-import { receipt as buildReceipt, fuelUsed } from './economy/fuel';
+import { receipt as buildReceipt, fuelUsed, type FuelOptions } from './economy/fuel';
 import type { TripReceipt } from '../core/types';
 import type { BikeCollisionSeverity } from '../core/types';
 
@@ -52,6 +54,9 @@ export class GameSession {
 
   bike: BikeState;
 
+  /** T8.3: litres burned since the current trip began; fed to `settleTrip`. */
+  tripFuelLiters = 0;
+
   /** Set when `physics` is provided: real Rapier-backed stepping and static
    * collider collisions replace the direct `stepBike` call. */
   private readonly controller?: MotorcycleController;
@@ -62,6 +67,14 @@ export class GameSession {
   // Reused each step to keep the hot path allocation-free.
   private readonly camView: { x: number; z: number; heading: number; fovRad: number };
   private readonly pose: { x: number; z: number; speed: number };
+  // T8.3 live fuel/wear state, all reused to keep step() allocation-free.
+  private readonly fuelOpts: FuelOptions = {};
+  private readonly breakdownRng: Rng;
+  private readonly fuelStations: { x: number; z: number }[] = [];
+  private tripReqId: string | null = null;
+  private warnedWorn = false;
+  private stallSec = 0;
+  private readonly stalledInput: BikeInput = { throttle: 0, brake: 0.6, steer: 0 };
 
   constructor(opts: GameSessionOptions) {
     this.gm = opts.gm;
@@ -78,6 +91,7 @@ export class GameSession {
       economy: this.gm.economyManager,
       reputation: this.gm.reputationSystem,
       clock: this.gm.clock,
+      tripFuelLiters: () => this.tripFuelLiters,
       paymentReliabilityOf: (req) =>
         this.requests.getProfile(req.passengerId)?.paymentReliability,
     });
@@ -104,9 +118,85 @@ export class GameSession {
       this.bike = createDefaultBikeState();
     }
 
-    this.env = { wet: false, surface: 1.0, hasPassenger: false, conditionPct: 100 };
+    this.env = { wet: false, surface: 1.0, hasPassenger: false, conditionPct: 100, fuelEmpty: false };
     this.camView = { x: 0, z: 0, heading: 0, fovRad: (60 * Math.PI) / 180 };
     this.pose = { x: 0, z: 0, speed: 0 };
+
+    this.breakdownRng = this.gm.rng.fork('breakdown');
+    for (const poi of this.road.getPois()) {
+      const node = poi.kind === 'fuel' ? this.road.getNode(poi.nodeId) : undefined;
+      if (node) this.fuelStations.push({ x: node.x, z: node.z });
+    }
+    this.gm.fuelStationNearby = () => this.nearFuelStation();
+  }
+
+  /** True when the bike is within `stationRangeM` map metres of a fuel POI. */
+  nearFuelStation(): boolean {
+    const r2 = BALANCE.FUEL.stationRangeM * BALANCE.FUEL.stationRangeM;
+    for (const st of this.fuelStations) {
+      const dx = st.x - this.bike.x;
+      const dz = st.z - this.bike.z;
+      if (dx * dx + dz * dz <= r2) return true;
+    }
+    return false;
+  }
+
+  /** Starts a fresh fuel tally for a new trip. */
+  beginTripFuel(): void {
+    this.tripFuelLiters = 0;
+  }
+
+  /** Burns fuel and wears the bike for the ground covered this step. */
+  private burnAndWear(
+    input: BikeInput,
+    dt: number,
+    distM: number,
+    hasRide: boolean
+  ): void {
+    const em = this.gm.economyManager;
+    const speed = this.bike.speed;
+    const km = (distM * DISTANCE_SCALE) / 1000;
+
+    if (km > 0) {
+      em.applyWear(km);
+      this.rollBreakdown(km);
+    }
+
+    if (em.fuelLevel <= 0) return;
+    const idling = speed < BALANCE.FUEL.idleSpeedMs && (hasRide || input.throttle > 0);
+    if (km <= 0 && !idling) return;
+
+    const o = this.fuelOpts;
+    o.model = this.ride.activeBikeId;
+    o.engineTune = this.ride.hasEngineTune;
+    o.loadKg = this.env.hasPassenger ? BALANCE.FUEL.passengerKg : 0;
+    o.roughness = 1 - clamp(this.env.surface, 0, 1);
+    o.throttleStress = clamp(input.throttle, 0, 1) * clamp(1 - speed / this.bikeSpec.vmax, 0, 1);
+    o.conditionPct = em.motorcycleCondition;
+    const idleMin = idling ? (dt * TIME_SCALE) / 60 : 0;
+    const liters = Math.min(em.fuelLevel, fuelUsed(km, idleMin, o));
+    em.consumeFuel(liters);
+    this.tripFuelLiters += liters;
+  }
+
+  /** Warns once when condition drops, and only afterwards rolls for a stall. */
+  private rollBreakdown(km: number): void {
+    const cond = this.gm.economyManager.motorcycleCondition;
+    if (cond >= BALANCE.WEAR.warnBelow) {
+      this.warnedWorn = false;
+      return;
+    }
+    if (!this.warnedWorn) {
+      this.warnedWorn = true;
+      this.gm.bus.emit('bike/conditionWarning', { conditionPct: cond });
+      return;
+    }
+    if (cond >= BALANCE.WEAR.breakdownBelow || this.stallSec > 0) return;
+    const perKm = BALANCE.WEAR.breakdownPerKmAtZero * (1 - cond / BALANCE.WEAR.breakdownBelow);
+    if (this.breakdownRng.chance(perKm * km)) {
+      this.stallSec = BALANCE.WEAR.breakdownStallSec;
+      this.gm.bus.emit('bike/breakdown', { conditionPct: cond });
+    }
   }
 
   /** T7.3: places the bike on the road network at `gm.homeNodeId`, aligned
@@ -228,11 +318,34 @@ export class GameSession {
         ? 0.85
         : 1.0;
     this.env.hasPassenger = activeReq?.status === 'OnTrip';
-    this.env.conditionPct = this.gm.economy.motorcycleCondition;
+    this.env.conditionPct = this.gm.economyManager.motorcycleCondition;
+    this.env.fuelEmpty = this.gm.economyManager.fuelLevel <= 0;
 
+    const reqId = activeReq ? activeReq.requestId : null;
+    if (reqId !== this.tripReqId) {
+      this.tripReqId = reqId;
+      if (reqId) this.beginTripFuel();
+    }
+
+    if (this.stallSec > 0) {
+      // Broken down: no throttle until the engine catches again (or is repaired).
+      this.stallSec -= dt;
+      if (this.gm.economyManager.motorcycleCondition >= BALANCE.WEAR.breakdownBelow) this.stallSec = 0;
+      input = this.stalledInput;
+    }
+
+    const prevX = this.bike.x;
+    const prevZ = this.bike.z;
     this.bike = this.controller
       ? this.controller.update(input, this.env, dt)
       : stepBike(this.bike, input, this.bikeSpec, this.env, dt, this.bike);
+
+    const mx = this.bike.x - prevX;
+    const mz = this.bike.z - prevZ;
+    const moved = Math.sqrt(mx * mx + mz * mz);
+    // A jump larger than any real step (teleport, respawn) is not riding.
+    const plausible = (this.bikeSpec.vmax + 1) * dt * 2;
+    this.burnAndWear(input, dt, moved <= plausible ? moved : 0, activeReq !== null);
 
     this.camView.x = this.bike.x;
     this.camView.z = this.bike.z;

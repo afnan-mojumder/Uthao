@@ -40,6 +40,8 @@ export interface BikeEnvironment {
   surface: number; // 0-1, 1 = perfect
   hasPassenger: boolean;
   conditionPct: number; // 0-100
+  /** T8.3: empty tank, the bike can only be pushed. */
+  fuelEmpty?: boolean;
 }
 
 export function createDefaultBikeSpec(): BikeSpec {
@@ -78,8 +80,14 @@ export function stepBike(
   out?: BikeState
 ): BikeState {
   let effectiveAccel = spec.accel * clamp(input.throttle, 0, 1);
+  let vmax = spec.vmax;
   if (env.conditionPct < spec.conditionPenaltyThreshold) {
     effectiveAccel *= spec.conditionPenaltyMult;
+    vmax *= BALANCE.WEAR.wornVmaxMult;
+  }
+  if (env.fuelEmpty) {
+    vmax = BALANCE.FUEL.pushSpeedMs;
+    effectiveAccel = Math.min(effectiveAccel, BALANCE.FUEL.pushAccel * clamp(input.throttle, 0, 1));
   }
   if (env.hasPassenger) {
     effectiveAccel *= spec.passengerAccelMult;
@@ -95,8 +103,12 @@ export function stepBike(
   let newSpeed = state.speed;
   if (effectiveBrake > 0) {
     newSpeed = Math.max(0, newSpeed - effectiveBrake * dt);
-  } else if (effectiveAccel > 0) {
-    newSpeed = Math.min(spec.vmax, newSpeed + effectiveAccel * dt);
+  } else if (effectiveAccel > 0 && newSpeed < vmax) {
+    newSpeed = Math.min(vmax, newSpeed + effectiveAccel * dt);
+  }
+  if (newSpeed > vmax) {
+    // Throttle cut or worn: bleed speed down to the cap instead of snapping.
+    newSpeed = Math.max(vmax, newSpeed - 4.0 * dt);
   }
 
   // Speed-scaled steering angle

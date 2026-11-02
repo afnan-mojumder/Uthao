@@ -4,6 +4,14 @@ import type { BookingType, TripReceipt } from '../../core/types';
 export interface FuelOptions {
   model?: 'old100' | 'used125' | 'new150';
   engineTune?: boolean;
+  /** Passenger/cargo weight on board. */
+  loadKg?: number;
+  /** 0-1: how bad the road surface is (1 = worst). */
+  roughness?: number;
+  /** 0-1: how hard the throttle is worked (launching from standstill). */
+  throttleStress?: number;
+  /** 0-100 bike condition; worn bikes burn more. */
+  conditionPct?: number;
 }
 
 /**
@@ -20,7 +28,15 @@ export function fuelUsed(
   const model = options?.model ?? 'old100';
   const kmPerL = BALANCE.FUEL.kmPerL[model] ?? BALANCE.FUEL.kmPerL.old100;
 
-  const drivingLiters = Math.max(0, virtualKm) / kmPerL;
+  const F = BALANCE.FUEL;
+  const conditionWorn = (100 - (options?.conditionPct ?? 100)) / 100;
+  const burnMult =
+    1 +
+    Math.max(0, options?.loadKg ?? 0) * F.loadPerKg +
+    Math.max(0, options?.roughness ?? 0) * F.roughnessMult +
+    Math.max(0, options?.throttleStress ?? 0) * F.throttleStressMult +
+    Math.max(0, conditionWorn) * F.wornMult;
+  const drivingLiters = (Math.max(0, virtualKm) / kmPerL) * burnMult;
   const idleHours = Math.max(0, idleGameMin) / 60;
   const idleLiters = idleHours * BALANCE.FUEL.idleLPerGameHour;
 

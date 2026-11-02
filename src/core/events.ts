@@ -67,6 +67,10 @@ export interface GameEvents extends Record<string, unknown> {
   'bike/infraction': { kind: BikeInfractionKind; segmentId: string };
   'bike/fuelEmpty': Record<string, never>;
   'bike/puncture': Record<string, never>;
+  /** T8.3: condition fell below the warning level; a breakdown may follow. */
+  'bike/conditionWarning': { conditionPct: number };
+  /** T8.3: the engine stalled from wear; repairable at the garage. */
+  'bike/breakdown': { conditionPct: number };
   'bike/swapped': { bikeId: BikeId; prevBikeId: BikeId };
   'delivery/offered': { delivery: DeliveryJob };
   'delivery/accepted': { deliveryId: string };

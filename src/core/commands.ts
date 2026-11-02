@@ -11,6 +11,8 @@ export type Command =
   | { type: 'cancelRide'; reason?: string }
   | { type: 'chooseEncounterOption'; instanceId: string; choiceId: string }
   | { type: 'buyFuel'; liters: number }
+  | { type: 'refuelAtStation'; liters: number }
+  | { type: 'callFuelRescue' }
   | { type: 'repair'; item: string }
   | { type: 'buyUpgrade'; upgradeId: string }
   | { type: 'buyBike'; bikeId: BikeId; useTradeIn?: boolean }

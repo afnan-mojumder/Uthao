@@ -121,6 +121,9 @@ export class GameManager {
    * effect handlers (e.g. `endTrip`) can reach the live ride state. Optional
    * because tests construct a bare GameManager with no ride loop. */
   rideManager?: RideManager;
+  /** T8.3: set by GameSession. When present, buying fuel needs the bike at a
+   * fuel station; without a session (bare GameManager) there is no position to gate on. */
+  fuelStationNearby?: () => boolean;
 
   paused: boolean = false;
   accumulator: number = 0;
@@ -406,9 +409,32 @@ export class GameManager {
         return res;
       }
       case 'buyFuel':
-        this.economy.fuelLevel += cmd.liters;
-        this.economyManager.fuelLevel = this.economy.fuelLevel;
-        return { success: true };
+      case 'refuelAtStation': {
+        if (this.fuelStationNearby && !this.fuelStationNearby()) {
+          return { success: false, reason: 'Not at a fuel station' };
+        }
+        const em = this.economyManager;
+        // Never free and never negative: buy only what the cash covers.
+        const affordable = Math.floor((em.cash / BALANCE.FUEL.pricePerL) * 100) / 100;
+        const want = Math.min(Math.max(0, cmd.liters), affordable);
+        const added = em.refuel(want, BALANCE.FUEL.pricePerL, this.clock.day, this.clock.minutes);
+        this.syncEconomy();
+        if (added <= 0) {
+          return { success: false, reason: affordable <= 0 ? 'Insufficient funds' : 'Tank is full' };
+        }
+        return { success: true, data: { liters: added } };
+      }
+      case 'callFuelRescue': {
+        const em = this.economyManager;
+        if (em.fuelLevel >= BALANCE.FUEL.rescueBelowL) {
+          return { success: false, reason: 'Tank is not empty' };
+        }
+        const res = em.callFriendForFuel(this.clock.day, this.clock.minutes);
+        // The wait is real game time: someone has to bring the fuel.
+        this.clock.minutes += res.timeCostMin;
+        this.syncEconomy();
+        return { success: true, data: res };
+      }
       case 'repair': {
         const atKamal = this.isNearKamalBhai();
         const kamalRel = this.reputationSystem.getRelationship('char_kamal');
