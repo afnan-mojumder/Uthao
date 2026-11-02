@@ -8,7 +8,6 @@ import type { RoadNetwork } from '../road/RoadNetwork';
 import type { EventBus, GameEvents } from '../../core/events';
 import type {
   RideRequest,
-  Transaction,
   BikeId,
   TripOutcome,
   TripState,
@@ -18,7 +17,9 @@ import type { Fsm } from '../../core/fsm';
 import type { Route, PickupOptionsResult } from '../road/routing';
 import type { Rng } from '../../core/rng';
 import { BALANCE } from '../../config/balance';
-import { receipt } from '../economy/fuel';
+import { receipt, fuelUsed } from '../economy/fuel';
+import type { EconomyManager } from '../economy/EconomyManager';
+import type { ReputationSystem } from '../reputation/ReputationSystem';
 import { defaultDialogueManager } from '../dialogue/DialogueManager';
 import { getCharacter } from '../passenger/PassengerAI';
 
@@ -30,6 +31,13 @@ export interface RideManagerOptions {
   /** 0-1 payment reliability of the request's passenger; drives the NoShow chance.
    * Without it, every passenger counts as fully reliable (never no-shows). */
   paymentReliabilityOf?: (req: RideRequest) => number | undefined;
+  /** T8.2: when present, a finished trip is paid through `economy.settleTrip`.
+   * Without it (bare unit tests) the receipt is computed but nothing is paid. */
+  economy?: EconomyManager;
+  /** T8.2: supplies the trip rating (`getActiveTripRating`) and starts the trip's tally. */
+  reputation?: ReputationSystem;
+  /** T8.2: real day/minute for the ledger rows. */
+  clock?: { day: number; minutes: number };
 }
 
 export class RideManager {
@@ -43,6 +51,9 @@ export class RideManager {
   private interruptedFrom: TripState | null = null;
   private readonly rng?: Rng;
   private readonly paymentReliabilityOf?: (req: RideRequest) => number | undefined;
+  private readonly economy?: EconomyManager;
+  private readonly reputation?: ReputationSystem;
+  private readonly clock?: { day: number; minutes: number };
   currentRoute: Route | null = null;
   offAppStrikes: number = 0;
   appSuspendedUntilDay: number = 0;
@@ -58,6 +69,9 @@ export class RideManager {
     this.bus = opts.bus;
     this.rng = opts.rng;
     this.paymentReliabilityOf = opts.paymentReliabilityOf;
+    this.economy = opts.economy;
+    this.reputation = opts.reputation;
+    this.clock = opts.clock;
     this.bus.on('bike/swapped', ({ bikeId }) => {
       this.activeBikeId = bikeId;
     });
@@ -338,6 +352,10 @@ export class RideManager {
             requestId: this.activeRequest.requestId,
           });
           this.go('startTrip');
+          this.reputation?.startTrip({
+            requestId: this.activeRequest.requestId,
+            isUrgent: this.activeRequest.specialCircumstance === 'urgent',
+          });
           this.bus.emit('ride/started', {
             requestId: this.activeRequest.requestId,
           });
@@ -379,20 +397,44 @@ export class RideManager {
         );
         if (dist <= 8.0 && bikePose.speed < 2.0) {
           // Arrived at destination
+          const req = this.activeRequest;
+          // MASTER §15 completion order: clear nav target -> settle -> reputation
+          // (ReputationSystem's ride/completed listener records receipt.rating) ->
+          // dropped off -> ride/completed -> Completed.
           this.go('arriveDestination'); // enters 'Completing'
+          this.currentRoute = null;
 
-          const tripReceipt = receipt({
-            requestId: this.activeRequest.requestId,
-            fare: this.activeRequest.initialFare,
-            bookingType: this.activeRequest.bookingType,
-            durationMin: this.activeRequest.estimatedDuration,
-            distanceKm: this.activeRequest.estimatedDistance,
-            rating: 5,
-            spec: {
-              model: this.activeBikeId,
-              engineTune: this.hasEngineTune,
-            },
-          });
+          const rating = this.reputation?.getActiveTripRating() ?? 5;
+          const spec = { model: this.activeBikeId, engineTune: this.hasEngineTune };
+          // ponytail: fuel burned is derived from distance until live burn lands (T8.3).
+          const fuelLiters = fuelUsed(req.estimatedDistance, 0, spec);
+          const tripReceipt = this.economy
+            ? this.economy.settleTrip({
+                requestId: req.requestId,
+                fare: req.initialFare,
+                tip: 0,
+                bonus: 0,
+                bookingType: req.bookingType,
+                fuelLiters,
+                otherCosts: 0,
+                penalties: 0,
+                compensation: 0,
+                durationMin: req.estimatedDuration,
+                distanceKm: req.estimatedDistance,
+                rating,
+                day: this.clock?.day ?? 1,
+                minute: this.clock?.minutes ?? 0,
+                consequences: [],
+              })
+            : receipt({
+                requestId: req.requestId,
+                fare: req.initialFare,
+                bookingType: req.bookingType,
+                durationMin: req.estimatedDuration,
+                distanceKm: req.estimatedDistance,
+                rating,
+                fuelLiters,
+              });
 
           const charDef = this.activeRequest.characterId ? getCharacter(this.activeRequest.characterId) : undefined;
           const dropOffDialogue = defaultDialogueManager.getDropOff({
@@ -414,20 +456,13 @@ export class RideManager {
             });
           }
 
-          this.bus.emit('ride/completed', {
-            requestId: this.activeRequest.requestId,
-            receipt: tripReceipt,
-          });
-
-          const tx: Transaction = {
-            id: `tx_${this.activeRequest.requestId}`,
-            day: 1,
-            minute: 0,
-            kind: 'fare',
-            amount: tripReceipt.net,
-            requestId: this.activeRequest.requestId,
-          };
-          this.bus.emit('economy/transaction', { tx });
+          // null: already settled (e.g. the tutorial settled it); never pay or announce twice.
+          if (tripReceipt) {
+            this.bus.emit('ride/completed', {
+              requestId: req.requestId,
+              receipt: tripReceipt,
+            });
+          }
 
           this.go('settle'); // enters 'Completed'
           this.clearActive();

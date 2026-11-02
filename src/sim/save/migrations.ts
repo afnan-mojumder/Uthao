@@ -1,4 +1,4 @@
-import type { WeatherKind, SafetyRecord, PlayerEconomy, StoryState } from '../../core/types';
+import type { Transaction, WeatherKind, SafetyRecord, PlayerEconomy, StoryState } from '../../core/types';
 import type { ActiveRoadEvent } from '../world/RoadEvents';
 
 export type SaveSlot = 'auto' | 'slot1' | 'slot2' | 'slot3';
@@ -40,6 +40,10 @@ export interface SaveV1 {
   weather: WeatherKind;
   waypointNodeId: string | null;
   roadEvents?: ActiveRoadEvent[];
+  /** T8.2, optional so older saves still load (folded into save v2 by T11.4). */
+  ledger?: Transaction[];
+  settledRequests?: string[];
+  requestSeq?: number;
 }
 
 export type AnySave = SaveV1 | Record<string, unknown>;

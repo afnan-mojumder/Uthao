@@ -47,12 +47,18 @@ export interface RideReceiptOptions {
   rating?: number | null;
   consequences?: string[];
   otherCosts?: number;
+  bonus?: number;
+  penalties?: number;
+  compensation?: number;
+  /** Fuel burned over the trip. When omitted it is derived from distance and idle time. */
+  fuelLiters?: number;
   spec?: FuelOptions;
 }
 
 /**
  * Computes official TripReceipt matching GDD §10:
- * Net earnings = fare + tip - commission - fuelCost - otherCosts
+ * Net earnings = fare + tip + bonus - commission - fuelCost - otherCosts - penalties - compensation
+ * `fuelCost` is the value of fuel burned (non-cash; the tank is bought at the pump).
  */
 export function receipt(ride: RideReceiptOptions): TripReceipt {
   const fare = Math.max(0, Math.round(ride.fare));
@@ -65,11 +71,14 @@ export function receipt(ride: RideReceiptOptions): TripReceipt {
       : BALANCE.COMMISSION_APP;
   const commission = Math.round(fare * commissionRate);
 
-  const liters = fuelUsed(ride.distanceKm, ride.idleMin ?? 0, ride.spec);
+  const liters = ride.fuelLiters ?? fuelUsed(ride.distanceKm, ride.idleMin ?? 0, ride.spec);
   const costOfFuel = fuelCost(liters);
   const otherCosts = Math.max(0, Math.round(ride.otherCosts ?? 0));
+  const bonus = Math.max(0, Math.round(ride.bonus ?? 0));
+  const penalties = Math.max(0, Math.round(ride.penalties ?? 0));
+  const compensation = Math.max(0, Math.round(ride.compensation ?? 0));
 
-  const net = fare + tip - commission - costOfFuel - otherCosts;
+  const net = fare + tip + bonus - commission - costOfFuel - otherCosts - penalties - compensation;
 
   return {
     requestId: ride.requestId,
@@ -78,6 +87,10 @@ export function receipt(ride: RideReceiptOptions): TripReceipt {
     commission,
     fuelCost: costOfFuel,
     otherCosts,
+    bonus,
+    penalties,
+    compensation,
+    fuelLiters: liters,
     net,
     durationMin: ride.durationMin,
     distanceKm: ride.distanceKm,

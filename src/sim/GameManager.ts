@@ -31,7 +31,7 @@ import passengerEncounters from '../../data/encounters/passenger.json';
 import { ReputationSystem } from './reputation/ReputationSystem';
 import { getBikeDef } from './economy/bikes';
 import { DeliveryManager } from './delivery/DeliveryManager';
-import type { SafetyRecord } from '../core/types';
+import type { SafetyRecord, Transaction } from '../core/types';
 import { RoadEventManager, type ActiveRoadEvent } from './world/RoadEvents';
 import defaultUpgrades from '../../data/upgrades.json';
 import type { RepairItem, UpgradeDef } from './economy/maintenance';
@@ -92,6 +92,10 @@ export interface SimSnapshot {
     promises: { kept: number; broken: number };
   };
   roadEvents?: ActiveRoadEvent[];
+  /** T8.2 (additive): paid-trip record, so a reload can never pay a trip twice. */
+  ledger?: Transaction[];
+  settledRequests?: string[];
+  requestSeq?: number;
 }
 
 export class GameManager {
@@ -131,6 +135,8 @@ export class GameManager {
   atKamalBhai: boolean = false;
   playerDistFromHomeM: number = 0;
   todayCompletedRides: number = 0;
+  /** T8.2: last used request sequence number (persisted). */
+  requestSeq: number = 0;
   todayStartRating: number = 5.0;
   todayRelationshipsStart: Record<string, number> = {};
 
@@ -625,6 +631,9 @@ export class GameManager {
         promises: this.reputationSystem.getPromisesRecord(),
       },
       roadEvents: this.roadEvents.getActiveEvents(),
+      ledger: [...this.economyManager.getLedger()],
+      settledRequests: this.economyManager.getSettledIds(),
+      requestSeq: this.requestSeq,
     };
   }
 
@@ -672,6 +681,9 @@ export class GameManager {
         relationships: this.story.characterRelationships,
       });
     }
+
+    this.economyManager.restoreLedger(snap.ledger ?? [], snap.settledRequests ?? []);
+    this.requestSeq = snap.requestSeq ?? 0;
 
     // Restore road events
     this.roadEvents.clearEvents();

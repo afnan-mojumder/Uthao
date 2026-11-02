@@ -255,7 +255,12 @@ export type TransactionKind =
   | 'robbery'
   | 'delivery'
   | 'medical'
-  | 'bike_purchase';
+  | 'bike_purchase'
+  | 'bonus'
+  | 'bribe'
+  | 'compensation'
+  | 'tea'
+  | 'savings';
 
 export interface Transaction {
   id: string;
@@ -273,6 +278,11 @@ export interface TripReceipt {
   commission: number;
   fuelCost: number;
   otherCosts: number;
+  bonus: number;
+  penalties: number;
+  compensation: number;
+  /** Fuel burned over the trip (fuelCost is its value; not a cash posting). */
+  fuelLiters: number;
   net: number;
   durationMin: number;
   distanceKm: number;

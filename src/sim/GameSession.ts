@@ -73,6 +73,9 @@ export class GameSession {
       roadNetwork: this.road,
       bus: this.gm.bus,
       rng: this.gm.rng.fork('rideManager'),
+      economy: this.gm.economyManager,
+      reputation: this.gm.reputationSystem,
+      clock: this.gm.clock,
       paymentReliabilityOf: (req) =>
         this.requests.getProfile(req.passengerId)?.paymentReliability,
     });
@@ -81,6 +84,8 @@ export class GameSession {
     this.traffic = new TrafficManager(this.road, this.gm.seed);
     this.requests = new RequestGenerator(this.road, this.gm.rng.fork('requestGenerator'), {
       reputationSystem: this.gm.reputationSystem,
+      dayProvider: () => this.gm.clock.day,
+      seqProvider: () => ++this.gm.requestSeq,
       phoneBatteryProvider: () => this.gm.economy.phoneBattery,
     });
 

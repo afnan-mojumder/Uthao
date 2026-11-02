@@ -420,7 +420,7 @@ export function bindEventBusToStore(bus: EventBus<GameEvents>): () => void {
       passengerName: 'Passenger',
       fare: ev.receipt.fare,
       net: ev.receipt.net,
-      rating: 5,
+      rating: ev.receipt.rating ?? 5,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     };
 

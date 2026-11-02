@@ -1,3 +1,4 @@
+import { fuelUsed } from '../sim/economy/fuel';
 import type { GameSession } from '../sim/GameSession';
 import type { SaveSystem } from '../sim/save/SaveSystem';
 import { respond } from '../sim/negotiation/NegotiationSystem';
@@ -124,32 +125,28 @@ export function bindUi(session: GameSession, saveSystem?: SaveSystem): void {
         gm.bus.emit('story/flag', { key: 'tutorial_mintu_advice', value: true });
       } else if (nextStep === 'receipt') {
         const fare = tutorialSignal.value.agreedFare ?? 100;
-        const commission = Math.round(fare * 0.15);
-        const net = fare - commission;
-        gm.economyManager.post({
-          id: `tx_first_ride_${Date.now()}`,
+        // T8.2: the tutorial ride is paid through the same exactly-once path as a live ride.
+        const tutorialRating = gm.reputationSystem.getActiveTripRating();
+        const settled = gm.economyManager.settleTrip({
+          requestId: 'req_tutorial_01',
+          fare,
+          tip: 0,
+          bonus: 0,
+          bookingType: 'app',
+          fuelLiters: fuelUsed(0.1, 0),
+          otherCosts: 0,
+          penalties: 0,
+          compensation: 0,
+          durationMin: 3,
+          distanceKm: 0.1,
+          rating: tutorialRating,
           day: gm.clock.day,
           minute: gm.clock.minutes,
-          kind: 'fare',
-          amount: net,
+          consequences: [],
         });
-        gm.economy.cash = gm.economyManager.cash;
-        gm.bus.emit('ride/completed', {
-          requestId: 'req_tutorial_01',
-          receipt: {
-            requestId: 'req_tutorial_01',
-            fare,
-            tip: 0,
-            commission,
-            fuelCost: 5,
-            otherCosts: 0,
-            net,
-            durationMin: 3,
-            distanceKm: 0.1,
-            rating: 5,
-            consequences: [],
-          },
-        });
+        if (settled) {
+          gm.bus.emit('ride/completed', { requestId: settled.requestId, receipt: settled });
+        }
       }
     },
     negotiate: (fare) => {

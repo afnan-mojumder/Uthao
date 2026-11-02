@@ -5,10 +5,12 @@ import {
   fuelCost,
   receipt,
   EconomyManager,
+  type TripSettlement,
 } from '../../../src/sim/economy';
+import { serialize, deserialize } from '../../../src/sim/save/SaveSystem';
 import { BALANCE } from '../../../src/config/balance';
 import { GameManager } from '../../../src/sim/GameManager';
-import type { DaySummary } from '../../../src/core/types';
+import type { DaySummary, Transaction } from '../../../src/core/types';
 
 describe('Economy and Fuel (T2.6)', () => {
   it('net formula matches GDD', () => {
@@ -197,5 +199,79 @@ describe('Economy and Fuel (T2.6)', () => {
       expect(gm.economyManager.cash).toBe(cashBefore - 45000);
       expect(gm.economyManager.debt).toBe(0);
     });
+  });
+});
+
+describe('Exactly-once settlement and ledger (T8.2)', () => {
+  const trip = (over: Partial<TripSettlement> = {}): TripSettlement => ({
+    requestId: 'req_1_1',
+    fare: 150,
+    tip: 0,
+    bonus: 0,
+    bookingType: 'app',
+    fuelLiters: 0.1,
+    otherCosts: 0,
+    penalties: 0,
+    compensation: 0,
+    durationMin: 10,
+    distanceKm: 3,
+    rating: 5,
+    day: 2,
+    minute: 480,
+    consequences: [],
+    ...over,
+  });
+  const sum = (txs: Transaction[]) => txs.reduce((a, t) => a + t.amount, 0);
+  const make = () => new EconomyManager(new EventBus<GameEvents>(), { cash: 100 });
+
+  it('net matches the formula', () => {
+    const eco = make();
+    const r = eco.settleTrip(
+      trip({ fare: 150, tip: 10, bonus: 5, otherCosts: 4, penalties: 3, compensation: 2, fuelLiters: 0.1 })
+    )!;
+    expect(r.net).toBe(150 + 10 + 5 - r.commission - r.fuelCost - 4 - 3 - 2);
+  });
+
+  it('the ledger reconciles: net + fuelCost equals ledger sum for the request', () => {
+    const eco = make();
+    const r = eco.settleTrip(trip({ tip: 7, bonus: 3, otherCosts: 4, penalties: 2, compensation: 1, fuelLiters: 0.4 }))!;
+    expect(r.fuelCost).toBeGreaterThan(0);
+    expect(r.net + r.fuelCost).toBe(sum(eco.ledgerFor(r.requestId)));
+    expect(eco.ledgerFor(r.requestId).some((t) => t.kind === 'fuel')).toBe(false); // fuel is never posted
+    expect(eco.cash).toBe(100 + r.net + r.fuelCost);
+  });
+
+  it('settling twice pays once', () => {
+    const eco = make();
+    expect(eco.settleTrip(trip())).not.toBeNull();
+    const c = eco.cash;
+    const rows = eco.getLedger().length;
+    expect(eco.settleTrip(trip())).toBeNull();
+    expect(eco.cash).toBe(c);
+    expect(eco.getLedger().length).toBe(rows);
+  });
+
+  it('a save taken after settle and reloaded still refuses a second settle', () => {
+    const gm = new GameManager({ seed: 3, mode: 'career', data: {} });
+    gm.requestSeq = 4;
+    gm.economyManager.settleTrip(trip({ requestId: 'req_1_4' }));
+    const cash = gm.economyManager.cash;
+    const loaded = deserialize(JSON.parse(JSON.stringify(serialize(gm))));
+    expect(loaded.economyManager.cash).toBe(cash);
+    expect(loaded.economyManager.ledgerFor('req_1_4').length).toBeGreaterThan(0);
+    expect(loaded.economyManager.settleTrip(trip({ requestId: 'req_1_4' }))).toBeNull();
+    expect(loaded.economyManager.cash).toBe(cash);
+    expect(loaded.requestSeq).toBe(4);
+  });
+
+  it('a pre-T8.2 save without ledger fields still loads', () => {
+    const gm = new GameManager({ seed: 3, mode: 'career', data: {} });
+    const save = JSON.parse(JSON.stringify(serialize(gm)));
+    delete save.ledger;
+    delete save.settledRequests;
+    delete save.requestSeq;
+    const loaded = deserialize(save);
+    expect(loaded.economyManager.getLedger()).toHaveLength(0);
+    expect(loaded.requestSeq).toBe(0);
   });
 });

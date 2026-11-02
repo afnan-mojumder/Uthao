@@ -86,6 +86,13 @@ export function TripSummary({ receipt, onContinue }: TripSummaryProps) {
             </div>
           )}
 
+          {receipt.bonus > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ color: '#94a3b8' }}>{t('trip.summary.bonus')}</span>
+              <span style={{ color: '#10b981' }}>+৳{receipt.bonus}</span>
+            </div>
+          )}
+
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <span style={{ color: '#94a3b8' }}>{t('trip.summary.commission')}</span>
             <span style={{ color: '#f87171' }}>-৳{receipt.commission}</span>
@@ -100,6 +107,19 @@ export function TripSummary({ receipt, onContinue }: TripSummaryProps) {
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span style={{ color: '#94a3b8' }}>{t('trip.summary.other_costs')}</span>
               <span style={{ color: '#f87171' }}>-৳{receipt.otherCosts}</span>
+            </div>
+          )}
+
+          {receipt.penalties > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ color: '#94a3b8' }}>{t('trip.summary.penalties')}</span>
+              <span style={{ color: '#f87171' }}>-৳{receipt.penalties}</span>
+            </div>
+          )}
+          {receipt.compensation > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ color: '#94a3b8' }}>{t('trip.summary.compensation')}</span>
+              <span style={{ color: '#f87171' }}>-৳{receipt.compensation}</span>
             </div>
           )}
 

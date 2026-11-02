@@ -37,6 +37,18 @@ describe('RequestGenerator', () => {
     }
   });
 
+  it('request ids are req_<day>_<seq> and never repeat from a persisted seq', () => {
+    let seq = 41;
+    const generator = new RequestGenerator(roadNetwork, new Rng(5), {
+      dayProvider: () => 3,
+      seqProvider: () => ++seq,
+    });
+    const a = generator.sampleRequest(540, 'clear')!.request.requestId;
+    const b = generator.sampleRequest(540, 'clear')!.request.requestId;
+    expect(a).toBe('req_3_42');
+    expect(b).toBe('req_3_43');
+  });
+
   it('rush hour produces more requests than midday (seeded)', () => {
     const seed = 999;
     const rngRush = new Rng(seed);

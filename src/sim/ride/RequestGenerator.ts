@@ -67,6 +67,9 @@ export interface RequestGeneratorOptions {
   characters?: CharacterDef[];
   phoneBattery?: number;
   phoneBatteryProvider?: () => number;
+  /** T8.2: request IDs are `req_<day>_<seq>`; the owner persists `seq` so a loaded game never reuses one. */
+  dayProvider?: () => number;
+  seqProvider?: () => number;
 }
 
 export class RequestGenerator {
@@ -82,6 +85,8 @@ export class RequestGenerator {
   private profiles: Map<string, PassengerProfile> = new Map();
   private phoneBattery: number = 100;
   private phoneBatteryProvider?: () => number;
+  private readonly dayProvider: () => number;
+  private readonly seqProvider: () => number;
   // Reused each tick() call so the common zero-request case allocates nothing.
   private readonly tickScratch: RideRequest[] = [];
 
@@ -99,6 +104,9 @@ export class RequestGenerator {
     this.requestRateMultiplier = opts.requestRateMultiplier ?? 1.0;
     this.phoneBattery = opts.phoneBattery ?? 100;
     this.phoneBatteryProvider = opts.phoneBatteryProvider;
+    let localSeq = 0;
+    this.dayProvider = opts.dayProvider ?? (() => 1);
+    this.seqProvider = opts.seqProvider ?? (() => ++localSeq);
     this.computeEligibleNodes();
   }
 
@@ -129,6 +137,10 @@ export class RequestGenerator {
       return false;
     }
     return true;
+  }
+
+  private nextRequestId(): string {
+    return `req_${this.dayProvider()}_${this.seqProvider()}`;
   }
 
   setPhoneBattery(battery: number): void {
@@ -247,7 +259,7 @@ export class RequestGenerator {
 
       if (r && r.nodeIds.length > 0) {
         const fare = fairFare(r.virtualKm, r.etaMin, surge);
-        const reqId = `req_${this.rng.int(100000, 999999)}`;
+        const reqId = this.nextRequestId();
 
         let special: SpecialCircumstance | undefined;
         if (weather === 'lightRain' || weather === 'heavyRain') {
@@ -346,7 +358,7 @@ export class RequestGenerator {
             ? 1.0
             : surgeAt(undefined, currentMinute, weather);
         const fare = fairFare(r.virtualKm, r.etaMin, surge);
-        const reqId = `req_${charDef.id}_${this.rng.int(1000, 9999)}`;
+        const reqId = this.nextRequestId();
 
         let special: SpecialCircumstance | undefined;
         if (weather === 'lightRain' || weather === 'heavyRain') {

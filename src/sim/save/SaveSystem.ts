@@ -133,6 +133,9 @@ export function serialize(gm: GameManager, slot: SaveSlot = 'auto'): SaveV1 {
     weather: snap.weather,
     waypointNodeId: snap.waypointNodeId,
     roadEvents: snap.roadEvents ? [...snap.roadEvents] : [],
+    ledger: snap.ledger ? [...snap.ledger] : [],
+    settledRequests: snap.settledRequests ? [...snap.settledRequests] : [],
+    requestSeq: snap.requestSeq ?? 0,
   };
 }
 
@@ -181,6 +184,9 @@ export function deserialize(save: SaveV1, gameData?: GameData): GameManager {
       promises: { ...save.reputation.promises },
     },
     roadEvents: save.roadEvents ? [...save.roadEvents] : [],
+    ledger: save.ledger,
+    settledRequests: save.settledRequests,
+    requestSeq: save.requestSeq,
   };
 
   gm.applySnapshot(snapshot, save.rngState);

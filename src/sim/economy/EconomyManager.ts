@@ -1,6 +1,7 @@
 import type { EventBus } from '../../core/events';
 import type { GameEvents } from '../../core/events';
-import type { PlayerEconomy, Transaction, BikeId } from '../../core/types';
+import type { PlayerEconomy, Transaction, BikeId, BookingType, TripReceipt } from '../../core/types';
+import { receipt as buildReceipt } from './fuel';
 import { getBikeDef, calculateNetBikePurchaseCost } from './bikes';
 import { BALANCE } from '../../config/balance';
 import {
@@ -10,7 +11,30 @@ import {
   calculateUpgradeCost,
 } from './maintenance';
 
+export interface TripSettlement {
+  requestId: string;
+  fare: number;
+  tip: number;
+  bonus: number;
+  bookingType: BookingType;
+  fuelLiters: number;
+  otherCosts: number;
+  penalties: number;
+  compensation: number;
+  durationMin: number;
+  distanceKm: number;
+  rating: number;
+  day: number;
+  minute: number;
+  consequences: string[];
+}
+
+// ponytail: oldest rows drop past this cap; a rolling archive is a save-v2 (T11.4) concern.
+const LEDGER_CAP = 5000;
+
 export class EconomyManager {
+  private ledger: Transaction[] = [];
+  private readonly settled = new Set<string>();
   private readonly bus: EventBus<GameEvents>;
   private txSeq = 0;
   cash: number;
@@ -97,7 +121,78 @@ export class EconomyManager {
       this.debt = 0;
     }
 
+    this.ledger.push(tx);
+    if (this.ledger.length > LEDGER_CAP) this.ledger.splice(0, this.ledger.length - LEDGER_CAP);
     this.bus.emit('economy/transaction', { tx });
+  }
+
+  /**
+   * The single exactly-once path that pays for a trip. Posts one transaction per
+   * component (fare +, tip +, bonus +, commission -, other costs -, penalties -,
+   * compensation -). Fuel is never posted: the tank was bought at the pump, and the
+   * receipt's fuelCost is the value of fuel burned (non-cash), so
+   * `receipt.net + receipt.fuelCost === sum(ledgerFor(requestId))`.
+   * Returns null, paying nothing, when the request was already settled.
+   */
+  settleTrip(s: TripSettlement): TripReceipt | null {
+    if (this.settled.has(s.requestId)) return null;
+    this.settled.add(s.requestId);
+
+    const r = buildReceipt({
+      requestId: s.requestId,
+      fare: s.fare,
+      tip: s.tip,
+      bonus: s.bonus,
+      bookingType: s.bookingType,
+      fuelLiters: s.fuelLiters,
+      otherCosts: s.otherCosts,
+      penalties: s.penalties,
+      compensation: s.compensation,
+      durationMin: s.durationMin,
+      distanceKm: s.distanceKm,
+      rating: s.rating,
+      consequences: s.consequences,
+    });
+
+    const rows: Array<[Transaction['kind'], number]> = [
+      ['fare', r.fare],
+      ['tip', r.tip],
+      ['bonus', r.bonus],
+      ['commission', -r.commission],
+      ['maintenance', -r.otherCosts],
+      ['fine', -r.penalties],
+      ['compensation', -r.compensation],
+    ];
+    for (const [kind, amount] of rows) {
+      if (amount === 0) continue;
+      this.post({
+        id: `tx_${s.requestId}_${kind}`,
+        day: s.day,
+        minute: s.minute,
+        kind,
+        amount,
+        requestId: s.requestId,
+      });
+    }
+    return r;
+  }
+
+  getLedger(): readonly Transaction[] {
+    return this.ledger;
+  }
+
+  ledgerFor(requestId: string): Transaction[] {
+    return this.ledger.filter((t) => t.requestId === requestId);
+  }
+
+  getSettledIds(): string[] {
+    return [...this.settled];
+  }
+
+  restoreLedger(ledger: Transaction[], settled: string[]): void {
+    this.ledger = ledger.map((t) => ({ ...t }));
+    this.settled.clear();
+    for (const id of settled) this.settled.add(id);
   }
 
   /**
