@@ -158,3 +158,40 @@ describe('T7.3 real physics, road spawn and collisions', () => {
     expect(hits.mock.calls[0]![0].otherKind).toBe('traffic');
   });
 });
+
+describe('newCareer resets settlement state (T8.2 fix)', () => {
+  it('a second career can settle the tutorial ride again', () => {
+    const s = makeSession({ seed: 5, autoRequests: false });
+    const completed: unknown[] = [];
+    s.gm.bus.on('ride/completed', (e) => completed.push(e));
+
+    s.newCareer();
+    const cash0 = s.gm.economyManager.cash;
+    expect(s.settleTutorialRide(100)).not.toBeNull();
+    expect(s.gm.economyManager.cash).toBeGreaterThan(cash0);
+    expect(completed).toHaveLength(1);
+
+    s.gm.requestSeq = 9;
+    s.newCareer();
+    expect(s.gm.economyManager.getLedger()).toHaveLength(0);
+    expect(s.gm.economyManager.getSettledIds()).toHaveLength(0);
+    expect(s.gm.requestSeq).toBe(0);
+
+    const cash1 = s.gm.economyManager.cash;
+    expect(s.settleTutorialRide(100)).not.toBeNull();
+    expect(s.gm.economyManager.cash).toBeGreaterThan(cash1);
+    expect(completed).toHaveLength(2);
+  });
+
+  it('an already-settled tutorial ride still announces completion without paying twice', () => {
+    const s = makeSession({ seed: 5, autoRequests: false });
+    s.newCareer();
+    s.settleTutorialRide(100);
+    const cash = s.gm.economyManager.cash;
+    const completed: unknown[] = [];
+    s.gm.bus.on('ride/completed', (e) => completed.push(e));
+    expect(s.settleTutorialRide(100)).not.toBeNull();
+    expect(s.gm.economyManager.cash).toBe(cash);
+    expect(completed).toHaveLength(1);
+  });
+});

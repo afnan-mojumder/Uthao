@@ -17,6 +17,8 @@ import {
 import { SIM_DT } from '../config/constants';
 import { TIME_SCALE } from '../core/clock';
 import { clamp } from '../core/math';
+import { receipt as buildReceipt, fuelUsed } from './economy/fuel';
+import type { TripReceipt } from '../core/types';
 import type { BikeCollisionSeverity } from '../core/types';
 
 // ponytail: proximity thresholds, not measured against real bike/vehicle
@@ -268,10 +270,40 @@ export class GameSession {
     this.gm.economyManager.cash = 600;
     this.gm.economy.fuelLevel = 1.2;
     this.gm.economyManager.fuelLevel = 1.2;
+    // A new career starts with a clean paid-trip record, or the tutorial ride would count as already settled.
+    this.gm.economyManager.restoreLedger([], []);
+    this.gm.requestSeq = 0;
     this.gm.story.branchFlags = {};
     this.gm.story.completedMissions = [];
     this.gm.story.activeMissions = ['m1_first_ride'];
     this.gm.missionManager.activateMission('m1_first_ride');
+  }
+
+  /** T8.2: settles the scripted tutorial ride through the same exactly-once path as a
+   * live ride and announces `ride/completed`. If it was already settled it pays nothing
+   * but still announces completion (so the tutorial and m1_first_ride cannot softlock). */
+  settleTutorialRide(fare: number): TripReceipt {
+    const { gm } = this;
+    const base = {
+      requestId: 'req_tutorial_01',
+      fare,
+      tip: 0,
+      bonus: 0,
+      bookingType: 'app' as const,
+      fuelLiters: fuelUsed(0.1, 0),
+      otherCosts: 0,
+      penalties: 0,
+      compensation: 0,
+      durationMin: 3,
+      distanceKm: 0.1,
+      rating: gm.reputationSystem.getActiveTripRating(),
+      consequences: [],
+    };
+    const settled =
+      gm.economyManager.settleTrip({ ...base, day: gm.clock.day, minute: gm.clock.minutes }) ??
+      buildReceipt(base);
+    gm.bus.emit('ride/completed', { requestId: settled.requestId, receipt: settled });
+    return settled;
   }
 
   /** T7.4: converts the running session to a true endless one (no missions,
