@@ -9,15 +9,14 @@ test('negotiation flow: debug-spawn a bargainer, counter twice, accept, assert t
   await page.waitForSelector('#game-canvas');
   await expect(page.locator('#hud')).toBeVisible();
 
-  // Turn on autopilot and spawn bargainer with initial fare 90
+  // Offer a bargainer (fare 90) and accept it. Negotiation comes BEFORE pickup (MASTER 6-7).
   await page.evaluate(() => {
     window.__uthao?.spawnBargainer(90);
-    window.__uthao?.autopilot(true);
   });
 
-  // Wait for bike to reach pickup point and negotiation panel to open
+  // Panel opens immediately on accept, while the rider has not yet headed to pickup
   const negPanel = page.locator('[data-testid="negotiation-panel"]');
-  await expect(negPanel).toBeVisible({ timeout: 25000 });
+  await expect(negPanel).toBeVisible({ timeout: 5000 });
 
   // Counter 1: step up high (+৳40) and counter (passenger rejects)
   const plus10Btn = page.locator('[data-testid="stepper-plus-10"]');
@@ -41,8 +40,9 @@ test('negotiation flow: debug-spawn a bargainer, counter twice, accept, assert t
   await expect(acceptBtn).toBeVisible({ timeout: 5000 });
   await acceptBtn.click();
 
-  // Panel should close and trip starts
+  // Panel should close; only now does the rider head to pickup (autopilot drives pickup + trip)
   await expect(negPanel).not.toBeVisible({ timeout: 5000 });
+  await page.evaluate(() => window.__uthao?.autopilot(true));
 
   // Wait for trip completion on autopilot
   await page.waitForFunction(

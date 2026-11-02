@@ -172,9 +172,13 @@ export function initDebugApi(
         surge: 1.0,
       };
       if (options.rideManager) {
-        options.rideManager.enableNegotiation = true;
-        options.rideManager.offer(req);
-        options.rideManager.accept(req.requestId);
+        const rm = options.rideManager;
+        // The single-district boot already holds an active test ride; accept() refuses while one is active.
+        const busy = rm.getActiveRequest();
+        if (busy) rm.cancel(busy.requestId, 'system', 'debugSpawnBargainer');
+        rm.enableNegotiation = true;
+        rm.offer(req);
+        rm.accept(req.requestId);
       }
       return req;
     },

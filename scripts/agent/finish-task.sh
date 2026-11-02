@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Usage: scripts/agent/finish-task.sh <member> <task>
 # Run on the task branch with all work committed (including the "- [x] **<task>**" tick in your DEV file).
-# Rebases onto origin/main, runs `npm run check`, pushes the branch, fast-forwards main and pushes it.
+# Rebases onto origin/main, runs `npm run check`, the smoke spec, then the FULL desktop-chrome e2e suite, pushes the branch, fast-forwards main and pushes it.
 # Retries if the other member pushed to main in between.
 # Exit 1 = precondition or check failed. Exit 2 = rebase conflict: resolve, `git rebase --continue`, rerun.
 set -euo pipefail
@@ -19,6 +19,7 @@ for attempt in 1 2 3 4 5; do
   if [[ -f package.json ]]; then
     npm run -s check || { echo "npm run check failed after rebase; fix, commit, rerun"; exit 1; }
     npx playwright test tests/e2e/smoke.spec.ts --project=desktop-chrome || { echo "smoke e2e spec failed after rebase; fix, commit, rerun"; exit 1; }
+    npx playwright test --project=desktop-chrome || { echo "full desktop e2e suite failed after rebase; fix, commit, rerun"; exit 1; }
   fi
   git push -q --force-with-lease origin "$branch"
   git checkout -q main

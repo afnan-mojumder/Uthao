@@ -37,7 +37,7 @@ Repeat until your queue is finished. **Don't stop between tasks and don't ask pe
 1. In **your own** member file, change `- [ ] **Tx.y**` to `- [x] **Tx.y**`.
 2. Append one line to `docs/progress/<member>.md`: `YYYY-MM-DD Tx.y done — <one-line note, anything the other member should know>`.
 3. `git commit -am "chore(Tx.y): mark done"`.
-4. Run `scripts/agent/finish-task.sh <member> <Tx.y>`. It rebases onto `origin/main`, runs `npm run check`, pushes the branch, fast-forwards `main` and pushes it. It retries if the other member merged in between.
+4. Run `scripts/agent/finish-task.sh <member> <Tx.y>`. It rebases onto `origin/main`, runs `npm run check`, the smoke e2e spec and the full desktop-chrome e2e suite, pushes the branch, fast-forwards `main` and pushes it. It retries if the other member merged in between.
    - Exit 0: merged. Go back to Step A.
    - Exit 2: rebase conflict. Resolve it (§4), run `GIT_EDITOR=true git rebase --continue`, then rerun `finish-task.sh`.
    - Exit 1: a check failed, usually because the other member's newly merged code interacts with yours. Fix it on your branch, commit, and rerun.
