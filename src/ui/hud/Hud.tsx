@@ -1,7 +1,7 @@
 import { render } from 'preact';
 import type { JSX } from 'preact';
 import { t } from '../i18n';
-import { settingsSignal, onRefuelCallback, onFuelRescueCallback } from '../store';
+import { settingsSignal, onRefuelCallback, onFuelRescueCallback, onChargePhoneCallback } from '../store';
 import { BALANCE } from '../../config/balance';
 import type { PassengerStatus } from '../../core/types';
 
@@ -28,6 +28,8 @@ export interface HudState {
   fuelMaxL: number;
   /** Bike at a fuel station: a Refuel action exists. */
   nearStation?: boolean;
+  /** T8.4: the phone is low and the bike is at a place where it can really be charged. */
+  chargeSpot?: 'home' | 'teaStall' | null;
   /** 0-100 bike condition, for the wear warning. */
   conditionPct?: number;
 
@@ -102,7 +104,8 @@ function FuelActions({ state }: { state: HudState }): JSX.Element | null {
   const canRescue = state.fuelL < BALANCE.FUEL.rescueBelowL;
   const canRefuel = !!state.nearStation && state.fuelL < state.fuelMaxL - 0.5;
   const worn = (state.conditionPct ?? 100) < BALANCE.WEAR.warnBelow;
-  if (!canRescue && !canRefuel && !worn) return null;
+  const canCharge = !!state.chargeSpot;
+  if (!canRescue && !canRefuel && !worn && !canCharge) return null;
   return (
     <div data-testid="hud-fuel-actions" style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}>
       {canRescue && (
@@ -118,6 +121,11 @@ function FuelActions({ state }: { state: HudState }): JSX.Element | null {
       {canRefuel && (
         <button data-testid="hud-btn-refuel" style={fuelBtnStyle} onClick={() => onRefuelCallback?.()}>
           {t('hud.refuel')}
+        </button>
+      )}
+      {canCharge && (
+        <button data-testid="hud-btn-charge-phone" style={fuelBtnStyle} onClick={() => onChargePhoneCallback?.(state.chargeSpot!)}>
+          {t('hud.charge_phone')}
         </button>
       )}
       {canRescue && (

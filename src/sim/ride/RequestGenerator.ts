@@ -19,6 +19,9 @@ import {
 import { fairFare, surgeAt } from '../negotiation/fare';
 import type { ReputationSystem } from '../reputation/ReputationSystem';
 
+// POIs where passengers gather (T8.4 demand zones).
+const DEMAND_POI_KINDS: string[] = ['busStop', 'market', 'officeGate', 'school', 'hospital', 'crossing', 'teaStall'];
+
 export function getTimeOfDayDemandMultiplier(minute: number): number {
   const m = ((minute % 1440) + 1440) % 1440;
   // Morning rush: 08:00 - 10:30 (480 - 630) -> 2.5
@@ -67,6 +70,8 @@ export interface RequestGeneratorOptions {
   characters?: CharacterDef[];
   phoneBattery?: number;
   phoneBatteryProvider?: () => number;
+  /** T8.4: when true the app offers nothing (suspended); direct and street rides continue. */
+  appSuspendedProvider?: () => boolean;
   /** T8.2: request IDs are `req_<day>_<seq>`; the owner persists `seq` so a loaded game never reuses one. */
   dayProvider?: () => number;
   seqProvider?: () => number;
@@ -85,6 +90,8 @@ export class RequestGenerator {
   private profiles: Map<string, PassengerProfile> = new Map();
   private phoneBattery: number = 100;
   private phoneBatteryProvider?: () => number;
+  private appSuspendedProvider?: () => boolean;
+  private demandNodeIds: Set<string> = new Set();
   private readonly dayProvider: () => number;
   private readonly seqProvider: () => number;
   // Reused each tick() call so the common zero-request case allocates nothing.
@@ -104,6 +111,7 @@ export class RequestGenerator {
     this.requestRateMultiplier = opts.requestRateMultiplier ?? 1.0;
     this.phoneBattery = opts.phoneBattery ?? 100;
     this.phoneBatteryProvider = opts.phoneBatteryProvider;
+    this.appSuspendedProvider = opts.appSuspendedProvider;
     let localSeq = 0;
     this.dayProvider = opts.dayProvider ?? (() => 1);
     this.seqProvider = opts.seqProvider ?? (() => ++localSeq);
@@ -166,14 +174,23 @@ export class RequestGenerator {
   }
 
   private computeEligibleNodes(): void {
+    // T8.4: a pickup needs real kerb: an accessible, practical segment that is not a
+    // divided carriageway (a passenger cannot wait mid-carriageway).
     const nodeSet = new Set<string>();
     for (const seg of this.network.getAllSegments()) {
-      if (seg.pickupPractical && seg.motorcycleAccessible) {
+      if (seg.pickupPractical && seg.motorcycleAccessible && !seg.divided) {
         nodeSet.add(seg.startNodeId);
         nodeSet.add(seg.endNodeId);
       }
     }
     this.eligibleNodeIds = Array.from(nodeSet);
+    // Demand zones: where people gather, so street hails come from here first.
+    this.demandNodeIds = new Set();
+    for (const poi of this.network.getPois()) {
+      if (DEMAND_POI_KINDS.includes(poi.kind) && nodeSet.has(poi.nodeId)) {
+        this.demandNodeIds.add(poi.nodeId);
+      }
+    }
   }
 
   getEligibleNodeIds(): string[] {
@@ -234,7 +251,7 @@ export class RequestGenerator {
       );
     }
 
-    if (bookingType === 'app' && this.getPhoneBattery() <= 0) {
+    if (bookingType === 'app' && (this.getPhoneBattery() <= 0 || this.appSuspendedProvider?.())) {
       return null;
     }
 
@@ -257,7 +274,13 @@ export class RequestGenerator {
         weather,
       });
 
-      if (r && r.nodeIds.length > 0) {
+      // The pickup must also be reachable from the destination side, or the rider
+      // could be stranded there with nobody to take.
+      if (
+        r &&
+        r.nodeIds.length > 0 &&
+        this.network.route(destNodeId, pickupNodeId, { mode: 'motorcycle', weather })
+      ) {
         const fare = fairFare(r.virtualKm, r.etaMin, surge);
         const reqId = this.nextRequestId();
 
@@ -414,7 +437,9 @@ export class RequestGenerator {
     });
 
     if (nearbyNodes.length === 0) return null;
-    const pickupNodeId = this.rng.pick(nearbyNodes);
+    // Hails come from demand zones when the rider is in one, else any nearby kerb.
+    const inZone = nearbyNodes.filter((id) => this.demandNodeIds.has(id));
+    const pickupNodeId = this.rng.pick(inZone.length > 0 ? inZone : nearbyNodes);
     return this.sampleRequest(currentMinute, weather, 'street', pickupNodeId);
   }
 
@@ -436,6 +461,7 @@ export class RequestGenerator {
     const requests = this.tickScratch;
     requests.length = 0;
 
+    // Direct bookings are off-app: only a dead phone stops them. A suspended app stops app rides only.
     if (this.getPhoneBattery() > 0) {
       // Direct bookings from recurring regulars (threshold relationship >= 15)
       if (this.rng.chance(0.08 * dtMinutes)) {
@@ -450,7 +476,8 @@ export class RequestGenerator {
         }
       }
 
-      for (let i = 0; i < count; i++) {
+      const appOpen = !this.appSuspendedProvider?.();
+      for (let i = 0; appOpen && i < count; i++) {
         const result = this.sampleRequest(currentMinute, weather, 'app');
         if (result) {
           requests.push(result.request);

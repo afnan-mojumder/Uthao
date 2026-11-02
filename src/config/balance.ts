@@ -24,6 +24,21 @@ export const BALANCE = {
   TRIP: {
     // Balancing placeholder: NoShow chance at pickup = (1 - paymentReliability) * this.
     noShowMaxChance: 0.3,
+    // T8.4: passenger mood lost per metre they are asked to walk to a relocated pickup.
+    walkMoodLossPerM: 0.002,
+    maxRelocateWalkM: 300,
+  },
+  NAV: {
+    // T8.4: more than this far from the route for this long counts as a missed turn.
+    offRouteM: 25,
+    offRouteSec: 2,
+    noRouteNoticeSec: 8,
+  },
+  PHONE: {
+    // T8.4: charging is a real action: you must be at the spot, and it takes game time.
+    chargeRangeM: 25,
+    chargeWaitMin: { home: 45, teaStall: 20 },
+    lowBatteryPct: 20,
   },
   FUEL: {
     pricePerL: 130,

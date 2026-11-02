@@ -1,4 +1,5 @@
 import type { RideManager } from './RideManager';
+import { nextInstruction, type NavInstruction } from '../road/navigation';
 import { passengerStatusOf } from './tripFsm';
 import type { PassengerStatus, TripState } from '../../core/types';
 
@@ -11,6 +12,9 @@ export interface RideView {
   navTargetNodeId: string | null;
   pickupVisible: boolean;
   dropoffVisible: boolean;
+  /** T8.4: next maneuver on the live route; null unless a real route is being followed.
+   * Shared scratch object: read it immediately, never keep a reference. */
+  instruction: NavInstruction | null;
 }
 
 // One view per RideManager, rewritten in place: this is read every frame, so it
@@ -33,6 +37,7 @@ export function deriveRideView(ride: RideManager): RideView {
       navTargetNodeId: null,
       pickupVisible: false,
       dropoffVisible: false,
+      instruction: null,
     };
     views.set(ride, v);
   }
@@ -48,12 +53,21 @@ export function deriveRideView(ride: RideManager): RideView {
   v.navTargetNodeId = null;
   v.pickupVisible = false;
   v.dropoffVisible = false;
+  v.instruction = null;
 
   if (!req) {
+    const notice = ride.getNoticeKey();
+    const app = trip === 'Idle' ? ride.getAppStatus() : 'ok';
     v.objectiveKey =
-      trip === 'RequestAvailable'
-        ? 'objective.ride_available'
-        : trip === 'NoShow'
+      notice !== null
+        ? notice
+        : app === 'suspended'
+          ? 'objective.app_suspended'
+          : app === 'phoneDead'
+            ? 'objective.charge_phone'
+            : trip === 'RequestAvailable'
+              ? 'objective.ride_available'
+              : trip === 'NoShow'
           ? 'objective.no_show'
           : trip === 'Cancelled'
             ? 'objective.cancelled'
@@ -87,6 +101,9 @@ export function deriveRideView(ride: RideManager): RideView {
       break;
     default:
       v.objectiveKey = 'objective.idle_find_ride';
+  }
+  if (v.navTargetNodeId !== null && ride.currentRoute) {
+    v.instruction = nextInstruction(ride.currentRoute, ride.getPose(), ride.roadNetwork.getNodesMap());
   }
   if (trip === 'EmergencyInterrupted') v.objectiveKey = 'objective.emergency';
   return v;

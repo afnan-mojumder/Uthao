@@ -354,8 +354,9 @@ describe('Detours, Crossings, and Off-App (T2.5)', () => {
     const req: RideRequest = {
       requestId: 'req_reroute',
       passengerId: 'p1',
-      pickupNodeId: 'N1',
-      destinationNodeId: 'N3',
+      // T8.4: accept routes from the rider (N1) to the pickup first, so the pickup is N3.
+      pickupNodeId: 'N3',
+      destinationNodeId: 'N1',
       initialFare: 100,
       estimatedDistance: 1,
       estimatedDuration: 3,

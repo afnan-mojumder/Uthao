@@ -12,6 +12,7 @@ import {
   setGarageDispatchers,
   setBikeDispatchers,
   setFuelDispatchers,
+  setChargePhoneDispatcher,
   setMenuDispatchers,
   setSaveDispatchers,
   setTutorialDispatchers,
@@ -92,6 +93,9 @@ export function bindUi(session: GameSession, saveSystem?: SaveSystem): void {
       }),
     () => void gm.dispatch({ type: 'callFuelRescue' })
   );
+
+  // T8.4: charge the phone at home or a tea stall (a real, timed action).
+  setChargePhoneDispatcher((where) => void gm.dispatch({ type: 'chargePhone', location: where }));
 
   setBikeDispatchers(
     (bikeId, useTradeIn) =>

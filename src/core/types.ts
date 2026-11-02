@@ -56,7 +56,8 @@ export type TripOutcome =
   | 'passengerCancelled'
   | 'riderCancelled'
   | 'accident'
-  | 'robbery';
+  | 'robbery'
+  | 'noRoute';
 
 /** Player-facing passenger status derived from `TripState` by `passengerStatusOf`. */
 export type PassengerStatus =

@@ -124,6 +124,8 @@ export class GameManager {
   /** T8.3: set by GameSession. When present, buying fuel needs the bike at a
    * fuel station; without a session (bare GameManager) there is no position to gate on. */
   fuelStationNearby?: () => boolean;
+  /** T8.4: set by GameSession. Charging at home or a tea stall needs the bike there. */
+  phoneChargeNearby?: (location: 'home' | 'teaStall') => boolean;
 
   paused: boolean = false;
   accumulator: number = 0;
@@ -598,9 +600,20 @@ export class GameManager {
         return { success: true };
       }
       case 'chargePhone': {
+        // T8.4: a charge at a named place needs you to be there and takes game time.
+        // Without a location (older callers) it stays an instant top-up.
+        if (cmd.location && this.phoneChargeNearby && !this.phoneChargeNearby(cmd.location)) {
+          return { success: false, reason: 'Not at a charging spot' };
+        }
         const cost = cmd.cost ?? (cmd.location === 'home' ? 0 : 10);
+        if (cost > this.economyManager.cash) {
+          return { success: false, reason: 'Insufficient funds' };
+        }
         this.economyManager.chargeBattery(100, cost, this.clock.day, this.clock.minutes);
         this.syncEconomy();
+        if (cmd.location && this.phoneChargeNearby) {
+          this.waitGameMinutes(BALANCE.PHONE.chargeWaitMin[cmd.location]);
+        }
         return { success: true };
       }
       case 'delayRent': {

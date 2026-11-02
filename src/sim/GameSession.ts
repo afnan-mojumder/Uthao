@@ -66,11 +66,12 @@ export class GameSession {
   private readonly env: BikeEnvironment;
   // Reused each step to keep the hot path allocation-free.
   private readonly camView: { x: number; z: number; heading: number; fovRad: number };
-  private readonly pose: { x: number; z: number; speed: number };
+  private readonly pose: { x: number; z: number; speed: number; heading: number };
   // T8.3 live fuel/wear state, all reused to keep step() allocation-free.
   private readonly fuelOpts: FuelOptions = {};
   private readonly breakdownRng: Rng;
   private readonly fuelStations: { x: number; z: number }[] = [];
+  private readonly teaStalls: { x: number; z: number }[] = [];
   private tripReqId: string | null = null;
   private warnedWorn = false;
   private stallSec = 0;
@@ -92,6 +93,12 @@ export class GameSession {
       reputation: this.gm.reputationSystem,
       clock: this.gm.clock,
       tripFuelLiters: () => this.tripFuelLiters,
+      appStatus: () =>
+        this.ride.isAppSuspended(this.gm.clock.day)
+          ? 'suspended'
+          : this.gm.economy.phoneBattery <= 0
+            ? 'phoneDead'
+            : 'ok',
       paymentReliabilityOf: (req) =>
         this.requests.getProfile(req.passengerId)?.paymentReliability,
     });
@@ -103,6 +110,7 @@ export class GameSession {
       dayProvider: () => this.gm.clock.day,
       seqProvider: () => ++this.gm.requestSeq,
       phoneBatteryProvider: () => this.gm.economy.phoneBattery,
+      appSuspendedProvider: () => this.ride.isAppSuspended(this.gm.clock.day),
     });
 
     this.bikeSpec = createDefaultBikeSpec();
@@ -120,7 +128,7 @@ export class GameSession {
 
     this.env = { wet: false, surface: 1.0, hasPassenger: false, conditionPct: 100, fuelEmpty: false };
     this.camView = { x: 0, z: 0, heading: 0, fovRad: (60 * Math.PI) / 180 };
-    this.pose = { x: 0, z: 0, speed: 0 };
+    this.pose = { x: 0, z: 0, speed: 0, heading: 0 };
 
     this.breakdownRng = this.gm.rng.fork('breakdown');
     for (const poi of this.road.getPois()) {
@@ -128,6 +136,31 @@ export class GameSession {
       if (node) this.fuelStations.push({ x: node.x, z: node.z });
     }
     this.gm.fuelStationNearby = () => this.nearFuelStation();
+    for (const poi of this.road.getPois()) {
+      const node = poi.kind === 'teaStall' ? this.road.getNode(poi.nodeId) : undefined;
+      if (node) this.teaStalls.push({ x: node.x, z: node.z });
+    }
+    this.gm.phoneChargeNearby = (where) => this.nearChargeSpot(where);
+  }
+
+  /** True when the bike is within `PHONE.chargeRangeM` of home or a tea stall. */
+  nearChargeSpot(where: 'home' | 'teaStall'): boolean {
+    const r2 = BALANCE.PHONE.chargeRangeM * BALANCE.PHONE.chargeRangeM;
+    // Same fallback as spawnAtHome: a district without the home node uses its first node.
+    const home =
+      where === 'home' ? (this.road.getNode(this.gm.homeNodeId) ?? this.road.getAllNodes()[0]) : undefined;
+    if (home) {
+      const dx = home.x - this.bike.x;
+      const dz = home.z - this.bike.z;
+      return dx * dx + dz * dz <= r2;
+    }
+    if (where === 'home') return false;
+    for (const st of this.teaStalls) {
+      const dx = st.x - this.bike.x;
+      const dz = st.z - this.bike.z;
+      if (dx * dx + dz * dz <= r2) return true;
+    }
+    return false;
   }
 
   /** True when the bike is within `stationRangeM` map metres of a fuel POI. */
@@ -295,6 +328,20 @@ export class GameSession {
     }
   }
 
+  /** T8.4: missed turns and closed roads re-plan the route (or fail the ride clearly). */
+  private navigate(): void {
+    const route = this.ride.currentRoute;
+    if (!route || !this.ride.getActiveRequest()) return;
+    const ids = route.segmentIds;
+    for (let i = 0; i < ids.length; i++) {
+      if (this.gm.roadEvents.isSegmentClosed(ids[i]!)) {
+        this.ride.rerouteIfBlocked(ids[i]!);
+        return;
+      }
+    }
+    if (this.ride.isOffRoute(this.pose)) this.ride.reroute(this.pose);
+  }
+
   setAutoRequests(on: boolean): void {
     this.autoRequests = on;
   }
@@ -353,12 +400,14 @@ export class GameSession {
     this.pose.x = this.bike.x;
     this.pose.z = this.bike.z;
     this.pose.speed = this.bike.speed;
+    this.pose.heading = this.bike.heading;
 
     this.traffic.maintainDensity(this.camView, this.gm.clock.minutes);
     this.traffic.update(dt, this.camView, this.pose);
     this.checkTrafficCollisions();
 
     this.ride.update(this.pose, dt);
+    this.navigate();
 
     if (this.autoRequests) {
       const dtMinutes = (dt * TIME_SCALE) / 60;

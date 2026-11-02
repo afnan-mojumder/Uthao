@@ -12,7 +12,9 @@ import type {
   TripOutcome,
   TripState,
 } from '../../core/types';
-import { distance2d } from '../../core/math';
+import { distance2d, clamp } from '../../core/math';
+import { distanceToRoute } from '../road/navigation';
+import { fairFare } from '../negotiation/fare';
 import type { Fsm } from '../../core/fsm';
 import type { Route, PickupOptionsResult } from '../road/routing';
 import type { Rng } from '../../core/rng';
@@ -41,6 +43,9 @@ export interface RideManagerOptions {
   /** T8.3: fuel actually burned over the current trip. Without it the receipt falls
    * back to a distance estimate (bare unit tests, no live riding). */
   tripFuelLiters?: () => number;
+  /** T8.4: whether the app can offer rides right now; drives the idle objective.
+   * Without it the app is always available. */
+  appStatus?: () => 'ok' | 'phoneDead' | 'suspended';
 }
 
 export class RideManager {
@@ -58,6 +63,15 @@ export class RideManager {
   private readonly reputation?: ReputationSystem;
   private readonly clock?: { day: number; minutes: number };
   private readonly tripFuelLiters?: () => number;
+  private readonly appStatusProvider?: () => 'ok' | 'phoneDead' | 'suspended';
+  // T8.4 live-navigation state. Scratch values only: nothing here allocates per step.
+  private readonly pose = { x: 0, z: 0, heading: 0 };
+  private hasPose = false;
+  private simTimeSec = 0;
+  private offRouteSince = -1;
+  private passengerMood = 1;
+  private noticeKey: string | null = null;
+  private noticeUntil = 0;
   currentRoute: Route | null = null;
   offAppStrikes: number = 0;
   appSuspendedUntilDay: number = 0;
@@ -77,6 +91,7 @@ export class RideManager {
     this.reputation = opts.reputation;
     this.clock = opts.clock;
     this.tripFuelLiters = opts.tripFuelLiters;
+    this.appStatusProvider = opts.appStatus;
     this.bus.on('bike/swapped', ({ bikeId }) => {
       this.activeBikeId = bikeId;
     });
@@ -100,6 +115,25 @@ export class RideManager {
   /** While `EmergencyInterrupted`, the state that `resumeTrip()` returns to. */
   getInterruptedFrom(): TripState | null {
     return this.interruptedFrom;
+  }
+
+  /** Last known bike pose (from `update`); `heading` is 0 until the caller supplies it. */
+  getPose(): { x: number; z: number; heading: number } {
+    return this.pose;
+  }
+
+  getAppStatus(): 'ok' | 'phoneDead' | 'suspended' {
+    return this.appStatusProvider ? this.appStatusProvider() : 'ok';
+  }
+
+  /** 0-1; drops when the passenger is asked to walk to a relocated pickup. */
+  getPassengerMood(): number {
+    return this.passengerMood;
+  }
+
+  /** A short-lived objective key explaining why the last ride ended (e.g. no route). */
+  getNoticeKey(): string | null {
+    return this.noticeKey !== null && this.simTimeSec < this.noticeUntil ? this.noticeKey : null;
   }
 
   getOfferedRequests(): RideRequest[] {
@@ -134,6 +168,35 @@ export class RideManager {
     this.interruptedFrom = null;
     this.rideElapsedSec = 0;
     this.smallTalkTriggered = false;
+    this.offRouteSince = -1;
+  }
+
+  /** Node nearest the last known bike pose, or null before the first `update`. */
+  private nearestNodeId(): string | null {
+    if (!this.hasPose) return null;
+    return this.roadNetwork.nearestNode(this.pose.x, this.pose.z)?.nodeId ?? null;
+  }
+
+  /** Where the current route is heading: the pickup until the passenger is aboard. */
+  private routeTargetId(): string | null {
+    const req = this.activeRequest;
+    if (!req) return null;
+    const s = this.trip.state === 'EmergencyInterrupted' ? this.interruptedFrom : this.trip.state;
+    return s === 'Negotiating' || s === 'Accepted' || s === 'EnRouteToPickup'
+      ? req.pickupNodeId
+      : req.destinationNodeId;
+  }
+
+  /** No route remains: the ride fails visibly, never a silent stall. */
+  private failNoRoute(): void {
+    const requestId = this.activeRequest?.requestId;
+    if (!requestId || !this.trip.can('fail')) return;
+    this.go('fail');
+    this.outcome = 'noRoute';
+    this.noticeKey = 'objective.no_route';
+    this.noticeUntil = this.simTimeSec + BALANCE.NAV.noRouteNoticeSec;
+    this.clearActive();
+    this.bus.emit('ride/cancelled', { requestId, by: 'system', reason: 'noRoute' });
   }
 
   offer(request: RideRequest): void {
@@ -162,11 +225,14 @@ export class RideManager {
     this.offeredRequests.delete(requestId);
     this.activeRequest = { ...req };
     this.go('open');
-    this.currentRoute = this.roadNetwork.route(
-      startNodeId ?? req.pickupNodeId,
-      req.destinationNodeId,
-      { mode: 'motorcycle' }
-    );
+    this.passengerMood = 1;
+    this.offRouteSince = -1;
+    // Ride to the pickup first from where the bike is; the trip route follows at pickup.
+    // Without a known position (bare tests) fall back to the trip route itself.
+    const from = startNodeId ?? this.nearestNodeId();
+    this.currentRoute = from
+      ? this.roadNetwork.route(from, req.pickupNodeId, { mode: 'motorcycle' })
+      : this.roadNetwork.route(req.pickupNodeId, req.destinationNodeId, { mode: 'motorcycle' });
     this.bus.emit('ride/accepted', { requestId });
     if (this.enableNegotiation) {
       this.bus.emit('negotiation/started', { requestId, initialFare: req.initialFare });
@@ -218,25 +284,82 @@ export class RideManager {
     return this.roadNetwork.pickupOptions(req, riderPos, options);
   }
 
+  /** A segment on the current route is blocked: route around it from where the bike
+   * is, or fail the ride clearly when nothing is left. */
   rerouteIfBlocked(blockedSegmentId: string, currentNodeId?: string): Route | null {
-    if (!this.activeRequest || !this.currentRoute) {
-      return null;
-    }
-    if (!this.currentRoute.segmentIds.includes(blockedSegmentId)) {
-      return null;
-    }
+    const target = this.routeTargetId();
+    if (!this.activeRequest || !this.currentRoute || !target) return null;
+    if (!this.currentRoute.segmentIds.includes(blockedSegmentId)) return null;
 
-    const fromNode = currentNodeId ?? this.activeRequest.pickupNodeId;
-    const newRoute = this.roadNetwork.route(fromNode, this.activeRequest.destinationNodeId, {
+    const fromNode = currentNodeId ?? this.nearestNodeId() ?? this.activeRequest.pickupNodeId;
+    const newRoute = this.roadNetwork.route(fromNode, target, {
       mode: 'motorcycle',
       avoid: [blockedSegmentId],
     });
-
     if (newRoute) {
       this.currentRoute = newRoute;
+      this.offRouteSince = -1;
       return newRoute;
     }
+    this.failNoRoute();
     return null;
+  }
+
+  /** True once the bike has been more than `NAV.offRouteM` from the current route for
+   * `NAV.offRouteSec` of sim time (advanced by `update`). Allocation-free. */
+  isOffRoute(pose: { x: number; z: number }): boolean {
+    const route = this.currentRoute;
+    if (!route || !this.activeRequest || route.segmentIds.length === 0) {
+      this.offRouteSince = -1;
+      return false;
+    }
+    if (distanceToRoute(route, this.roadNetwork.getNodesMap(), pose.x, pose.z) <= BALANCE.NAV.offRouteM) {
+      this.offRouteSince = -1;
+      return false;
+    }
+    if (this.offRouteSince < 0) this.offRouteSince = this.simTimeSec;
+    return this.simTimeSec - this.offRouteSince >= BALANCE.NAV.offRouteSec;
+  }
+
+  /** Recalculates the route from the bike's position to the current target (after a
+   * missed turn). Fails the ride clearly when the target is unreachable. */
+  reroute(pose: { x: number; z: number }): Route | null {
+    const target = this.routeTargetId();
+    if (!this.activeRequest || !target) return null;
+    const from = this.roadNetwork.nearestNode(pose.x, pose.z)?.nodeId;
+    const fresh = from ? this.roadNetwork.route(from, target, { mode: 'motorcycle' }) : null;
+    this.offRouteSince = -1;
+    if (fresh) {
+      this.currentRoute = fresh;
+      return fresh;
+    }
+    this.failNoRoute();
+    return null;
+  }
+
+  /** Moves the pickup to `nodeId` (e.g. a safe crossing), `walkM` metres from the old
+   * one. Only while the pickup can still change. Re-prices the trip while still
+   * negotiating; later the agreed fare stands and the passenger just walks. */
+  relocatePickup(nodeId: string, walkM: number): boolean {
+    const req = this.activeRequest;
+    const s = this.trip.state;
+    if (!req || (s !== 'Negotiating' && s !== 'Accepted' && s !== 'EnRouteToPickup')) return false;
+    if (!(walkM >= 0) || walkM > BALANCE.TRIP.maxRelocateWalkM || !this.roadNetwork.getNode(nodeId)) {
+      return false;
+    }
+    const from = this.nearestNodeId() ?? req.pickupNodeId;
+    const toPickup = this.roadNetwork.route(from, nodeId, { mode: 'motorcycle' });
+    const trip = this.roadNetwork.route(nodeId, req.destinationNodeId, { mode: 'motorcycle' });
+    if (!toPickup || !trip) return false;
+
+    req.pickupNodeId = nodeId;
+    req.estimatedDistance = trip.virtualKm;
+    req.estimatedDuration = trip.etaMin;
+    if (s === 'Negotiating') req.initialFare = fairFare(trip.virtualKm, trip.etaMin, req.surge);
+    this.currentRoute = toPickup;
+    this.offRouteSince = -1;
+    this.passengerMood = clamp(this.passengerMood - walkM * BALANCE.TRIP.walkMoodLossPerM, 0, 1);
+    return true;
   }
 
   addStrike(currentDay: number): { strikes: number; suspended: boolean } {
@@ -317,9 +440,14 @@ export class RideManager {
   }
 
   update(
-    bikePose: { x: number; z: number; speed: number },
+    bikePose: { x: number; z: number; speed: number; heading?: number },
     dt: number
   ): void {
+    this.simTimeSec += dt;
+    this.pose.x = bikePose.x;
+    this.pose.z = bikePose.z;
+    this.pose.heading = bikePose.heading ?? this.pose.heading;
+    this.hasPose = true;
     this.settleToIdle();
     if (!this.activeRequest) {
       return;
@@ -357,6 +485,13 @@ export class RideManager {
             requestId: this.activeRequest.requestId,
           });
           this.go('startTrip');
+          // Pickup done: the route now runs from here to the destination.
+          this.currentRoute = this.roadNetwork.route(
+            this.activeRequest.pickupNodeId,
+            this.activeRequest.destinationNodeId,
+            { mode: 'motorcycle' }
+          );
+          this.offRouteSince = -1;
           this.reputation?.startTrip({
             requestId: this.activeRequest.requestId,
             isUrgent: this.activeRequest.specialCircumstance === 'urgent',

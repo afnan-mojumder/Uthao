@@ -27,5 +27,14 @@
   "hud.fuel_empty": "Tank empty! Push the bike or call for help",
   "hud.refuel": "Refuel",
   "hud.fuel_rescue": "Call fuel rescue (৳{cost}, {min} min)",
-  "hud.bike_warn": "Bike in poor shape, visit a garage"
+  "hud.bike_warn": "Bike in poor shape, visit a garage",
+  "objective.charge_phone": "Phone is dead: charge it at home or a tea stall, or pick up passengers hailing on the street",
+  "objective.app_suspended": "The app is suspended: take direct or street passengers until it is back",
+  "objective.no_route": "No road left to the destination, the ride was cancelled. Look for a new ride",
+  "nav.left": "Turn left in {dist} m",
+  "nav.right": "Turn right in {dist} m",
+  "nav.straight": "Continue straight for {dist} m",
+  "nav.uturn": "Make a U-turn",
+  "nav.arrive": "Arrive in {dist} m",
+  "hud.charge_phone": "Charge phone"
 }

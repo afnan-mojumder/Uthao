@@ -588,6 +588,12 @@ export function setFuelDispatchers(refuel: () => void, rescue: () => void): void
   onFuelRescueCallback = rescue;
 }
 
+export let onChargePhoneCallback: ((where: 'home' | 'teaStall') => void) | null = null;
+
+export function setChargePhoneDispatcher(charge: (where: 'home' | 'teaStall') => void): void {
+  onChargePhoneCallback = charge;
+}
+
 export let onBuyBikeCallback: ((bikeId: string, useTradeIn?: boolean) => void) | null = null;
 export let onSwitchBikeCallback: ((bikeId: string) => void) | null = null;
 

@@ -18,7 +18,6 @@ import {
   unsupportedSignal,
   initPwaInstall,
   negotiationSignal,
-  phoneSignal,
   hudSignal,
   tutorialSignal,
   screenSignal,
@@ -408,7 +407,17 @@ function frame(now: number) {
       shiftDay,
       rating,
       isFirstPerson,
-      nextTurn: phoneSignal.value.navigationTurn,
+      nextTurn: view.instruction
+        ? { direction: view.instruction.kind, text: t(view.instruction.textKey, { dist: Math.round(view.instruction.distanceM) }) }
+        : null,
+      chargeSpot:
+        gm.economyManager.phoneBattery < BALANCE.PHONE.lowBatteryPct
+          ? session.nearChargeSpot('home')
+            ? 'home'
+            : session.nearChargeSpot('teaStall')
+              ? 'teaStall'
+              : null
+          : null,
       passengerStatus: activeReq
         ? {
             status: view.passenger,
