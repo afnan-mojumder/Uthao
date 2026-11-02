@@ -600,9 +600,9 @@ export class GameManager {
         return { success: true };
       }
       case 'chargePhone': {
-        // T8.4: a charge at a named place needs you to be there and takes game time.
-        // Without a location (older callers) it stays an instant top-up.
-        if (cmd.location && this.phoneChargeNearby && !this.phoneChargeNearby(cmd.location)) {
+        // T8.4: every charge needs you at a named place (checked against the bike's
+        // position) and takes game time. No place, or no way to check it, means no charge.
+        if (!cmd.location || !this.phoneChargeNearby || !this.phoneChargeNearby(cmd.location)) {
           return { success: false, reason: 'Not at a charging spot' };
         }
         const cost = cmd.cost ?? (cmd.location === 'home' ? 0 : 10);
@@ -611,9 +611,7 @@ export class GameManager {
         }
         this.economyManager.chargeBattery(100, cost, this.clock.day, this.clock.minutes);
         this.syncEconomy();
-        if (cmd.location && this.phoneChargeNearby) {
-          this.waitGameMinutes(BALANCE.PHONE.chargeWaitMin[cmd.location]);
-        }
+        this.waitGameMinutes(BALANCE.PHONE.chargeWaitMin[cmd.location]);
         return { success: true };
       }
       case 'delayRent': {

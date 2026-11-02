@@ -9,6 +9,7 @@ import { deriveRideView } from '../../../src/sim/ride/rideView';
 import { nextInstruction, type NavInstruction } from '../../../src/sim/road/navigation';
 import { GameManager } from '../../../src/sim/GameManager';
 import { GameSession } from '../../../src/sim/GameSession';
+import { BALANCE } from '../../../src/config/balance';
 import { SIM_DT } from '../../../src/config/constants';
 import type { DistrictData } from '../../../src/sim/schemas';
 import type { BikeInput } from '../../../src/physics/bikeModel';
@@ -102,13 +103,14 @@ describe('pickup validity (T8.4)', () => {
   // Rider R, eastbound divided lane R->X->U, U-turn at U, westbound lane U->W->P (pickup).
   const divided = () =>
     net(
-      [n('R', 0, 0), n('X', 60, 0, ['crossing']), { ...n('U', 400, 0), kind: 'uturn' as const }, n('W', 200, 20), n('P', 50, 20), n('Z', 0, 20)],
+      [n('R', 0, 0), n('X', 60, 0, ['crossing']), { ...n('U', 400, 0), kind: 'uturn' as const }, n('W', 200, 20), n('P', 50, 20), n('Z', 0, 20), n('Q', 60, -20)],
       [
         seg('RX', 'R', 'X', { oneWay: true, divided: true }),
         seg('XU', 'X', 'U', { oneWay: true, divided: true }),
         seg('UW', 'U', 'W', { oneWay: true, divided: true }),
         seg('WP', 'W', 'P', { oneWay: true, divided: true }),
         seg('PZ', 'P', 'Z'),
+        seg('XQ', 'X', 'Q'), // the crossing has a kerb on an ordinary side street
       ]
     );
 
@@ -142,6 +144,9 @@ describe('pickup validity (T8.4)', () => {
     expect(rm.getActiveRequest()!.initialFare).not.toBe(fareBefore);
 
     expect(rm.relocatePickup('nope', 10)).toBe(false);
+    // A lying walk distance is rejected, and nothing changes.
+    expect(rm.relocatePickup('P', 1)).toBe(false);
+    expect(rm.getActiveRequest()!.pickupNodeId).toBe('X');
     rm.agreeFare(rm.getActiveRequest()!.initialFare);
     rm.update({ x: 60, z: 0, speed: 0, heading: 0 }, 0.1);
     rm.update({ x: 60, z: 0, speed: 0, heading: 0 }, 0.1);
@@ -151,6 +156,29 @@ describe('pickup validity (T8.4)', () => {
 });
 
 describe('navigation and reroute (T8.4)', () => {
+  it('relocating to a divided-road or inaccessible node is refused and changes nothing', () => {
+    const network = net(
+      [n('A', 0, 0), n('B', 100, 0), n('C', 200, 0), n('D', 100, 40), n('E', 130, 0)],
+      [
+        seg('AB', 'A', 'B'), seg('BC', 'B', 'C'),
+        seg('BD', 'B', 'D', { divided: true }),
+        seg('CE', 'C', 'E', { motorcycleAccessible: false }),
+      ]
+    );
+    const rm = rideAt(network, 0, 0);
+    rm.enableNegotiation = true;
+    rm.offer(req('r1', 'C', 'A'));
+    rm.accept('r1');
+    const route = rm.currentRoute;
+    const mood = rm.getPassengerMood();
+    expect(rm.relocatePickup('D', 100)).toBe(false); // divided only
+    expect(rm.relocatePickup('E', 70)).toBe(false); // inaccessible only
+    expect(rm.getActiveRequest()!.pickupNodeId).toBe('C');
+    expect(rm.currentRoute).toBe(route);
+    expect(rm.getPassengerMood()).toBe(mood);
+    expect(rm.relocatePickup('B', 100)).toBe(true); // legal
+  });
+
   it('accept routes from the bike nearest node to the pickup, then pickup to destination', () => {
     const network = grid();
     const rm = rideAt(network, 5, 5);
@@ -345,6 +373,33 @@ describe('dead phone and suspended app (T8.4, Review Focus #4)', () => {
     expect(deriveRideView(ride).objectiveKey).not.toBe('objective.charge_phone');
     const after = collect(session, 9000);
     expect(after.some((r) => r.bookingType === 'app')).toBe(true);
+  });
+
+  it('chargePhone without a location is rejected and the battery is unchanged', () => {
+    const session = liveSession(14);
+    session.gm.economyManager.phoneBattery = 0;
+    const r = session.gm.dispatch({ type: 'chargePhone', cost: 10 });
+    expect(r.success).toBe(false);
+    expect(session.gm.economyManager.phoneBattery).toBe(0);
+    const bare = new GameManager({ seed: 1, mode: 'career', data: {} });
+    bare.economyManager.phoneBattery = 0;
+    expect(bare.dispatch({ type: 'chargePhone', location: 'home' }).success).toBe(false);
+    expect(bare.economyManager.phoneBattery).toBe(0);
+  });
+
+  it('a valid charge costs the stated cash and advances time by the stated wait', () => {
+    const session = liveSession(15);
+    const { gm } = session;
+    const home = (session.road.getNode(gm.homeNodeId) ?? session.road.getAllNodes()[0])!;
+    session.bike.x = home.x;
+    session.bike.z = home.z;
+    gm.economyManager.phoneBattery = 5;
+    const cash = gm.economyManager.cash;
+    const t0 = gm.clock.minutes;
+    expect(gm.dispatch({ type: 'chargePhone', location: 'home' }).success).toBe(true);
+    expect(gm.clock.minutes - t0).toBeCloseTo(BALANCE.PHONE.chargeWaitMin.home, 0);
+    expect(gm.economyManager.cash).toBe(cash);
+    expect(gm.economyManager.phoneBattery).toBe(100);
   });
 
   it('charging far from any charge spot is refused', () => {

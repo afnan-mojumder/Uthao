@@ -9,6 +9,12 @@ import {
 } from './routing';
 import { nearestNode, segmentAt } from './spatial';
 
+/** A segment a passenger can be picked up from: accessible, practical, and not a divided
+ * carriageway. The single eligibility rule for generated and relocated pickups. */
+export function isPickupSegment(seg: RoadSegment): boolean {
+  return seg.pickupPractical && seg.motorcycleAccessible && !seg.divided;
+}
+
 export class RoadNetwork {
   private nodes: RoadNode[] = [];
   private segments: RoadSegment[] = [];
@@ -86,6 +92,14 @@ export class RoadNetwork {
     opts: RouteOptions
   ): Route | null {
     return this.graph.route(fromNodeId, toNodeId, opts);
+  }
+
+  /** True when `nodeId` touches at least one pickup-eligible segment. */
+  isPickupNode(nodeId: string): boolean {
+    for (const seg of this.segments) {
+      if ((seg.startNodeId === nodeId || seg.endNodeId === nodeId) && isPickupSegment(seg)) return true;
+    }
+    return false;
   }
 
   getNode(nodeId: string): RoadNode | undefined {

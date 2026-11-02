@@ -1,4 +1,4 @@
-import type { RoadNetwork } from '../road/RoadNetwork';
+import { isPickupSegment, type RoadNetwork } from '../road/RoadNetwork';
 import type { Rng } from '../../core/rng';
 import type {
   ArchetypeId,
@@ -178,7 +178,7 @@ export class RequestGenerator {
     // divided carriageway (a passenger cannot wait mid-carriageway).
     const nodeSet = new Set<string>();
     for (const seg of this.network.getAllSegments()) {
-      if (seg.pickupPractical && seg.motorcycleAccessible && !seg.divided) {
+      if (isPickupSegment(seg)) {
         nodeSet.add(seg.startNodeId);
         nodeSet.add(seg.endNodeId);
       }

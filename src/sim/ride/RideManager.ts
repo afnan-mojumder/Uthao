@@ -344,7 +344,12 @@ export class RideManager {
     const req = this.activeRequest;
     const s = this.trip.state;
     if (!req || (s !== 'Negotiating' && s !== 'Accepted' && s !== 'EnRouteToPickup')) return false;
-    if (!(walkM >= 0) || walkM > BALANCE.TRIP.maxRelocateWalkM || !this.roadNetwork.getNode(nodeId)) {
+    const oldNode = this.roadNetwork.getNode(req.pickupNodeId);
+    const newNode = this.roadNetwork.getNode(nodeId);
+    if (!oldNode || !newNode || !this.roadNetwork.isPickupNode(nodeId)) return false;
+    // The walk is measured from the map, not trusted: a caller's walkM must match it (within 5 m).
+    const trueWalkM = distance2d(oldNode.x, oldNode.z, newNode.x, newNode.z);
+    if (!(walkM >= 0) || Math.abs(walkM - trueWalkM) > 5 || trueWalkM > BALANCE.TRIP.maxRelocateWalkM) {
       return false;
     }
     const from = this.nearestNodeId() ?? req.pickupNodeId;
@@ -358,7 +363,7 @@ export class RideManager {
     if (s === 'Negotiating') req.initialFare = fairFare(trip.virtualKm, trip.etaMin, req.surge);
     this.currentRoute = toPickup;
     this.offRouteSince = -1;
-    this.passengerMood = clamp(this.passengerMood - walkM * BALANCE.TRIP.walkMoodLossPerM, 0, 1);
+    this.passengerMood = clamp(this.passengerMood - trueWalkM * BALANCE.TRIP.walkMoodLossPerM, 0, 1);
     return true;
   }
 
