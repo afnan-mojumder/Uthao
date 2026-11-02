@@ -10,7 +10,6 @@ import {
   promptPwaInstall,
   phoneSignal,
   negotiationSignal,
-  hudSignal,
   onAcceptRequestCallback,
   onDeclineRequestCallback,
   onNegotiationActionCallback,
@@ -246,13 +245,14 @@ export function App(): JSX.Element {
         onCallContact={(charId) => onCallContactCallback?.(charId)}
       />
 
-      {/* T2.4 Negotiation Panel (Opens when stopped at pickup) */}
+      {/* T2.4 Negotiation Panel (opens as soon as an offer is accepted, before pickup) */}
       {negotiationSignal.value.active && negotiationSignal.value.session && (
         <NegotiationPanel
           active={negotiationSignal.value.active}
-          bikeSpeed={hudSignal.value.speedKmh / 3.6}
           session={negotiationSignal.value.session}
           lastResult={negotiationSignal.value.lastResult}
+          mood={negotiationSignal.value.mood}
+          pickup={negotiationSignal.value.pickup}
           onAction={(action) => onNegotiationActionCallback?.(action)}
           onClose={() => {
             negotiationSignal.value = { ...negotiationSignal.value, active: false };

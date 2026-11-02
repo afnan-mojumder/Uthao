@@ -59,16 +59,36 @@ export function bindUi(session: GameSession, saveSystem?: SaveSystem): void {
   setNegotiationActionDispatcher((action) => {
     const current = negotiationSignal.value.session;
     if (!current) return;
-    const result = respond(current, action);
+    // Relocation uses the sim's measured option, never numbers the panel sent.
+    const choice = action.kind === 'pickupAdjust' ? session.pickupChoice() : null;
+    if (action.kind === 'pickupAdjust' && !choice) return;
+    const result = respond(
+      current,
+      choice ? { kind: 'pickupAdjust', walkM: choice.walkM, savesMin: choice.savesMin } : action
+    );
+    let next = result.session;
+    if (choice && result.session.walkM > current.walkM && rideManager.relocatePickup(choice.nodeId, choice.walkM)) {
+      next = session.repriceNegotiation(result.session);
+    }
     negotiationSignal.value = {
-      active: result.session.status === 'active',
-      session: result.session,
+      active: next.status === 'active',
+      session: next,
       lastResult: result,
+      mood: rideManager.getPassengerMood(),
+      pickup: next.status === 'active' ? session.pickupChoice() : null,
     };
     if (result.outcome?.kind === 'accepted') {
+      if (action.kind === 'offApp') session.markOffApp();
       rideManager.agreeFare(result.outcome.fare);
     } else if (result.outcome?.kind === 'walkedAway') {
-      rideManager.walkAwayNegotiation();
+      // The rider declining ends in Declined; the passenger losing patience ends in Cancelled.
+      if (action.kind === 'decline') {
+        const id = rideManager.getActiveRequest()?.requestId;
+        if (id) rideManager.cancel(id, 'rider', 'declined');
+        negotiationSignal.value = { ...negotiationSignal.value, active: false };
+      } else {
+        rideManager.walkAwayNegotiation();
+      }
     }
   });
 

@@ -101,6 +101,10 @@ export const BALANCE = {
     c: 1.0,
     d: 0.6,
     e: 1.5,
+    /** H: weight of interaction history (-1..1) in the acceptance logit. */
+    h: 0.8,
+    /** Agreed fare this far above fair counts as overcharging for the H history. */
+    overchargeMargin: 0.25,
     patienceDecayPerRound: 0.25,
   },
   TRAFFIC: {

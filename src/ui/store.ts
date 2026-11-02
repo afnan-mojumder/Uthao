@@ -46,6 +46,10 @@ export interface NegotiationUiState {
   active: boolean;
   session: NegotiationSession | null;
   lastResult: NegotiationResult | null;
+  /** 0-1 passenger mood (drops when asked to walk). */
+  mood?: number;
+  /** A real relocation the sim can do now; the panel shows the button only when set. */
+  pickup?: { nodeId: string; walkM: number; savesMin: number } | null;
 }
 
 export interface DayEndState {

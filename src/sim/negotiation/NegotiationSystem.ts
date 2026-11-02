@@ -16,7 +16,10 @@ export interface NegotiationContext {
   traffic: number;
   day: number;
   walkM: number;
+  /** The session RNG (a fork); its state seeds this negotiation's decision rolls. */
   rng: Rng;
+  /** H: interaction history -1..1; negative = the rider overcharged this passenger before. */
+  history?: number;
 }
 
 export type NegotiationAction =
@@ -43,6 +46,8 @@ export interface NegotiationSession {
   readonly status: 'active' | 'accepted' | 'walkedAway';
   readonly walkM: number;
   readonly detourExtraMin: number;
+  /** Per-negotiation salt taken from `ctx.rng` so decisions differ by seed but replay identically. */
+  readonly salt: number;
 }
 
 export interface NegotiationResult {
@@ -93,6 +98,7 @@ interface FactorContributions {
   contribPatience: number;
   contribTraffic: number;
   contribWalk: number;
+  contribHistory: number;
   detourBoost: number;
   pAccept: number;
   topFactor: ReasonCode;
@@ -130,6 +136,8 @@ export function evaluateFactors(
   );
   const contribWalk = -cfg.e * walkPenalty;
 
+  const contribHistory = cfg.h * clamp(session.ctx.history ?? 0, -1, 1);
+
   const detourBoost =
     session.detourExtraMin > 0
       ? 0.6 * (session.detourExtraMin / 10) * (0.5 + 0.5 * U)
@@ -143,6 +151,7 @@ export function evaluateFactors(
     contribPatience +
     contribTraffic +
     contribWalk +
+    contribHistory +
     detourBoost;
 
   const pAccept = 1 / (1 + Math.exp(-z));
@@ -186,6 +195,7 @@ export function evaluateFactors(
     contribPatience,
     contribTraffic,
     contribWalk,
+    contribHistory,
     detourBoost,
     pAccept,
     topFactor,
@@ -216,6 +226,7 @@ export function startNegotiation(
     status: 'active',
     walkM: ctx.walkM,
     detourExtraMin: 0,
+    salt: ctx.rng.getState(),
   };
 }
 
@@ -308,11 +319,7 @@ export function respond(
       timeBenefit;
     const pAcceptAdjust = 1 / (1 + Math.exp(-zAdjust));
 
-    const decisionSeed = hashSeed(
-      session.req.requestId,
-      session.round,
-      'pickupAdjust'
-    );
+    const decisionSeed = hashSeed(session.req.requestId, session.round, session.salt, 'pickupAdjust');
     const rng = new Rng(decisionSeed);
     const accepted = rng.next() < pAcceptAdjust;
 
@@ -359,11 +366,7 @@ export function respond(
       BALANCE.NEGOTIATION.e * walkPenalty;
     const pAcceptAlley = 1 / (1 + Math.exp(-zAlley));
 
-    const decisionSeed = hashSeed(
-      session.req.requestId,
-      session.round,
-      'refuseAlley'
-    );
+    const decisionSeed = hashSeed(session.req.requestId, session.round, session.salt, 'refuseAlley');
     const rng = new Rng(decisionSeed);
     const accepted = rng.next() < pAcceptAlley;
 
@@ -409,7 +412,7 @@ export function respond(
   const factors = evaluateFactors(session, F);
 
   // Decision roll seeded by hash(requestId, round)
-  const decisionSeed = hashSeed(session.req.requestId, session.round);
+  const decisionSeed = hashSeed(session.req.requestId, session.round, session.salt);
   const decisionRng = new Rng(decisionSeed);
   const accepted = decisionRng.next() < factors.pAccept;
 

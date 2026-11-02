@@ -20,7 +20,11 @@ import type { Rng } from '../core/rng';
 import { TIME_SCALE } from '../core/clock';
 import { clamp } from '../core/math';
 import { receipt as buildReceipt, fuelUsed, type FuelOptions } from './economy/fuel';
-import type { TripReceipt } from '../core/types';
+import type { TripReceipt, PassengerProfile } from '../core/types';
+import { startNegotiation, type NegotiationSession } from './negotiation/NegotiationSystem';
+import { fairFare, isRushHourMinute } from './negotiation/fare';
+import { generateProfile } from './passenger/profiles';
+import { expectedBudget, openingOffer } from './passenger/PassengerAI';
 import type { BikeCollisionSeverity } from '../core/types';
 
 // ponytail: proximity thresholds, not measured against real bike/vehicle
@@ -36,6 +40,9 @@ export interface GameSessionOptions {
   /** Whether RequestGenerator automatically offers rides each step. Debug/test
    * single-district boots set this false and inject a deterministic ride instead. */
   autoRequests?: boolean;
+  /** T8.5: accepted rides open a real negotiation (default). Headless sim drivers
+   * that only want accept -> agreed fare pass false. */
+  negotiation?: boolean;
 }
 
 /**
@@ -104,6 +111,21 @@ export class GameSession {
     });
     // T7.5: lets effect handlers (e.g. `endTrip`) reach the live ride state.
     this.gm.rideManager = this.ride;
+    this.ride.enableNegotiation = opts.negotiation ?? true;
+    // H: an agreed fare well above fair adds an overcharge mark, a fair one slowly rebuilds goodwill.
+    this.gm.bus.on('negotiation/result', (ev) => {
+      if (ev.outcome.kind !== 'accepted') return;
+      const req = this.ride.getActiveRequest();
+      if (!req || req.requestId !== ev.requestId) return;
+      const fair = fairFare(req.estimatedDistance, req.estimatedDuration, req.surge);
+      const over = ev.outcome.fare / Math.max(fair, 1) - 1;
+      const h = this.gm.negotiationHistory;
+      this.gm.negotiationHistory = clamp(
+        over > BALANCE.NEGOTIATION.overchargeMargin ? h - 0.15 : over <= 0.05 ? h + 0.05 : h,
+        -1,
+        1
+      );
+    });
     this.traffic = new TrafficManager(this.road, this.gm.seed);
     this.requests = new RequestGenerator(this.road, this.gm.rng.fork('requestGenerator'), {
       reputationSystem: this.gm.reputationSystem,
@@ -141,6 +163,50 @@ export class GameSession {
       if (node) this.teaStalls.push({ x: node.x, z: node.z });
     }
     this.gm.phoneChargeNearby = (where) => this.nearChargeSpot(where);
+  }
+
+  /** T8.5: starts a negotiation with the actual passenger of `requestId`: its own profile
+   * (or a seeded commuter for rides injected without one), the career's overcharge history,
+   * and a fork of the session RNG, so the same seed replays the same outcome. */
+  beginNegotiation(requestId: string): NegotiationSession | null {
+    const req = this.ride.getActiveRequest();
+    if (!req || req.requestId !== requestId) return null;
+    const profile: PassengerProfile =
+      this.requests.getProfile(req.passengerId) ??
+      generateProfile('commuter', this.gm.rng.fork(`profile:${req.passengerId}`), req.passengerId);
+    const rain = this.gm.weather === 'lightRain' || this.gm.weather === 'heavyRain';
+    return startNegotiation(req, profile, {
+      traffic: Math.min(1, (isRushHourMinute(this.gm.clock.minutes) ? 0.7 : 0.3) + (rain ? 0.15 : 0)),
+      walkM: 0,
+      day: this.gm.clock.day,
+      history: this.gm.negotiationHistory,
+      rng: this.gm.rng.fork(`negotiation:${requestId}`),
+    });
+  }
+
+  /** T8.5: a nearer pickup the passenger could walk to (e.g. across a divided road), or
+   * null. The negotiation panel offers relocation only when this is non-null. */
+  pickupChoice(): { nodeId: string; walkM: number; savesMin: number } | null {
+    const req = this.ride.getActiveRequest();
+    if (!req || this.ride.getTripState() !== 'Negotiating') return null;
+    return this.ride.pickupOptions(req, { x: this.bike.x, z: this.bike.z })?.crossPoint ?? null;
+  }
+
+  /** T8.5: after `relocatePickup` re-priced the ride, bring the live negotiation's fare
+   * and budget in line with the new trip (round, patience and walk are kept). */
+  repriceNegotiation(neg: NegotiationSession): NegotiationSession {
+    const req = neg.req;
+    const fair = fairFare(req.estimatedDistance, req.estimatedDuration, req.surge);
+    const budget = expectedBudget(neg.profile, fair, this.gm.clock.day);
+    return { ...neg, fairFare: fair, expectedBudget: budget, currentPassengerOffer: openingOffer(neg.profile, budget) };
+  }
+
+  /** T8.5: the rider took the ride off the app: no commission, and the platform may notice. */
+  markOffApp(): void {
+    const req = this.ride.getActiveRequest();
+    if (!req) return;
+    req.bookingType = 'offApp';
+    this.ride.recordOffAppRide(req.passengerId, this.gm.clock.day, this.gm.rng.fork('offApp'));
   }
 
   /** True when the bike is within `PHONE.chargeRangeM` of home or a tea stall. */
@@ -435,6 +501,7 @@ export class GameSession {
     // A new career starts with a clean paid-trip record, or the tutorial ride would count as already settled.
     this.gm.economyManager.restoreLedger([], []);
     this.gm.requestSeq = 0;
+    this.gm.negotiationHistory = 0;
     this.gm.story.branchFlags = {};
     this.gm.story.completedMissions = [];
     this.gm.story.activeMissions = ['m1_first_ride'];

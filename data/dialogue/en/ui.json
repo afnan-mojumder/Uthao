@@ -226,9 +226,9 @@
   "tutorial.nabila.title": "Incoming Request: Nabila",
   "tutorial.nabila.intro": "University student heading to Campus Gate.",
   "tutorial.nabila.dialogue": "Passenger: 'Bhai, campuse jaben? 80 taka debo.'",
-  "tutorial.nabila.counter_100": "Na apa, 100 takar kome poshaye na (৳100)",
-  "tutorial.nabila.counter_90": "90 den, gaser dam-o to barlo (৳90)",
-  "tutorial.nabila.accept_80": "Accha ashen, 80 takai deben (৳80)",
+  "tutorial.nabila.counter_100": "“Brother, give me 100. The traffic is terrible.”",
+  "tutorial.nabila.counter_90": "“Give me 90, I am keeping it low just for you.”",
+  "tutorial.nabila.accept_80": "“All right, brother, let us go for 80 taka.”",
   "tutorial.nabila.accepted": "Nabila: 'Accha thik ache, cholen. Taratari jete hobe.'",
   "tutorial.riding.tip": "Follow the navigation arrow to Campus Gate. Keep an eye on traffic.",
   "tutorial.receipt.title": "Trip Complete — Receipt Explained",
@@ -256,5 +256,6 @@
   "delivery.luggage_full": "Luggage Full (Max {max})",
   "settings.reduce_motion": "Reduce Motion (Disable Camera Shake & FOV Kick)",
   "settings.auto_cruise": "Auto-Cruise Mode (Tap to Maintain Speed on Mobile)",
-  "settings.colorblind_palette": "Colorblind Route Palette"
+  "settings.colorblind_palette": "Colorblind Route Palette",
+  "tutorial.nabila.decline_example": "“This fare will not work, brother.”"
 }

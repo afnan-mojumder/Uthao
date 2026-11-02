@@ -60,6 +60,7 @@ describe('T2.4 Negotiation Store & Logic', () => {
     status: 'active',
     walkM: 0,
     detourExtraMin: 0,
+    salt: rng.getState(),
   };
 
   beforeEach(() => {

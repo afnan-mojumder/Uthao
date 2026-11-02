@@ -518,6 +518,10 @@ export function FirstRideTutorial(props: FirstRideTutorialProps): JSX.Element | 
                 >
                   <span style={{ fontWeight: 800 }}>৳80</span> — {t('tutorial.nabila.accept_80')}
                 </button>
+
+                <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+                  {t('tutorial.nabila.decline_example')}
+                </div>
               </div>
             )}
 

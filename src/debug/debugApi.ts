@@ -4,8 +4,8 @@ import type { RideRequest, TripReceipt, WeatherKind } from '../core/types';
 import type { Renderer } from '../render/Renderer';
 import type { AutopilotController } from './autopilot';
 import type { RideManager } from '../sim/ride/RideManager';
+import { Rng, hashSeed } from '../core/rng';
 import { generateProfile } from '../sim/passenger/profiles';
-import { Rng } from '../core/rng';
 
 export interface DebugApi {
   gm: GameManager;
@@ -49,6 +49,7 @@ export interface DebugApiOptions {
   renderer?: Renderer;
   autopilot?: AutopilotController;
   rideManager?: RideManager;
+  requests?: import('../sim/ride/RequestGenerator').RequestGenerator;
   trafficManager?: import('../sim/traffic/TrafficManager').TrafficManager;
 }
 
@@ -74,6 +75,8 @@ export function spawnTestRequest(rideManager: RideManager, fare = 120): RideRequ
   };
   rideManager.offer(req);
   rideManager.accept(req.requestId);
+  // Debug rides skip the haggling: the listed fare is the agreed fare.
+  rideManager.agreeFare(fare);
   return req;
 }
 
@@ -157,7 +160,9 @@ export function initDebugApi(
       const allNodes = options.rideManager?.roadNetwork.getAllNodes() ?? [];
       const pNodeId = allNodes[0]?.nodeId ?? 'N1';
       const dNodeId = allNodes[1]?.nodeId ?? 'N2';
-      const bargainerProfile = generateProfile('bargainer', new Rng(123), 'p_bargainer');
+      const bargainerProfile = generateProfile('bargainer', new Rng(hashSeed('debugBargainer')), 'p_bargainer');
+      bargainerProfile.patience = 0.8; // a patient haggler, so scripted e2e rounds stay on the page
+      options.requests?.setProfile(bargainerProfile);
       const req: RideRequest = {
         requestId: 'req_bargain_test',
         passengerId: bargainerProfile.passengerId,

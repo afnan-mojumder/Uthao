@@ -11,25 +11,24 @@ import enDialogue from '../../../data/dialogue/en/negotiation.json';
 
 export interface NegotiationPanelProps {
   active: boolean;
-  bikeSpeed: number; // m/s
   session: NegotiationSession;
   lastResult?: NegotiationResult | null;
+  /** 0-1 passenger mood. */
+  mood?: number;
+  /** A relocation the sim can really perform right now (null: none, no button). */
+  pickup?: { nodeId: string; walkM: number; savesMin: number } | null;
   onAction: (action: NegotiationAction) => void;
   onClose?: () => void;
 }
 
 export function NegotiationPanel({
   active,
-  bikeSpeed,
   session,
   lastResult,
+  mood = 1,
+  pickup = null,
   onAction,
 }: NegotiationPanelProps): JSX.Element | null {
-  // Only opens when the bike is stopped at pickup (< 2.0 m/s)
-  if (!active || bikeSpeed > 2.0) {
-    return null;
-  }
-
   const [counterAmount, setCounterAmount] = useState<number>(() => {
     return session.currentRiderOffer ?? session.currentPassengerOffer;
   });
@@ -37,6 +36,8 @@ export function NegotiationPanel({
   useEffect(() => {
     setCounterAmount(session.currentPassengerOffer);
   }, [session.currentPassengerOffer]);
+
+  if (!active) return null;
 
   const stepFare = (delta: number) => {
     setCounterAmount((prev) => Math.max(50, prev + delta));
@@ -162,6 +163,19 @@ export function NegotiationPanel({
           </div>
         </div>
 
+        {/* Mood and the single available route */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#94a3b8' }}>
+          <span data-testid="mood-text">
+            {t('negotiation.mood')}: {Math.round(mood * 100)}%
+          </span>
+          <span data-testid="route-text">
+            {t('negotiation.route', {
+              distance: session.req.estimatedDistance.toFixed(1),
+              eta: session.req.estimatedDuration,
+            })}
+          </span>
+        </div>
+
         {/* Reaction Chip after Round */}
         {lastResult && (
           <div
@@ -281,7 +295,7 @@ export function NegotiationPanel({
 
           <div style={{ padding: '0 16px', textAlign: 'center' }}>
             <span style={{ fontSize: '10px', color: '#94a3b8', textTransform: 'uppercase', display: 'block' }}>
-              Your Quote
+              {t('negotiation.your_quote')}
             </span>
             <span style={{ fontSize: '22px', fontWeight: 800, color: '#f59e0b' }}>
               ৳{counterAmount}
@@ -322,6 +336,28 @@ export function NegotiationPanel({
             +৳১০
           </button>
         </div>
+
+        {/* Custom counteroffer */}
+        <input
+          type="number"
+          min={50}
+          step={5}
+          data-testid="custom-counter-input"
+          aria-label={t('negotiation.custom_counter')}
+          value={counterAmount}
+          onInput={(e) => {
+            const v = Number((e.target as HTMLInputElement).value);
+            if (Number.isFinite(v)) setCounterAmount(Math.max(50, Math.round(v)));
+          }}
+          style={{
+            padding: '8px 12px',
+            borderRadius: '10px',
+            background: '#0f172a',
+            border: '1px solid rgba(255, 255, 255, 0.15)',
+            color: '#f8fafc',
+            fontSize: '14px',
+          }}
+        />
 
         {/* Quick Action Buttons Grid */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px' }}>
@@ -384,43 +420,26 @@ export function NegotiationPanel({
             {t('negotiation.discount', { fare: Math.max(50, counterAmount - 10) })}
           </button>
 
-          {/* 4. Cross to other side */}
-          <button
-            type="button"
-            data-testid="cross-side-btn"
-            onClick={() => onAction({ kind: 'pickupAdjust', walkM: 60, savesMin: 5 })}
-            style={{
-              padding: '10px',
-              borderRadius: '10px',
-              background: 'rgba(30, 41, 59, 0.8)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              color: '#f8fafc',
-              fontSize: '12px',
-              fontWeight: 600,
-              cursor: 'pointer',
-            }}
-          >
-            {t('negotiation.cross')}
-          </button>
-
-          {/* 5. Not entering alley */}
-          <button
-            type="button"
-            data-testid="refuse-alley-btn"
-            onClick={() => onAction({ kind: 'refuseAlley', walkM: 40 })}
-            style={{
-              padding: '10px',
-              borderRadius: '10px',
-              background: 'rgba(30, 41, 59, 0.8)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              color: '#f8fafc',
-              fontSize: '12px',
-              fontWeight: 600,
-              cursor: 'pointer',
-            }}
-          >
-            {t('negotiation.refuse_alley')}
-          </button>
+          {/* 4. Relocate the pickup: only when the sim has a real, measured option */}
+          {pickup && (
+            <button
+              type="button"
+              data-testid="cross-side-btn"
+              onClick={() => onAction({ kind: 'pickupAdjust', walkM: pickup.walkM, savesMin: pickup.savesMin })}
+              style={{
+                padding: '10px',
+                borderRadius: '10px',
+                background: 'rgba(30, 41, 59, 0.8)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                color: '#f8fafc',
+                fontSize: '12px',
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              {t('negotiation.relocate', { walk: Math.round(pickup.walkM), min: Math.round(pickup.savesMin) })}
+            </button>
+          )}
 
           {/* 6. Explain detour */}
           <button

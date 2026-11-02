@@ -96,6 +96,7 @@ export interface SimSnapshot {
   ledger?: Transaction[];
   settledRequests?: string[];
   requestSeq?: number;
+  negotiationHistory?: number;
 }
 
 export class GameManager {
@@ -142,6 +143,8 @@ export class GameManager {
   todayCompletedRides: number = 0;
   /** T8.2: last used request sequence number (persisted). */
   requestSeq: number = 0;
+  /** T8.5 H: -1..1 overcharge history across the career (negative = the rider overcharged passengers); fed to negotiation. */
+  negotiationHistory: number = 0;
   todayStartRating: number = 5.0;
   todayRelationshipsStart: Record<string, number> = {};
 
@@ -690,6 +693,7 @@ export class GameManager {
       ledger: [...this.economyManager.getLedger()],
       settledRequests: this.economyManager.getSettledIds(),
       requestSeq: this.requestSeq,
+      negotiationHistory: this.negotiationHistory,
     };
   }
 
@@ -740,6 +744,7 @@ export class GameManager {
 
     this.economyManager.restoreLedger(snap.ledger ?? [], snap.settledRequests ?? []);
     this.requestSeq = snap.requestSeq ?? 0;
+    this.negotiationHistory = snap.negotiationHistory ?? 0;
 
     // Restore road events
     this.roadEvents.clearEvents();

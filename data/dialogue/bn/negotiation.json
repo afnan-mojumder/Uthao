@@ -32,9 +32,14 @@
   "negotiation.refuse_alley": "গলির ভেতরে যাব না",
   "negotiation.explain_detour": "ঘুরে যাওয়ার কারণ (+{min}মি)",
   "negotiation.off_app": "অ্যাপ ছাড়া (৳{fare})",
-  "negotiation.decline": "প্রত্যাখ্যান করুন",
+  "negotiation.decline": "না করুন / চলে যান",
   "negotiation.stepper.minus5": "-৳৫",
   "negotiation.stepper.plus5": "+৳৫",
   "negotiation.stepper.minus10": "-৳১০",
-  "negotiation.stepper.plus10": "+৳১০"
+  "negotiation.stepper.plus10": "+৳১০",
+  "negotiation.mood": "মেজাজ",
+  "negotiation.route": "রুট: {distance} কিমি, {eta} মিনিট",
+  "negotiation.relocate": "পিকআপ সরান ({walk}মি হাঁটা, {min}মি বাঁচবে)",
+  "negotiation.your_quote": "আপনার দর",
+  "negotiation.custom_counter": "নিজের পাল্টা দর"
 }

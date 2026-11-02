@@ -66,7 +66,7 @@ function fsmAt(state: TripState) {
 function makeSession(rng?: Rng, reliability?: number) {
   const road = RoadNetwork.fromDistricts([testloopData as DistrictData]);
   const gm = new GameManager({ seed: 7, mode: 'career', data: {} });
-  const session = new GameSession({ gm, road, autoRequests: false });
+  const session = new GameSession({ gm, road, autoRequests: false, negotiation: false });
   if (rng) {
     // Same wiring GameSession uses, with a controllable RNG / reliability.
     (session.ride as unknown as { rng: Rng }).rng = rng;

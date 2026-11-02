@@ -32,9 +32,14 @@
   "negotiation.refuse_alley": "Not entering the alley",
   "negotiation.explain_detour": "Explain Detour (+{min}m)",
   "negotiation.off_app": "Off-app (৳{fare})",
-  "negotiation.decline": "Decline Ride",
+  "negotiation.decline": "Decline / Walk away",
   "negotiation.stepper.minus5": "-৳5",
   "negotiation.stepper.plus5": "+৳5",
   "negotiation.stepper.minus10": "-৳10",
-  "negotiation.stepper.plus10": "+৳10"
+  "negotiation.stepper.plus10": "+৳10",
+  "negotiation.mood": "Mood",
+  "negotiation.route": "Route: {distance} km, {eta} min",
+  "negotiation.relocate": "Move pickup ({walk} m walk, saves {min} min)",
+  "negotiation.your_quote": "Your Quote",
+  "negotiation.custom_counter": "Custom counteroffer"
 }

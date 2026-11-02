@@ -197,6 +197,11 @@ export class RequestGenerator {
     return [...this.eligibleNodeIds];
   }
 
+  /** Registers a profile for a passenger created outside the generator (debug/test rides). */
+  setProfile(profile: PassengerProfile): void {
+    this.profiles.set(profile.passengerId, profile);
+  }
+
   getProfile(passengerId: string): PassengerProfile | undefined {
     return this.profiles.get(passengerId);
   }

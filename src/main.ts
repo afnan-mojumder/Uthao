@@ -26,13 +26,10 @@ import {
 } from './ui/store';
 import { bindUi } from './ui/bindings';
 import { SaveSystem } from './sim/save/SaveSystem';
-import { startNegotiation } from './sim/negotiation/NegotiationSystem';
 import { Minimap } from './render/minimap';
 import { deriveRideView } from './sim/ride/rideView';
 import { t } from './ui/i18n';
 import { BALANCE } from './config/balance';
-import { generateProfile } from './sim/passenger/profiles';
-import { Rng } from './core/rng';
 import type { DistrictData, WorldData } from './sim/schemas';
 import type { QualityLevel } from './render/quality';
 import type { DistrictId } from './core/types';
@@ -218,6 +215,7 @@ initDebugApi(gm, {
   renderer,
   autopilot,
   rideManager,
+  requests: session.requests,
   trafficManager,
 });
 
@@ -228,23 +226,15 @@ bindUi(session, activeSaveSystem);
 
 // T8.1: negotiation now happens before pickup, as soon as the rider accepts.
 gm.bus.on('negotiation/started', (ev) => {
-  if (rideManager.enableNegotiation) {
-    const activeReq = rideManager.getActiveRequest();
-    if (activeReq && activeReq.requestId === ev.requestId) {
-      const profile = generateProfile('bargainer', new Rng(123), activeReq.passengerId);
-      profile.patience = 0.8;
-      const session = startNegotiation(activeReq, profile, {
-        traffic: 0.5,
-        day: gm.clock.day,
-        walkM: 0,
-        rng: new Rng(123),
-      });
-      negotiationSignal.value = {
-        active: true,
-        session,
-        lastResult: null,
-      };
-    }
+  const negotiation = session.beginNegotiation(ev.requestId);
+  if (negotiation) {
+    negotiationSignal.value = {
+      active: true,
+      session: negotiation,
+      lastResult: null,
+      mood: rideManager.getPassengerMood(),
+      pickup: session.pickupChoice(),
+    };
   }
 });
 

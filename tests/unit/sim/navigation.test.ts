@@ -355,6 +355,7 @@ describe('dead phone and suspended app (T8.4, Review Focus #4)', () => {
     // The street ride is rideable end to end.
     ride.offer(street!);
     expect(ride.accept(street!.requestId)).toBe(true);
+    ride.agreeFare(street!.initialFare); // T8.5: the street ride is negotiated before pickup
     const p = session.road.getNode(street!.pickupNodeId)!;
     const d = session.road.getNode(street!.destinationNodeId)!;
     session.bike.x = p.x; session.bike.z = p.z; session.bike.speed = 0;

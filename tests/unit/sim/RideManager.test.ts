@@ -135,7 +135,7 @@ describe('RideManager settlement (T8.2)', () => {
   function liveSession() {
     const road = RoadNetwork.fromDistricts([testloopData as DistrictData]);
     const gm = new GameManager({ seed: 7, mode: 'career', data: {} });
-    const session = new GameSession({ gm, road, autoRequests: false });
+    const session = new GameSession({ gm, road, autoRequests: false, negotiation: false });
     const [pickup, dest] = [road.getAllNodes()[0]!, road.getAllNodes()[1]!];
     const req: RideRequest = {
       requestId: 'req_2_1',

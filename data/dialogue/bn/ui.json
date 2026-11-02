@@ -226,9 +226,9 @@
   "tutorial.nabila.title": "অনুরোধ এসেছে: নাবিলা",
   "tutorial.nabila.intro": "বিশ্ববিদ্যালয় শিক্ষার্থী, ক্যাম্পাস গেটে যাবেন।",
   "tutorial.nabila.dialogue": "যাত্রী: 'ভাই, ক্যাম্পাসে যাবেন? ৮০ টাকা দেব।'",
-  "tutorial.nabila.counter_100": "না আপা, ১০০ টাকার কমে পোষায় না (১০০৳)",
-  "tutorial.nabila.counter_90": "৯০ দেন, গ্যাসের দামও তো বাড়ল (৯০৳)",
-  "tutorial.nabila.accept_80": "আচ্ছা আসেন, ৮০ টাকাই দেবেন (৮০৳)",
+  "tutorial.nabila.counter_100": "“ভাই, ১০০ দেন। জ্যাম অনেক।”",
+  "tutorial.nabila.counter_90": "“৯০ দেন, আপনার জন্য কম রাখলাম।”",
+  "tutorial.nabila.accept_80": "“আচ্ছা ভাই, ৮০ টাকায় চলেন।”",
   "tutorial.nabila.accepted": "নাবিলা: 'আচ্ছা ঠিক আছে, চলুন। তাড়াতাড়ি যেতে হবে।'",
   "tutorial.riding.tip": "ন্যাভিগেশন তীর অনুসরণ করে ক্যাম্পাস গেটে চলুন। ট্রাফিকের দিকে খেয়াল রাখুন।",
   "tutorial.receipt.title": "ট্রিপ সম্পন্ন — ভাড়ার হিসাব",
@@ -256,5 +256,6 @@
   "delivery.luggage_full": "ক্যারিয়ার ভর্তি (সর্বোচ্চ {max})",
   "settings.reduce_motion": "কম ঝাঁকুনি মোড (ক্যামেরা শেক ও এফওভি কিক বন্ধ)",
   "settings.auto_cruise": "অটো-ক্রুজ মোড (মোবাইলে গতি ধরে রাখতে এক চাপ)",
-  "settings.colorblind_palette": "উচ্চ-কন্ট্রাস্ট কালারব্লাইন্ড রুট প্যালেট"
+  "settings.colorblind_palette": "উচ্চ-কন্ট্রাস্ট কালারব্লাইন্ড রুট প্যালেট",
+  "tutorial.nabila.decline_example": "“এই ভাড়ায় হবে না ভাই।”"
 }
