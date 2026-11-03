@@ -334,6 +334,17 @@ describe('NegotiationSystem (T2.3)', () => {
     expect(new Set(best).size).toBeGreaterThan(1);
   });
 
+  describe('T8.5 review fixes', () => {
+    it('explaining a detour repeatedly is capped, so it cannot force certain acceptance', () => {
+      const profile = mockProfile({ archetype: 'commuter' });
+      let s = startNegotiation(mockRequest(), profile, {
+        traffic: 0.2, day: 1, walkM: 0, rng: new Rng(42),
+      });
+      for (let i = 0; i < 10; i++) s = respond(s, { kind: 'explainDetour', extraMin: 8 }).session;
+      expect(s.detourExtraMin).toBeLessThanOrEqual(16);
+    });
+  });
+
   describe('T8.5 live session negotiates with the request profile', () => {
     function live(seed: number) {
       const road = RoadNetwork.fromDistricts([testloopData as DistrictData]);

@@ -58,7 +58,9 @@ export function bindUi(session: GameSession, saveSystem?: SaveSystem): void {
 
   setNegotiationActionDispatcher((action) => {
     const current = negotiationSignal.value.session;
-    if (!current) return;
+    // Only the live negotiation for the ride that is still active may act.
+    if (!current || current.status !== 'active') return;
+    if (rideManager.getActiveRequest()?.requestId !== current.req.requestId) return;
     // Relocation uses the sim's measured option, never numbers the panel sent.
     const choice = action.kind === 'pickupAdjust' ? session.pickupChoice() : null;
     if (action.kind === 'pickupAdjust' && !choice) return;
@@ -67,8 +69,15 @@ export function bindUi(session: GameSession, saveSystem?: SaveSystem): void {
       choice ? { kind: 'pickupAdjust', walkM: choice.walkM, savesMin: choice.savesMin } : action
     );
     let next = result.session;
-    if (choice && result.session.walkM > current.walkM && rideManager.relocatePickup(choice.nodeId, choice.walkM)) {
-      next = session.repriceNegotiation(result.session);
+    let accepted = result.outcome?.kind === 'accepted';
+    if (choice && accepted) {
+      if (rideManager.relocatePickup(choice.nodeId, choice.walkM)) {
+        next = session.repriceNegotiation(result.session);
+      } else {
+        // The pickup did not move, so the walk penalty must not stick: keep only the patience cost.
+        next = { ...current, currentPatience: result.session.currentPatience };
+        accepted = false;
+      }
     }
     negotiationSignal.value = {
       active: next.status === 'active',
@@ -77,7 +86,7 @@ export function bindUi(session: GameSession, saveSystem?: SaveSystem): void {
       mood: rideManager.getPassengerMood(),
       pickup: next.status === 'active' ? session.pickupChoice() : null,
     };
-    if (result.outcome?.kind === 'accepted') {
+    if (accepted && result.outcome?.kind === 'accepted') {
       if (action.kind === 'offApp') session.markOffApp();
       rideManager.agreeFare(result.outcome.fare);
     } else if (result.outcome?.kind === 'walkedAway') {

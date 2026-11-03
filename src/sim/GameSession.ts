@@ -193,12 +193,20 @@ export class GameSession {
   }
 
   /** T8.5: after `relocatePickup` re-priced the ride, bring the live negotiation's fare
-   * and budget in line with the new trip (round, patience and walk are kept). */
+   * and budget in line with the new trip. Round, patience and walk are kept, and the
+   * passenger's standing offer is never lowered by a relocation. */
   repriceNegotiation(neg: NegotiationSession): NegotiationSession {
     const req = neg.req;
     const fair = fairFare(req.estimatedDistance, req.estimatedDuration, req.surge);
     const budget = expectedBudget(neg.profile, fair, this.gm.clock.day);
-    return { ...neg, fairFare: fair, expectedBudget: budget, currentPassengerOffer: openingOffer(neg.profile, budget) };
+    const offer = Math.max(neg.currentPassengerOffer, openingOffer(neg.profile, budget));
+    return {
+      ...neg,
+      fairFare: fair,
+      expectedBudget: budget,
+      currentPassengerOffer: offer,
+      currentRiderOffer: null,
+    };
   }
 
   /** T8.5: the rider took the ride off the app: no commission, and the platform may notice. */

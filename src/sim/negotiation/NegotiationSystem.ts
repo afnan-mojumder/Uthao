@@ -12,6 +12,9 @@ import { fairFare } from './fare';
 import { expectedBudget, openingOffer } from '../passenger/PassengerAI';
 import { defaultDialogueManager } from '../dialogue/DialogueManager';
 
+// ponytail: detour explanations cap at 16 extra minutes; a per-negotiation budget is the upgrade path if tuning needs more.
+const MAX_DETOUR_EXTRA_MIN = 16;
+
 export interface NegotiationContext {
   traffic: number;
   day: number;
@@ -140,7 +143,7 @@ export function evaluateFactors(
 
   const detourBoost =
     session.detourExtraMin > 0
-      ? 0.6 * (session.detourExtraMin / 10) * (0.5 + 0.5 * U)
+      ? 0.6 * (Math.min(session.detourExtraMin, MAX_DETOUR_EXTRA_MIN) / 10) * (0.5 + 0.5 * U)
       : 0;
 
   const z =
@@ -294,7 +297,8 @@ export function respond(
     );
     const updatedSession: NegotiationSession = {
       ...session,
-      detourExtraMin: session.detourExtraMin + action.extraMin,
+      // Capped so repeated explanations cannot push acceptance to certainty (see detourBoost).
+      detourExtraMin: Math.min(MAX_DETOUR_EXTRA_MIN, session.detourExtraMin + action.extraMin),
       currentPatience: nextPatience,
     };
     return {
