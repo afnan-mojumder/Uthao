@@ -3675,6 +3675,636 @@
     "category": "general"
   },
   {
+    "id": "dl_student_greeting_01",
+    "archetype": "student",
+    "phase": "greeting",
+    "key": "dialogue.pool.student.greeting.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_greeting_02",
+    "archetype": "student",
+    "phase": "greeting",
+    "key": "dialogue.pool.student.greeting.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_greeting_03",
+    "archetype": "student",
+    "phase": "greeting",
+    "key": "dialogue.pool.student.greeting.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_offer_01",
+    "archetype": "student",
+    "phase": "offer",
+    "key": "dialogue.pool.student.offer.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_offer_02",
+    "archetype": "student",
+    "phase": "offer",
+    "key": "dialogue.pool.student.offer.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_counter_01",
+    "archetype": "student",
+    "phase": "counter",
+    "key": "dialogue.pool.student.counter.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_counter_02",
+    "archetype": "student",
+    "phase": "counter",
+    "key": "dialogue.pool.student.counter.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_accept_01",
+    "archetype": "student",
+    "phase": "accept",
+    "key": "dialogue.pool.student.accept.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_accept_02",
+    "archetype": "student",
+    "phase": "accept",
+    "key": "dialogue.pool.student.accept.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_reject_01",
+    "archetype": "student",
+    "phase": "reject",
+    "key": "dialogue.pool.student.reject.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_reject_02",
+    "archetype": "student",
+    "phase": "reject",
+    "key": "dialogue.pool.student.reject.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_small_talk_01",
+    "archetype": "student",
+    "phase": "small_talk",
+    "key": "dialogue.pool.student.small_talk.01",
+    "category": "cricket"
+  },
+  {
+    "id": "dl_student_small_talk_02",
+    "archetype": "student",
+    "phase": "small_talk",
+    "key": "dialogue.pool.student.small_talk.02",
+    "category": "exams"
+  },
+  {
+    "id": "dl_student_drop_off_01",
+    "archetype": "student",
+    "phase": "drop_off",
+    "key": "dialogue.pool.student.drop_off.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_drop_off_02",
+    "archetype": "student",
+    "phase": "drop_off",
+    "key": "dialogue.pool.student.drop_off.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_greeting_01",
+    "archetype": "office",
+    "phase": "greeting",
+    "key": "dialogue.pool.office.greeting.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_greeting_02",
+    "archetype": "office",
+    "phase": "greeting",
+    "key": "dialogue.pool.office.greeting.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_greeting_03",
+    "archetype": "office",
+    "phase": "greeting",
+    "key": "dialogue.pool.office.greeting.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_offer_01",
+    "archetype": "office",
+    "phase": "offer",
+    "key": "dialogue.pool.office.offer.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_offer_02",
+    "archetype": "office",
+    "phase": "offer",
+    "key": "dialogue.pool.office.offer.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_counter_01",
+    "archetype": "office",
+    "phase": "counter",
+    "key": "dialogue.pool.office.counter.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_counter_02",
+    "archetype": "office",
+    "phase": "counter",
+    "key": "dialogue.pool.office.counter.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_accept_01",
+    "archetype": "office",
+    "phase": "accept",
+    "key": "dialogue.pool.office.accept.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_accept_02",
+    "archetype": "office",
+    "phase": "accept",
+    "key": "dialogue.pool.office.accept.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_reject_01",
+    "archetype": "office",
+    "phase": "reject",
+    "key": "dialogue.pool.office.reject.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_reject_02",
+    "archetype": "office",
+    "phase": "reject",
+    "key": "dialogue.pool.office.reject.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_small_talk_01",
+    "archetype": "office",
+    "phase": "small_talk",
+    "key": "dialogue.pool.office.small_talk.01",
+    "category": "cricket"
+  },
+  {
+    "id": "dl_office_small_talk_02",
+    "archetype": "office",
+    "phase": "small_talk",
+    "key": "dialogue.pool.office.small_talk.02",
+    "category": "exams"
+  },
+  {
+    "id": "dl_office_drop_off_01",
+    "archetype": "office",
+    "phase": "drop_off",
+    "key": "dialogue.pool.office.drop_off.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_drop_off_02",
+    "archetype": "office",
+    "phase": "drop_off",
+    "key": "dialogue.pool.office.drop_off.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_greeting_01",
+    "archetype": "urgent",
+    "phase": "greeting",
+    "key": "dialogue.pool.urgent.greeting.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_greeting_02",
+    "archetype": "urgent",
+    "phase": "greeting",
+    "key": "dialogue.pool.urgent.greeting.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_greeting_03",
+    "archetype": "urgent",
+    "phase": "greeting",
+    "key": "dialogue.pool.urgent.greeting.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_offer_01",
+    "archetype": "urgent",
+    "phase": "offer",
+    "key": "dialogue.pool.urgent.offer.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_offer_02",
+    "archetype": "urgent",
+    "phase": "offer",
+    "key": "dialogue.pool.urgent.offer.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_counter_01",
+    "archetype": "urgent",
+    "phase": "counter",
+    "key": "dialogue.pool.urgent.counter.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_counter_02",
+    "archetype": "urgent",
+    "phase": "counter",
+    "key": "dialogue.pool.urgent.counter.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_accept_01",
+    "archetype": "urgent",
+    "phase": "accept",
+    "key": "dialogue.pool.urgent.accept.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_accept_02",
+    "archetype": "urgent",
+    "phase": "accept",
+    "key": "dialogue.pool.urgent.accept.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_reject_01",
+    "archetype": "urgent",
+    "phase": "reject",
+    "key": "dialogue.pool.urgent.reject.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_reject_02",
+    "archetype": "urgent",
+    "phase": "reject",
+    "key": "dialogue.pool.urgent.reject.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_small_talk_01",
+    "archetype": "urgent",
+    "phase": "small_talk",
+    "key": "dialogue.pool.urgent.small_talk.01",
+    "category": "cricket"
+  },
+  {
+    "id": "dl_urgent_small_talk_02",
+    "archetype": "urgent",
+    "phase": "small_talk",
+    "key": "dialogue.pool.urgent.small_talk.02",
+    "category": "exams"
+  },
+  {
+    "id": "dl_urgent_drop_off_01",
+    "archetype": "urgent",
+    "phase": "drop_off",
+    "key": "dialogue.pool.urgent.drop_off.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_drop_off_02",
+    "archetype": "urgent",
+    "phase": "drop_off",
+    "key": "dialogue.pool.urgent.drop_off.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_greeting_01",
+    "archetype": "traveler",
+    "phase": "greeting",
+    "key": "dialogue.pool.traveler.greeting.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_greeting_02",
+    "archetype": "traveler",
+    "phase": "greeting",
+    "key": "dialogue.pool.traveler.greeting.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_greeting_03",
+    "archetype": "traveler",
+    "phase": "greeting",
+    "key": "dialogue.pool.traveler.greeting.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_offer_01",
+    "archetype": "traveler",
+    "phase": "offer",
+    "key": "dialogue.pool.traveler.offer.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_offer_02",
+    "archetype": "traveler",
+    "phase": "offer",
+    "key": "dialogue.pool.traveler.offer.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_counter_01",
+    "archetype": "traveler",
+    "phase": "counter",
+    "key": "dialogue.pool.traveler.counter.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_counter_02",
+    "archetype": "traveler",
+    "phase": "counter",
+    "key": "dialogue.pool.traveler.counter.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_accept_01",
+    "archetype": "traveler",
+    "phase": "accept",
+    "key": "dialogue.pool.traveler.accept.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_accept_02",
+    "archetype": "traveler",
+    "phase": "accept",
+    "key": "dialogue.pool.traveler.accept.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_reject_01",
+    "archetype": "traveler",
+    "phase": "reject",
+    "key": "dialogue.pool.traveler.reject.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_reject_02",
+    "archetype": "traveler",
+    "phase": "reject",
+    "key": "dialogue.pool.traveler.reject.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_small_talk_01",
+    "archetype": "traveler",
+    "phase": "small_talk",
+    "key": "dialogue.pool.traveler.small_talk.01",
+    "category": "cricket"
+  },
+  {
+    "id": "dl_traveler_small_talk_02",
+    "archetype": "traveler",
+    "phase": "small_talk",
+    "key": "dialogue.pool.traveler.small_talk.02",
+    "category": "exams"
+  },
+  {
+    "id": "dl_traveler_drop_off_01",
+    "archetype": "traveler",
+    "phase": "drop_off",
+    "key": "dialogue.pool.traveler.drop_off.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_drop_off_02",
+    "archetype": "traveler",
+    "phase": "drop_off",
+    "key": "dialogue.pool.traveler.drop_off.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_greeting_01",
+    "archetype": "unreliable",
+    "phase": "greeting",
+    "key": "dialogue.pool.unreliable.greeting.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_greeting_02",
+    "archetype": "unreliable",
+    "phase": "greeting",
+    "key": "dialogue.pool.unreliable.greeting.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_greeting_03",
+    "archetype": "unreliable",
+    "phase": "greeting",
+    "key": "dialogue.pool.unreliable.greeting.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_offer_01",
+    "archetype": "unreliable",
+    "phase": "offer",
+    "key": "dialogue.pool.unreliable.offer.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_offer_02",
+    "archetype": "unreliable",
+    "phase": "offer",
+    "key": "dialogue.pool.unreliable.offer.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_counter_01",
+    "archetype": "unreliable",
+    "phase": "counter",
+    "key": "dialogue.pool.unreliable.counter.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_counter_02",
+    "archetype": "unreliable",
+    "phase": "counter",
+    "key": "dialogue.pool.unreliable.counter.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_accept_01",
+    "archetype": "unreliable",
+    "phase": "accept",
+    "key": "dialogue.pool.unreliable.accept.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_accept_02",
+    "archetype": "unreliable",
+    "phase": "accept",
+    "key": "dialogue.pool.unreliable.accept.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_reject_01",
+    "archetype": "unreliable",
+    "phase": "reject",
+    "key": "dialogue.pool.unreliable.reject.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_reject_02",
+    "archetype": "unreliable",
+    "phase": "reject",
+    "key": "dialogue.pool.unreliable.reject.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_small_talk_01",
+    "archetype": "unreliable",
+    "phase": "small_talk",
+    "key": "dialogue.pool.unreliable.small_talk.01",
+    "category": "cricket"
+  },
+  {
+    "id": "dl_unreliable_small_talk_02",
+    "archetype": "unreliable",
+    "phase": "small_talk",
+    "key": "dialogue.pool.unreliable.small_talk.02",
+    "category": "exams"
+  },
+  {
+    "id": "dl_unreliable_drop_off_01",
+    "archetype": "unreliable",
+    "phase": "drop_off",
+    "key": "dialogue.pool.unreliable.drop_off.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_drop_off_02",
+    "archetype": "unreliable",
+    "phase": "drop_off",
+    "key": "dialogue.pool.unreliable.drop_off.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_greeting_01",
+    "archetype": "family",
+    "phase": "greeting",
+    "key": "dialogue.pool.family.greeting.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_greeting_02",
+    "archetype": "family",
+    "phase": "greeting",
+    "key": "dialogue.pool.family.greeting.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_greeting_03",
+    "archetype": "family",
+    "phase": "greeting",
+    "key": "dialogue.pool.family.greeting.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_offer_01",
+    "archetype": "family",
+    "phase": "offer",
+    "key": "dialogue.pool.family.offer.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_offer_02",
+    "archetype": "family",
+    "phase": "offer",
+    "key": "dialogue.pool.family.offer.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_counter_01",
+    "archetype": "family",
+    "phase": "counter",
+    "key": "dialogue.pool.family.counter.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_counter_02",
+    "archetype": "family",
+    "phase": "counter",
+    "key": "dialogue.pool.family.counter.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_accept_01",
+    "archetype": "family",
+    "phase": "accept",
+    "key": "dialogue.pool.family.accept.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_accept_02",
+    "archetype": "family",
+    "phase": "accept",
+    "key": "dialogue.pool.family.accept.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_reject_01",
+    "archetype": "family",
+    "phase": "reject",
+    "key": "dialogue.pool.family.reject.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_reject_02",
+    "archetype": "family",
+    "phase": "reject",
+    "key": "dialogue.pool.family.reject.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_small_talk_01",
+    "archetype": "family",
+    "phase": "small_talk",
+    "key": "dialogue.pool.family.small_talk.01",
+    "category": "cricket"
+  },
+  {
+    "id": "dl_family_small_talk_02",
+    "archetype": "family",
+    "phase": "small_talk",
+    "key": "dialogue.pool.family.small_talk.02",
+    "category": "exams"
+  },
+  {
+    "id": "dl_family_drop_off_01",
+    "archetype": "family",
+    "phase": "drop_off",
+    "key": "dialogue.pool.family.drop_off.01",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_drop_off_02",
+    "archetype": "family",
+    "phase": "drop_off",
+    "key": "dialogue.pool.family.drop_off.02",
+    "category": "general"
+  },
+  {
     "id": "char_tanvir_flag_punctual",
     "characterId": "char_tanvir",
     "archetype": "commuter",

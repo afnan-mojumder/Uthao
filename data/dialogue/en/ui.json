@@ -257,5 +257,7 @@
   "settings.reduce_motion": "Reduce Motion (Disable Camera Shake & FOV Kick)",
   "settings.auto_cruise": "Auto-Cruise Mode (Tap to Maintain Speed on Mobile)",
   "settings.colorblind_palette": "Colorblind Route Palette",
-  "tutorial.nabila.decline_example": "“This fare will not work, brother.”"
+  "tutorial.nabila.decline_example": "“This fare will not work, brother.”",
+  "trip.consequence.offAppUnpaid": "Off-app fare went unpaid",
+  "trip.consequence.disputed": "Passenger contested the ride (disputed)"
 }

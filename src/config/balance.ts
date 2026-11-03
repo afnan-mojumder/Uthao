@@ -18,6 +18,9 @@ export const BALANCE = {
   OFF_APP: {
     commission: 0,
     policyDetectChance: 0.03,
+    // ponytail: T8.6 placeholder, non-payment chance = (1 - paymentReliability) * nonPayFactor, capped.
+    nonPayFactor: 1.5,
+    nonPayMaxChance: 0.5,
     strikesToSuspend: 3,
     suspendDays: 2,
   },
@@ -129,6 +132,13 @@ export const BALANCE = {
     careful: { budgetFactor: 0.95, openingFactor: 0.95 },
     regular: { budgetFactor: 0.9, openingFactor: 0.9 },
     risky: { budgetFactor: 1.3, openingFactor: 1.1 },
+    // ponytail: T8.6 placeholders, tuned in T11.3 against the bot harness.
+    student: { budgetFactor: 0.75, openingFactor: 0.85 },
+    office: { budgetFactor: 1.1, openingFactor: 0.95 },
+    urgent: { budgetFactor: 1.3, openingFactor: 1.0 },
+    traveler: { budgetFactor: 1.0, openingFactor: 0.9 },
+    unreliable: { budgetFactor: 0.8, openingFactor: 0.9 },
+    family: { budgetFactor: 1.0, openingFactor: 0.9 },
   },
   BIKE: {
     old100: {

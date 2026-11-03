@@ -4,7 +4,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-const archetypes = ['bargainer', 'commuter', 'careful', 'regular', 'risky'];
+import { t86Templates } from './dialogue-t86-templates.mjs';
+
+const archetypes = ['bargainer', 'commuter', 'careful', 'regular', 'risky', 'student', 'office', 'urgent', 'traveler', 'unreliable', 'family'];
 const phases = ['greeting', 'offer', 'counter', 'accept', 'reject', 'small_talk', 'drop_off'];
 
 // Base themes per archetype & phase to ensure rich variety and cultural realism
@@ -899,12 +901,23 @@ const allLines = [];
 const enDict = {};
 const bnDict = {};
 
+// T8.6: the six new archetypes live in their own file; merged here so one generator writes everything.
+Object.assign(templates, t86Templates);
+for (const arch of archetypes) {
+  const total = phases.reduce((n, ph) => n + (templates[arch]?.[ph]?.length ?? 0), 0);
+  if (total < 15) {
+    console.error(`Error: Archetype ${arch} has ${total} lines across phases, need >= 15!`);
+    process.exit(1);
+  }
+}
+
 // 1. Process archetype lines
 for (const arch of archetypes) {
   for (const ph of phases) {
     const pool = templates[arch]?.[ph] || [];
-    if (pool.length < 15) {
-      console.error(`Error: Archetype ${arch} phase ${ph} only has ${pool.length} lines, need >= 15!`);
+    // T8.6: the bar is 15 lines per archetype across phases, and at least one per phase.
+    if (pool.length < 1) {
+      console.error(`Error: Archetype ${arch} phase ${ph} has no lines!`);
       process.exit(1);
     }
     pool.forEach((item, idx) => {
@@ -942,7 +955,7 @@ for (const cl of characterLines) {
 }
 
 console.log(`Generated total of ${allLines.length} dialogue entries:`);
-console.log(`- Per-archetype base lines: ${archetypes.length * phases.length * 15} (35 pools x 15)`);
+console.log(`- Per-archetype base lines: ${allLines.filter((l) => !l.characterId).length}`);
 console.log(`- Flag-conditioned character lines: ${characterLines.length}`);
 
 // Output files

@@ -20,6 +20,8 @@ import type { Route, PickupOptionsResult } from '../road/routing';
 import type { Rng } from '../../core/rng';
 import { BALANCE } from '../../config/balance';
 import { receipt, fuelUsed } from '../economy/fuel';
+import { offAppPayout, isDisputed } from '../economy/offApp';
+import { Rng as SeededRng, hashSeed } from '../../core/rng';
 import type { EconomyManager } from '../economy/EconomyManager';
 import type { ReputationSystem } from '../reputation/ReputationSystem';
 import { defaultDialogueManager } from '../dialogue/DialogueManager';
@@ -33,6 +35,8 @@ export interface RideManagerOptions {
   /** 0-1 payment reliability of the request's passenger; drives the NoShow chance.
    * Without it, every passenger counts as fully reliable (never no-shows). */
   paymentReliabilityOf?: (req: RideRequest) => number | undefined;
+  /** T8.6: the passenger's archetype, for dispute behaviour (unreliable passengers may contest). */
+  archetypeOf?: (req: RideRequest) => string | undefined;
   /** T8.2: when present, a finished trip is paid through `economy.settleTrip`.
    * Without it (bare unit tests) the receipt is computed but nothing is paid. */
   economy?: EconomyManager;
@@ -59,6 +63,7 @@ export class RideManager {
   private interruptedFrom: TripState | null = null;
   private readonly rng?: Rng;
   private readonly paymentReliabilityOf?: (req: RideRequest) => number | undefined;
+  private readonly archetypeOf?: (req: RideRequest) => string | undefined;
   private readonly economy?: EconomyManager;
   private readonly reputation?: ReputationSystem;
   private readonly clock?: { day: number; minutes: number };
@@ -87,6 +92,7 @@ export class RideManager {
     this.bus = opts.bus;
     this.rng = opts.rng;
     this.paymentReliabilityOf = opts.paymentReliabilityOf;
+    this.archetypeOf = opts.archetypeOf;
     this.economy = opts.economy;
     this.reputation = opts.reputation;
     this.clock = opts.clock;
@@ -552,10 +558,26 @@ export class RideManager {
           const rating = this.reputation?.getActiveTripRating() ?? 5;
           const spec = { model: this.activeBikeId, engineTune: this.hasEngineTune };
           const fuelLiters = this.tripFuelLiters?.() ?? fuelUsed(req.estimatedDistance, 0, spec);
+          // T8.6: an off-app fare can go unpaid. The roll is seeded by the request, so it replays.
+          const offApp = req.bookingType === 'offApp'
+            ? offAppPayout(
+                req.initialFare,
+                this.paymentReliabilityOf?.(req) ?? 1,
+                new SeededRng(hashSeed(req.requestId, 'offAppPay')).next()
+              )
+            : null;
+          // T8.6: an unreliable passenger may contest the ride; it settles as Disputed.
+          const archetype = this.archetypeOf?.(req);
+          const disputed = archetype !== undefined && isDisputed(
+            archetype,
+            this.paymentReliabilityOf?.(req) ?? 1,
+            new SeededRng(hashSeed(req.requestId, 'dispute')).next()
+          );
+          if (disputed) this.outcome = 'disputed';
           const tripReceipt = this.economy
             ? this.economy.settleTrip({
                 requestId: req.requestId,
-                fare: req.initialFare,
+                fare: offApp ? offApp.paid : req.initialFare,
                 tip: 0,
                 bonus: 0,
                 bookingType: req.bookingType,
@@ -568,7 +590,10 @@ export class RideManager {
                 rating,
                 day: this.clock?.day ?? 1,
                 minute: this.clock?.minutes ?? 0,
-                consequences: [],
+                consequences: [
+                  ...(offApp?.unpaid ? ['trip.consequence.offAppUnpaid'] : []),
+                  ...(disputed ? ['trip.consequence.disputed'] : []),
+                ],
               })
             : receipt({
                 requestId: req.requestId,

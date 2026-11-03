@@ -77,6 +77,10 @@ export interface RequestGeneratorOptions {
   seqProvider?: () => number;
 }
 
+// ponytail: T8.6 placeholder share of requests from the six new archetypes; tune in T11.3.
+const NEW_ARCHETYPE_SHARE = 0.15;
+const NEW_ARCHETYPES: ArchetypeId[] = ['student', 'office', 'urgent', 'traveler', 'unreliable', 'family'];
+
 export class RequestGenerator {
   readonly network: RoadNetwork;
   readonly rng: Rng;
@@ -208,7 +212,12 @@ export class RequestGenerator {
 
   sampleArchetype(minute: number): ArchetypeId {
     const m = ((minute % 1440) + 1440) % 1440;
-    const roll = this.rng.next();
+    const draw = this.rng.next();
+    // T8.6: a fixed share of requests comes from the six new archetypes; the rest keep the original tables.
+    if (draw < NEW_ARCHETYPE_SHARE) {
+      return NEW_ARCHETYPES[Math.floor((draw / NEW_ARCHETYPE_SHARE) * NEW_ARCHETYPES.length)]!;
+    }
+    const roll = (draw - NEW_ARCHETYPE_SHARE) / (1 - NEW_ARCHETYPE_SHARE);
 
     // Late night distribution
     if (m >= 1380 || m < 300) {

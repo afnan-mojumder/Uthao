@@ -20,7 +20,13 @@ export type ArchetypeId =
   | 'commuter'
   | 'careful'
   | 'regular'
-  | 'risky';
+  | 'risky'
+  | 'student'
+  | 'office'
+  | 'urgent'
+  | 'traveler'
+  | 'unreliable'
+  | 'family';
 
 /** @deprecated T8.1: ride state is `TripState` (see sim/ride/tripFsm.ts). Kept so
  * `RideRequest.status` readers keep working through `legacyStatusOf`; removed in T12.5. */

@@ -108,6 +108,7 @@ export class GameSession {
             : 'ok',
       paymentReliabilityOf: (req) =>
         this.requests.getProfile(req.passengerId)?.paymentReliability,
+      archetypeOf: (req) => this.requests.getProfile(req.passengerId)?.archetype,
     });
     // T7.5: lets effect handlers (e.g. `endTrip`) reach the live ride state.
     this.gm.rideManager = this.ride;

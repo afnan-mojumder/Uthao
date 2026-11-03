@@ -5,15 +5,42 @@
       "bn": "দরদামকারী",
       "en": "The Bargainer"
     },
-    "budgetFactor": [0.75, 0.95],
-    "patience": [0.35, 0.65],
-    "urgency": [0.2, 0.5],
-    "bargainingTendency": [0.7, 1.0],
-    "safetySensitivity": [0.3, 0.6],
-    "trustInRider": [0.2, 0.5],
-    "localKnowledge": [0.5, 0.85],
-    "paymentReliability": [0.85, 1.0],
-    "walkTolerance": [0.3, 0.7],
+    "budgetFactor": [
+      0.75,
+      0.95
+    ],
+    "patience": [
+      0.35,
+      0.65
+    ],
+    "urgency": [
+      0.2,
+      0.5
+    ],
+    "bargainingTendency": [
+      0.7,
+      1.0
+    ],
+    "safetySensitivity": [
+      0.3,
+      0.6
+    ],
+    "trustInRider": [
+      0.2,
+      0.5
+    ],
+    "localKnowledge": [
+      0.5,
+      0.85
+    ],
+    "paymentReliability": [
+      0.85,
+      1.0
+    ],
+    "walkTolerance": [
+      0.3,
+      0.7
+    ],
     "names": [
       "p_abdul_kader",
       "p_salma_begum",
@@ -28,15 +55,42 @@
       "bn": "অফিস যাত্রী",
       "en": "The Office Commuter"
     },
-    "budgetFactor": [0.95, 1.2],
-    "patience": [0.2, 0.45],
-    "urgency": [0.7, 1.0],
-    "bargainingTendency": [0.1, 0.35],
-    "safetySensitivity": [0.3, 0.6],
-    "trustInRider": [0.4, 0.7],
-    "localKnowledge": [0.3, 0.6],
-    "paymentReliability": [0.95, 1.0],
-    "walkTolerance": [0.1, 0.4],
+    "budgetFactor": [
+      0.95,
+      1.2
+    ],
+    "patience": [
+      0.2,
+      0.45
+    ],
+    "urgency": [
+      0.7,
+      1.0
+    ],
+    "bargainingTendency": [
+      0.1,
+      0.35
+    ],
+    "safetySensitivity": [
+      0.3,
+      0.6
+    ],
+    "trustInRider": [
+      0.4,
+      0.7
+    ],
+    "localKnowledge": [
+      0.3,
+      0.6
+    ],
+    "paymentReliability": [
+      0.95,
+      1.0
+    ],
+    "walkTolerance": [
+      0.1,
+      0.4
+    ],
     "names": [
       "p_tanvir_ahmed",
       "p_farhana_haque",
@@ -51,15 +105,42 @@
       "bn": "সতর্ক যাত্রী",
       "en": "The Careful Passenger"
     },
-    "budgetFactor": [0.9, 1.1],
-    "patience": [0.6, 0.9],
-    "urgency": [0.1, 0.4],
-    "bargainingTendency": [0.2, 0.5],
-    "safetySensitivity": [0.8, 1.0],
-    "trustInRider": [0.3, 0.6],
-    "localKnowledge": [0.2, 0.5],
-    "paymentReliability": [0.9, 1.0],
-    "walkTolerance": [0.2, 0.5],
+    "budgetFactor": [
+      0.9,
+      1.1
+    ],
+    "patience": [
+      0.6,
+      0.9
+    ],
+    "urgency": [
+      0.1,
+      0.4
+    ],
+    "bargainingTendency": [
+      0.2,
+      0.5
+    ],
+    "safetySensitivity": [
+      0.8,
+      1.0
+    ],
+    "trustInRider": [
+      0.3,
+      0.6
+    ],
+    "localKnowledge": [
+      0.2,
+      0.5
+    ],
+    "paymentReliability": [
+      0.9,
+      1.0
+    ],
+    "walkTolerance": [
+      0.2,
+      0.5
+    ],
     "names": [
       "p_rashida_khatun",
       "p_zahid_hasan",
@@ -74,15 +155,42 @@
       "bn": "পরিচিত স্থানীয়",
       "en": "The Local Regular"
     },
-    "budgetFactor": [0.85, 1.05],
-    "patience": [0.4, 0.7],
-    "urgency": [0.3, 0.6],
-    "bargainingTendency": [0.3, 0.6],
-    "safetySensitivity": [0.4, 0.7],
-    "trustInRider": [0.6, 0.9],
-    "localKnowledge": [0.75, 1.0],
-    "paymentReliability": [0.9, 1.0],
-    "walkTolerance": [0.4, 0.8],
+    "budgetFactor": [
+      0.85,
+      1.05
+    ],
+    "patience": [
+      0.4,
+      0.7
+    ],
+    "urgency": [
+      0.3,
+      0.6
+    ],
+    "bargainingTendency": [
+      0.3,
+      0.6
+    ],
+    "safetySensitivity": [
+      0.4,
+      0.7
+    ],
+    "trustInRider": [
+      0.6,
+      0.9
+    ],
+    "localKnowledge": [
+      0.75,
+      1.0
+    ],
+    "paymentReliability": [
+      0.9,
+      1.0
+    ],
+    "walkTolerance": [
+      0.4,
+      0.8
+    ],
     "names": [
       "p_alamgir_bhai",
       "p_rokeya_khala",
@@ -97,21 +205,348 @@
       "bn": "ঝুঁকিপূর্ণ যাত্রী",
       "en": "The Risky Customer"
     },
-    "budgetFactor": [1.1, 1.5],
-    "patience": [0.1, 0.4],
-    "urgency": [0.8, 1.0],
-    "bargainingTendency": [0.1, 0.3],
-    "safetySensitivity": [0.05, 0.3],
-    "trustInRider": [0.1, 0.4],
-    "localKnowledge": [0.5, 0.9],
-    "paymentReliability": [0.6, 0.9],
-    "walkTolerance": [0.1, 0.5],
+    "budgetFactor": [
+      1.1,
+      1.5
+    ],
+    "patience": [
+      0.1,
+      0.4
+    ],
+    "urgency": [
+      0.8,
+      1.0
+    ],
+    "bargainingTendency": [
+      0.1,
+      0.3
+    ],
+    "safetySensitivity": [
+      0.05,
+      0.3
+    ],
+    "trustInRider": [
+      0.1,
+      0.4
+    ],
+    "localKnowledge": [
+      0.5,
+      0.9
+    ],
+    "paymentReliability": [
+      0.6,
+      0.9
+    ],
+    "walkTolerance": [
+      0.1,
+      0.5
+    ],
     "names": [
       "p_shanto_bhai",
       "p_rubel_black",
       "p_kajol_viper",
       "p_bappi_don",
       "p_sohel_rana"
+    ]
+  },
+  "student": {
+    "id": "student",
+    "name": {
+      "bn": "ছাত্র যাত্রী",
+      "en": "The Student"
+    },
+    "budgetFactor": [
+      0.6,
+      0.85
+    ],
+    "patience": [
+      0.4,
+      0.7
+    ],
+    "urgency": [
+      0.2,
+      0.5
+    ],
+    "bargainingTendency": [
+      0.5,
+      0.8
+    ],
+    "safetySensitivity": [
+      0.4,
+      0.7
+    ],
+    "trustInRider": [
+      0.4,
+      0.7
+    ],
+    "localKnowledge": [
+      0.2,
+      0.5
+    ],
+    "paymentReliability": [
+      0.6,
+      0.85
+    ],
+    "walkTolerance": [
+      0.4,
+      0.8
+    ],
+    "names": [
+      "p_nadia_islam",
+      "p_rafi_uddin",
+      "p_tasnim_hasan",
+      "p_imran_sheikh",
+      "p_mim_akter"
+    ]
+  },
+  "office": {
+    "id": "office",
+    "name": {
+      "bn": "অফিস দৌড়ানো যাত্রী",
+      "en": "The Rushed Office Worker"
+    },
+    "budgetFactor": [
+      1.0,
+      1.3
+    ],
+    "patience": [
+      0.2,
+      0.4
+    ],
+    "urgency": [
+      0.8,
+      1.0
+    ],
+    "bargainingTendency": [
+      0.05,
+      0.25
+    ],
+    "safetySensitivity": [
+      0.3,
+      0.6
+    ],
+    "trustInRider": [
+      0.5,
+      0.8
+    ],
+    "localKnowledge": [
+      0.4,
+      0.7
+    ],
+    "paymentReliability": [
+      0.95,
+      1.0
+    ],
+    "walkTolerance": [
+      0.1,
+      0.3
+    ],
+    "names": [
+      "p_rakib_sarkar",
+      "p_lipi_das",
+      "p_jahid_mia",
+      "p_sumaiya_noor",
+      "p_habib_ullah"
+    ]
+  },
+  "urgent": {
+    "id": "urgent",
+    "name": {
+      "bn": "জরুরি যাত্রী",
+      "en": "The Urgent Passenger"
+    },
+    "budgetFactor": [
+      1.1,
+      1.6
+    ],
+    "patience": [
+      0.1,
+      0.3
+    ],
+    "urgency": [
+      0.9,
+      1.0
+    ],
+    "bargainingTendency": [
+      0.0,
+      0.2
+    ],
+    "safetySensitivity": [
+      0.2,
+      0.5
+    ],
+    "trustInRider": [
+      0.3,
+      0.6
+    ],
+    "localKnowledge": [
+      0.3,
+      0.6
+    ],
+    "paymentReliability": [
+      0.8,
+      1.0
+    ],
+    "walkTolerance": [
+      0.0,
+      0.3
+    ],
+    "names": [
+      "p_babul_mia",
+      "p_ruma_khatun",
+      "p_faruk_ali",
+      "p_ayesha_siddika",
+      "p_mizan_rahman"
+    ]
+  },
+  "traveler": {
+    "id": "traveler",
+    "name": {
+      "bn": "পথিক যাত্রী",
+      "en": "The Lost Traveler"
+    },
+    "budgetFactor": [
+      0.9,
+      1.3
+    ],
+    "patience": [
+      0.3,
+      0.6
+    ],
+    "urgency": [
+      0.3,
+      0.7
+    ],
+    "bargainingTendency": [
+      0.3,
+      0.6
+    ],
+    "safetySensitivity": [
+      0.4,
+      0.7
+    ],
+    "trustInRider": [
+      0.3,
+      0.6
+    ],
+    "localKnowledge": [
+      0.0,
+      0.2
+    ],
+    "paymentReliability": [
+      0.9,
+      1.0
+    ],
+    "walkTolerance": [
+      0.2,
+      0.5
+    ],
+    "names": [
+      "p_kawsar_ahmed",
+      "p_josna_begum",
+      "p_selim_reza",
+      "p_nazmul_huda",
+      "p_mitu_rani"
+    ]
+  },
+  "unreliable": {
+    "id": "unreliable",
+    "name": {
+      "bn": "অনির্ভরযোগ্য যাত্রী",
+      "en": "The Unreliable Passenger"
+    },
+    "budgetFactor": [
+      0.6,
+      1.0
+    ],
+    "patience": [
+      0.2,
+      0.5
+    ],
+    "urgency": [
+      0.3,
+      0.7
+    ],
+    "bargainingTendency": [
+      0.4,
+      0.8
+    ],
+    "safetySensitivity": [
+      0.2,
+      0.5
+    ],
+    "trustInRider": [
+      0.1,
+      0.4
+    ],
+    "localKnowledge": [
+      0.3,
+      0.7
+    ],
+    "paymentReliability": [
+      0.3,
+      0.6
+    ],
+    "walkTolerance": [
+      0.3,
+      0.6
+    ],
+    "names": [
+      "p_jamal_uddin",
+      "p_lucky_hossain",
+      "p_dulal_mia",
+      "p_shahin_alam",
+      "p_rubel_sheikh"
+    ]
+  },
+  "family": {
+    "id": "family",
+    "name": {
+      "bn": "পরিবারের যাত্রী",
+      "en": "The Family"
+    },
+    "budgetFactor": [
+      0.9,
+      1.2
+    ],
+    "patience": [
+      0.5,
+      0.8
+    ],
+    "urgency": [
+      0.4,
+      0.7
+    ],
+    "bargainingTendency": [
+      0.2,
+      0.5
+    ],
+    "safetySensitivity": [
+      0.7,
+      1.0
+    ],
+    "trustInRider": [
+      0.4,
+      0.7
+    ],
+    "localKnowledge": [
+      0.2,
+      0.5
+    ],
+    "paymentReliability": [
+      0.9,
+      1.0
+    ],
+    "walkTolerance": [
+      0.0,
+      0.2
+    ],
+    "names": [
+      "p_mamun_hasan",
+      "p_shirina_begum",
+      "p_kamal_pasha",
+      "p_anika_rahman",
+      "p_shafiq_uddin"
     ]
   }
 }

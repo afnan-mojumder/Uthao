@@ -160,7 +160,7 @@ export interface DistrictData {
 export const ArchetypeRangeSchema = z.tuple([z.number(), z.number()]);
 
 export const ArchetypeDefinitionSchema = z.object({
-  id: z.enum(['bargainer', 'commuter', 'careful', 'regular', 'risky']),
+  id: z.enum(['bargainer', 'commuter', 'careful', 'regular', 'risky', 'student', 'office', 'urgent', 'traveler', 'unreliable', 'family']),
   name: z.object({
     bn: z.string(),
     en: z.string(),
@@ -178,7 +178,7 @@ export const ArchetypeDefinitionSchema = z.object({
 });
 
 export const ArchetypesDataSchema = z.record(
-  z.enum(['bargainer', 'commuter', 'careful', 'regular', 'risky']),
+  z.enum(['bargainer', 'commuter', 'careful', 'regular', 'risky', 'student', 'office', 'urgent', 'traveler', 'unreliable', 'family']),
   ArchetypeDefinitionSchema
 );
 
@@ -423,7 +423,7 @@ export const CharacterDefSchema = z.object({
   roleKey: z.string(),
   bioKey: z.string().optional(),
   phone: z.string(),
-  archetype: z.enum(['commuter', 'bargainer', 'careful', 'regular', 'risky']),
+  archetype: z.enum(['bargainer', 'commuter', 'careful', 'regular', 'risky', 'student', 'office', 'urgent', 'traveler', 'unreliable', 'family']),
   homeNodeId: z.string(),
   destinationNodeIds: z.array(z.string()).optional(),
   preferredTimes: z.array(CharacterPreferredTimeSchema),
@@ -503,7 +503,7 @@ export type DialoguePhase =
 
 export const DialogueLineSchema = z.object({
   id: z.string(),
-  archetype: z.enum(['bargainer', 'commuter', 'careful', 'regular', 'risky']).optional(),
+  archetype: z.enum(['bargainer', 'commuter', 'careful', 'regular', 'risky', 'student', 'office', 'urgent', 'traveler', 'unreliable', 'family']).optional(),
   characterId: z.string().optional(),
   phase: z.enum(['greeting', 'offer', 'counter', 'accept', 'reject', 'small_talk', 'drop_off']),
   key: z.string(),
