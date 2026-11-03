@@ -67,3 +67,18 @@
 - **Automated Tests Mapped:** 21 / 21 (100% test coverage)
 - **Manual Hardware Protocols Defined:** 21 / 21 (100% protocol coverage)
 - **Automated QA Test Suite:** `tests/unit/qa/testMatrix.test.ts`
+
+## Gate M1: the prototype protocol (T8.7)
+
+Automated: `tests/e2e/prototype.spec.ts` runs accept, negotiate, autopilot ride, one debug encounter, drop off, summary-to-ledger reconciliation and continue, on desktop and pixel7. Passing it does not sign off the gate. Afnan signs off by playing.
+
+Play it by hand on a fresh career, on PC and then on an Android phone:
+
+1. Start a new career from the main menu. Without help, reach the first ride.
+2. Accept a fare, then negotiate with the passenger. Does the panel make the passenger's mood and the fare choice clear?
+3. Ride to pickup, then to drop-off. Do the navigation and objective text say what to do next?
+4. When an encounter appears, answer it. Does the sim resume cleanly?
+5. At drop-off, read the summary. Do its rows match what your money did? Continue, then find the next fare.
+6. Repeat on the phone. Is it enjoyable, and is anything unplayable?
+
+Record in one line per point: pass, or what broke and how it felt. Then tick `GATE-M1` in `docs/QUESTIONS.md`.

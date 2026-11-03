@@ -33,3 +33,10 @@ Please have a native speaker review the following files for natural colloquial D
 ## T8.5 Bangla negotiation lines need native review
 - [ ] `data/dialogue/bn/ui.json` (`tutorial.nabila.counter_100`, `counter_90`, `accept_80`, `decline_example`): the four MASTER section 6 sample lines, copied verbatim into the first-ride negotiation. A native speaker should confirm they read naturally for a rider speaking to a student.
 - [ ] `data/dialogue/bn/negotiation.json`: new panel strings (`negotiation.mood`, `route`, `relocate`, `your_quote`, `custom_counter`, and the reworded `negotiation.decline`) are first-draft Bangla.
+
+## Gate M1 sign-off (blocks M2)
+- [ ] GATE-M1 signed off by Afnan: play the build on PC and on an Android phone. Can a new player accept, negotiate, ride, handle an encounter, drop off and see the summary unaided, and is it enjoyable? Protocol in `docs/PLAYTEST.md`. Do not start T13.x until this is ticked.
+
+## T8.6 open items (from review)
+- [ ] A disputed ride is recorded in the receipt (`trip.consequence.disputed`), but the ride outcome is cleared on settle, so the passenger status view never shows `Disputed`. Fix before M2, or after GATE-M1.
+- [ ] Off-app non-payment and disputes have no money or reputation effect beyond the ledger row and the receipt consequence. Price them in T11.3.

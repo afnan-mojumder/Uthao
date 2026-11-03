@@ -25,6 +25,8 @@ export function TripSummary({ receipt, onContinue }: TripSummaryProps) {
         alignItems: 'center',
         justifyContent: 'center',
         zIndex: 1000,
+        // The app root ignores pointer events; the summary must take them or Continue is unclickable.
+        pointerEvents: 'auto',
         fontFamily: "'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
         color: '#f8fafc',
       }}

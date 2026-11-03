@@ -75,7 +75,7 @@ Spec: `docs/MASTER.md`. Plan with full task details: `docs/superpowers/plans/202
 - [x] **T8.4** Pickup validity, navigation, reroute, phone states (5), deps: T8.1
 - [x] **T8.5** Negotiation with the real passenger (3), deps: T8.1, T7.4
 - [x] **T8.6** Six new archetypes and live off-app rides (5), deps: T8.5, T8.2
-- [ ] **T8.7** Gate M1 prototype test and human sign-off request (3), deps: T7.3, T7.5, T8.3, T8.4, T8.6
+- [x] **T8.7** Gate M1 prototype test and human sign-off request (3), deps: T7.3, T7.5, T8.3, T8.4, T8.6
 - [ ] **T13.1** Bounded, attributed meters (5), deps: T8.7
 - [ ] **T13.2** Karma panel, Story panel, UI Sheet, hotkeys (5), deps: T13.1
 - [ ] **T13.3** Exploitation and help as real choices (3), deps: T13.1
