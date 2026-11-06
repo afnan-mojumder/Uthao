@@ -259,5 +259,6 @@
   "settings.colorblind_palette": "Colorblind Route Palette",
   "tutorial.nabila.decline_example": "“This fare will not work, brother.”",
   "trip.consequence.offAppUnpaid": "Off-app fare went unpaid",
-  "trip.consequence.disputed": "Passenger contested the ride (disputed)"
+  "trip.consequence.disputed": "Passenger contested the ride (disputed)",
+  "settings.prototype_note": "Not in this build yet"
 }

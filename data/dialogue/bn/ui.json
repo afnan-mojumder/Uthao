@@ -259,5 +259,6 @@
   "settings.colorblind_palette": "উচ্চ-কন্ট্রাস্ট কালারব্লাইন্ড রুট প্যালেট",
   "tutorial.nabila.decline_example": "“এই ভাড়ায় হবে না ভাই।”",
   "trip.consequence.offAppUnpaid": "অ্যাপ ছাড়া ভাড়া পরিশোধ হয়নি",
-  "trip.consequence.disputed": "যাত্রী রাইডটি বিতর্কিত করেছেন"
+  "trip.consequence.disputed": "যাত্রী রাইডটি বিতর্কিত করেছেন",
+  "settings.prototype_note": "এই বিল্ডে এখনও নেই"
 }

@@ -23,7 +23,11 @@ import {
   screenSignal,
   journalSignal,
   journalDataSignal,
+  settingsSignal,
+  type GameSettings,
 } from './ui/store';
+import { setLanguage } from './ui/i18n';
+import { routeColorFor } from './ui/settingsEffects';
 import { bindUi } from './ui/bindings';
 import { SaveSystem } from './sim/save/SaveSystem';
 import { Minimap } from './render/minimap';
@@ -99,6 +103,9 @@ async function bootGame(): Promise<void> {
   if (!hasWebGL2Support()) {
     unsupportedSignal.value = 'WebGL2 is required to run Uthao on this device';
   }
+
+  // The saved language applies before the first render.
+  setLanguage(settingsSignal.value.language);
 
   // 2. Mount Preact UI App
   if (typeof document !== 'undefined') {
@@ -223,6 +230,16 @@ initDebugApi(gm, {
 // menu, save/load, tutorial, garage, bike, ending, phone contacts) is bound
 // here in one place instead of scattered across this file.
 bindUi(session, activeSaveSystem);
+
+// Settings take effect as soon as they are saved, and the saved language is
+// applied on boot. Cancel reverts the language preview (Settings.tsx).
+const applySettings = (s: GameSettings) => {
+  document.documentElement.dataset.reduceMotion = String(s.reduceMotion);
+  minimap?.setRouteColor(routeColorFor(s));
+  gm.eventDirector.pauseOnDecisions = s.pauseOnDecisions;
+  inputManager.setBindings({ ...inputManager.getBindings(), tiltEnabled: s.tiltControls });
+};
+settingsSignal.subscribe(applySettings);
 
 // T8.1: negotiation now happens before pickup, as soon as the rider accepts.
 gm.bus.on('negotiation/started', (ev) => {

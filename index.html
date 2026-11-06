@@ -50,6 +50,13 @@
         pointer-events: none;
         z-index: 20;
       }
+      /* Reduce motion: the settings toggle sets data-reduce-motion on <html>. */
+      html[data-reduce-motion="true"] *,
+      html[data-reduce-motion="true"] *::before,
+      html[data-reduce-motion="true"] *::after {
+        animation: none !important;
+        transition: none !important;
+      }
       /* Keyboard and gamepad focus must be visible on every control. */
       :focus-visible {
         outline: 3px solid #38bdf8;

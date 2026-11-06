@@ -19,6 +19,12 @@ export class Minimap {
   private readonly size: number;
   private readonly viewRadiusM: number;
   private readonly rotateWithPlayer: boolean;
+  private routeColor = '#10b981';
+
+  /** Settings change the route line between the normal and high-contrast colours. */
+  setRouteColor(color: string): void {
+    this.routeColor = color;
+  }
 
   constructor(roadNetwork: RoadNetwork, options: MinimapOptions = {}) {
     this.roadNetwork = roadNetwork;
@@ -154,7 +160,7 @@ export class Minimap {
         }
       }
       if (started) {
-        ctx.strokeStyle = '#10b981';
+        ctx.strokeStyle = this.routeColor;
         ctx.lineWidth = 3.5;
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';

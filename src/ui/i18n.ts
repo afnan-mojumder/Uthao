@@ -26,14 +26,18 @@ const dictionaries: Record<Language, Record<string, string>> = {
   en: { ...enUi, ...enNegotiation, ...enPhone, ...enHud, ...enMissions, ...enEndings, ...enCharacters, ...enEncounters, ...enDialogue, ...enPassengers },
 };
 
-let currentLanguage: Language = 'bn'; // Default to Bangla for authentic Dhaka experience
+import { signal } from '@preact/signals';
+
+// Default to Bangla for authentic Dhaka experience. A signal, so components that
+// call t() re-render when the language changes.
+const languageSignal = signal<Language>('bn');
 
 export function setLanguage(lang: Language): void {
-  currentLanguage = lang;
+  languageSignal.value = lang;
 }
 
 export function getLanguage(): Language {
-  return currentLanguage;
+  return languageSignal.value;
 }
 
 export function loadTranslations(lang: Language, data: Record<string, string>): void {
@@ -49,7 +53,7 @@ export function getDictionary(lang: Language): Record<string, string> {
  * Falls back to 'en' dictionary, then to the key itself if not found.
  */
 export function t(key: string, vars?: Record<string, string | number>): string {
-  let template = dictionaries[currentLanguage]?.[key];
+  let template = dictionaries[languageSignal.value]?.[key];
 
   // Fallback to English
   if (typeof template === 'undefined') {

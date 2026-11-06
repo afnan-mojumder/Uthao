@@ -53,6 +53,12 @@ export function Settings({
     onClose?.();
   };
 
+  // Cancel discards every change, including a language shown as a preview.
+  const handleCancel = () => {
+    setLanguage(settingsSignal.value.language);
+    onClose?.();
+  };
+
   return (
     <div
       data-testid="settings-screen"
@@ -104,7 +110,7 @@ export function Settings({
           </div>
           <button
             data-testid="settings-close-btn"
-            onClick={onClose}
+            onClick={handleCancel}
             style={{
               background: 'none',
               border: 'none',
@@ -319,7 +325,10 @@ export function Settings({
                 </label>
 
                 <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
-                  <span style={{ fontSize: '0.9rem', color: '#cbd5e1' }}>{t('settings.auto_cruise')}</span>
+                  <span style={{ fontSize: '0.9rem', color: '#cbd5e1' }}>
+                    {t('settings.auto_cruise')}
+                    <span style={{ marginLeft: '8px', fontSize: '0.75rem', color: '#fbbf24' }}>{t('settings.prototype_note')}</span>
+                  </span>
                   <input
                     data-testid="settings-auto-cruise-toggle"
                     type="checkbox"
@@ -337,6 +346,9 @@ export function Settings({
           {/* Audio Tab */}
           {activeTab === 'audio' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <p data-testid="settings-audio-prototype" style={{ margin: 0, fontSize: '0.85rem', color: '#fbbf24' }}>
+                {t('settings.prototype_note')}
+              </p>
               {/* Master Volume */}
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
@@ -476,7 +488,7 @@ export function Settings({
         >
           <button
             data-testid="settings-cancel-btn"
-            onClick={onClose}
+            onClick={handleCancel}
             style={{
               padding: '10px 20px',
               borderRadius: '10px',
