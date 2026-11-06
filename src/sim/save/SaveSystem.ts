@@ -232,13 +232,14 @@ export class SaveSystem {
       this.storage.setItem(key, jsonStr);
       return { success: true, slot, timestamp: saveObj.timestamp };
     } catch (err) {
-      // Storage throwing -> memory fallback
+      // The browser refused the write (quota, private window). Keep a copy in
+      // memory so Continue works until the tab closes, but do not report it as
+      // saved: it is not on disk, and the player must be told.
       if (!this.storage.isMemoryOnly) {
         const mem = new MemoryStorageAdapter();
         this.storage = mem;
         this.isMemoryOnly = true;
         this.storage.setItem(key, jsonStr);
-        return { success: true, slot, timestamp: saveObj.timestamp };
       }
       return {
         success: false,
@@ -351,7 +352,16 @@ export class SaveSystem {
    * 2. day/ended
    * 3. visibilitychange hidden
    */
-  bindAutosave(gm: GameManager, visibilityTarget?: VisibilityTarget): () => void {
+  /**
+   * Autosaves on ride and day events, and when the tab is hidden. `canAutosave`
+   * says whether a career is under way; on the title screen the game is blank,
+   * and saving it would overwrite the real career.
+   */
+  bindAutosave(
+    gm: GameManager,
+    visibilityTarget?: VisibilityTarget,
+    canAutosave: () => boolean = () => true
+  ): () => void {
     const unsubRides = gm.bus.on('ride/completed', () => {
       this.save(gm, 'auto');
     });
@@ -366,7 +376,7 @@ export class SaveSystem {
       onVisibilityChange = () => {
         if (visibilityTarget.visibilityState === 'hidden') {
           gm.paused = true;
-          this.save(gm, 'auto');
+          if (canAutosave()) this.save(gm, 'auto');
         }
       };
       visibilityTarget.addEventListener('visibilitychange', onVisibilityChange);

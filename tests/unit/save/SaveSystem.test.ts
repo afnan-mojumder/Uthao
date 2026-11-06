@@ -172,7 +172,7 @@ describe('SaveSystem (T4.9)', () => {
     expect(saveSystem.hasCorruptBackup(slot)).toBe(true);
   });
 
-  it('storage throwing → memory fallback', () => {
+  it('storage throwing → memory copy kept, but the save is reported as failed', () => {
     // Failing storage adapter simulating localStorage quota limit exceeded
     const failingStorage: StorageAdapter = {
       isMemoryOnly: false,
@@ -186,10 +186,11 @@ describe('SaveSystem (T4.9)', () => {
     const throwingSaveSystem = new SaveSystem(failingStorage);
     expect(throwingSaveSystem.isMemoryOnly).toBe(false);
 
-    // Save should catch throw, switch adapter to memory fallback, and succeed
+    // The save did not reach storage, so it must not report success. A copy is
+    // kept in memory so Continue still works in this session.
     const saveResult = throwingSaveSystem.save(gm, 'slot1');
 
-    expect(saveResult.success).toBe(true);
+    expect(saveResult.success).toBe(false);
     expect(throwingSaveSystem.isMemoryOnly).toBe(true);
     expect(throwingSaveSystem.hasSave('slot1')).toBe(true);
   });

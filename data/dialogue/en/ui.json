@@ -260,5 +260,6 @@
   "tutorial.nabila.decline_example": "“This fare will not work, brother.”",
   "trip.consequence.offAppUnpaid": "Off-app fare went unpaid",
   "trip.consequence.disputed": "Passenger contested the ride (disputed)",
-  "settings.prototype_note": "Not in this build yet"
+  "settings.prototype_note": "Not in this build yet",
+  "save.failed": "Could not save: the browser would not store the game. Free up space and try again."
 }

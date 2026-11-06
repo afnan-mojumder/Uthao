@@ -27,6 +27,7 @@ import {
   type GameSettings,
 } from './ui/store';
 import { setLanguage } from './ui/i18n';
+import { consumeFreshCareer } from './ui/freshCareer';
 import { routeColorFor } from './ui/settingsEffects';
 import { bindUi } from './ui/bindings';
 import { SaveSystem } from './sim/save/SaveSystem';
@@ -201,7 +202,12 @@ async function bootGame(): Promise<void> {
 // T4.9 SaveSystem and tab visibility lifecycle handling
 const activeSaveSystem = new SaveSystem();
 saveSystem = activeSaveSystem;
-activeSaveSystem.bindAutosave(gm, typeof document !== 'undefined' ? document : undefined);
+activeSaveSystem.bindAutosave(
+  gm,
+  typeof document !== 'undefined' ? document : undefined,
+  // On the title screen the game is blank: never save it over the real career.
+  () => screenSignal.value !== 'title'
+);
 
 if (typeof document !== 'undefined') {
   document.addEventListener('visibilitychange', () => {
@@ -265,6 +271,13 @@ if (isSingleDistrict) {
 // T7.3: spawn on the road network at the player's home node, aligned to the
 // road, instead of the old off-road `activeDistrict.nodes[0].x - 9` offset.
 session.spawnAtHome();
+
+// A new career requested from the menu before this reload: start it on this fresh game.
+if (consumeFreshCareer()) {
+  session.newCareer();
+  tutorialSignal.value = { active: true, step: 'alarm', agreedFare: 100 };
+  screenSignal.value = 'game';
+}
 
 let lastTime = typeof performance !== 'undefined' ? performance.now() : 0;
 let roamNodeIndex = 0;

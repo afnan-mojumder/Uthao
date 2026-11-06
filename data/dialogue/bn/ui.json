@@ -260,5 +260,6 @@
   "tutorial.nabila.decline_example": "“এই ভাড়ায় হবে না ভাই।”",
   "trip.consequence.offAppUnpaid": "অ্যাপ ছাড়া ভাড়া পরিশোধ হয়নি",
   "trip.consequence.disputed": "যাত্রী রাইডটি বিতর্কিত করেছেন",
-  "settings.prototype_note": "এই বিল্ডে এখনও নেই"
+  "settings.prototype_note": "এই বিল্ডে এখনও নেই",
+  "save.failed": "সেভ করা যায়নি: ব্রাউজার গেম সংরক্ষণ করতে দেয়নি। জায়গা খালি করে আবার চেষ্টা করুন।"
 }

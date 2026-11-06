@@ -1,6 +1,7 @@
 import type { JSX } from 'preact';
 import { signal } from '@preact/signals';
 import { t } from '../i18n';
+import { saveStatusSignal } from '../store';
 import { SaveSystem } from '../../sim/save/SaveSystem';
 import type { SaveSlot, SaveV1 } from '../../sim/save/migrations';
 
@@ -98,6 +99,11 @@ export function SaveSlots({
                 ? t('save.title_save') || '💾 গেম সেভ করুন (Save Game)'
                 : t('save.title_load') || '📂 গেম লোড করুন (Load Game)'}
             </h2>
+            {saveStatusSignal.value === 'failed' && (
+              <div data-testid="save-failed" role="alert" style={{ fontSize: '0.85rem', color: '#f87171', fontWeight: 600 }}>
+                {t('save.failed')}
+              </div>
+            )}
             <div style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
               {mode === 'save'
                 ? 'একটি খালি বা পুরাতন স্লট নির্বাচন করুন'

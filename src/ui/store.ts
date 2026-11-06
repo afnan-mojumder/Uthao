@@ -393,6 +393,9 @@ export function setGarageDispatchers(
   onBuyUpgradeCallback = buyUpgradeFn;
 }
 
+/** Result of the last manual save, shown in the save slots. */
+export const saveStatusSignal = signal<'saved' | 'failed' | null>(null);
+
 export let onSaveGameCallback: ((slot: SaveSlot) => void) | null = null;
 export let onLoadGameCallback: ((slot: SaveSlot) => void) | null = null;
 

@@ -34,7 +34,9 @@ test('pauses on hidden', async ({ page }) => {
 });
 
 test('autosaves on hidden', async ({ page }) => {
-  await page.goto('/?district=testloop');
+  // A career under way (debug boot starts in the game). On the title screen a
+  // hidden tab must not save, see saveIntegrity.test.ts.
+  await page.goto('/?debug=1&district=testloop');
   await page.waitForFunction(() => (window as unknown as { __uthao?: unknown }).__uthao !== undefined);
 
   // Clear previous storage

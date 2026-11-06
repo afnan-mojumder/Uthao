@@ -3,6 +3,7 @@ import type { SaveSystem } from '../sim/save/SaveSystem';
 import { respond } from '../sim/negotiation/NegotiationSystem';
 import type { BikeId } from '../core/types';
 import { BALANCE } from '../config/balance';
+import { requestFreshCareer } from './freshCareer';
 import {
   setChoiceDispatcher,
   setRequestDispatchers,
@@ -20,6 +21,7 @@ import {
   negotiationSignal,
   tutorialSignal,
   pausedSignal,
+  saveStatusSignal,
 } from './store';
 
 /**
@@ -133,6 +135,13 @@ export function bindUi(session: GameSession, saveSystem?: SaveSystem): void {
   );
 
   const startNewCareer = () => {
+    // A new career needs a fresh game, so every system starts from its defaults.
+    // Reload for one; the boot starts the career (main.ts). Without session
+    // storage, start in place.
+    if (requestFreshCareer() && typeof window !== 'undefined') {
+      window.location.reload();
+      return;
+    }
     session.newCareer();
     tutorialSignal.value = { active: true, step: 'alarm', agreedFare: 100 };
   };
@@ -153,7 +162,10 @@ export function bindUi(session: GameSession, saveSystem?: SaveSystem): void {
   );
 
   setSaveDispatchers(
-    (slot) => saveSystem?.save(gm, slot),
+    (slot) => {
+      const res = saveSystem?.save(gm, slot);
+      if (res) saveStatusSignal.value = res.success ? 'saved' : 'failed';
+    },
     (slot) => {
       if (!saveSystem) return;
       const res = saveSystem.loadGame(slot);
