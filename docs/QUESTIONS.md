@@ -40,3 +40,5 @@ Please have a native speaker review the following files for natural colloquial D
 ## T8.6 open items (from review)
 - [ ] A disputed ride is recorded in the receipt (`trip.consequence.disputed`), but the ride outcome is cleared on settle, so the passenger status view never shows `Disputed`. Fix before M2, or after GATE-M1.
 - [ ] Off-app non-payment and disputes have no money or reputation effect beyond the ledger row and the receipt consequence. Price them in T11.3.
+## T9.6 Passenger name transliterations need native review
+- [ ] `data/dialogue/bn/passengers.json`: 54 random-passenger names (Bangla script) were transliterated for T9.6. A native speaker should check spelling and nicknames such as Kajol Viper, Rubel Black, Bappi Don.
