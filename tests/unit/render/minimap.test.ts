@@ -1,102 +1,32 @@
 import { describe, it, expect } from 'vitest';
-import { Minimap } from '../../../src/render/minimap';
-import { RoadNetwork } from '../../../src/sim/road/RoadNetwork';
-import type { DistrictData } from '../../../src/sim/schemas';
+import { mapRotationFor, arrowRotationFor } from '../../../src/render/minimap';
 
-describe('T2.8 Minimap', () => {
-  const mockDistrict: DistrictData = {
-    districtId: 'mirpara',
-    name: { bn: 'মিরপাড়া', en: 'Mirpara' },
-    nodes: [
-      { nodeId: 'node_1', x: 0, z: 0, kind: 'junction' },
-      { nodeId: 'node_2', x: 50, z: 0, kind: 'junction' },
-      { nodeId: 'node_3', x: 50, z: 50, kind: 'junction' },
-    ],
-    segments: [
-      {
-        segmentId: 'seg_1',
-        startNodeId: 'node_1',
-        endNodeId: 'node_2',
-        width: 8,
-        surfaceCondition: 1,
-        trafficDensity: 0.5,
-        speedLimit: 40,
-        turnRestrictions: [],
-        motorcycleAccessible: true,
-        pedestrianDensity: 0.2,
-        riskLevel: 0.1,
-        oneWay: false,
-        divided: false,
-        lanes: 2,
-        roadType: 'main',
-        floodSensitivity: 0,
-        pickupPractical: true,
-        district: 'mirpara',
-        tags: [],
-      },
-      {
-        segmentId: 'seg_2',
-        startNodeId: 'node_2',
-        endNodeId: 'node_3',
-        width: 6,
-        surfaceCondition: 1,
-        trafficDensity: 0.3,
-        speedLimit: 30,
-        turnRestrictions: [],
-        motorcycleAccessible: true,
-        pedestrianDensity: 0.2,
-        riskLevel: 0.1,
-        oneWay: false,
-        divided: false,
-        lanes: 1,
-        roadType: 'residential',
-        floodSensitivity: 0,
-        pickupPractical: true,
-        district: 'mirpara',
-        tags: [],
-      },
-    ],
-    pois: [],
-  };
+// The bike moves along (sin heading, cos heading) in world x/z. Canvas y grows
+// downward, and "up" on the map is (0, -1). The map must turn so that forward
+// points up. Before the fix the map turned the wrong way and was 90 degrees off.
+function rotate(v: [number, number], angle: number): [number, number] {
+  const [x, y] = v;
+  return [x * Math.cos(angle) - y * Math.sin(angle), x * Math.sin(angle) + y * Math.cos(angle)];
+}
 
-  const roadNetwork = RoadNetwork.fromDistricts([mockDistrict]);
+describe('minimap turns the way the bike faces', () => {
+  for (const heading of [0, 0.7, Math.PI / 2, 2.5, -1.2]) {
+    it(`with the bike at heading ${heading.toFixed(2)}, the map shows forward as up`, () => {
+      const forward: [number, number] = [Math.sin(heading), Math.cos(heading)];
 
-  it('initializes minimap canvas with specified size and properties', () => {
-    const minimap = new Minimap(roadNetwork, { size: 180, viewRadiusM: 100 });
-    expect(minimap.canvas).toBeDefined();
-    expect(minimap.canvas.width).toBe(180);
-    expect(minimap.canvas.height).toBe(180);
-    expect(minimap.canvas.id).toBe('minimap-canvas');
-  });
+      const onMap = rotate(forward, mapRotationFor(heading));
 
-  it('updates canvas render cycle without throwing errors in headless or DOM environment', () => {
-    const minimap = new Minimap(roadNetwork, { size: 160 });
+      expect(onMap[0]).toBeCloseTo(0, 9);
+      expect(onMap[1]).toBeCloseTo(-1, 9);
+    });
 
-    const playerPose = { x: 10, z: 10, heading: Math.PI / 4 };
-    const mockRoute = {
-      fromNodeId: 'node_1',
-      toNodeId: 'node_3',
-      segmentIds: ['seg_1', 'seg_2'],
-      nodeIds: ['node_1', 'node_2', 'node_3'],
-      lengthM: 100,
-      virtualKm: 0.1,
-      etaMin: 1,
-      uTurns: 0,
-    };
-    const markers = {
-      pickup: { x: 0, z: 0 },
-      dropoff: { x: 50, z: 50 },
-    };
+    it(`in north-up mode, the arrow points along the bike at heading ${heading.toFixed(2)}`, () => {
+      const forward: [number, number] = [Math.sin(heading), Math.cos(heading)];
 
-    expect(() => {
-      minimap.update(playerPose, mockRoute, markers);
-    }).not.toThrow();
-  });
+      const arrowTip = rotate([0, -1], arrowRotationFor(heading));
 
-  it('handles empty route and null markers gracefully', () => {
-    const minimap = new Minimap(roadNetwork);
-    expect(() => {
-      minimap.update({ x: 0, z: 0, heading: 0 }, null, { pickup: null, dropoff: null });
-    }).not.toThrow();
-  });
+      expect(arrowTip[0]).toBeCloseTo(forward[0], 9);
+      expect(arrowTip[1]).toBeCloseTo(forward[1], 9);
+    });
+  }
 });

@@ -12,6 +12,19 @@ export interface MinimapMarkers {
   dropoff?: { x: number; z: number } | null;
 }
 
+/**
+ * Canvas rotation that puts the bike's forward direction at the top of the map.
+ * The bike moves along (sin heading, cos heading); canvas up is (0, -1).
+ */
+export function mapRotationFor(heading: number): number {
+  return heading - Math.PI;
+}
+
+/** Canvas rotation for the arrow in north-up mode, so it points along the bike. */
+export function arrowRotationFor(heading: number): number {
+  return Math.PI - heading;
+}
+
 export class Minimap {
   readonly canvas: HTMLCanvasElement;
   private readonly ctx: CanvasRenderingContext2D | null;
@@ -94,7 +107,7 @@ export class Minimap {
 
     if (this.rotateWithPlayer) {
       // Rotate map opposite to player heading so forward is UP
-      ctx.rotate(-playerPose.heading + Math.PI / 2);
+      ctx.rotate(mapRotationFor(playerPose.heading));
     }
 
     // 4. Draw road network segments within view
@@ -203,7 +216,7 @@ export class Minimap {
     ctx.save();
     ctx.translate(center, center);
     if (!this.rotateWithPlayer) {
-      ctx.rotate(playerPose.heading - Math.PI / 2);
+      ctx.rotate(arrowRotationFor(playerPose.heading));
     }
     ctx.beginPath();
     ctx.moveTo(0, -7); // Top tip
