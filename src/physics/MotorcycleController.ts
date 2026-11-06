@@ -19,6 +19,9 @@ export interface MotorcycleControllerOptions {
   spec?: BikeSpec;
 }
 
+/** Minimum seconds between two bike/nearMiss reports. */
+const NEAR_MISS_COOLDOWN_S = 1.0;
+
 export class MotorcycleController {
   readonly world: PhysicsWorld;
   readonly bus?: EventBus<GameEvents>;
@@ -29,6 +32,7 @@ export class MotorcycleController {
   readonly collider: RAPIER.Collider;
   readonly characterController: RAPIER.KinematicCharacterController;
 
+  private nearMissCooldownS = 0;
   private readonly _desiredTranslation = { x: 0, y: 0, z: 0 };
   private readonly _bodyTranslation = { x: 0, y: 0.5, z: 0 };
   private readonly _bodyRotation = { x: 0, y: 0, z: 0, w: 1 };
@@ -73,6 +77,7 @@ export class MotorcycleController {
   }
 
   update(input: BikeInput, env: BikeEnvironment, dt: number): BikeState {
+    this.nearMissCooldownS = Math.max(0, this.nearMissCooldownS - dt);
     const desiredState = stepBike(this.state, input, this.spec, env, dt, this._nextState);
 
     this._desiredTranslation.x = desiredState.x - this.state.x;
@@ -160,8 +165,11 @@ export class MotorcycleController {
       this._rayOrigin.y = 0.5;
       this._rayOrigin.z = this.state.z;
 
-      const hitLeft = this.world.raw.castRay(this._leftRay, rayDist, true);
-      const hitRight = this.world.raw.castRay(this._rightRay, rayDist, true);
+      // Exclude the bike's own body: its collider sits on the ray origin and
+      // would otherwise read as an obstacle at distance 0 on every frame.
+      const ownBody = this.body;
+      const hitLeft = this.world.raw.castRay(this._leftRay, rayDist, true, undefined, undefined, undefined, ownBody);
+      const hitRight = this.world.raw.castRay(this._rightRay, rayDist, true, undefined, undefined, undefined, ownBody);
 
       let minClearance: number | null = null;
       if (hitLeft !== null) minClearance = hitLeft.timeOfImpact;
@@ -172,11 +180,13 @@ export class MotorcycleController {
             : Math.min(minClearance, hitRight.timeOfImpact);
       }
 
-      if (minClearance !== null && minClearance < 1.0) {
+      if (minClearance !== null && minClearance < 1.0 && this.nearMissCooldownS <= 0) {
         this.bus?.emit('bike/nearMiss', {
           distanceM: minClearance,
           speedKmh: totalSpeedKmh,
         });
+        // A near miss is a moment, not a state: one report per second at most.
+        this.nearMissCooldownS = NEAR_MISS_COOLDOWN_S;
       }
     }
 

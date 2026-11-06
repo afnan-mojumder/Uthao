@@ -97,4 +97,41 @@ describe('PhysicsWorld and MotorcycleController', () => {
     expect(forwardProgress).toBeGreaterThan(1.5);
     expect(ctrl.state.x).toBeLessThanOrEqual(0.5); // prevented from penetrating wall
   });
+
+  describe('near-miss reporting (bug: fired every frame at speed)', () => {
+    const env = { wet: false, surface: 1.0, hasPassenger: false, conditionPct: 100 };
+    const input = { throttle: 1.0, brake: 0, steer: 0 };
+
+    it('riding on an open road at 30 km/h reports no near miss', async () => {
+      // Arrange: nothing around the bike but its own body
+      const openWorld = await PhysicsWorld.create();
+      const nearMiss = vi.fn();
+      bus.on('bike/nearMiss', nearMiss);
+      const ctrl = new MotorcycleController({ world: openWorld, bus, initialPose: { x: 0, z: 0, heading: 0 } });
+      ctrl.state.speed = 30 / 3.6;
+
+      // Act
+      for (let i = 0; i < 60; i++) ctrl.update(input, env, dt);
+
+      // Assert: the bike's own collider must not count as an obstacle
+      expect(nearMiss).not.toHaveBeenCalled();
+    });
+
+    it('passing a wall close on one side reports one near miss, not one per frame', async () => {
+      // Arrange: a wall running along the bike's path, 0.7 m to its right
+      const wallWorld = await PhysicsWorld.create();
+      wallWorld.addStaticBox(0.9, 0.5, 0, 0.2, 1.0, 20);
+      const nearMiss = vi.fn();
+      bus.on('bike/nearMiss', nearMiss);
+      const ctrl = new MotorcycleController({ world: wallWorld, bus, initialPose: { x: 0, z: -10, heading: 0 } });
+      ctrl.state.speed = 30 / 3.6;
+
+      // Act: one second of riding alongside the wall
+      for (let i = 0; i < 60; i++) ctrl.update(input, env, dt);
+
+      // Assert: a near miss is a moment, so it is reported once per cooldown
+      expect(nearMiss.mock.calls.length).toBeGreaterThanOrEqual(1);
+      expect(nearMiss.mock.calls.length).toBeLessThanOrEqual(2);
+    });
+  });
 });
