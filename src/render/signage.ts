@@ -1,5 +1,24 @@
 import * as THREE from 'three';
 import signsBn from '../../data/dialogue/bn/signs.json';
+import signsEn from '../../data/dialogue/en/signs.json';
+
+export type SignLanguage = 'bn' | 'en';
+
+const SIGN_TEXT: Record<SignLanguage, Record<string, string>> = { bn: signsBn, en: signsEn };
+
+/** Language for atlases built from now on. Synced from the saved settings. */
+let defaultSignLanguage: SignLanguage = 'bn';
+
+export function setDefaultSignLanguage(lang: SignLanguage): void {
+  defaultSignLanguage = lang;
+}
+
+/** The contact line printed under each sign, in the sign's language. */
+function contactLine(lang: SignLanguage, n: number): string {
+  return lang === 'en'
+    ? `Prop. Rafiq • Mob 01712-${n}`
+    : `প্রোঃ মোঃ রফিক • মোবাঃ ০১৭১২-${n}`;
+}
 
 export interface SignUv {
   uMin: number;
@@ -24,14 +43,18 @@ const SIGN_COLORS = [
 ];
 
 export class SignageAtlas {
-  readonly signs: Record<string, string>;
+  signs: Record<string, string>;
   readonly texture: THREE.Texture;
   readonly material: THREE.MeshStandardMaterial;
   readonly uvs: Map<string, SignUv> = new Map();
   readonly signKeys: string[] = [];
 
+  private lang: SignLanguage;
+  private canvas: HTMLCanvasElement | null = null;
+
   constructor(opts: SignageAtlasOptions = {}) {
-    this.signs = opts.signs ?? signsBn;
+    this.lang = defaultSignLanguage;
+    this.signs = opts.signs ?? SIGN_TEXT[this.lang];
     this.signKeys = Object.keys(this.signs);
     const width = opts.atlasWidth ?? 1024;
     const height = opts.atlasHeight ?? 1024;
@@ -81,6 +104,13 @@ export class SignageAtlas {
     const ctx = canvas.getContext('2d');
     if (!ctx) return null;
 
+    this.canvas = canvas;
+    this.paint(ctx, totalWidth, totalHeight);
+    return canvas;
+  }
+
+  /** Paints every sign into the atlas and records where each one sits. */
+  private paint(ctx: CanvasRenderingContext2D, totalWidth: number, totalHeight: number): void {
     // Fill dark background
     ctx.fillStyle = '#111827';
     ctx.fillRect(0, 0, totalWidth, totalHeight);
@@ -127,7 +157,7 @@ export class SignageAtlas {
       ctx.fillStyle = colorScheme.sub;
       ctx.font = 'bold 18px sans-serif';
       ctx.fillText(
-        `প্রোঃ মোঃ রফিক • মোবাঃ ০১৭১২-${100000 + i * 27}`,
+        contactLine(this.lang, 100000 + i * 27),
         x + cellW / 2,
         y + cellH / 2 + 28,
         cellW - 50
@@ -141,8 +171,18 @@ export class SignageAtlas {
 
       this.uvs.set(key, { uMin, vMin, uMax, vMax });
     }
+  }
 
-    return canvas;
+  /** Switches the sign text of an existing atlas, e.g. after a language change. */
+  setLanguage(lang: SignLanguage): void {
+    if (lang === this.lang) return;
+    this.lang = lang;
+    this.signs = SIGN_TEXT[lang];
+    if (this.canvas) {
+      const ctx = this.canvas.getContext('2d');
+      if (ctx) this.paint(ctx, this.canvas.width, this.canvas.height);
+      this.texture.needsUpdate = true;
+    }
   }
 
   getUv(signKey: string): SignUv {

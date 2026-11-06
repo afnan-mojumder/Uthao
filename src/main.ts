@@ -27,6 +27,7 @@ import {
   type GameSettings,
 } from './ui/store';
 import { setLanguage } from './ui/i18n';
+import { setDefaultSignLanguage } from './render/signage';
 import { consumeFreshCareer } from './ui/freshCareer';
 import { routeColorFor } from './ui/settingsEffects';
 import { bindUi } from './ui/bindings';
@@ -181,6 +182,8 @@ async function bootGame(): Promise<void> {
   if (canvas && hasWebGL2Support()) {
     renderer = Renderer.init(canvas, qualityChoice);
     loadRendererScene(renderer);
+    // Storefront signs follow a language change while playing.
+    settingsSignal.subscribe((s) => renderer?.cityBuilder?.signageAtlas.setLanguage(s.language));
 
     // WebGL context lost & restored lifecycle listeners
     canvas.addEventListener('webglcontextlost', (e) => {
@@ -241,6 +244,7 @@ bindUi(session, activeSaveSystem);
 // applied on boot. Cancel reverts the language preview (Settings.tsx).
 const applySettings = (s: GameSettings) => {
   document.documentElement.dataset.reduceMotion = String(s.reduceMotion);
+  setDefaultSignLanguage(s.language); // storefront signs, for districts loaded from now on
   minimap?.setRouteColor(routeColorFor(s));
   gm.eventDirector.pauseOnDecisions = s.pauseOnDecisions;
   inputManager.setBindings({ ...inputManager.getBindings(), tiltEnabled: s.tiltControls });
