@@ -51,15 +51,15 @@
         "id": "obj_m4_survive",
         "descKey": "obj_m4_survive_desc",
         "type": "survive",
-        "encounterId": "crime_enc_wrong_pickup"
+        "encounterId": "enc_wrong_pickup_pin"
       },
       {
         "id": "obj_m4_police",
         "descKey": "obj_m4_police_desc",
         "type": "choose",
-        "encounterId": "police_checkpoint",
+        "encounterId": "enc_traffic_checkpoint",
         "choiceIds": [
-          "cooperatedPolice"
+          "cooperate"
         ]
       }
     ],

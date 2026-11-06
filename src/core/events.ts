@@ -1,3 +1,4 @@
+import type { CareerChoiceOption, EndingResult } from '../sim/mission/endings';
 import type {
   BikeCollisionSeverity,
   BikeId,
@@ -49,7 +50,8 @@ export interface GameEvents extends Record<string, unknown> {
   'economy/transaction': { tx: Transaction };
   'reputation/changed': { delta: ReputationDelta };
   'encounter/started': { instance: EncounterInstance };
-  'encounter/resolved': { instanceId: string; choiceId: string };
+  // encounterId is the definition id (e.g. enc_traffic_checkpoint); missions match on it.
+  'encounter/resolved': { instanceId: string; choiceId: string; encounterId?: string };
   'mission/objectiveUpdated': {
     missionId: string;
     objectiveId: string;
@@ -79,7 +81,9 @@ export interface GameEvents extends Record<string, unknown> {
   'delivery/damaged': { deliveryId: string; reason: string };
   'story/flag': { key: string; value: boolean | number | string };
   'character/contactAdded': { characterId: string };
-  'ending/reached': { endingId: EndingId };
+  // result is the real sim evaluation; choices is set only for the career decision.
+  'ending/reached': { endingId: EndingId; result?: EndingResult; choices?: CareerChoiceOption[] };
+  'mission/activated': { missionId: string };
 }
 
 export class EventBus<M extends Record<string, unknown>> {

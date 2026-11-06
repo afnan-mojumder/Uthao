@@ -165,7 +165,8 @@
         "id": "refuse",
         "labelKey": "encounter.urgent_exam.choice.refuse",
         "effects": [
-          { "type": "mood", "delta": -0.15 }
+          { "type": "mood", "delta": -0.15 },
+          { "type": "flag", "key": "pressuredSpeeding", "value": "refused" }
         ]
       }
     ]
@@ -186,7 +187,8 @@
         "labelKey": "encounter.traffic_checkpoint.choice.cooperate",
         "effects": [
           { "type": "time", "min": 3 },
-          { "type": "relationship", "characterId": "char_morshed", "delta": 3 }
+          { "type": "relationship", "characterId": "char_morshed", "delta": 3 },
+          { "type": "flag", "key": "cooperatedPolice", "value": true }
         ]
       },
       {

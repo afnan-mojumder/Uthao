@@ -3,6 +3,8 @@ import { RideManager } from './ride/RideManager';
 import { RequestGenerator } from './ride/RequestGenerator';
 import { TrafficManager } from './traffic/TrafficManager';
 import type { RoadNetwork } from './road/RoadNetwork';
+import { encounterPhaseFor, type RidePhaseInput } from './events/phase';
+import type { EncounterPhase } from './events/conditions';
 import type { PhysicsWorld } from '../physics/PhysicsWorld';
 import { MotorcycleController } from '../physics/MotorcycleController';
 import {
@@ -74,6 +76,13 @@ export class GameSession {
   // Reused each step to keep the hot path allocation-free.
   private readonly camView: { x: number; z: number; heading: number; fovRad: number };
   private readonly pose: { x: number; z: number; speed: number; heading: number };
+  // Reused every tick (the step loop is allocation-free); see currentEncounterPhase.
+  private readonly phaseInput: RidePhaseInput = {
+    trip: 'Idle',
+    hasRequest: false,
+    distToPickupM: Infinity,
+    distToDropoffM: Infinity,
+  };
   // T8.3 live fuel/wear state, all reused to keep step() allocation-free.
   private readonly fuelOpts: FuelOptions = {};
   private readonly breakdownRng: Rng;
@@ -425,10 +434,27 @@ export class GameSession {
     return this.autoRequests;
   }
 
+  /** The encounter phase the live ride is in: offer, pickup, trip, drop-off or roaming. */
+  private currentEncounterPhase(): EncounterPhase {
+    const s = this.phaseInput;
+    const req = this.ride.getActiveRequest();
+    s.trip = this.ride.getTripState();
+    s.hasRequest = req !== null;
+    s.distToPickupM = Infinity;
+    s.distToDropoffM = Infinity;
+    if (req) {
+      const pickup = this.ride.roadNetwork.getNode(req.pickupNodeId);
+      const dropoff = this.ride.roadNetwork.getNode(req.destinationNodeId);
+      if (pickup) s.distToPickupM = Math.hypot(this.bike.x - pickup.x, this.bike.z - pickup.z);
+      if (dropoff) s.distToDropoffM = Math.hypot(this.bike.x - dropoff.x, this.bike.z - dropoff.z);
+    }
+    return encounterPhaseFor(s);
+  }
+
   /** Advances clock/weather/encounters, bike physics, traffic and ride state
    * by one tick, then (when enabled) offers any newly generated requests. */
   step(input: BikeInput, dt: number = SIM_DT): void {
-    this.gm.tick(dt, this.bike.speed * 3.6);
+    this.gm.tick(dt, this.bike.speed * 3.6, this.currentEncounterPhase());
 
     const activeReq = this.ride.getActiveRequest();
 

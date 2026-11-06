@@ -54,6 +54,7 @@
         "labelKey": "encounter.vendor_discount.choice.grant",
         "effects": [
           { "type": "money", "amount": -20, "kind": "fare" },
+          { "type": "flag", "key": "helpedHospitalFree", "value": true },
           { "type": "relationship", "characterId": "char_bablu", "delta": 10 },
           { "type": "localTrust", "delta": 5 }
         ]
@@ -62,7 +63,8 @@
         "id": "standard",
         "labelKey": "encounter.vendor_discount.choice.standard",
         "effects": [
-          { "type": "mood", "delta": 0 }
+          { "type": "mood", "delta": 0 },
+          { "type": "flag", "key": "profit_lesson_done", "value": true }
         ]
       },
       {

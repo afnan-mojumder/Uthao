@@ -224,6 +224,7 @@ export class EventDirector {
     ctx.eventBus.emit('encounter/resolved', {
       instanceId,
       choiceId,
+      encounterId: def.id,
     });
 
     this.activeEncounter = null;

@@ -69,9 +69,6 @@ export class MissionManager {
 
     this.bus.on('day/ended', ({ day }) => {
       this.checkFailConditions(day);
-      if (day >= 6) {
-        this.checkEnding('ending_v1_first_week');
-      }
     });
 
     this.bus.on('ride/completed', ({ receipt }) => {
@@ -132,7 +129,7 @@ export class MissionManager {
       }
     });
 
-    this.bus.on('encounter/resolved', ({ instanceId, choiceId }) => {
+    this.bus.on('encounter/resolved', ({ instanceId, choiceId, encounterId }) => {
       for (const missionId of this.activeMissionIds) {
         const def = this.missions.get(missionId);
         const objMap = this.objectiveStates.get(missionId);
@@ -143,7 +140,8 @@ export class MissionManager {
           if (!state) continue;
 
           const changed = evaluateEncounterResolved(obj, state, {
-            encounterId: instanceId,
+            // Objectives name definition ids; fall back to the instance only for old emitters.
+            encounterId: encounterId ?? instanceId,
             choiceId,
             success: true,
           });
@@ -246,10 +244,19 @@ export class MissionManager {
 
     const objMap = new Map<string, ObjectiveState>();
     for (const obj of def.objectives) {
-      objMap.set(obj.id, createObjectiveState(obj));
+      const state = createObjectiveState(obj);
+      // A flag set before the mission unlocked still counts: flags are read here,
+      // because the event that set them has already been emitted.
+      if (obj.type === 'flag' && this.storyState.branchFlags[obj.key] === obj.value) {
+        state.progress = 1;
+        state.completed = true;
+      }
+      objMap.set(obj.id, state);
     }
     this.objectiveStates.set(id, objMap);
 
+    this.bus.emit('mission/activated', { missionId: id });
+    if (def.objectives.length > 0) this.checkMissionCompletion(id);
     return true;
   }
 

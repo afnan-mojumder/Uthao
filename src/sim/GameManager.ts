@@ -19,7 +19,7 @@ import type {
 import { EventDirector } from './events/EventDirector';
 import { EconomyManager } from './economy/EconomyManager';
 import type { EncounterDef } from './schemas';
-import type { EncounterContext } from './events/conditions';
+import type { EncounterContext, EncounterPhase } from './events/conditions';
 import type { EffectContext } from './events/effects';
 import type { RideManager } from './ride/RideManager';
 import routeEncounters from '../../data/encounters/route.json';
@@ -36,7 +36,12 @@ import { RoadEventManager, type ActiveRoadEvent } from './world/RoadEvents';
 import defaultUpgrades from '../../data/upgrades.json';
 import type { RepairItem, UpgradeDef } from './economy/maintenance';
 import { MissionManager } from './mission/MissionManager';
-import { getAvailableCareerChoices } from './mission/endings';
+import {
+  evaluateEnding,
+  getAvailableCareerChoices,
+  type CareerChoice,
+  type EndingEvaluationContext,
+} from './mission/endings';
 import type { MissionDef, EndingDef } from './schemas';
 import ch1Missions from '../../data/missions/ch1.json';
 import ch2Missions from '../../data/missions/ch2.json';
@@ -55,6 +60,9 @@ const DEFAULT_ENCOUNTERS: EncounterDef[] = [
   ...passengerEncounters,
   ...crimeEncounters,
 ] as EncounterDef[];
+
+/** The mission where the player commits to a career; its flag ends the campaign. */
+const CAREER_DECISION_MISSION = 'm6_decision';
 
 export interface GameData {
   districts?: unknown;
@@ -262,6 +270,15 @@ export class GameManager {
       }
     });
 
+    // The career decision is offered as its mission starts, with the real standing.
+    this.bus.on('mission/activated', ({ missionId }) => {
+      if (missionId === CAREER_DECISION_MISSION) this.offerCareerDecision();
+    });
+    // The campaign ends on its final flag, and the ending comes from the real state.
+    this.bus.on('story/flag', ({ key, value }) => {
+      if (key === 'campaign_completed' && value === true) this.reachFinalEnding();
+    });
+
     this.bus.on('reputation/changed', () => {
       this.economy.reputation = this.reputationSystem.getAppRating();
       this.economyManager.reputation = this.economy.reputation;
@@ -345,7 +362,7 @@ export class GameManager {
     }
   }
 
-  tick(dt: number = SIM_DT, speedKmh: number = 0): void {
+  tick(dt: number = SIM_DT, speedKmh: number = 0, phase: EncounterPhase = 'roaming'): void {
     if (this.paused) {
       return;
     }
@@ -356,7 +373,7 @@ export class GameManager {
 
     // Evaluate encounters (once per game minute or on phase change)
     const ctx: EncounterContext = {
-      phase: 'roaming',
+      phase,
       minute: this.clock.minutes,
       day: this.clock.day,
       weather: this.weather,
@@ -377,6 +394,37 @@ export class GameManager {
         this.paused = true;
       }
     }
+  }
+
+  /** The real state the endings are judged on. */
+  private endingContext(): EndingEvaluationContext {
+    const rep = this.reputationSystem;
+    return {
+      day: this.clock.day,
+      economy: this.economyManager.getSnapshot(),
+      story: this.story,
+      rating: rep.getAppRating(),
+      localTrust: rep.getLocalTrust(),
+      safetyRecord: rep.getSafetyRecord(),
+      riskScore: rep.getRiskScore(),
+      promises: rep.getPromisesRecord(),
+      careerChoice: this.story.branchFlags.career_choice as CareerChoice | undefined,
+      appSuspended: this.story.branchFlags.appSuspended === true,
+    };
+  }
+
+  /** Shows the player's standing and the career options when the decision mission starts. */
+  private offerCareerDecision(): void {
+    const result = evaluateEnding(this.endingContext());
+    const kamalRel = this.story.characterRelationships['char_kamal'] ?? 0;
+    const choices = getAvailableCareerChoices(this.economyManager.getSnapshot().savings, kamalRel);
+    this.bus.emit('ending/reached', { endingId: result.endingId, result, choices });
+  }
+
+  /** Emits the final ending once the campaign's last flag is set. */
+  private reachFinalEnding(): void {
+    const result = evaluateEnding(this.endingContext());
+    this.bus.emit('ending/reached', { endingId: result.endingId, result });
   }
 
   dispatch(cmd: Command): CommandResult {
@@ -402,6 +450,8 @@ export class GameManager {
         this.syncEconomy();
         this.story.branchFlags.career_choice = cmd.choice;
         this.bus.emit('story/flag', { key: 'career_choice', value: cmd.choice });
+        // The Chapter 6 mission waits on this flag, not on the choice id.
+        this.bus.emit('story/flag', { key: 'ch6_decision_made', value: true });
         return { success: true };
       }
       case 'acceptDelivery':

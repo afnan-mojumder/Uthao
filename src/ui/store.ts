@@ -9,7 +9,6 @@ import type {
 } from '../sim/negotiation/NegotiationSystem';
 import type { EndingResult, CareerChoiceOption, CareerChoice } from '../sim/mission/endings';
 import type { SaveSlot } from '../sim/save/migrations';
-import type { EndingId } from '../core/types';
 
 export type ScreenId = 'title' | 'game' | 'garage' | 'map' | 'pause';
 
@@ -520,37 +519,13 @@ export function bindEventBusToStore(bus: EventBus<GameEvents>): () => void {
   unsubscribers.push(unsubDayStarted);
 
   const unsubEnding = bus.on('ending/reached', (ev) => {
-    const res = (ev as { endingId: EndingId; result?: EndingResult }).result;
-    if (res) {
-      endingSignal.value = {
-        active: true,
-        result: res,
-      };
-    } else {
-      endingSignal.value = {
-        active: true,
-        result: {
-          endingId: ev.endingId,
-          titleKey: `ending_${ev.endingId}_title`,
-          descKey: `ending_${ev.endingId}_desc`,
-          dominantIdentity: 'regular',
-          tendencies: {
-            professional: 25,
-            negotiator: 25,
-            hustler: 25,
-            regular: 25,
-          },
-          summary: {
-            cash: 0,
-            savings: 0,
-            debt: 0,
-            rating: 5.0,
-            localTrust: 50,
-            completedMissions: 0,
-          },
-        },
-      };
-    }
+    // Only a real evaluation from the sim opens the ending screen. There is no placeholder result.
+    if (!ev.result) return;
+    endingSignal.value = {
+      active: true,
+      result: ev.result,
+      choices: ev.choices,
+    };
   });
   unsubscribers.push(unsubEnding);
 
