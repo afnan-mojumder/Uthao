@@ -136,6 +136,7 @@ export function serialize(gm: GameManager, slot: SaveSlot = 'auto'): SaveV1 {
     ledger: snap.ledger ? [...snap.ledger] : [],
     settledRequests: snap.settledRequests ? [...snap.settledRequests] : [],
     requestSeq: snap.requestSeq ?? 0,
+    negotiationHistory: snap.negotiationHistory ?? 0,
   };
 }
 
@@ -187,6 +188,7 @@ export function deserialize(save: SaveV1, gameData?: GameData): GameManager {
     ledger: save.ledger,
     settledRequests: save.settledRequests,
     requestSeq: save.requestSeq,
+    negotiationHistory: save.negotiationHistory ?? 0,
   };
 
   gm.applySnapshot(snapshot, save.rngState);

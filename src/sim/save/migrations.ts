@@ -44,6 +44,8 @@ export interface SaveV1 {
   ledger?: Transaction[];
   settledRequests?: string[];
   requestSeq?: number;
+  /** Accepted fares so far; drives passenger haggling. Optional so older saves load as 0. */
+  negotiationHistory?: number;
 }
 
 export type AnySave = SaveV1 | Record<string, unknown>;
