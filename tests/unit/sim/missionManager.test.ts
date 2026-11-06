@@ -171,7 +171,7 @@ describe('MissionManager (T4.7)', () => {
     }
   });
 
-  it('triggers end-of-week v1 ending check on Day 6 completion', () => {
+  it('does not end the career on Day 6; endings come from campaign completion', () => {
     let endingReached: string | null = null;
     bus.on('ending/reached', ({ endingId }) => {
       endingReached = endingId;
@@ -190,6 +190,7 @@ describe('MissionManager (T4.7)', () => {
       },
     });
 
-    expect(endingReached).toBe('ending_v1_first_week');
+    // The old placeholder ended the career here; the real ending now comes from campaign_completed.
+    expect(endingReached).toBeNull();
   });
 });
