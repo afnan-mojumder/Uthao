@@ -144,6 +144,8 @@ export class GameManager {
   waypointNodeId: string | null = null;
   isNavigating: boolean = false;
   shiftEnded: boolean = false;
+  /** Rent posted at this shift's end; a delay can move it to the next rent day. */
+  todayRentPosted = 0;
   homeNodeId: string = 'res_n2_0';
   playerNodeId: string = 'res_n2_0';
   atKamalBhai: boolean = false;
@@ -344,8 +346,9 @@ export class GameManager {
       this.economy.phoneBattery = this.economyManager.phoneBattery;
     }
 
-    // Forced shift end at 23:00 (1380 minutes)
-    if (this.clock.minutes >= 23 * 60 && !this.shiftEnded) {
+    // Forced shift end at 23:00 (1380 minutes). It waits for a ride in progress,
+    // so that trip's money lands in the day's summary (until midnight).
+    if (this.clock.minutes >= 23 * 60 && !this.shiftEnded && (!this.rideInProgress() || this.clock.minutes >= 24 * 60)) {
       this.dispatch({ type: 'endShift' });
     }
   }
@@ -425,6 +428,22 @@ export class GameManager {
   private reachFinalEnding(): void {
     const result = evaluateEnding(this.endingContext());
     this.bus.emit('ending/reached', { endingId: result.endingId, result });
+  }
+
+  /** A passenger has agreed to a trip and it is not yet settled: its money must
+   * land before the shift ends. Offers and negotiations do not count. */
+  private rideInProgress(): boolean {
+    switch (this.rideManager?.getTripState()) {
+      case 'Accepted':
+      case 'EnRouteToPickup':
+      case 'PassengerOnboard':
+      case 'EnRouteToDestination':
+      case 'Completing':
+      case 'EmergencyInterrupted':
+        return true;
+      default:
+        return false;
+    }
   }
 
   dispatch(cmd: Command): CommandResult {
@@ -568,6 +587,9 @@ export class GameManager {
         if (this.shiftEnded) {
           return { success: false, reason: 'Shift already ended' };
         }
+        if (this.rideInProgress() && this.clock.minutes < 24 * 60) {
+          return { success: false, reason: 'Finish the active ride first' };
+        }
 
         // Commute home if > 1.5 km (1500m)
         if (this.playerDistFromHomeM > 1500) {
@@ -598,6 +620,7 @@ export class GameManager {
           this.clock.minutes
         );
 
+        this.todayRentPosted = living.rent;
         if (living.rentDelayed) {
           this.story.branchFlags['rentDelayedOnce'] = true;
           this.reputationSystem.changeRelationship('char_ma', -10);
@@ -642,6 +665,9 @@ export class GameManager {
         return { success: true, data: summary };
       }
       case 'sleep': {
+        if (!this.shiftEnded && this.rideInProgress()) {
+          return { success: false, reason: 'Finish the active ride first' };
+        }
         if (!this.shiftEnded) {
           this.dispatch({ type: 'endShift' });
         }
@@ -675,19 +701,24 @@ export class GameManager {
         if (!BALANCE.LIVING.rentDueDays.includes(this.clock.day)) {
           return { success: false, reason: 'Rent is not due today' };
         }
-        if (!this.story.branchFlags['rentDelayedOnce']) {
-          this.story.branchFlags['rentDelayedOnce'] = true;
-          this.reputationSystem.changeRelationship('char_ma', -10);
-          return { success: true };
-        } else {
-          this.story.branchFlags['rentEvictionWarning'] = true;
-          this.reputationSystem.changeRelationship('char_ma', -25);
-          return { success: false, reason: 'Rent cannot be delayed more than once' };
+        if (this.story.branchFlags['rentDelayedOnce']) {
+          return { success: false, reason: 'Rent was already delayed once' };
         }
+        if (!this.economyManager.delayRent(this.todayRentPosted, this.clock.day, this.clock.minutes)) {
+          return { success: false, reason: 'No rent to delay' };
+        }
+        this.todayRentPosted = 0;
+        this.story.branchFlags['rentDelayedOnce'] = true;
+        this.reputationSystem.changeRelationship('char_ma', -10);
+        this.syncEconomy();
+        return { success: true };
       }
       case 'askAdvance': {
-        this.economyManager.askAdvance(cmd.from, cmd.amount, this.clock.day, this.clock.minutes);
+        const granted = this.economyManager.askAdvance(cmd.from, cmd.amount, this.clock.day, this.clock.minutes);
         this.syncEconomy();
+        if (!granted) {
+          return { success: false, reason: 'Family cannot advance any more money' };
+        }
         this.reputationSystem.changeRelationship(cmd.from, -5);
         return { success: true };
       }

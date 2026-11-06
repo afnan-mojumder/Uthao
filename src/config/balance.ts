@@ -96,6 +96,9 @@ export const BALANCE = {
     rentAmount: 4000,
     familyPaymentDay3: 1200,
     startCash: 600,
+    // Total family advances allowed over a career. Advances are not repaid
+    // in game, so this is the cap on the debt they can create.
+    advanceCap: 2000,
   },
   NEGOTIATION: {
     k0: 0.3,

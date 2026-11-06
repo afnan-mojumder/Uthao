@@ -3,9 +3,21 @@ import { test, expect } from '@playwright/test';
 test('T4.1 Day end lifecycle e2e: end shift, assert breakdown, sleep to start next day', async ({
   page,
 }) => {
+  test.setTimeout(90000);
   await page.goto('/?debug=1&district=testloop');
   await page.waitForSelector('#game-canvas');
   await expect(page.locator('#hud')).toBeVisible();
+
+  // The debug district starts with a trip under way. A shift cannot end with a
+  // passenger on board, so finish the trip first (autopilot drives it), then
+  // dismiss its receipt.
+  await page.evaluate(() => window.__uthao?.autopilot(true));
+  await page.waitForFunction(
+    () => window.__uthao?.eventLog.includes('ride/completed'),
+    null,
+    { timeout: 60000 }
+  );
+  await page.evaluate(() => window.__uthao?.autopilot(false));
 
   // Advance clock to afternoon (13:00) and trigger endShift
   await page.evaluate(() => {

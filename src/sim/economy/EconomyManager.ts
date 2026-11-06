@@ -40,6 +40,10 @@ export class EconomyManager {
   private txSeq = 0;
   cash: number;
   debt: number;
+  /** Family advances taken this career (see BALANCE.LIVING.advanceCap). */
+  advancesTaken = 0;
+  /** Rent moved to the next rent day by a delay; added to that day's bill. */
+  deferredRent = 0;
   dailyRevenue: number;
   dailyExpenses: number;
   fuelLevel: number;
@@ -65,6 +69,8 @@ export class EconomyManager {
     this.bus = bus;
     this.cash = initial?.cash ?? BALANCE.LIVING.startCash;
     this.debt = initial?.debt ?? 0;
+    this.advancesTaken = initial?.advancesTaken ?? 0;
+    this.deferredRent = initial?.deferredRent ?? 0;
     this.dailyRevenue = initial?.dailyRevenue ?? 0;
     this.dailyExpenses = initial?.dailyExpenses ?? 0;
     this.fuelLevel = initial?.fuelLevel ?? BALANCE.FUEL.startL;
@@ -122,6 +128,11 @@ export class EconomyManager {
       this.debt = 0;
     }
 
+    this.record(tx);
+  }
+
+  /** The one place a transaction enters the ledger. */
+  private record(tx: Transaction): void {
     this.ledger.push(tx);
     if (this.ledger.length > LEDGER_CAP) this.ledger.splice(0, this.ledger.length - LEDGER_CAP);
     this.bus.emit('economy/transaction', { tx });
@@ -334,7 +345,8 @@ export class EconomyManager {
     // 4. Rent (on rent days: 7, 14, 20)
     if (BALANCE.LIVING.rentDueDays.includes(day)) {
       const rentAmount = BALANCE.LIVING.rentAmount;
-      rent = rentAmount;
+      rent = rentAmount + this.deferredRent;
+      this.deferredRent = 0;
 
       if (options?.delayRent || this.cash < rentAmount) {
         this.rentMissedCount++;
@@ -350,7 +362,7 @@ export class EconomyManager {
         day,
         minute,
         kind: 'rent',
-        amount: -rentAmount,
+        amount: -rent,
       });
     }
 
@@ -366,24 +378,49 @@ export class EconomyManager {
     };
   }
 
+  /**
+   * Takes an advance from family. Granted up to BALANCE.LIVING.advanceCap in
+   * total. Returns true if any money was granted.
+   */
   askAdvance(
     from: 'char_mintu' | 'char_ma',
     amount: number,
     day = 1,
     minute = 0
-  ): void {
-    if (!Number.isFinite(amount) || amount <= 0) return;
-    this.cash += amount;
-    this.debt += amount;
-    this.bus.emit('economy/transaction', {
-      tx: {
-        id: `tx_advance_${from}_${day}_${minute}_${++this.txSeq}`,
-        day,
-        minute,
-        kind: 'family',
-        amount,
-      },
+  ): boolean {
+    if (!Number.isFinite(amount) || amount <= 0) return false;
+    const granted = Math.min(amount, BALANCE.LIVING.advanceCap - this.advancesTaken);
+    if (granted <= 0) return false;
+    this.advancesTaken += granted;
+    this.cash += granted;
+    this.debt += granted;
+    this.record({
+      id: `tx_advance_${from}_${day}_${minute}_${++this.txSeq}`,
+      day,
+      minute,
+      kind: 'family',
+      amount: granted,
     });
+    return true;
+  }
+
+  /**
+   * The player delays today's rent: the amount posted at shift end comes back
+   * to cash now, and is charged again on the next rent day. Returns false when
+   * there is nothing to delay.
+   */
+  delayRent(amount: number, day: number, minute: number): boolean {
+    if (!Number.isFinite(amount) || amount <= 0) return false;
+    this.cash += amount;
+    this.deferredRent += amount;
+    this.record({
+      id: `tx_rent_delay_${day}_${minute}_${++this.txSeq}`,
+      day,
+      minute,
+      kind: 'rent',
+      amount,
+    });
+    return true;
   }
 
   getOverallCondition(): number {
@@ -579,6 +616,8 @@ export class EconomyManager {
   getSnapshot(): PlayerEconomy {
     return {
       cash: this.cash,
+      advancesTaken: this.advancesTaken,
+      deferredRent: this.deferredRent,
       debt: this.debt,
       dailyRevenue: this.dailyRevenue,
       dailyExpenses: this.dailyExpenses,
@@ -601,6 +640,8 @@ export class EconomyManager {
 
   restoreState(econ: Partial<PlayerEconomy>): void {
     if (econ.cash !== undefined) this.cash = econ.cash;
+    if (econ.advancesTaken !== undefined) this.advancesTaken = econ.advancesTaken;
+    if (econ.deferredRent !== undefined) this.deferredRent = econ.deferredRent;
     if (econ.savings !== undefined) this.savings = econ.savings;
     if (econ.debt !== undefined) this.debt = econ.debt;
     if (econ.dailyRevenue !== undefined) this.dailyRevenue = econ.dailyRevenue;

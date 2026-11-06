@@ -203,6 +203,10 @@ export type BikeId = 'old100' | 'used125' | 'new150';
 
 export interface PlayerEconomy {
   cash: number;
+  /** Family advances taken so far this career, capped by BALANCE.LIVING.advanceCap. */
+  advancesTaken?: number;
+  /** Rent moved to the next rent day by a delay. */
+  deferredRent?: number;
   dailyRevenue: number;
   dailyExpenses: number;
   fuelLevel: number; // L
