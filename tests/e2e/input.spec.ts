@@ -126,7 +126,8 @@ test.describe('gamepad only', () => {
     await press(page, BTN_A);
 
     // Assert: the game starts and the tutorial alarm appears
-    await expect(page.getByTestId('tutorial-btn-alarm')).toBeVisible({ timeout: 10000 });
+    // New Career reloads the page for a fresh game, so allow for the boot.
+    await expect(page.getByTestId('tutorial-btn-alarm')).toBeVisible({ timeout: 20000 });
     await expect(page.getByTestId('main-menu')).toHaveCount(0);
   });
 
