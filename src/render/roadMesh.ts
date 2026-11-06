@@ -121,7 +121,9 @@ export class RoadMeshBuilder {
       const roadGeo = new THREE.PlaneGeometry(width, len);
       const roadMesh = new THREE.Mesh(roadGeo, this.roadMat);
       roadMesh.rotation.x = -Math.PI / 2;
-      roadMesh.rotation.z = -rotY;
+      // Plane is laid flat (x -90°) after this z turn, so +rotY lines it up with the
+      // street: the z turn had the wrong sign and mirrored the strip on diagonals.
+      roadMesh.rotation.z = rotY;
       roadMesh.position.set(midX, 0.02, midZ);
       roadMesh.receiveShadow = true;
       group.add(roadMesh);
