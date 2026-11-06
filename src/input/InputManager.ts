@@ -234,12 +234,21 @@ export class InputManager {
       this.activeKeys.delete(e.code);
     };
 
+    // A key released while another window has focus never reaches us, so
+    // forget everything held when focus leaves; otherwise the bike keeps
+    // throttling or steering until the key is pressed and released again.
+    const onBlur = () => {
+      this.activeKeys.clear();
+    };
+
     window.addEventListener('keydown', onKeyDown);
     window.addEventListener('keyup', onKeyUp);
+    window.addEventListener('blur', onBlur);
 
     this.teardownFns.push(() => {
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
+      window.removeEventListener('blur', onBlur);
     });
 
     // Touch event listeners

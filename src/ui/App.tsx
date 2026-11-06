@@ -1,5 +1,5 @@
 import type { JSX } from 'preact';
-import { useState, useEffect } from 'preact/hooks';
+import { useState, useEffect, useRef } from 'preact/hooks';
 import {
   rotateOverlaySignal,
   unsupportedSignal,
@@ -61,9 +61,14 @@ import { FirstRideTutorial } from './tutorial/FirstRideTutorial';
 import { TripSummary } from './trip/TripSummary';
 import { Journal } from './journal/Journal';
 import { t } from './i18n';
+import { startGamepadNav, uiModalOpen } from './gamepadNav';
 
 export function App(): JSX.Element {
   const [showSettings, setShowSettings] = useState(false);
+  // Keyboard and gamepad listeners are attached once, so they read the live
+  // value through this ref rather than a stale closure.
+  const showSettingsRef = useRef(showSettings);
+  showSettingsRef.current = showSettings;
   useEffect(() => {
     const checkOrientation = () => {
       if (typeof window === 'undefined') return;
@@ -73,12 +78,25 @@ export function App(): JSX.Element {
     };
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Never take keys from text fields.
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.tagName === 'SELECT' ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
       if (e.key === 'Tab') {
-        e.preventDefault();
-        phoneSignal.value = {
-          ...phoneSignal.value,
-          open: !phoneSignal.value.open,
-        };
+        // Tab opens the phone only while driving. In menus and modals, and
+        // with the phone already open, Tab moves focus like any other key.
+        if (!uiModalOpen(showSettingsRef.current)) {
+          e.preventDefault();
+          phoneSignal.value = { ...phoneSignal.value, open: true };
+        }
+        return;
       }
       if (e.key === 'g' || e.key === 'G') {
         garageSignal.value = {
@@ -97,8 +115,18 @@ export function App(): JSX.Element {
         journalSignal.value = !journalSignal.value;
       }
       if (e.key === 'Escape') {
-        if (showSettings) {
+        // Close the innermost open panel first, then fall through to pause.
+        if (showSettingsRef.current) {
           setShowSettings(false);
+        } else if (saveSlotsSignal.value.isOpen) {
+          saveSlotsSignal.value = { ...saveSlotsSignal.value, isOpen: false };
+        } else if (garageSignal.value.open) {
+          garageSignal.value = { ...garageSignal.value, open: false };
+          if (screenSignal.value === 'garage') screenSignal.value = 'game';
+        } else if (journalSignal.value) {
+          journalSignal.value = false;
+        } else if (phoneSignal.value.open) {
+          phoneSignal.value = { ...phoneSignal.value, open: false };
         } else if (screenSignal.value === 'map') {
           screenSignal.value = 'game';
         } else if (screenSignal.value === 'pause') {
@@ -116,11 +144,13 @@ export function App(): JSX.Element {
     window.addEventListener('resize', checkOrientation);
     window.addEventListener('orientationchange', checkOrientation);
     window.addEventListener('keydown', handleKeyDown);
+    const stopGamepad = startGamepadNav(() => showSettingsRef.current);
 
     return () => {
       window.removeEventListener('resize', checkOrientation);
       window.removeEventListener('orientationchange', checkOrientation);
       window.removeEventListener('keydown', handleKeyDown);
+      stopGamepad();
     };
   }, []);
 

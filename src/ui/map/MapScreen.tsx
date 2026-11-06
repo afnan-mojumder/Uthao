@@ -502,6 +502,49 @@ export function MapScreen({
           }}
         />
 
+        {/* Keyboard and gamepad route to every displayed point of interest:
+            each is a real button, so focus can reach it without a pointer.
+            Selecting one does exactly what a canvas click does. */}
+        <div
+          data-testid="map-poi-list"
+          style={{
+            position: 'absolute',
+            top: '12px',
+            left: '12px',
+            right: '12px',
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '6px',
+            pointerEvents: 'auto',
+          }}
+        >
+          {displayedPois.map((poi) => (
+            <button
+              key={poi.nodeId}
+              data-testid={`map-poi-${poi.nodeId}`}
+              aria-pressed={selectedNodeId === poi.nodeId}
+              onClick={() => {
+                setSelectedPoi(poi);
+                setSelectedNodeId(poi.nodeId);
+              }}
+              style={{
+                padding: '6px 12px',
+                borderRadius: '9999px',
+                border: selectedNodeId === poi.nodeId
+                  ? '1px solid #38bdf8'
+                  : '1px solid rgba(255, 255, 255, 0.15)',
+                background: 'rgba(15, 23, 42, 0.85)',
+                color: '#f8fafc',
+                fontSize: '0.8rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              {poi.nameKey ? t(poi.nameKey) : poi.nodeId}
+            </button>
+          ))}
+        </div>
+
         {/* Selected POI / Node Detail Card */}
         {selectedNodeId && (
           <div

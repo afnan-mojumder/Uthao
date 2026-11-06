@@ -329,6 +329,20 @@ export function setChoiceDispatcher(fn: (choiceId: string, instanceId: string) =
   onChooseCallback = fn;
 }
 
+/**
+ * Answers the open encounter with the option at `index` (0-based). Keyboard
+ * digits and gamepad buttons both come through here. Returns false when no
+ * card is open or the index has no option.
+ */
+export function chooseChoiceOption(index: number): boolean {
+  const choice = choiceSignal.value;
+  if (!choice.active || !choice.instanceId) return false;
+  const option = choice.options[index];
+  if (!option || !onChooseCallback) return false;
+  onChooseCallback(String(option.id), choice.instanceId);
+  return true;
+}
+
 export function setRequestDispatchers(
   acceptFn: (requestId: string) => void,
   declineFn: (requestId: string) => void

@@ -251,6 +251,7 @@ session.spawnAtHome();
 
 let lastTime = typeof performance !== 'undefined' ? performance.now() : 0;
 let roamNodeIndex = 0;
+let cameraHeld = false;
 
 function frame(now: number) {
   const dt = (now - lastTime) / 1000;
@@ -311,6 +312,9 @@ function frame(now: number) {
     // Horn (traffic reaction to the player, not part of the bike/traffic/ride
     // step itself, so it stays here alongside the rest of the input glue).
     const rawInput = inputManager.read();
+    // Camera key (C) or gamepad Select toggles on press, not while held.
+    if (rawInput.camera && !cameraHeld) renderer?.cameraRig.toggleMode();
+    cameraHeld = rawInput.camera;
     if (rawInput.horn) {
       trafficManager.triggerHorn({ x: session.bike.x, z: session.bike.z });
     }
