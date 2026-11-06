@@ -6,7 +6,7 @@ export default tsPlugin.config(
   js.configs.recommended,
   ...tsPlugin.configs.recommended,
   {
-    ignores: ['dist/**', 'node_modules/**', 'assets-src/**', 'test-results/**', 'playwright-report/**'],
+    ignores: ['dist/**', 'node_modules/**', 'assets-src/**', 'test-results/**', 'playwright-report/**', '.remember/**'],
   },
   {
     files: ['scripts/**', '*.config.{js,ts,mjs}'],

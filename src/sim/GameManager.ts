@@ -207,7 +207,9 @@ export class GameManager {
     this.eventDirector = new EventDirector({
       definitions: encounterDefs,
       seed: this.seed,
-      pauseOnDecisions: true,
+      // Cards never freeze the sim: a card waits for a stopped bike and the
+      // world keeps running behind it, so the driving keys stay live.
+      pauseOnDecisions: false,
     });
 
     const allCampaignMissions = [
@@ -343,7 +345,7 @@ export class GameManager {
     }
   }
 
-  tick(dt: number = SIM_DT): void {
+  tick(dt: number = SIM_DT, speedKmh: number = 0): void {
     if (this.paused) {
       return;
     }
@@ -362,7 +364,9 @@ export class GameManager {
       flags: this.story.branchFlags,
       relationships: this.story.characterRelationships,
       cash: this.economyManager.cash,
-      speedKmh: 0,
+      // The bike's real speed: an encounter card only shows once the bike is
+      // stopped (EventDirector's speed gate), so a moving bike keeps its keys.
+      speedKmh,
       bikeCondition: this.economyManager.motorcycleCondition,
     };
     // T7.1: ambient (roaming) encounters are suppressed while disabled (main

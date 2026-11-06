@@ -428,7 +428,7 @@ export class GameSession {
   /** Advances clock/weather/encounters, bike physics, traffic and ride state
    * by one tick, then (when enabled) offers any newly generated requests. */
   step(input: BikeInput, dt: number = SIM_DT): void {
-    this.gm.tick(dt);
+    this.gm.tick(dt, this.bike.speed * 3.6);
 
     const activeReq = this.ride.getActiveRequest();
 

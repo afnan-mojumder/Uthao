@@ -382,6 +382,8 @@ describe('EventDirector and Encounter Framework (T3.6)', () => {
       },
     });
 
+    // GameManager defaults to non-pausing cards; this test covers the pause path explicitly.
+    gm.eventDirector.pauseOnDecisions = true;
     expect(gm.paused).toBe(false);
 
     // Tick gm: encounter should evaluate and trigger pause
