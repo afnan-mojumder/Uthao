@@ -208,7 +208,7 @@ describe('RideManager driven by TripFsm', () => {
     expect(first.objectiveKey).toBe('objective.go_to_pickup');
     expect(first.navTargetNodeId).toBe(pickup.nodeId);
     expect(first.pickupVisible).toBe(true);
-    expect(first.objectiveVars.node).toBe(pickup.nodeId);
+    expect(first.objectiveVars.place).toMatch(/^poi\./);
 
     stepAt(session, pickup);
     stepAt(session, pickup);

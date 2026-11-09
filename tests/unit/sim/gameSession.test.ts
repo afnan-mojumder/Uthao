@@ -42,21 +42,6 @@ function headingError(bike: BikeState, segment: RoadSegment, road: RoadNetwork):
 }
 
 /** Steers and throttles the session towards `target` for `seconds` of sim time. */
-function driveInto(
-  session: GameSession,
-  target: { x: number; z: number },
-  seconds: number
-): void {
-  const steps = Math.ceil(seconds / SIM_DT);
-  for (let i = 0; i < steps; i++) {
-    const dx = target.x - session.bike.x;
-    const dz = target.z - session.bike.z;
-    const desiredHeading = Math.atan2(dx, dz);
-    const steer = clamp(angleDiff(session.bike.heading, desiredHeading) * 2, -1, 1);
-    session.step({ throttle: 1, brake: 0, steer }, SIM_DT);
-  }
-}
-
 function stepMinutes(session: GameSession, minutes: number): void {
   const steps = Math.ceil(minutes / MINUTES_PER_STEP);
   for (let i = 0; i < steps; i++) {
@@ -120,9 +105,20 @@ describe('T7.3 real physics, road spawn and collisions', () => {
     s.bike.speed = 0;
     s.physics!.addStaticBox(0, 0.5, 6, 5.0, 1.0, 0.2);
 
-    driveInto(s, { x: 0, z: 6 }, 5);
+    // Drive into the wall until the first hit. Stop there: a bike held on the
+    // throttle against the wall is later recovered (audit H-8), which is tested elsewhere.
+    for (let i = 0; i < 600 && hits.mock.calls.length === 0; i++) {
+      const desiredHeading = Math.atan2(0 - s.bike.x, 6 - s.bike.z);
+      const steer = clamp(angleDiff(s.bike.heading, desiredHeading) * 2, -1, 1);
+      s.step({ throttle: 1, brake: 0, steer }, SIM_DT);
+    }
 
     expect(hits).toHaveBeenCalled();
+    // Keep the throttle on against the wall for half a second (well inside the
+    // recovery wait): the bike must stay stopped.
+    for (let i = 0; i < 30; i++) {
+      s.step({ throttle: 1, brake: 0, steer: 0 }, SIM_DT);
+    }
     expect(s.bike.speed).toBeLessThan(2);
   });
 

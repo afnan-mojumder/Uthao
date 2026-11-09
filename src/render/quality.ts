@@ -9,6 +9,22 @@ export interface QualityConfig {
   rainParticles: number;
 }
 
+const QUALITY_LEVELS: readonly QualityLevel[] = ['low', 'medium', 'high'];
+
+/**
+ * The level to start with: a valid `?quality=` URL parameter wins, otherwise
+ * the saved setting. Anything else falls back to the saved setting.
+ */
+export function resolveQualityLevel(
+  urlParam: string | null | undefined,
+  saved: QualityLevel
+): QualityLevel {
+  if (urlParam && (QUALITY_LEVELS as readonly string[]).includes(urlParam)) {
+    return urlParam as QualityLevel;
+  }
+  return saved;
+}
+
 export function getQualityConfig(level: QualityLevel, dpr = 1): QualityConfig {
   switch (level) {
     case 'low':

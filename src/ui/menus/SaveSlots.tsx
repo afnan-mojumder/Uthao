@@ -96,8 +96,8 @@ export function SaveSlots({
           <div>
             <h2 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 700, color: '#f59e0b' }}>
               {mode === 'save'
-                ? t('save.title_save') || '💾 গেম সেভ করুন (Save Game)'
-                : t('save.title_load') || '📂 গেম লোড করুন (Load Game)'}
+                ? t('save.title_save')
+                : t('save.title_load')}
             </h2>
             {saveStatusSignal.value === 'failed' && (
               <div data-testid="save-failed" role="alert" style={{ fontSize: '0.85rem', color: '#f87171', fontWeight: 600 }}>
@@ -124,7 +124,7 @@ export function SaveSlots({
               fontSize: '0.9rem',
             }}
           >
-            ✕ {t('btn_close') || 'বন্ধ'}
+            ✕ {t('btn_close')}
           </button>
         </div>
 

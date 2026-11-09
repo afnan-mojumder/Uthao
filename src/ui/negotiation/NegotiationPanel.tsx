@@ -5,7 +5,7 @@ import type {
   NegotiationAction,
   NegotiationResult,
 } from '../../sim/negotiation/NegotiationSystem';
-import { t, getLanguage, getDictionary } from '../i18n';
+import { t, getLanguage, getDictionary, localDigits } from '../i18n';
 import bnDialogue from '../../../data/dialogue/bn/negotiation.json';
 import enDialogue from '../../../data/dialogue/en/negotiation.json';
 
@@ -17,6 +17,8 @@ export interface NegotiationPanelProps {
   mood?: number;
   /** A relocation the sim can really perform right now (null: none, no button). */
   pickup?: { nodeId: string; walkM: number; savesMin: number } | null;
+  /** Name key of the destination's place. */
+  destinationKey?: string;
   onAction: (action: NegotiationAction) => void;
   onClose?: () => void;
 }
@@ -27,6 +29,7 @@ export function NegotiationPanel({
   lastResult,
   mood = 1,
   pickup = null,
+  destinationKey,
   onAction,
 }: NegotiationPanelProps): JSX.Element | null {
   const [counterAmount, setCounterAmount] = useState<number>(() => {
@@ -67,10 +70,10 @@ export function NegotiationPanel({
   const rawKey = lastResult?.passengerLine ?? 'dialogue.negotiation.opening';
   const currentLang = getLanguage();
   const vars: Record<string, string | number> = {
-    fare: session.currentPassengerOffer,
-    offer: session.currentPassengerOffer,
-    counter: counterAmount,
-    destination: session.req.destinationNodeId ?? 'destination',
+    fare: localDigits(session.currentPassengerOffer),
+    offer: localDigits(session.currentPassengerOffer),
+    counter: localDigits(counterAmount),
+    destination: destinationKey ? t(destinationKey) : '',
   };
   const primaryLine = t(rawKey, vars);
   const otherLang = currentLang === 'bn' ? 'en' : 'bn';
@@ -166,12 +169,12 @@ export function NegotiationPanel({
         {/* Mood and the single available route */}
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#94a3b8' }}>
           <span data-testid="mood-text">
-            {t('negotiation.mood')}: {Math.round(mood * 100)}%
+            {t('negotiation.mood')}: {localDigits(Math.round(mood * 100))}%
           </span>
           <span data-testid="route-text">
             {t('negotiation.route', {
-              distance: session.req.estimatedDistance.toFixed(1),
-              eta: session.req.estimatedDuration,
+              distance: localDigits(session.req.estimatedDistance.toFixed(1)),
+              eta: localDigits(session.req.estimatedDuration),
             })}
           </span>
         </div>

@@ -26,11 +26,14 @@ export class InputManager {
   private state: InputState;
   private rawKeyboard: RawKeyboardInput = {};
   private activeKeys = new Set<string>();
+  /** Keys pressed since the last update, so a quick tap is not lost between frames (audit: tap of C dropped). */
+  private tappedKeys = new Set<string>();
 
   // Touch state
   private touchSteer = 0; // -1..1
-  private touchThrottle = 0; // 0..1
-  private touchBrake = 0; // 0..1
+  // Each pad tracks the fingers on it, so lifting one releases only that pad.
+  private throttleTouchIds = new Set<number>();
+  private brakeTouchIds = new Set<number>();
   private touchSteerTouchId: number | null = null;
   private touchSteerStartX = 0;
 
@@ -102,15 +105,16 @@ export class InputManager {
     if (this.matchesAny(this.bindings.keyboard.brake)) kbBrake = 1.0;
     if (this.matchesAny(this.bindings.keyboard.steerLeft)) targetKbSteer -= 1.0;
     if (this.matchesAny(this.bindings.keyboard.steerRight)) targetKbSteer += 1.0;
-    if (this.matchesAny(this.bindings.keyboard.horn)) horn = true;
-    if (this.matchesAny(this.bindings.keyboard.camera)) camera = true;
-    if (this.matchesAny(this.bindings.keyboard.phone)) phone = true;
-    if (this.matchesAny(this.bindings.keyboard.map)) map = true;
-    if (this.matchesAny(this.bindings.keyboard.pause)) pause = true;
-    if (this.matchesAny(this.bindings.keyboard.choice0)) choice = 0;
-    if (this.matchesAny(this.bindings.keyboard.choice1)) choice = 1;
-    if (this.matchesAny(this.bindings.keyboard.choice2)) choice = 2;
-    if (this.matchesAny(this.bindings.keyboard.choice3)) choice = 3;
+    if (this.matchesPressed(this.bindings.keyboard.horn)) horn = true;
+    if (this.matchesPressed(this.bindings.keyboard.camera)) camera = true;
+    if (this.matchesPressed(this.bindings.keyboard.phone)) phone = true;
+    if (this.matchesPressed(this.bindings.keyboard.map)) map = true;
+    if (this.matchesPressed(this.bindings.keyboard.pause)) pause = true;
+    if (this.matchesPressed(this.bindings.keyboard.choice0)) choice = 0;
+    if (this.matchesPressed(this.bindings.keyboard.choice1)) choice = 1;
+    if (this.matchesPressed(this.bindings.keyboard.choice2)) choice = 2;
+    if (this.matchesPressed(this.bindings.keyboard.choice3)) choice = 3;
+    this.tappedKeys.clear();
 
     // Smooth keyboard steer towards target
     if (dt > 0) {
@@ -157,8 +161,10 @@ export class InputManager {
     }
 
     // Combine throttle, brake, steer across Keyboard, Gamepad, Touch, and Tilt
-    const finalThrottle = Math.max(kbThrottle, gpThrottle, this.touchThrottle);
-    const finalBrake = Math.max(kbBrake, gpBrake, this.touchBrake);
+    const touchThrottle = this.throttleTouchIds.size > 0 ? 1 : 0;
+    const touchBrake = this.brakeTouchIds.size > 0 ? 1 : 0;
+    const finalThrottle = Math.max(kbThrottle, gpThrottle, touchThrottle);
+    const finalBrake = Math.max(kbBrake, gpBrake, touchBrake);
 
     let finalSteer = this.currentSteer;
     if (Math.abs(gpSteer) > 0.01) finalSteer = gpSteer;
@@ -206,6 +212,11 @@ export class InputManager {
     this.activeKeys.clear();
   }
 
+  /** True if any of `codes` is held now, or was pressed since the last update. */
+  private matchesPressed(codes: string[]): boolean {
+    return this.matchesAny(codes) || codes.some((c) => this.tappedKeys.has(c));
+  }
+
   private matchesAny(codes: string[]): boolean {
     for (const code of codes) {
       if (this.activeKeys.has(code)) return true;
@@ -228,6 +239,7 @@ export class InputManager {
   private attachListeners(target: Window | HTMLElement): void {
     const onKeyDown = (e: KeyboardEvent) => {
       this.activeKeys.add(e.code);
+      this.tappedKeys.add(e.code);
     };
 
     const onKeyUp = (e: KeyboardEvent) => {
@@ -277,7 +289,7 @@ export class InputManager {
             py >= layout.throttlePad.y &&
             py <= layout.throttlePad.y + layout.throttlePad.height
           ) {
-            this.touchThrottle = 1.0;
+            this.throttleTouchIds.add(t.identifier);
           }
 
           // Brake pad
@@ -287,7 +299,7 @@ export class InputManager {
             py >= layout.brakePad.y &&
             py <= layout.brakePad.y + layout.brakePad.height
           ) {
-            this.touchBrake = 1.0;
+            this.brakeTouchIds.add(t.identifier);
           }
         }
       };
@@ -310,14 +322,17 @@ export class InputManager {
         for (let i = 0; i < e.changedTouches.length; i++) {
           const t = e.changedTouches[i];
           if (!t) continue;
+          this.throttleTouchIds.delete(t.identifier);
+          this.brakeTouchIds.delete(t.identifier);
           if (t.identifier === this.touchSteerTouchId) {
             this.touchSteerTouchId = null;
             this.touchSteer = 0;
           }
         }
         if (e.touches.length === 0) {
-          this.touchThrottle = 0;
-          this.touchBrake = 0;
+          this.throttleTouchIds.clear();
+          this.brakeTouchIds.clear();
+          this.touchSteerTouchId = null;
           this.touchSteer = 0;
         }
       };

@@ -2,9 +2,11 @@ import { describe, it, expect } from 'vitest';
 import {
   stepBike,
   type BikeSpec,
+  createBikeSpec,
   createDefaultBikeSpec,
   createDefaultBikeState,
 } from '../../../src/physics/bikeModel';
+import type { BikeId } from '../../../src/core/types';
 
 describe('bikeModel (pure math)', () => {
   const dt = 1 / 60;
@@ -23,6 +25,51 @@ describe('bikeModel (pure math)', () => {
 
     expect(time).toBeGreaterThanOrEqual(3.7);
     expect(time).toBeLessThanOrEqual(4.3);
+  });
+
+  it('every bike stops 30-40% further on wet roads than dry (PLAYTEST band)', () => {
+    const stopDistance = (bikeId: BikeId, wet: boolean): number => {
+      const spec = createBikeSpec(bikeId);
+      let state = { ...createDefaultBikeState(), speed: 11 };
+      const env = { wet, surface: 1.0, hasPassenger: false, conditionPct: 100 };
+      const input = { throttle: 0, brake: 1.0, steer: 0 };
+      const startZ = state.z;
+      while (state.speed > 0.001) state = stepBike(state, input, spec, env, dt);
+      return Math.abs(state.z - startZ);
+    };
+
+    for (const bikeId of ['old100', 'used125', 'new150'] as const) {
+      const ratio = stopDistance(bikeId, true) / stopDistance(bikeId, false);
+      expect(ratio, bikeId).toBeGreaterThanOrEqual(1.3);
+      expect(ratio, bikeId).toBeLessThanOrEqual(1.4);
+    }
+  });
+
+  it('releasing the throttle slows the bike, with no brake', () => {
+    const spec = createDefaultBikeSpec();
+    let state = { ...createDefaultBikeState(), speed: 11 };
+    const env = { wet: false, surface: 1.0, hasPassenger: false, conditionPct: 100 };
+    const coast = { throttle: 0, brake: 0, steer: 0 };
+
+    for (let i = 0; i < 60; i++) state = stepBike(state, coast, spec, env, dt);
+
+    // About 0.6 m/s lost per second: between 10.2 and 10.8 m/s after one second.
+    expect(state.speed).toBeLessThan(10.8);
+    expect(state.speed).toBeGreaterThan(10.2);
+  });
+
+  it('a full-lock turn at 40 km/h keeps most of its speed after one second (audit H-3)', () => {
+    // Arrange: cruising at 40 km/h (11.1 m/s), dry, rider holds full lock.
+    const spec = createDefaultBikeSpec();
+    let state = { ...createDefaultBikeState(), speed: 40 / 3.6 };
+    const env = { wet: false, surface: 1.0, hasPassenger: false, conditionPct: 100 };
+    const input = { throttle: 0.5, brake: 0, steer: 1 };
+
+    // Act
+    for (let i = 0; i < 60; i++) state = stepBike(state, input, spec, env, dt);
+
+    // Assert: the audit saw 40 km/h fall to about 19 km/h. Require at least 30 km/h.
+    expect(state.speed * 3.6).toBeGreaterThanOrEqual(30);
   });
 
   it('never exceeds vmax', () => {

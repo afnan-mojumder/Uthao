@@ -195,9 +195,10 @@ describe('T4.5 Remaining Signature Situations', () => {
         const startDayMinutes = gm.clock.minutes;
         const startCondition = economyManager.motorcycleCondition;
 
-        let flagEmitted: { key: string; value: unknown } | null = null;
+        // A choice may set several flags, so every emitted flag is kept.
+        const flagsEmitted: { key: string; value: unknown }[] = [];
         bus.on('story/flag', (ev) => {
-          flagEmitted = ev;
+          flagsEmitted.push(ev);
         });
 
         applyEffects(choice.effects, effectCtx);
@@ -224,7 +225,7 @@ describe('T4.5 Remaining Signature Situations', () => {
               break;
             case 'flag':
               expect(gm.story.branchFlags[eff.key]).toBe(eff.value);
-              expect(flagEmitted).toEqual({ key: eff.key, value: eff.value });
+              expect(flagsEmitted).toContainEqual({ key: eff.key, value: eff.value });
               break;
             case 'relationship':
               expect(gm.story.characterRelationships[eff.characterId]).toBe(eff.delta);

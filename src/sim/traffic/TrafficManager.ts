@@ -9,6 +9,14 @@ import { BALANCE } from '../../config/balance';
 import type { RoadType } from '../../core/types';
 import type { RoadEventManager } from '../world/RoadEvents';
 
+/** Stop line sits this far before the end of an approach lane (the junction). */
+const STOP_LINE_SETBACK_M = 5;
+/** A bike within this distance of a lane's centreline is in that lane. */
+const BIKE_LANE_HALF_WIDTH_M = 2.2;
+const BIKE_LENGTH_M = 1.8;
+/** Only approaches within this distance of a red light react to it. */
+const SIGNAL_REACT_RANGE_M = 80;
+
 export type TrafficVehicleKind =
   | 'car'
   | 'bus'
@@ -152,6 +160,8 @@ export class TrafficManager {
   private rng: Rng;
   private nextAgentSeq = 0;
   private agentsByLane: Map<string, TrafficAgent[]> = new Map();
+  /** The rider this tick, so vehicles can see the bike ahead of them. */
+  private bikeView: { x: number; z: number; speed: number } | undefined;
 
   constructor(
     network: RoadNetwork,
@@ -362,6 +372,78 @@ export class TrafficManager {
     return { x: baseX, z: baseZ };
   }
 
+  /**
+   * The nearest thing ahead that the agent must respect: the vehicle in front,
+   * a red (or unsafe yellow) signal at the stop line, or the bike in its lane.
+   * Each is modelled as a leader, so car following handles all of them.
+   */
+  private effectiveLeader(
+    agent: TrafficAgent,
+    lane: Lane,
+    leader: TrafficAgent | null
+  ): { pos: number; speed: number; length: number } | null {
+    let best: { pos: number; speed: number; length: number } | null = leader
+      ? { pos: leader.distAlongLane, speed: leader.speed, length: leader.length }
+      : null;
+
+    const stopPos = lane.lengthM - STOP_LINE_SETBACK_M;
+    if (this.signalHoldsAt(agent, lane, stopPos)) {
+      if (!best || stopPos < best.pos - best.length / 2) {
+        best = { pos: stopPos, speed: 0, length: 0 };
+      }
+    }
+
+    const bike = this.bikeView;
+    if (bike) {
+      const along = this.projectOntoLane(lane, bike.x, bike.z);
+      if (along !== null && along > agent.distAlongLane) {
+        const rear = along - BIKE_LENGTH_M / 2;
+        if (!best || rear < best.pos - best.length / 2) {
+          best = { pos: along, speed: bike.speed, length: BIKE_LENGTH_M };
+        }
+      }
+    }
+    return best;
+  }
+
+  /** True when the agent must stop for the light at the end of its lane. */
+  private signalHoldsAt(agent: TrafficAgent, lane: Lane, stopPos: number): boolean {
+    const node = this.network.getNode(lane.endNodeId);
+    if (!node?.signal) return false;
+    const distToLine = stopPos - agent.distAlongLane;
+    if (distToLine < 0 || distToLine > SIGNAL_REACT_RANGE_M) return false;
+
+    // Phase 0 serves east-west approaches, phase 1 north-south.
+    const heading = this.computeLaneHeading(lane);
+    const approach = Math.abs(Math.sin(heading)) >= Math.abs(Math.cos(heading)) ? 0 : 1;
+    const status = this.signals.getSignalStatus(node.nodeId, approach);
+    if (status === 'red') return true;
+    // Yellow: stop only if the bike can stop short of the line, otherwise go through.
+    if (status === 'yellow') return distToLine > agent.speed * 1.5;
+    return false;
+  }
+
+  /** Distance along the lane where a point lies, or null if it is off the lane. */
+  private projectOntoLane(lane: Lane, x: number, z: number): number | null {
+    const p1 = lane.points[0];
+    const p2 = lane.points[1];
+    if (!p1 || !p2) return null;
+    const dx = p2.x - p1.x;
+    const dz = p2.z - p1.z;
+    const len = Math.hypot(dx, dz);
+    if (len < 0.1) return null;
+    const ux = dx / len;
+    const uz = dz / len;
+    const rx = x - p1.x;
+    const rz = z - p1.z;
+    const along = rx * ux + rz * uz;
+    const lateral = rx * uz - rz * ux;
+    if (along < 0 || along > lane.lengthM || Math.abs(lateral) > BIKE_LANE_HALF_WIDTH_M) {
+      return null;
+    }
+    return along;
+  }
+
   computeLaneHeading(lane: Lane): number {
     if (lane.points.length < 2) return 0;
     const p1 = lane.points[0]!;
@@ -401,10 +483,11 @@ export class TrafficManager {
   update(
     dt: number,
     camera?: CameraViewInfo,
-    player?: { x: number; z: number; speed: number }
+    player?: { x: number; z: number; speed: number; heading?: number }
   ): void {
     this.signals.update(dt);
-    this.pedestrians.update(dt, player, camera);
+    this.bikeView = player;
+    this.pedestrians.update(dt, player, camera, this.agents);
 
     // Group agents by lane to identify leader-follower pairs using pooled map
     for (const arr of this.agentsByLane.values()) {
@@ -554,9 +637,7 @@ export class TrafficManager {
           length: agent.length,
         };
 
-        const leaderItem = leader
-          ? { pos: leader.distAlongLane, speed: leader.speed, length: leader.length }
-          : null;
+        const leaderItem = this.effectiveLeader(agent, lane, leader ?? null);
 
         const step = stepCarFollowing(
           followerItem,

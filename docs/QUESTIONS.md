@@ -42,3 +42,7 @@ Please have a native speaker review the following files for natural colloquial D
 - [ ] Off-app non-payment and disputes have no money or reputation effect beyond the ledger row and the receipt consequence. Price them in T11.3.
 ## T9.6 Passenger name transliterations need native review
 - [ ] `data/dialogue/bn/passengers.json`: 54 random-passenger names (Bangla script) were transliterated for T9.6. A native speaker should check spelling and nicknames such as Kajol Viper, Rubel Black, Bappi Don.
+- [ ] @afnan: T9.21 bn `encounter.friend_package.choice.accept` (data/dialogue/bn/encounters.json) is first-draft Bangla; native review needed.
+- [ ] @afnan: T9.21 bn `career_choice_prototype_notice` (data/dialogue/bn/endings.json) is first-draft Bangla; native review needed.
+- [ ] @afnan: T9.16 bn strings for menu.new_career_confirm* are first-draft Bangla; native review needed.
+- [ ] @afnan: T9.26 bn `settings.reduce_motion` and `settings.colorblind_route` (data/dialogue/bn/ui.json) are first-draft Bangla; native review needed.

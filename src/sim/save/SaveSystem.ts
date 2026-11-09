@@ -106,7 +106,7 @@ export function serialize(gm: GameManager, slot: SaveSlot = 'auto'): SaveV1 {
     reputation: snap.reputation
       ? {
           rating: snap.reputation.rating,
-          ratingsHistory: gm.reputationSystem.getRatingsHistory(),
+          ratingsHistory: snap.reputation.ratingsHistory ?? [],
           localTrust: snap.reputation.localTrust,
           safetyRecord: { ...snap.reputation.safetyRecord },
           riskScore: snap.reputation.riskScore,
@@ -137,6 +137,8 @@ export function serialize(gm: GameManager, slot: SaveSlot = 'auto'): SaveV1 {
     settledRequests: snap.settledRequests ? [...snap.settledRequests] : [],
     requestSeq: snap.requestSeq ?? 0,
     negotiationHistory: snap.negotiationHistory ?? 0,
+    shiftEnded: snap.shiftEnded ?? false,
+    todayRentPosted: snap.todayRentPosted ?? 0,
   };
 }
 
@@ -179,6 +181,7 @@ export function deserialize(save: SaveV1, gameData?: GameData): GameManager {
     waypointNodeId: save.waypointNodeId,
     reputation: {
       rating: save.reputation.rating,
+      ratingsHistory: save.reputation.ratingsHistory ?? [],
       localTrust: save.reputation.localTrust,
       safetyRecord: { ...save.reputation.safetyRecord },
       riskScore: save.reputation.riskScore,
@@ -189,6 +192,8 @@ export function deserialize(save: SaveV1, gameData?: GameData): GameManager {
     settledRequests: save.settledRequests,
     requestSeq: save.requestSeq,
     negotiationHistory: save.negotiationHistory ?? 0,
+    shiftEnded: save.shiftEnded ?? false,
+    todayRentPosted: save.todayRentPosted ?? 0,
   };
 
   gm.applySnapshot(snapshot, save.rngState);
@@ -324,6 +329,28 @@ export class SaveSystem {
     return slots.some((s) => this.hasSave(s));
   }
 
+  /** The most recently written readable save across all slots, or null. */
+  latestSave(): SaveV1 | null {
+    let latest: SaveV1 | null = null;
+    for (const save of Object.values(this.listSlots())) {
+      if (save && (!latest || save.timestamp > latest.timestamp)) latest = save;
+    }
+    return latest;
+  }
+
+  /** The slot holding the most recently written readable save, or null. Continue loads this. */
+  latestSlot(): SaveSlot | null {
+    let best: SaveSlot | null = null;
+    let bestTime = -Infinity;
+    for (const [slot, save] of Object.entries(this.listSlots()) as [SaveSlot, SaveV1 | null][]) {
+      if (save && save.timestamp > bestTime) {
+        best = slot;
+        bestTime = save.timestamp;
+      }
+    }
+    return best;
+  }
+
   hasCorruptBackup(slot: SaveSlot): boolean {
     const corruptKey = this.getCorruptKey(slot);
     return !!this.storage.getItem(corruptKey);
@@ -372,6 +399,11 @@ export class SaveSystem {
       this.save(gm, 'auto');
     });
 
+    // Sleeping starts the next morning: save it, so a reload does not land on last night.
+    const unsubMorning = gm.bus.on('day/started', () => {
+      this.save(gm, 'auto');
+    });
+
     let onVisibilityChange: (() => void) | undefined;
 
     if (visibilityTarget) {
@@ -387,6 +419,7 @@ export class SaveSystem {
     return () => {
       unsubRides();
       unsubDays();
+      unsubMorning();
       if (visibilityTarget && onVisibilityChange) {
         visibilityTarget.removeEventListener('visibilitychange', onVisibilityChange);
       }

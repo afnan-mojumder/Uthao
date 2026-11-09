@@ -1,5 +1,6 @@
 import type { JSX } from 'preact';
-import { useState } from 'preact/hooks';
+import { useState, useEffect } from 'preact/hooks';
+import { makeRestInert } from '../focusTrap';
 import {
   type GameSettings,
   settingsSignal,
@@ -38,6 +39,18 @@ export function Settings({
     const [settingsState, setSettingsState] = useState<GameSettings>({ ...settingsSignal.value });
     localSettings = settingsState;
     setLocalSettings = setSettingsState;
+    // Keyboard focus stays in Settings while it is open, and returns to the opener on close.
+    useEffect(() => {
+      const overlay = document.querySelector<HTMLElement>('[data-testid="settings-screen"]');
+      if (!overlay) return undefined;
+      const opener = document.activeElement as HTMLElement | null;
+      const release = makeRestInert(overlay);
+      overlay.querySelector<HTMLElement>('button, input, select')?.focus();
+      return () => {
+        release();
+        opener?.focus?.();
+      };
+    }, []);
   } catch {
     // Vitest node environment
   }
@@ -417,6 +430,17 @@ export function Settings({
                   style={{ width: '100%', accentColor: '#38bdf8', cursor: 'pointer' }}
                 />
               </div>
+
+              <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
+                <span style={{ fontSize: '0.9rem', color: '#cbd5e1' }}>{t('settings.mute')}</span>
+                <input
+                  data-testid="settings-mute"
+                  type="checkbox"
+                  checked={localSettings.muted}
+                  onChange={(e) => setLocalSettings((prev) => ({ ...prev, muted: e.currentTarget.checked }))}
+                  style={{ width: '18px', height: '18px', accentColor: '#38bdf8', cursor: 'pointer' }}
+                />
+              </label>
             </div>
           )}
 

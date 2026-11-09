@@ -1,109 +1,136 @@
-import * as THREE from 'three';
+import type { BikeCollisionSeverity } from '../core/types';
 
 export interface AudioVolumes {
   master: number; // 0..1
   sfx: number; // 0..1
-  music: number; // 0..1
+  ambient: number; // 0..1: city murmur and rain. The game has no music track.
+  muted: boolean;
 }
 
+/** The one place volume defaults live; the settings store reads them from here. */
+export const DEFAULT_VOLUMES: Readonly<AudioVolumes> = {
+  master: 0.8,
+  sfx: 0.9,
+  ambient: 0.7,
+  muted: false,
+};
+
+export type AudioChannel = 'master' | 'sfx' | 'ambient';
+
+/** Collisions fire every tick while the bike touches something; one sound per window. */
+const IMPACT_COOLDOWN_S = 0.3;
+
+const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
+
+function defaultContext(): AudioContext | null {
+  if (typeof window === 'undefined') return null;
+  const Ctx =
+    window.AudioContext ||
+    (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+  return Ctx ? new Ctx() : null;
+}
+
+/**
+ * Procedural Web Audio. Every source routes into the sfx or ambient channel,
+ * and both channels into master, so each volume is one absolute gain value.
+ * The AudioContext is created on the first user gesture (browsers block audio
+ * before one).
+ */
 export class AudioManager {
-  readonly listener: THREE.AudioListener | null = null;
   private audioContext: AudioContext | null = null;
   private isUnlocked = false;
+  private volumes: AudioVolumes = { ...DEFAULT_VOLUMES };
 
-  private volumes: AudioVolumes = {
-    master: 0.8,
-    sfx: 0.8,
-    music: 0.5,
-  };
+  private masterGain: GainNode | null = null;
+  private sfxGain: GainNode | null = null;
+  private ambientGain: GainNode | null = null;
 
-  // Sound nodes / generators
   private engineOsc: OscillatorNode | null = null;
   private engineGain: GainNode | null = null;
-  private hornOsc: OscillatorNode | null = null;
   private hornGain: GainNode | null = null;
   private cityBedGain: GainNode | null = null;
   private rainBedGain: GainNode | null = null;
-  private enginePitchMult: number = 1.0;
+  private noise: AudioBuffer | null = null;
+  private enginePitchMult = 1.0;
+  private lastImpactAt = -Infinity;
 
-  constructor() {
-    if (typeof window !== 'undefined') {
-      try {
-        const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-        if (AudioCtx) {
-          this.audioContext = new AudioCtx();
-        }
-      } catch {
-        // AudioContext not available in this environment
-      }
-
-      try {
-        this.listener = new THREE.AudioListener();
-      } catch {
-        // Fallback if THREE AudioListener fails
-      }
-
-      this.setupUnlockListeners();
-    }
+  constructor(private readonly createContext: () => AudioContext | null = defaultContext) {
+    if (typeof window !== 'undefined') this.setupUnlockListeners();
   }
 
   public unlock(): void {
     if (this.isUnlocked) return;
-    if (this.audioContext && this.audioContext.state === 'suspended') {
+    try {
+      this.audioContext = this.createContext();
+    } catch {
+      this.audioContext = null;
+    }
+    if (!this.audioContext) return;
+    this.isUnlocked = true;
+    if (this.audioContext.state === 'suspended') {
       this.audioContext.resume().catch(() => {});
     }
-    this.isUnlocked = true;
     this.initAudioNodes();
+    this.applyChannelGains();
   }
 
   public getVolumes(): AudioVolumes {
     return { ...this.volumes };
   }
 
+  /** Current gain of a channel node, or null before the first gesture. */
+  public getChannelGain(channel: AudioChannel): number | null {
+    const node = { master: this.masterGain, sfx: this.sfxGain, ambient: this.ambientGain }[channel];
+    return node ? node.gain.value : null;
+  }
+
   public setMasterVolume(vol: number): void {
-    this.volumes.master = Math.max(0, Math.min(1, vol));
-    if (this.listener) {
-      this.listener.setMasterVolume(this.volumes.master);
-    }
-    this.updateAmbientGains();
+    this.volumes.master = clamp01(vol);
+    this.applyChannelGains();
   }
 
   public setSfxVolume(vol: number): void {
-    this.volumes.sfx = Math.max(0, Math.min(1, vol));
+    this.volumes.sfx = clamp01(vol);
+    this.applyChannelGains();
   }
 
-  public setMusicVolume(vol: number): void {
-    this.volumes.music = Math.max(0, Math.min(1, vol));
-    this.updateAmbientGains();
+  public setAmbientVolume(vol: number): void {
+    this.volumes.ambient = clamp01(vol);
+    this.applyChannelGains();
   }
 
-  /**
-   * Updates dynamic engine pitch and volume based on speed and throttle.
-   * speed in m/s, throttle 0..1
-   */
+  public setMuted(muted: boolean): void {
+    this.volumes.muted = muted;
+    this.applyChannelGains();
+  }
+
+  /** bikes.json `audioPitch` for the bike being ridden. */
   public setEnginePitch(mult: number): void {
     this.enginePitchMult = Math.max(0.5, Math.min(2.0, mult));
   }
 
-  public updateEngine(speed: number, throttle: number): void {
-    if (!this.audioContext || !this.engineOsc || !this.engineGain) return;
+  public getEnginePitch(): number {
+    return this.enginePitchMult;
+  }
 
-    // Pitch scales with speed (approx 50 Hz idle to 240 Hz top gear)
-    const baseFreq = 55 * this.enginePitchMult;
+  /** Engine frequency in Hz for a speed (m/s) and throttle (0..1). */
+  public engineFrequency(speed: number, throttle: number): number {
     const speedFactor = Math.min(speed / 25, 1.2);
-    const targetFreq = (baseFreq + speedFactor * 180 + throttle * 25) * this.enginePitchMult;
+    return (55 + speedFactor * 180 + throttle * 25) * this.enginePitchMult;
+  }
 
-    this.engineOsc.frequency.setTargetAtTime(targetFreq, this.audioContext.currentTime, 0.05);
-
-    // Engine volume scales with throttle + idle base
-    const targetVol = (0.15 + throttle * 0.45) * this.volumes.master * this.volumes.sfx;
-    this.engineGain.gain.setTargetAtTime(targetVol, this.audioContext.currentTime, 0.05);
+  /** speed in m/s, throttle 0..1; `running` false silences the engine (menus, pause). */
+  public updateEngine(speed: number, throttle: number, running = true): void {
+    if (!this.audioContext || !this.engineOsc || !this.engineGain) return;
+    const now = this.audioContext.currentTime;
+    this.engineOsc.frequency.setTargetAtTime(this.engineFrequency(speed, throttle), now, 0.05);
+    const targetVol = running ? 0.15 + throttle * 0.45 : 0;
+    this.engineGain.gain.setTargetAtTime(targetVol, now, 0.05);
   }
 
   public startHorn(): void {
     if (!this.audioContext || !this.hornGain) return;
-    const vol = 0.5 * this.volumes.master * this.volumes.sfx;
-    this.hornGain.gain.setTargetAtTime(vol, this.audioContext.currentTime, 0.02);
+    this.hornGain.gain.setTargetAtTime(0.5, this.audioContext.currentTime, 0.02);
   }
 
   public stopHorn(): void {
@@ -111,126 +138,159 @@ export class AudioManager {
     this.hornGain.gain.setTargetAtTime(0, this.audioContext.currentTime, 0.05);
   }
 
-  /**
-   * Play procedural short blip for UI button click.
-   */
   public playClick(): void {
+    this.tone([800], 0.04, 0.25, 'sine', 400);
+  }
+
+  public playCashRegister(): void {
+    this.tone([987.77, 1318.51], 0.25, 0.3, 'triangle'); // B5, E6
+  }
+
+  /** Phone ping for a new ride or delivery offer. */
+  public playNotify(): void {
+    this.tone([880, 1174.66], 0.12, 0.25, 'sine'); // A5, D6
+  }
+
+  public playMissionComplete(): void {
+    this.tone([523.25, 659.25, 783.99], 0.3, 0.3, 'triangle'); // C5 E5 G5
+  }
+
+  /** Tyre scrub when the bike starts to wobble. */
+  public playWobble(): void {
+    this.noiseBurst(0.25, 0.2, 'bandpass', 1800);
+  }
+
+  public playImpact(severity: BikeCollisionSeverity): void {
     if (!this.audioContext) return;
+    const now = this.audioContext.currentTime;
+    if (now - this.lastImpactAt < IMPACT_COOLDOWN_S) return;
+    this.lastImpactAt = now;
+    const vol = severity === 'crash' ? 0.9 : severity === 'bump' ? 0.5 : 0.2;
+    this.noiseBurst(severity === 'crash' ? 0.5 : 0.15, vol, 'lowpass', severity === 'crash' ? 600 : 900);
+  }
+
+  /** City murmur scales with traffic density 0..1; rain bed on while raining. */
+  public setAmbience(districtDensity: number, isRaining: boolean): void {
+    if (!this.cityBedGain || !this.rainBedGain || !this.audioContext) return;
+    const now = this.audioContext.currentTime;
+    this.cityBedGain.gain.setTargetAtTime(clamp01(districtDensity) * 0.2, now, 0.5);
+    this.rainBedGain.gain.setTargetAtTime(isRaining ? 0.35 : 0, now, 0.5);
+  }
+
+  /** Absolute gains: changing one channel never compounds another. */
+  private applyChannelGains(): void {
+    if (!this.audioContext || !this.masterGain || !this.sfxGain || !this.ambientGain) return;
+    const now = this.audioContext.currentTime;
+    this.masterGain.gain.setValueAtTime(this.volumes.muted ? 0 : this.volumes.master, now);
+    this.sfxGain.gain.setValueAtTime(this.volumes.sfx, now);
+    this.ambientGain.gain.setValueAtTime(this.volumes.ambient, now);
+  }
+
+  private tone(freqs: number[], dur: number, vol: number, type: OscillatorType, endFreq?: number): void {
+    const ctx = this.audioContext;
+    if (!ctx || !this.sfxGain) return;
     try {
-      const osc = this.audioContext.createOscillator();
-      const gain = this.audioContext.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(800, this.audioContext.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(400, this.audioContext.currentTime + 0.04);
-
-      const vol = 0.25 * this.volumes.master * this.volumes.sfx;
-      gain.gain.setValueAtTime(vol, this.audioContext.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.04);
-
-      osc.connect(gain);
-      gain.connect(this.audioContext.destination);
-
-      osc.start();
-      osc.stop(this.audioContext.currentTime + 0.04);
+      freqs.forEach((freq, idx) => {
+        const start = ctx.currentTime + idx * 0.08;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, start);
+        if (endFreq) osc.frequency.exponentialRampToValueAtTime(endFreq, start + dur);
+        gain.gain.setValueAtTime(vol, start);
+        gain.gain.exponentialRampToValueAtTime(0.001, start + dur);
+        osc.connect(gain);
+        gain.connect(this.sfxGain!);
+        osc.start(start);
+        osc.stop(start + dur);
+      });
     } catch {
       // Ignore audio synthesis errors
     }
   }
 
-  /**
-   * Play cash register chime on ride payment.
-   */
-  public playCashRegister(): void {
-    if (!this.audioContext) return;
+  private noiseBurst(dur: number, vol: number, filterType: BiquadFilterType, freq: number): void {
+    const ctx = this.audioContext;
+    if (!ctx || !this.sfxGain || !this.noise) return;
     try {
-      const notes = [987.77, 1318.51]; // B5, E6
-      notes.forEach((freq, idx) => {
-        if (!this.audioContext) return;
-        const osc = this.audioContext.createOscillator();
-        const gain = this.audioContext.createGain();
-        osc.type = 'triangle';
-        osc.frequency.value = freq;
-
-        const startTime = this.audioContext.currentTime + idx * 0.08;
-        const vol = 0.3 * this.volumes.master * this.volumes.sfx;
-        gain.gain.setValueAtTime(vol, startTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.25);
-
-        osc.connect(gain);
-        gain.connect(this.audioContext.destination);
-
-        osc.start(startTime);
-        osc.stop(startTime + 0.25);
-      });
+      const src = ctx.createBufferSource();
+      src.buffer = this.noise;
+      const filter = ctx.createBiquadFilter();
+      filter.type = filterType;
+      filter.frequency.setValueAtTime(freq, ctx.currentTime);
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(vol, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+      src.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.sfxGain);
+      src.start();
+      src.stop(ctx.currentTime + dur);
     } catch {
-      // Ignore
+      // Ignore audio synthesis errors
     }
   }
 
-  /**
-   * Updates ambient city murmur and rain loop volumes.
-   */
-  public setAmbience(districtDensity: number, isRaining: boolean): void {
-    if (!this.cityBedGain || !this.rainBedGain || !this.audioContext) return;
-
-    const cityTarget = Math.min(1, Math.max(0, districtDensity)) * 0.2 * this.volumes.master * this.volumes.music;
-    const rainTarget = (isRaining ? 0.35 : 0) * this.volumes.master * this.volumes.sfx;
-
-    this.cityBedGain.gain.setTargetAtTime(cityTarget, this.audioContext.currentTime, 0.5);
-    this.rainBedGain.gain.setTargetAtTime(rainTarget, this.audioContext.currentTime, 0.5);
-  }
-
-  private updateAmbientGains(): void {
-    if (!this.cityBedGain || !this.rainBedGain || !this.audioContext) return;
-    const currentCity = this.cityBedGain.gain.value;
-    const currentRain = this.rainBedGain.gain.value;
-    this.cityBedGain.gain.setValueAtTime(currentCity * this.volumes.master, this.audioContext.currentTime);
-    this.rainBedGain.gain.setValueAtTime(currentRain * this.volumes.master, this.audioContext.currentTime);
+  /** A looping filtered-noise bed feeding `out`. */
+  private noiseBed(out: GainNode, filterType: BiquadFilterType, freq: number): void {
+    const ctx = this.audioContext!;
+    const src = ctx.createBufferSource();
+    src.buffer = this.noise;
+    src.loop = true;
+    const filter = ctx.createBiquadFilter();
+    filter.type = filterType;
+    filter.frequency.setValueAtTime(freq, ctx.currentTime);
+    src.connect(filter);
+    filter.connect(out);
+    src.start();
   }
 
   private initAudioNodes(): void {
-    if (!this.audioContext) return;
-
+    const ctx = this.audioContext;
+    if (!ctx) return;
     try {
-      // Engine oscillator
-      this.engineOsc = this.audioContext.createOscillator();
+      const now = ctx.currentTime;
+      const gainAt = (v: number, out: AudioNode) => {
+        const g = ctx.createGain();
+        g.gain.setValueAtTime(v, now);
+        g.connect(out);
+        return g;
+      };
+
+      this.masterGain = gainAt(0, ctx.destination);
+      this.sfxGain = gainAt(0, this.masterGain);
+      this.ambientGain = gainAt(0, this.masterGain);
+
+      // Two seconds of white noise, shared by impacts, wobble and the ambient beds.
+      const len = Math.floor(ctx.sampleRate * 2);
+      this.noise = ctx.createBuffer(1, len, ctx.sampleRate);
+      const data = this.noise.getChannelData(0);
+      for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+
+      // Engine: sawtooth through a lowpass for a motorcycle thrum.
+      this.engineOsc = ctx.createOscillator();
       this.engineOsc.type = 'sawtooth';
-      this.engineOsc.frequency.setValueAtTime(55, this.audioContext.currentTime);
-
-      this.engineGain = this.audioContext.createGain();
-      this.engineGain.gain.setValueAtTime(0, this.audioContext.currentTime);
-
-      // Lowpass filter to muffle raw sawtooth into motorcycle engine thrum
-      const filter = this.audioContext.createBiquadFilter();
+      this.engineOsc.frequency.setValueAtTime(55, now);
+      const filter = ctx.createBiquadFilter();
       filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(320, this.audioContext.currentTime);
-
+      filter.frequency.setValueAtTime(320, now);
+      this.engineGain = gainAt(0, this.sfxGain);
       this.engineOsc.connect(filter);
       filter.connect(this.engineGain);
-      this.engineGain.connect(this.audioContext.destination);
       this.engineOsc.start();
 
-      // Horn dual-tone oscillator
-      this.hornOsc = this.audioContext.createOscillator();
-      this.hornOsc.type = 'triangle';
-      this.hornOsc.frequency.setValueAtTime(440, this.audioContext.currentTime); // 440 Hz classic Dhaka bike horn
+      // Horn: 440 Hz triangle, gated by its gain.
+      const hornOsc = ctx.createOscillator();
+      hornOsc.type = 'triangle';
+      hornOsc.frequency.setValueAtTime(440, now);
+      this.hornGain = gainAt(0, this.sfxGain);
+      hornOsc.connect(this.hornGain);
+      hornOsc.start();
 
-      this.hornGain = this.audioContext.createGain();
-      this.hornGain.gain.setValueAtTime(0, this.audioContext.currentTime);
-
-      this.hornOsc.connect(this.hornGain);
-      this.hornGain.connect(this.audioContext.destination);
-      this.hornOsc.start();
-
-      // Ambient city gain
-      this.cityBedGain = this.audioContext.createGain();
-      this.cityBedGain.gain.setValueAtTime(0, this.audioContext.currentTime);
-      this.cityBedGain.connect(this.audioContext.destination);
-
-      // Rain bed gain
-      this.rainBedGain = this.audioContext.createGain();
-      this.rainBedGain.gain.setValueAtTime(0, this.audioContext.currentTime);
-      this.rainBedGain.connect(this.audioContext.destination);
+      this.cityBedGain = gainAt(0, this.ambientGain);
+      this.noiseBed(this.cityBedGain, 'lowpass', 400);
+      this.rainBedGain = gainAt(0, this.ambientGain);
+      this.noiseBed(this.rainBedGain, 'highpass', 2500);
     } catch {
       // Audio nodes creation fallback
     }
@@ -243,11 +303,8 @@ export class AudioManager {
       window.removeEventListener('keydown', unlockHandler);
       window.removeEventListener('touchstart', unlockHandler);
     };
-
-    window.addEventListener('pointerdown', unlockHandler, { once: true, passive: true });
-    window.addEventListener('keydown', unlockHandler, { once: true, passive: true });
-    window.addEventListener('touchstart', unlockHandler, { once: true, passive: true });
+    window.addEventListener('pointerdown', unlockHandler, { passive: true });
+    window.addEventListener('keydown', unlockHandler, { passive: true });
+    window.addEventListener('touchstart', unlockHandler, { passive: true });
   }
 }
-
-export const audioManager = new AudioManager();

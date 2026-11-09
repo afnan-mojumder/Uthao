@@ -1,4 +1,5 @@
 import type { JSX } from 'preact';
+import { mapLayout } from './mapLayout';
 import { useState, useEffect, useRef } from 'preact/hooks';
 import defaultDistrict from '../../../data/districts/mirpara.json';
 import type { DistrictData, Poi } from '../../sim/schemas';
@@ -100,14 +101,13 @@ export function MapScreen({
       if (n.z > maxZ) maxZ = n.z;
     }
 
-    const margin = 60 * dpr;
-    const spanX = maxX - minX || 500;
-    const spanZ = maxZ - minZ || 500;
-    const baseScale = Math.min((width - margin * 2) / spanX, (height - margin * 2) / spanZ) * 0.95;
-    const scale = baseScale * zoom;
-
-    const offsetX = (width - spanX * scale) / 2 - minX * scale;
-    const offsetZ = (height - spanZ * scale) / 2 - minZ * scale;
+    const { scale, offsetX, offsetZ } = mapLayout(
+      width,
+      height,
+      dpr,
+      { minX, minZ, spanX: maxX - minX || 500, spanZ: maxZ - minZ || 500 },
+      zoom
+    );
 
     const toScreen = (x: number, z: number) => ({
       x: x * scale + offsetX,
@@ -310,13 +310,13 @@ export function MapScreen({
         if (node.z < minZ) minZ = node.z;
         if (node.z > maxZ) maxZ = node.z;
       }
-      const margin = 60 * dpr;
-      const spanX = maxX - minX || 500;
-      const spanZ = maxZ - minZ || 500;
-      const baseScale = Math.min((width - margin * 2) / spanX, (height - margin * 2) / spanZ) * 0.95;
-      const scale = baseScale * zoom;
-      const offsetX = (width - spanX * scale) / 2 - minX * scale;
-      const offsetZ = (height - spanZ * scale) / 2 - minZ * scale;
+      const { scale, offsetX, offsetZ } = mapLayout(
+        width,
+        height,
+        dpr,
+        { minX, minZ, spanX: maxX - minX || 500, spanZ: maxZ - minZ || 500 },
+        zoom
+      );
 
       const sx = (n.x * scale + offsetX) / dpr;
       const sy = (n.z * scale + offsetZ) / dpr;

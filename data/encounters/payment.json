@@ -55,6 +55,7 @@
         "effects": [
           { "type": "money", "amount": -20, "kind": "fare" },
           { "type": "flag", "key": "helpedHospitalFree", "value": true },
+          { "type": "flag", "key": "profit_lesson_done", "value": true },
           { "type": "relationship", "characterId": "char_bablu", "delta": 10 },
           { "type": "localTrust", "delta": 5 }
         ]
@@ -72,6 +73,7 @@
         "labelKey": "encounter.vendor_discount.choice.tea_favor",
         "effects": [
           { "type": "money", "amount": -15, "kind": "fare" },
+          { "type": "flag", "key": "profit_lesson_done", "value": true },
           { "type": "relationship", "characterId": "char_bablu", "delta": 5 },
           { "type": "relationship", "characterId": "char_mintu", "delta": 3 }
         ]

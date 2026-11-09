@@ -43,6 +43,27 @@ describe('PhysicsWorld and MotorcycleController', () => {
     expect(payload.relSpeedKmh).toBeGreaterThanOrEqual(25);
   });
 
+  it('grinding against a wall emits one collision per contact, not one per frame (audit Low: grinding)', () => {
+    world.addStaticBox(0, 0.5, 2.0, 5.0, 1.0, 0.2);
+
+    const collisionHandler = vi.fn();
+    bus.on('bike/collision', collisionHandler);
+
+    const ctrl = new MotorcycleController({
+      world,
+      bus,
+      initialPose: { x: 0, z: 1.0, heading: 0 },
+    });
+    ctrl.state.speed = 30 / 3.6;
+
+    // Hold the throttle into the wall for one second of game time.
+    const env = { wet: false, surface: 1.0, hasPassenger: false, conditionPct: 100 };
+    const input = { throttle: 1.0, brake: 0, steer: 0 };
+    for (let i = 0; i < 60; i++) ctrl.update(input, env, dt);
+
+    expect(collisionHandler).toHaveBeenCalledTimes(1);
+  });
+
   it('at 5 km/h emits scuff', () => {
     world.addStaticBox(0, 0.5, 2.0, 5.0, 1.0, 0.2);
 

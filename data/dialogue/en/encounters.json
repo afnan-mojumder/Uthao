@@ -55,7 +55,7 @@
   "encounter.regular_direct_call.choice.mintu": "Recommend your friend Mintu instead",
 
   "encounter.friend_package.title": "Mintu calls from his tea stall: 'Dosto, can you rush this spare parts package to Farmgate?'",
-  "encounter.friend_package.choice.accept": "Accept the urgent parcel delivery",
+  "encounter.friend_package.choice.accept": "Do Mintu's favour: he pays 120 for the detour",
   "encounter.friend_package.choice.decline": "Decline due to passenger commitments",
 
   "encounter.wait_errand.title": "Passenger asks: 'Wait here 5 minutes while I buy medicine, okay?'",

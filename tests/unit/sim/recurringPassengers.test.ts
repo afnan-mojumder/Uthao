@@ -106,6 +106,7 @@ describe('T4.3 Recurring Passengers & Direct Bookings', () => {
 
     // End day 1 shift and sleep to start Day 2
     gm.clock.minutes = 13 * 60; // Advance time past 12:00
+    gm.dispatch({ type: 'endShift' });
     gm.dispatch({ type: 'sleep' });
 
     // Verify relationship levels persisted across the day boundary

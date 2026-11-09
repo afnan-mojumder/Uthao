@@ -40,3 +40,25 @@ describe('road asphalt follows its street', () => {
     expect(Math.abs(alongXZ.dot(streetDir))).toBeCloseTo(1, 3);
   });
 });
+
+// The CityBuilder bins each road child into a LOD chunk by its position. Merged
+// markings, puddles and zebras sat at the origin, so they vanished away from it.
+describe('road pieces sit at their own place, not the origin', () => {
+  it('every road child of a district has its position inside its own footprint', () => {
+    // Arrange
+    const district = mirparaData as unknown as DistrictData;
+
+    // Act
+    const result = new RoadMeshBuilder().build(district);
+    result.group.updateMatrixWorld(true);
+
+    // Assert: each child's position (the bin key) lies within its world box
+    const box = new THREE.Box3();
+    for (const child of result.group.children) {
+      box.setFromObject(child).expandByScalar(0.01);
+      const p = child.position;
+      expect(box.containsPoint(new THREE.Vector3(p.x, box.min.y, p.z)), child.uuid).toBe(true);
+    }
+    expect(result.group.children.length).toBeGreaterThan(10);
+  });
+});

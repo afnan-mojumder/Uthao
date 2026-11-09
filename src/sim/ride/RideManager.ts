@@ -19,6 +19,7 @@ import type { Fsm } from '../../core/fsm';
 import type { Route, PickupOptionsResult } from '../road/routing';
 import type { Rng } from '../../core/rng';
 import { BALANCE } from '../../config/balance';
+import { computeTipChance } from '../reputation/ReputationSystem';
 import { receipt, fuelUsed } from '../economy/fuel';
 import { offAppPayout, isDisputed } from '../economy/offApp';
 import { Rng as SeededRng, hashSeed } from '../../core/rng';
@@ -26,6 +27,21 @@ import type { EconomyManager } from '../economy/EconomyManager';
 import type { ReputationSystem } from '../reputation/ReputationSystem';
 import { defaultDialogueManager } from '../dialogue/DialogueManager';
 import { getCharacter } from '../passenger/PassengerAI';
+
+/**
+ * Tip for a completed, paid trip. The roll is seeded by the request, so it replays.
+ * Chance follows passenger rating (GDD §6); size is a share of the fare, clamped.
+ */
+export function tipAmountFor(requestId: string, fare: number, rating: number): number {
+  const roll = new SeededRng(hashSeed(requestId, 'tip')).next();
+  if (roll >= computeTipChance(rating)) return 0;
+  return clamp(Math.round(fare * BALANCE.TIP.fareShare), BALANCE.TIP.minAmount, BALANCE.TIP.maxAmount);
+}
+
+/** What the platform settles: a disputed ride keeps only part of its fare. */
+export function settledFare(fare: number, disputed: boolean): number {
+  return disputed ? Math.round(fare * BALANCE.DISPUTE.fareKept) : fare;
+}
 
 export interface RideManagerOptions {
   roadNetwork: RoadNetwork;
@@ -574,11 +590,12 @@ export class RideManager {
             new SeededRng(hashSeed(req.requestId, 'dispute')).next()
           );
           if (disputed) this.outcome = 'disputed';
+          const paidFare = offApp ? offApp.paid : req.initialFare;
           const tripReceipt = this.economy
             ? this.economy.settleTrip({
                 requestId: req.requestId,
-                fare: offApp ? offApp.paid : req.initialFare,
-                tip: 0,
+                fare: settledFare(paidFare, disputed),
+                tip: disputed || offApp?.unpaid ? 0 : tipAmountFor(req.requestId, paidFare, rating),
                 bonus: 0,
                 bookingType: req.bookingType,
                 fuelLiters,

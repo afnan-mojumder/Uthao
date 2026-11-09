@@ -1,4 +1,5 @@
 import { render } from 'preact';
+import { passengerHintKey } from './passengerHint';
 import type { JSX } from 'preact';
 import { t } from '../i18n';
 import { settingsSignal, onRefuelCallback, onFuelRescueCallback, onChargePhoneCallback } from '../store';
@@ -495,14 +496,10 @@ export function HudView({ state }: { state: HudState }): JSX.Element {
           </div>
           <div>
             <div style={{ fontSize: '15px', fontWeight: 800, color: '#f8fafc' }}>
-              {state.passengerStatus?.name || (state.passengerStatus?.status === 'OnTrip' ? 'Passenger on Bike' : t('hud.passenger.waiting'))}
+              {state.passengerStatus?.name || (state.passengerStatus?.status === 'OnTrip' ? t('hud.passenger.on_bike') : t('hud.passenger.waiting'))}
             </div>
             <div style={{ fontSize: '14px', color: '#94a3b8', fontWeight: 600 }}>
-              {state.passengerStatus?.status === 'OnTrip'
-                ? t('hud.passenger.ontrip')
-                : (state.passengerStatus?.status === 'RiderEnRoute' || state.passengerStatus?.status === 'Accepted' || state.passengerStatus?.status === 'Negotiating')
-                ? t('hud.passenger.pickup')
-                : t('hud.passenger.none')}
+              {t(passengerHintKey(state.passengerStatus?.status))}
               {state.etaMinutes !== undefined && ` • ${t('hud.eta', { min: state.etaMinutes })}`}
             </div>
           </div>

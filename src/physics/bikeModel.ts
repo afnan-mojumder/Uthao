@@ -70,6 +70,10 @@ export function createDefaultBikeState(): BikeState {
 }
 
 const WHEELBASE = 1.35; // metres
+/** Coast-down deceleration (m/s^2) with the throttle released and no brake. */
+const COAST_DECEL = 0.6;
+/** Steering may ask for up to this multiple of the grip limit before it is clamped. */
+const STEER_SLIDE_ALLOWANCE = 1.2;
 
 export function stepBike(
   state: BikeState,
@@ -105,6 +109,9 @@ export function stepBike(
     newSpeed = Math.max(0, newSpeed - effectiveBrake * dt);
   } else if (effectiveAccel > 0 && newSpeed < vmax) {
     newSpeed = Math.min(vmax, newSpeed + effectiveAccel * dt);
+  } else if (input.throttle <= 0) {
+    // Off the throttle the bike coasts down: rolling resistance and engine drag.
+    newSpeed = Math.max(0, newSpeed - COAST_DECEL * dt);
   }
   if (newSpeed > vmax) {
     // Throttle cut or worn: bleed speed down to the cap instead of snapping.
@@ -117,27 +124,26 @@ export function stepBike(
   const targetSteerRad = clamp(input.steer, -1, 1) * degToRad(maxSteerDeg);
   const newSteer = lerp(state.steer, targetSteerRad, clamp(dt * 20, 0, 1));
 
-  // Yaw rate from kinematic bicycle model
-  const yawRate = (newSpeed * Math.tan(newSteer)) / WHEELBASE;
-  const newHeading = angleDiff(0, state.heading + yawRate * dt);
-
-  // Lateral acceleration & grip check
-  const aLat = Math.abs(newSpeed * yawRate);
+  // Lateral grip budget. The tyres can give this much sideways force, plus a
+  // small slide allowance at the limit (which shows as wobble). Steer beyond
+  // that is clamped, so a hard turn bends the path rather than bleeding speed
+  // (audit H-3). Steering alone never crashes the bike; collisions do.
   const grip = env.wet ? spec.wetLateralGrip : spec.dryLateralGrip;
   const gripLimit = 9.81 * grip * clamp(env.surface, 0.1, 1.0);
+  const maxYawRate =
+    newSpeed > 0.5 ? (gripLimit * STEER_SLIDE_ALLOWANCE) / newSpeed : Infinity;
+
+  // Yaw rate from kinematic bicycle model, within the grip budget
+  const rawYawRate = (newSpeed * Math.tan(newSteer)) / WHEELBASE;
+  const yawRate = clamp(rawYawRate, -maxYawRate, maxYawRate);
+  const newHeading = angleDiff(0, state.heading + yawRate * dt);
+
+  // Lateral acceleration against the grip budget
+  const aLat = Math.abs(newSpeed * yawRate);
   const gripRatio = gripLimit > 0 ? aLat / gripLimit : 0;
 
-  let wobble = false;
-  let crashed = false;
-
-  if (gripRatio > 1.5) {
-    crashed = true;
-    wobble = true;
-    newSpeed = Math.max(0, newSpeed - 8.0 * dt);
-  } else if (gripRatio > 1.0) {
-    wobble = true;
-    newSpeed = Math.max(0, newSpeed - 2.5 * dt);
-  }
+  const wobble = gripRatio > 1.0;
+  const crashed = false;
 
   // Lean angle derived from lateral acceleration (capped at leanMaxDeg)
   const maxLean = degToRad(spec.leanMaxDeg);

@@ -148,7 +148,7 @@ export const BALANCE = {
       vmax: 22, // m/s (~79 km/h)
       accel: 2.75, // m/s^2 (0 -> 11 m/s in 4.0s)
       brakeDecelDry: 6.0, // m/s^2 (stopping distance from 11 m/s: 11^2 / (2 * 6) = 10.08m ≈ 10.1m)
-      brakeDecelWet: 4.2, // m/s^2
+      brakeDecelWet: 4.4, // m/s^2 (wet stops ~36% longer than dry; PLAYTEST band 30-40%)
       steerMaxDegAt0: 35,
       steerMaxDegAtVmax: 8,
       leanMaxDeg: 35,
@@ -162,7 +162,7 @@ export const BALANCE = {
       vmax: 25, // m/s (90 km/h)
       accel: 3.3, // m/s^2 (0 -> 11 m/s in 3.3s)
       brakeDecelDry: 6.8, // m/s^2
-      brakeDecelWet: 4.8, // m/s^2
+      brakeDecelWet: 4.9, // m/s^2 (wet stops ~39% longer than dry)
       steerMaxDegAt0: 35,
       steerMaxDegAtVmax: 8,
       leanMaxDeg: 35,
@@ -223,6 +223,12 @@ export const BALANCE = {
     ratingSlope: 0.3,
     minAmount: 10,
     maxAmount: 40,
+    /** Tip size as a share of the fare, clamped to min/max. */
+    fareShare: 0.1,
+  },
+  DISPUTE: {
+    /** Share of the fare the platform settles when the passenger disputes the ride. */
+    fareKept: 0.5,
   },
   TRUST: {
     localTrustStart: 30,

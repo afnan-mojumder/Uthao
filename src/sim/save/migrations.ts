@@ -46,6 +46,9 @@ export interface SaveV1 {
   requestSeq?: number;
   /** Accepted fares so far; drives passenger haggling. Optional so older saves load as 0. */
   negotiationHistory?: number;
+  /** The day-end step already ran on this day; optional so older saves load as false. */
+  shiftEnded?: boolean;
+  todayRentPosted?: number;
 }
 
 export type AnySave = SaveV1 | Record<string, unknown>;

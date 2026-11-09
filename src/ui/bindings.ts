@@ -15,6 +15,7 @@ import {
   setFuelDispatchers,
   setChargePhoneDispatcher,
   setMenuDispatchers,
+  setHasSaveCallback,
   setSaveDispatchers,
   setTutorialDispatchers,
   setEndingDispatchers,
@@ -149,8 +150,9 @@ export function bindUi(session: GameSession, saveSystem?: SaveSystem): void {
   setMenuDispatchers(
     startNewCareer,
     () => {
-      if (saveSystem) {
-        const res = saveSystem.loadGame('auto');
+      const slot = saveSystem?.latestSlot();
+      if (saveSystem && slot) {
+        const res = saveSystem.loadGame(slot);
         if (res.success) gm.applySnapshot(res.gm.snapshot(), res.save.rngState);
       }
     },
@@ -160,6 +162,7 @@ export function bindUi(session: GameSession, saveSystem?: SaveSystem): void {
     },
     (nodeId) => gm.dispatch({ type: 'setWaypoint', nodeId })
   );
+  setHasSaveCallback(() => saveSystem?.hasAnySave() ?? false);
 
   setSaveDispatchers(
     (slot) => {

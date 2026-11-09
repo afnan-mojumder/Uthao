@@ -25,6 +25,13 @@ export class CameraRig {
     this.mode = this.mode === 'chase' ? 'firstPerson' : 'chase';
   }
 
+  private reduceMotion = false;
+
+  /** Reduce motion: no speed-linked field-of-view kick (audit). */
+  setReduceMotion(on: boolean): void {
+    this.reduceMotion = on;
+  }
+
   update(
     targetPos: THREE.Vector3,
     heading: number, // radians
@@ -32,8 +39,8 @@ export class CameraRig {
     colliders: THREE.Object3D[] = [],
     dt: number = 1 / 60
   ): void {
-    // Dynamic FOV: 60 at rest -> 72 at vmax (22 m/s)
-    const speedRatio = clamp(speed / 22, 0, 1);
+    // Dynamic FOV: 60 at rest -> 72 at vmax (22 m/s). Reduce motion holds it at 60.
+    const speedRatio = this.reduceMotion ? 0 : clamp(speed / 22, 0, 1);
     this.camera.fov = lerp(60, 72, speedRatio);
     this.camera.updateProjectionMatrix();
 

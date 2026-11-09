@@ -426,7 +426,7 @@ export function FirstRideTutorial(props: FirstRideTutorialProps): JSX.Element | 
         <div style={cardStyle}>
           <div style={headerStyle}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#f59e0b', fontWeight: 700 }}>
-              <span>🤝</span> Fare Negotiation Tutorial (GDD §6)
+              <span>🤝</span> Fare Negotiation Tutorial
             </div>
             <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>Nabila • Student</span>
           </div>

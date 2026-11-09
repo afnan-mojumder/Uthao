@@ -85,7 +85,7 @@ export function Pause({
             {t('pause.title')}
           </h2>
           <p style={{ margin: 0, fontSize: '0.85rem', color: '#94a3b8' }}>
-            Dhaka Ride-Hailing · Press Esc or Resume
+            {t('pause.subtitle')}
           </p>
         </div>
 
@@ -155,7 +155,7 @@ export function Pause({
               gap: '8px',
             }}
           >
-            <span>💾</span> {t('pause.save') || 'গেম সেভ করুন (Save Game)'}
+            <span>💾</span> {t('pause.save')}
           </button>
 
           <button
@@ -177,7 +177,7 @@ export function Pause({
               gap: '8px',
             }}
           >
-            <span>📂</span> {t('pause.load') || 'গেম লোড করুন (Load Game)'}
+            <span>📂</span> {t('pause.load')}
           </button>
 
           <button

@@ -29,9 +29,9 @@ test('ride completes via autopilot', async ({ page }) => {
   );
 
   // Objective should update to drop off
-  await expect(page.locator('#hud-objective')).toHaveText(
-    'N2-এ যাত্রী নামিয়ে দিন'
-  );
+  // The drop-off names a place, never the raw road node id (audit T9.22).
+  await expect(page.locator('#hud-objective')).toHaveText(/যাত্রী নামিয়ে দিন/);
+  await expect(page.locator('#hud-objective')).not.toContainText('N2');
 
   // Wait for ride/completed
   await page.waitForFunction(

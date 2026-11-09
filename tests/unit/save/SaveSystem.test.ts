@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { GameManager } from '../../../src/sim/GameManager';
 import {
   SaveSystem,
@@ -282,5 +282,21 @@ describe('SaveSystem (T4.9)', () => {
     expect(saveSystem.hasSave('auto')).toBe(true);
 
     unbind();
+  });
+
+  it('latestSave picks the newest readable slot, and null when there is none', () => {
+    expect(saveSystem.latestSave()).toBeNull();
+    const now = vi.spyOn(Date, 'now').mockReturnValue(1000);
+    gm.clock.day = 2;
+    saveSystem.save(gm, 'auto');
+    now.mockReturnValue(2000);
+    gm.clock.day = 5;
+    saveSystem.save(gm, 'slot2');
+    now.mockRestore();
+    memoryStorage.setItem(saveSystem.getSlotKey('slot3'), '{not json');
+
+    const latest = saveSystem.latestSave();
+    expect(latest?.slot).toBe('slot2');
+    expect(latest?.clock.day).toBe(5);
   });
 });

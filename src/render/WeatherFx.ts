@@ -9,6 +9,12 @@ export interface WeatherFxOptions {
   rainCount?: number;
 }
 
+/** Luminance of an ambient light: intensity times the colour's perceived brightness. */
+function ambientLuminance(colorHex: number, intensity: number): number {
+  const c = new THREE.Color(colorHex);
+  return intensity * (0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b);
+}
+
 export class WeatherFx {
   readonly scene: THREE.Scene;
   readonly dirLight?: THREE.DirectionalLight;
@@ -17,9 +23,13 @@ export class WeatherFx {
 
   readonly rainGroup: THREE.Group;
   private rainGeometry: THREE.BufferGeometry;
-  private rainMaterial: THREE.PointsMaterial;
-  private rainPoints: THREE.Points;
+  private rainMaterial: THREE.LineBasicMaterial;
+  private rainLines: THREE.LineSegments;
+  private ambientFloorLum: number | undefined;
+  /** Drop heads: x, y, z per drop. */
   private rainPositions: Float32Array;
+  /** Two vertices per drop (top and bottom of the streak), drawn as line segments. */
+  private rainLineVerts: Float32Array;
   private readonly rainCount: number;
   private readonly rainBoxSize = 50;
 
@@ -42,6 +52,7 @@ export class WeatherFx {
     // 1. Rain particle system (GPU Points)
     this.rainGroup = new THREE.Group();
     this.rainPositions = new Float32Array(this.rainCount * 3);
+    this.rainLineVerts = new Float32Array(this.rainCount * 6);
 
     for (let i = 0; i < this.rainCount; i++) {
       this.rainPositions[i * 3 + 0] = (Math.random() - 0.5) * this.rainBoxSize;
@@ -52,19 +63,18 @@ export class WeatherFx {
     this.rainGeometry = new THREE.BufferGeometry();
     this.rainGeometry.setAttribute(
       'position',
-      new THREE.BufferAttribute(this.rainPositions, 3)
+      new THREE.BufferAttribute(this.rainLineVerts, 3)
     );
 
-    this.rainMaterial = new THREE.PointsMaterial({
+    this.rainMaterial = new THREE.LineBasicMaterial({
       color: 0x93c5fd,
-      size: 0.25,
       transparent: true,
       opacity: 0.7,
       depthWrite: false,
     });
 
-    this.rainPoints = new THREE.Points(this.rainGeometry, this.rainMaterial);
-    this.rainGroup.add(this.rainPoints);
+    this.rainLines = new THREE.LineSegments(this.rainGeometry, this.rainMaterial);
+    this.rainGroup.add(this.rainLines);
     this.rainGroup.visible = false;
     this.scene.add(this.rainGroup);
 
@@ -92,6 +102,15 @@ export class WeatherFx {
       depthWrite: false,
     });
     this.scene.add(this.waterGroup);
+  }
+
+  /** 30% of the midday ambient luminance, computed once. */
+  private nightAmbientFloor(): number {
+    if (this.ambientFloorLum === undefined) {
+      const noon = TimeOfDay.getSunSkyState(12 * 60);
+      this.ambientFloorLum = 0.3 * ambientLuminance(noon.ambientColor, noon.ambientIntensity);
+    }
+    return this.ambientFloorLum;
   }
 
   /**
@@ -124,6 +143,11 @@ export class WeatherFx {
       if (weather === 'cloudy') intensity *= 0.8;
       else if (weather === 'lightRain') intensity *= 0.65;
       else if (weather === 'heavyRain') intensity *= 0.4;
+      // Night keeps a readable floor: it never drops below 30% of midday
+      // ambient light (audit: near black at 22:30 and 03:00).
+      const floor = this.nightAmbientFloor();
+      const lum = ambientLuminance(sunSky.ambientColor, intensity);
+      if (lum > 0 && lum < floor) intensity *= floor / lum;
       this.hemiLight.intensity = intensity;
     }
 
@@ -162,9 +186,11 @@ export class WeatherFx {
       this.rainGroup.position.set(bikePos.x, 0, bikePos.z);
       const fallSpeed = weather === 'heavyRain' ? 45 : 25;
       this.rainMaterial.opacity = weather === 'heavyRain' ? 0.8 : 0.45;
-      this.rainMaterial.size = weather === 'heavyRain' ? 0.3 : 0.2;
+      // Streaks: long enough to read as falling rain, shorter in light rain.
+      const streak = weather === 'heavyRain' ? 0.6 : 0.4;
 
       const pos = this.rainPositions;
+      const verts = this.rainLineVerts;
       for (let i = 0; i < this.rainCount; i++) {
         const yIdx = i * 3 + 1;
         const currentY = pos[yIdx] ?? 0;
@@ -176,6 +202,17 @@ export class WeatherFx {
           pos[i * 3 + 2] = (Math.random() - 0.5) * this.rainBoxSize;
         }
         pos[yIdx] = nextY;
+
+        // Top vertex then bottom vertex, same x and z, so each drop is a vertical line.
+        const x = pos[i * 3 + 0] ?? 0;
+        const z = pos[i * 3 + 2] ?? 0;
+        const v = i * 6;
+        verts[v + 0] = x;
+        verts[v + 1] = nextY + streak;
+        verts[v + 2] = z;
+        verts[v + 3] = x;
+        verts[v + 4] = nextY;
+        verts[v + 5] = z;
       }
       this.rainGeometry.attributes.position!.needsUpdate = true;
     }

@@ -32,6 +32,8 @@ import type { BikeCollisionSeverity } from '../core/types';
 // ponytail: proximity thresholds, not measured against real bike/vehicle
 // hitboxes — revisit with real collider shapes if this reads as too lenient/strict.
 const TRAFFIC_COLLISION_MARGIN_M = 0.6;
+/** Seconds a bike may stay wedged before it is put back on the road. */
+const WEDGED_RECOVER_S = 2.0;
 const TRAFFIC_NEAR_MISS_MARGIN_M = 1.5;
 const TRAFFIC_NEAR_MISS_MIN_SPEED_MS = 20 / 3.6;
 
@@ -91,6 +93,11 @@ export class GameSession {
   private tripReqId: string | null = null;
   private warnedWorn = false;
   private stallSec = 0;
+  /** Seconds the bike has been wedged against an obstacle (see recoverBike). */
+  private wedgedSec = 0;
+  private wobbling = false;
+  /** Traffic agents the bike is currently touching; a hit is reported once per contact. */
+  private readonly trafficContacts = new Set<string>();
   private readonly stalledInput: BikeInput = { throttle: 0, brake: 0.6, steer: 0 };
 
   constructor(opts: GameSessionOptions) {
@@ -324,13 +331,23 @@ export class GameSession {
   spawnAtHome(): void {
     const anchor = this.road.getNode(this.gm.homeNodeId) ?? this.road.getAllNodes()[0];
     if (!anchor) return;
+    this.placeOnRoadNear(anchor.x, anchor.z);
+  }
 
-    const segment = this.road.segmentAt(anchor.x, anchor.z, 30);
+  /** Recovers a crashed or stuck bike: back onto the nearest road, stopped and
+   * facing along it, so the rider keeps their place in the city (audit H-5, H-8). */
+  recoverBike(): void {
+    this.placeOnRoadNear(this.bike.x, this.bike.z);
+  }
+
+  /** Puts the bike, stopped, on the road segment nearest (anchorX, anchorZ), aligned to it. */
+  private placeOnRoadNear(anchorX: number, anchorZ: number): void {
+    const segment = this.road.segmentAt(anchorX, anchorZ, 30);
     const startNode = segment ? this.road.getNode(segment.startNodeId) : undefined;
     const endNode = segment ? this.road.getNode(segment.endNodeId) : undefined;
 
-    let x = anchor.x;
-    let z = anchor.z;
+    let x = anchorX;
+    let z = anchorZ;
     let heading = this.bike.heading;
 
     if (startNode && endNode) {
@@ -340,7 +357,7 @@ export class GameSession {
       const t =
         lenSq > 0
           ? clamp(
-              ((anchor.x - startNode.x) * dx + (anchor.z - startNode.z) * dz) / lenSq,
+              ((anchorX - startNode.x) * dx + (anchorZ - startNode.z) * dz) / lenSq,
               0,
               1
             )
@@ -373,6 +390,7 @@ export class GameSession {
     const speedKmh = this.bike.speed * 3.6;
     let nearestGapM = Infinity;
 
+    let touching = false;
     for (const agent of this.traffic.agents.values()) {
       const dx = agent.x - this.bike.x;
       const dz = agent.z - this.bike.z;
@@ -383,23 +401,30 @@ export class GameSession {
         nearestGapM = gap;
       }
 
-      if (gap <= 0) {
-        const relSpeedKmh = Math.abs(speedKmh - agent.speed * 3.6);
-        let severity: BikeCollisionSeverity;
-        if (relSpeedKmh > 25) {
-          severity = 'crash';
-          this.bike.speed = 0;
-        } else if (relSpeedKmh >= 8) {
-          severity = 'bump';
-          this.bike.speed *= 0.4;
-        } else {
-          severity = 'scuff';
-          this.bike.speed *= 0.95;
-        }
-        this.gm.bus.emit('bike/collision', { severity, relSpeedKmh, otherKind: 'traffic' });
-        return;
+      if (gap > 0) {
+        this.trafficContacts.delete(agent.id);
+        continue;
       }
+      touching = true;
+      // One hit per contact: a bike that stays inside a vehicle is not hit again each tick.
+      if (this.trafficContacts.has(agent.id)) continue;
+      this.trafficContacts.add(agent.id);
+
+      const relSpeedKmh = Math.abs(speedKmh - agent.speed * 3.6);
+      let severity: BikeCollisionSeverity;
+      if (relSpeedKmh > 25) {
+        severity = 'crash';
+        this.bike.speed = 0;
+      } else if (relSpeedKmh >= 8) {
+        severity = 'bump';
+        this.bike.speed *= 0.4;
+      } else {
+        severity = 'scuff';
+        this.bike.speed *= 0.95;
+      }
+      this.gm.bus.emit('bike/collision', { severity, relSpeedKmh, otherKind: 'traffic' });
     }
+    if (touching) return;
 
     if (
       nearestGapM < TRAFFIC_NEAR_MISS_MARGIN_M &&
@@ -494,6 +519,22 @@ export class GameSession {
     // A jump larger than any real step (teleport, respawn) is not riding.
     const plausible = (this.bikeSpec.vmax + 1) * dt * 2;
     this.burnAndWear(input, dt, moved <= plausible ? moved : 0, activeReq !== null);
+
+    // The tyres reaching the grip limit is reported once per slide, not every frame.
+    const wobbleNow = this.bike.wobble === true;
+    if (wobbleNow && !this.wobbling) {
+      this.gm.bus.emit('bike/wobble', {});
+    }
+    this.wobbling = wobbleNow;
+
+    // Wedged against kerb or wall: nearly stopped while the rider is still on the
+    // throttle, or just crashed. After a short wait, put the bike back on the road.
+    const wedged = this.bike.speed < 0.3 && (input.throttle > 0 || this.bike.crashed) && this.stallSec <= 0;
+    this.wedgedSec = wedged ? this.wedgedSec + dt : 0;
+    if (this.wedgedSec >= WEDGED_RECOVER_S) {
+      this.wedgedSec = 0;
+      this.recoverBike();
+    }
 
     this.camView.x = this.bike.x;
     this.camView.z = this.bike.z;

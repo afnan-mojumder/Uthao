@@ -1,4 +1,11 @@
 import { render, h } from 'preact';
+import { AudioManager } from './audio/AudioManager';
+import { getBikeDef } from './sim/economy/bikes';
+import { bindAudio } from './audio/bindAudio';
+
+/** Set once at boot in the bindings below; the frame loop drives it. */
+let audio: AudioManager;
+let engineThrottle = 0;
 import { GameManager } from './sim/GameManager';
 import { GameSession } from './sim/GameSession';
 import { PhysicsWorld } from './physics/PhysicsWorld';
@@ -33,11 +40,11 @@ import { routeColorFor } from './ui/settingsEffects';
 import { bindUi } from './ui/bindings';
 import { SaveSystem } from './sim/save/SaveSystem';
 import { Minimap } from './render/minimap';
-import { deriveRideView } from './sim/ride/rideView';
+import { deriveRideView, nearestPlaceKey } from './sim/ride/rideView';
 import { t } from './ui/i18n';
 import { BALANCE } from './config/balance';
 import type { DistrictData, WorldData } from './sim/schemas';
-import type { QualityLevel } from './render/quality';
+import { resolveQualityLevel, type QualityLevel } from './render/quality';
 import type { DistrictId } from './core/types';
 import testloopData from '../data/districts/testloop.json';
 import mirparaData from '../data/districts/mirpara.json';
@@ -125,11 +132,11 @@ async function bootGame(): Promise<void> {
   const activeDistrict: DistrictData = isSingleDistrict
     ? allDistrictsMap[districtParam!]!
     : (mirparaData as DistrictData);
-  const qualityParam = urlParams?.get('quality') as QualityLevel | null;
-  const qualityChoice: QualityLevel =
-    qualityParam && ['low', 'medium', 'high'].includes(qualityParam)
-      ? qualityParam
-      : 'medium';
+  // A `?quality=` URL parameter overrides the saved Settings value.
+  const qualityChoice: QualityLevel = resolveQualityLevel(
+    urlParams?.get('quality'),
+    settingsSignal.value.quality
+  );
 
   const roadNetwork = isSingleDistrict
     ? RoadNetwork.fromDistricts([activeDistrict])
@@ -143,6 +150,11 @@ async function bootGame(): Promise<void> {
 
   // Bind reactive signals store to sim event bus
   bindEventBusToStore(gm.bus);
+  // Sound: the audio context starts on the first gesture; settings and sim events drive it.
+  audio = new AudioManager();
+  bindAudio(audio, gm.bus, settingsSignal, document);
+  // The bike slid at the grip limit: a tyre sound (H-4 for the ear).
+  gm.bus.on('bike/wobble', () => audio.playWobble());
 
   // T7.3: real Rapier physics world, used by GameSession's MotorcycleController
   // (collisions/near-misses against colliders) and by CityBuilder (colliders
@@ -184,6 +196,11 @@ async function bootGame(): Promise<void> {
     loadRendererScene(renderer);
     // Storefront signs follow a language change while playing.
     settingsSignal.subscribe((s) => renderer?.cityBuilder?.signageAtlas.setLanguage(s.language));
+    // A quality change in Settings reaches the running renderer. A URL override still wins.
+    settingsSignal.subscribe((s) => {
+      const level = resolveQualityLevel(urlParams?.get('quality'), s.quality);
+      if (renderer && level !== renderer.qualityManager.config.level) renderer.setQuality(level);
+    });
 
     // WebGL context lost & restored lifecycle listeners
     canvas.addEventListener('webglcontextlost', (e) => {
@@ -244,6 +261,7 @@ bindUi(session, activeSaveSystem);
 // applied on boot. Cancel reverts the language preview (Settings.tsx).
 const applySettings = (s: GameSettings) => {
   document.documentElement.dataset.reduceMotion = String(s.reduceMotion);
+  renderer?.cameraRig.setReduceMotion(s.reduceMotion);
   setDefaultSignLanguage(s.language); // storefront signs, for districts loaded from now on
   minimap?.setRouteColor(routeColorFor(s));
   gm.eventDirector.pauseOnDecisions = s.pauseOnDecisions;
@@ -261,6 +279,7 @@ gm.bus.on('negotiation/started', (ev) => {
       lastResult: null,
       mood: rideManager.getPassengerMood(),
       pickup: session.pickupChoice(),
+      destinationKey: nearestPlaceKey(rideManager, negotiation.req.destinationNodeId ?? ''),
     };
   }
 });
@@ -354,7 +373,18 @@ function frame(now: number) {
     }
 
     session.step(input, SIM_DT);
+    engineThrottle = input.throttle;
+    if (rawInput.horn) audio.startHorn();
+    else audio.stopHorn();
   }
+
+  // Engine and ambience follow the bike; menus and pause are silent.
+  const playing = inGame && !pausedSignal.value;
+  const raining = gm.weather === 'lightRain' || gm.weather === 'heavyRain';
+  audio.setEnginePitch(getBikeDef(gm.economyManager.currentBikeId).audioPitch);
+  audio.updateEngine(session.bike.speed, engineThrottle, playing);
+  audio.setAmbience(0.5, raining);
+  if (!playing) audio.stopHorn();
 
   const activeReq = rideManager.getActiveRequest();
   // T8.1: the one place HUD, minimap and markers read ride state from.
@@ -410,7 +440,9 @@ function frame(now: number) {
 
   // Update HUD
   if (hud) {
-    const objective = t(view.objectiveKey, view.objectiveVars);
+    // The view carries the place's name key; translate it here, not in the sim.
+    const placeKey = String(view.objectiveVars.place ?? '');
+    const objective = t(view.objectiveKey, { place: placeKey ? t(placeKey) : '' });
     const fare = activeReq?.initialFare;
 
     const currentSpeedKmh = session.bike.speed * 3.6;

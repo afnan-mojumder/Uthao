@@ -40,6 +40,15 @@ export function getLanguage(): Language {
   return languageSignal.value;
 }
 
+const BANGLA_DIGITS = '০১২৩৪৫৬৭৮৯';
+
+/** A number as shown on screen: Bangla digits in Bangla mode, Western otherwise (audit). */
+export function localDigits(value: string | number): string {
+  const text = String(value);
+  if (languageSignal.value !== 'bn') return text;
+  return text.replace(/[0-9]/g, (d) => BANGLA_DIGITS[Number(d)]!);
+}
+
 export function loadTranslations(lang: Language, data: Record<string, string>): void {
   dictionaries[lang] = { ...dictionaries[lang], ...data };
 }

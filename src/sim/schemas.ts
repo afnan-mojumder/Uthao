@@ -370,6 +370,8 @@ export const ObjectiveDefSchema = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('survive'),
     encounterId: z.string(),
+    /** Choices that count as getting through the encounter. Omitted: any choice that does not fail. */
+    choiceIds: z.array(z.string()).optional(),
   }),
 ]);
 

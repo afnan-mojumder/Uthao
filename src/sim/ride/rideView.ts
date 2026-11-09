@@ -26,6 +26,29 @@ const views = new WeakMap<RideManager, RideView>();
  * ride's `TripState` (+ outcome and active request); nothing else decides what
  * the player is told to do.
  */
+/**
+ * The name key of the place nearest a road node: the POI on it, or else the
+ * closest POI. Objectives show a place name, never a raw road node id (audit).
+ * Returns '' when the network has no POIs.
+ */
+export function nearestPlaceKey(ride: { roadNetwork: { getPois(): { nodeId: string; nameKey: string }[]; getNode(id: string): { x: number; z: number } | undefined } }, nodeId: string): string {
+  const network = ride.roadNetwork;
+  const node = network.getNode(nodeId);
+  let bestKey = '';
+  let bestDist = Infinity;
+  for (const poi of network.getPois()) {
+    if (poi.nodeId === nodeId) return poi.nameKey;
+    const at = network.getNode(poi.nodeId);
+    if (!node || !at) continue;
+    const d = Math.hypot(at.x - node.x, at.z - node.z);
+    if (d < bestDist) {
+      bestDist = d;
+      bestKey = poi.nameKey;
+    }
+  }
+  return bestKey;
+}
+
 export function deriveRideView(ride: RideManager): RideView {
   let v = views.get(ride);
   if (!v) {
@@ -33,7 +56,7 @@ export function deriveRideView(ride: RideManager): RideView {
       trip: 'Idle',
       passenger: 'RequestCreated',
       objectiveKey: 'objective.idle_find_ride',
-      objectiveVars: { node: '' },
+      objectiveVars: { place: '' },
       navTargetNodeId: null,
       pickupVisible: false,
       dropoffVisible: false,
@@ -49,7 +72,7 @@ export function deriveRideView(ride: RideManager): RideView {
 
   v.trip = trip;
   v.passenger = passengerStatusOf(trip, ride.getOutcome() ?? undefined);
-  v.objectiveVars.node = '';
+  v.objectiveVars.place = '';
   v.navTargetNodeId = null;
   v.pickupVisible = false;
   v.dropoffVisible = false;
@@ -85,14 +108,14 @@ export function deriveRideView(ride: RideManager): RideView {
     case 'Accepted':
     case 'EnRouteToPickup':
       v.objectiveKey = 'objective.go_to_pickup';
-      v.objectiveVars.node = req.pickupNodeId;
+      v.objectiveVars.place = nearestPlaceKey(ride, req.pickupNodeId);
       v.navTargetNodeId = req.pickupNodeId;
       v.pickupVisible = true;
       break;
     case 'PassengerOnboard':
     case 'EnRouteToDestination':
       v.objectiveKey = 'objective.drop_off';
-      v.objectiveVars.node = req.destinationNodeId;
+      v.objectiveVars.place = nearestPlaceKey(ride, req.destinationNodeId);
       v.navTargetNodeId = req.destinationNodeId;
       v.dropoffVisible = true;
       break;

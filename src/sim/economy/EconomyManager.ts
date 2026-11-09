@@ -110,7 +110,7 @@ export class EconomyManager {
 
     if (safeAmount > 0) {
       this.cash += safeAmount;
-      this.dailyRevenue += safeAmount;
+      if (tx.kind !== 'event') this.dailyRevenue += safeAmount;
     } else if (safeAmount < 0) {
       this.dailyExpenses += Math.abs(safeAmount);
       this.cash += safeAmount;

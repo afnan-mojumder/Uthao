@@ -18,6 +18,8 @@ export interface EndingEvaluationContext {
   riskScore: number;
   promises: { kept: number; broken: number };
   careerChoice?: CareerChoice;
+  /** Savings the player had when they made the career choice, before paying for it. */
+  careerSavings?: number;
   appSuspended?: boolean;
 }
 
@@ -104,6 +106,7 @@ export function evaluateEnding(ctx: EndingEvaluationContext): EndingResult {
   const dominantIdentity = getDominantIdentity(tendencies);
 
   const kamalRel = story.characterRelationships['char_kamal'] ?? 0;
+  const decisionSavings = ctx.careerSavings ?? economy.savings;
   const isSuspended = ctx.appSuspended || story.branchFlags['appSuspended'] === true;
 
   let endingId: EndingId;
@@ -119,12 +122,13 @@ export function evaluateEnding(ctx: EndingEvaluationContext): EndingResult {
   ) {
     endingId = 'fast_money';
   }
-  // 3. Workshop Owner: choice workshop AND savings >= 25000 AND relationship.kamal >= 30
-  else if (ctx.careerChoice === 'workshop' && economy.savings >= 25000 && kamalRel >= 30) {
+  // 3. Workshop Owner: choice workshop AND savings >= 25000 AND relationship.kamal >= 30.
+  // The choice is paid for first, so savings are judged as they were before it.
+  else if (ctx.careerChoice === 'workshop' && decisionSavings >= 25000 && kamalRel >= 30) {
     endingId = 'workshop_owner';
   }
   // 4. Independent Rider: choice bike AND savings >= 15000
-  else if (ctx.careerChoice === 'bike' && economy.savings >= 15000) {
+  else if (ctx.careerChoice === 'bike' && decisionSavings >= 15000) {
     endingId = 'independent_rider';
   }
   // 5. Trusted Local: localTrust >= 70 AND rating >= 4.6 (accessible with low savings!)

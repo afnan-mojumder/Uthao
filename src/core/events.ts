@@ -66,6 +66,8 @@ export interface GameEvents extends Record<string, unknown> {
     otherKind?: string;
   };
   'bike/nearMiss': { distanceM: number; speedKmh: number };
+  /** The bike reached the grip limit and the tyres slid: shown to the rider as a wobble (audit H-4). */
+  'bike/wobble': Record<string, never>;
   'bike/infraction': { kind: BikeInfractionKind; segmentId: string };
   'bike/fuelEmpty': Record<string, never>;
   'bike/puncture': Record<string, never>;

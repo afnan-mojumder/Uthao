@@ -293,3 +293,48 @@ describe('T3.5 Time of Day & Weather', () => {
     });
   });
 });
+
+describe('WeatherFx night and rain (T9.19)', () => {
+  // Ambient a lit surface gets: light intensity times the light colour's luminance.
+  const ambient = (fx: WeatherFx) => {
+    const c = fx.hemiLight!.color;
+    return fx.hemiLight!.intensity * (0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b);
+  };
+
+  it('night stays readable at 22:30 and 03:00, even in heavy rain', () => {
+    // Arrange
+    const fx = new WeatherFx(new THREE.Scene(), {
+      hemiLight: new THREE.HemisphereLight(),
+      dirLight: new THREE.DirectionalLight(),
+    });
+    fx.update(1 / 60, 12 * 60, 'clear', { x: 0, y: 0, z: 0 }, 0);
+    const midday = ambient(fx);
+
+    const cases = [[22 * 60 + 30, 'clear'], [3 * 60, 'clear'], [3 * 60, 'heavyRain']] as const;
+    for (const [minute, weather] of cases) {
+      // Act
+      fx.update(1 / 60, minute, weather, { x: 0, y: 0, z: 0 }, 0);
+      // Assert: at least a quarter of the midday ambient
+      expect(ambient(fx), `${minute} ${weather}`).toBeGreaterThanOrEqual(midday * 0.25);
+    }
+  });
+
+  it('heavy rain draws thin falling streaks, not floating squares', () => {
+    // Arrange
+    const fx = new WeatherFx(new THREE.Scene(), { rainCount: 50 });
+
+    // Act
+    fx.update(1 / 60, 12 * 60, 'heavyRain', { x: 0, y: 0, z: 0 }, 0);
+
+    // Assert: drops are vertical line segments taller than they are wide
+    const drops = fx.rainGroup.children[0];
+    expect(drops).toBeInstanceOf(THREE.LineSegments);
+    const pos = (drops as THREE.LineSegments).geometry.getAttribute('position');
+    expect(pos.count).toBe(100);
+    for (let i = 0; i < pos.count; i += 2) {
+      expect(pos.getX(i)).toBeCloseTo(pos.getX(i + 1), 5);
+      expect(pos.getZ(i)).toBeCloseTo(pos.getZ(i + 1), 5);
+      expect(Math.abs(pos.getY(i + 1) - pos.getY(i))).toBeGreaterThan(0.3);
+    }
+  });
+});

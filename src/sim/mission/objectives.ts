@@ -150,7 +150,9 @@ export function evaluateEncounterResolved(
       }
     }
   } else if (objective.type === 'survive') {
-    if (payload.encounterId === objective.encounterId && payload.success !== false) {
+    // Refusing or cancelling is not surviving: only the listed choices count.
+    const choiceOk = !objective.choiceIds || objective.choiceIds.includes(payload.choiceId);
+    if (payload.encounterId === objective.encounterId && payload.success !== false && choiceOk) {
       state.progress = 1;
       state.completed = true;
       changed = true;

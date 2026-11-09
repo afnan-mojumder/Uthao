@@ -21,6 +21,8 @@ export interface MotorcycleControllerOptions {
 
 /** Minimum seconds between two bike/nearMiss reports. */
 const NEAR_MISS_COOLDOWN_S = 1.0;
+/** A static contact that drops out and restarts within this window counts as one contact. */
+const CONTACT_RELEASE_S = 0.25;
 
 export class MotorcycleController {
   readonly world: PhysicsWorld;
@@ -33,6 +35,9 @@ export class MotorcycleController {
   readonly characterController: RAPIER.KinematicCharacterController;
 
   private nearMissCooldownS = 0;
+  /** Seconds since the last frame of static contact ended; a contact that
+   * restarts within CONTACT_RELEASE_S is the same contact. */
+  private contactHoldS = 0;
   private readonly _desiredTranslation = { x: 0, y: 0, z: 0 };
   private readonly _bodyTranslation = { x: 0, y: 0.5, z: 0 };
   private readonly _bodyRotation = { x: 0, y: 0, z: 0, w: 1 };
@@ -78,6 +83,7 @@ export class MotorcycleController {
 
   update(input: BikeInput, env: BikeEnvironment, dt: number): BikeState {
     this.nearMissCooldownS = Math.max(0, this.nearMissCooldownS - dt);
+    this.contactHoldS = Math.max(0, this.contactHoldS - dt);
     const desiredState = stepBike(this.state, input, this.spec, env, dt, this._nextState);
 
     this._desiredTranslation.x = desiredState.x - this.state.x;
@@ -145,11 +151,15 @@ export class MotorcycleController {
         desiredState.speed = tangentialSpeed * 0.95;
       }
 
-      this.bus?.emit('bike/collision', {
-        severity: collisionSeverity,
-        relSpeedKmh: maxImpactKmh,
-        otherKind: 'static',
-      });
+      // The physical response above applies every frame of contact, but the
+      // event is one report per contact (audit: grinding fires every frame).
+      if (this.contactHoldS <= 0) {
+        this.bus?.emit('bike/collision', {
+          severity: collisionSeverity,
+          relSpeedKmh: maxImpactKmh,
+          otherKind: 'static',
+        });
+      }
     } else if (totalSpeedKmh > 20) {
       // Near miss check: raycast left and right
       const rayDist = 1.0;
@@ -189,6 +199,8 @@ export class MotorcycleController {
         this.nearMissCooldownS = NEAR_MISS_COOLDOWN_S;
       }
     }
+
+    if (numCollisions > 0) this.contactHoldS = CONTACT_RELEASE_S;
 
     // Apply movement
     this.state.x += movement.x;

@@ -6,6 +6,22 @@ import { getRoadWidth } from '../../render/roadMesh';
 import { BALANCE } from '../../config/balance';
 import type { CameraViewInfo } from './TrafficManager';
 
+/** What a walker reacts to: any vehicle, with its position and travel direction. */
+export interface VehicleView {
+  x: number;
+  z: number;
+  heading: number;
+  speed: number;
+}
+
+/** How long a crossing hazard must clear before a walker steps out. */
+const CROSSING_HAZARD_WINDOW_S = 1.0;
+/** Vehicles farther than this do not stop a walker. */
+const HAZARD_RANGE_M = 40;
+const ACCIDENT_DURATION_S = 5;
+/** Walkers within the accident radius plus this margin stop until it clears. */
+const ACCIDENT_ZONE_MARGIN_M = 10;
+
 export type PedestrianState = 'sidewalk' | 'crossing' | 'jaywalking' | 'yielding' | 'road_worker';
 
 export interface PedestrianAgent {
@@ -62,6 +78,8 @@ export class PedestrianManager {
   private rng: Rng;
   private nextPedSeq = 0;
   private crossingNodeIds: Set<string> = new Set();
+  /** Reported accidents: walkers near one stop until it clears. */
+  private accidents: { x: number; z: number; radius: number; ttl: number }[] = [];
   private eligibleSegments: RoadSegment[] = [];
 
   constructor(network: RoadNetwork, seed = 4242) {
@@ -247,11 +265,22 @@ export class PedestrianManager {
     return affected;
   }
 
+  /** A vehicle or accident reported here: walkers near it stop until it clears. */
+  reportAccident(x: number, z: number, radius = 5): void {
+    this.accidents.push({ x, z, radius, ttl: ACCIDENT_DURATION_S });
+  }
+
   update(
     dt: number,
-    player?: { x: number; z: number; speed: number },
-    camera?: CameraViewInfo
+    player?: { x: number; z: number; speed: number; heading?: number },
+    camera?: CameraViewInfo,
+    vehicles?: ReadonlyMap<string, VehicleView>
   ): void {
+    this.accidents = this.accidents.filter((a) => {
+      a.ttl -= dt;
+      return a.ttl > 0;
+    });
+
     for (const ped of this.pedestrians.values()) {
       // 1. Handle yielding
       if (ped.state === 'yielding') {
@@ -277,9 +306,14 @@ export class PedestrianManager {
       const segLen = Math.hypot(eNode.x - sNode.x, eNode.z - sNode.z);
       const roadW = getRoadWidth(seg);
       const sidewalkOffset = roadW / 2 + 1.2;
+      const crossDistTotal = roadW + 2.4;
       const dx = eNode.x - sNode.x;
       const dz = eNode.z - sNode.z;
       const baseHeading = Math.atan2(dx, dz);
+      const here = this.computePosition(sNode, eNode, ped.distAlongSegment, ped.lateralOffset);
+
+      // Walkers near an accident stop where they are until it clears.
+      if (ped.state === 'sidewalk' && this.nearAccident(here.x, here.z)) continue;
 
       // 2. State-specific behavior
       if (ped.state === 'sidewalk') {
@@ -295,11 +329,16 @@ export class PedestrianManager {
         if (ped.distAlongSegment >= segLen) {
           // Reached end node: check for crossing
           if (this.crossingNodeIds.has(seg.endNodeId)) {
-            // Start crossing at crossing node
-            ped.state = 'crossing';
-            ped.crossingProgress = 0;
-            ped.crossingFromOffset = ped.lateralOffset;
-            ped.crossingToOffset = ped.side === 'left' ? sidewalkOffset : -sidewalkOffset;
+            const kerb = this.computePosition(sNode, eNode, segLen, ped.lateralOffset);
+            if (this.crossingHazard(kerb.x, kerb.z, crossDistTotal / Math.max(0.1, ped.speed), player, vehicles)) {
+              // Wait at the kerb: never step out in front of a vehicle.
+              ped.distAlongSegment = segLen;
+            } else {
+              ped.state = 'crossing';
+              ped.crossingProgress = 0;
+              ped.crossingFromOffset = ped.lateralOffset;
+              ped.crossingToOffset = ped.side === 'left' ? sidewalkOffset : -sidewalkOffset;
+            }
           } else {
             // Reverse direction
             ped.direction = -1;
@@ -309,10 +348,15 @@ export class PedestrianManager {
         } else if (ped.distAlongSegment <= 0) {
           // Reached start node: check for crossing
           if (this.crossingNodeIds.has(seg.startNodeId)) {
-            ped.state = 'crossing';
-            ped.crossingProgress = 0;
-            ped.crossingFromOffset = ped.lateralOffset;
-            ped.crossingToOffset = ped.side === 'left' ? sidewalkOffset : -sidewalkOffset;
+            const kerb = this.computePosition(sNode, eNode, 0, ped.lateralOffset);
+            if (this.crossingHazard(kerb.x, kerb.z, crossDistTotal / Math.max(0.1, ped.speed), player, vehicles)) {
+              ped.distAlongSegment = 0;
+            } else {
+              ped.state = 'crossing';
+              ped.crossingProgress = 0;
+              ped.crossingFromOffset = ped.lateralOffset;
+              ped.crossingToOffset = ped.side === 'left' ? sidewalkOffset : -sidewalkOffset;
+            }
           } else {
             // Reverse direction
             ped.direction = 1;
@@ -321,28 +365,50 @@ export class PedestrianManager {
           }
         }
       } else if (ped.state === 'crossing' || ped.state === 'jaywalking') {
-        // Progress crossing across road
-        const crossDistTotal = roadW + 2.4;
-        const progressInc = (ped.speed * dt) / crossDistTotal;
-        ped.crossingProgress = clamp((ped.crossingProgress ?? 0) + progressInc, 0, 1);
+        const remainingS = (1 - (ped.crossingProgress ?? 0)) * crossDistTotal / Math.max(0.1, ped.speed);
+        const hazard =
+          ped.state === 'crossing' &&
+          this.crossingHazard(here.x, here.z, remainingS, player, vehicles);
 
-        const fromOffset = ped.crossingFromOffset ?? -sidewalkOffset;
-        const toOffset = ped.crossingToOffset ?? sidewalkOffset;
-        ped.lateralOffset = fromOffset + (toOffset - fromOffset) * ped.crossingProgress;
+        if (hazard) {
+          // A vehicle is coming while the walker is still on the road: step back.
+          const back = (ped.crossingProgress ?? 0) - (ped.speed * dt) / crossDistTotal;
+          if (back <= 0) {
+            ped.state = 'sidewalk';
+            ped.lateralOffset = ped.crossingFromOffset ?? ped.lateralOffset;
+            ped.crossingProgress = undefined;
+            ped.crossingFromOffset = undefined;
+            ped.crossingToOffset = undefined;
+            ped.heading = ped.direction === 1 ? baseHeading : baseHeading + Math.PI;
+          } else {
+            ped.crossingProgress = back;
+            const fromOffset = ped.crossingFromOffset ?? -sidewalkOffset;
+            const toOffset = ped.crossingToOffset ?? sidewalkOffset;
+            ped.lateralOffset = fromOffset + (toOffset - fromOffset) * back;
+          }
+        } else {
+          // Progress crossing across road
+          const progressInc = (ped.speed * dt) / crossDistTotal;
+          ped.crossingProgress = clamp((ped.crossingProgress ?? 0) + progressInc, 0, 1);
 
-        // Heading across road: perpendicular to road
-        const crossHeading = toOffset > fromOffset ? baseHeading + Math.PI / 2 : baseHeading - Math.PI / 2;
-        ped.heading = crossHeading;
+          const fromOffset = ped.crossingFromOffset ?? -sidewalkOffset;
+          const toOffset = ped.crossingToOffset ?? sidewalkOffset;
+          ped.lateralOffset = fromOffset + (toOffset - fromOffset) * ped.crossingProgress;
 
-        if (ped.crossingProgress >= 1) {
-          // Completed crossing
-          ped.state = 'sidewalk';
-          ped.side = ped.side === 'left' ? 'right' : 'left';
-          ped.lateralOffset = toOffset;
-          ped.crossingProgress = undefined;
-          ped.crossingFromOffset = undefined;
-          ped.crossingToOffset = undefined;
-          ped.heading = ped.direction === 1 ? baseHeading : baseHeading + Math.PI;
+          // Heading across road: perpendicular to road
+          const crossHeading = toOffset > fromOffset ? baseHeading + Math.PI / 2 : baseHeading - Math.PI / 2;
+          ped.heading = crossHeading;
+
+          if (ped.crossingProgress >= 1) {
+            // Completed crossing
+            ped.state = 'sidewalk';
+            ped.side = ped.side === 'left' ? 'right' : 'left';
+            ped.lateralOffset = toOffset;
+            ped.crossingProgress = undefined;
+            ped.crossingFromOffset = undefined;
+            ped.crossingToOffset = undefined;
+            ped.heading = ped.direction === 1 ? baseHeading : baseHeading + Math.PI;
+          }
         }
       } else if (ped.state === 'road_worker') {
         ped.distAlongSegment += ped.direction * ped.speed * dt;
@@ -371,6 +437,55 @@ export class PedestrianManager {
               : 'far';
       }
     }
+  }
+
+  private nearAccident(x: number, z: number): boolean {
+    for (const a of this.accidents) {
+      const zone = a.radius + ACCIDENT_ZONE_MARGIN_M;
+      const dx = x - a.x;
+      const dz = z - a.z;
+      if (dx * dx + dz * dz <= zone * zone) return true;
+    }
+    return false;
+  }
+
+  /**
+   * True when a vehicle or the bike is coming toward (px, pz) and would reach it
+   * before a walker who needs `timeNeededS` to get across has finished.
+   */
+  private crossingHazard(
+    px: number,
+    pz: number,
+    timeNeededS: number,
+    player: { x: number; z: number; speed: number; heading?: number } | undefined,
+    vehicles: ReadonlyMap<string, VehicleView> | undefined
+  ): boolean {
+    if (player && player.heading !== undefined && this.isApproaching(px, pz, player, timeNeededS)) {
+      return true;
+    }
+    if (vehicles) {
+      for (const v of vehicles.values()) {
+        if (this.isApproaching(px, pz, v, timeNeededS)) return true;
+      }
+    }
+    return false;
+  }
+
+  private isApproaching(
+    px: number,
+    pz: number,
+    v: { x: number; z: number; speed: number; heading?: number },
+    timeNeededS: number
+  ): boolean {
+    if (v.heading === undefined || v.speed < 0.5) return false;
+    const rx = px - v.x;
+    const rz = pz - v.z;
+    const dist = Math.hypot(rx, rz);
+    if (dist > HAZARD_RANGE_M) return false;
+    const vx = Math.sin(v.heading) * v.speed;
+    const vz = Math.cos(v.heading) * v.speed;
+    if (vx * rx + vz * rz <= 0) return false; // moving away from the point
+    return dist / v.speed < timeNeededS + CROSSING_HAZARD_WINDOW_S;
   }
 
   private computePosition(

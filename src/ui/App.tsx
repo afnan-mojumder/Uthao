@@ -1,4 +1,5 @@
 import type { JSX } from 'preact';
+import { TouchActions, isTouchDevice } from './touch/TouchActions';
 import { useState, useEffect, useRef } from 'preact/hooks';
 import {
   rotateOverlaySignal,
@@ -25,6 +26,8 @@ import {
   onSwitchBikeCallback,
   onStartNewCareerCallback,
   onContinueCareerCallback,
+  hasSaveCallback,
+  exitToTitle,
   onStartEndlessCallback,
   onResumeGameCallback,
   onSetWaypointCallback,
@@ -54,7 +57,8 @@ import { MapScreen } from './map/MapScreen';
 import { SaveSlots } from './menus/SaveSlots';
 import {
   saveSlotsSignal,
-  onSaveGameCallback,
+  impactSignal,
+  saveToSlotFromPanel,
   onLoadGameCallback,
 } from './store';
 import { FirstRideTutorial } from './tutorial/FirstRideTutorial';
@@ -259,6 +263,31 @@ export function App(): JSX.Element {
         />
       )}
 
+      {/* Audit H-4: a wobble or a collision is shown to the rider. */}
+      {impactSignal.value.kind !== null && (
+        <div
+          data-testid="impact-banner"
+          role="status"
+          style={{
+            position: 'absolute',
+            top: '18%',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            pointerEvents: 'none',
+            zIndex: 9100,
+            padding: '8px 16px',
+            borderRadius: '10px',
+            background: 'rgba(15, 23, 42, 0.85)',
+            color: impactSignal.value.kind === 'crash' ? '#fca5a5' : '#fde68a',
+            fontWeight: 700,
+          }}
+        >
+          {t(`impact.${impactSignal.value.kind}`)}
+        </div>
+      )}
+      {/* H-17: touch players get pause, map, phone, horn and camera; zones are drawn. */}
+      {isTouchDevice() && screenSignal.value === 'game' && <TouchActions />}
+
       {/* T2.4 Uthao Phone & RequestCard */}
       <Phone
         isOpen={phoneSignal.value.open}
@@ -283,6 +312,7 @@ export function App(): JSX.Element {
           lastResult={negotiationSignal.value.lastResult}
           mood={negotiationSignal.value.mood}
           pickup={negotiationSignal.value.pickup}
+          destinationKey={negotiationSignal.value.destinationKey}
           onAction={(action) => onNegotiationActionCallback?.(action)}
           onClose={() => {
             negotiationSignal.value = { ...negotiationSignal.value, active: false };
@@ -356,6 +386,7 @@ export function App(): JSX.Element {
       {/* T3.10 Main Menu */}
       {screenSignal.value === 'title' && (
         <MainMenu
+          hasSave={hasSaveCallback?.() ?? false}
           onNewCareer={() => {
             screenSignal.value = 'game';
             onStartNewCareerCallback?.();
@@ -391,10 +422,7 @@ export function App(): JSX.Element {
           onOpenLoad={() => {
             saveSlotsSignal.value = { isOpen: true, mode: 'load' };
           }}
-          onExitToMainMenu={() => {
-            screenSignal.value = 'title';
-            pausedSignal.value = false;
-          }}
+          onExitToMainMenu={() => exitToTitle()}
         />
       )}
 
@@ -419,7 +447,8 @@ export function App(): JSX.Element {
           }}
           onSelectSlot={(slot) => {
             if (saveSlotsSignal.value.mode === 'save') {
-              onSaveGameCallback?.(slot);
+              // A failed save keeps the panel open so the failure message shows.
+              if (!saveToSlotFromPanel(slot)) return;
             } else {
               onLoadGameCallback?.(slot);
               screenSignal.value = 'game';

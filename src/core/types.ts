@@ -251,6 +251,8 @@ export interface StoryState {
 export type TransactionKind =
   | 'fare'
   | 'tip'
+  /** Money from an encounter or mission: it is not trip income (audit: booked as trip income). */
+  | 'event'
   | 'commission'
   | 'fuel'
   | 'repair'

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   InputManager,
   touchLayout,
@@ -161,5 +161,87 @@ describe('T1.4 Input System', () => {
       expect(state.pause).toBe(true);
       expect(state.choice).toBe(2);
     });
+  });
+  describe('Touch pads release per finger (H-16)', () => {
+    type Listener = (e: unknown) => void;
+    let listeners: Record<string, Listener>;
+    const W = 1000;
+    const H = 500;
+    const fire = (type: string, changed: Array<{ id: number; x: number; y: number }>, stillDown: number) =>
+      listeners[type]!({
+        changedTouches: changed.map((c) => ({ identifier: c.id, clientX: c.x, clientY: c.y })),
+        touches: { length: stillDown },
+      });
+
+    beforeEach(() => {
+      listeners = {};
+      vi.stubGlobal('window', {
+        innerWidth: W,
+        innerHeight: H,
+        addEventListener: (type: string, fn: Listener) => {
+          listeners[type] = fn;
+        },
+        removeEventListener: () => {},
+      });
+    });
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    it('lifting the throttle finger releases throttle while steer is still held', () => {
+      const input = new InputManager({ bindings: DEFAULT_BINDINGS });
+      const pad = touchLayout(W, H).throttlePad;
+      fire('touchstart', [{ id: 1, x: 50, y: 250 }], 1); // steer finger
+      fire('touchstart', [{ id: 2, x: pad.x + 5, y: pad.y + 5 }], 2); // throttle finger
+      input.update(0.016);
+      expect(input.read().throttle).toBe(1);
+
+      fire('touchend', [{ id: 2, x: pad.x + 5, y: pad.y + 5 }], 1);
+      input.update(0.016);
+      expect(input.read().throttle).toBe(0);
+    });
+
+    it('a cancelled brake touch releases brake, the throttle finger keeps throttle', () => {
+      const input = new InputManager({ bindings: DEFAULT_BINDINGS });
+      const layout = touchLayout(W, H);
+      fire('touchstart', [{ id: 1, x: 50, y: 250 }], 1);
+      fire('touchstart', [{ id: 2, x: layout.throttlePad.x + 5, y: layout.throttlePad.y + 5 }], 2);
+      fire('touchstart', [{ id: 3, x: layout.brakePad.x + 5, y: layout.brakePad.y + 5 }], 3);
+      input.update(0.016);
+      expect(input.read().brake).toBe(1);
+
+      fire('touchcancel', [{ id: 3, x: 0, y: 0 }], 2);
+      input.update(0.016);
+      expect(input.read().brake).toBe(0);
+      expect(input.read().throttle).toBe(1);
+    });
+  });
+});
+
+describe('quick key taps are not lost between frames (audit: tap of C dropped)', () => {
+  it('a camera tap that starts and ends between two updates still toggles the camera', () => {
+    const handlers: Record<string, (e: KeyboardEvent) => void> = {};
+    const fakeWindow = {
+      addEventListener: (type: string, fn: (e: KeyboardEvent) => void) => {
+        handlers[type] = fn;
+      },
+      removeEventListener: () => {},
+    };
+    const g = globalThis as unknown as { window?: unknown };
+    const previous = g.window;
+    g.window = fakeWindow;
+    try {
+      const input = new InputManager();
+      // Press and release C with no update in between.
+      handlers.keydown!({ code: 'KeyC' } as KeyboardEvent);
+      handlers.keyup!({ code: 'KeyC' } as KeyboardEvent);
+      input.update(1 / 60);
+      expect(input.read().camera).toBe(true);
+      // Nothing pressed since: the tap is consumed.
+      input.update(1 / 60);
+      expect(input.read().camera).toBe(false);
+    } finally {
+      g.window = previous;
+    }
   });
 });

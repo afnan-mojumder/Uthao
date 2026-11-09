@@ -94,6 +94,7 @@ export interface SimSnapshot {
   waypointNodeId: string | null;
   reputation?: {
     rating: number;
+    ratingsHistory?: number[];
     localTrust: number;
     safetyRecord: SafetyRecord;
     riskScore: number;
@@ -105,6 +106,9 @@ export interface SimSnapshot {
   settledRequests?: string[];
   requestSeq?: number;
   negotiationHistory?: number;
+  /** The day-end step already ran today; a reload must not run it again (H-12). */
+  shiftEnded?: boolean;
+  todayRentPosted?: number;
 }
 
 export class GameManager {
@@ -412,6 +416,7 @@ export class GameManager {
       riskScore: rep.getRiskScore(),
       promises: rep.getPromisesRecord(),
       careerChoice: this.story.branchFlags.career_choice as CareerChoice | undefined,
+      careerSavings: this.story.branchFlags.career_choice_savings as number | undefined,
       appSuspended: this.story.branchFlags.appSuspended === true,
     };
   }
@@ -465,6 +470,8 @@ export class GameManager {
         if (!opt || !opt.available) {
           return { success: false, reason: opt?.disabledReason ?? 'Choice unavailable' };
         }
+        // Record what the player had before paying, so the ending judges that (H-9).
+        this.story.branchFlags.career_choice_savings = this.economy.savings;
         this.economyManager.spendSavings(opt.cost);
         this.syncEconomy();
         this.story.branchFlags.career_choice = cmd.choice;
@@ -665,11 +672,8 @@ export class GameManager {
         return { success: true, data: summary };
       }
       case 'sleep': {
-        if (!this.shiftEnded && this.rideInProgress()) {
-          return { success: false, reason: 'Finish the active ride first' };
-        }
         if (!this.shiftEnded) {
-          this.dispatch({ type: 'endShift' });
+          return { success: false, reason: 'End the shift before sleeping' };
         }
         this.clock.endShift();
         this.economyManager.resetDaily();
@@ -769,6 +773,7 @@ export class GameManager {
       waypointNodeId: this.waypointNodeId,
       reputation: {
         rating: this.reputationSystem.getAppRating(),
+        ratingsHistory: this.reputationSystem.getRatingsHistory(),
         localTrust: this.reputationSystem.getLocalTrust(),
         safetyRecord: this.reputationSystem.getSafetyRecord(),
         riskScore: this.reputationSystem.getRiskScore(),
@@ -779,6 +784,8 @@ export class GameManager {
       settledRequests: this.economyManager.getSettledIds(),
       requestSeq: this.requestSeq,
       negotiationHistory: this.negotiationHistory,
+      shiftEnded: this.shiftEnded,
+      todayRentPosted: this.todayRentPosted,
     };
   }
 
@@ -819,6 +826,7 @@ export class GameManager {
     if (snap.reputation) {
       this.reputationSystem.restoreState({
         rating: snap.reputation.rating,
+        ratingsHistory: snap.reputation.ratingsHistory ?? [],
         localTrust: snap.reputation.localTrust,
         safetyRecord: snap.reputation.safetyRecord,
         riskScore: snap.reputation.riskScore,
@@ -830,6 +838,8 @@ export class GameManager {
     this.economyManager.restoreLedger(snap.ledger ?? [], snap.settledRequests ?? []);
     this.requestSeq = snap.requestSeq ?? 0;
     this.negotiationHistory = snap.negotiationHistory ?? 0;
+    this.shiftEnded = snap.shiftEnded ?? false;
+    this.todayRentPosted = snap.todayRentPosted ?? 0;
 
     // Restore road events
     this.roadEvents.clearEvents();

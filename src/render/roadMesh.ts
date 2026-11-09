@@ -29,6 +29,20 @@ export function getRoadWidth(segment: RoadSegment): number {
   }
 }
 
+/**
+ * A mesh for world-space merged geometry, moved so its position is the
+ * geometry's centre. CityBuilder bins road children into LOD chunks by
+ * position; at the origin they were hidden everywhere else.
+ */
+function placedMesh(geo: THREE.BufferGeometry, mat: THREE.Material): THREE.Mesh {
+  geo.computeBoundingBox();
+  const c = geo.boundingBox!.getCenter(new THREE.Vector3());
+  geo.translate(-c.x, 0, -c.z);
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.position.set(c.x, 0, c.z);
+  return mesh;
+}
+
 export class RoadMeshBuilder {
   private roadMat: THREE.MeshStandardMaterial;
   private kerbMat: THREE.MeshStandardMaterial;
@@ -194,7 +208,7 @@ export class RoadMeshBuilder {
         if (dashGeos.length > 0) {
           const mergedDashes = mergeGeometries(dashGeos, false);
           if (mergedDashes) {
-            group.add(new THREE.Mesh(mergedDashes, this.markingMat));
+            group.add(placedMesh(mergedDashes, this.markingMat));
           }
         }
       }
@@ -217,7 +231,7 @@ export class RoadMeshBuilder {
         if (puddleGeos.length > 0) {
           const mergedPuddles = mergeGeometries(puddleGeos, false);
           if (mergedPuddles) {
-            group.add(new THREE.Mesh(mergedPuddles, this.puddleMat));
+            group.add(placedMesh(mergedPuddles, this.puddleMat));
           }
         }
       }
@@ -258,7 +272,7 @@ export class RoadMeshBuilder {
       if (stripeGeos.length > 0) {
         const mergedZebra = mergeGeometries(stripeGeos, false);
         if (mergedZebra) {
-          group.add(new THREE.Mesh(mergedZebra, this.zebraMat));
+          group.add(placedMesh(mergedZebra, this.zebraMat));
         }
       }
       zebraCount++;

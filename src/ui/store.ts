@@ -1,4 +1,5 @@
 import { signal } from '@preact/signals';
+import { DEFAULT_VOLUMES } from '../audio/AudioManager';
 import type { EventBus, GameEvents } from '../core/events';
 import type { DaySummary, RideRequest, TripReceipt } from '../core/types';
 import type { TripHistoryItem } from './phone/Phone';
@@ -49,6 +50,8 @@ export interface NegotiationUiState {
   mood?: number;
   /** A real relocation the sim can do now; the panel shows the button only when set. */
   pickup?: { nodeId: string; walkM: number; savesMin: number } | null;
+  /** Name key of the destination's place (never the raw road node id). */
+  destinationKey?: string;
 }
 
 export interface DayEndState {
@@ -151,7 +154,6 @@ export interface GameSettings {
   quality: 'low' | 'medium' | 'high';
   subtitlesSize: 'normal' | 'large';
   colorblindRoute: boolean;
-  colorblindPalette?: 'standard' | 'high_contrast' | 'deuteranopia';
   reduceMotion: boolean;
   autoCruise: boolean;
   pauseOnDecisions: boolean;
@@ -159,6 +161,8 @@ export interface GameSettings {
   masterVolume: number;
   sfxVolume: number;
   ambientVolume: number;
+  /** Silences all game sound (audit: no mute control). */
+  muted: boolean;
 }
 
 export const DEFAULT_SETTINGS: GameSettings = {
@@ -166,14 +170,15 @@ export const DEFAULT_SETTINGS: GameSettings = {
   quality: 'medium',
   subtitlesSize: 'normal',
   colorblindRoute: false,
-  colorblindPalette: 'standard',
   reduceMotion: false,
   autoCruise: false,
   pauseOnDecisions: false,
   tiltControls: false,
-  masterVolume: 0.8,
-  sfxVolume: 0.9,
-  ambientVolume: 0.7,
+  // One place for the volume defaults: the audio module owns them.
+  masterVolume: DEFAULT_VOLUMES.master,
+  sfxVolume: DEFAULT_VOLUMES.sfx,
+  ambientVolume: DEFAULT_VOLUMES.ambient,
+  muted: DEFAULT_VOLUMES.muted,
 };
 
 export const SETTINGS_STORAGE_KEY = 'uthao_user_settings';
@@ -293,6 +298,8 @@ export let onRepairCallback: ((item: string) => void) | null = null;
 export let onBuyUpgradeCallback: ((upgradeId: string) => void) | null = null;
 export let onStartNewCareerCallback: (() => void) | null = null;
 export let onContinueCareerCallback: (() => void) | null = null;
+/** Reports whether any save slot holds a career, so the title can offer Continue. */
+export let hasSaveCallback: (() => boolean) | null = null;
 export let onStartEndlessCallback: (() => void) | null = null;
 export let onResumeGameCallback: (() => void) | null = null;
 export let onSetWaypointCallback: ((nodeId: string | null) => void) | null = null;
@@ -322,6 +329,20 @@ export function setMenuDispatchers(
   if (endlessFn) onStartEndlessCallback = endlessFn;
   if (resumeFn) onResumeGameCallback = resumeFn;
   if (setWaypointFn) onSetWaypointCallback = setWaypointFn;
+}
+
+export function setHasSaveCallback(fn: () => boolean): void {
+  hasSaveCallback = fn;
+}
+
+/**
+ * Leaves the running game for the title screen. The first-ride tutorial is
+ * cleared too, or its full-screen layer would sit on top of the title.
+ */
+export function exitToTitle(): void {
+  tutorialSignal.value = { active: false, step: 'idle' };
+  pausedSignal.value = false;
+  screenSignal.value = 'title';
 }
 
 export function setChoiceDispatcher(fn: (choiceId: string, instanceId: string) => void): void {
@@ -396,6 +417,16 @@ export function setGarageDispatchers(
 /** Result of the last manual save, shown in the save slots. */
 export const saveStatusSignal = signal<'saved' | 'failed' | null>(null);
 
+/**
+ * Runs a manual save to a slot and reports whether it worked. A failed save
+ * leaves the save panel open with its failure message (audit H-13).
+ */
+export function saveToSlotFromPanel(slot: SaveSlot): boolean {
+  saveStatusSignal.value = null;
+  onSaveGameCallback?.(slot);
+  return saveStatusSignal.value !== 'failed';
+}
+
 export let onSaveGameCallback: ((slot: SaveSlot) => void) | null = null;
 export let onLoadGameCallback: ((slot: SaveSlot) => void) | null = null;
 
@@ -412,10 +443,48 @@ export function setSaveDispatchers(
  * T7.4: dispatcher wiring (turning UI actions into Commands) now lives solely in
  * `src/ui/bindings.ts`'s `bindUi`, so this only mirrors sim events to signals.
  */
+/** The latest bike impact the rider should see: a wobble or a collision. */
+export interface ImpactState {
+  kind: 'wobble' | 'scuff' | 'bump' | 'crash' | null;
+  /** Counts every impact, so a repeat of the same kind still re-shows the banner. */
+  seq: number;
+}
+
+export const impactSignal = signal<ImpactState>({ kind: null, seq: 0 });
+
+/** How long an impact banner stays up before it clears itself. */
+const IMPACT_BANNER_MS = 1200;
+let impactClearTimer: ReturnType<typeof setTimeout> | undefined;
+
+function showImpact(kind: NonNullable<ImpactState['kind']>): void {
+  impactSignal.value = { kind, seq: impactSignal.value.seq + 1 };
+  if (impactClearTimer !== undefined) clearTimeout(impactClearTimer);
+  impactClearTimer = setTimeout(() => {
+    impactSignal.value = { ...impactSignal.value, kind: null };
+    impactClearTimer = undefined;
+  }, IMPACT_BANNER_MS);
+}
+
 export function bindEventBusToStore(bus: EventBus<GameEvents>): () => void {
   const unsubscribers: Array<() => void> = [];
 
+  // A request that arrives under an open story card is held and shown once the
+  // card closes, so it never covers the card or starts its timer unseen.
+  let heldRequest: RideRequest | null = null;
+
+  // Audit H-4: wobble and crash feedback reaches the rider, not just the event bus.
+  unsubscribers.push(bus.on('bike/collision', (ev) => showImpact(ev.severity)));
+  unsubscribers.push(bus.on('bike/wobble', () => showImpact('wobble')));
+
   const unsubRideRequested = bus.on('ride/requested', (ev) => {
+    if (choiceSignal.value.active) {
+      heldRequest = ev.request;
+      phoneSignal.value = {
+        ...phoneSignal.value,
+        unreadCount: phoneSignal.value.unreadCount + 1,
+      };
+      return;
+    }
     phoneSignal.value = {
       ...phoneSignal.value,
       incomingRequest: ev.request,
@@ -424,6 +493,18 @@ export function bindEventBusToStore(bus: EventBus<GameEvents>): () => void {
     };
   });
   unsubscribers.push(unsubRideRequested);
+
+  const unsubChoiceClosed = choiceSignal.subscribe((choice) => {
+    if (choice.active || heldRequest === null) return;
+    const request = heldRequest;
+    heldRequest = null;
+    phoneSignal.value = {
+      ...phoneSignal.value,
+      incomingRequest: request,
+      timeoutRemaining: 15,
+    };
+  });
+  unsubscribers.push(unsubChoiceClosed);
 
   const unsubRideAccepted = bus.on('ride/accepted', () => {
     phoneSignal.value = {

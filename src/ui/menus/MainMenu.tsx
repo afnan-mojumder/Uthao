@@ -30,6 +30,17 @@ export function MainMenu({
   } catch {
     // Vitest node environment
   }
+  let confirmNewCareer = false;
+  let setConfirmNewCareer = (v: boolean) => {
+    confirmNewCareer = v;
+  };
+  try {
+    const [cn, scn] = useState(false);
+    confirmNewCareer = cn;
+    setConfirmNewCareer = scn;
+  } catch {
+    // Vitest node environment
+  }
 
   return (
     <div
@@ -118,7 +129,7 @@ export function MainMenu({
             lineHeight: 1.5,
           }}
         >
-          Dhaka Low-Poly Motorcycle Simulation · Traffic · Street Life · Economy
+          {t('menu.tagline')}
         </p>
       </div>
 
@@ -158,9 +169,54 @@ export function MainMenu({
           </button>
         )}
 
+        {confirmNewCareer && (
+          <div
+            data-testid="menu-new-career-confirm"
+            role="alertdialog"
+            aria-labelledby="menu-new-career-confirm-text"
+            style={{
+              padding: '14px',
+              borderRadius: '14px',
+              border: '1px solid rgba(248, 113, 113, 0.5)',
+              background: 'rgba(69, 10, 10, 0.85)',
+              color: '#fecaca',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '10px',
+            }}
+          >
+            <p id="menu-new-career-confirm-text" style={{ margin: 0, fontWeight: 600 }}>
+              {t('menu.new_career_confirm')}
+            </p>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button
+                data-testid="menu-new-career-confirm-yes"
+                onClick={() => {
+                  setConfirmNewCareer(false);
+                  onNewCareer?.();
+                }}
+                style={{ flex: 1, padding: '10px', borderRadius: '10px', fontWeight: 700, cursor: 'pointer' }}
+              >
+                {t('menu.new_career_confirm_yes')}
+              </button>
+              <button
+                data-testid="menu-new-career-confirm-no"
+                onClick={() => setConfirmNewCareer(false)}
+                style={{ flex: 1, padding: '10px', borderRadius: '10px', fontWeight: 700, cursor: 'pointer' }}
+              >
+                {t('menu.new_career_confirm_no')}
+              </button>
+            </div>
+          </div>
+        )}
+
         <button
           data-testid="menu-btn-new-career"
-          onClick={onNewCareer}
+          onClick={() => {
+            // A career already on disk is replaced by a new one, so ask first.
+            if (hasSave) setConfirmNewCareer(true);
+            else onNewCareer?.();
+          }}
           style={{
             padding: '16px',
             borderRadius: '14px',
@@ -252,6 +308,12 @@ export function MainMenu({
       {showCredits && (
         <div
           data-testid="credits-modal"
+          tabIndex={-1}
+          ref={(el) => el?.focus()}
+          onKeyDown={(e) => {
+            // Escape closes the credits, like the Close button.
+            if (e.key === 'Escape') setShowCredits(false);
+          }}
           style={{
             position: 'fixed',
             inset: 0,

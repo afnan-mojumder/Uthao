@@ -4,6 +4,7 @@ import { MotorcycleMesh } from './vehicles';
 import { RideMarkers } from './props';
 import {
   AdaptiveQualityManager,
+  getQualityConfig,
   type QualityLevel,
 } from './quality';
 import type { SimSnapshot } from '../sim/GameManager';
@@ -31,7 +32,11 @@ export class Renderer {
   cityBuilder?: CityBuilder;
 
   private canvas: HTMLCanvasElement;
+  /** Camera anti-clip targets. After a load this IS cityBuilder.colliders, the
+   * live list streaming pushes to and splices from (H-7). */
   private colliders: THREE.Object3D[] = [];
+  /** H-6: one ground plane in every mode, kept under the bike out to draw distance. */
+  private ground: THREE.Mesh;
   private testSceneGroup?: THREE.Group;
   private prevBikePose = { x: 0, y: 0, z: 0, heading: 0, lean: 0, steer: 0 };
   private currBikePose = { x: 0, y: 0, z: 0, heading: 0, lean: 0, steer: 0 };
@@ -76,6 +81,15 @@ export class Renderer {
 
     this.markers = new RideMarkers();
     this.scene.add(this.markers.root);
+
+    this.ground = new THREE.Mesh(
+      new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2),
+      new THREE.MeshStandardMaterial({ color: 0x4a4a42, roughness: 0.95 })
+    );
+    this.ground.name = 'ground_plane';
+    this.ground.position.y = -0.01;
+    this.ground.receiveShadow = true;
+    this.scene.add(this.ground);
 
     this.buildTestScene();
 
@@ -129,6 +143,19 @@ export class Renderer {
     }
   }
 
+  /** Applies a quality level chosen in Settings to the running renderer. */
+  setQuality(level: QualityLevel): void {
+    const dpr = window.devicePixelRatio || 1;
+    this.qualityManager.config = getQualityConfig(level, dpr);
+    const cfg = this.qualityManager.config;
+    this.applyQuality();
+    this.dirLight.castShadow = cfg.shadows;
+    const fog = this.scene.fog;
+    if (fog instanceof THREE.Fog) fog.far = cfg.drawDistance;
+    this.cameraRig.camera.far = cfg.drawDistance;
+    this.cameraRig.camera.updateProjectionMatrix();
+  }
+
   resize(): void {
     const width = this.canvas.clientWidth || window.innerWidth;
     const height = this.canvas.clientHeight || window.innerHeight;
@@ -140,17 +167,6 @@ export class Renderer {
   private buildTestScene(): void {
     this.testSceneGroup = new THREE.Group();
     this.testSceneGroup.name = 'test_scene_group';
-
-    // Ground plane
-    const groundGeo = new THREE.PlaneGeometry(600, 600);
-    const groundMat = new THREE.MeshStandardMaterial({
-      color: 0x222222,
-      roughness: 0.9,
-    });
-    const ground = new THREE.Mesh(groundGeo, groundMat);
-    ground.rotation.x = -Math.PI / 2;
-    ground.receiveShadow = true;
-    this.testSceneGroup.add(ground);
 
     // 400 m loop road (100m x 100m square loop with rounded corners)
     // Road ribbon
@@ -250,7 +266,7 @@ export class Renderer {
     this.cityBuilder = new CityBuilder();
     this.cityBuilder.buildDistrict(district, physicsWorld);
     this.scene.add(this.cityBuilder.root);
-    this.colliders.push(...this.cityBuilder.colliders);
+    this.colliders = this.cityBuilder.colliders;
   }
 
   loadWorld(
@@ -269,7 +285,7 @@ export class Renderer {
     this.cityBuilder = new CityBuilder();
     this.cityBuilder.initWorldStreaming(world, districtProvider, physicsWorld, initialPos);
     this.scene.add(this.cityBuilder.root);
-    this.colliders.push(...this.cityBuilder.colliders);
+    this.colliders = this.cityBuilder.colliders;
   }
 
   setBikeState(state: {
@@ -306,6 +322,10 @@ export class Renderer {
     const steer = lerp(this.prevBikePose.steer, this.currBikePose.steer, alpha);
 
     this.bikeMesh.setPose({ x, y: 0, z, heading, lean, steer });
+
+    const groundSize = 2 * this.qualityManager.config.drawDistance + 20;
+    this.ground.position.set(x, -0.01, z);
+    this.ground.scale.set(groundSize, 1, groundSize);
 
     // Update ride markers animation
     this.markers.update(1 / 60);
@@ -366,11 +386,16 @@ export class Renderer {
   /** T7.3: debug/e2e check that CameraRig's anti-clip raycast pull-in is
    * actually keeping the camera out of every collider, not just close to it. */
   isCameraClipping(): boolean {
-    const camPos = this.cameraRig.camera.position;
-    const box = new THREE.Box3();
+    // Test in each collider's own frame: a world AABB of a rotated building is
+    // bigger than the building and would report clipping that is not there.
+    const local = new THREE.Vector3();
     for (const collider of this.colliders) {
-      box.setFromObject(collider);
-      if (box.containsPoint(camPos)) return true;
+      if (!(collider instanceof THREE.Mesh)) continue;
+      const geo = collider.geometry as THREE.BufferGeometry;
+      if (!geo.boundingBox) geo.computeBoundingBox();
+      collider.updateWorldMatrix(true, false);
+      local.copy(this.cameraRig.camera.position).applyMatrix4(collider.matrixWorld.clone().invert());
+      if (geo.boundingBox!.containsPoint(local)) return true;
     }
     return false;
   }

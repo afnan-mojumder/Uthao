@@ -25,11 +25,13 @@ export function applyEffect(effect: Effect, ctx: EffectContext): void {
     case 'money': {
       // Money changes MUST ONLY route through EconomyManager
       const rngSuffix = ctx.gameManager.rng ? ctx.gameManager.rng.int(1000, 9999) : 1000;
+      // A positive fare or tip from an encounter is not a trip: book it as event income.
+      const isEventIncome = effect.amount > 0 && (effect.kind === 'fare' || effect.kind === 'tip');
       ctx.economyManager.post({
         id: `tx_enc_${ctx.gameManager.clock.day}_${Math.floor(ctx.gameManager.clock.minutes)}_${rngSuffix}`,
         day: ctx.gameManager.clock.day,
         minute: ctx.gameManager.clock.minutes,
-        kind: effect.kind,
+        kind: isEventIncome ? 'event' : effect.kind,
         amount: effect.amount,
       });
       // Synchronize economy snapshot

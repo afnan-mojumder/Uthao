@@ -75,7 +75,7 @@ export function Journal({
         >
           <div>
             <h2 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 700, color: '#f59e0b' }}>
-              {t('journal_title') || 'রাইডার জার্নাল (Rider Journal)'}
+              {t('journal_title')}
             </h2>
             <div style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
               অধ্যায় {story.currentChapter} · দিন {snapshot.clock.day}
@@ -94,7 +94,7 @@ export function Journal({
               fontSize: '0.9rem',
             }}
           >
-            ✕ {t('btn_close') || 'বন্ধ'}
+            ✕ {t('btn_close')}
           </button>
         </div>
 

@@ -51,7 +51,8 @@
         "id": "obj_m4_survive",
         "descKey": "obj_m4_survive_desc",
         "type": "survive",
-        "encounterId": "enc_wrong_pickup_pin"
+        "encounterId": "enc_wrong_pickup_pin",
+        "choiceIds": ["drive", "walk"]
       },
       {
         "id": "obj_m4_police",
