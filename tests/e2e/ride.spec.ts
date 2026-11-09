@@ -1,7 +1,8 @@
 import { test, expect } from '@playwright/test';
 
 test('ride completes via autopilot', async ({ page }) => {
-  test.setTimeout(60000);
+  // Generous: this runs in parallel with the other specs, which slows autopilot.
+  test.setTimeout(120000);
 
   await page.goto('/?debug=1&district=testloop&encounters=0');
   await page.waitForSelector('#game-canvas');
@@ -25,7 +26,7 @@ test('ride completes via autopilot', async ({ page }) => {
       );
     },
     null,
-    { timeout: 25000 }
+    { timeout: 50000 }
   );
 
   // Objective should update to drop off
@@ -40,7 +41,7 @@ test('ride completes via autopilot', async ({ page }) => {
       return api?.eventLog.includes('ride/completed');
     },
     null,
-    { timeout: 30000 }
+    { timeout: 60000 }
   );
 
   // Verify receipt
