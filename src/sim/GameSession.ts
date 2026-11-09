@@ -387,7 +387,7 @@ export class GameSession {
    * by the physics world. Runs every tick, so it must stay allocation-free:
    * iterates the traffic Map directly instead of `getAgents()`'s array copy. */
   private checkTrafficCollisions(): void {
-    const speedKmh = this.bike.speed * 3.6;
+    const speedKmh = Math.abs(this.bike.speed) * 3.6;
     let nearestGapM = Infinity;
 
     let touching = false;

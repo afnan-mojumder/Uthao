@@ -52,7 +52,9 @@ export function MainMenu({
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        justifyContent: 'center',
+        // 'safe' keeps overflowing content reachable on short landscape phones (audit: Credits clipped).
+        justifyContent: 'safe center',
+        overflowY: 'auto',
         background: 'radial-gradient(ellipse at 50% 30%, rgba(30, 41, 59, 0.94) 0%, rgba(15, 23, 42, 0.98) 75%, #020617 100%)',
         backdropFilter: 'blur(20px)',
         fontFamily: "'Hind Siliguri', 'Segoe UI', system-ui, sans-serif",

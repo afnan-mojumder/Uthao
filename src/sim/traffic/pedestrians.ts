@@ -322,7 +322,7 @@ export class PedestrianManager {
 
         // Occasional jaywalk roll (1 in 500 chance per step)
         if (player && this.rng.next() < 0.002) {
-          this.tryStartJaywalk(ped, player, player.speed);
+          this.tryStartJaywalk(ped, player, Math.abs(player.speed));
         }
 
         // Check if reached segment boundary
@@ -477,7 +477,7 @@ export class PedestrianManager {
     v: { x: number; z: number; speed: number; heading?: number },
     timeNeededS: number
   ): boolean {
-    if (v.heading === undefined || v.speed < 0.5) return false;
+    if (v.heading === undefined || Math.abs(v.speed) < 0.5) return false;
     const rx = px - v.x;
     const rz = pz - v.z;
     const dist = Math.hypot(rx, rz);

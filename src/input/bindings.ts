@@ -17,6 +17,9 @@ export const DEFAULT_BINDINGS: InputBindings = {
     choice1: ['Digit2', 'Numpad2'],
     choice2: ['Digit3', 'Numpad3'],
     choice3: ['Digit4', 'Numpad4'],
+    garage: ['KeyG'],
+    journal: ['KeyJ'],
+    mute: ['KeyN'],
   },
   gamepad: {
     throttleAxisOrButton: 7, // RT

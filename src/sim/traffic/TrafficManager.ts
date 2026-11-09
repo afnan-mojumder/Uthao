@@ -399,7 +399,7 @@ export class TrafficManager {
       if (along !== null && along > agent.distAlongLane) {
         const rear = along - BIKE_LENGTH_M / 2;
         if (!best || rear < best.pos - best.length / 2) {
-          best = { pos: along, speed: bike.speed, length: BIKE_LENGTH_M };
+          best = { pos: along, speed: Math.max(0, bike.speed), length: BIKE_LENGTH_M };
         }
       }
     }

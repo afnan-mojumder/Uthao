@@ -65,6 +65,8 @@ import { FirstRideTutorial } from './tutorial/FirstRideTutorial';
 import { TripSummary } from './trip/TripSummary';
 import { Journal } from './journal/Journal';
 import { t } from './i18n';
+import { loadBindings } from '../input/bindings';
+import { toggleMute } from './store';
 import { startGamepadNav, uiModalOpen } from './gamepadNav';
 
 export function App(): JSX.Element {
@@ -93,32 +95,36 @@ export function App(): JSX.Element {
       ) {
         return;
       }
-      if (e.key === 'Tab') {
+      // Hotkeys follow the bindings config, matched by key code (audit: hotkeys ignored it).
+      const bound = loadBindings().keyboard;
+      const pressed = (codes: string[]) => codes.includes(e.code);
+      if (pressed(bound.phone)) {
         // Tab opens the phone only while driving. In menus and modals, and
         // with the phone already open, Tab moves focus like any other key.
-        if (!uiModalOpen(showSettingsRef.current)) {
+        if (!uiModalOpen(showSettingsRef.current, { ignoreTutorial: true })) {
           e.preventDefault();
           phoneSignal.value = { ...phoneSignal.value, open: true };
         }
         return;
       }
-      if (e.key === 'g' || e.key === 'G') {
+      if (pressed(bound.garage)) {
         garageSignal.value = {
           ...garageSignal.value,
           open: !garageSignal.value.open,
         };
       }
-      if (e.key === 'm' || e.key === 'M') {
+      if (pressed(bound.map)) {
         if (screenSignal.value === 'map') {
           screenSignal.value = 'game';
         } else if (screenSignal.value === 'game') {
           screenSignal.value = 'map';
         }
       }
-      if (e.key === 'j' || e.key === 'J') {
+      if (pressed(bound.journal)) {
         journalSignal.value = !journalSignal.value;
       }
-      if (e.key === 'Escape') {
+      if (pressed(bound.mute)) toggleMute();
+      if (pressed(bound.pause)) {
         // Close the innermost open panel first, then fall through to pause.
         if (showSettingsRef.current) {
           setShowSettings(false);

@@ -70,6 +70,10 @@ export function createDefaultBikeState(): BikeState {
 }
 
 const WHEELBASE = 1.35; // metres
+/** Reverse: entered from a standstill with the brake held; capped at a walking pace. */
+const REVERSE_ENTRY_MS = 0.5;
+const REVERSE_MAX_MS = 1.5;
+const REVERSE_ACCEL = 1.0;
 /** Coast-down deceleration (m/s^2) with the throttle released and no brake. */
 const COAST_DECEL = 0.6;
 /** Steering may ask for up to this multiple of the grip limit before it is clamped. */
@@ -105,7 +109,10 @@ export function stepBike(
 
   // Speed update
   let newSpeed = state.speed;
-  if (effectiveBrake > 0) {
+  if (effectiveBrake > 0 && state.speed <= REVERSE_ENTRY_MS && input.throttle <= 0) {
+    // Stopped with the brake held and no throttle: the bike backs up slowly (audit H-8).
+    newSpeed = Math.max(-REVERSE_MAX_MS, newSpeed - REVERSE_ACCEL * dt);
+  } else if (effectiveBrake > 0) {
     newSpeed = Math.max(0, newSpeed - effectiveBrake * dt);
   } else if (effectiveAccel > 0 && newSpeed < vmax) {
     newSpeed = Math.min(vmax, newSpeed + effectiveAccel * dt);
@@ -130,8 +137,9 @@ export function stepBike(
   // (audit H-3). Steering alone never crashes the bike; collisions do.
   const grip = env.wet ? spec.wetLateralGrip : spec.dryLateralGrip;
   const gripLimit = 9.81 * grip * clamp(env.surface, 0.1, 1.0);
+  const absSpeed = Math.abs(newSpeed);
   const maxYawRate =
-    newSpeed > 0.5 ? (gripLimit * STEER_SLIDE_ALLOWANCE) / newSpeed : Infinity;
+    absSpeed > 0.5 ? (gripLimit * STEER_SLIDE_ALLOWANCE) / absSpeed : Infinity;
 
   // Yaw rate from kinematic bicycle model, within the grip budget
   const rawYawRate = (newSpeed * Math.tan(newSteer)) / WHEELBASE;

@@ -114,7 +114,7 @@ export class MotorcycleController {
     const numCollisions = this.characterController.numComputedCollisions();
 
     let collisionSeverity: BikeCollisionSeverity | null = null;
-    const totalSpeedKmh = this.state.speed * 3.6;
+    const totalSpeedKmh = Math.abs(this.state.speed) * 3.6;
 
     if (numCollisions > 0) {
       // Find maximum impact velocity along collision normal

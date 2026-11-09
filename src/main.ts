@@ -1,4 +1,5 @@
 import { render, h } from 'preact';
+import { watchOverlayFocus } from './ui/gamepadNav';
 import { AudioManager } from './audio/AudioManager';
 import { getBikeDef } from './sim/economy/bikes';
 import { bindAudio } from './audio/bindAudio';
@@ -150,6 +151,8 @@ async function bootGame(): Promise<void> {
 
   // Bind reactive signals store to sim event bus
   bindEventBusToStore(gm.bus);
+  // Keyboard and pad focus move into a panel when it opens.
+  watchOverlayFocus();
   // Sound: the audio context starts on the first gesture; settings and sim events drive it.
   audio = new AudioManager();
   bindAudio(audio, gm.bus, settingsSignal, document);
@@ -445,7 +448,8 @@ function frame(now: number) {
     const objective = t(view.objectiveKey, { place: placeKey ? t(placeKey) : '' });
     const fare = activeReq?.initialFare;
 
-    const currentSpeedKmh = session.bike.speed * 3.6;
+    // Speed is signed (negative when reversing); the dial shows the magnitude.
+    const currentSpeedKmh = Math.abs(session.bike.speed) * 3.6;
     const fuelL = gm.economyManager.fuelLevel;
     const fuelMaxL = BALANCE.FUEL.tankL;
     const todayNetEarnings = gm.economy.dailyRevenue - gm.economy.dailyExpenses;

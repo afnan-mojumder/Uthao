@@ -198,6 +198,11 @@ export function loadSettings(): GameSettings {
   return memorySettings ? { ...memorySettings } : { ...DEFAULT_SETTINGS };
 }
 
+/** Mutes or unmutes all game sound and keeps the choice. */
+export function toggleMute(): void {
+  saveSettings({ ...settingsSignal.value, muted: !settingsSignal.value.muted });
+}
+
 export function saveSettings(settings: GameSettings): void {
   memorySettings = { ...settings };
   settingsSignal.value = settings;

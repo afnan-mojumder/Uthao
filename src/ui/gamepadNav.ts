@@ -14,6 +14,7 @@
 
 import { GamepadEdges, pickNeighbor, type Box, type NavDir } from '../input/gamepadNav';
 import { loadBindings } from '../input/bindings';
+import { effect } from '@preact/signals';
 import {
   choiceSignal,
   dayEndSignal,
@@ -21,6 +22,7 @@ import {
   garageSignal,
   journalSignal,
   negotiationSignal,
+  pausedSignal,
   phoneSignal,
   saveSlotsSignal,
   screenSignal,
@@ -39,7 +41,7 @@ const FOCUSABLE =
   'button, [role="button"], a[href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
 
 /** True when a menu, panel or overlay owns the screen, so the pad navigates it. */
-export function uiModalOpen(settingsOpen: boolean): boolean {
+export function uiModalOpen(settingsOpen: boolean, opts: { ignoreTutorial?: boolean } = {}): boolean {
   return (
     settingsOpen ||
     screenSignal.value !== 'game' ||
@@ -50,7 +52,7 @@ export function uiModalOpen(settingsOpen: boolean): boolean {
     garageSignal.value.open ||
     journalSignal.value ||
     tripSummarySignal.value !== null ||
-    tutorialSignal.value.active ||
+    (!opts.ignoreTutorial && tutorialSignal.value.active) ||
     saveSlotsSignal.value.isOpen ||
     phoneSignal.value.open
   );
@@ -94,8 +96,8 @@ export function confirmFocus(): void {
 }
 
 /** Sends a key through the same window listeners the keyboard uses. */
-export function dispatchKey(key: string): void {
-  window.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
+export function dispatchKey(key: string, code: string): void {
+  window.dispatchEvent(new KeyboardEvent('keydown', { key, code, bubbles: true }));
 }
 
 function firstGamepad(): Gamepad | null {
@@ -131,12 +133,12 @@ export function startGamepadNav(isSettingsOpen: () => boolean): () => void {
     } else if (uiModalOpen(isSettingsOpen())) {
       if (snap.dir) moveFocus(snap.dir);
       if (snap.pressed.includes(BTN_CONFIRM)) confirmFocus();
-      if (snap.pressed.includes(BTN_BACK)) dispatchKey('Escape');
+      if (snap.pressed.includes(BTN_BACK)) dispatchKey('Escape', 'Escape');
     }
 
-    if (snap.pressed.includes(BTN_PAUSE)) dispatchKey('Escape');
-    if (snap.pressed.includes(BTN_PHONE)) dispatchKey('Tab');
-    if (snap.pressed.includes(BTN_MAP)) dispatchKey('m');
+    if (snap.pressed.includes(BTN_PAUSE)) dispatchKey('Escape', 'Escape');
+    if (snap.pressed.includes(BTN_PHONE)) dispatchKey('Tab', 'Tab');
+    if (snap.pressed.includes(BTN_MAP)) dispatchKey('m', 'KeyM');
 
     frame = requestAnimationFrame(tick);
   };
@@ -146,4 +148,35 @@ export function startGamepadNav(isSettingsOpen: () => boolean): () => void {
     running = false;
     cancelAnimationFrame(frame);
   };
+}
+
+/**
+ * When a menu, panel or overlay opens, keyboard and pad focus move into it.
+ * Without this, focus stayed on whatever was behind (audit: overlays had no
+ * focus target on open). Returns the function that stops watching.
+ */
+export function watchOverlayFocus(): () => void {
+  let last = '';
+  return effect(() => {
+    const key = [
+      screenSignal.value,
+      journalSignal.value,
+      saveSlotsSignal.value.isOpen,
+      garageSignal.value.open,
+      pausedSignal.value,
+      choiceSignal.value.active,
+      negotiationSignal.value.active,
+      dayEndSignal.value.active,
+      endingSignal.value.active,
+      tripSummarySignal.value !== null,
+    ].join('|');
+    if (key === last) return;
+    last = key;
+    // Render first, then move focus, so the overlay's controls exist.
+    setTimeout(() => {
+      if (!uiModalOpen(false)) return;
+      const active = document.activeElement as HTMLElement | null;
+      if (!active || active === document.body) focusables()[0]?.focus();
+    }, 0);
+  });
 }

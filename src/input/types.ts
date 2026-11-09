@@ -38,6 +38,12 @@ export interface KeyboardBindings {
   choice1: string[];
   choice2: string[];
   choice3: string[];
+  /** Opens the garage. */
+  garage: string[];
+  /** Opens the rider journal. */
+  journal: string[];
+  /** Toggles all game sound. */
+  mute: string[];
 }
 
 export interface GamepadBindings {
