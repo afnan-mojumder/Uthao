@@ -90,6 +90,7 @@ export class GameSession {
   private readonly breakdownRng: Rng;
   private readonly fuelStations: { x: number; z: number }[] = [];
   private readonly teaStalls: { x: number; z: number }[] = [];
+  private lastAccidentEncounterMin = -Infinity;
   private tripReqId: string | null = null;
   private warnedWorn = false;
   private stallSec = 0;
@@ -423,6 +424,15 @@ export class GameSession {
         this.bike.speed *= 0.95;
       }
       this.gm.bus.emit('bike/collision', { severity, relSpeedKmh, otherKind: 'traffic' });
+      if (
+        severity === 'crash' &&
+        this.gm.eventDirector.enabled &&
+        this.gm.eventDirector.activeEncounter === null &&
+        this.gm.clock.minutes - this.lastAccidentEncounterMin >= 60
+      ) {
+        this.lastAccidentEncounterMin = this.gm.clock.minutes;
+        this.gm.eventDirector.forceStart('enc_accident_aftermath', this.gm.bus);
+      }
     }
     if (touching) return;
 
@@ -553,11 +563,13 @@ export class GameSession {
 
     if (this.autoRequests) {
       const dtMinutes = (dt * TIME_SCALE) / 60;
+      const eventDemandMult = this.gm.roadEvents.getDemandMultiplier();
       const newRequests = this.requests.tick(
         dtMinutes,
         this.gm.clock.minutes,
         this.gm.weather,
-        this.pose
+        this.pose,
+        this.requests.getRequestRateMultiplier() * eventDemandMult
       );
       for (const req of newRequests) {
         this.ride.offer(req);

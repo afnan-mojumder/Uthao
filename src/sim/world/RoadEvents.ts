@@ -1,5 +1,5 @@
 import type { EventBus, GameEvents } from '../../core/events';
-import type { RoadEvent, RoadSegment } from '../../core/types';
+import type { RoadEvent, RoadSegment, WeatherKind } from '../../core/types';
 import { Rng } from '../../core/rng';
 import type { RoadNetwork } from '../road/RoadNetwork';
 
@@ -9,7 +9,10 @@ export type RoadEventKind =
   | 'market_congestion'
   | 'blocked_intersection'
   | 'diversion'
-  | 'closure';
+  | 'closure'
+  | 'vip_protocol'
+  | 'waterlogging'
+  | 'eid_rush';
 
 export interface ActiveRoadEvent extends RoadEvent {
   id: string;
@@ -231,6 +234,21 @@ export class RoadEventManager {
   }
 
   /**
+   * City-wide ride demand multiplier from active Dhaka events (e.g., Eid rush surge).
+   */
+  getDemandMultiplier(): number {
+    let congestionCount = 0;
+    for (const event of this.activeEvents.values()) {
+      if (!event.active) continue;
+      if (event.kind === 'eid_rush') return 1.35;
+      if (event.kind === 'waterlogging' || event.kind === 'market_congestion') {
+        congestionCount++;
+      }
+    }
+    return congestionCount >= 2 ? 1.15 : 1.0;
+  }
+
+  /**
    * Schedules a road event to activate at a future game minute.
    */
   scheduleEvent(event: ScheduledRoadEvent): void {
@@ -289,7 +307,7 @@ export class RoadEventManager {
   /**
    * Generates an authentic random Dhaka road event.
    */
-  generateRandomEvent(currentMinute = 0): ActiveRoadEvent | null {
+  generateRandomEvent(currentMinute = 0, weather?: WeatherKind): ActiveRoadEvent | null {
     if (!this.network) return null;
     const segments = this.network.getAllSegments();
     if (segments.length === 0) return null;
@@ -301,15 +319,27 @@ export class RoadEventManager {
       'blocked_intersection',
       'diversion',
       'closure',
+      'vip_protocol',
+      'waterlogging',
+      'eid_rush',
     ];
+    if (weather === 'lightRain' || weather === 'heavyRain') {
+      // Rain makes waterlogging much more likely on Dhaka streets.
+      kinds.push('waterlogging', 'waterlogging', 'waterlogging');
+    }
 
     const kind = this.rng.pick(kinds);
     let eligibleSegments: RoadSegment[];
 
-    if (kind === 'market_congestion') {
+    if (kind === 'market_congestion' || kind === 'eid_rush') {
       eligibleSegments = segments.filter((s) => s.roadType === 'market');
       if (eligibleSegments.length === 0) eligibleSegments = segments;
-    } else if (kind === 'diversion' || kind === 'closure') {
+    } else if (kind === 'waterlogging') {
+      eligibleSegments = segments.filter(
+        (s) => s.roadType === 'alley' || s.roadType === 'service' || s.roadType === 'market'
+      );
+      if (eligibleSegments.length === 0) eligibleSegments = segments;
+    } else if (kind === 'diversion' || kind === 'closure' || kind === 'vip_protocol') {
       eligibleSegments = segments.filter((s) => !s.divided || s.lanes <= 2);
       if (eligibleSegments.length === 0) eligibleSegments = segments;
     } else {
@@ -319,7 +349,7 @@ export class RoadEventManager {
     const seg = this.rng.pick(eligibleSegments);
     const id = `re_rand_${++this.nextEventSeq}_${seg.segmentId}`;
 
-    const duration = this.rng.range(30, 180);
+    let duration = this.rng.range(30, 180);
 
     let closesSegment = false;
     let speedCapKmh: number | undefined;
@@ -365,6 +395,32 @@ export class RoadEventManager {
         title = {
           bn: 'রোড ডাইভারশন',
           en: 'Traffic Diversion',
+        };
+        break;
+      case 'vip_protocol':
+        closesSegment = true;
+        duration = this.rng.range(20, 45);
+        title = {
+          bn: 'ভিআইপি প্রোটোকল',
+          en: 'VIP Protocol Closure',
+        };
+        break;
+      case 'waterlogging':
+        speedCapKmh = 12;
+        congestionMultiplier = 2.2;
+        duration = this.rng.range(45, 120);
+        title = {
+          bn: 'জলাবদ্ধতা',
+          en: 'Waterlogging Detour',
+        };
+        break;
+      case 'eid_rush':
+        speedCapKmh = 15;
+        congestionMultiplier = 2.8;
+        duration = this.rng.range(60, 150);
+        title = {
+          bn: 'ঈদের ভিড়',
+          en: 'Eid Rush Surge',
         };
         break;
       case 'closure':

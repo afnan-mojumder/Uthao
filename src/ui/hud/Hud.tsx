@@ -1,4 +1,5 @@
 import { render } from 'preact';
+import { signal, type Signal } from '@preact/signals';
 import { passengerHintKey } from './passengerHint';
 import type { JSX } from 'preact';
 import { t } from '../i18n';
@@ -599,6 +600,10 @@ export function HudView({ state }: { state: HudState }): JSX.Element {
   );
 }
 
+function HudSignalRoot({ stateSignal }: { stateSignal: Signal<HudState> }): JSX.Element {
+  return <HudView state={stateSignal.value} />;
+}
+
 export class Hud {
   private container: HTMLDivElement;
   private state: HudState = {
@@ -613,14 +618,16 @@ export class Hud {
     shiftDay: 1,
     rating: 5.0,
   };
+  private readonly stateSignal: Signal<HudState>;
 
   constructor(parent?: HTMLElement) {
+    this.stateSignal = signal(this.state);
     if (typeof document !== 'undefined') {
       const targetParent = parent ?? document.body;
       this.container = document.createElement('div');
       this.container.id = 'hud-root';
       targetParent.appendChild(this.container);
-      this.render();
+      render(<HudSignalRoot stateSignal={this.stateSignal} />, this.container);
     } else {
       this.container = { id: 'hud-root' } as unknown as HTMLDivElement;
     }
@@ -628,21 +635,17 @@ export class Hud {
 
   update(state: Partial<HudState>): void {
     this.state = { ...this.state, ...state };
-    this.render();
+    this.stateSignal.value = this.state;
   }
 
   getState(): HudState {
     return { ...this.state };
   }
 
-  private render(): void {
-    if (typeof document !== 'undefined' && this.container && 'appendChild' in this.container) {
-      render(<HudView state={this.state} />, this.container);
-    }
-  }
-
   destroy(): void {
-    render(null, this.container);
-    this.container.remove();
+    if (typeof document !== 'undefined' && this.container && 'remove' in this.container) {
+      render(null, this.container);
+      this.container.remove();
+    }
   }
 }

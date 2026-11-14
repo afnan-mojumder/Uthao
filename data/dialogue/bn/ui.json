@@ -281,5 +281,10 @@
   "trip.consequence.offAppUnpaid": "অ্যাপ ছাড়া ভাড়া পরিশোধ হয়নি",
   "trip.consequence.disputed": "যাত্রী রাইডটি বিতর্কিত করেছেন",
   "settings.prototype_note": "এই বিল্ডে এখনও নেই",
-  "save.failed": "সেভ করা যায়নি: ব্রাউজার গেম সংরক্ষণ করতে দেয়নি। জায়গা খালি করে আবার চেষ্টা করুন।"
+  "save.failed": "সেভ করা যায়নি: ব্রাউজার গেম সংরক্ষণ করতে দেয়নি। জায়গা খালি করে আবার চেষ্টা করুন।",
+  "tutorial.nego.title": "ভাড়া দরদাম টিউটোরিয়াল",
+  "tutorial.nego.passenger_label": "নাবিলা • ছাত্রী",
+  "tutorial.nego.offer_label": "যাত্রীর প্রস্তাব:",
+  "tutorial.nego.agreed_label": "চূড়ান্ত ভাড়া: ৳{fare}",
+  "tutorial.nego.start_ride": "ক্যাম্পাস গেটে যাত্রা শুরু"
 }

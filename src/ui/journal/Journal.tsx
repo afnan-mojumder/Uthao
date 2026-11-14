@@ -43,7 +43,7 @@ export function Journal({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        zIndex: 100,
+        zIndex: 9100,
         color: '#f8fafc',
         fontFamily: "'Noto Sans Bengali', system-ui, sans-serif",
       }}

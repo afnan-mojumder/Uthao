@@ -36,7 +36,7 @@ export function ChoiceCardView({
         boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.7), 0 8px 10px -6px rgba(0, 0, 0, 0.7)',
         borderRadius: '16px',
         padding: '20px 24px',
-        zIndex: 9998,
+        zIndex: 9550,
         color: '#f8fafc',
         fontFamily: 'system-ui, sans-serif',
         pointerEvents: 'auto',

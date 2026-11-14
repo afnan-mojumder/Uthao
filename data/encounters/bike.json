@@ -42,5 +42,48 @@
         ]
       }
     ]
+  },
+  {
+    "id": "enc_accident_aftermath",
+    "category": "bike",
+    "trigger": {
+      "custom": "accident"
+    },
+    "weight": 5,
+    "cooldownMin": 60,
+    "oncePerDay": false,
+    "lineKey": "encounter.accident.title",
+    "choices": [
+      {
+        "id": "check_and_settle",
+        "labelKey": "encounter.accident.choice.settle",
+        "requires": {
+          "minCash": 300
+        },
+        "effects": [
+          { "type": "money", "amount": -300, "kind": "fine" },
+          { "type": "time", "min": 10 },
+          { "type": "localTrust", "delta": 4 }
+        ]
+      },
+      {
+        "id": "apologize_and_continue",
+        "labelKey": "encounter.accident.choice.apologize",
+        "effects": [
+          { "type": "time", "min": 6 },
+          { "type": "localTrust", "delta": -1 },
+          { "type": "rating", "delta": -0.2 }
+        ]
+      },
+      {
+        "id": "flee_scene",
+        "labelKey": "encounter.accident.choice.flee",
+        "effects": [
+          { "type": "localTrust", "delta": -8 },
+          { "type": "rating", "delta": -0.5 },
+          { "type": "flag", "key": "fledAccident", "value": true }
+        ]
+      }
+    ]
   }
 ]

@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import type { BuildingLot } from '../sim/schemas';
 import type { SignageAtlas } from './signage';
+import { getFacadeTexture, getWindowEmissiveTexture } from './textures';
 
 export interface BuildingsBuildResult {
   group: THREE.Group;
@@ -33,10 +34,14 @@ export class BuildingBuilder {
   constructor(signageAtlas?: SignageAtlas) {
     this.signageAtlas = signageAtlas;
 
+    const winEmissiveTex = getWindowEmissiveTexture();
     this.windowMat = new THREE.MeshStandardMaterial({
       color: 0x1f2937, // Tinted glass
-      roughness: 0.1,
-      metalness: 0.8,
+      roughness: 0.15,
+      metalness: 0.75,
+      emissive: 0xffd27d,
+      ...(winEmissiveTex ? { emissiveMap: winEmissiveTex } : {}),
+      emissiveIntensity: 0,
     });
 
     this.grillMat = new THREE.MeshStandardMaterial({
@@ -63,13 +68,20 @@ export class BuildingBuilder {
     });
   }
 
+  /** Controls warm lit window intensity at dusk/night (0 = off, 1 = full night). */
+  setNightGlow(glow01: number): void {
+    this.windowMat.emissiveIntensity = Math.max(0, Math.min(1, glow01)) * 0.9;
+  }
+
   private getFacadeMaterial(colorHex: number): THREE.MeshStandardMaterial {
     let mat = this.materials.get(colorHex);
     if (!mat) {
+      const facadeTex = getFacadeTexture();
       mat = new THREE.MeshStandardMaterial({
         color: colorHex,
-        roughness: 0.8,
-        metalness: 0.1,
+        ...(facadeTex ? { map: facadeTex } : {}),
+        roughness: 0.85,
+        metalness: 0.05,
       });
       this.materials.set(colorHex, mat);
     }

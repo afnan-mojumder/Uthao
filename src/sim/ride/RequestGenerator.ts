@@ -499,9 +499,20 @@ export class RequestGenerator {
       }
     }
 
-    // Street hails: pedestrians near player within 40m
+    // Street hails: pedestrians near player within 40m (higher near demand POIs and in rain)
     if (playerPose) {
-      const streetHailProb = 0.2 * timeMult * dtMinutes;
+      let nearDemandZone = false;
+      for (const id of this.demandNodeIds) {
+        const node = this.network.getNode(id);
+        if (node && distance2d(playerPose.x, playerPose.z, node.x, node.z) <= 60) {
+          nearDemandZone = true;
+          break;
+        }
+      }
+      const zoneMult = nearDemandZone ? 1.4 : 1.0;
+      const rainHailMult =
+        weather === 'lightRain' || weather === 'heavyRain' ? 1.25 : 1.0;
+      const streetHailProb = 0.2 * timeMult * zoneMult * rainHailMult * dtMinutes;
       if (this.rng.chance(streetHailProb)) {
         const hail = this.sampleStreetHail(playerPose, currentMinute, weather);
         if (hail) {

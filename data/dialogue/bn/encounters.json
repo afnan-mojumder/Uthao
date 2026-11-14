@@ -61,5 +61,16 @@
   "encounter.wait_errand.title": "যাত্রী বলল: 'ফার্মেসী থেকে ওষুধটা নিয়া আসি, ৫ মিনিট একটু দাঁড়াবেন ভাই?'",
   "encounter.wait_errand.choice.fee": "৩০ টাকা ওয়েটিং চার্জের শর্তে অপেক্ষা করতে রাজি হন",
   "encounter.wait_errand.choice.free": "কোনো অতিরিক্ত টাকা না চেয়ে মন খুলে অপেক্ষা করুন",
-  "encounter.wait_errand.choice.end": "এখানেই ট্রিপ শেষ করে দিন যাতে পরে আবার বুক করতে পারে"
+  "encounter.wait_errand.choice.end": "এখানেই ট্রিপ শেষ করে দিন যাতে পরে আবার বুক করতে পারে",
+
+  "encounter.police_stop.title": "ট্রাফিক সার্জেন্ট রাস্তায় হাত তুলে সিগন্যাল ও কাগজপত্র চেক করার জন্য আপনাকে থামালেন!",
+  "encounter.police_stop.choice.pay_fine": "সরকারি রসিদ নিয়ে ৪০০ টাকা জরিমানা পরিশোধ করুন",
+  "encounter.police_stop.choice.explain": "ভদ্রভাবে পরিস্থিতি বুঝিয়ে নিজের পরিষ্কার রেকর্ড দেখান",
+  "encounter.police_stop.choice.offer_bribe": "ঝামেলা এড়াতে চুপচাপ ১৫০ টাকা 'চা-পানি' দিতে চান",
+  "encounter.police_stop.choice.flee": "থ্রটল ঘুরিয়ে ভিড়ের ফাঁক গলে পালানোর চেষ্টা করুন",
+
+  "encounter.accident.title": "জোরে ধাক্কা লেগেছে! বাইক সামলে ওঠার আগেই আশপাশে লোকজন জমে যাচ্ছে।",
+  "encounter.accident.choice.settle": "সবার খোঁজ নিন এবং ক্ষতিপূরণ ও চিকিৎসার জন্য ৩০০ টাকা দিন",
+  "encounter.accident.choice.apologize": "আন্তরিকভাবে দুঃখ প্রকাশ করে যোগাযোগের নম্বর দিন",
+  "encounter.accident.choice.flee": "লোকজন ঘিরে ধরার আগেই বাইক তুলে দ্রুত পালিয়ে যান"
 }

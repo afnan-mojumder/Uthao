@@ -278,11 +278,6 @@ export class RideManager {
     });
   }
 
-  /** @deprecated T8.1: use `agreeFare` (negotiation now precedes pickup). Removed in T12.5. */
-  completeNegotiation(finalFare: number): void {
-    this.agreeFare(finalFare);
-  }
-
   /** An emergency (crash, robbery, ...) pauses ride progress; `resumeTrip` continues it. */
   interrupt(): boolean {
     if (!this.trip.can('interrupt')) return false;

@@ -35,6 +35,7 @@ export default defineConfig({
         ],
       },
       workbox: {
+        maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
         globPatterns: ['**/*.{js,css,html,ico,png,svg,json,wasm}'],
         runtimeCaching: [
           {
@@ -52,6 +53,19 @@ export default defineConfig({
       },
     }),
   ],
+  build: {
+    chunkSizeWarningLimit: 2500,
+    rolldownOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules/three')) return 'vendor-three';
+          if (id.includes('node_modules/@dimforge/rapier3d')) return 'vendor-rapier';
+          if (id.includes('node_modules/preact') || id.includes('node_modules/@preact')) return 'vendor-preact';
+          if (id.includes('/data/districts/') || id.includes('/data/world.json')) return 'game-world-data';
+        },
+      },
+    },
+  },
   server: {
     host: true,
   },

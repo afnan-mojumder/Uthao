@@ -61,5 +61,16 @@
   "encounter.wait_errand.title": "Passenger asks: 'Wait here 5 minutes while I buy medicine, okay?'",
   "encounter.wait_errand.choice.fee": "Agree with a ৳30 waiting fee",
   "encounter.wait_errand.choice.free": "Wait generously without extra charge",
-  "encounter.wait_errand.choice.end": "End the trip here so they can book another later"
+  "encounter.wait_errand.choice.end": "End the trip here so they can book another later",
+
+  "encounter.police_stop.title": "A traffic sergeant steps into the lane and waves you over for a signal & document check!",
+  "encounter.police_stop.choice.pay_fine": "Accept the official citation and pay the ৳400 fine",
+  "encounter.police_stop.choice.explain": "Explain politely and show your clean riding record",
+  "encounter.police_stop.choice.offer_bribe": "Quietly offer ৳150 'tea money' to settle it fast",
+  "encounter.police_stop.choice.flee": "Rev the throttle and weave away into traffic",
+
+  "encounter.accident.title": "Heavy impact! Crowd gathers around as you steady the bike and check for injuries.",
+  "encounter.accident.choice.settle": "Check everyone is okay and pay ৳300 for damages & medical aid",
+  "encounter.accident.choice.apologize": "Apologize sincerely and exchange contact details",
+  "encounter.accident.choice.flee": "Pick up the bike and speed away before a crowd blocks the road"
 }

@@ -342,6 +342,9 @@ export class GameManager {
 
     if (currHour !== prevHour) {
       this.bus.emit('clock/hour', { hour: currHour % 24 });
+      if (this.roadEvents.getActiveEvents().length < 2 && this.rng.next() < 0.45) {
+        this.roadEvents.generateRandomEvent(this.clock.minutes, this.weather);
+      }
     }
 
     // Phone battery drain while navigating: 3% per game hour

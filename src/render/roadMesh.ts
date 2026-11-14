@@ -2,12 +2,46 @@ import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import type { RoadSegment, RoadNode } from '../core/types';
 import type { DistrictData } from '../sim/schemas';
+import { getAsphaltTexture, getSidewalkTexture } from './textures';
 
 export interface RoadBuildResult {
   group: THREE.Group;
   colliders: THREE.Object3D[];
   zebraCount: number;
   segmentCount: number;
+}
+
+export function kerbEndTrim(
+  seg: RoadSegment,
+  atStart: boolean,
+  segments: readonly RoadSegment[],
+  nodeMap: ReadonlyMap<string, { x: number; z: number }>
+): number {
+  const nodeId = atStart ? seg.startNodeId : seg.endNodeId;
+  const otherId = atStart ? seg.endNodeId : seg.startNodeId;
+  const here = nodeMap.get(nodeId);
+  const far = nodeMap.get(otherId);
+  if (!here || !far) return 0;
+  const ax = far.x - here.x;
+  const az = far.z - here.z;
+  const aLen = Math.hypot(ax, az);
+  if (aLen < 0.1) return 0;
+  let trim = 0;
+  for (const o of segments) {
+    if (o === seg) continue;
+    const oFarId =
+      o.startNodeId === nodeId ? o.endNodeId : o.endNodeId === nodeId ? o.startNodeId : null;
+    const oFar = oFarId ? nodeMap.get(oFarId) : undefined;
+    if (!oFar) continue;
+    const bx = oFar.x - here.x;
+    const bz = oFar.z - here.z;
+    const bLen = Math.hypot(bx, bz);
+    if (bLen < 0.1) continue;
+    const sin = Math.abs(ax * bz - az * bx) / (aLen * bLen);
+    if (sin < 0.2) continue; // (near-)collinear continuation, kerb carries on
+    trim = Math.max(trim, getRoadWidth(o) / 2 / Math.max(sin, 0.3));
+  }
+  return Math.min(trim, aLen / 2 - 0.05);
 }
 
 export function getRoadWidth(segment: RoadSegment): number {
@@ -46,15 +80,20 @@ function placedMesh(geo: THREE.BufferGeometry, mat: THREE.Material): THREE.Mesh 
 export class RoadMeshBuilder {
   private roadMat: THREE.MeshStandardMaterial;
   private kerbMat: THREE.MeshStandardMaterial;
+  private sidewalkMat: THREE.MeshStandardMaterial;
   private medianMat: THREE.MeshStandardMaterial;
   private markingMat: THREE.MeshBasicMaterial;
   private zebraMat: THREE.MeshBasicMaterial;
   private puddleMat: THREE.MeshStandardMaterial;
   private bumpMat: THREE.MeshStandardMaterial;
+  private poleMat: THREE.MeshStandardMaterial;
+  private wireMat: THREE.LineBasicMaterial;
 
   constructor() {
+    const asphaltTex = getAsphaltTexture();
     this.roadMat = new THREE.MeshStandardMaterial({
-      color: 0x1e2124, // Dhaka dark weathered asphalt
+      color: asphaltTex ? 0xd8dce0 : 0x262a2e, // Weathered Dhaka asphalt
+      ...(asphaltTex ? { map: asphaltTex } : {}),
       roughness: 0.85,
       metalness: 0.05,
     });
@@ -62,6 +101,13 @@ export class RoadMeshBuilder {
     this.kerbMat = new THREE.MeshStandardMaterial({
       color: 0x8a8a8a, // Concrete kerb grey
       roughness: 0.9,
+    });
+
+    const sidewalkTex = getSidewalkTexture();
+    this.sidewalkMat = new THREE.MeshStandardMaterial({
+      color: sidewalkTex ? 0xffffff : 0x7c7870,
+      ...(sidewalkTex ? { map: sidewalkTex } : {}),
+      roughness: 0.92,
     });
 
     this.medianMat = new THREE.MeshStandardMaterial({
@@ -87,6 +133,25 @@ export class RoadMeshBuilder {
       color: 0xd97706, // Amber/yellow speed bump
       roughness: 0.7,
     });
+
+    this.poleMat = new THREE.MeshStandardMaterial({
+      color: 0x475569,
+      roughness: 0.7,
+      metalness: 0.4,
+    });
+
+    this.wireMat = new THREE.LineBasicMaterial({
+      color: 0x1e293b,
+      transparent: true,
+      opacity: 0.75,
+    });
+  }
+
+  /** Adjusts asphalt roughness/metalness for monsoon wetness (0 = dry, 1 = soaked). */
+  setWetness(wet01: number): void {
+    const w = Math.max(0, Math.min(1, wet01));
+    this.roadMat.roughness = 0.85 - w * 0.67;
+    this.roadMat.metalness = 0.05 + w * 0.25;
   }
 
   build(district: DistrictData): RoadBuildResult {
@@ -142,36 +207,116 @@ export class RoadMeshBuilder {
       roadMesh.receiveShadow = true;
       group.add(roadMesh);
 
-      // Kerbs along left and right edges
+      // Kerbs along left and right edges, trimmed at junctions so they don't cut across intersections
       const kerbHeight = 0.18;
       const kerbWidth = 0.28;
-      const kerbGeo = new THREE.BoxGeometry(kerbWidth, kerbHeight, len);
+      const startTrim = kerbEndTrim(seg, true, district.segments, nodeMap);
+      const endTrim = kerbEndTrim(seg, false, district.segments, nodeMap);
+      const kerbLen = len - startTrim - endTrim;
 
-      // Left kerb
-      const leftKerb = new THREE.Mesh(kerbGeo, this.kerbMat);
-      leftKerb.position.set(
-        midX - (nx * (width / 2 + kerbWidth / 2)),
-        kerbHeight / 2,
-        midZ - (nz * (width / 2 + kerbWidth / 2))
-      );
-      leftKerb.rotation.y = rotY;
-      leftKerb.receiveShadow = true;
-      leftKerb.castShadow = true;
-      group.add(leftKerb);
-      colliders.push(leftKerb);
+      if (kerbLen > 0.2) {
+        const kerbShift = (startTrim - endTrim) / 2;
+        const kMidX = midX + (dx / len) * kerbShift;
+        const kMidZ = midZ + (dz / len) * kerbShift;
+        const kerbGeo = new THREE.BoxGeometry(kerbWidth, kerbHeight, kerbLen);
 
-      // Right kerb
-      const rightKerb = new THREE.Mesh(kerbGeo, this.kerbMat);
-      rightKerb.position.set(
-        midX + (nx * (width / 2 + kerbWidth / 2)),
-        kerbHeight / 2,
-        midZ + (nz * (width / 2 + kerbWidth / 2))
-      );
-      rightKerb.rotation.y = rotY;
-      rightKerb.receiveShadow = true;
-      rightKerb.castShadow = true;
-      group.add(rightKerb);
-      colliders.push(rightKerb);
+        // Left kerb
+        const leftKerb = new THREE.Mesh(kerbGeo, this.kerbMat);
+        leftKerb.position.set(
+          kMidX - (nx * (width / 2 + kerbWidth / 2)),
+          kerbHeight / 2,
+          kMidZ - (nz * (width / 2 + kerbWidth / 2))
+        );
+        leftKerb.rotation.y = rotY;
+        leftKerb.receiveShadow = true;
+        leftKerb.castShadow = true;
+        group.add(leftKerb);
+        colliders.push(leftKerb);
+
+        // Right kerb
+        const rightKerb = new THREE.Mesh(kerbGeo, this.kerbMat);
+        rightKerb.position.set(
+          kMidX + (nx * (width / 2 + kerbWidth / 2)),
+          kerbHeight / 2,
+          kMidZ + (nz * (width / 2 + kerbWidth / 2))
+        );
+        rightKerb.rotation.y = rotY;
+        rightKerb.receiveShadow = true;
+        rightKerb.castShadow = true;
+        group.add(rightKerb);
+        colliders.push(rightKerb);
+
+        // Sidewalks & overhead Dhaka utility poles/wires on main/residential/market streets
+        if (seg.roadType !== 'alley' && seg.roadType !== 'flyover') {
+          const swWidth = 1.6;
+          const swHeight = 0.12;
+          const swGeo = new THREE.BoxGeometry(swWidth, swHeight, kerbLen);
+          const swOffset = width / 2 + kerbWidth + swWidth / 2;
+
+          const leftSw = new THREE.Mesh(swGeo, this.sidewalkMat);
+          leftSw.position.set(kMidX - nx * swOffset, swHeight / 2, kMidZ - nz * swOffset);
+          leftSw.rotation.y = rotY;
+          leftSw.receiveShadow = true;
+          group.add(leftSw);
+
+          const rightSw = new THREE.Mesh(swGeo, this.sidewalkMat);
+          rightSw.position.set(kMidX + nx * swOffset, swHeight / 2, kMidZ + nz * swOffset);
+          rightSw.rotation.y = rotY;
+          rightSw.receiveShadow = true;
+          group.add(rightSw);
+
+          if ((seg.roadType === 'main' || seg.roadType === 'market') && kerbLen > 24) {
+            const poleSpacing = 32;
+            const numPoles = Math.floor(kerbLen / poleSpacing);
+            if (numPoles >= 2) {
+              const poleH = 6.2;
+              const poleGeo = new THREE.CylinderGeometry(0.08, 0.11, poleH, 6);
+              const poleGeos: THREE.BufferGeometry[] = [];
+              const wireVerts: number[] = [];
+              const dirX = dx / len;
+              const dirZ = dz / len;
+              const poleLateral = width / 2 + kerbWidth + 0.35;
+
+              let prevX = 0;
+              let prevZ = 0;
+              for (let p = 0; p < numPoles; p++) {
+                const along = -kerbLen / 2 + (p + 0.5) * (kerbLen / numPoles);
+                const px = kMidX - nx * poleLateral + dirX * along;
+                const pz = kMidZ - nz * poleLateral + dirZ * along;
+                const g = poleGeo.clone();
+                g.translate(px, poleH / 2, pz);
+                poleGeos.push(g);
+
+                if (p > 0) {
+                  // Two sagging overhead wires between adjacent poles
+                  const midWX = (prevX + px) / 2;
+                  const midWZ = (prevZ + pz) / 2;
+                  for (const hOff of [5.4, 5.85]) {
+                    wireVerts.push(prevX, hOff, prevZ, midWX, hOff - 0.35, midWZ);
+                    wireVerts.push(midWX, hOff - 0.35, midWZ, px, hOff, pz);
+                  }
+                }
+                prevX = px;
+                prevZ = pz;
+              }
+              const mergedPoles = mergeGeometries(poleGeos, false);
+              if (mergedPoles) {
+                group.add(placedMesh(mergedPoles, this.poleMat));
+              }
+              if (wireVerts.length > 0) {
+                const wireGeo = new THREE.BufferGeometry();
+                wireGeo.setAttribute('position', new THREE.Float32BufferAttribute(wireVerts, 3));
+                wireGeo.computeBoundingBox();
+                const c = wireGeo.boundingBox!.getCenter(new THREE.Vector3());
+                wireGeo.translate(-c.x, 0, -c.z);
+                const wireLines = new THREE.LineSegments(wireGeo, this.wireMat);
+                wireLines.position.set(c.x, 0, c.z);
+                group.add(wireLines);
+              }
+            }
+          }
+        }
+      }
 
       // Raised median on divided roads
       if (seg.divided) {

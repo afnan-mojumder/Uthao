@@ -4,7 +4,8 @@ import type { DistrictId } from '../core/types';
 import type { DistrictData, WorldData } from '../sim/schemas';
 import type { PhysicsWorld } from '../physics/PhysicsWorld';
 import { SignageAtlas } from './signage';
-import { RoadMeshBuilder, getRoadWidth } from './roadMesh';
+import { RoadMeshBuilder, getRoadWidth, kerbEndTrim } from './roadMesh';
+export { kerbEndTrim };
 import { BuildingBuilder } from './buildings';
 import {
   LodManager,
@@ -17,48 +18,6 @@ import {
 export interface CityBuilderOptions {
   signageAtlas?: SignageAtlas;
   chunkSize?: number;
-}
-
-type KerbSeg = DistrictData['segments'][number];
-
-/**
- * T9.1: metres to cut off the kerb collider at one end of `seg` so it does not
- * wall off roads that join at that node (a kerb running past a junction made
- * the cross-road impassable to the Rapier bike controller).
- * ponytail: setback = joining road's half-width / sin(angle); collinear
- * continuations are ignored. Exact kerb-return curves if junctions need polish.
- */
-export function kerbEndTrim(
-  seg: KerbSeg,
-  atStart: boolean,
-  segments: readonly KerbSeg[],
-  nodeMap: ReadonlyMap<string, { x: number; z: number }>
-): number {
-  const nodeId = atStart ? seg.startNodeId : seg.endNodeId;
-  const otherId = atStart ? seg.endNodeId : seg.startNodeId;
-  const here = nodeMap.get(nodeId);
-  const far = nodeMap.get(otherId);
-  if (!here || !far) return 0;
-  const ax = far.x - here.x;
-  const az = far.z - here.z;
-  const aLen = Math.hypot(ax, az);
-  if (aLen < 0.1) return 0;
-  let trim = 0;
-  for (const o of segments) {
-    if (o === seg) continue;
-    const oFarId =
-      o.startNodeId === nodeId ? o.endNodeId : o.endNodeId === nodeId ? o.startNodeId : null;
-    const oFar = oFarId ? nodeMap.get(oFarId) : undefined;
-    if (!oFar) continue;
-    const bx = oFar.x - here.x;
-    const bz = oFar.z - here.z;
-    const bLen = Math.hypot(bx, bz);
-    if (bLen < 0.1) continue;
-    const sin = Math.abs(ax * bz - az * bx) / (aLen * bLen);
-    if (sin < 0.2) continue; // (near-)collinear continuation, kerb carries on
-    trim = Math.max(trim, getRoadWidth(o) / 2 / Math.max(sin, 0.3));
-  }
-  return Math.min(trim, aLen / 2 - 0.05);
 }
 
 export interface StaticBoxDesc {
@@ -81,6 +40,7 @@ interface BuildDistrictTask {
   kerbIndex: number;
   roadColliders: THREE.Object3D[];
   buildingColliders: THREE.Object3D[];
+  buildingGroups: { obj: THREE.Object3D; x: number; z: number }[];
   chunkObjects: { obj: THREE.Object3D; x: number; z: number }[];
   physicsColliders: RAPIER.Collider[];
   staticBoxDescs: StaticBoxDesc[];
@@ -173,6 +133,7 @@ export class CityBuilder {
       kerbIndex: 0,
       roadColliders: [],
       buildingColliders: [],
+      buildingGroups: [],
       chunkObjects: [],
       physicsColliders: [],
       staticBoxDescs: [],
@@ -208,7 +169,7 @@ export class CityBuilder {
       const bResult = this.buildingBuilder.build(batch);
       task.buildingColliders.push(...bResult.colliders);
       for (const bGroup of bResult.group.children) {
-        task.chunkObjects.push({
+        task.buildingGroups.push({
           obj: bGroup,
           x: bGroup.position.x,
           z: bGroup.position.z,
@@ -348,6 +309,11 @@ export class CityBuilder {
     }
 
     if (task.stage === 'finalize') {
+      // 0. Batch building sub-meshes per spatial chunk and material into BatchedMesh
+      //    to drastically cut draw calls while preserving 100m LOD chunk culling.
+      const batchedBuildings = this.batchBuildingGroups(task.buildingGroups);
+      task.chunkObjects.push(...batchedBuildings);
+
       // 1. Commit objects to LodManager
       for (const item of task.chunkObjects) {
         this.lodManager.addObject(item.obj, item.x, item.z);
@@ -515,5 +481,90 @@ export class CityBuilder {
 
     // 4. Update spatial chunk visibility culling
     this.lodManager.update(cameraPos, maxDistance);
+  }
+
+  private batchBuildingGroups(
+    buildingGroups: { obj: THREE.Object3D; x: number; z: number }[]
+  ): { obj: THREE.Object3D; x: number; z: number }[] {
+    if (buildingGroups.length === 0) return [];
+    const chunkSize = this.lodManager.chunkSize;
+    const result: { obj: THREE.Object3D; x: number; z: number }[] = [];
+
+    type BatchItem = { geometry: THREE.BufferGeometry; matrix: THREE.Matrix4 };
+    type Bucket = {
+      chunkX: number;
+      chunkZ: number;
+      material: THREE.Material;
+      castShadow: boolean;
+      receiveShadow: boolean;
+      items: BatchItem[];
+      vertexCount: number;
+      indexCount: number;
+    };
+    const buckets = new Map<string, Bucket>();
+
+    for (const entry of buildingGroups) {
+      entry.obj.updateMatrixWorld(true);
+      const cx = Math.floor(entry.x / chunkSize);
+      const cz = Math.floor(entry.z / chunkSize);
+      const chunkCenterX = (cx + 0.5) * chunkSize;
+      const chunkCenterZ = (cz + 0.5) * chunkSize;
+
+      entry.obj.traverse((child) => {
+        if (!(child instanceof THREE.Mesh)) return;
+        const mat = child.material;
+        if (Array.isArray(mat)) {
+          // Keep multi-material meshes unbatched as a safe fallback
+          const worldClone = child.clone();
+          worldClone.applyMatrix4(child.matrixWorld);
+          result.push({ obj: worldClone, x: entry.x, z: entry.z });
+          return;
+        }
+        const geo = child.geometry;
+        const posAttr = geo.getAttribute('position');
+        if (!posAttr) return;
+
+        const hasIndex = geo.index !== null;
+        const key = `${cx},${cz}|${mat.uuid}|${hasIndex ? 1 : 0}|${child.castShadow ? 1 : 0}|${child.receiveShadow ? 1 : 0}`;
+        let bucket = buckets.get(key);
+        if (!bucket) {
+          bucket = {
+            chunkX: chunkCenterX,
+            chunkZ: chunkCenterZ,
+            material: mat,
+            castShadow: child.castShadow,
+            receiveShadow: child.receiveShadow,
+            items: [],
+            vertexCount: 0,
+            indexCount: 0,
+          };
+          buckets.set(key, bucket);
+        }
+        bucket.items.push({ geometry: geo, matrix: child.matrixWorld.clone() });
+        bucket.vertexCount += posAttr.count;
+        bucket.indexCount += geo.index ? geo.index.count : posAttr.count;
+      });
+    }
+
+    for (const bucket of buckets.values()) {
+      const batched = new THREE.BatchedMesh(
+        bucket.items.length,
+        bucket.vertexCount,
+        Math.max(bucket.indexCount, bucket.vertexCount),
+        bucket.material
+      );
+      batched.castShadow = bucket.castShadow;
+      batched.receiveShadow = bucket.receiveShadow;
+      for (const item of bucket.items) {
+        const geoId = batched.addGeometry(item.geometry);
+        const instId = batched.addInstance(geoId);
+        batched.setMatrixAt(instId, item.matrix);
+        item.geometry.dispose();
+      }
+      batched.computeBoundingSphere();
+      result.push({ obj: batched, x: bucket.chunkX, z: bucket.chunkZ });
+    }
+
+    return result;
   }
 }

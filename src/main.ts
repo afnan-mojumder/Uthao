@@ -123,6 +123,8 @@ async function bootGame(): Promise<void> {
     const uiRoot = document.getElementById('ui-root');
     if (uiRoot) {
       render(h(App, null), uiRoot);
+      const bootText = document.getElementById('boot-text');
+      if (bootText) bootText.style.display = 'none';
     }
   }
 
@@ -158,6 +160,7 @@ async function bootGame(): Promise<void> {
   bindAudio(audio, gm.bus, settingsSignal, document);
   // The bike slid at the grip limit: a tyre sound (H-4 for the ear).
   gm.bus.on('bike/wobble', () => audio.playWobble());
+  gm.bus.on('bike/nearMiss', () => audio.playNearMiss());
 
   // T7.3: real Rapier physics world, used by GameSession's MotorcycleController
   // (collisions/near-misses against colliders) and by CityBuilder (colliders
@@ -197,6 +200,10 @@ async function bootGame(): Promise<void> {
   if (canvas && hasWebGL2Support()) {
     renderer = Renderer.init(canvas, qualityChoice);
     loadRendererScene(renderer);
+    gm.bus.on('bike/collision', ({ severity }) => {
+      if (severity === 'crash') renderer?.cameraRig.triggerShake(0.45);
+      else if (severity === 'bump') renderer?.cameraRig.triggerShake(0.18);
+    });
     // Storefront signs follow a language change while playing.
     settingsSignal.subscribe((s) => renderer?.cityBuilder?.signageAtlas.setLanguage(s.language));
     // A quality change in Settings reaches the running renderer. A URL override still wins.

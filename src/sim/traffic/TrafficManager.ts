@@ -252,7 +252,7 @@ export class TrafficManager {
   maintainDensity(
     camera: CameraViewInfo,
     currentMinute: number,
-    baseTargetDensity = 12
+    baseTargetDensity = 24
   ): void {
     const timeMult = getTimeOfDayTrafficMultiplier(currentMinute);
     const targetCount = Math.round(baseTargetDensity * timeMult);

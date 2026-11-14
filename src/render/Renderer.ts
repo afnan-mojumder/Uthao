@@ -15,6 +15,7 @@ import type { DistrictData, WorldData } from '../sim/schemas';
 import type { PhysicsWorld } from '../physics/PhysicsWorld';
 import { CityBuilder } from './CityBuilder';
 import { PeopleRenderer } from './people';
+import { TimeOfDay } from '../sim/world/TimeOfDay';
 import type { PedestrianAgent } from '../sim/traffic/pedestrians';
 import type { TrafficAgent } from '../sim/traffic/TrafficManager';
 
@@ -37,10 +38,18 @@ export class Renderer {
   private colliders: THREE.Object3D[] = [];
   /** H-6: one ground plane in every mode, kept under the bike out to draw distance. */
   private ground: THREE.Mesh;
+  private skyDome: THREE.Mesh;
+  private skyUniforms: {
+    uTopColor: { value: THREE.Color };
+    uHorizonColor: { value: THREE.Color };
+  };
   private testSceneGroup?: THREE.Group;
   private prevBikePose = { x: 0, y: 0, z: 0, heading: 0, lean: 0, steer: 0 };
   private currBikePose = { x: 0, y: 0, z: 0, heading: 0, lean: 0, steer: 0 };
   private bikeSpeed = 0;
+  private readonly _bikePos = new THREE.Vector3();
+  private readonly _bikeGroundPos = { x: 0, y: 0, z: 0 };
+  private readonly _camPos = { x: 0, z: 0 };
 
   private constructor(
     canvas: HTMLCanvasElement,
@@ -57,6 +66,9 @@ export class Renderer {
       antialias: true,
       powerPreference: 'high-performance',
     });
+    this.webglRenderer.toneMapping = THREE.AgXToneMapping;
+    this.webglRenderer.toneMappingExposure = 1.05;
+    this.webglRenderer.outputColorSpace = THREE.SRGBColorSpace;
 
     this.applyQuality();
 
@@ -67,6 +79,39 @@ export class Renderer {
       50,
       this.qualityManager.config.drawDistance
     );
+
+    this.skyUniforms = {
+      uTopColor: { value: new THREE.Color(0x3b82f6) },
+      uHorizonColor: { value: new THREE.Color(0xbae6fd) },
+    };
+    this.skyDome = new THREE.Mesh(
+      new THREE.SphereGeometry(Math.max(120, this.qualityManager.config.drawDistance * 0.92), 16, 12),
+      new THREE.ShaderMaterial({
+        uniforms: this.skyUniforms,
+        side: THREE.BackSide,
+        depthWrite: false,
+        fog: false,
+        vertexShader: `
+          varying vec3 vWorldPos;
+          void main() {
+            vWorldPos = position;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          }
+        `,
+        fragmentShader: `
+          uniform vec3 uTopColor;
+          uniform vec3 uHorizonColor;
+          varying vec3 vWorldPos;
+          void main() {
+            float h = clamp(normalize(vWorldPos).y, 0.0, 1.0);
+            vec3 col = mix(uHorizonColor, uTopColor, pow(h, 0.55));
+            gl_FragColor = vec4(col, 1.0);
+          }
+        `,
+      })
+    );
+    this.skyDome.name = 'sky_dome';
+    this.scene.add(this.skyDome);
 
     const aspect = canvas.clientWidth / (canvas.clientHeight || 1);
     this.cameraRig = new CameraRig(
@@ -331,22 +376,42 @@ export class Renderer {
     this.markers.update(1 / 60);
 
     // Update Camera Rig
-    const bikePos = new THREE.Vector3(x, 0, z);
-    this.cameraRig.update(bikePos, heading, this.bikeSpeed, this.colliders);
+    this._bikePos.set(x, 0, z);
+    this.cameraRig.update(this._bikePos, heading, this.bikeSpeed, this.colliders, 1 / 60, lean);
 
     // Update Weather and Lighting FX
+    this._bikeGroundPos.x = x;
+    this._bikeGroundPos.z = z;
     this.weatherFx.update(
       1 / 60,
       snapshot.clock.minutes,
       snapshot.weather,
-      { x, y: 0, z },
+      this._bikeGroundPos,
       heading,
       false
     );
 
-    // Update CityBuilder LOD chunks and streaming
+    // Update sky dome gradient & position
+    this.skyDome.position.set(x, 0, z);
+    if (this.scene.background instanceof THREE.Color) {
+      this.skyUniforms.uTopColor.value.copy(this.scene.background);
+      if (this.scene.fog instanceof THREE.Fog) {
+        this.skyUniforms.uHorizonColor.value.copy(this.scene.fog.color);
+      } else {
+        this.skyUniforms.uHorizonColor.value.copy(this.scene.background);
+      }
+    }
+
+    // Update CityBuilder LOD chunks, streaming, monsoon road wetness & night windows
     if (this.cityBuilder) {
-      this.cityBuilder.update({ x, z }, this.qualityManager.config.drawDistance, 4);
+      const wet01 =
+        snapshot.weather === 'heavyRain' ? 1.0 : snapshot.weather === 'lightRain' ? 0.65 : 0.0;
+      this.cityBuilder.roadBuilder.setWetness(wet01);
+      const nightGlow = TimeOfDay.isStreetlightsActive(snapshot.clock.minutes) ? 1.0 : 0.0;
+      this.cityBuilder.buildingBuilder.setNightGlow(nightGlow);
+      this._camPos.x = x;
+      this._camPos.z = z;
+      this.cityBuilder.update(this._camPos, this.qualityManager.config.drawDistance, 4);
     }
 
     this.webglRenderer.render(this.scene, this.cameraRig.camera);

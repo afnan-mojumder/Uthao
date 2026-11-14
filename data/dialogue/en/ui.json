@@ -281,5 +281,10 @@
   "trip.consequence.offAppUnpaid": "Off-app fare went unpaid",
   "trip.consequence.disputed": "Passenger contested the ride (disputed)",
   "settings.prototype_note": "Not in this build yet",
-  "save.failed": "Could not save: the browser would not store the game. Free up space and try again."
+  "save.failed": "Could not save: the browser would not store the game. Free up space and try again.",
+  "tutorial.nego.title": "Fare Negotiation Tutorial",
+  "tutorial.nego.passenger_label": "Nabila • Student",
+  "tutorial.nego.offer_label": "Passenger Offer:",
+  "tutorial.nego.agreed_label": "Negotiation Outcome: Agreed Fare ৳{fare}",
+  "tutorial.nego.start_ride": "Begin Ride to Campus Gate"
 }

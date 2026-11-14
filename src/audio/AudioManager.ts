@@ -46,6 +46,8 @@ export class AudioManager {
   private ambientGain: GainNode | null = null;
 
   private engineOsc: OscillatorNode | null = null;
+  private engineSubOsc: OscillatorNode | null = null;
+  private engineFilter: BiquadFilterNode | null = null;
   private engineGain: GainNode | null = null;
   private hornGain: GainNode | null = null;
   private cityBedGain: GainNode | null = null;
@@ -123,7 +125,14 @@ export class AudioManager {
   public updateEngine(speed: number, throttle: number, running = true): void {
     if (!this.audioContext || !this.engineOsc || !this.engineGain) return;
     const now = this.audioContext.currentTime;
-    this.engineOsc.frequency.setTargetAtTime(this.engineFrequency(speed, throttle), now, 0.05);
+    const freq = this.engineFrequency(speed, throttle);
+    this.engineOsc.frequency.setTargetAtTime(freq, now, 0.05);
+    if (this.engineSubOsc) {
+      this.engineSubOsc.frequency.setTargetAtTime(freq * 0.5, now, 0.05);
+    }
+    if (this.engineFilter) {
+      this.engineFilter.frequency.setTargetAtTime(320 + throttle * 1100 + Math.min(speed, 25) * 18, now, 0.06);
+    }
     const targetVol = running ? 0.15 + throttle * 0.45 : 0;
     this.engineGain.gain.setTargetAtTime(targetVol, now, 0.05);
   }
@@ -158,6 +167,11 @@ export class AudioManager {
   /** Tyre scrub when the bike starts to wobble. */
   public playWobble(): void {
     this.noiseBurst(0.25, 0.2, 'bandpass', 1800);
+  }
+
+  /** Air whoosh when threading close past traffic at speed. */
+  public playNearMiss(): void {
+    this.noiseBurst(0.18, 0.28, 'bandpass', 1400);
   }
 
   public playImpact(severity: BikeCollisionSeverity): void {
@@ -267,25 +281,35 @@ export class AudioManager {
       const data = this.noise.getChannelData(0);
       for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
 
-      // Engine: sawtooth through a lowpass for a motorcycle thrum.
+      // Engine: sawtooth + sub-octave triangle through a throttle-modulated lowpass.
       this.engineOsc = ctx.createOscillator();
       this.engineOsc.type = 'sawtooth';
       this.engineOsc.frequency.setValueAtTime(55, now);
-      const filter = ctx.createBiquadFilter();
-      filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(320, now);
+      this.engineSubOsc = ctx.createOscillator();
+      this.engineSubOsc.type = 'triangle';
+      this.engineSubOsc.frequency.setValueAtTime(27.5, now);
+      this.engineFilter = ctx.createBiquadFilter();
+      this.engineFilter.type = 'lowpass';
+      this.engineFilter.frequency.setValueAtTime(320, now);
       this.engineGain = gainAt(0, this.sfxGain);
-      this.engineOsc.connect(filter);
-      filter.connect(this.engineGain);
+      this.engineOsc.connect(this.engineFilter);
+      this.engineSubOsc.connect(this.engineFilter);
+      this.engineFilter.connect(this.engineGain);
       this.engineOsc.start();
+      this.engineSubOsc.start();
 
-      // Horn: 440 Hz triangle, gated by its gain.
+      // Horn: dual-tone Dhaka bike horn (440 Hz + 554 Hz).
       const hornOsc = ctx.createOscillator();
       hornOsc.type = 'triangle';
       hornOsc.frequency.setValueAtTime(440, now);
+      const hornOsc2 = ctx.createOscillator();
+      hornOsc2.type = 'sawtooth';
+      hornOsc2.frequency.setValueAtTime(554.37, now);
       this.hornGain = gainAt(0, this.sfxGain);
       hornOsc.connect(this.hornGain);
+      hornOsc2.connect(this.hornGain);
       hornOsc.start();
+      hornOsc2.start();
 
       this.cityBedGain = gainAt(0, this.ambientGain);
       this.noiseBed(this.cityBedGain, 'lowpass', 400);

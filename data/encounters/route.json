@@ -286,5 +286,62 @@
         ]
       }
     ]
+  },
+  {
+    "id": "enc_police_signal_stop",
+    "category": "route",
+    "trigger": {
+      "phase": "roaming",
+      "roadType": ["main"],
+      "hours": [8, 22]
+    },
+    "weight": 4,
+    "cooldownMin": 150,
+    "oncePerDay": true,
+    "lineKey": "encounter.police_stop.title",
+    "choices": [
+      {
+        "id": "pay_fine",
+        "labelKey": "encounter.police_stop.choice.pay_fine",
+        "requires": {
+          "minCash": 400
+        },
+        "effects": [
+          { "type": "money", "amount": -400, "kind": "fine" },
+          { "type": "time", "min": 5 },
+          { "type": "localTrust", "delta": 3 }
+        ]
+      },
+      {
+        "id": "explain",
+        "labelKey": "encounter.police_stop.choice.explain",
+        "effects": [
+          { "type": "time", "min": 8 },
+          { "type": "localTrust", "delta": 1 },
+          { "type": "flag", "key": "contestedPoliceStop", "value": true }
+        ]
+      },
+      {
+        "id": "offer_bribe",
+        "labelKey": "encounter.police_stop.choice.offer_bribe",
+        "requires": {
+          "minCash": 150
+        },
+        "effects": [
+          { "type": "money", "amount": -150, "kind": "fine" },
+          { "type": "time", "min": 2 },
+          { "type": "localTrust", "delta": -4 },
+          { "type": "flag", "key": "bribedPolice", "value": true }
+        ]
+      },
+      {
+        "id": "flee_stop",
+        "labelKey": "encounter.police_stop.choice.flee",
+        "effects": [
+          { "type": "startMinigame", "kind": "flee" },
+          { "type": "localTrust", "delta": -6 }
+        ]
+      }
+    ]
   }
 ]

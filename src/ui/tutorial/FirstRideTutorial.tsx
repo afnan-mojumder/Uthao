@@ -49,7 +49,7 @@ export function FirstRideTutorial(props: FirstRideTutorialProps): JSX.Element | 
   const containerStyle = {
     position: 'fixed' as const,
     inset: 0,
-    zIndex: 9995,
+    zIndex: 9520,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -426,9 +426,9 @@ export function FirstRideTutorial(props: FirstRideTutorialProps): JSX.Element | 
         <div style={cardStyle}>
           <div style={headerStyle}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#f59e0b', fontWeight: 700 }}>
-              <span>🤝</span> Fare Negotiation Tutorial
+              <span>🤝</span> {t('tutorial.nego.title')}
             </div>
-            <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>Nabila • Student</span>
+            <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>{t('tutorial.nego.passenger_label')}</span>
           </div>
 
           <div style={{ padding: '24px' }}>
@@ -442,7 +442,7 @@ export function FirstRideTutorial(props: FirstRideTutorialProps): JSX.Element | 
               }}
             >
               <div style={{ fontSize: '0.85rem', color: '#fbbf24', fontWeight: 700, marginBottom: '4px' }}>
-                Passenger Offer:
+                {t('tutorial.nego.offer_label')}
               </div>
               <div style={{ fontSize: '1.05rem', color: '#f8fafc', fontWeight: 600 }}>
                 "{t('tutorial.nabila.dialogue')}"
@@ -460,7 +460,7 @@ export function FirstRideTutorial(props: FirstRideTutorialProps): JSX.Element | 
                 }}
               >
                 <div style={{ fontSize: '0.85rem', color: '#4ade80', fontWeight: 700, marginBottom: '4px' }}>
-                  Negotiation Outcome: Agreed Fare ৳{selectedOffer}
+                  {t('tutorial.nego.agreed_label', { fare: String(selectedOffer ?? 0) })}
                 </div>
                 <div style={{ fontSize: '1rem', color: '#f8fafc', fontWeight: 600 }}>
                   "{agreedPrompt}"
@@ -536,7 +536,7 @@ export function FirstRideTutorial(props: FirstRideTutorialProps): JSX.Element | 
                 cursor: agreedPrompt ? 'pointer' : 'not-allowed',
               }}
             >
-              <span>🏍️</span> Begin Ride to Campus Gate / ক্যাম্পাসে যাত্রা শুরু
+              <span>🏍️</span> {t('tutorial.nego.start_ride')}
             </button>
           </div>
         </div>
@@ -554,7 +554,7 @@ export function FirstRideTutorial(props: FirstRideTutorialProps): JSX.Element | 
           top: '20px',
           left: '50%',
           transform: 'translateX(-50%)',
-          zIndex: 9995,
+          zIndex: 9520,
           width: '90%',
           maxWidth: '600px',
           background: 'rgba(15, 23, 42, 0.92)',
