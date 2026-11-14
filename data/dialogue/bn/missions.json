@@ -92,5 +92,17 @@
   "obj_side_eid_rush_desc": "ঈদের বাড়তি চাপের ৪টি ট্রিপ সম্পন্ন করুন",
   "mission_side_garage_helper_title": "সাইড: গ্যারেজের সহকারী",
   "mission_side_garage_helper_desc": "পাইকারি মার্কেট থেকে কামাল ভাইয়ের বাইকের জন্য জরুরি স্পেয়ার পার্টস এনে দিন।",
-  "obj_side_garage_helper_desc": "গ্যারেজের পার্টস আনার ট্রিপে কামাল ভাইকে সহায়তা করুন"
+  "obj_side_garage_helper_desc": "গ্যারেজের পার্টস আনার ট্রিপে কামাল ভাইকে সহায়তা করুন",
+  "mission_side_puncture_patch_title": "সাইড: পাংচার সারাইয়ের দৌড়",
+  "mission_side_puncture_patch_desc": "যেকোনো ফুয়েল স্টেশনে গিয়ে চাকার হাওয়া ও জোড়া চেক করুন, তারপর নিরাপদে ১টি রাইড শেষ করুন।",
+  "obj_side_puncture_reach_fuel_desc": "যেকোনো ফুয়েল পাম্পে পৌঁছান",
+  "obj_side_puncture_safe_ride_desc": "দুর্ঘটনা ছাড়াই ১টি রাইড সম্পন্ন করুন",
+  "mission_side_accident_inspection_title": "সাইড: দুর্ঘটনা-পরবর্তী চেকআপ",
+  "mission_side_accident_inspection_desc": "নিরাপত্তার জন্য নিকটস্থ হাসপাতাল বা ক্লিনিকে ঘুরে আসুন, তারপর ১টি নিরাপদ রাইড দিন।",
+  "obj_side_accident_reach_hospital_desc": "যেকোনো হাসপাতাল বা ক্লিনিকে যান",
+  "obj_side_accident_safe_ride_desc": "দুর্ঘটনা ছাড়াই ১টি রাইড সম্পন্ন করুন",
+  "mission_side_police_clearance_title": "সাইড: কাগজপত্র ও ক্লিয়ারেন্স",
+  "mission_side_police_clearance_desc": "অফিস গেট বা চেকপোস্টে কাগজপত্র যাচাই করুন এবং ১টি পরিচ্ছন্ন রাইড সম্পন্ন করুন।",
+  "obj_side_police_reach_office_desc": "যেকোনো অফিস গেট বা চেকপোস্টে পৌঁছান",
+  "obj_side_police_clean_ride_desc": "দুর্ঘটনা ছাড়াই ১টি রাইড সম্পন্ন করুন"
 }

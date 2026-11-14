@@ -40,6 +40,18 @@ export interface HudState {
   destinationName?: string;
   etaMinutes?: number;
   nextTurn?: HudNavigationTurn | null;
+  activeMission?: {
+    titleKey: string;
+    objectiveDescKey: string;
+    progress: number;
+    target: number;
+    targetNameKey?: string;
+    targetDistM?: number;
+  } | null;
+  roadEventAlert?: {
+    title: string;
+    kind: string;
+  } | null;
 
   // Passenger Status
   passengerStatus?: HudPassengerInfo;
@@ -344,6 +356,50 @@ export function HudView({ state }: { state: HudState }): JSX.Element {
           {state.fare !== undefined && (
             <div style={{ fontSize: '14px', color: '#fbbf24', marginTop: '3px', fontWeight: 700 }}>
               {t('hud.fare', { fare: state.fare })}
+            </div>
+          )}
+          {state.activeMission && (
+            <div
+              data-testid="hud-active-mission"
+              style={{
+                marginTop: '6px',
+                paddingTop: '6px',
+                borderTop: '1px solid rgba(255, 255, 255, 0.14)',
+                fontSize: '13px',
+                color: '#cbd5e1',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '2px',
+              }}
+            >
+              <div style={{ color: '#38bdf8', fontWeight: 700 }}>
+                {t(state.activeMission.titleKey)}
+              </div>
+              <div>
+                {t(state.activeMission.objectiveDescKey)} ({state.activeMission.progress}/{state.activeMission.target})
+                {state.activeMission.targetDistM !== undefined && (
+                  <span style={{ color: '#fbbf24', marginLeft: '6px', fontWeight: 700 }}>
+                    • {Math.round(state.activeMission.targetDistM)}m
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+          {state.roadEventAlert && (
+            <div
+              data-testid="hud-road-event"
+              style={{
+                marginTop: '6px',
+                padding: '4px 10px',
+                borderRadius: '8px',
+                background: 'rgba(245, 158, 11, 0.2)',
+                border: '1px solid rgba(245, 158, 11, 0.45)',
+                color: '#fde68a',
+                fontSize: '12px',
+                fontWeight: 700,
+              }}
+            >
+              {t('hud.road_event')}: {state.roadEventAlert.title}
             </div>
           )}
         </div>

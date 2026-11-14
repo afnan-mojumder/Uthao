@@ -286,5 +286,7 @@
   "tutorial.nego.passenger_label": "Nabila • Student",
   "tutorial.nego.offer_label": "Passenger Offer:",
   "tutorial.nego.agreed_label": "Negotiation Outcome: Agreed Fare ৳{fare}",
-  "tutorial.nego.start_ride": "Begin Ride to Campus Gate"
+  "tutorial.nego.start_ride": "Begin Ride to Campus Gate",
+  "ui.mission_badge": "Mission",
+  "hud.road_event": "Road Alert"
 }

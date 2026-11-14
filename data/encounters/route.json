@@ -318,7 +318,8 @@
         "effects": [
           { "type": "time", "min": 8 },
           { "type": "localTrust", "delta": 1 },
-          { "type": "flag", "key": "contestedPoliceStop", "value": true }
+          { "type": "flag", "key": "contestedPoliceStop", "value": true },
+          { "type": "startMission", "missionId": "side_police_clearance" }
         ]
       },
       {

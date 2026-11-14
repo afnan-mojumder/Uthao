@@ -140,6 +140,7 @@ export class EventDirector {
     const instanceChoices: EncounterChoice[] = finalChoices.map((c) => ({
       id: c.id,
       labelKey: c.labelKey,
+      isMission: c.effects.some((e) => e.type === 'startMission'),
     }));
 
     const instance: EncounterInstance = {
@@ -176,6 +177,7 @@ export class EventDirector {
     const instanceChoices: EncounterChoice[] = def.choices.map((c) => ({
       id: c.id,
       labelKey: c.labelKey,
+      isMission: c.effects.some((e) => e.type === 'startMission'),
     }));
 
     const instance: EncounterInstance = {
@@ -296,7 +298,11 @@ export class EventDirector {
         id: `inst_${matchingDef.id}_${Math.floor(ctx.minute)}_${r.int(1000, 9999)}`,
         encounterId: matchingDef.id,
         lineKey: matchingDef.lineKey,
-        choices: validChoices.map((c) => ({ id: c.id, labelKey: c.labelKey })),
+        choices: validChoices.map((c) => ({
+          id: c.id,
+          labelKey: c.labelKey,
+          isMission: c.effects.some((e) => e.type === 'startMission'),
+        })),
       };
 
       this.activeEncounter = instance;

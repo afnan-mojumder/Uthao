@@ -465,9 +465,46 @@ function frame(now: number) {
     const rating = gm.reputationSystem.getAppRating();
     const isFirstPerson = renderer ? renderer.cameraRig.mode === 'firstPerson' : false;
 
+    let activeMissionHud: {
+      titleKey: string;
+      objectiveDescKey: string;
+      progress: number;
+      target: number;
+      targetNameKey?: string;
+      targetDistM?: number;
+    } | null = null;
+    const activeMissionId = gm.story.activeMissions[0];
+    if (activeMissionId) {
+      const mDef = gm.missionManager.missions.get(activeMissionId);
+      const states = gm.missionManager.getObjectiveStates(activeMissionId);
+      if (mDef && mDef.objectives.length > 0) {
+        const nextObj = mDef.objectives.find((o) => !states.find((s) => s.id === o.id)?.completed) ?? mDef.objectives[0]!;
+        const st = states.find((s) => s.id === nextObj.id);
+        const reachTarget = nextObj.type === 'reach' ? session.getNearestMissionTarget() : null;
+        activeMissionHud = {
+          titleKey: mDef.titleKey,
+          objectiveDescKey: nextObj.descKey,
+          progress: st?.progress ?? 0,
+          target: st?.target ?? 1,
+          targetNameKey: reachTarget?.nameKey,
+          targetDistM: reachTarget?.distanceM,
+        };
+      }
+    }
+
+    const activeRoadEv = gm.roadEvents.getActiveEvents().find((e) => e.active);
+    const roadEventAlert = activeRoadEv
+      ? {
+          title: activeRoadEv.title?.[settingsSignal.value.language] ?? activeRoadEv.kind,
+          kind: activeRoadEv.kind,
+        }
+      : null;
+
     hud.update({
       speedKmh: currentSpeedKmh,
       objectiveText: objective,
+      activeMission: activeMissionHud,
+      roadEventAlert,
       fare,
       fuelL,
       fuelMaxL,

@@ -272,6 +272,10 @@ export const EffectSchema = z.discriminatedUnion('type', [
     templateId: z.string(),
   }),
   z.object({
+    type: z.literal('startMission'),
+    missionId: z.string(),
+  }),
+  z.object({
     type: z.literal('injury'),
     // T7.5: bare (no target) is read as 'bike' for back-compat with data
     // written before this field existed.
@@ -400,6 +404,7 @@ export const MissionDefSchema = z.object({
   failConditions: z.array(MissionObjectiveSchema).optional(),
   onFail: z.array(EffectSchema).optional(),
   unlocks: z.array(z.string()).default([]),
+  triggerOnly: z.boolean().optional(),
 });
 
 export type MissionDef = z.infer<typeof MissionDefSchema>;

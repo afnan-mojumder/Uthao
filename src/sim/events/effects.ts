@@ -160,6 +160,11 @@ export function applyEffect(effect: Effect, ctx: EffectContext): void {
       break;
     }
 
+    case 'startMission': {
+      ctx.gameManager.missionManager.activateMission(effect.missionId);
+      break;
+    }
+
     case 'injury': {
       // T7.5: only damage the bike when that's actually the target; bare
       // (no target) data predates this field and is read as 'bike' for

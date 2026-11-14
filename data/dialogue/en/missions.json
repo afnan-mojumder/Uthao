@@ -92,5 +92,17 @@
   "obj_side_eid_rush_desc": "Complete 4 high-demand holiday trips",
   "mission_side_garage_helper_title": "Side: Garage Helper Day",
   "mission_side_garage_helper_desc": "Help Kamal bhai retrieve vital motorcycle spare parts from the wholesale market.",
-  "obj_side_garage_helper_desc": "Assist Kamal bhai on a garage parts run"
+  "obj_side_garage_helper_desc": "Assist Kamal bhai on a garage parts run",
+  "mission_side_puncture_patch_title": "Side: Puncture Patch Run",
+  "mission_side_puncture_patch_desc": "Ride to a fuel station pump to top up air and check the tire, then finish a clean ride.",
+  "obj_side_puncture_reach_fuel_desc": "Reach any fuel station",
+  "obj_side_puncture_safe_ride_desc": "Complete 1 crash-free ride",
+  "mission_side_accident_inspection_title": "Side: Post-Crash Checkup",
+  "mission_side_accident_inspection_desc": "Stop by a clinic or hospital to check yourself, then complete 1 safe ride.",
+  "obj_side_accident_reach_hospital_desc": "Visit any hospital or clinic",
+  "obj_side_accident_safe_ride_desc": "Complete 1 crash-free ride",
+  "mission_side_police_clearance_title": "Side: Papers & Clearance",
+  "mission_side_police_clearance_desc": "Report to an office gate / checkpoint to verify your papers, then finish 1 clean ride.",
+  "obj_side_police_reach_office_desc": "Reach an office gate / checkpoint",
+  "obj_side_police_clean_ride_desc": "Complete 1 crash-free ride"
 }

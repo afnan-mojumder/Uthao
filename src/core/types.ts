@@ -370,6 +370,7 @@ export interface ReputationDelta {
 export interface EncounterChoice {
   id: string;
   labelKey: string;
+  isMission?: boolean;
 }
 
 export interface EncounterInstance {

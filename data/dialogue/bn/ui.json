@@ -286,5 +286,7 @@
   "tutorial.nego.passenger_label": "নাবিলা • ছাত্রী",
   "tutorial.nego.offer_label": "যাত্রীর প্রস্তাব:",
   "tutorial.nego.agreed_label": "চূড়ান্ত ভাড়া: ৳{fare}",
-  "tutorial.nego.start_ride": "ক্যাম্পাস গেটে যাত্রা শুরু"
+  "tutorial.nego.start_ride": "ক্যাম্পাস গেটে যাত্রা শুরু",
+  "ui.mission_badge": "মিশন",
+  "hud.road_event": "রাস্তার সতর্কতা"
 }

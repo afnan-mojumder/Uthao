@@ -108,17 +108,35 @@ export function ChoiceCardView({
             }}
           >
             <span>{t(opt.text)}</span>
-            <span
-              style={{
-                backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                padding: '2px 8px',
-                borderRadius: '4px',
-                fontSize: '0.8rem',
-                fontFamily: 'monospace',
-                color: '#94a3b8',
-              }}
-            >
-              [{idx + 1}]
+            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              {opt.isMission && (
+                <span
+                  style={{
+                    fontSize: '0.72rem',
+                    fontWeight: 700,
+                    padding: '2px 8px',
+                    borderRadius: '999px',
+                    background: 'rgba(16, 185, 129, 0.2)',
+                    color: '#34d399',
+                    border: '1px solid rgba(52, 211, 153, 0.4)',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {t('ui.mission_badge')}
+                </span>
+              )}
+              <span
+                style={{
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  padding: '2px 8px',
+                  borderRadius: '4px',
+                  fontSize: '0.8rem',
+                  fontFamily: 'monospace',
+                  color: '#94a3b8',
+                }}
+              >
+                [{idx + 1}]
+              </span>
             </span>
           </button>
         ))}

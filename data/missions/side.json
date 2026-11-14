@@ -244,5 +244,113 @@
       }
     ],
     "unlocks": []
+  },
+  {
+    "id": "side_puncture_patch",
+    "chapter": 1,
+    "day": 1,
+    "triggerOnly": true,
+    "titleKey": "mission_side_puncture_patch_title",
+    "descKey": "mission_side_puncture_patch_desc",
+    "prerequisites": [],
+    "objectives": [
+      {
+        "id": "obj_side_puncture_reach_fuel",
+        "descKey": "obj_side_puncture_reach_fuel_desc",
+        "type": "reach",
+        "poiId": "poi_kind:fuel"
+      },
+      {
+        "id": "obj_side_puncture_safe_ride",
+        "descKey": "obj_side_puncture_safe_ride_desc",
+        "type": "completeRides",
+        "count": 1,
+        "noCrash": true
+      }
+    ],
+    "rewards": [
+      {
+        "type": "money",
+        "amount": 150,
+        "kind": "reward"
+      },
+      {
+        "type": "localTrust",
+        "delta": 5
+      }
+    ],
+    "unlocks": []
+  },
+  {
+    "id": "side_accident_inspection",
+    "chapter": 1,
+    "day": 1,
+    "triggerOnly": true,
+    "titleKey": "mission_side_accident_inspection_title",
+    "descKey": "mission_side_accident_inspection_desc",
+    "prerequisites": [],
+    "objectives": [
+      {
+        "id": "obj_side_accident_reach_hospital",
+        "descKey": "obj_side_accident_reach_hospital_desc",
+        "type": "reach",
+        "poiId": "poi_kind:hospital"
+      },
+      {
+        "id": "obj_side_accident_safe_ride",
+        "descKey": "obj_side_accident_safe_ride_desc",
+        "type": "completeRides",
+        "count": 1,
+        "noCrash": true
+      }
+    ],
+    "rewards": [
+      {
+        "type": "money",
+        "amount": 200,
+        "kind": "reward"
+      },
+      {
+        "type": "rating",
+        "delta": 0.1
+      }
+    ],
+    "unlocks": []
+  },
+  {
+    "id": "side_police_clearance",
+    "chapter": 1,
+    "day": 1,
+    "triggerOnly": true,
+    "titleKey": "mission_side_police_clearance_title",
+    "descKey": "mission_side_police_clearance_desc",
+    "prerequisites": [],
+    "objectives": [
+      {
+        "id": "obj_side_police_reach_office",
+        "descKey": "obj_side_police_reach_office_desc",
+        "type": "reach",
+        "poiId": "poi_kind:officeGate"
+      },
+      {
+        "id": "obj_side_police_clean_ride",
+        "descKey": "obj_side_police_clean_ride_desc",
+        "type": "completeRides",
+        "count": 1,
+        "noCrash": true
+      }
+    ],
+    "rewards": [
+      {
+        "type": "money",
+        "amount": 180,
+        "kind": "reward"
+      },
+      {
+        "type": "localTrust",
+        "delta": 4
+      }
+    ],
+    "unlocks": []
   }
 ]

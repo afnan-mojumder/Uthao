@@ -139,6 +139,8 @@ export class GameManager {
   fuelStationNearby?: () => boolean;
   /** T8.4: set by GameSession. Charging at home or a tea stall needs the bike there. */
   phoneChargeNearby?: (location: 'home' | 'teaStall') => boolean;
+  /** Provided by GameSession so encounter `spawnRequest` effects offer live rides. */
+  spawnSpecialRequest?: (templateId: string) => void;
 
   paused: boolean = false;
   accumulator: number = 0;
@@ -258,6 +260,7 @@ export class GameManager {
         economyManager: this.economyManager,
         rideManager: this.rideManager,
         eventBus: this.bus,
+        spawnSpecialRequest: this.spawnSpecialRequest,
       }),
     });
 
@@ -579,6 +582,7 @@ export class GameManager {
           economyManager: this.economyManager,
           rideManager: this.rideManager,
           eventBus: this.bus,
+          spawnSpecialRequest: this.spawnSpecialRequest,
         };
         const ok = this.eventDirector.chooseOption(
           cmd.instanceId,

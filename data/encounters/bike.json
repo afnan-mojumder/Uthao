@@ -30,7 +30,8 @@
         "effects": [
           { "type": "money", "amount": -150, "kind": "repair" },
           { "type": "time", "min": 15 },
-          { "type": "injury", "severity": 3 }
+          { "type": "injury", "severity": 3 },
+          { "type": "startMission", "missionId": "side_puncture_patch" }
         ]
       },
       {
@@ -63,7 +64,8 @@
         "effects": [
           { "type": "money", "amount": -300, "kind": "fine" },
           { "type": "time", "min": 10 },
-          { "type": "localTrust", "delta": 4 }
+          { "type": "localTrust", "delta": 4 },
+          { "type": "startMission", "missionId": "side_accident_inspection" }
         ]
       },
       {

@@ -8,6 +8,7 @@ import {
   evaluateEncounterResolved,
   evaluateFlagChanged,
   evaluateRelationshipChanged,
+  evaluateReachPoi,
 } from './objectives';
 import type { StoryState, EndingId, DistrictId } from '../../core/types';
 import type { EffectContext } from '../events/effects';
@@ -220,7 +221,7 @@ export class MissionManager {
 
   refreshAvailableMissions(currentChapter: number, currentDay: number): void {
     for (const [id, def] of this.missions) {
-      if (this.completedMissionIds.has(id) || this.activeMissionIds.has(id)) {
+      if (def.triggerOnly || this.completedMissionIds.has(id) || this.activeMissionIds.has(id)) {
         continue;
       }
 
@@ -231,6 +232,46 @@ export class MissionManager {
         }
       }
     }
+  }
+
+  /** Evaluates `reach` objectives against the POIs currently within range of the player. */
+  checkNearbyPois(nearbyPoiIds: Set<string>): void {
+    if (nearbyPoiIds.size === 0 || this.activeMissionIds.size === 0) return;
+    for (const missionId of this.activeMissionIds) {
+      const def = this.missions.get(missionId);
+      const objMap = this.objectiveStates.get(missionId);
+      if (!def || !objMap) continue;
+      for (const obj of def.objectives) {
+        if (obj.type !== 'reach') continue;
+        const state = objMap.get(obj.id);
+        if (!state) continue;
+        if (evaluateReachPoi(obj, state, nearbyPoiIds)) {
+          this.bus.emit('mission/objectiveUpdated', {
+            missionId,
+            objectiveId: obj.id,
+            progress: state.progress,
+          });
+        }
+      }
+      this.checkMissionCompletion(missionId);
+    }
+  }
+
+  /** Returns the first incomplete `reach` objective's target POI/kind, if any. */
+  getActiveReachTarget(): { missionId: string; poiId: string } | null {
+    for (const missionId of this.activeMissionIds) {
+      const def = this.missions.get(missionId);
+      const objMap = this.objectiveStates.get(missionId);
+      if (!def || !objMap) continue;
+      for (const obj of def.objectives) {
+        if (obj.type !== 'reach') continue;
+        const state = objMap.get(obj.id);
+        if (state && !state.completed) {
+          return { missionId, poiId: obj.poiId };
+        }
+      }
+    }
+    return null;
   }
 
   activateMission(id: string): boolean {

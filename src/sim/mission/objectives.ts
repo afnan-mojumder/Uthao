@@ -197,3 +197,17 @@ export function evaluateRelationshipChanged(
 
   return false;
 }
+
+export function evaluateReachPoi(
+  objective: MissionObjective,
+  state: ObjectiveState,
+  nearbyPoiIds: Set<string>
+): boolean {
+  if (state.completed || objective.type !== 'reach') return false;
+  if (nearbyPoiIds.has(objective.poiId)) {
+    state.progress = 1;
+    state.completed = true;
+    return true;
+  }
+  return false;
+}

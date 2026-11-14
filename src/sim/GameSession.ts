@@ -90,6 +90,8 @@ export class GameSession {
   private readonly breakdownRng: Rng;
   private readonly fuelStations: { x: number; z: number }[] = [];
   private readonly teaStalls: { x: number; z: number }[] = [];
+  private readonly poiPositions: { id: string; kind: string; nameKey: string; x: number; z: number }[] = [];
+  private readonly nearbyPoiIds = new Set<string>();
   private lastAccidentEncounterMin = -Infinity;
   private tripReqId: string | null = null;
   private warnedWorn = false;
@@ -172,15 +174,23 @@ export class GameSession {
 
     this.breakdownRng = this.gm.rng.fork('breakdown');
     for (const poi of this.road.getPois()) {
-      const node = poi.kind === 'fuel' ? this.road.getNode(poi.nodeId) : undefined;
-      if (node) this.fuelStations.push({ x: node.x, z: node.z });
+      const node = this.road.getNode(poi.nodeId);
+      if (node) {
+        this.poiPositions.push({ id: poi.id, kind: poi.kind, nameKey: poi.nameKey, x: node.x, z: node.z });
+        if (poi.kind === 'fuel') this.fuelStations.push({ x: node.x, z: node.z });
+        if (poi.kind === 'teaStall') this.teaStalls.push({ x: node.x, z: node.z });
+      }
     }
     this.gm.fuelStationNearby = () => this.nearFuelStation();
-    for (const poi of this.road.getPois()) {
-      const node = poi.kind === 'teaStall' ? this.road.getNode(poi.nodeId) : undefined;
-      if (node) this.teaStalls.push({ x: node.x, z: node.z });
-    }
     this.gm.phoneChargeNearby = (where) => this.nearChargeSpot(where);
+    this.gm.spawnSpecialRequest = (templateId) => {
+      const res = this.requests.sampleRequest(
+        this.gm.clock.minutes,
+        this.gm.weather,
+        templateId === 'street' ? 'street' : 'app'
+      );
+      if (res) this.ride.offer(res.request);
+    };
   }
 
   /** T8.5: starts a negotiation with the actual passenger of `requestId`: its own profile
@@ -264,6 +274,41 @@ export class GameSession {
       if (dx * dx + dz * dz <= r2) return true;
     }
     return false;
+  }
+
+  private checkMissionPois(): void {
+    const target = this.gm.missionManager.getActiveReachTarget();
+    if (!target) return;
+    const r2 = BALANCE.FUEL.stationRangeM * BALANCE.FUEL.stationRangeM;
+    this.nearbyPoiIds.clear();
+    for (const poi of this.poiPositions) {
+      const dx = poi.x - this.bike.x;
+      const dz = poi.z - this.bike.z;
+      if (dx * dx + dz * dz <= r2) {
+        this.nearbyPoiIds.add(poi.id);
+        this.nearbyPoiIds.add(`poi_kind:${poi.kind}`);
+      }
+    }
+    if (this.nearbyPoiIds.size > 0) {
+      this.gm.missionManager.checkNearbyPois(this.nearbyPoiIds);
+    }
+  }
+
+  /** Nearest POI matching the first active `reach` mission objective, for HUD/minimap guidance. */
+  getNearestMissionTarget(): { x: number; z: number; nameKey: string; distanceM: number } | null {
+    const target = this.gm.missionManager.getActiveReachTarget();
+    if (!target) return null;
+    const isKind = target.poiId.startsWith('poi_kind:');
+    const kind = isKind ? target.poiId.slice('poi_kind:'.length) : '';
+    let best: { x: number; z: number; nameKey: string; distanceM: number } | null = null;
+    for (const poi of this.poiPositions) {
+      if (isKind ? poi.kind !== kind : poi.id !== target.poiId) continue;
+      const dist = Math.hypot(poi.x - this.bike.x, poi.z - this.bike.z);
+      if (!best || dist < best.distanceM) {
+        best = { x: poi.x, z: poi.z, nameKey: poi.nameKey, distanceM: dist };
+      }
+    }
+    return best;
   }
 
   /** Starts a fresh fuel tally for a new trip. */
@@ -559,6 +604,7 @@ export class GameSession {
     this.checkTrafficCollisions();
 
     this.ride.update(this.pose, dt);
+    this.checkMissionPois();
     this.navigate();
 
     if (this.autoRequests) {

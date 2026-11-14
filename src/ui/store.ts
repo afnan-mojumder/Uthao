@@ -23,6 +23,7 @@ export interface HudState {
 export interface ChoiceOption {
   id: string | number;
   text: string;
+  isMission?: boolean;
 }
 
 export interface ChoiceState {
@@ -567,6 +568,7 @@ export function bindEventBusToStore(bus: EventBus<GameEvents>): () => void {
       options: ev.instance.choices.map((c) => ({
         id: c.id,
         text: c.labelKey,
+        isMission: c.isMission,
       })),
       instanceId: ev.instance.id,
     };
