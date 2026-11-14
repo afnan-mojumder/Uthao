@@ -72,14 +72,16 @@ export function bindUi(session: GameSession, saveSystem?: SaveSystem): void {
       choice ? { kind: 'pickupAdjust', walkM: choice.walkM, savesMin: choice.savesMin } : action
     );
     let next = result.session;
-    let accepted = result.outcome?.kind === 'accepted';
-    if (choice && accepted) {
+    const accepted = result.outcome?.kind === 'accepted';
+    // A successful pickupAdjust only raises the walked distance; it does not end the
+    // negotiation and carries no outcome, so it must be detected from the session.
+    const relocated = result.outcome === undefined && result.session.walkM > current.walkM;
+    if (choice && relocated) {
       if (rideManager.relocatePickup(choice.nodeId, choice.walkM)) {
         next = session.repriceNegotiation(result.session);
       } else {
         // The pickup did not move, so the walk penalty must not stick: keep only the patience cost.
         next = { ...current, currentPatience: result.session.currentPatience };
-        accepted = false;
       }
     }
     negotiationSignal.value = {

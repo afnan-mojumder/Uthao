@@ -598,6 +598,13 @@ export class GameManager {
           return { success: false, reason: 'Finish the active ride first' };
         }
 
+        // A negotiation is not a ride in progress, but it must not outlive the
+        // shift: the trip would stay in `Negotiating` overnight and every later
+        // accept would be refused. The passenger walks away instead.
+        if (this.rideManager?.getTripState() === 'Negotiating') {
+          this.rideManager.walkAwayNegotiation();
+        }
+
         // Commute home if > 1.5 km (1500m)
         if (this.playerDistFromHomeM > 1500) {
           const kmPerL = BALANCE.FUEL.kmPerL[this.economyManager.currentBikeId] ?? 40;
