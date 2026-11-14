@@ -23,7 +23,7 @@ export function ChoiceCardView({
       data-testid="choice-card"
       style={{
         position: 'fixed',
-        top: 'calc(16px + env(safe-area-inset-top, 0px))',
+        top: 'calc(140px + env(safe-area-inset-top, 0px))',
         left: '50%',
         transform: 'translateX(-50%)',
         width: '92%',

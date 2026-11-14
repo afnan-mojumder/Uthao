@@ -20,6 +20,7 @@ export interface EventDirectorOptions {
   definitions?: EncounterDef[];
   seed?: number;
   pauseOnDecisions?: boolean;
+  globalCooldownMin?: number;
 }
 
 export class EventDirector {
@@ -37,11 +38,14 @@ export class EventDirector {
   private firedToday: Set<string> = new Set();
   private lastEvaluationMinute: number = -1;
   private currentPhase: EncounterPhase = 'roaming';
+  private readonly globalCooldownMin: number;
+  private nextGlobalEncounterMinute: number = 0;
 
   constructor(opts: EventDirectorOptions = {}) {
     this.definitions = opts.definitions ?? [];
     this.rng = new Rng(opts.seed ?? 42);
     this.pauseOnDecisions = opts.pauseOnDecisions ?? true;
+    this.globalCooldownMin = opts.globalCooldownMin ?? 0;
   }
 
   setPauseOnDecisions(val: boolean): void {
@@ -67,11 +71,20 @@ export class EventDirector {
       return null;
     }
 
+    if (this.globalCooldownMin > 0 && !this.pauseOnDecisions && this.lastEvaluationMinute < 0) {
+      // Avoid firing a random encounter on the very first frame of a live session.
+      this.nextGlobalEncounterMinute = ctx.minute + 3;
+    }
+
     this.lastEvaluationMinute = ctx.minute;
     this.currentPhase = ctx.phase;
 
     // Max 1 active encounter at a time
     if (this.activeEncounter !== null) {
+      return null;
+    }
+
+    if (this.globalCooldownMin > 0 && ctx.minute < this.nextGlobalEncounterMinute) {
       return null;
     }
 
@@ -121,6 +134,9 @@ export class EventDirector {
     }
 
     // Mark cooldown and daily tracking
+    if (this.globalCooldownMin > 0) {
+      this.nextGlobalEncounterMinute = ctx.minute + this.globalCooldownMin;
+    }
     this.cooldowns.set(selected.id, ctx.minute + selected.cooldownMin);
     if (selected.oncePerDay) {
       this.firedToday.add(selected.id);

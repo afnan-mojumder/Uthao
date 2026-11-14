@@ -39,6 +39,7 @@ import {
   onEnterEndlessCallback,
   tripSummarySignal,
   journalSignal,
+  mapPlayerPosSignal,
   journalDataSignal,
 } from './store';
 import { RotateOverlay } from './overlays/RotateOverlay';
@@ -436,6 +437,7 @@ export function App(): JSX.Element {
       {screenSignal.value === 'map' && (
         <MapScreen
           isOpen={true}
+          playerPos={mapPlayerPosSignal.value}
           onSetWaypoint={(nodeId) => onSetWaypointCallback?.(nodeId)}
           onClose={() => {
             screenSignal.value = 'game';

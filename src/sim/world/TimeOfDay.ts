@@ -81,7 +81,7 @@ export class TimeOfDay {
     // Sun intensity
     let sunIntensity = 0;
     if (isDay) {
-      sunIntensity = Math.sin(sunAngle) * 1.3;
+      sunIntensity = Math.max(0.45, Math.sin(sunAngle) * 1.5);
     }
 
     // Color palettes
@@ -94,18 +94,18 @@ export class TimeOfDay {
     if (minOfDay >= 360 && minOfDay < 480) {
       // Dawn (06:00 - 08:00): Warm amber/gold into light blue
       const t = (minOfDay - 360) / 120;
-      skyColor = lerpColor(0x2a2b4a, 0x87ceeb, t);
-      fogColor = lerpColor(0x383959, 0x87ceeb, t);
-      sunColor = 0xffa040;
-      ambientColor = 0xffecd2;
-      ambientIntensity = lerp(0.3, 0.75, t);
+      skyColor = lerpColor(0x5b6ea6, 0x87ceeb, t);
+      fogColor = lerpColor(0x6478a8, 0xa5d8f0, t);
+      sunColor = 0xffc078;
+      ambientColor = 0xfff3e0;
+      ambientIntensity = lerp(0.65, 0.95, t);
     } else if (minOfDay >= 480 && minOfDay < 1020) {
       // Midday (08:00 - 17:00): Dhaka sky
       skyColor = 0x87ceeb;
       fogColor = 0xa5d8f0;
       sunColor = 0xfffaed;
       ambientColor = 0xffffff;
-      ambientIntensity = 0.8;
+      ambientIntensity = 0.95;
     } else if (minOfDay >= 1020 && minOfDay < 1140) {
       // Golden Hour & Sunset (17:00 - 19:00): Crimson/orange into deep twilight
       const t = (minOfDay - 1020) / 120;

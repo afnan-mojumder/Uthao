@@ -30,6 +30,7 @@ import {
   tutorialSignal,
   screenSignal,
   journalSignal,
+  mapPlayerPosSignal,
   journalDataSignal,
   settingsSignal,
   type GameSettings,
@@ -541,6 +542,9 @@ function frame(now: number) {
       fuel: (fuelL / fuelMaxL) * 100,
       objectiveText: objective,
     };
+    if (screenSignal.value === 'map') {
+      mapPlayerPosSignal.value = { x: session.bike.x, z: session.bike.z };
+    }
   }
 
   if (typeof requestAnimationFrame !== 'undefined') {

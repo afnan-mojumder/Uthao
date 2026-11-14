@@ -73,6 +73,7 @@ export const tripSummarySignal = signal<TripReceipt | null>(null);
 /** T7.4: toggled by the 'j' keybinding, same pattern as garage ('g') and the
  * map ('m'). */
 export const journalSignal = signal<boolean>(false);
+export const mapPlayerPosSignal = signal<{ x: number; z: number }>({ x: 0, z: 0 });
 
 export interface JournalData {
   snapshot: import('../sim/GameManager').SimSnapshot;

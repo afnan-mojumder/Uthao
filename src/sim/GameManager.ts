@@ -226,6 +226,7 @@ export class GameManager {
       // Cards never freeze the sim: a card waits for a stopped bike and the
       // world keeps running behind it, so the driving keys stay live.
       pauseOnDecisions: false,
+      globalCooldownMin: 12,
     });
 
     const allCampaignMissions = [
