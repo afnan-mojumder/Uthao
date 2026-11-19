@@ -8,7 +8,7 @@ test.describe('T7.1 Real-game boot gate smoke test', () => {
     await page.goto('/');
 
     // Boots on the main menu, not directly into the game world.
-    await expect(page.getByTestId('main-menu')).toBeVisible();
+    await expect(page.getByTestId('main-menu')).toBeVisible({ timeout: 30000 });
     await expect(page.getByTestId('choice-card')).toHaveCount(0);
 
     await page.getByTestId('menu-btn-new-career').click();

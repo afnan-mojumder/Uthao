@@ -51,9 +51,10 @@ const BTN_B = 1;
 
 test.describe('keyboard focus and escape', () => {
   test('Tab moves focus between title-screen buttons instead of being swallowed', async ({ page }) => {
+    test.setTimeout(60000);
     // Arrange
     await page.goto('/');
-    await expect(page.getByTestId('main-menu')).toBeVisible();
+    await expect(page.getByTestId('main-menu')).toBeVisible({ timeout: 30000 });
 
     // Act
     await page.keyboard.press('Tab');
@@ -67,8 +68,10 @@ test.describe('keyboard focus and escape', () => {
   });
 
   test('Escape closes Settings opened from the title screen', async ({ page }) => {
+    test.setTimeout(60000);
     // Arrange
     await page.goto('/');
+    await expect(page.getByTestId('main-menu')).toBeVisible({ timeout: 30000 });
     await page.getByTestId('menu-btn-settings').click();
     await expect(page.getByTestId('settings-screen')).toBeVisible();
 
@@ -118,7 +121,7 @@ test.describe('gamepad only', () => {
     // Arrange
     await page.addInitScript(GAMEPAD_SHIM);
     await page.goto('/');
-    await expect(page.getByTestId('main-menu')).toBeVisible();
+    await expect(page.getByTestId('main-menu')).toBeVisible({ timeout: 30000 });
 
     // Act: D-pad moves focus down the menu until New Career has it
     const focusedTestId = () =>

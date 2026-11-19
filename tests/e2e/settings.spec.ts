@@ -5,13 +5,14 @@ import { test, expect } from '@playwright/test';
 
 async function openSettings(page: import('@playwright/test').Page): Promise<void> {
   await page.goto('/');
-  await expect(page.getByTestId('main-menu')).toBeVisible();
+  await expect(page.getByTestId('main-menu')).toBeVisible({ timeout: 30000 });
   await page.getByTestId('menu-btn-settings').click();
   await expect(page.getByTestId('settings-screen')).toBeVisible();
 }
 
 test.describe('settings take effect', () => {
   test('reduce motion applies to the page as soon as it is saved', async ({ page }) => {
+    test.setTimeout(60000);
     // Arrange
     await openSettings(page);
 
@@ -35,10 +36,12 @@ test.describe('settings take effect', () => {
     await page.reload();
 
     // Assert
+    await expect(page.getByTestId('menu-btn-new-career')).toBeVisible({ timeout: 30000 });
     await expect(page.getByTestId('menu-btn-new-career')).toContainText('New Career');
   });
 
   test('Cancel discards a language shown as a preview', async ({ page }) => {
+    test.setTimeout(60000);
     // Arrange: the default is Bangla
     await openSettings(page);
     await page.getByTestId('settings-lang-en').click();

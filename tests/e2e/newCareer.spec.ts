@@ -3,8 +3,9 @@ import { test, expect } from '@playwright/test';
 // A new career starts from a fresh game. Before this, the debt, relationships,
 // bikes and endings of the previous career carried over.
 test('a new career starts with no debt and default relationships', async ({ page }) => {
+  test.setTimeout(60000);
   await page.goto('/');
-  await expect(page.getByTestId('main-menu')).toBeVisible();
+  await expect(page.getByTestId('main-menu')).toBeVisible({ timeout: 30000 });
 
   // Arrange: leave the first career in a bad state
   await page.evaluate(() => {

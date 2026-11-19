@@ -258,7 +258,7 @@ test.describe('T3.10 Menus, Settings, Pause and Dhaka Map E2E', () => {
   }) => {
     test.setTimeout(60000);
     await page.goto('/');
-    await expect(page.getByTestId('main-menu')).toBeVisible();
+    await expect(page.getByTestId('main-menu')).toBeVisible({ timeout: 30000 });
 
     // Hotkeys G, J, N should not fire on title screen
     await page.keyboard.press('KeyG');

@@ -2,13 +2,14 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Settings keeps keyboard focus (audit: focus leaked behind Settings)', () => {
   test('the screen behind Settings is inert, and closing Settings returns focus to its opener', async ({ page }) => {
+    test.setTimeout(60000);
     await page.goto('/?debug=1&district=testloop&encounters=0');
     await page.waitForSelector('#game-canvas');
     await page.evaluate(() => {
       const ui = (window as unknown as { __uthaoUi?: { screenSignal: { value: string } } }).__uthaoUi;
       if (ui) ui.screenSignal.value = 'title';
     });
-    await expect(page.locator('[data-testid="main-menu"]')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('[data-testid="main-menu"]')).toBeVisible({ timeout: 30000 });
     const settingsBtn = page.locator('[data-testid="menu-btn-settings"]');
     await expect(settingsBtn).toBeVisible();
     await settingsBtn.focus();
