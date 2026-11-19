@@ -157,8 +157,20 @@ function initialScreen(): ScreenId {
 export const screenSignal = signal<ScreenId>(initialScreen());
 export const pausedSignal = signal<boolean>(false);
 export const rotateOverlaySignal = signal<boolean>(false);
+export interface LoadingState {
+  active: boolean;
+  stageKey: string;
+  progress: number;
+  error?: string;
+}
+
 export const unsupportedSignal = signal<string | null>(null);
-export const loadingSignal = signal<boolean>(false);
+export const loadingSignal = signal<LoadingState>({
+  // Active during browser boot until bindUi() finishes; inactive in headless unit tests.
+  active: typeof document !== 'undefined',
+  stageKey: 'loading.boot',
+  progress: 0,
+});
 export const contextLostSignal = signal<boolean>(false);
 
 export interface GameSettings {
@@ -298,6 +310,7 @@ if (typeof window !== 'undefined') {
     tutorialSignal,
     endingSignal,
     unsupportedSignal,
+    loadingSignal,
     rotateOverlaySignal,
     tripSummarySignal,
     journalSignal,

@@ -50,7 +50,7 @@ import {
 function resetAllSignals(): void {
   screenSignal.value = 'game';
   pausedSignal.value = false;
-  loadingSignal.value = false;
+  loadingSignal.value = { active: false, stageKey: 'loading.boot', progress: 0 };
   contextLostSignal.value = false;
   rotateOverlaySignal.value = false;
   unsupportedSignal.value = null;
@@ -128,7 +128,7 @@ describe('uiModalOpen & system overlay guards', () => {
   });
 
   it.each([
-    ['loadingSignal', () => { loadingSignal.value = true; }],
+    ['loadingSignal', () => { loadingSignal.value = { active: true, stageKey: 'loading.boot', progress: 0 }; }],
     ['contextLostSignal', () => { contextLostSignal.value = true; }],
     ['rotateOverlaySignal', () => { rotateOverlaySignal.value = true; }],
     ['unsupportedSignal', () => { unsupportedSignal.value = 'WebGL2 required'; }],
@@ -221,7 +221,7 @@ describe('uiModalOpen & system overlay guards', () => {
     });
 
     it.each([
-      ['loadingSignal', () => { loadingSignal.value = true; }],
+      ['loadingSignal', () => { loadingSignal.value = { active: true, stageKey: 'loading.boot', progress: 0 }; }],
       ['contextLostSignal', () => { contextLostSignal.value = true; }],
       ['rotateOverlaySignal', () => { rotateOverlaySignal.value = true; }],
       ['unsupportedSignal', () => { unsupportedSignal.value = 'WebGL2 unsupported'; }],
@@ -249,7 +249,7 @@ describe('uiModalOpen & system overlay guards', () => {
     });
 
     it.each([
-      ['loadingSignal', () => { loadingSignal.value = true; }],
+      ['loadingSignal', () => { loadingSignal.value = { active: true, stageKey: 'loading.boot', progress: 0 }; }],
       ['contextLostSignal', () => { contextLostSignal.value = true; }],
       ['rotateOverlaySignal', () => { rotateOverlaySignal.value = true; }],
       ['unsupportedSignal', () => { unsupportedSignal.value = 'WebGL2 unsupported'; }],

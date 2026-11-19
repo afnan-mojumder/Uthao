@@ -18,11 +18,15 @@ test.describe('Settings keeps keyboard focus (audit: focus leaked behind Setting
     await expect(settingsScreen).toBeVisible();
 
     // The menu behind is inert: its buttons cannot take focus.
-    const behindInert = await page.evaluate(() => {
-      const btn = document.querySelector('[data-testid="menu-btn-new-career"]');
-      return btn ? !!btn.closest('[inert]') : null;
-    });
-    expect(behindInert).toBe(true);
+    // Preact runs effects after paint, so poll rather than read once.
+    await expect
+      .poll(() =>
+        page.evaluate(() => {
+          const btn = document.querySelector('[data-testid="menu-btn-new-career"]');
+          return btn ? !!btn.closest('[inert]') : null;
+        })
+      )
+      .toBe(true);
 
     // Focus starts inside Settings.
     const focusInside = await page.evaluate(() => {

@@ -47,7 +47,7 @@ const FOCUSABLE =
 /** True when any system overlay (`Z_LAYER.SYSTEM_OVERLAY`) owns the entire screen. */
 export function hasSystemOverlay(): boolean {
   return (
-    loadingSignal.value ||
+    loadingSignal.value.active ||
     contextLostSignal.value ||
     rotateOverlaySignal.value ||
     Boolean(unsupportedSignal.value)
@@ -177,6 +177,8 @@ export function watchOverlayFocus(): () => void {
   return effect(() => {
     const key = [
       screenSignal.value,
+      loadingSignal.value.active,
+      Boolean(unsupportedSignal.value),
       journalSignal.value,
       saveSlotsSignal.value.isOpen,
       garageSignal.value.open,

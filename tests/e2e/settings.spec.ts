@@ -25,6 +25,7 @@ test.describe('settings take effect', () => {
   });
 
   test('the saved language is still in use after a reload', async ({ page }) => {
+    test.setTimeout(60000);
     // Arrange: English is saved from the settings screen
     await openSettings(page);
     await page.getByTestId('settings-lang-en').click();

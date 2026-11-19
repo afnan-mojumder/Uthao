@@ -24,6 +24,7 @@ import {
   pausedSignal,
   contextLostSignal,
   unsupportedSignal,
+  loadingSignal,
   initPwaInstall,
   negotiationSignal,
   hudSignal,
@@ -100,6 +101,28 @@ const isMapTool = urlParams?.get('tool') === 'map';
 // that drive the sim directly and don't want a roaming encounter card in the way).
 const encountersDisabledByUrl = urlParams?.get('encounters') === '0';
 
+let uiMounted = false;
+
+function mountUiApp(): void {
+  if (uiMounted || typeof document === 'undefined') return;
+  initPwaInstall();
+  const uiRoot = document.getElementById('ui-root');
+  if (uiRoot) {
+    render(h(App, null), uiRoot);
+    const bootText = document.getElementById('boot-text');
+    if (bootText) bootText.style.display = 'none';
+    uiMounted = true;
+  }
+}
+
+function setLoadingStage(stageKey: string, progress: number): void {
+  loadingSignal.value = {
+    active: typeof document !== 'undefined',
+    stageKey,
+    progress,
+  };
+}
+
 if (isMapTool) {
   const districtChoice = urlParams?.get('district') === 'testloop' ? testloopData : mirparaData;
   initMapViewer({ district: districtChoice as DistrictData });
@@ -107,26 +130,33 @@ if (isMapTool) {
   // T7.3: Rapier's WASM init is async, so the rest of boot (which constructs
   // GameSession and loads the renderer's colliders) waits for it to finish
   // before the first frame runs.
-  void bootGame();
+  void bootGame().catch((err) => {
+    console.error('Uthao boot failed:', err);
+    mountUiApp();
+    const message = err instanceof Error ? err.message : String(err);
+    loadingSignal.value = {
+      active: typeof document !== 'undefined',
+      stageKey: 'loading.error',
+      progress: loadingSignal.value.progress,
+      error: message,
+    };
+  });
 }
 
 async function bootGame(): Promise<void> {
-  if (!hasWebGL2Support()) {
-    unsupportedSignal.value = 'WebGL2 is required to run Uthao on this device';
-  }
-
   // The saved language applies before the first render.
   setLanguage(settingsSignal.value.language);
 
-  // 2. Mount Preact UI App
-  if (typeof document !== 'undefined') {
-    initPwaInstall();
-    const uiRoot = document.getElementById('ui-root');
-    if (uiRoot) {
-      render(h(App, null), uiRoot);
-      const bootText = document.getElementById('boot-text');
-      if (bootText) bootText.style.display = 'none';
-    }
+  setLoadingStage('loading.boot', 0);
+
+  // 2. Mount Preact UI App while loadingSignal.active is true so <Loading />
+  // owns the screen and <MainMenu /> stays hidden until bindUi() completes.
+  mountUiApp();
+
+  if (!hasWebGL2Support()) {
+    unsupportedSignal.value = t('ui.unsupported_webgl');
+    loadingSignal.value = { active: false, stageKey: 'loading.boot', progress: 0 };
+    return;
   }
 
   const districtParam = urlParams?.get('district');
@@ -165,9 +195,9 @@ async function bootGame(): Promise<void> {
 
   // T7.3: real Rapier physics world, used by GameSession's MotorcycleController
   // (collisions/near-misses against colliders) and by CityBuilder (colliders
-  // for streamed districts). Not constructed when WebGL2 is unavailable since
-  // there's nothing to collide with on screen in that case.
-  const physics = hasWebGL2Support() ? await PhysicsWorld.create() : undefined;
+  // for streamed districts).
+  setLoadingStage('loading.physics', 25);
+  const physics = await PhysicsWorld.create();
 
   // T7.2: single-district debug/test URLs (e.g. `?district=testloop`) get one
   // deterministic ride instead of the real RequestGenerator, so e2e specs stay
@@ -198,7 +228,8 @@ async function bootGame(): Promise<void> {
     }
   }
 
-  if (canvas && hasWebGL2Support()) {
+  if (canvas) {
+    setLoadingStage('loading.world', 55);
     renderer = Renderer.init(canvas, qualityChoice);
     loadRendererScene(renderer);
     gm.bus.on('bike/collision', ({ severity }) => {
@@ -231,6 +262,7 @@ async function bootGame(): Promise<void> {
   }
 
 // T4.9 SaveSystem and tab visibility lifecycle handling
+setLoadingStage('loading.session', 85);
 const activeSaveSystem = new SaveSystem();
 saveSystem = activeSaveSystem;
 activeSaveSystem.bindAutosave(
@@ -312,6 +344,10 @@ if (consumeFreshCareer()) {
   tutorialSignal.value = { active: true, step: 'alarm', agreedFare: 100 };
   screenSignal.value = 'game';
 }
+
+// All systems, scene, SaveSystem, debug API, and UI callbacks are now bound;
+// hide <Loading /> so <MainMenu /> (or the active game screen) can accept input.
+loadingSignal.value = { active: false, stageKey: 'loading.ready', progress: 100 };
 
 let lastTime = typeof performance !== 'undefined' ? performance.now() : 0;
 let roamNodeIndex = 0;

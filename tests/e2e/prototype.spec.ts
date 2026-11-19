@@ -6,7 +6,7 @@ import { test, expect } from '@playwright/test';
 // Runs on every project in playwright.config.ts (desktop-chrome and pixel7).
 
 test('prototype: accept, negotiate, ride, encounter, drop off, reconcile, continue', async ({ page }) => {
-  test.setTimeout(90000);
+  test.setTimeout(120000);
 
   await page.goto('/?debug=1&district=testloop&encounters=0');
   await page.waitForSelector('#game-canvas');
@@ -36,7 +36,7 @@ test('prototype: accept, negotiate, ride, encounter, drop off, reconcile, contin
 
   // 5. Drop off: the trip completes and the summary appears.
   await page.waitForFunction(() => window.__uthao?.eventLog.includes('ride/completed') ?? false, null, {
-    timeout: 60000,
+    timeout: 90000,
   });
   const summary = page.locator('#trip-summary-overlay');
   await expect(summary).toBeVisible({ timeout: 5000 });

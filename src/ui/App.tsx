@@ -425,7 +425,7 @@ export function App(): JSX.Element {
         </div>
       )}
 
-      {screenSignal.value === 'title' && (
+      {screenSignal.value === 'title' && !loadingSignal.value.active && !unsupportedSignal.value && (
         <MainMenu
           hasSave={hasSaveCallback?.() ?? false}
           onNewCareer={() => {
@@ -521,7 +521,7 @@ export function App(): JSX.Element {
       )}
 
       {/* 7. System Overlays (render after all modals) */}
-      {loadingSignal.value && <Loading />}
+      {loadingSignal.value.active && <Loading />}
 
       {contextLostSignal.value && (
         <div

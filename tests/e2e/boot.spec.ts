@@ -68,3 +68,64 @@ test('portrait shows rotate overlay on pixel7 portrait', async ({ page }) => {
   await page.goto('/');
   await expect(page.locator('[data-testid="rotate-overlay"]')).toBeVisible();
 });
+
+test('main-menu waits for boot readiness so first click on New Career never hits a null callback', async ({
+  page,
+}) => {
+  // Click New Career on the exact DOM mutation where main-menu first appears.
+  // Before P0.3, main-menu rendered before PhysicsWorld/Renderer/bindUi() finished,
+  // so clicking immediately invoked a null callback and stranded the player.
+  await page.addInitScript(() => {
+    let clicked = false;
+    const tryClick = () => {
+      if (clicked) return;
+      const btn = document.querySelector('[data-testid="menu-btn-new-career"]') as HTMLButtonElement | null;
+      if (btn) {
+        clicked = true;
+        btn.click();
+      }
+    };
+    const observer = new MutationObserver(() => tryClick());
+    window.addEventListener('DOMContentLoaded', () => {
+      observer.observe(document.body, { childList: true, subtree: true });
+      tryClick();
+    });
+  });
+
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await expect(page.getByTestId('tutorial-btn-alarm')).toBeVisible({ timeout: 30000 });
+  await expect(page.getByTestId('main-menu')).toHaveCount(0);
+});
+
+test('aborts boot cleanly before physics/renderer/rAF when WebGL2 is unavailable', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (err) => errors.push(err.message));
+
+  await page.addInitScript(() => {
+    Object.defineProperty(window, 'WebGL2RenderingContext', {
+      configurable: true,
+      value: undefined,
+    });
+    const origGetContext = HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext = function (
+      this: HTMLCanvasElement,
+      type: string,
+      ...args: unknown[]
+    ) {
+      if (type === 'webgl2') return null;
+      return origGetContext.apply(this, [type, ...args] as Parameters<typeof origGetContext>);
+    } as typeof origGetContext;
+  });
+
+  await page.goto('/');
+  const unsupported = page.getByTestId('unsupported-overlay');
+  await expect(unsupported).toBeVisible({ timeout: 10000 });
+  await expect(unsupported).toContainText('উঠাও চালাতে WebGL2 প্রয়োজন');
+  await expect(page.getByTestId('loading-overlay')).toHaveCount(0);
+  await expect(page.getByTestId('main-menu')).toHaveCount(0);
+  const hasDebugApi = await page.evaluate(
+    () => (window as unknown as { __uthao?: unknown }).__uthao !== undefined
+  );
+  expect(hasDebugApi).toBe(false);
+  expect(errors).toEqual([]);
+});

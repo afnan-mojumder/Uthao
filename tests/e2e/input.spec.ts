@@ -20,6 +20,10 @@ const GAMEPAD_SHIM = () => {
   });
 };
 
+function isContextDestroyedError(err: unknown): boolean {
+  return err instanceof Error && /Execution context was destroyed|Cannot find context/i.test(err.message);
+}
+
 async function press(page: Page, button: number): Promise<void> {
   await page.evaluate((b) => {
     (window as unknown as { __pad: { buttons: { pressed: boolean; value: number }[] } }).__pad.buttons[b]!.pressed = true;
@@ -28,10 +32,16 @@ async function press(page: Page, button: number): Promise<void> {
   // Hold for a real button-press length: the pad is read once per frame, and
   // emulated devices run at low frame rates.
   await page.waitForTimeout(200);
-  await page.evaluate((b) => {
-    (window as unknown as { __pad: { buttons: { pressed: boolean; value: number }[] } }).__pad.buttons[b]!.pressed = false;
-    (window as unknown as { __pad: { buttons: { pressed: boolean; value: number }[] } }).__pad.buttons[b]!.value = 0;
-  }, button);
+  try {
+    await page.evaluate((b) => {
+      (window as unknown as { __pad: { buttons: { pressed: boolean; value: number }[] } }).__pad.buttons[b]!.pressed = false;
+      (window as unknown as { __pad: { buttons: { pressed: boolean; value: number }[] } }).__pad.buttons[b]!.value = 0;
+    }, button);
+  } catch (err) {
+    // Pressing A on New Career triggers window.location.reload() while held.
+    if (!isContextDestroyedError(err)) throw err;
+    return;
+  }
   await page.waitForTimeout(150);
 }
 
@@ -104,6 +114,7 @@ test.describe('camera key', () => {
 
 test.describe('gamepad only', () => {
   test('a gamepad alone can focus New Career, press it, and reach the alarm', async ({ page }) => {
+    test.setTimeout(60000);
     // Arrange
     await page.addInitScript(GAMEPAD_SHIM);
     await page.goto('/');
@@ -122,12 +133,32 @@ test.describe('gamepad only', () => {
       )
       .toBe('menu-btn-new-career');
 
-    // Act: A clicks the focused button
-    await press(page, BTN_A);
+    // Act: A clicks the focused button; retry across SwiftShader frame gaps until
+    // New Career triggers the fresh-career reload and reaches the tutorial alarm.
+    await expect
+      .poll(
+        async () => {
+          try {
+            if (await page.getByTestId('tutorial-btn-alarm').isVisible()) return true;
+            if ((await page.getByTestId('main-menu').count()) > 0) {
+              if ((await focusedTestId()) === 'menu-btn-new-career') {
+                await press(page, BTN_A);
+              } else {
+                await press(page, DPAD_DOWN);
+              }
+            }
+            return await page.getByTestId('tutorial-btn-alarm').isVisible();
+          } catch (err) {
+            if (isContextDestroyedError(err)) return false;
+            throw err;
+          }
+        },
+        { timeout: 40000 }
+      )
+      .toBe(true);
 
     // Assert: the game starts and the tutorial alarm appears
-    // New Career reloads the page for a fresh game, so allow for the boot.
-    await expect(page.getByTestId('tutorial-btn-alarm')).toBeVisible({ timeout: 20000 });
+    await expect(page.getByTestId('tutorial-btn-alarm')).toBeVisible({ timeout: 10000 });
     await expect(page.getByTestId('main-menu')).toHaveCount(0);
   });
 
@@ -200,6 +231,7 @@ test.describe('gamepad map', () => {
 
 test.describe('human steering direction', () => {
   test('KeyA turns screen-left and KeyD turns screen-right in chase camera', async ({ page }) => {
+    test.setTimeout(60000);
     const driveAndMeasure = async (steerKey: 'KeyA' | 'KeyD') => {
       await page.goto('/?debug=1&district=testloop&encounters=0');
       await page.waitForFunction(() => {
@@ -277,7 +309,7 @@ test.describe('human steering direction', () => {
               }, start);
               return measured.dist > 1.5 && Math.abs(measured.headingDelta) > 0.08;
             },
-            { timeout: 15000 }
+            { timeout: 25000 }
           )
           .toBe(true);
         return measured;

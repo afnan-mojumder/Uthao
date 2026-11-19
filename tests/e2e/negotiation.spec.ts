@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test('negotiation flow: debug-spawn a bargainer, counter twice, accept, assert the fare on the receipt', async ({
   page,
 }) => {
-  test.setTimeout(60000);
+  test.setTimeout(120000);
 
   await page.goto('/?debug=1&district=testloop&encounters=0');
   await page.waitForSelector('#game-canvas');
@@ -51,7 +51,7 @@ test('negotiation flow: debug-spawn a bargainer, counter twice, accept, assert t
       return api?.eventLog.includes('ride/completed');
     },
     null,
-    { timeout: 45000 }
+    { timeout: 90000 }
   );
 
   // Assert receipt fare

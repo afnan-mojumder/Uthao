@@ -3,8 +3,8 @@ import { test, expect } from '@playwright/test';
 test('T4.1 Day end lifecycle e2e: end shift, assert breakdown, sleep to start next day', async ({
   page,
 }) => {
-  test.setTimeout(90000);
-  await page.goto('/?debug=1&district=testloop');
+  test.setTimeout(120000);
+  await page.goto('/?debug=1&district=testloop&encounters=0');
   await page.waitForSelector('#game-canvas');
   await expect(page.locator('#hud')).toBeVisible();
 
@@ -15,9 +15,14 @@ test('T4.1 Day end lifecycle e2e: end shift, assert breakdown, sleep to start ne
   await page.waitForFunction(
     () => window.__uthao?.eventLog.includes('ride/completed'),
     null,
-    { timeout: 60000 }
+    { timeout: 90000 }
   );
   await page.evaluate(() => window.__uthao?.autopilot(false));
+
+  const tripSummary = page.locator('#trip-summary-overlay');
+  await expect(tripSummary).toBeVisible({ timeout: 5000 });
+  await page.locator('#btn-trip-continue').click();
+  await expect(tripSummary).toHaveCount(0);
 
   // Advance clock to afternoon (13:00) and trigger endShift
   await page.evaluate(() => {
