@@ -5,6 +5,7 @@ import defaultDistrict from '../../../data/districts/mirpara.json';
 import type { DistrictData, Poi } from '../../sim/schemas';
 import type { RoadNode } from '../../core/types';
 import { t } from '../i18n';
+import { Z_LAYER } from '../store';
 
 export interface MapScreenProps {
   isOpen: boolean;
@@ -26,36 +27,11 @@ export function MapScreen({
   onSetWaypoint,
   onClose,
 }: MapScreenProps): JSX.Element | null {
-  if (!isOpen) return null;
-
-  let canvasRef: { current: HTMLCanvasElement | null } = { current: null };
-  let selectedPoi: Poi | null = null;
-  let setSelectedPoi: (poi: Poi | null) => void = () => {};
-  let selectedNodeId: string | null = waypointNodeId;
-  let setSelectedNodeId: (id: string | null) => void = () => {};
-  let filter: 'all' | 'fuel' | 'garage' | 'tea' = 'all';
-  let setFilter: (f: 'all' | 'fuel' | 'garage' | 'tea') => void = () => {};
-  let zoom = 1.0;
-  let setZoom: (updater: number | ((z: number) => number)) => void = () => {};
-
-  try {
-    const hookCanvasRef = useRef<HTMLCanvasElement | null>(null);
-    canvasRef = hookCanvasRef;
-    const [sp, ssp] = useState<Poi | null>(null);
-    selectedPoi = sp;
-    setSelectedPoi = ssp;
-    const [sn, ssn] = useState<string | null>(waypointNodeId);
-    selectedNodeId = sn;
-    setSelectedNodeId = ssn;
-    const [f, sf] = useState<'all' | 'fuel' | 'garage' | 'tea'>('all');
-    filter = f;
-    setFilter = sf;
-    const [zm, szm] = useState<number>(1.0);
-    zoom = zm;
-    setZoom = szm;
-  } catch {
-    // Vitest node environment
-  }
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [selectedPoi, setSelectedPoi] = useState<Poi | null>(null);
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(waypointNodeId);
+  const [filter, setFilter] = useState<'all' | 'fuel' | 'garage' | 'tea'>('all');
+  const [zoom, setZoom] = useState<number>(1.0);
 
   const pois = districtData.pois ?? [];
   const nodes = districtData.nodes ?? [];
@@ -71,13 +47,13 @@ export function MapScreen({
   });
 
   // Canvas drawing effect
-  try {
-    useEffect(() => {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
+  useEffect(() => {
+    if (!isOpen) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
 
     // Handle high DPI
     const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
@@ -275,10 +251,9 @@ export function MapScreen({
     ctx.font = `${Math.round(16 * dpr)}px sans-serif`;
     ctx.fillText('🏍️', pPos.x - 8 * dpr, pPos.y - 12 * dpr);
     ctx.restore();
-  }, [districtData, playerPos, waypointNodeId, destinationNodeId, selectedPoi, selectedNodeId, filter, zoom]);
-  } catch {
-    // Vitest node environment
-  }
+  }, [isOpen, districtData, playerPos, waypointNodeId, destinationNodeId, selectedPoi, selectedNodeId, filter, zoom]);
+
+  if (!isOpen) return null;
 
   // Click on canvas to select POI or node
   const handleCanvasClick = (e: MouseEvent) => {
@@ -347,7 +322,7 @@ export function MapScreen({
       style={{
         position: 'fixed',
         inset: 0,
-        zIndex: 9996,
+        zIndex: Z_LAYER.PANEL,
         background: '#090d16',
         display: 'flex',
         flexDirection: 'column',

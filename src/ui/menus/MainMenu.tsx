@@ -1,6 +1,7 @@
 import type { JSX } from 'preact';
 import { useState } from 'preact/hooks';
 import { t } from '../i18n';
+import { Z_LAYER } from '../store';
 
 export interface MainMenuProps {
   hasSave?: boolean;
@@ -19,28 +20,8 @@ export function MainMenu({
   onEndless,
   onOpenSettings,
 }: MainMenuProps): JSX.Element {
-  let showCredits = propShowCredits ?? false;
-  let setShowCredits = (v: boolean) => {
-    showCredits = v;
-  };
-  try {
-    const [c, sc] = useState(propShowCredits ?? false);
-    showCredits = c;
-    setShowCredits = sc;
-  } catch {
-    // Vitest node environment
-  }
-  let confirmNewCareer = false;
-  let setConfirmNewCareer = (v: boolean) => {
-    confirmNewCareer = v;
-  };
-  try {
-    const [cn, scn] = useState(false);
-    confirmNewCareer = cn;
-    setConfirmNewCareer = scn;
-  } catch {
-    // Vitest node environment
-  }
+  const [showCredits, setShowCredits] = useState(propShowCredits ?? false);
+  const [confirmNewCareer, setConfirmNewCareer] = useState(false);
 
   return (
     <div
@@ -48,7 +29,7 @@ export function MainMenu({
       style={{
         position: 'fixed',
         inset: 0,
-        zIndex: 9990,
+        zIndex: Z_LAYER.MODAL,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -319,7 +300,7 @@ export function MainMenu({
           style={{
             position: 'fixed',
             inset: 0,
-            zIndex: 9999,
+            zIndex: Z_LAYER.MODAL,
             background: 'rgba(15, 23, 42, 0.92)',
             backdropFilter: 'blur(16px)',
             display: 'flex',

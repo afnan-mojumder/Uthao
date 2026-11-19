@@ -1,5 +1,6 @@
 import type { JSX } from 'preact';
 import { t } from '../i18n';
+import { Z_LAYER } from '../store';
 
 interface UnsupportedProps {
   message?: string;
@@ -13,7 +14,8 @@ export function Unsupported({ message }: UnsupportedProps): JSX.Element {
       style={{
         position: 'fixed',
         inset: 0,
-        zIndex: 9999,
+        zIndex: Z_LAYER.SYSTEM_OVERLAY,
+        pointerEvents: 'auto',
         background: 'rgba(10, 15, 29, 0.94)',
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',

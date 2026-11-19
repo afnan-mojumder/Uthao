@@ -1,10 +1,11 @@
 import type { JSX } from 'preact';
-import { useState, useEffect } from 'preact/hooks';
+import { useState, useEffect, useRef } from 'preact/hooks';
 import { makeRestInert } from '../focusTrap';
 import {
   type GameSettings,
   settingsSignal,
   saveSettings,
+  Z_LAYER,
 } from '../store';
 import { t, setLanguage } from '../i18n';
 
@@ -12,6 +13,8 @@ export interface SettingsProps {
   isOpen: boolean;
   initialTab?: 'general' | 'audio' | 'controls';
   onClose?: () => void;
+  onCancel?: () => void;
+  onCancelRef?: { current: (() => void) | null };
   onSave?: (settings: GameSettings) => void;
 }
 
@@ -19,41 +22,55 @@ export function Settings({
   isOpen,
   initialTab = 'general',
   onClose,
+  onCancel,
+  onCancelRef,
   onSave,
 }: SettingsProps): JSX.Element | null {
-  if (!isOpen) return null;
+  const [activeTab, setActiveTab] = useState<'general' | 'audio' | 'controls'>(initialTab);
+  const [localSettings, setLocalSettings] = useState<GameSettings>({ ...settingsSignal.value });
 
-  let activeTab: 'general' | 'audio' | 'controls' = initialTab;
-  let setActiveTab = (tab: 'general' | 'audio' | 'controls') => {
-    activeTab = tab;
-  };
-  let localSettings: GameSettings = { ...settingsSignal.value };
-  let setLocalSettings = (updater: GameSettings | ((prev: GameSettings) => GameSettings)) => {
-    localSettings = typeof updater === 'function' ? updater(localSettings) : updater;
+  // Cancel discards every change, including a language shown as a preview.
+  const handleCancel = () => {
+    setLanguage(settingsSignal.value.language);
+    onCancel?.();
+    onClose?.();
   };
 
-  try {
-    const [tab, setTab] = useState<'general' | 'audio' | 'controls'>(initialTab);
-    activeTab = tab;
-    setActiveTab = setTab;
-    const [settingsState, setSettingsState] = useState<GameSettings>({ ...settingsSignal.value });
-    localSettings = settingsState;
-    setLocalSettings = setSettingsState;
-    // Keyboard focus stays in Settings while it is open, and returns to the opener on close.
-    useEffect(() => {
-      const overlay = document.querySelector<HTMLElement>('[data-testid="settings-screen"]');
-      if (!overlay) return undefined;
-      const opener = document.activeElement as HTMLElement | null;
-      const release = makeRestInert(overlay);
-      overlay.querySelector<HTMLElement>('button, input, select')?.focus();
+  const handleCancelRef = useRef(handleCancel);
+  handleCancelRef.current = handleCancel;
+  const needsResetOnOpenRef = useRef(false);
+
+  // Keyboard focus stays in Settings while it is open, and returns to the opener on close.
+  useEffect(() => {
+    if (!isOpen) {
+      needsResetOnOpenRef.current = true;
+      return undefined;
+    }
+    if (needsResetOnOpenRef.current) {
+      needsResetOnOpenRef.current = false;
+      setActiveTab(initialTab);
+      setLocalSettings({ ...settingsSignal.value });
+    }
+    if (onCancelRef) {
+      onCancelRef.current = () => handleCancelRef.current();
+    }
+    const overlay = document.querySelector<HTMLElement>('[data-testid="settings-screen"]');
+    if (!overlay) {
       return () => {
-        release();
-        opener?.focus?.();
+        if (onCancelRef) onCancelRef.current = null;
       };
-    }, []);
-  } catch {
-    // Vitest node environment
-  }
+    }
+    const opener = document.activeElement as HTMLElement | null;
+    const release = makeRestInert(overlay);
+    overlay.querySelector<HTMLElement>('button, input, select')?.focus();
+    return () => {
+      if (onCancelRef) onCancelRef.current = null;
+      release();
+      opener?.focus?.();
+    };
+  }, [isOpen, initialTab, onCancelRef]);
+
+  if (!isOpen) return null;
 
   const handleLangChange = (lang: 'bn' | 'en') => {
     setLanguage(lang);
@@ -66,19 +83,13 @@ export function Settings({
     onClose?.();
   };
 
-  // Cancel discards every change, including a language shown as a preview.
-  const handleCancel = () => {
-    setLanguage(settingsSignal.value.language);
-    onClose?.();
-  };
-
   return (
     <div
       data-testid="settings-screen"
       style={{
         position: 'fixed',
         inset: 0,
-        zIndex: 9998,
+        zIndex: Z_LAYER.CRITICAL_MODAL,
         background: 'rgba(15, 23, 42, 0.92)',
         backdropFilter: 'blur(16px)',
         display: 'flex',

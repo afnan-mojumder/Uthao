@@ -1,4 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+vi.mock('preact/hooks', () => ({
+  useState: <T>(init: T | (() => T)) => [
+    typeof init === 'function' ? (init as () => T)() : init,
+    vi.fn(),
+  ],
+  useRef: <T>(init: T) => ({ current: init }),
+  useEffect: () => {},
+}));
+
 import {
   screenSignal,
   pausedSignal,

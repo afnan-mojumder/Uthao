@@ -1,5 +1,6 @@
 import type { JSX } from 'preact';
 import { t } from '../i18n';
+import { Z_LAYER } from '../store';
 
 export function RotateOverlay(): JSX.Element {
   return (
@@ -9,7 +10,8 @@ export function RotateOverlay(): JSX.Element {
       style={{
         position: 'fixed',
         inset: 0,
-        zIndex: 9999,
+        zIndex: Z_LAYER.SYSTEM_OVERLAY,
+        pointerEvents: 'auto',
         background: 'rgba(5, 10, 20, 0.88)',
         backdropFilter: 'blur(16px)',
         WebkitBackdropFilter: 'blur(16px)',

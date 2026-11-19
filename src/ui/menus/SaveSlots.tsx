@@ -1,7 +1,7 @@
 import type { JSX } from 'preact';
 import { signal } from '@preact/signals';
 import { t } from '../i18n';
-import { saveStatusSignal } from '../store';
+import { saveStatusSignal, Z_LAYER } from '../store';
 import { SaveSystem } from '../../sim/save/SaveSystem';
 import type { SaveSlot, SaveV1 } from '../../sim/save/migrations';
 
@@ -57,7 +57,8 @@ export function SaveSlots({
       style={{
         position: 'fixed',
         inset: 0,
-        zIndex: 9999,
+        zIndex: Z_LAYER.CRITICAL_MODAL,
+        pointerEvents: 'auto',
         background: 'rgba(15, 23, 42, 0.88)',
         backdropFilter: 'blur(16px)',
         display: 'flex',

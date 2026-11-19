@@ -155,4 +155,169 @@ test.describe('T3.10 Menus, Settings, Pause and Dhaka Map E2E', () => {
     });
     await expect(unsupportedOverlay).not.toBeVisible({ timeout: 5000 });
   });
+
+  test('modals (SaveSlots, Ending, Journal) close via real pointer clicks and system overlays layer on top', async ({
+    page,
+  }) => {
+    test.setTimeout(60000);
+    await page.goto('/?debug=1&district=testloop&encounters=0');
+    await page.waitForSelector('#game-canvas');
+    await expect(page.locator('#hud')).toBeVisible();
+
+    // 1. Pause -> Save Slots -> Close button with real pointer click (no force: true)
+    await page.keyboard.press('Escape');
+    const pauseMenu = page.locator('[data-testid="pause-menu"]');
+    await expect(pauseMenu).toBeVisible({ timeout: 5000 });
+
+    await page.getByTestId('pause-btn-save').click();
+    const saveSlotsModal = page.getByTestId('save-slots-modal');
+    await expect(saveSlotsModal).toBeVisible({ timeout: 5000 });
+
+    // System overlay sits above SaveSlots and intercepts pointer events
+    await page.evaluate(() => {
+      const ui = (window as unknown as {
+        __uthaoUi?: { unsupportedSignal: { value: string | null } };
+      }).__uthaoUi;
+      if (ui) ui.unsupportedSignal.value = 'WebGL2 unsupported';
+    });
+    const unsupportedOverlay = page.getByTestId('unsupported-overlay');
+    await expect(unsupportedOverlay).toBeVisible({ timeout: 5000 });
+    const topElement = await page.evaluate(() => {
+      const el = document.elementFromPoint(window.innerWidth / 2, window.innerHeight / 2);
+      return el?.closest('[data-testid]')?.getAttribute('data-testid') ?? null;
+    });
+    expect(topElement).toBe('unsupported-overlay');
+
+    await page.evaluate(() => {
+      const ui = (window as unknown as {
+        __uthaoUi?: { unsupportedSignal: { value: string | null }; rotateOverlaySignal: { value: boolean } };
+      }).__uthaoUi;
+      if (ui) {
+        ui.unsupportedSignal.value = null;
+        ui.rotateOverlaySignal.value = true;
+      }
+    });
+    const rotateOverlay = page.getByTestId('rotate-overlay');
+    await expect(rotateOverlay).toBeVisible({ timeout: 5000 });
+    const topAfterUnsupported = await page.evaluate(() => {
+      const el = document.elementFromPoint(window.innerWidth / 2, window.innerHeight / 2);
+      return el?.closest('[data-testid]')?.getAttribute('data-testid') ?? null;
+    });
+    expect(topAfterUnsupported).toBe('rotate-overlay');
+
+    await page.evaluate(() => {
+      const ui = (window as unknown as {
+        __uthaoUi?: { rotateOverlaySignal: { value: boolean } };
+      }).__uthaoUi;
+      if (ui) ui.rotateOverlaySignal.value = false;
+    });
+    await expect(rotateOverlay).not.toBeVisible({ timeout: 5000 });
+
+    // Real pointer click closes Save Slots
+    await page.getByTestId('btn-close-save-slots').click({ timeout: 5000 });
+    await expect(saveSlotsModal).not.toBeVisible({ timeout: 5000 });
+
+    // Resume to game
+    await page.getByTestId('pause-btn-resume').click();
+    await expect(pauseMenu).not.toBeVisible({ timeout: 5000 });
+
+    // 2. Journal opens via 'J' and closes via real pointer click
+    await page.keyboard.press('KeyJ');
+    const journalCloseBtn = page.getByRole('button', { name: /✕/ });
+    await expect(journalCloseBtn).toBeVisible({ timeout: 5000 });
+    await journalCloseBtn.click({ timeout: 5000 });
+    await expect(journalCloseBtn).not.toBeVisible({ timeout: 5000 });
+
+    // 3. Ending closes via real pointer click
+    await page.evaluate(() => {
+      const ui = (window as unknown as {
+        __uthaoUi?: { endingSignal: { value: unknown } };
+      }).__uthaoUi;
+      if (ui) {
+        ui.endingSignal.value = {
+          active: true,
+          result: {
+            endingId: 'independent_rider',
+            titleKey: 'ending_independent_rider_title',
+            descKey: 'ending_independent_rider_desc',
+            dominantIdentity: 'professional',
+            tendencies: { professional: 45, negotiator: 20, hustler: 15, regular: 20 },
+            summary: { cash: 8500, savings: 22000, debt: 0, rating: 4.85, localTrust: 75, completedMissions: 4 },
+          },
+        };
+      }
+    });
+    const endingScreen = page.getByTestId('ending-screen');
+    await expect(endingScreen).toBeVisible({ timeout: 5000 });
+    await endingScreen.getByRole('button', { name: /Close|বন্ধ/ }).click({ timeout: 5000 });
+    await expect(endingScreen).not.toBeVisible({ timeout: 5000 });
+  });
+
+  test('G/J/N hotkeys are guarded outside game/when modal open, and Escape in Settings restores previewed language', async ({
+    page,
+  }) => {
+    test.setTimeout(60000);
+    await page.goto('/');
+    await expect(page.getByTestId('main-menu')).toBeVisible();
+
+    // Hotkeys G, J, N should not fire on title screen
+    await page.keyboard.press('KeyG');
+    await expect(page.getByTestId('garage-screen')).toHaveCount(0);
+
+    await page.keyboard.press('KeyJ');
+    await expect(page.getByRole('button', { name: /✕/ })).toHaveCount(0);
+
+    const mutedBefore = await page.evaluate(() => {
+      const ui = (window as unknown as { __uthaoUi?: { settingsSignal: { value: { muted: boolean } } } }).__uthaoUi;
+      return ui?.settingsSignal.value.muted ?? false;
+    });
+    await page.keyboard.press('KeyN');
+    const mutedAfter = await page.evaluate(() => {
+      const ui = (window as unknown as { __uthaoUi?: { settingsSignal: { value: { muted: boolean } } } }).__uthaoUi;
+      return ui?.settingsSignal.value.muted ?? false;
+    });
+    expect(mutedAfter).toBe(mutedBefore);
+
+    // Open Settings, preview English, press Escape -> language reverts to Bangla
+    await page.getByTestId('menu-btn-settings').click();
+    await expect(page.getByTestId('settings-screen')).toBeVisible();
+    await page.getByTestId('settings-lang-en').click();
+    await expect(page.getByTestId('menu-btn-new-career')).toContainText('New Career');
+
+    await page.keyboard.press('Escape');
+    await expect(page.getByTestId('settings-screen')).toHaveCount(0);
+    await expect(page.getByTestId('menu-btn-new-career')).not.toContainText('New Career');
+
+    // Also verify G/J/N are blocked when a modal is open in 'game' mode, and work while driving
+    await page.goto('/?debug=1&district=testloop&encounters=0');
+    await page.waitForSelector('#game-canvas');
+    await expect(page.locator('#hud')).toBeVisible();
+
+    await page.keyboard.press('Escape');
+    await expect(page.getByTestId('pause-menu')).toBeVisible();
+
+    await page.keyboard.press('KeyG');
+    await expect(page.getByTestId('garage-screen')).toHaveCount(0);
+    await page.keyboard.press('KeyJ');
+    await expect(page.getByRole('button', { name: /✕/ })).toHaveCount(0);
+
+    const mutedInPauseBefore = await page.evaluate(() => {
+      const ui = (window as unknown as { __uthaoUi?: { settingsSignal: { value: { muted: boolean } } } }).__uthaoUi;
+      return ui?.settingsSignal.value.muted ?? false;
+    });
+    await page.keyboard.press('KeyN');
+    const mutedInPauseAfter = await page.evaluate(() => {
+      const ui = (window as unknown as { __uthaoUi?: { settingsSignal: { value: { muted: boolean } } } }).__uthaoUi;
+      return ui?.settingsSignal.value.muted ?? false;
+    });
+    expect(mutedInPauseAfter).toBe(mutedInPauseBefore);
+
+    // Resume to game: now G toggles Garage open & closed
+    await page.keyboard.press('Escape');
+    await expect(page.getByTestId('pause-menu')).toHaveCount(0);
+    await page.keyboard.press('KeyG');
+    await expect(page.getByTestId('garage-screen')).toBeVisible();
+    await page.keyboard.press('KeyG');
+    await expect(page.getByTestId('garage-screen')).toHaveCount(0);
+  });
 });

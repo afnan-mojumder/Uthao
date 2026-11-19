@@ -1,5 +1,6 @@
 import type { JSX } from 'preact';
 import { t } from '../i18n';
+import { Z_LAYER } from '../store';
 
 interface LoadingProps {
   message?: string;
@@ -13,7 +14,8 @@ export function Loading({ message }: LoadingProps): JSX.Element {
       style={{
         position: 'fixed',
         inset: 0,
-        zIndex: 9998,
+        zIndex: Z_LAYER.SYSTEM_OVERLAY,
+        pointerEvents: 'auto',
         background: 'rgba(7, 12, 22, 0.85)',
         backdropFilter: 'blur(12px)',
         WebkitBackdropFilter: 'blur(12px)',

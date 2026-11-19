@@ -13,6 +13,16 @@ import type { SaveSlot } from '../sim/save/migrations';
 
 export type ScreenId = 'title' | 'game' | 'garage' | 'map' | 'pause';
 
+export const Z_LAYER = {
+  HUD: 100,
+  TOUCH: 200,
+  TOAST: 300,
+  PANEL: 500,
+  MODAL: 700,
+  CRITICAL_MODAL: 800,
+  SYSTEM_OVERLAY: 900,
+} as const;
+
 export interface HudState {
   speedKmh: number;
   objectiveText: string;
@@ -343,12 +353,21 @@ export function setHasSaveCallback(fn: () => boolean): void {
 }
 
 /**
- * Leaves the running game for the title screen. The first-ride tutorial is
- * cleared too, or its full-screen layer would sit on top of the title.
+ * Leaves the running game for the title screen. Clears the tutorial, pause
+ * state, and every open modal or panel signal so nothing sits over the title.
  */
 export function exitToTitle(): void {
   tutorialSignal.value = { active: false, step: 'idle' };
   pausedSignal.value = false;
+  phoneSignal.value = { ...phoneSignal.value, open: false };
+  negotiationSignal.value = { active: false, session: null, lastResult: null };
+  garageSignal.value = { ...garageSignal.value, open: false };
+  journalSignal.value = false;
+  dayEndSignal.value = { active: false, summary: null };
+  endingSignal.value = { active: false, result: null, choices: undefined };
+  tripSummarySignal.value = null;
+  choiceSignal.value = { active: false, prompt: '', options: [], instanceId: undefined };
+  saveSlotsSignal.value = { ...saveSlotsSignal.value, isOpen: false };
   screenSignal.value = 'title';
 }
 

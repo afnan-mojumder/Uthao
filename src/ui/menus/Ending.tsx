@@ -1,5 +1,6 @@
 import type { JSX } from 'preact';
 import { t } from '../i18n';
+import { Z_LAYER } from '../store';
 import type { EndingResult, CareerChoiceOption, CareerChoice } from '../../sim/mission/endings';
 
 export interface EndingProps {
@@ -71,7 +72,8 @@ export function Ending({
       style={{
         position: 'fixed',
         inset: 0,
-        zIndex: 9999,
+        zIndex: Z_LAYER.CRITICAL_MODAL,
+        pointerEvents: 'auto',
         background: 'rgba(10, 15, 29, 0.92)',
         backdropFilter: 'blur(16px)',
         display: 'flex',

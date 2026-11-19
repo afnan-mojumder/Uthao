@@ -1,5 +1,6 @@
 import { useState } from 'preact/hooks';
 import { t } from '../i18n';
+import { Z_LAYER } from '../store';
 import type { SimSnapshot } from '../../sim/GameManager';
 import type { MissionDef } from '../../sim/schemas';
 import type { ObjectiveState } from '../../sim/mission/objectives';
@@ -43,7 +44,8 @@ export function Journal({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        zIndex: 9100,
+        zIndex: Z_LAYER.PANEL,
+        pointerEvents: 'auto',
         color: '#f8fafc',
         fontFamily: "'Noto Sans Bengali', system-ui, sans-serif",
       }}
