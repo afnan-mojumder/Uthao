@@ -13,23 +13,27 @@ export interface TrafficSignalState {
 
 export class SignalController {
   private signals: Map<string, TrafficSignalState> = new Map();
+  private readonly signalList: TrafficSignalState[] = [];
 
   constructor(signaledNodes: RoadNode[], greenDuration = BALANCE.TRAFFIC.signalGreenTimeSec) {
     for (const node of signaledNodes) {
       if (node.signal) {
-        this.signals.set(node.nodeId, {
+        const state: TrafficSignalState = {
           nodeId: node.nodeId,
           activePhaseIndex: 0,
           phaseTimer: greenDuration,
           greenPhaseDuration: greenDuration,
           yellowPhaseDuration: 3.0,
-        });
+        };
+        this.signals.set(node.nodeId, state);
+        this.signalList.push(state);
       }
     }
   }
 
   update(dt: number): void {
-    for (const signal of this.signals.values()) {
+    for (let i = 0; i < this.signalList.length; i++) {
+      const signal = this.signalList[i]!;
       signal.phaseTimer -= dt;
       if (signal.phaseTimer <= 0) {
         // Toggle between Phase 0 and Phase 1

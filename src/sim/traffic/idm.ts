@@ -1,5 +1,6 @@
 import { BALANCE } from '../../config/balance';
 import { clamp } from '../../core/math';
+import type { TrafficVehicleKind } from './TrafficManager';
 
 export interface IDMParameters {
   a: number; // Maximum acceleration (m/s^2)
@@ -9,6 +10,12 @@ export interface IDMParameters {
   delta: number; // Acceleration exponent
 }
 
+export interface CarFollowingResult {
+  newPos: number;
+  newSpeed: number;
+  gap: number;
+}
+
 export const DEFAULT_IDM_PARAMS: IDMParameters = {
   a: BALANCE.TRAFFIC.idm.a,
   b: BALANCE.TRAFFIC.idm.b,
@@ -16,6 +23,26 @@ export const DEFAULT_IDM_PARAMS: IDMParameters = {
   T: BALANCE.TRAFFIC.idm.T,
   delta: BALANCE.TRAFFIC.idm.delta,
 };
+
+/** Tailored IDM parameters per Dhaka vehicle class (nimble two/three-wheelers vs heavy buses/trucks). */
+export const VEHICLE_IDM_PARAMS: Record<TrafficVehicleKind, IDMParameters> = {
+  car: { a: 1.8, b: 2.6, s0: 2.0, T: 1.2, delta: 4.0 },
+  ride_hailing_car: { a: 1.9, b: 2.6, s0: 1.9, T: 1.15, delta: 4.0 },
+  bus: { a: 0.9, b: 1.8, s0: 2.8, T: 1.6, delta: 4.0 },
+  minibus: { a: 1.3, b: 2.2, s0: 2.2, T: 1.3, delta: 4.0 },
+  truck: { a: 0.75, b: 1.6, s0: 3.2, T: 1.8, delta: 4.0 },
+  delivery_van: { a: 1.2, b: 2.1, s0: 2.4, T: 1.4, delta: 4.0 },
+  cng: { a: 2.1, b: 2.8, s0: 1.4, T: 0.95, delta: 4.0 },
+  motorcycle: { a: 2.6, b: 3.5, s0: 1.2, T: 0.85, delta: 4.0 },
+  scooter: { a: 2.2, b: 3.0, s0: 1.3, T: 0.95, delta: 4.0 },
+  rickshaw: { a: 0.9, b: 2.2, s0: 1.2, T: 1.0, delta: 4.0 },
+  bicycle: { a: 1.1, b: 2.4, s0: 1.1, T: 0.9, delta: 4.0 },
+  vendor_cart: { a: 0.5, b: 1.8, s0: 1.3, T: 1.1, delta: 4.0 },
+};
+
+export function getIdmParams(kind: TrafficVehicleKind): IDMParameters {
+  return VEHICLE_IDM_PARAMS[kind] ?? DEFAULT_IDM_PARAMS;
+}
 
 /**
  * Calculates acceleration using the Intelligent Driver Model (IDM).
@@ -66,8 +93,9 @@ export function stepCarFollowing(
   leader: { pos: number; speed: number; length: number } | null,
   speedLimit: number,
   dt: number,
-  params: IDMParameters = DEFAULT_IDM_PARAMS
-): { newPos: number; newSpeed: number; gap: number } {
+  params: IDMParameters = DEFAULT_IDM_PARAMS,
+  out?: CarFollowingResult
+): CarFollowingResult {
   let s = Infinity;
   let deltaV = 0;
 
@@ -89,7 +117,7 @@ export function stepCarFollowing(
     const proposedFront = follower.pos + follower.length / 2 + moveDist;
     if (proposedFront > maxAllowedFront) {
       moveDist = Math.max(0, maxAllowedFront - (follower.pos + follower.length / 2));
-      newSpeed = Math.min(newSpeed, leader.speed);
+      newSpeed = Math.max(0, Math.min(newSpeed, Math.max(0, leader.speed)));
     }
   }
 
@@ -97,10 +125,18 @@ export function stepCarFollowing(
   const finalGap = leader
     ? leader.pos - leader.length / 2 - (newPos + follower.length / 2)
     : Infinity;
+  const clampedGap = Math.max(0.1, finalGap);
+
+  if (out) {
+    out.newPos = newPos;
+    out.newSpeed = newSpeed;
+    out.gap = clampedGap;
+    return out;
+  }
 
   return {
     newPos,
     newSpeed,
-    gap: Math.max(0.1, finalGap),
+    gap: clampedGap,
   };
 }

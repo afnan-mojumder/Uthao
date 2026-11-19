@@ -397,8 +397,8 @@ export class PeopleRenderer {
       }
 
       const idHash = hashId(p.id);
-      const baseY = (p as { y?: number }).y ?? 0;
-      const effectiveSpeed = p.state === 'yielding' ? 0 : p.speed;
+      const baseY = p.y ?? 0;
+      const effectiveSpeed = p.state === 'yielding' && p.crossingProgress === undefined ? 0 : p.speed;
       const isMoving = effectiveSpeed > 0.05;
 
       let legSwing = 0;
@@ -484,7 +484,7 @@ export class PeopleRenderer {
         const dz = r.z - cameraPos.z;
         if (dx * dx + dz * dz > maxDistSq) continue;
       }
-      const y = (r as { y?: number }).y ?? 0;
+      const y = r.y ?? 0;
       this._pos.set(r.x, y, r.z);
       this._quat.setFromAxisAngle(this._yAxis, r.heading);
       this._rootMat.compose(this._pos, this._quat, this._scale);
@@ -516,7 +516,7 @@ export class PeopleRenderer {
       const n = this.slotCounts[slotIdx]!;
       if (n >= slot.capacity) continue;
 
-      const y = (a as { y?: number }).y ?? 0;
+      const y = a.y ?? 0;
       this._pos.set(a.x, y, a.z);
       this._quat.setFromAxisAngle(this._yAxis, a.heading);
       this._rootMat.compose(this._pos, this._quat, this._scale);

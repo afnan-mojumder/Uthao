@@ -1,7 +1,7 @@
 import { GameManager } from './GameManager';
 import { RideManager } from './ride/RideManager';
 import { RequestGenerator } from './ride/RequestGenerator';
-import { TrafficManager } from './traffic/TrafficManager';
+import { TrafficManager, VEHICLE_CONFIGS } from './traffic/TrafficManager';
 import type { RoadNetwork } from './road/RoadNetwork';
 import type { SegmentElevationHit } from './road/spatial';
 import { encounterPhaseFor, type RidePhaseInput } from './events/phase';
@@ -82,7 +82,7 @@ export class GameSession {
   private readonly env: BikeEnvironment;
   // Reused each step to keep the hot path allocation-free.
   private readonly camView: { x: number; z: number; heading: number; fovRad: number };
-  private readonly pose: { x: number; z: number; speed: number; heading: number };
+  private readonly pose: { x: number; y: number; z: number; speed: number; heading: number };
   // Reused every tick (the step loop is allocation-free); see currentEncounterPhase.
   private readonly phaseInput: RidePhaseInput = {
     trip: 'Idle',
@@ -181,7 +181,7 @@ export class GameSession {
         1
       );
     });
-    this.traffic = new TrafficManager(this.road, this.gm.seed);
+    this.traffic = new TrafficManager(this.road, this.gm.seed, this.gm.roadEvents);
     this.requests = new RequestGenerator(this.road, this.gm.rng.fork('requestGenerator'), {
       reputationSystem: this.gm.reputationSystem,
       dayProvider: () => this.gm.clock.day,
@@ -199,18 +199,22 @@ export class GameSession {
         spec: this.bikeSpec,
       });
       this.bike = this.controller.state;
-      this.gm.bus.on('bike/collision', (ev) => {
-        if (ev.otherKind === 'traffic' && ev.severity === 'crash') {
-          this.maybeStartAccidentEncounter();
-        }
-      });
     } else {
       this.bike = createDefaultBikeState();
     }
 
+    this.gm.bus.on('bike/collision', (ev) => {
+      if (ev.severity === 'crash') {
+        this.traffic.pedestrians.reportAccident(this.bike.x, this.bike.z);
+        if (ev.otherKind === 'traffic') {
+          this.maybeStartAccidentEncounter();
+        }
+      }
+    });
+
     this.env = { wet: false, surface: 1.0, hasPassenger: false, conditionPct: 100, fuelEmpty: false };
     this.camView = { x: 0, z: 0, heading: 0, fovRad: (60 * Math.PI) / 180 };
-    this.pose = { x: 0, z: 0, speed: 0, heading: 0 };
+    this.pose = { x: 0, y: 0, z: 0, speed: 0, heading: 0 };
 
     this.breakdownRng = this.gm.rng.fork('breakdown');
     this.punctureRng = this.gm.rng.fork('puncture');
@@ -623,14 +627,16 @@ export class GameSession {
       if (dx * dx + dz * dz > DYNAMIC_TRAFFIC_RANGE_SQ) continue;
       const yaw = agent.heading ?? 0;
       const speed = agent.speed ?? 0;
+      const y = this.traffic.getAgentY(agent);
+      const height = VEHICLE_CONFIGS[agent.kind]?.height ?? 2.5;
       obb.id = agent.id;
       obb.kind = agent.kind;
       obb.x = agent.x;
       obb.z = agent.z;
       obb.halfX = agent.width * 0.5;
       obb.halfZ = agent.length * 0.5;
-      obb.minY = 0;
-      obb.maxY = 2.5;
+      obb.minY = y;
+      obb.maxY = y + height;
       obb.yaw = yaw;
       obb.vx = Math.sin(yaw) * speed;
       obb.vz = Math.cos(yaw) * speed;
@@ -650,6 +656,10 @@ export class GameSession {
 
     let touching = false;
     for (const agent of this.traffic.agents.values()) {
+      if (Math.abs(this.traffic.getAgentY(agent) - this.bike.y) > 2.5) {
+        this.trafficContacts.delete(agent.id);
+        continue;
+      }
       const dx = agent.x - this.bike.x;
       const dz = agent.z - this.bike.z;
       const dist = Math.hypot(dx, dz);
@@ -685,9 +695,6 @@ export class GameSession {
         this.bike.speed *= 0.95;
       }
       this.gm.bus.emit('bike/collision', { severity, relSpeedKmh, otherKind: 'traffic' });
-      if (severity === 'crash') {
-        this.maybeStartAccidentEncounter();
-      }
     }
     if (touching) return;
 
@@ -856,12 +863,13 @@ export class GameSession {
     this.camView.z = this.bike.z;
     this.camView.heading = this.bike.heading;
     this.pose.x = this.bike.x;
+    this.pose.y = this.bike.y;
     this.pose.z = this.bike.z;
     this.pose.speed = this.bike.speed;
     this.pose.heading = this.bike.heading;
 
     this.traffic.maintainDensity(this.camView, this.gm.clock.minutes);
-    this.traffic.update(dt, this.camView, this.pose);
+    this.traffic.update(dt, this.camView, this.pose, this.env.wet);
     if (!this.controller) {
       this.checkTrafficCollisions(dt);
     }

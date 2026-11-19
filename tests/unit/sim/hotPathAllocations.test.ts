@@ -109,18 +109,37 @@ describe('Hot Path Allocation Optimization (T5.9)', () => {
     expect(diffMb).toBeLessThan(2);
   });
 
-  it('TrafficManager pools lane lists without allocating new Map per frame', () => {
+  it('TrafficManager pools lane lists without allocating new Map or calling Array.from per frame', () => {
     const network = RoadNetwork.fromDistricts([mirparaData as DistrictData]);
     const traffic = new TrafficManager(network, 42);
+    const cam = { x: 300, z: 300, heading: 0, fovRad: 1.2 };
+    const player = { x: 300, z: 300, speed: 8, heading: 0 };
 
-    traffic.maintainDensity({ x: 300, z: 300, heading: 0, fovRad: 1.2 }, 480);
-    expect(traffic.agents.size).toBeGreaterThan(0);
-
-    for (let i = 0; i < 100; i++) {
-      traffic.update(1 / 60, { x: 300, z: 300, heading: 0, fovRad: 1.2 });
+    for (let i = 0; i < 600; i++) {
+      traffic.maintainDensity(cam, 480);
+      traffic.update(1 / 60, cam, player);
     }
-
     expect(traffic.agents.size).toBeGreaterThan(0);
+
+    const arrayFromSpy = vi.spyOn(Array, 'from');
+    const initialHeap = process.memoryUsage().heapUsed;
+    for (let i = 0; i < 2000; i++) {
+      traffic.update(1 / 60, cam, player);
+    }
+    const updateDiffMb = (process.memoryUsage().heapUsed - initialHeap) / (1024 * 1024);
+
+    const densityHeap0 = process.memoryUsage().heapUsed;
+    for (let i = 0; i < 2000; i++) {
+      traffic.maintainDensity(cam, 480);
+      traffic.update(1 / 60, cam, player);
+    }
+    const loopDiffMb = (process.memoryUsage().heapUsed - densityHeap0) / (1024 * 1024);
+
+    expect(arrayFromSpy).not.toHaveBeenCalled();
+    expect(updateDiffMb).toBeLessThan(2);
+    expect(loopDiffMb).toBeLessThan(10);
+    expect(traffic.agents.size).toBeGreaterThan(0);
+    arrayFromSpy.mockRestore();
   });
 
   it('RequestGenerator.tick reuses the same output array across calls (T7.2)', () => {

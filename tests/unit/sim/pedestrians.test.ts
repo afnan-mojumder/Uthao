@@ -8,7 +8,9 @@ import {
 } from '../../../src/sim/traffic/pedestrians';
 import { TrafficManager, type TrafficAgent } from '../../../src/sim/traffic/TrafficManager';
 import mirparaData from '../../../data/districts/mirpara.json';
+import puranparaData from '../../../data/districts/puranpara.json';
 import type { DistrictData } from '../../../src/sim/schemas';
+import type { RoadNode, RoadSegment } from '../../../src/core/types';
 
 describe('Pedestrians, rickshaws, local traffic behaviour (T3.4)', () => {
   const network = RoadNetwork.fromDistricts([mirparaData as DistrictData]);
@@ -286,6 +288,164 @@ describe('Pedestrians, rickshaws, local traffic behaviour (T3.4)', () => {
       for (const ped of peds) {
         expect(['sidewalk', 'crossing', 'jaywalking', 'yielding']).toContain(ped.state);
         expect(ped.speed).toBeGreaterThan(1.0);
+      }
+    });
+
+    it('turns corners onto adjacent sidewalk segments instead of reversing at non-crossing junctions', () => {
+      const nodes: RoadNode[] = [
+        { nodeId: 'A', x: 0, z: 0, kind: 'junction' },
+        { nodeId: 'B', x: 50, z: 0, kind: 'junction' },
+        { nodeId: 'C', x: 50, z: 50, kind: 'junction' },
+      ];
+      const mkSeg = (id: string, a: string, b: string): RoadSegment => ({
+        segmentId: id,
+        startNodeId: a,
+        endNodeId: b,
+        width: 8,
+        surfaceCondition: 1,
+        trafficDensity: 0.3,
+        speedLimit: 40,
+        turnRestrictions: [],
+        motorcycleAccessible: true,
+        pedestrianDensity: 0.5,
+        riskLevel: 0,
+        oneWay: false,
+        divided: false,
+        lanes: 2,
+        roadType: 'residential',
+        floodSensitivity: 0,
+        pickupPractical: true,
+        district: 'testloop',
+        tags: [],
+      });
+      const cornerNet = RoadNetwork.fromDistricts([
+        { districtId: 'testloop', name: { bn: 'x', en: 'x' }, nodes, segments: [mkSeg('AB', 'A', 'B'), mkSeg('BC', 'B', 'C')], pois: [] },
+      ]);
+      const pm = new PedestrianManager(cornerNet, 11);
+      const ped: PedestrianAgent = {
+        id: 'corner_ped',
+        x: 45,
+        z: 5.2,
+        heading: Math.PI / 2,
+        speed: 1.4,
+        state: 'sidewalk',
+        segmentId: 'AB',
+        distAlongSegment: 45,
+        lateralOffset: 5.2,
+        side: 'right',
+        direction: 1,
+        lod: 'near',
+      };
+      pm.pedestrians.set(ped.id, ped);
+
+      for (let i = 0; i < 60; i++) pm.update(0.1);
+      expect(ped.segmentId).toBe('BC');
+      expect(ped.x).toBeLessThan(50);
+      expect(ped.z).toBeGreaterThan(5);
+    });
+
+    it('completes crossing forward when past midpoint and a vehicle approaches', () => {
+      const nodes: RoadNode[] = [
+        { nodeId: 'W', x: -50, z: 0, kind: 'junction' },
+        { nodeId: 'C', x: 0, z: 0, kind: 'junction', tags: ['crossing'] },
+        { nodeId: 'E', x: 50, z: 0, kind: 'junction' },
+      ];
+      const mkSeg = (id: string, a: string, b: string): RoadSegment => ({
+        segmentId: id,
+        startNodeId: a,
+        endNodeId: b,
+        width: 8,
+        surfaceCondition: 1,
+        trafficDensity: 0.3,
+        speedLimit: 40,
+        turnRestrictions: [],
+        motorcycleAccessible: true,
+        pedestrianDensity: 0.5,
+        riskLevel: 0,
+        oneWay: false,
+        divided: false,
+        lanes: 2,
+        roadType: 'main',
+        floodSensitivity: 0,
+        pickupPractical: true,
+        district: 'testloop',
+        tags: [],
+      });
+      const net = RoadNetwork.fromDistricts([
+        { districtId: 'testloop', name: { bn: 'x', en: 'x' }, nodes, segments: [mkSeg('WC', 'W', 'C'), mkSeg('CE', 'C', 'E')], pois: [] },
+      ]);
+      const pm = new PedestrianManager(net, 1);
+      const ped: PedestrianAgent = {
+        id: 'halfway',
+        x: 0,
+        z: 1.0,
+        heading: 0,
+        speed: 1.3,
+        state: 'crossing',
+        segmentId: 'WC',
+        distAlongSegment: 50,
+        lateralOffset: 1.0,
+        side: 'left',
+        direction: 1,
+        crossingProgress: 0.65,
+        crossingFromOffset: -5.2,
+        crossingToOffset: 5.2,
+        lod: 'near',
+      };
+      pm.pedestrians.set(ped.id, ped);
+
+      const vehicles = new Map([['car', { x: -18, z: -2, heading: Math.PI / 2, speed: 10 }]]);
+      for (let i = 0; i < 40; i++) pm.update(0.1, undefined, undefined, vehicles);
+
+      expect(ped.state).toBe('sidewalk');
+      expect(ped.lateralOffset).toBeCloseTo(5.2, 4);
+      expect(ped.side).toBe('right');
+    });
+
+    it('expands jaywalk safety margin when the road is wet', () => {
+      const pedMgr = new PedestrianManager(network, 123);
+      const playerPos = { x: 100, z: 100 };
+      const playerSpeed = 11.0; // dry 1.5*stop = 15.125m; wet (4.4 m/s^2) 1.5*stop = 20.625m
+      const ped: PedestrianAgent = {
+        id: 'wet_ped',
+        x: 100,
+        z: 117, // 17m away: safe when dry, unsafe when wet!
+        heading: 0,
+        speed: 1.3,
+        state: 'sidewalk',
+        segmentId: mirparaData.segments[0]!.segmentId,
+        distAlongSegment: 10,
+        lateralOffset: 5,
+        side: 'right',
+        direction: 1,
+        lod: 'near',
+      };
+
+      expect(canStartJaywalk({ x: ped.x, z: ped.z }, playerPos, playerSpeed, 6.0, false)).toBe(true);
+      expect(canStartJaywalk({ x: ped.x, z: ped.z }, playerPos, playerSpeed, 6.0, true)).toBe(false);
+      expect(pedMgr.tryStartJaywalk(ped, playerPos, playerSpeed, true)).toBe(false);
+      expect(ped.state).toBe('sidewalk');
+    });
+
+    it('keeps alley pedestrians near alley edge rather than inside adjacent buildings', () => {
+      const puranNet = RoadNetwork.fromDistricts([puranparaData as DistrictData]);
+      const alleySeg = puranNet.getAllSegments().find((s) => s.roadType === 'alley')!;
+      const alleyOnlyNet = RoadNetwork.fromDistricts([
+        {
+          districtId: 'puranpara',
+          name: { bn: 'x', en: 'x' },
+          nodes: [puranNet.getNode(alleySeg.startNodeId)!, puranNet.getNode(alleySeg.endNodeId)!],
+          segments: [alleySeg],
+          pois: [],
+        },
+      ]);
+      const sNode = alleyOnlyNet.getNode(alleySeg.startNodeId)!;
+      const pm = new PedestrianManager(alleyOnlyNet, 77);
+      pm.maintainDensity({ x: sNode.x + 25, z: sNode.z, heading: 0, fovRad: 1.2 }, 720, 10);
+      const peds = pm.getPedestrians();
+      expect(peds.length).toBeGreaterThan(0);
+      for (const ped of peds) {
+        expect(Math.abs(ped.lateralOffset)).toBeLessThanOrEqual(alleySeg.width / 2 + 0.5);
       }
     });
   });
