@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { CameraRig } from './CameraRig';
-import { MotorcycleMesh } from './vehicles';
+import { MotorcycleMesh, type BikeCosmetics } from './vehicles';
 import { RideMarkers } from './props';
 import {
   AdaptiveQualityManager,
@@ -10,7 +10,7 @@ import {
 import type { SimSnapshot } from '../sim/GameManager';
 import { lerp, angleDiff } from '../core/math';
 import { WeatherFx } from './WeatherFx';
-import type { DistrictId } from '../core/types';
+import type { BikeId, DistrictId } from '../core/types';
 import type { DistrictData, WorldData } from '../sim/schemas';
 import type { PhysicsWorld } from '../physics/PhysicsWorld';
 import { CityBuilder } from './CityBuilder';
@@ -48,10 +48,16 @@ export class Renderer {
   private testSceneGroup?: THREE.Group;
   private prevBikePose = { x: 0, y: 0, z: 0, heading: 0, lean: 0, steer: 0 };
   private currBikePose = { x: 0, y: 0, z: 0, heading: 0, lean: 0, steer: 0 };
+  private readonly _renderBikePose = { x: 0, y: 0, z: 0, heading: 0, lean: 0, steer: 0 };
   private bikeSpeed = 0;
+  private lastRenderMs = 0;
+  private lastSyncedBikeId: BikeId = 'old100';
+  private lastSyncedPaint: string | undefined = undefined;
+  private lastSyncedSeatCover: string | undefined = undefined;
   private readonly _bikePos = new THREE.Vector3();
   private readonly _bikeGroundPos = { x: 0, y: 0, z: 0 };
   private readonly _camPos = { x: 0, z: 0 };
+  private readonly _peopleCamPos = { x: 0, z: 0 };
 
   private constructor(
     canvas: HTMLCanvasElement,
@@ -186,6 +192,22 @@ export class Renderer {
   async preloadAssets(onProgress?: (pct: number) => void): Promise<void> {
     await assetManager.init(this.webglRenderer);
     await assetManager.preloadCore(onProgress);
+    this.peopleRenderer.refreshPrototypes();
+  }
+
+  setBikeVariant(variant: BikeId): void {
+    this.lastSyncedBikeId = variant;
+    this.bikeMesh.setVariant(variant);
+  }
+
+  setBikeCosmetics(cosmetics: BikeCosmetics): void {
+    this.lastSyncedPaint = cosmetics.paint;
+    this.lastSyncedSeatCover = cosmetics.seatCover;
+    this.bikeMesh.setCosmetics(cosmetics);
+  }
+
+  setBrakeLight(braking: boolean): void {
+    this.bikeMesh.setBraking(braking);
   }
 
   /** Syncs 3D traffic signal pole lenses to the live SignalController (zero allocations). */
@@ -350,37 +372,73 @@ export class Renderer {
 
   setBikeState(state: {
     x: number;
+    y?: number;
     z: number;
     heading: number;
     speed: number;
     lean: number;
     steer: number;
+    braking?: boolean;
   }): void {
-    this.prevBikePose = { ...this.currBikePose };
-    this.currBikePose = {
-      x: state.x,
-      y: 0,
-      z: state.z,
-      heading: state.heading,
-      lean: state.lean,
-      steer: state.steer,
-    };
+    this.prevBikePose.x = this.currBikePose.x;
+    this.prevBikePose.y = this.currBikePose.y;
+    this.prevBikePose.z = this.currBikePose.z;
+    this.prevBikePose.heading = this.currBikePose.heading;
+    this.prevBikePose.lean = this.currBikePose.lean;
+    this.prevBikePose.steer = this.currBikePose.steer;
+
+    this.currBikePose.x = state.x;
+    this.currBikePose.y = state.y ?? 0;
+    this.currBikePose.z = state.z;
+    this.currBikePose.heading = state.heading;
+    this.currBikePose.lean = state.lean;
+    this.currBikePose.steer = state.steer;
     this.bikeSpeed = state.speed;
+    if (state.braking !== undefined) {
+      this.bikeMesh.setBraking(state.braking);
+    }
   }
 
   render(snapshot: SimSnapshot, alpha = 1.0, signals?: SignalController): void {
     const now = performance.now();
+    const frameDt =
+      this.lastRenderMs > 0
+        ? Math.min(0.1, Math.max(0, (now - this.lastRenderMs) / 1000))
+        : 1 / 60;
+    this.lastRenderMs = now;
     this.qualityManager.recordFrame(now);
 
-    // Interpolate bike pose
+    // Sync active bike variant and cosmetics from snapshot economy state (zero alloc)
+    const econ = snapshot.economy;
+    if (econ) {
+      const bikeId = econ.currentBikeId ?? 'old100';
+      if (bikeId !== this.lastSyncedBikeId) {
+        this.setBikeVariant(bikeId);
+      }
+      const paint = econ.installedCosmetics?.paint;
+      const seatCover = econ.installedCosmetics?.seatCover;
+      if (paint !== this.lastSyncedPaint || seatCover !== this.lastSyncedSeatCover) {
+        this.setBikeCosmetics(econ.installedCosmetics ?? {});
+      }
+    }
+
+    // Interpolate bike pose (including Mohakhali flyover y elevation)
     const x = lerp(this.prevBikePose.x, this.currBikePose.x, alpha);
+    const y = lerp(this.prevBikePose.y, this.currBikePose.y, alpha);
     const z = lerp(this.prevBikePose.z, this.currBikePose.z, alpha);
     const diff = angleDiff(this.prevBikePose.heading, this.currBikePose.heading);
     const heading = this.prevBikePose.heading + diff * alpha;
     const lean = lerp(this.prevBikePose.lean, this.currBikePose.lean, alpha);
     const steer = lerp(this.prevBikePose.steer, this.currBikePose.steer, alpha);
 
-    this.bikeMesh.setPose({ x, y: 0, z, heading, lean, steer });
+    this._renderBikePose.x = x;
+    this._renderBikePose.y = y;
+    this._renderBikePose.z = z;
+    this._renderBikePose.heading = heading;
+    this._renderBikePose.lean = lean;
+    this._renderBikePose.steer = steer;
+    this.bikeMesh.setPose(this._renderBikePose);
+    this.bikeMesh.update(frameDt > 0 ? frameDt : 1 / 60, this.bikeSpeed);
 
     const groundSize = 2 * this.qualityManager.config.drawDistance + 20;
     this.ground.position.set(x, -0.01, z);
@@ -390,11 +448,12 @@ export class Renderer {
     this.markers.update(1 / 60);
 
     // Update Camera Rig
-    this._bikePos.set(x, 0, z);
+    this._bikePos.set(x, y, z);
     this.cameraRig.update(this._bikePos, heading, this.bikeSpeed, this.colliders, 1 / 60, lean);
 
     // Update Weather and Lighting FX
     this._bikeGroundPos.x = x;
+    this._bikeGroundPos.y = y;
     this._bikeGroundPos.z = z;
     this.weatherFx.update(
       1 / 60,
@@ -443,12 +502,13 @@ export class Renderer {
     trafficAgents: TrafficAgent[],
     timeSec = 0
   ): void {
-    const camPos = { x: this.currBikePose.x, z: this.currBikePose.z };
+    this._peopleCamPos.x = this.currBikePose.x;
+    this._peopleCamPos.z = this.currBikePose.z;
     this.peopleRenderer.update(
       pedestrians,
       trafficAgents,
       timeSec,
-      camPos,
+      this._peopleCamPos,
       this.qualityManager.config.drawDistance
     );
   }

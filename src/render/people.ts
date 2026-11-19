@@ -1,51 +1,142 @@
 import * as THREE from 'three';
-import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import type { PedestrianAgent } from '../sim/traffic/pedestrians';
 import type { TrafficAgent, TrafficVehicleKind } from '../sim/traffic/TrafficManager';
-import { DRAWN_VEHICLE_KINDS, VEHICLE_COLOR } from './vehicleStyles';
+import { assetManager } from './assets';
+import {
+  DRAWN_VEHICLE_KINDS,
+  PEDESTRIAN_PANTS_COLORS,
+  PEDESTRIAN_SHIRT_COLORS,
+  PEDESTRIAN_SKIN_COLORS,
+  ROAD_WORKER_VEST_COLOR,
+  VEHICLE_COLOR,
+  VEHICLE_MODEL_IDS,
+} from './vehicleStyles';
+import {
+  buildMultiMaterialPrototype,
+  createBicycleMesh,
+  createBusMesh,
+  createCNGMesh,
+  createCarMesh,
+  createRickshawMesh,
+  createScooterMesh,
+  createTrafficMotorcycleMesh,
+  createVendorCartMesh,
+} from './vehicles';
+
+interface VehiclePrototype {
+  geometry: THREE.BufferGeometry;
+  material: THREE.Material | THREE.Material[];
+  isGltf: boolean;
+}
+
+interface VehicleSlot {
+  kind: TrafficVehicleKind;
+  modelId?: string;
+  mesh: THREE.InstancedMesh;
+  capacity: number;
+  isGltf: boolean;
+  slotIndex: number;
+}
+
+export interface PedestrianPartMeshes {
+  head: THREE.InstancedMesh;
+  torso: THREE.InstancedMesh;
+  leftLeg: THREE.InstancedMesh;
+  rightLeg: THREE.InstancedMesh;
+  leftArm: THREE.InstancedMesh;
+  rightArm: THREE.InstancedMesh;
+}
+
+function hashId(id: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < id.length; i++) {
+    h ^= id.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
+function disposeSlotResources(mesh: THREE.InstancedMesh): void {
+  if (mesh.geometry && !mesh.geometry.userData?.shared) {
+    mesh.geometry.dispose();
+  }
+  if (Array.isArray(mesh.material)) {
+    for (const m of mesh.material) {
+      if (m && !m.userData?.shared) m.dispose();
+    }
+  } else if (mesh.material && !mesh.material.userData?.shared) {
+    mesh.material.dispose();
+  }
+}
 
 export class PeopleRenderer {
   readonly root: THREE.Group;
-  private pedMesh: THREE.InstancedMesh;
+
+  // Multi-part animated pedestrians (6 InstancedMeshes = 6 draw calls total)
+  private pedHeadMesh: THREE.InstancedMesh;
+  private pedTorsoMesh: THREE.InstancedMesh;
+  private pedLeftLegMesh: THREE.InstancedMesh;
+  private pedRightLegMesh: THREE.InstancedMesh;
+  private pedLeftArmMesh: THREE.InstancedMesh;
+  private pedRightArmMesh: THREE.InstancedMesh;
+
   private rickshawMesh: THREE.InstancedMesh;
   private maxPedestrians = 120;
   private maxRickshaws = 60;
-  private dummy = new THREE.Object3D();
-
-  // One instanced mesh per drawn vehicle kind, indexed like DRAWN_VEHICLE_KINDS.
-  private readonly vehicleKinds: TrafficVehicleKind[] = [];
-  private readonly vehicleMeshes: THREE.InstancedMesh[] = [];
-  private readonly vehicleCounts: number[] = [];
-  private readonly vehicleIndex = new Map<TrafficVehicleKind, number>();
   private maxVehiclesPerKind = 40;
+
+  // Preallocated scratch objects for 100% allocation-free per-frame updates
+  private readonly _pos = new THREE.Vector3();
+  private readonly _quat = new THREE.Quaternion();
+  private readonly _scale = new THREE.Vector3(1, 1, 1);
+  private readonly _rootMat = new THREE.Matrix4();
+  private readonly _partPos = new THREE.Vector3();
+  private readonly _partQuat = new THREE.Quaternion();
+  private readonly _partMat = new THREE.Matrix4();
+  private readonly _finalMat = new THREE.Matrix4();
+  private readonly _xAxis = new THREE.Vector3(1, 0, 0);
+  private readonly _yAxis = new THREE.Vector3(0, 1, 0);
+  private readonly _scratchColor = new THREE.Color();
+
+  // Vehicle slots per kind
+  private readonly vehicleKinds: TrafficVehicleKind[] = [];
+  private readonly slotsByKind = new Map<TrafficVehicleKind, VehicleSlot[]>();
+  private readonly allSlots: VehicleSlot[] = [];
+  private readonly slotCounts: number[] = [];
 
   constructor() {
     this.root = new THREE.Group();
     this.root.name = 'people_renderer';
 
-    // 1. Pedestrian instanced mesh
-    const pedGeo = this.buildPedestrianGeometry();
-    const pedMat = new THREE.MeshStandardMaterial({
-      color: 0x2563eb,
-      roughness: 0.7,
-      metalness: 0.1,
-    });
-    this.pedMesh = new THREE.InstancedMesh(pedGeo, pedMat, this.maxPedestrians);
-    this.pedMesh.count = 0;
-    this.pedMesh.castShadow = true;
-    this.pedMesh.receiveShadow = true;
-    this.root.add(this.pedMesh);
+    // 1. Multi-part pedestrians
+    const headGeo = new THREE.BoxGeometry(0.21, 0.22, 0.21);
+    headGeo.translate(0, 1.56, 0);
+    const headMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.72 });
+    this.pedHeadMesh = this.createPedPartMesh(headGeo, headMat);
 
-    // 2. Rickshaw instanced mesh
-    const rickshawGeo = this.buildRickshawGeometry();
-    const rickshawMat = new THREE.MeshStandardMaterial({
-      color: 0x16a34a, // Dhaka vibrant green and yellow
-      roughness: 0.5,
-      metalness: 0.2,
-    });
+    const torsoGeo = new THREE.BoxGeometry(0.36, 0.56, 0.22);
+    torsoGeo.translate(0, 1.12, 0);
+    const torsoMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.78 });
+    this.pedTorsoMesh = this.createPedPartMesh(torsoGeo, torsoMat);
+
+    // Pivot legs at hip (y = 0.84) and arms at shoulder (y = 1.36)
+    const legGeo = new THREE.BoxGeometry(0.13, 0.84, 0.14);
+    legGeo.translate(0, -0.42, 0);
+    const legMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.85 });
+    this.pedLeftLegMesh = this.createPedPartMesh(legGeo, legMat);
+    this.pedRightLegMesh = this.createPedPartMesh(legGeo, legMat);
+
+    const armGeo = new THREE.BoxGeometry(0.1, 0.48, 0.1);
+    armGeo.translate(0, -0.22, 0);
+    const armMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.78 });
+    this.pedLeftArmMesh = this.createPedPartMesh(armGeo, armMat);
+    this.pedRightArmMesh = this.createPedPartMesh(armGeo, armMat);
+
+    // 2. Multi-material Dhaka cycle rickshaw
+    const rickshawProto = buildMultiMaterialPrototype(createRickshawMesh());
     this.rickshawMesh = new THREE.InstancedMesh(
-      rickshawGeo,
-      rickshawMat,
+      rickshawProto.geometry,
+      rickshawProto.material,
       this.maxRickshaws
     );
     this.rickshawMesh.count = 0;
@@ -53,22 +144,205 @@ export class PeopleRenderer {
     this.rickshawMesh.receiveShadow = true;
     this.root.add(this.rickshawMesh);
 
-    // 3. Cars, buses, CNG autos, trucks and the rest of the traffic
-    DRAWN_VEHICLE_KINDS.forEach((kind, idx) => {
-      const mesh = new THREE.InstancedMesh(
-        this.buildVehicleGeometry(kind),
-        new THREE.MeshStandardMaterial({ color: VEHICLE_COLOR[kind], roughness: 0.5, metalness: 0.2 }),
-        this.maxVehiclesPerKind
-      );
-      mesh.count = 0;
-      mesh.castShadow = true;
-      mesh.receiveShadow = true;
-      this.root.add(mesh);
+    // 3. Cars, buses, CNG autos, trucks, motorcycles, scooters, bicycles, carts
+    for (const kind of DRAWN_VEHICLE_KINDS) {
       this.vehicleKinds.push(kind);
-      this.vehicleMeshes.push(mesh);
-      this.vehicleCounts.push(0);
-      this.vehicleIndex.set(kind, idx);
-    });
+      const modelIds = VEHICLE_MODEL_IDS[kind];
+      const slots: VehicleSlot[] = [];
+
+      if (modelIds && modelIds.length > 0) {
+        const perVariantCap = Math.max(
+          16,
+          Math.ceil(this.maxVehiclesPerKind / modelIds.length) + 4
+        );
+        for (const modelId of modelIds) {
+          const proto = this.resolveVehiclePrototype(kind, modelId);
+          const mesh = this.createVehicleInstancedMesh(proto, perVariantCap);
+          const slot: VehicleSlot = {
+            kind,
+            modelId,
+            mesh,
+            capacity: perVariantCap,
+            isGltf: proto.isGltf,
+            slotIndex: this.allSlots.length,
+          };
+          slots.push(slot);
+          this.allSlots.push(slot);
+          this.slotCounts.push(0);
+        }
+      } else {
+        const proto = this.resolveVehiclePrototype(kind);
+        const mesh = this.createVehicleInstancedMesh(proto, this.maxVehiclesPerKind);
+        const slot: VehicleSlot = {
+          kind,
+          mesh,
+          capacity: this.maxVehiclesPerKind,
+          isGltf: proto.isGltf,
+          slotIndex: this.allSlots.length,
+        };
+        slots.push(slot);
+        this.allSlots.push(slot);
+        this.slotCounts.push(0);
+      }
+
+      this.slotsByKind.set(kind, slots);
+    }
+  }
+
+  private createPedPartMesh(
+    geo: THREE.BufferGeometry,
+    mat: THREE.Material
+  ): THREE.InstancedMesh {
+    const mesh = new THREE.InstancedMesh(geo, mat, this.maxPedestrians);
+    mesh.count = 0;
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    // Pre-allocate instanceColor buffer once at construction time so update() stays zero-alloc
+    this._scratchColor.setHex(0xffffff);
+    mesh.setColorAt(0, this._scratchColor);
+    this.root.add(mesh);
+    return mesh;
+  }
+
+  private createVehicleInstancedMesh(
+    proto: VehiclePrototype,
+    capacity: number
+  ): THREE.InstancedMesh {
+    const mesh = new THREE.InstancedMesh(proto.geometry, proto.material, capacity);
+    mesh.count = 0;
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    this.root.add(mesh);
+    return mesh;
+  }
+
+  private resolveVehiclePrototype(kind: TrafficVehicleKind, modelId?: string): VehiclePrototype {
+    if (modelId) {
+      const gltfProto = assetManager.getInstancedPrototype(modelId);
+      if (gltfProto) {
+        return {
+          geometry: gltfProto.geometry,
+          material: gltfProto.material,
+          isGltf: true,
+        };
+      }
+    }
+
+    switch (kind) {
+      case 'cng': {
+        const p = buildMultiMaterialPrototype(createCNGMesh());
+        return { ...p, isGltf: false };
+      }
+      case 'bus': {
+        const p = buildMultiMaterialPrototype(createBusMesh());
+        return { ...p, isGltf: false };
+      }
+      case 'motorcycle': {
+        const p = buildMultiMaterialPrototype(createTrafficMotorcycleMesh());
+        return { ...p, isGltf: false };
+      }
+      case 'scooter': {
+        const p = buildMultiMaterialPrototype(createScooterMesh());
+        return { ...p, isGltf: false };
+      }
+      case 'bicycle': {
+        const p = buildMultiMaterialPrototype(createBicycleMesh());
+        return { ...p, isGltf: false };
+      }
+      case 'vendor_cart': {
+        const p = buildMultiMaterialPrototype(createVendorCartMesh());
+        return { ...p, isGltf: false };
+      }
+      case 'car':
+      case 'ride_hailing_car': {
+        const p = buildMultiMaterialPrototype(createCarMesh());
+        return { ...p, isGltf: false };
+      }
+      default:
+        return this.buildBoxFallbackPrototype(kind);
+    }
+  }
+
+  private buildBoxFallbackPrototype(kind: TrafficVehicleKind): VehiclePrototype {
+    const group = new THREE.Group();
+    const color = VEHICLE_COLOR[kind] ?? 0x64748b;
+    const bodyMat = new THREE.MeshStandardMaterial({ color, roughness: 0.5, metalness: 0.2 });
+    const cabinMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.2 });
+    const wheelMat = new THREE.MeshStandardMaterial({ color: 0x18181b, roughness: 0.85 });
+
+    let w = 2.0;
+    let h = 1.6;
+    let d = 4.4;
+    if (kind === 'minibus') {
+      w = 2.05;
+      h = 2.1;
+      d = 4.8;
+    } else if (kind === 'delivery_van') {
+      w = 2.0;
+      h = 2.2;
+      d = 4.6;
+    } else if (kind === 'truck') {
+      w = 2.4;
+      h = 2.6;
+      d = 7.4;
+    }
+
+    const body = new THREE.Mesh(new THREE.BoxGeometry(w, h * 0.65, d), bodyMat);
+    body.position.set(0, 0.35 + h * 0.325, 0);
+    group.add(body);
+
+    const cab = new THREE.Mesh(new THREE.BoxGeometry(w * 0.86, h * 0.35, d * 0.45), cabinMat);
+    cab.position.set(0, 0.35 + h * 0.82, d * 0.18);
+    group.add(cab);
+
+    const wheelGeo = new THREE.CylinderGeometry(0.35, 0.35, 0.16, 10);
+    const halfW = w * 0.48;
+    const halfL = d * 0.32;
+    const offsets: [number, number][] = [
+      [-halfW, halfL],
+      [halfW, halfL],
+      [-halfW, -halfL],
+      [halfW, -halfL],
+    ];
+    for (const [wx, wz] of offsets) {
+      const wheel = new THREE.Mesh(wheelGeo, wheelMat);
+      wheel.rotation.z = Math.PI / 2;
+      wheel.position.set(wx, 0.35, wz);
+      group.add(wheel);
+    }
+
+    const p = buildMultiMaterialPrototype(group);
+    return { ...p, isGltf: false };
+  }
+
+  /**
+   * Upgrades procedural car/van/truck placeholders to optimized Kenney GLTF prototypes
+   * once `assetManager.preloadCore()` has finished.
+   */
+  refreshPrototypes(): void {
+    for (const slot of this.allSlots) {
+      if (!slot.modelId) continue;
+      const gltfProto = assetManager.getInstancedPrototype(slot.modelId);
+      if (!gltfProto) continue;
+      if (slot.isGltf && slot.mesh.geometry === gltfProto.geometry) continue;
+
+      const oldMesh = slot.mesh;
+      const nextMesh = new THREE.InstancedMesh(
+        gltfProto.geometry,
+        gltfProto.material,
+        slot.capacity
+      );
+      nextMesh.count = 0;
+      nextMesh.castShadow = true;
+      nextMesh.receiveShadow = true;
+
+      this.root.remove(oldMesh);
+      disposeSlotResources(oldMesh);
+      this.root.add(nextMesh);
+
+      slot.mesh = nextMesh;
+      slot.isGltf = true;
+    }
   }
 
   /** The kinds this renderer draws as vehicles (for tests and debugging). */
@@ -76,100 +350,30 @@ export class PeopleRenderer {
     return [...this.vehicleKinds];
   }
 
-  private buildVehicleGeometry(kind: TrafficVehicleKind): THREE.BufferGeometry {
-    const parts: THREE.BufferGeometry[] = [];
-    const box = (w: number, h: number, d: number, x: number, y: number, z: number) =>
-      new THREE.BoxGeometry(w, h, d).translate(x, y, z);
-    const wheel = (x: number, y: number, z: number) =>
-      new THREE.CylinderGeometry(0.35, 0.35, 0.12, 8).rotateZ(Math.PI / 2).translate(x, y, z);
-    const fourWheels = (halfW: number, halfL: number) => {
-      parts.push(
-        wheel(-halfW, 0.35, halfL),
-        wheel(halfW, 0.35, halfL),
-        wheel(-halfW, 0.35, -halfL),
-        wheel(halfW, 0.35, -halfL)
-      );
+  getRickshawMesh(): THREE.InstancedMesh {
+    return this.rickshawMesh;
+  }
+
+  getVehicleMeshes(kind: TrafficVehicleKind): THREE.InstancedMesh[] {
+    const slots = this.slotsByKind.get(kind);
+    return slots ? slots.map((s) => s.mesh) : [];
+  }
+
+  hasGltfPrototype(kind: TrafficVehicleKind): boolean {
+    const slots = this.slotsByKind.get(kind);
+    if (!slots || slots.length === 0) return false;
+    return slots.some((s) => s.isGltf);
+  }
+
+  getPedestrianPartMeshes(): PedestrianPartMeshes {
+    return {
+      head: this.pedHeadMesh,
+      torso: this.pedTorsoMesh,
+      leftLeg: this.pedLeftLegMesh,
+      rightLeg: this.pedRightLegMesh,
+      leftArm: this.pedLeftArmMesh,
+      rightArm: this.pedRightArmMesh,
     };
-
-    switch (kind) {
-      case 'car':
-        parts.push(box(1.8, 0.7, 4.0, 0, 0.55, 0), box(1.6, 0.6, 2.0, 0, 1.15, -0.2));
-        fourWheels(0.85, 1.3);
-        break;
-      case 'bus':
-        parts.push(box(2.5, 2.8, 8.0, 0, 1.6, 0));
-        fourWheels(1.2, 2.5);
-        break;
-      case 'minibus':
-        parts.push(box(2.1, 2.2, 5.0, 0, 1.25, 0));
-        fourWheels(0.95, 1.7);
-        break;
-      case 'truck':
-        parts.push(box(2.4, 2.6, 6.0, 0, 1.5, -1.4), box(2.2, 1.6, 1.8, 0, 1.0, 2.6));
-        fourWheels(1.1, 2.7);
-        break;
-      case 'delivery_van':
-        parts.push(box(2.0, 2.1, 4.4, 0, 1.2, 0));
-        fourWheels(0.9, 1.5);
-        break;
-      case 'cng':
-        // Three-wheeled auto-rickshaw: one wheel at the front, two at the back.
-        parts.push(box(1.2, 0.9, 2.0, 0, 0.6, -0.2), wheel(0, 0.35, 1.0), wheel(-0.5, 0.35, -0.9), wheel(0.5, 0.35, -0.9));
-        break;
-      case 'motorcycle':
-        parts.push(box(0.4, 0.9, 1.8, 0, 0.6, 0), wheel(0, 0.35, 0.8), wheel(0, 0.35, -0.8));
-        break;
-      case 'scooter':
-        parts.push(box(0.45, 0.7, 1.6, 0, 0.55, 0), wheel(0, 0.3, 0.7), wheel(0, 0.3, -0.7));
-        break;
-      case 'bicycle':
-        parts.push(box(0.15, 0.6, 1.6, 0, 0.6, 0), wheel(0, 0.33, 0.7), wheel(0, 0.33, -0.7));
-        break;
-      case 'ride_hailing_car':
-        parts.push(box(1.9, 0.7, 4.4, 0, 0.55, 0), box(1.6, 0.6, 2.2, 0, 1.15, -0.2));
-        fourWheels(0.9, 1.4);
-        break;
-      case 'vendor_cart':
-        parts.push(box(1.3, 0.9, 2.2, 0, 0.9, 0), box(1.1, 0.25, 1.9, 0, 1.5, 0));
-        fourWheels(0.6, 0.8);
-        break;
-      default:
-        parts.push(box(1.8, 1.0, 3.0, 0, 0.7, 0));
-    }
-
-    const merged = mergeGeometries(parts, false);
-    return merged ?? new THREE.BoxGeometry(1.8, 1.4, 4.0);
-  }
-
-  private buildPedestrianGeometry(): THREE.BufferGeometry {
-    const head = new THREE.BoxGeometry(0.22, 0.22, 0.22).translate(0, 1.55, 0);
-    const torso = new THREE.BoxGeometry(0.38, 0.6, 0.22).translate(0, 1.15, 0);
-    const legs = new THREE.BoxGeometry(0.32, 0.85, 0.2).translate(0, 0.425, 0);
-    const merged = mergeGeometries([head, torso, legs], false);
-    return merged ?? new THREE.BoxGeometry(0.4, 1.7, 0.3);
-  }
-
-  private buildRickshawGeometry(): THREE.BufferGeometry {
-    const hood = new THREE.BoxGeometry(1.0, 0.9, 0.9).translate(0, 1.35, -0.4);
-    const seat = new THREE.BoxGeometry(0.9, 0.4, 0.6).translate(0, 0.6, -0.4);
-    const chassis = new THREE.BoxGeometry(0.4, 0.1, 1.8).translate(0, 0.35, 0.2);
-    const puller = new THREE.BoxGeometry(0.3, 0.5, 0.2).translate(0, 1.0, 0.4);
-    const head = new THREE.BoxGeometry(0.18, 0.18, 0.18).translate(0, 1.35, 0.4);
-    const wL = new THREE.CylinderGeometry(0.35, 0.35, 0.08, 8)
-      .rotateZ(Math.PI / 2)
-      .translate(-0.48, 0.35, -0.4);
-    const wR = new THREE.CylinderGeometry(0.35, 0.35, 0.08, 8)
-      .rotateZ(Math.PI / 2)
-      .translate(0.48, 0.35, -0.4);
-    const wF = new THREE.CylinderGeometry(0.35, 0.35, 0.08, 8)
-      .rotateZ(Math.PI / 2)
-      .translate(0, 0.35, 1.0);
-
-    const merged = mergeGeometries(
-      [hood, seat, chassis, puller, head, wL, wR, wF],
-      false
-    );
-    return merged ?? new THREE.BoxGeometry(1.1, 1.6, 2.2);
   }
 
   update(
@@ -179,48 +383,112 @@ export class PeopleRenderer {
     cameraPos?: { x: number; z: number },
     maxDistance = 250
   ): void {
-    // 1. Update pedestrians with optional distance culling
+    const maxDistSq = maxDistance * maxDistance;
+
+    // 1. Update multi-part pedestrians (allocation-free)
     let pedCount = 0;
     const maxPeds = this.maxPedestrians;
     for (let i = 0; i < pedestrians.length && pedCount < maxPeds; i++) {
       const p = pedestrians[i]!;
       if (cameraPos) {
-        const d = Math.hypot(p.x - cameraPos.x, p.z - cameraPos.z);
-        if (d > maxDistance) continue;
-      }
-      this.dummy.position.set(p.x, 0, p.z);
-      this.dummy.rotation.set(0, p.heading, 0);
-
-      // Subtle walking bob when moving
-      if (p.state !== 'yielding') {
-        this.dummy.position.y = Math.abs(Math.sin(timeSec * 8 + i * 1.5)) * 0.04;
-      } else {
-        this.dummy.position.y = 0;
+        const dx = p.x - cameraPos.x;
+        const dz = p.z - cameraPos.z;
+        if (dx * dx + dz * dz > maxDistSq) continue;
       }
 
-      this.dummy.updateMatrix();
-      this.pedMesh.setMatrixAt(pedCount, this.dummy.matrix);
+      const idHash = hashId(p.id);
+      const baseY = (p as { y?: number }).y ?? 0;
+      const effectiveSpeed = p.state === 'yielding' ? 0 : p.speed;
+      const isMoving = effectiveSpeed > 0.05;
+
+      let legSwing = 0;
+      let bobY = 0;
+      if (isMoving) {
+        const phase = timeSec * (effectiveSpeed * 5.2) + (idHash % 100) * 0.0628;
+        const swingAmp = Math.min(0.55, effectiveSpeed * 0.36);
+        legSwing = Math.sin(phase) * swingAmp;
+        bobY = Math.abs(Math.sin(phase)) * 0.04;
+      }
+
+      this._pos.set(p.x, baseY + bobY, p.z);
+      this._quat.setFromAxisAngle(this._yAxis, p.heading);
+      this._rootMat.compose(this._pos, this._quat, this._scale);
+
+      // Head & Torso
+      this.pedHeadMesh.setMatrixAt(pedCount, this._rootMat);
+      this.pedTorsoMesh.setMatrixAt(pedCount, this._rootMat);
+
+      // Left leg (hip at -0.09, 0.84, 0)
+      this._partPos.set(-0.09, 0.84, 0);
+      this._partQuat.setFromAxisAngle(this._xAxis, legSwing);
+      this._partMat.compose(this._partPos, this._partQuat, this._scale);
+      this._finalMat.multiplyMatrices(this._rootMat, this._partMat);
+      this.pedLeftLegMesh.setMatrixAt(pedCount, this._finalMat);
+
+      // Right leg (hip at +0.09, 0.84, 0)
+      this._partPos.set(0.09, 0.84, 0);
+      this._partQuat.setFromAxisAngle(this._xAxis, -legSwing);
+      this._partMat.compose(this._partPos, this._partQuat, this._scale);
+      this._finalMat.multiplyMatrices(this._rootMat, this._partMat);
+      this.pedRightLegMesh.setMatrixAt(pedCount, this._finalMat);
+
+      // Left arm (shoulder at -0.24, 1.36, 0) swings opposite to left leg
+      this._partPos.set(-0.24, 1.36, 0);
+      this._partQuat.setFromAxisAngle(this._xAxis, -legSwing * 0.7);
+      this._partMat.compose(this._partPos, this._partQuat, this._scale);
+      this._finalMat.multiplyMatrices(this._rootMat, this._partMat);
+      this.pedLeftArmMesh.setMatrixAt(pedCount, this._finalMat);
+
+      // Right arm (shoulder at +0.24, 1.36, 0)
+      this._partPos.set(0.24, 1.36, 0);
+      this._partQuat.setFromAxisAngle(this._xAxis, legSwing * 0.7);
+      this._partMat.compose(this._partPos, this._partQuat, this._scale);
+      this._finalMat.multiplyMatrices(this._rootMat, this._partMat);
+      this.pedRightArmMesh.setMatrixAt(pedCount, this._finalMat);
+
+      // Per-instance Bangladeshi clothing & skin variation
+      const skinHex = PEDESTRIAN_SKIN_COLORS[idHash % PEDESTRIAN_SKIN_COLORS.length]!;
+      this._scratchColor.setHex(skinHex);
+      this.pedHeadMesh.setColorAt(pedCount, this._scratchColor);
+
+      const shirtHex = p.isRoadWorker
+        ? ROAD_WORKER_VEST_COLOR
+        : PEDESTRIAN_SHIRT_COLORS[(idHash >>> 4) % PEDESTRIAN_SHIRT_COLORS.length]!;
+      this._scratchColor.setHex(shirtHex);
+      this.pedTorsoMesh.setColorAt(pedCount, this._scratchColor);
+      this.pedLeftArmMesh.setColorAt(pedCount, this._scratchColor);
+      this.pedRightArmMesh.setColorAt(pedCount, this._scratchColor);
+
+      const pantsHex = PEDESTRIAN_PANTS_COLORS[(idHash >>> 8) % PEDESTRIAN_PANTS_COLORS.length]!;
+      this._scratchColor.setHex(pantsHex);
+      this.pedLeftLegMesh.setColorAt(pedCount, this._scratchColor);
+      this.pedRightLegMesh.setColorAt(pedCount, this._scratchColor);
+
       pedCount++;
     }
-    this.pedMesh.count = pedCount;
-    if (this.pedMesh.instanceMatrix) {
-      this.pedMesh.instanceMatrix.needsUpdate = true;
-    }
 
-    // 2. Update rickshaws without array allocations (.filter)
+    this.commitPedPartMesh(this.pedHeadMesh, pedCount);
+    this.commitPedPartMesh(this.pedTorsoMesh, pedCount);
+    this.commitPedPartMesh(this.pedLeftLegMesh, pedCount);
+    this.commitPedPartMesh(this.pedRightLegMesh, pedCount);
+    this.commitPedPartMesh(this.pedLeftArmMesh, pedCount);
+    this.commitPedPartMesh(this.pedRightArmMesh, pedCount);
+
+    // 2. Update rickshaws without array allocations
     let rCount = 0;
     for (let i = 0; i < trafficAgents.length && rCount < this.maxRickshaws; i++) {
       const r = trafficAgents[i]!;
       if (r.kind !== 'rickshaw') continue;
       if (cameraPos) {
-        const d = Math.hypot(r.x - cameraPos.x, r.z - cameraPos.z);
-        if (d > maxDistance) continue;
+        const dx = r.x - cameraPos.x;
+        const dz = r.z - cameraPos.z;
+        if (dx * dx + dz * dz > maxDistSq) continue;
       }
-      this.dummy.position.set(r.x, 0, r.z);
-      this.dummy.rotation.set(0, r.heading, 0);
-      this.dummy.position.y = 0;
-      this.dummy.updateMatrix();
-      this.rickshawMesh.setMatrixAt(rCount, this.dummy.matrix);
+      const y = (r as { y?: number }).y ?? 0;
+      this._pos.set(r.x, y, r.z);
+      this._quat.setFromAxisAngle(this._yAxis, r.heading);
+      this._rootMat.compose(this._pos, this._quat, this._scale);
+      this.rickshawMesh.setMatrixAt(rCount, this._rootMat);
       rCount++;
     }
     this.rickshawMesh.count = rCount;
@@ -228,28 +496,46 @@ export class PeopleRenderer {
       this.rickshawMesh.instanceMatrix.needsUpdate = true;
     }
 
-    // 3. Cars, buses and the rest: each kind fills its own instanced mesh.
-    for (let k = 0; k < this.vehicleCounts.length; k++) this.vehicleCounts[k] = 0;
+    // 3. Cars, buses, CNGs, trucks, motorcycles, scooters, bicycles, carts
+    for (let s = 0; s < this.slotCounts.length; s++) {
+      this.slotCounts[s] = 0;
+    }
+
     for (let i = 0; i < trafficAgents.length; i++) {
       const a = trafficAgents[i]!;
-      const idx = this.vehicleIndex.get(a.kind);
-      if (idx === undefined) continue; // rickshaws and anything drawn elsewhere
-      const n = this.vehicleCounts[idx]!;
-      if (n >= this.maxVehiclesPerKind) continue;
+      const slots = this.slotsByKind.get(a.kind);
+      if (!slots || slots.length === 0) continue;
       if (cameraPos) {
-        const d = Math.hypot(a.x - cameraPos.x, a.z - cameraPos.z);
-        if (d > maxDistance) continue;
+        const dx = a.x - cameraPos.x;
+        const dz = a.z - cameraPos.z;
+        if (dx * dx + dz * dz > maxDistSq) continue;
       }
-      this.dummy.position.set(a.x, 0, a.z);
-      this.dummy.rotation.set(0, a.heading, 0);
-      this.dummy.updateMatrix();
-      this.vehicleMeshes[idx]!.setMatrixAt(n, this.dummy.matrix);
-      this.vehicleCounts[idx] = n + 1;
+
+      const slot = slots.length === 1 ? slots[0]! : slots[hashId(a.id) % slots.length]!;
+      const slotIdx = slot.slotIndex;
+      const n = this.slotCounts[slotIdx]!;
+      if (n >= slot.capacity) continue;
+
+      const y = (a as { y?: number }).y ?? 0;
+      this._pos.set(a.x, y, a.z);
+      this._quat.setFromAxisAngle(this._yAxis, a.heading);
+      this._rootMat.compose(this._pos, this._quat, this._scale);
+      slot.mesh.setMatrixAt(n, this._rootMat);
+      this.slotCounts[slotIdx] = n + 1;
     }
-    for (let k = 0; k < this.vehicleMeshes.length; k++) {
-      const mesh = this.vehicleMeshes[k]!;
-      mesh.count = this.vehicleCounts[k]!;
-      if (mesh.instanceMatrix) mesh.instanceMatrix.needsUpdate = true;
+
+    for (let s = 0; s < this.allSlots.length; s++) {
+      const slot = this.allSlots[s]!;
+      slot.mesh.count = this.slotCounts[s]!;
+      if (slot.mesh.instanceMatrix) {
+        slot.mesh.instanceMatrix.needsUpdate = true;
+      }
     }
+  }
+
+  private commitPedPartMesh(mesh: THREE.InstancedMesh, count: number): void {
+    mesh.count = count;
+    if (mesh.instanceMatrix) mesh.instanceMatrix.needsUpdate = true;
+    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
   }
 }

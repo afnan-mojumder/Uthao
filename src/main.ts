@@ -226,6 +226,12 @@ async function bootGame(): Promise<void> {
     }
   }
 
+  const syncBikeAppearance = (r: Renderer | undefined) => {
+    if (!r) return;
+    r.setBikeVariant(gm.economyManager.currentBikeId);
+    r.setBikeCosmetics(gm.economyManager.installedCosmetics);
+  };
+
   if (canvas) {
     setLoadingStage('loading.world', 55);
     renderer = Renderer.init(canvas, qualityChoice);
@@ -233,6 +239,10 @@ async function bootGame(): Promise<void> {
       setLoadingStage('loading.world', 55 + Math.round(pct * 0.25));
     });
     loadRendererScene(renderer);
+    syncBikeAppearance(renderer);
+    gm.bus.on('bike/swapped', () => syncBikeAppearance(renderer));
+    gm.bus.on('upgrade/purchased', () => syncBikeAppearance(renderer));
+    gm.bus.on('state/restored', () => syncBikeAppearance(renderer));
     gm.bus.on('bike/collision', ({ severity }) => {
       if (severity === 'crash') renderer?.cameraRig.triggerShake(0.45);
       else if (severity === 'bump') renderer?.cameraRig.triggerShake(0.18);
@@ -266,6 +276,7 @@ async function bootGame(): Promise<void> {
         physics.clearAllColliders();
         renderer = Renderer.init(canvas, qualityChoice);
         loadRendererScene(renderer);
+        syncBikeAppearance(renderer);
       }
     });
   }
@@ -350,6 +361,7 @@ session.spawnAtHome();
 // A new career requested from the menu before this reload: start it on this fresh game.
 if (consumeFreshCareer()) {
   session.newCareer();
+  syncBikeAppearance(renderer);
   tutorialSignal.value = { active: true, step: 'alarm', agreedFare: 100 };
   screenSignal.value = 'game';
 }
@@ -361,6 +373,7 @@ loadingSignal.value = { active: false, stageKey: 'loading.ready', progress: 100 
 let lastTime = typeof performance !== 'undefined' ? performance.now() : 0;
 let roamNodeIndex = 0;
 let cameraHeld = false;
+let lastBikeBrake = 0;
 
 function frame(now: number) {
   const dt = (now - lastTime) / 1000;
@@ -430,8 +443,13 @@ function frame(now: number) {
 
     session.step(input, SIM_DT);
     engineThrottle = input.throttle;
+    lastBikeBrake = input.brake;
     if (rawInput.horn) audio.startHorn();
     else audio.stopHorn();
+  }
+
+  if (!inGame || gm.paused) {
+    lastBikeBrake = 0;
   }
 
   // Engine and ambience follow the bike; menus and pause are silent.
@@ -462,6 +480,7 @@ function frame(now: number) {
     );
 
     renderer.setBikeState(session.bike);
+    renderer.setBrakeLight(lastBikeBrake > 0.05);
     const alpha = gm.accumulator / SIM_DT;
     renderer.render(gm.snapshot(), alpha, trafficManager.signals);
   }

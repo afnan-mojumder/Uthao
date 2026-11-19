@@ -116,3 +116,55 @@ describe('Renderer P2.3 wiring (assetManager preload & traffic signal sync)', ()
     spy.mockRestore();
   });
 });
+
+describe('Renderer P2.4 wiring (bike cosmetics, brake light, flyover y, people prototype refresh)', () => {
+  it('syncs bike variant, cosmetics, brake light, and flyover y elevation during render', () => {
+    const r = Renderer.init(canvas);
+
+    r.setBikeState({ x: 10, y: 5.5, z: 20, heading: 0.2, speed: 10, lean: 0, steer: 0, braking: true });
+    r.setBikeState({ x: 10, y: 5.5, z: 20, heading: 0.2, speed: 10, lean: 0, steer: 0, braking: true });
+
+    const snapWithCosmetics = {
+      clock: { minutes: 12 * 60 },
+      weather: 'clear',
+      economy: {
+        currentBikeId: 'used125',
+        installedCosmetics: { paint: '#dc2626', seatCover: 'leather' },
+      },
+    } as unknown as SimSnapshot;
+
+    r.render(snapWithCosmetics);
+
+    expect(r.bikeMesh.currentVariant).toBe('used125');
+    expect((r.bikeMesh.tank.material as THREE.MeshStandardMaterial).color.getHexString()).toBe('dc2626');
+    expect(r.bikeMesh.isBraking()).toBe(true);
+    expect(r.bikeMesh.root.position.y).toBeCloseTo(5.5);
+
+    // Clearing cosmetics / reverting to old100 (e.g. newCareer / state/restored) updates live
+    const snapReset = {
+      clock: { minutes: 12 * 60 },
+      weather: 'clear',
+      economy: {
+        currentBikeId: 'old100',
+        installedCosmetics: {},
+      },
+    } as unknown as SimSnapshot;
+
+    r.setBrakeLight(false);
+    r.render(snapReset);
+    expect(r.bikeMesh.currentVariant).toBe('old100');
+    expect((r.bikeMesh.tank.material as THREE.MeshStandardMaterial).color.getHexString()).toBe('00cc44');
+    expect(r.bikeMesh.isBraking()).toBe(false);
+  });
+
+  it('preloadAssets refreshes PeopleRenderer GLTF prototypes after preloadCore completes', async () => {
+    const r = Renderer.init(canvas);
+    vi.spyOn(assetManager, 'init').mockResolvedValue();
+    vi.spyOn(assetManager, 'preloadCore').mockResolvedValue();
+    const refreshSpy = vi.spyOn(r.peopleRenderer, 'refreshPrototypes');
+
+    await r.preloadAssets();
+    expect(refreshSpy).toHaveBeenCalledTimes(1);
+    vi.restoreAllMocks();
+  });
+});
