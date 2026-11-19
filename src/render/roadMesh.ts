@@ -176,17 +176,40 @@ function sharedMat<T extends THREE.Material>(mat: T): T {
   return mat;
 }
 
+function applyVertexColor(geo: THREE.BufferGeometry, colorHex: number): void {
+  const pos = geo.getAttribute('position');
+  if (!pos) return;
+  const c = new THREE.Color(colorHex);
+  const colors = new Float32Array(pos.count * 3);
+  for (let i = 0; i < pos.count; i++) {
+    colors[i * 3] = c.r;
+    colors[i * 3 + 1] = c.g;
+    colors[i * 3 + 2] = c.b;
+  }
+  geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+}
+
+export interface RoadSliceContext {
+  segments: readonly RoadSegment[];
+  nodeMap: ReadonlyMap<string, RoadNode>;
+  trimContextSegments: readonly RoadSegment[];
+  crossingNodes: Set<string>;
+  nodeIncidents: Map<string, RoadSegment[]>;
+  groundSegments: { ax: number; az: number; bx: number; bz: number; halfW: number }[];
+  builtFlyoverPairs: Set<string>;
+  placedPillarPositions: { x: number; z: number }[];
+  patchesBuilt: boolean;
+  zebrasBuilt: boolean;
+  segmentIndex: number;
+  zebraCount: number;
+}
+
 export class RoadMeshBuilder {
   private roadMat: THREE.MeshStandardMaterial;
-  private kerbMat: THREE.MeshStandardMaterial;
-  private deckMat: THREE.MeshStandardMaterial;
+  private roadTrimMat: THREE.MeshStandardMaterial;
   private sidewalkMat: THREE.MeshStandardMaterial;
-  private medianMat: THREE.MeshStandardMaterial;
   private markingMat: THREE.MeshBasicMaterial;
-  private zebraMat: THREE.MeshBasicMaterial;
   private puddleMat: THREE.MeshStandardMaterial;
-  private bumpMat: THREE.MeshStandardMaterial;
-  private poleMat: THREE.MeshStandardMaterial;
   private wireMat: THREE.LineBasicMaterial;
 
   constructor() {
@@ -200,17 +223,12 @@ export class RoadMeshBuilder {
       })
     );
 
-    this.kerbMat = sharedMat(
+    this.roadTrimMat = sharedMat(
       new THREE.MeshStandardMaterial({
-        color: 0x8a8a8a, // Concrete kerb grey
-        roughness: 0.9,
-      })
-    );
-
-    this.deckMat = sharedMat(
-      new THREE.MeshStandardMaterial({
-        color: 0x767b82, // Flyover concrete box girder / pier grey
-        roughness: 0.88,
+        color: 0xffffff,
+        vertexColors: true,
+        roughness: 0.85,
+        metalness: 0.1,
       })
     );
 
@@ -223,22 +241,9 @@ export class RoadMeshBuilder {
       })
     );
 
-    this.medianMat = sharedMat(
-      new THREE.MeshStandardMaterial({
-        color: 0x555555, // Raised median concrete
-        roughness: 0.8,
-      })
-    );
-
     this.markingMat = sharedMat(
       new THREE.MeshBasicMaterial({
-        color: 0xf5f5f5, // Road white line
-      })
-    );
-
-    this.zebraMat = sharedMat(
-      new THREE.MeshBasicMaterial({
-        color: 0xffffff, // Zebra crossing white
+        color: 0xf5f5f5, // Road white line & zebra crossing
       })
     );
 
@@ -250,21 +255,6 @@ export class RoadMeshBuilder {
       })
     );
 
-    this.bumpMat = sharedMat(
-      new THREE.MeshStandardMaterial({
-        color: 0xd97706, // Amber/yellow speed bump
-        roughness: 0.7,
-      })
-    );
-
-    this.poleMat = sharedMat(
-      new THREE.MeshStandardMaterial({
-        color: 0x475569,
-        roughness: 0.7,
-        metalness: 0.4,
-      })
-    );
-
     this.wireMat = sharedMat(
       new THREE.LineBasicMaterial({
         color: 0x1e293b,
@@ -272,6 +262,15 @@ export class RoadMeshBuilder {
         opacity: 0.75,
       })
     );
+  }
+
+  dispose(): void {
+    this.roadMat.dispose();
+    this.roadTrimMat.dispose();
+    this.sidewalkMat.dispose();
+    this.markingMat.dispose();
+    this.puddleMat.dispose();
+    this.wireMat.dispose();
   }
 
   /** Adjusts asphalt roughness/metalness for monsoon wetness (0 = dry, 1 = soaked). */
@@ -294,20 +293,11 @@ export class RoadMeshBuilder {
     );
   }
 
-  /**
-   * Builds road geometry for an arbitrary list of segments (such as a district or
-   * world border connectors) using `trimContextSegments` to trim kerbs cleanly at junctions.
-   */
-  buildSegments(
+  createSliceContext(
     segments: readonly RoadSegment[],
     nodeMap: ReadonlyMap<string, RoadNode>,
-    groupLabel = 'roads',
     trimContextSegments: readonly RoadSegment[] = segments
-  ): RoadBuildResult {
-    const group = new THREE.Group();
-    group.name = `district_roads_${groupLabel}`;
-    const colliders: THREE.Object3D[] = [];
-
+  ): RoadSliceContext {
     const crossingNodes = new Set<string>();
     const nodeIncidents = new Map<string, RoadSegment[]>();
 
@@ -357,17 +347,89 @@ export class RoadMeshBuilder {
       }
     }
 
-    const builtFlyoverPairs = new Set<string>();
-    const placedPillarPositions: { x: number; z: number }[] = [];
+    return {
+      segments,
+      nodeMap,
+      trimContextSegments,
+      crossingNodes,
+      nodeIncidents,
+      groundSegments,
+      builtFlyoverPairs: new Set<string>(),
+      placedPillarPositions: [],
+      patchesBuilt: false,
+      zebrasBuilt: false,
+      segmentIndex: 0,
+      zebraCount: 0,
+    };
+  }
 
+  /**
+   * Builds a single time-sliced batch of road geometry into `outObjects` and `colliders`.
+   * Returns `true` when all junction patches, segments, and zebra crossings are complete.
+   */
+  stepSlice(
+    ctx: RoadSliceContext,
+    batchSize: number,
+    outObjects: THREE.Object3D[],
+    colliders: THREE.Object3D[]
+  ): boolean {
+    if (!ctx.patchesBuilt) {
+      ctx.patchesBuilt = true;
+      this.buildJunctionPatches(ctx, outObjects);
+    }
+
+    const end = Math.min(ctx.segments.length, ctx.segmentIndex + batchSize);
+    for (let i = ctx.segmentIndex; i < end; i++) {
+      this.buildSingleSegment(ctx, ctx.segments[i]!, outObjects, colliders);
+    }
+    ctx.segmentIndex = end;
+
+    if (ctx.segmentIndex >= ctx.segments.length && !ctx.zebrasBuilt) {
+      ctx.zebrasBuilt = true;
+      this.buildZebraCrossings(ctx, outObjects);
+      return true;
+    }
+
+    return ctx.zebrasBuilt;
+  }
+
+  /**
+   * Builds road geometry for an arbitrary list of segments (such as a district or
+   * world border connectors) using `trimContextSegments` to trim kerbs cleanly at junctions.
+   */
+  buildSegments(
+    segments: readonly RoadSegment[],
+    nodeMap: ReadonlyMap<string, RoadNode>,
+    groupLabel = 'roads',
+    trimContextSegments: readonly RoadSegment[] = segments
+  ): RoadBuildResult {
+    const group = new THREE.Group();
+    group.name = `district_roads_${groupLabel}`;
+    const colliders: THREE.Object3D[] = [];
+
+    const ctx = this.createSliceContext(segments, nodeMap, trimContextSegments);
+    const outObjects: THREE.Object3D[] = [];
+    this.stepSlice(ctx, Math.max(segments.length, 1), outObjects, colliders);
+    for (const obj of outObjects) {
+      group.add(obj);
+    }
+
+    return {
+      group,
+      colliders,
+      zebraCount: ctx.zebraCount,
+      segmentCount: segments.length,
+    };
+  }
+
+  private buildJunctionPatches(ctx: RoadSliceContext, outObjects: THREE.Object3D[]): void {
     // 1. Build junction asphalt patches at nodes (y = 0.015 below strips at 0.02)
-    for (const [nodeId, incSegs] of nodeIncidents) {
+    for (const [nodeId, incSegs] of ctx.nodeIncidents) {
       if (incSegs.length < 2) continue;
-      const node = nodeMap.get(nodeId);
+      const node = ctx.nodeMap.get(nodeId);
       if (!node) continue;
       const nodeY = node.y ?? 0;
 
-      // Avoid double-patching flat vs elevated if mixed; group by elevation close to nodeY
       let maxW = 0;
       for (const s of incSegs) {
         maxW = Math.max(maxW, getRoadWidth(s));
@@ -378,330 +440,350 @@ export class RoadMeshBuilder {
       patchGeo.rotateX(-Math.PI / 2);
       const patchMesh = new THREE.Mesh(patchGeo, this.roadMat);
       patchMesh.name = 'junction_patch';
-      // Sit at 0.015 under road strips (0.02) on ground, or -0.005 on elevated ramps/decks
       patchMesh.position.set(node.x, nodeY > 0.5 ? nodeY - 0.005 : nodeY + 0.015, node.z);
+      patchMesh.castShadow = false;
       patchMesh.receiveShadow = true;
-      group.add(patchMesh);
+      outObjects.push(patchMesh);
+    }
+  }
+
+  private buildSingleSegment(
+    ctx: RoadSliceContext,
+    seg: RoadSegment,
+    outObjects: THREE.Object3D[],
+    colliders: THREE.Object3D[]
+  ): void {
+    const sNode = ctx.nodeMap.get(seg.startNodeId);
+    const eNode = ctx.nodeMap.get(seg.endNodeId);
+    if (!sNode || !eNode) return;
+
+    const dx = eNode.x - sNode.x;
+    const dz = eNode.z - sNode.z;
+    const horizLen = Math.hypot(dx, dz);
+    if (horizLen < 0.1) return;
+
+    const y1 = sNode.y ?? 0;
+    const y2 = eNode.y ?? 0;
+    const dy = y2 - y1;
+    const len3d = Math.hypot(horizLen, dy);
+    const isElevated = seg.roadType === 'flyover' || y1 > 0.1 || y2 > 0.1;
+
+    // Deduplicate opposite one-way flyover deck segments occupying exact same span
+    if (isElevated && Math.abs(dy) < 0.1) {
+      const pairKey =
+        seg.startNodeId < seg.endNodeId
+          ? `${seg.startNodeId}|${seg.endNodeId}`
+          : `${seg.endNodeId}|${seg.startNodeId}`;
+      if (ctx.builtFlyoverPairs.has(pairKey)) return;
+      ctx.builtFlyoverPairs.add(pairKey);
     }
 
-    // 2. Build road ribbons, kerbs, markings, medians, decks, and pillars per segment
-    for (const seg of segments) {
-      const sNode = nodeMap.get(seg.startNodeId);
-      const eNode = nodeMap.get(seg.endNodeId);
-      if (!sNode || !eNode) continue;
+    const nx = -dz / horizLen;
+    const nz = dx / horizLen;
+    const width = getRoadWidth(seg);
 
-      const dx = eNode.x - sNode.x;
-      const dz = eNode.z - sNode.z;
-      const horizLen = Math.hypot(dx, dz);
-      if (horizLen < 0.1) continue;
+    const midX = (sNode.x + eNode.x) / 2;
+    const midY = (y1 + y2) / 2;
+    const midZ = (sNode.z + eNode.z) / 2;
+    const rotY = Math.atan2(dx, dz);
+    const pitch = -Math.atan2(dy, horizLen);
 
-      const y1 = sNode.y ?? 0;
-      const y2 = eNode.y ?? 0;
-      const dy = y2 - y1;
-      const len3d = Math.hypot(horizLen, dy);
-      const isElevated = seg.roadType === 'flyover' || y1 > 0.1 || y2 > 0.1;
+    // Road plane (PlaneGeometry lies in XY; YXZ rotation y=rotY, x=-PI/2 + pitch lays it along 3D span)
+    const roadGeo = new THREE.PlaneGeometry(width, len3d);
+    scalePlaneUvs(roadGeo, width, len3d, ASPHALT_TILE_M, ASPHALT_TILE_M);
+    const roadMesh = new THREE.Mesh(roadGeo, this.roadMat);
+    roadMesh.rotation.order = 'YXZ';
+    roadMesh.rotation.y = rotY;
+    roadMesh.rotation.x = -Math.PI / 2 + pitch;
+    roadMesh.position.set(midX, midY + 0.02, midZ);
+    roadMesh.castShadow = false;
+    roadMesh.receiveShadow = true;
+    outObjects.push(roadMesh);
 
-      // Deduplicate opposite one-way flyover deck segments occupying exact same span
-      if (isElevated && Math.abs(dy) < 0.1) {
-        const pairKey =
-          seg.startNodeId < seg.endNodeId
-            ? `${seg.startNodeId}|${seg.endNodeId}`
-            : `${seg.endNodeId}|${seg.startNodeId}`;
-        if (builtFlyoverPairs.has(pairKey)) continue;
-        builtFlyoverPairs.add(pairKey);
+    if (isElevated) {
+      // Concrete box girder deck slab beneath elevated road / ramp
+      const deckThickness = 0.7;
+      const deckGeo = new THREE.BoxGeometry(width + 0.6, deckThickness, len3d);
+      applyVertexColor(deckGeo, 0x767b82);
+      const deckMesh = new THREE.Mesh(deckGeo, this.roadTrimMat);
+      deckMesh.name = 'flyover_deck';
+      deckMesh.rotation.order = 'YXZ';
+      deckMesh.rotation.y = rotY;
+      deckMesh.rotation.x = pitch;
+      deckMesh.position.set(midX, midY - deckThickness / 2 - 0.01, midZ);
+      deckMesh.castShadow = false;
+      deckMesh.receiveShadow = true;
+      outObjects.push(deckMesh);
+
+      // Raised concrete safety parapets along left and right edges
+      const barrierW = 0.28;
+      const barrierH = 0.85;
+      const barrierGeo = new THREE.BoxGeometry(barrierW, barrierH, len3d);
+      applyVertexColor(barrierGeo, 0x8a8a8a);
+      for (const side of [-1, 1] as const) {
+        const barrier = new THREE.Mesh(barrierGeo, this.roadTrimMat);
+        barrier.position.set(
+          midX + side * nx * (width / 2 + barrierW / 2),
+          midY + barrierH / 2,
+          midZ + side * nz * (width / 2 + barrierW / 2)
+        );
+        barrier.rotation.order = 'YXZ';
+        barrier.rotation.y = rotY;
+        barrier.rotation.x = pitch;
+        barrier.castShadow = false;
+        barrier.receiveShadow = true;
+        outObjects.push(barrier);
+        colliders.push(barrier);
       }
 
-      const nx = -dz / horizLen;
-      const nz = dx / horizLen;
-      const width = getRoadWidth(seg);
+      // Concrete support columns under elevated spans (deckY >= 2.0) clear of ground streets
+      const numPillars = Math.max(1, Math.floor(horizLen / 40));
+      for (let p = 0; p < numPillars; p++) {
+        const t = (p + 0.5) / numPillars;
+        const deckY = y1 + dy * t;
+        if (deckY < 2.0) continue;
+        const px = sNode.x + dx * t;
+        const pz = sNode.z + dz * t;
 
-      const midX = (sNode.x + eNode.x) / 2;
-      const midY = (y1 + y2) / 2;
-      const midZ = (sNode.z + eNode.z) / 2;
-      const rotY = Math.atan2(dx, dz);
-      const pitch = -Math.atan2(dy, horizLen);
-
-      // Road plane (PlaneGeometry lies in XY; YXZ rotation y=rotY, x=-PI/2 + pitch lays it along 3D span)
-      const roadGeo = new THREE.PlaneGeometry(width, len3d);
-      scalePlaneUvs(roadGeo, width, len3d, ASPHALT_TILE_M, ASPHALT_TILE_M);
-      const roadMesh = new THREE.Mesh(roadGeo, this.roadMat);
-      roadMesh.rotation.order = 'YXZ';
-      roadMesh.rotation.y = rotY;
-      roadMesh.rotation.x = -Math.PI / 2 + pitch;
-      roadMesh.position.set(midX, midY + 0.02, midZ);
-      roadMesh.receiveShadow = true;
-      group.add(roadMesh);
-
-      if (isElevated) {
-        // Concrete box girder deck slab beneath elevated road / ramp
-        const deckThickness = 0.7;
-        const deckGeo = new THREE.BoxGeometry(width + 0.6, deckThickness, len3d);
-        const deckMesh = new THREE.Mesh(deckGeo, this.deckMat);
-        deckMesh.name = 'flyover_deck';
-        deckMesh.rotation.order = 'YXZ';
-        deckMesh.rotation.y = rotY;
-        deckMesh.rotation.x = pitch;
-        deckMesh.position.set(midX, midY - deckThickness / 2 - 0.01, midZ);
-        deckMesh.castShadow = true;
-        deckMesh.receiveShadow = true;
-        group.add(deckMesh);
-
-        // Raised concrete safety parapets along left and right edges
-        const barrierW = 0.28;
-        const barrierH = 0.85;
-        const barrierGeo = new THREE.BoxGeometry(barrierW, barrierH, len3d);
-        for (const side of [-1, 1] as const) {
-          const barrier = new THREE.Mesh(barrierGeo, this.kerbMat);
-          barrier.position.set(
-            midX + side * nx * (width / 2 + barrierW / 2),
-            midY + barrierH / 2,
-            midZ + side * nz * (width / 2 + barrierW / 2)
-          );
-          barrier.rotation.order = 'YXZ';
-          barrier.rotation.y = rotY;
-          barrier.rotation.x = pitch;
-          barrier.castShadow = true;
-          barrier.receiveShadow = true;
-          group.add(barrier);
-          colliders.push(barrier);
+        let blocked = false;
+        for (const g of ctx.groundSegments) {
+          if (pointToSegmentDistanceXZ(px, pz, g.ax, g.az, g.bx, g.bz) < g.halfW + 1.4) {
+            blocked = true;
+            break;
+          }
         }
-
-        // Concrete support columns under elevated spans (deckY >= 2.0) clear of ground streets
-        const numPillars = Math.max(1, Math.floor(horizLen / 40));
-        for (let p = 0; p < numPillars; p++) {
-          const t = (p + 0.5) / numPillars;
-          const deckY = y1 + dy * t;
-          if (deckY < 2.0) continue;
-          const px = sNode.x + dx * t;
-          const pz = sNode.z + dz * t;
-
-          // Ensure pillar clears all ground-level road carriageways and previous pillars
-          let blocked = false;
-          for (const g of groundSegments) {
-            if (pointToSegmentDistanceXZ(px, pz, g.ax, g.az, g.bx, g.bz) < g.halfW + 1.4) {
+        if (!blocked) {
+          for (const prev of ctx.placedPillarPositions) {
+            if (Math.hypot(px - prev.x, pz - prev.z) < 8) {
               blocked = true;
               break;
             }
           }
-          if (!blocked) {
-            for (const prev of placedPillarPositions) {
-              if (Math.hypot(px - prev.x, pz - prev.z) < 8) {
-                blocked = true;
-                break;
-              }
-            }
-          }
-          if (blocked) continue;
-
-          placedPillarPositions.push({ x: px, z: pz });
-          const colH = Math.max(1.0, deckY - deckThickness);
-          const colGeo = new THREE.CylinderGeometry(0.65, 0.78, colH, 10);
-          colGeo.translate(0, colH / 2, 0);
-          const capGeo = new THREE.BoxGeometry(width * 0.72, 0.65, 1.4);
-          capGeo.translate(0, colH + 0.25, 0);
-          const pillarGeo = mergeGeometries([colGeo, capGeo], false);
-          colGeo.dispose();
-          capGeo.dispose();
-          if (pillarGeo) {
-            const pillar = new THREE.Mesh(pillarGeo, this.deckMat);
-            pillar.name = 'flyover_pillar';
-            pillar.position.set(px, 0, pz);
-            pillar.rotation.y = rotY;
-            pillar.castShadow = true;
-            pillar.receiveShadow = true;
-            group.add(pillar);
-            colliders.push(pillar);
-          }
         }
-      } else {
-        // Asymmetric kerbs & sidewalks on ground segments (skip kerbLen <= 0.2)
-        const kerbHeight = 0.18;
-        const kerbWidth = 0.28;
-        const dirX = dx / horizLen;
-        const dirZ = dz / horizLen;
+        if (blocked) continue;
 
-        for (const side of [-1, 1] as const) {
-          const startTrim = kerbEndTrim(seg, true, trimContextSegments, nodeMap, side);
-          const endTrim = kerbEndTrim(seg, false, trimContextSegments, nodeMap, side);
-          const kerbLen = horizLen - startTrim - endTrim;
-          if (kerbLen <= 0.2) continue;
+        ctx.placedPillarPositions.push({ x: px, z: pz });
+        const colH = Math.max(1.0, deckY - deckThickness);
+        const colGeo = new THREE.CylinderGeometry(0.65, 0.78, colH, 10);
+        colGeo.translate(0, colH / 2, 0);
+        const capGeo = new THREE.BoxGeometry(width * 0.72, 0.65, 1.4);
+        capGeo.translate(0, colH + 0.25, 0);
+        const pillarGeo = mergeGeometries([colGeo, capGeo], false);
+        colGeo.dispose();
+        capGeo.dispose();
+        if (pillarGeo) {
+          applyVertexColor(pillarGeo, 0x767b82);
+          const pillar = new THREE.Mesh(pillarGeo, this.roadTrimMat);
+          pillar.name = 'flyover_pillar';
+          pillar.position.set(px, 0, pz);
+          pillar.rotation.y = rotY;
+          pillar.castShadow = false;
+          pillar.receiveShadow = true;
+          outObjects.push(pillar);
+          colliders.push(pillar);
+        }
+      }
+    } else {
+      // Asymmetric kerbs & sidewalks on ground segments (skip kerbLen <= 0.2)
+      const kerbHeight = 0.18;
+      const kerbWidth = 0.28;
+      const dirX = dx / horizLen;
+      const dirZ = dz / horizLen;
 
-          const kerbShift = (startTrim - endTrim) / 2;
-          const kMidX = midX + dirX * kerbShift;
-          const kMidZ = midZ + dirZ * kerbShift;
+      for (const side of [-1, 1] as const) {
+        const startTrim = kerbEndTrim(seg, true, ctx.trimContextSegments, ctx.nodeMap, side);
+        const endTrim = kerbEndTrim(seg, false, ctx.trimContextSegments, ctx.nodeMap, side);
+        const kerbLen = horizLen - startTrim - endTrim;
+        if (kerbLen <= 0.2) continue;
 
-          const kerbGeo = new THREE.BoxGeometry(kerbWidth, kerbHeight, kerbLen);
-          const kerb = new THREE.Mesh(kerbGeo, this.kerbMat);
-          kerb.position.set(
-            kMidX + side * nx * (width / 2 + kerbWidth / 2),
-            kerbHeight / 2,
-            kMidZ + side * nz * (width / 2 + kerbWidth / 2)
+        const kerbShift = (startTrim - endTrim) / 2;
+        const kMidX = midX + dirX * kerbShift;
+        const kMidZ = midZ + dirZ * kerbShift;
+
+        const kerbGeo = new THREE.BoxGeometry(kerbWidth, kerbHeight, kerbLen);
+        applyVertexColor(kerbGeo, 0x8a8a8a);
+        const kerb = new THREE.Mesh(kerbGeo, this.roadTrimMat);
+        kerb.position.set(
+          kMidX + side * nx * (width / 2 + kerbWidth / 2),
+          kerbHeight / 2,
+          kMidZ + side * nz * (width / 2 + kerbWidth / 2)
+        );
+        kerb.rotation.y = rotY;
+        kerb.castShadow = false;
+        kerb.receiveShadow = true;
+        outObjects.push(kerb);
+        colliders.push(kerb);
+
+        // Sidewalks & overhead Dhaka utility poles/wires on main/residential/market/service streets
+        if (seg.roadType !== 'alley') {
+          const swWidth = 1.6;
+          const swHeight = 0.12;
+          const swGeo = new THREE.BoxGeometry(swWidth, swHeight, kerbLen);
+          scaleBoxUvs(swGeo, swWidth, swHeight, kerbLen, SIDEWALK_TILE_M, SIDEWALK_TILE_M);
+          const swOffset = width / 2 + kerbWidth + swWidth / 2;
+
+          const sw = new THREE.Mesh(swGeo, this.sidewalkMat);
+          sw.position.set(
+            kMidX + side * nx * swOffset,
+            swHeight / 2,
+            kMidZ + side * nz * swOffset
           );
-          kerb.rotation.y = rotY;
-          kerb.receiveShadow = true;
-          kerb.castShadow = true;
-          group.add(kerb);
-          colliders.push(kerb);
+          sw.rotation.y = rotY;
+          sw.castShadow = false;
+          sw.receiveShadow = true;
+          outObjects.push(sw);
 
-          // Sidewalks & overhead Dhaka utility poles/wires on main/residential/market/service streets
-          if (seg.roadType !== 'alley') {
-            const swWidth = 1.6;
-            const swHeight = 0.12;
-            const swGeo = new THREE.BoxGeometry(swWidth, swHeight, kerbLen);
-            scaleBoxUvs(swGeo, swWidth, swHeight, kerbLen, SIDEWALK_TILE_M, SIDEWALK_TILE_M);
-            const swOffset = width / 2 + kerbWidth + swWidth / 2;
+          // Place overhead utility poles + sagging wires along the left side (-1) of main/market roads
+          if (
+            side === -1 &&
+            (seg.roadType === 'main' || seg.roadType === 'market') &&
+            kerbLen > 24
+          ) {
+            const poleSpacing = 32;
+            const numPoles = Math.floor(kerbLen / poleSpacing);
+            if (numPoles >= 2) {
+              const poleH = 6.2;
+              const poleGeo = new THREE.CylinderGeometry(0.08, 0.11, poleH, 6);
+              const poleGeos: THREE.BufferGeometry[] = [];
+              const wireVerts: number[] = [];
+              const poleLateral = width / 2 + kerbWidth + 0.35;
 
-            const sw = new THREE.Mesh(swGeo, this.sidewalkMat);
-            sw.position.set(
-              kMidX + side * nx * swOffset,
-              swHeight / 2,
-              kMidZ + side * nz * swOffset
-            );
-            sw.rotation.y = rotY;
-            sw.receiveShadow = true;
-            group.add(sw);
+              let prevX = 0;
+              let prevZ = 0;
+              for (let p = 0; p < numPoles; p++) {
+                const along = -kerbLen / 2 + (p + 0.5) * (kerbLen / numPoles);
+                const px = kMidX - nx * poleLateral + dirX * along;
+                const pz = kMidZ - nz * poleLateral + dirZ * along;
+                const g = poleGeo.clone();
+                g.translate(px, poleH / 2, pz);
+                poleGeos.push(g);
 
-            // Place overhead utility poles + sagging wires along the left side (-1) of main/market roads
-            if (
-              side === -1 &&
-              (seg.roadType === 'main' || seg.roadType === 'market') &&
-              kerbLen > 24
-            ) {
-              const poleSpacing = 32;
-              const numPoles = Math.floor(kerbLen / poleSpacing);
-              if (numPoles >= 2) {
-                const poleH = 6.2;
-                const poleGeo = new THREE.CylinderGeometry(0.08, 0.11, poleH, 6);
-                const poleGeos: THREE.BufferGeometry[] = [];
-                const wireVerts: number[] = [];
-                const poleLateral = width / 2 + kerbWidth + 0.35;
-
-                let prevX = 0;
-                let prevZ = 0;
-                for (let p = 0; p < numPoles; p++) {
-                  const along = -kerbLen / 2 + (p + 0.5) * (kerbLen / numPoles);
-                  const px = kMidX - nx * poleLateral + dirX * along;
-                  const pz = kMidZ - nz * poleLateral + dirZ * along;
-                  const g = poleGeo.clone();
-                  g.translate(px, poleH / 2, pz);
-                  poleGeos.push(g);
-
-                  if (p > 0) {
-                    const midWX = (prevX + px) / 2;
-                    const midWZ = (prevZ + pz) / 2;
-                    for (const hOff of [5.4, 5.85]) {
-                      wireVerts.push(prevX, hOff, prevZ, midWX, hOff - 0.35, midWZ);
-                      wireVerts.push(midWX, hOff - 0.35, midWZ, px, hOff, pz);
-                    }
+                if (p > 0) {
+                  const midWX = (prevX + px) / 2;
+                  const midWZ = (prevZ + pz) / 2;
+                  for (const hOff of [5.4, 5.85]) {
+                    wireVerts.push(prevX, hOff, prevZ, midWX, hOff - 0.35, midWZ);
+                    wireVerts.push(midWX, hOff - 0.35, midWZ, px, hOff, pz);
                   }
-                  prevX = px;
-                  prevZ = pz;
                 }
-                poleGeo.dispose();
-                const mergedPoles = mergeGeometries(poleGeos, false);
-                for (const g of poleGeos) g.dispose();
-                if (mergedPoles) {
-                  group.add(placedMesh(mergedPoles, this.poleMat));
-                }
-                if (wireVerts.length > 0) {
-                  const wireGeo = new THREE.BufferGeometry();
-                  wireGeo.setAttribute('position', new THREE.Float32BufferAttribute(wireVerts, 3));
-                  wireGeo.computeBoundingBox();
-                  const c = wireGeo.boundingBox!.getCenter(new THREE.Vector3());
-                  wireGeo.translate(-c.x, 0, -c.z);
-                  const wireLines = new THREE.LineSegments(wireGeo, this.wireMat);
-                  wireLines.position.set(c.x, 0, c.z);
-                  group.add(wireLines);
-                }
+                prevX = px;
+                prevZ = pz;
+              }
+              poleGeo.dispose();
+              const mergedPoles = mergeGeometries(poleGeos, false);
+              for (const g of poleGeos) g.dispose();
+              if (mergedPoles) {
+                applyVertexColor(mergedPoles, 0x475569);
+                const poleMesh = placedMesh(mergedPoles, this.roadTrimMat);
+                poleMesh.castShadow = false;
+                outObjects.push(poleMesh);
+              }
+              if (wireVerts.length > 0) {
+                const wireGeo = new THREE.BufferGeometry();
+                wireGeo.setAttribute('position', new THREE.Float32BufferAttribute(wireVerts, 3));
+                wireGeo.computeBoundingBox();
+                const c = wireGeo.boundingBox!.getCenter(new THREE.Vector3());
+                wireGeo.translate(-c.x, 0, -c.z);
+                const wireLines = new THREE.LineSegments(wireGeo, this.wireMat);
+                wireLines.position.set(c.x, 0, c.z);
+                outObjects.push(wireLines);
               }
             }
           }
         }
-      }
-
-      // Raised median on two-way divided roads (never down the center of one-way carriageways)
-      if (seg.divided && !seg.oneWay && !isElevated) {
-        const medianW = 0.9;
-        const medianH = 0.22;
-        const medianGeo = new THREE.BoxGeometry(medianW, medianH, horizLen);
-        const median = new THREE.Mesh(medianGeo, this.medianMat);
-        median.position.set(midX, medianH / 2, midZ);
-        median.rotation.y = rotY;
-        median.castShadow = true;
-        median.receiveShadow = true;
-        group.add(median);
-        colliders.push(median);
-      } else {
-        // Dashed white centerline markings (interpolated along elevation on sloped ramps)
-        const dashLen = 2.5;
-        const gapLen = 2.5;
-        const step = dashLen + gapLen;
-        const numDashes = Math.floor(len3d / step);
-        const dashGeos: THREE.BufferGeometry[] = [];
-
-        for (let i = 0; i < numDashes; i++) {
-          const t = (i * step + dashLen / 2) / len3d;
-          const dashX = sNode.x + dx * t;
-          const dashY = y1 + dy * t + 0.03;
-          const dashZ = sNode.z + dz * t;
-
-          const dashGeo = new THREE.PlaneGeometry(0.16, dashLen);
-          dashGeo.rotateX(-Math.PI / 2 + pitch);
-          dashGeo.rotateY(rotY);
-          dashGeo.translate(dashX, dashY, dashZ);
-          dashGeos.push(dashGeo);
-        }
-
-        if (dashGeos.length > 0) {
-          const mergedDashes = mergeGeometries(dashGeos, false);
-          for (const g of dashGeos) g.dispose();
-          if (mergedDashes) {
-            group.add(placedMesh(mergedDashes, this.markingMat));
-          }
-        }
-      }
-
-      // Potholes / puddle decals by surfaceCondition (ground level only)
-      if (seg.surfaceCondition < 0.9 && !isElevated) {
-        const count = Math.min(4, Math.floor((1.0 - seg.surfaceCondition) * 8) + 1);
-        const puddleGeos: THREE.BufferGeometry[] = [];
-        for (let p = 0; p < count; p++) {
-          const t = 0.2 + (p * 0.6) / count;
-          const px = sNode.x + dx * t + nx * (p % 2 === 0 ? 1 : -1) * width * 0.2;
-          const pz = sNode.z + dz * t + nz * (p % 2 === 0 ? 1 : -1) * width * 0.2;
-          const puddleW = 1.2 + p * 0.3;
-          const puddleH = 0.8 + p * 0.2;
-          const puddleGeo = new THREE.PlaneGeometry(puddleW, puddleH);
-          puddleGeo.rotateX(-Math.PI / 2);
-          puddleGeo.translate(px, 0.025, pz);
-          puddleGeos.push(puddleGeo);
-        }
-        if (puddleGeos.length > 0) {
-          const mergedPuddles = mergeGeometries(puddleGeos, false);
-          for (const g of puddleGeos) g.dispose();
-          if (mergedPuddles) {
-            group.add(placedMesh(mergedPuddles, this.puddleMat));
-          }
-        }
-      }
-
-      // Speed bump (ground level)
-      if (!isElevated && seg.tags && (seg.tags.includes('speed_bump') || seg.tags.includes('school'))) {
-        const bumpW = width * 0.9;
-        const bumpGeo = new THREE.CylinderGeometry(0.5, 0.5, bumpW, 8);
-        const bump = new THREE.Mesh(bumpGeo, this.bumpMat);
-        bump.rotation.z = Math.PI / 2;
-        bump.rotation.y = rotY;
-        bump.scale.set(1.0, 0.2, 1.0);
-        bump.position.set(midX, 0.05, midZ);
-        group.add(bump);
       }
     }
 
+    // Raised median on two-way divided roads (never down the center of one-way carriageways)
+    if (seg.divided && !seg.oneWay && !isElevated) {
+      const medianW = 0.9;
+      const medianH = 0.22;
+      const medianGeo = new THREE.BoxGeometry(medianW, medianH, horizLen);
+      applyVertexColor(medianGeo, 0x555555);
+      const median = new THREE.Mesh(medianGeo, this.roadTrimMat);
+      median.position.set(midX, medianH / 2, midZ);
+      median.rotation.y = rotY;
+      median.castShadow = false;
+      median.receiveShadow = true;
+      outObjects.push(median);
+      colliders.push(median);
+    } else {
+      // Dashed white centerline markings (interpolated along elevation on sloped ramps)
+      const dashLen = 2.5;
+      const gapLen = 2.5;
+      const step = dashLen + gapLen;
+      const numDashes = Math.floor(len3d / step);
+      const dashGeos: THREE.BufferGeometry[] = [];
+
+      for (let i = 0; i < numDashes; i++) {
+        const t = (i * step + dashLen / 2) / len3d;
+        const dashX = sNode.x + dx * t;
+        const dashY = y1 + dy * t + 0.03;
+        const dashZ = sNode.z + dz * t;
+
+        const dashGeo = new THREE.PlaneGeometry(0.16, dashLen);
+        dashGeo.rotateX(-Math.PI / 2 + pitch);
+        dashGeo.rotateY(rotY);
+        dashGeo.translate(dashX, dashY, dashZ);
+        dashGeos.push(dashGeo);
+      }
+
+      if (dashGeos.length > 0) {
+        const mergedDashes = mergeGeometries(dashGeos, false);
+        for (const g of dashGeos) g.dispose();
+        if (mergedDashes) {
+          const markMesh = placedMesh(mergedDashes, this.markingMat);
+          markMesh.castShadow = false;
+          outObjects.push(markMesh);
+        }
+      }
+    }
+
+    // Potholes / puddle decals by surfaceCondition (ground level only)
+    if (seg.surfaceCondition < 0.9 && !isElevated) {
+      const count = Math.min(4, Math.floor((1.0 - seg.surfaceCondition) * 8) + 1);
+      const puddleGeos: THREE.BufferGeometry[] = [];
+      for (let p = 0; p < count; p++) {
+        const t = 0.2 + (p * 0.6) / count;
+        const px = sNode.x + dx * t + nx * (p % 2 === 0 ? 1 : -1) * width * 0.2;
+        const pz = sNode.z + dz * t + nz * (p % 2 === 0 ? 1 : -1) * width * 0.2;
+        const puddleW = 1.2 + p * 0.3;
+        const puddleH = 0.8 + p * 0.2;
+        const puddleGeo = new THREE.PlaneGeometry(puddleW, puddleH);
+        puddleGeo.rotateX(-Math.PI / 2);
+        puddleGeo.translate(px, 0.025, pz);
+        puddleGeos.push(puddleGeo);
+      }
+      if (puddleGeos.length > 0) {
+        const mergedPuddles = mergeGeometries(puddleGeos, false);
+        for (const g of puddleGeos) g.dispose();
+        if (mergedPuddles) {
+          const puddleMesh = placedMesh(mergedPuddles, this.puddleMat);
+          puddleMesh.castShadow = false;
+          outObjects.push(puddleMesh);
+        }
+      }
+    }
+
+    // Speed bump (ground level)
+    if (!isElevated && seg.tags && (seg.tags.includes('speed_bump') || seg.tags.includes('school'))) {
+      const bumpW = width * 0.9;
+      const bumpGeo = new THREE.CylinderGeometry(0.5, 0.5, bumpW, 8);
+      applyVertexColor(bumpGeo, 0xd97706);
+      const bump = new THREE.Mesh(bumpGeo, this.roadTrimMat);
+      bump.rotation.z = Math.PI / 2;
+      bump.rotation.y = rotY;
+      bump.scale.set(1.0, 0.2, 1.0);
+      bump.position.set(midX, 0.05, midZ);
+      bump.castShadow = false;
+      outObjects.push(bump);
+    }
+  }
+
+  private buildZebraCrossings(ctx: RoadSliceContext, outObjects: THREE.Object3D[]): void {
     // 3. Build Zebra Crossings at crossing nodes
-    let zebraCount = 0;
-    for (const nodeId of crossingNodes) {
-      const node = nodeMap.get(nodeId);
+    for (const nodeId of ctx.crossingNodes) {
+      const node = ctx.nodeMap.get(nodeId);
       if (!node) continue;
 
       const nodeY = node.y ?? 0;
@@ -724,17 +806,12 @@ export class RoadMeshBuilder {
         const mergedZebra = mergeGeometries(stripeGeos, false);
         for (const g of stripeGeos) g.dispose();
         if (mergedZebra) {
-          group.add(placedMesh(mergedZebra, this.zebraMat));
+          const zebraMesh = placedMesh(mergedZebra, this.markingMat);
+          zebraMesh.castShadow = false;
+          outObjects.push(zebraMesh);
         }
       }
-      zebraCount++;
+      ctx.zebraCount++;
     }
-
-    return {
-      group,
-      colliders,
-      zebraCount,
-      segmentCount: segments.length,
-    };
   }
 }

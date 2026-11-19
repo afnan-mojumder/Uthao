@@ -195,7 +195,7 @@ export class PeopleRenderer {
   ): THREE.InstancedMesh {
     const mesh = new THREE.InstancedMesh(geo, mat, this.maxPedestrians);
     mesh.count = 0;
-    mesh.castShadow = true;
+    mesh.castShadow = false;
     mesh.receiveShadow = true;
     // Pre-allocate instanceColor buffer once at construction time so update() stays zero-alloc
     this._scratchColor.setHex(0xffffff);
@@ -537,5 +537,49 @@ export class PeopleRenderer {
     mesh.count = count;
     if (mesh.instanceMatrix) mesh.instanceMatrix.needsUpdate = true;
     if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+  }
+
+  dispose(): void {
+    const pedMeshes = [
+      this.pedHeadMesh,
+      this.pedTorsoMesh,
+      this.pedLeftLegMesh,
+      this.pedRightLegMesh,
+      this.pedLeftArmMesh,
+      this.pedRightArmMesh,
+    ];
+    const geos = new Set<THREE.BufferGeometry>();
+    const mats = new Set<THREE.Material>();
+    for (const pm of pedMeshes) {
+      pm.dispose();
+      if (pm.geometry) geos.add(pm.geometry);
+      if (Array.isArray(pm.material)) {
+        for (const m of pm.material) mats.add(m);
+      } else if (pm.material) {
+        mats.add(pm.material);
+      }
+    }
+    for (const g of geos) g.dispose();
+    for (const m of mats) m.dispose();
+
+    const disposeOwnedSlot = (mesh: THREE.InstancedMesh) => {
+      mesh.dispose();
+      if (mesh.geometry) mesh.geometry.dispose();
+      if (Array.isArray(mesh.material)) {
+        for (const m of mesh.material) m.dispose();
+      } else if (mesh.material) {
+        mesh.material.dispose();
+      }
+    };
+
+    disposeOwnedSlot(this.rickshawMesh);
+    for (const slot of this.allSlots) {
+      if (slot.isGltf) {
+        slot.mesh.dispose();
+      } else {
+        disposeOwnedSlot(slot.mesh);
+      }
+    }
+    this.root.clear();
   }
 }

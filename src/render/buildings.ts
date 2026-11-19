@@ -70,15 +70,16 @@ export class BuildingBuilder {
   // Shared reusable materials (tagged userData.shared = true so district unload never disposes them)
   private facadeMat: THREE.MeshStandardMaterial;
   private windowMat: THREE.MeshStandardMaterial;
-  private grillMat: THREE.MeshStandardMaterial;
-  private shutterMat: THREE.MeshStandardMaterial;
-  private tankMat: THREE.MeshStandardMaterial;
-  private parapetMat: THREE.MeshStandardMaterial;
+  private detailMat: THREE.MeshStandardMaterial;
   private colliderMat: THREE.MeshBasicMaterial;
-  private canonicalPackMaterials: Map<string, THREE.Material> = new Map();
+  private canonicalPackMaterials: Map<string, THREE.Material>;
 
-  constructor(signageAtlas?: SignageAtlas) {
+  constructor(
+    signageAtlas?: SignageAtlas,
+    canonicalPackMaterials?: Map<string, THREE.Material>
+  ) {
     this.signageAtlas = signageAtlas;
+    this.canonicalPackMaterials = canonicalPackMaterials ?? new Map();
 
     const facadeTex = getFacadeTexture();
     this.facadeMat = sharedMat(
@@ -103,38 +104,23 @@ export class BuildingBuilder {
       })
     );
 
-    this.grillMat = sharedMat(
+    this.detailMat = sharedMat(
       new THREE.MeshStandardMaterial({
-        color: 0x111827, // Dark wrought iron grill
-        roughness: 0.6,
-        metalness: 0.7,
-      })
-    );
-
-    this.shutterMat = sharedMat(
-      new THREE.MeshStandardMaterial({
-        color: 0x334155, // Steel shutter blue-grey
-        roughness: 0.5,
-        metalness: 0.6,
-      })
-    );
-
-    this.tankMat = sharedMat(
-      new THREE.MeshStandardMaterial({
-        color: 0x14532d, // Gazi / RFL rooftop tank dark green
-        roughness: 0.4,
-        metalness: 0.1,
-      })
-    );
-
-    this.parapetMat = sharedMat(
-      new THREE.MeshStandardMaterial({
-        color: 0x64748b, // Concrete parapet
-        roughness: 0.9,
+        color: 0xffffff,
+        vertexColors: true,
+        roughness: 0.65,
+        metalness: 0.25,
       })
     );
 
     this.colliderMat = sharedMat(new THREE.MeshBasicMaterial({ visible: false }));
+  }
+
+  dispose(): void {
+    this.facadeMat.dispose();
+    this.windowMat.dispose();
+    this.detailMat.dispose();
+    this.colliderMat.dispose();
   }
 
   /** Controls warm lit window intensity at dusk/night (0 = off, 1 = full night). */
@@ -251,6 +237,7 @@ export class BuildingBuilder {
               0.75,
               0.08
             );
+            signMesh.castShadow = false;
             signMesh.position.set(0, 2.8, scaledD / 2 + 0.08);
             buildingGroup.add(signMesh);
           }
@@ -350,6 +337,7 @@ export class BuildingBuilder {
               0.75,
               0.08
             );
+            signMesh.castShadow = false;
             signMesh.position.set(
               -width * 0.25,
               shutterHeight + 0.42,
@@ -359,23 +347,30 @@ export class BuildingBuilder {
           }
         }
 
-        const addMergedMesh = (geos: THREE.BufferGeometry[], mat: THREE.Material) => {
+        const addMergedMesh = (
+          geos: THREE.BufferGeometry[],
+          mat: THREE.Material,
+          colorHex?: number
+        ) => {
           if (geos.length === 0) return;
           const merged = mergeGeometries(geos, false);
           for (const g of geos) g.dispose();
           if (merged) {
+            if (colorHex !== undefined) {
+              applyVertexColor(merged, colorHex);
+            }
             const mesh = new THREE.Mesh(merged, mat);
-            mesh.castShadow = true;
+            mesh.castShadow = false;
             mesh.receiveShadow = true;
             buildingGroup.add(mesh);
           }
         };
 
-        addMergedMesh(parapetGeos, this.parapetMat);
-        addMergedMesh(tankGeos, this.tankMat);
-        addMergedMesh(grillGeos, this.grillMat);
+        addMergedMesh(parapetGeos, this.detailMat, 0x64748b);
+        addMergedMesh(tankGeos, this.detailMat, 0x14532d);
+        addMergedMesh(grillGeos, this.detailMat, 0x111827);
         addMergedMesh(winGeos, this.windowMat);
-        addMergedMesh(shutterGeos, this.shutterMat);
+        addMergedMesh(shutterGeos, this.detailMat, 0x334155);
       }
 
       group.add(buildingGroup);

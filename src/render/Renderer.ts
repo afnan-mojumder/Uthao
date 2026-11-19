@@ -19,7 +19,9 @@ import type { PhysicsWorld } from '../physics/PhysicsWorld';
 import { CityBuilder } from './CityBuilder';
 import { PeopleRenderer } from './people';
 import { TimeOfDay } from '../sim/world/TimeOfDay';
+import { getBikeDef } from '../sim/economy/bikes';
 import { assetManager } from './assets';
+import { disposeHierarchy } from './lod';
 import type { PedestrianAgent } from '../sim/traffic/pedestrians';
 import type { TrafficAgent } from '../sim/traffic/TrafficManager';
 import type { SignalController } from '../sim/traffic/signals';
@@ -51,6 +53,7 @@ export class Renderer {
   };
   private shadowsInitialized = false;
   private configuredShadowMapSize = 0;
+  private adaptiveQualityEnabled = true;
   private lastFloodVersion = -1;
   private readonly _floodedSegmentsScratch: RoadSegment[] = [];
   private testSceneGroup?: THREE.Group;
@@ -58,6 +61,7 @@ export class Renderer {
   private currBikePose = { x: 0, y: 0, z: 0, heading: 0, lean: 0, steer: 0 };
   private readonly _renderBikePose = { x: 0, y: 0, z: 0, heading: 0, lean: 0, steer: 0 };
   private bikeSpeed = 0;
+  private activeBikeVmax = getBikeDef('old100').vmax;
   private lastRenderMs = 0;
   private lastSyncedBikeId: BikeId = 'old100';
   private lastSyncedPaint: string | undefined = undefined;
@@ -66,6 +70,8 @@ export class Renderer {
   private readonly _bikeGroundPos = { x: 0, y: 0, z: 0 };
   private readonly _camPos = { x: 0, z: 0 };
   private readonly _peopleCamPos = { x: 0, z: 0 };
+  private readonly _invMatrixScratch = new THREE.Matrix4();
+  private readonly onResize = () => this.resize();
 
   private constructor(
     canvas: HTMLCanvasElement,
@@ -138,6 +144,8 @@ export class Renderer {
       0.1,
       this.qualityManager.config.drawDistance
     );
+    this.cameraRig.setMaxSpeed(this.activeBikeVmax);
+    this.scene.add(this.cameraRig.camera);
 
     this.bikeMesh = new MotorcycleMesh();
     this.scene.add(this.bikeMesh.root);
@@ -178,7 +186,9 @@ export class Renderer {
     this.peopleRenderer = new PeopleRenderer();
     this.scene.add(this.peopleRenderer.root);
 
-    window.addEventListener('resize', () => this.resize());
+    if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+      window.addEventListener('resize', this.onResize);
+    }
     this.resize();
   }
 
@@ -199,6 +209,12 @@ export class Renderer {
   setBikeVariant(variant: BikeId): void {
     this.lastSyncedBikeId = variant;
     this.bikeMesh.setVariant(variant);
+    this.activeBikeVmax = getBikeDef(variant).vmax;
+    this.cameraRig.setMaxSpeed(this.activeBikeVmax);
+  }
+
+  setAdaptiveQualityEnabled(enabled: boolean): void {
+    this.adaptiveQualityEnabled = enabled;
   }
 
   setBikeCosmetics(cosmetics: BikeCosmetics): void {
@@ -227,7 +243,15 @@ export class Renderer {
 
   private configureShadows(cfg: QualityConfig): void {
     this.dirLight.castShadow = cfg.shadows;
-    if (!cfg.shadows) return;
+    if (!cfg.shadows) {
+      if (this.dirLight.shadow.map) {
+        this.dirLight.shadow.map.dispose();
+        this.dirLight.shadow.map = null;
+      }
+      this.shadowsInitialized = false;
+      this.configuredShadowMapSize = 0;
+      return;
+    }
 
     const targetMapSize = cfg.shadowMapSize || 1024;
     if (!this.shadowsInitialized || this.configuredShadowMapSize !== targetMapSize) {
@@ -256,11 +280,16 @@ export class Renderer {
   setQuality(level: QualityLevel): void {
     const dpr = window.devicePixelRatio || 1;
     this.qualityManager.config = getQualityConfig(level, dpr);
+    this.qualityManager.resetWindow();
     const cfg = this.qualityManager.config;
     this.applyQuality();
     void assetManager.init(this.webglRenderer);
     this.configureShadows(cfg);
-    this.weatherFx.setMaxPointLights(cfg.maxStreetlights);
+    this.weatherFx.setQuality({
+      drawDistance: cfg.drawDistance,
+      rainCount: cfg.rainParticles,
+      maxPointLights: cfg.maxStreetlights,
+    });
     const fog = this.scene.fog;
     if (fog instanceof THREE.Fog) fog.far = cfg.drawDistance;
     this.cameraRig.camera.far = cfg.drawDistance;
@@ -371,15 +400,18 @@ export class Renderer {
   loadDistrict(district: DistrictData, physicsWorld?: PhysicsWorld): void {
     if (this.testSceneGroup) {
       this.scene.remove(this.testSceneGroup);
+      disposeHierarchy(this.testSceneGroup);
       this.testSceneGroup = undefined;
     }
     if (this.cityBuilder) {
       this.scene.remove(this.cityBuilder.root);
+      this.cityBuilder.dispose();
     }
     this.cityBuilder = new CityBuilder();
     this.cityBuilder.buildDistrict(district, physicsWorld);
     this.scene.add(this.cityBuilder.root);
     this.colliders = this.cityBuilder.colliders;
+    this.cameraRig.setPhysicsWorld(physicsWorld);
 
     const nodeMap = new Map<string, RoadNode>();
     for (const node of district.nodes) {
@@ -396,15 +428,18 @@ export class Renderer {
   ): void {
     if (this.testSceneGroup) {
       this.scene.remove(this.testSceneGroup);
+      disposeHierarchy(this.testSceneGroup);
       this.testSceneGroup = undefined;
     }
     if (this.cityBuilder) {
       this.scene.remove(this.cityBuilder.root);
+      this.cityBuilder.dispose();
     }
     this.cityBuilder = new CityBuilder();
     this.cityBuilder.initWorldStreaming(world, districtProvider, physicsWorld, initialPos);
     this.scene.add(this.cityBuilder.root);
     this.colliders = this.cityBuilder.colliders;
+    this.cameraRig.setPhysicsWorld(physicsWorld);
 
     const nodeMap = new Map<string, RoadNode>();
     const districtSegments: RoadSegment[] = [];
@@ -460,6 +495,23 @@ export class Renderer {
     }
   }
 
+  /** Snaps both previous/current bike poses and camera directly to an initial or restored pose. */
+  snapBikeState(state: {
+    x: number;
+    y?: number;
+    z: number;
+    heading: number;
+    speed: number;
+    lean: number;
+    steer: number;
+    braking?: boolean;
+  }): void {
+    this.setBikeState(state);
+    this.setBikeState(state);
+    this._bikePos.set(state.x, state.y ?? 0, state.z);
+    this.cameraRig.snapTo(this._bikePos, state.heading, state.speed);
+  }
+
   render(snapshot: SimSnapshot, alpha = 1.0, signals?: SignalController): void {
     const now = performance.now();
     const frameDt =
@@ -467,7 +519,16 @@ export class Renderer {
         ? Math.min(0.1, Math.max(0, (now - this.lastRenderMs) / 1000))
         : 1 / 60;
     this.lastRenderMs = now;
-    this.qualityManager.recordFrame(now);
+    const dt = frameDt > 0 ? frameDt : 1 / 60;
+
+    if (this.adaptiveQualityEnabled) {
+      const trigger = this.qualityManager.recordFrame(now);
+      if (trigger === 'level') {
+        this.setQuality(this.qualityManager.config.level);
+      } else if (trigger === 'scale') {
+        this.applyQuality();
+      }
+    }
 
     // Sync active bike variant and cosmetics from snapshot economy state (zero alloc)
     const econ = snapshot.economy;
@@ -499,18 +560,27 @@ export class Renderer {
     this._renderBikePose.lean = lean;
     this._renderBikePose.steer = steer;
     this.bikeMesh.setPose(this._renderBikePose);
-    this.bikeMesh.update(frameDt > 0 ? frameDt : 1 / 60, this.bikeSpeed);
+    this.bikeMesh.update(dt, this.bikeSpeed);
 
     const groundSize = 2 * this.qualityManager.config.drawDistance + 20;
     this.ground.position.set(x, -0.01, z);
     this.ground.scale.set(groundSize, 1, groundSize);
 
     // Update ride markers animation
-    this.markers.update(1 / 60);
+    this.markers.update(dt);
 
     // Update Camera Rig
     this._bikePos.set(x, y, z);
-    this.cameraRig.update(this._bikePos, heading, this.bikeSpeed, this.colliders, 1 / 60, lean);
+    this.cameraRig.update(
+      this._bikePos,
+      heading,
+      this.bikeSpeed,
+      this.colliders,
+      dt,
+      lean,
+      this.activeBikeVmax,
+      steer
+    );
 
     // Update Weather and Lighting FX
     this._bikeGroundPos.x = x;
@@ -520,7 +590,7 @@ export class Renderer {
       snapshot.economy?.ownedUpgrades?.includes('upgrade_led_headlight')
     );
     this.weatherFx.update(
-      frameDt > 0 ? frameDt : 1 / 60,
+      dt,
       snapshot.clock.minutes,
       snapshot.weather,
       this._bikeGroundPos,
@@ -595,9 +665,65 @@ export class Renderer {
       const geo = collider.geometry as THREE.BufferGeometry;
       if (!geo.boundingBox) geo.computeBoundingBox();
       collider.updateWorldMatrix(true, false);
-      local.copy(this.cameraRig.camera.position).applyMatrix4(collider.matrixWorld.clone().invert());
+      this._invMatrixScratch.copy(collider.matrixWorld).invert();
+      local.copy(this.cameraRig.camera.position).applyMatrix4(this._invMatrixScratch);
       if (geo.boundingBox!.containsPoint(local)) return true;
     }
     return false;
+  }
+
+  dispose(): void {
+    if (typeof window !== 'undefined' && typeof window.removeEventListener === 'function') {
+      window.removeEventListener('resize', this.onResize);
+    }
+
+    if (this.cityBuilder) {
+      this.scene.remove(this.cityBuilder.root);
+      this.cityBuilder.dispose();
+      this.cityBuilder = undefined;
+    }
+
+    if (this.testSceneGroup) {
+      this.scene.remove(this.testSceneGroup);
+      disposeHierarchy(this.testSceneGroup);
+      this.testSceneGroup = undefined;
+    }
+
+    this.peopleRenderer.dispose();
+    this.scene.remove(this.peopleRenderer.root);
+
+    this.weatherFx.dispose();
+
+    this.bikeMesh.dispose();
+    this.scene.remove(this.bikeMesh.root);
+
+    this.markers.dispose();
+    this.scene.remove(this.markers.root);
+
+    this.cameraRig.dispose();
+    this.scene.remove(this.cameraRig.camera);
+
+    this.ground.geometry.dispose();
+    (this.ground.material as THREE.Material).dispose();
+    this.scene.remove(this.ground);
+
+    this.skyDome.geometry.dispose();
+    (this.skyDome.material as THREE.Material).dispose();
+    this.scene.remove(this.skyDome);
+
+    if (this.dirLight.shadow.map) {
+      this.dirLight.shadow.map.dispose();
+      this.dirLight.shadow.map = null;
+    }
+    this.shadowsInitialized = false;
+    this.configuredShadowMapSize = 0;
+    this.dirLight.dispose();
+    this.hemiLight.dispose();
+    this.scene.remove(this.dirLight);
+    this.scene.remove(this.dirLight.target);
+    this.scene.remove(this.hemiLight);
+
+    this.colliders = [];
+    this.webglRenderer.dispose();
   }
 }

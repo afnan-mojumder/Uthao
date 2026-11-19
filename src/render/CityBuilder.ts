@@ -1,10 +1,11 @@
 import * as THREE from 'three';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import type { DistrictId, RoadNode, RoadSegment } from '../core/types';
 import type { DistrictData, WorldData } from '../sim/schemas';
 import type { PhysicsWorld, StaticBoxHandle } from '../physics/PhysicsWorld';
 import type { SignalController } from '../sim/traffic/signals';
 import { SignageAtlas } from './signage';
-import { RoadMeshBuilder, getRoadWidth, kerbEndTrim } from './roadMesh';
+import { RoadMeshBuilder, getRoadWidth, kerbEndTrim, type RoadSliceContext } from './roadMesh';
 export { kerbEndTrim };
 import { BuildingBuilder } from './buildings';
 import { assetManager } from './assets';
@@ -21,10 +22,12 @@ import {
 } from './props';
 import {
   LodManager,
+  distanceToDistrictBounds,
   districtsToLoad,
   districtsToUnload,
   createDistrictSilhouette,
   disposeHierarchy,
+  type DistrictBounds,
 } from './lod';
 
 export interface CityBuilderOptions {
@@ -48,11 +51,15 @@ interface PositionedObj {
   z: number;
 }
 
+const DEFAULT_QUADRANT_SIZE = 300;
+const ROAD_SLICE_BATCH = 24;
+
 interface BuildDistrictTask {
   districtId: DistrictId;
   district: DistrictData;
   physicsWorld?: PhysicsWorld;
   stage: 'roads' | 'lots' | 'lot_colliders' | 'kerb_colliders' | 'props' | 'finalize';
+  roadSliceCtx?: RoadSliceContext;
   lotIndex: number;
   lotColliderIndex: number;
   kerbIndex: number;
@@ -74,12 +81,14 @@ export class CityBuilder {
   readonly buildingBuilder: BuildingBuilder;
   readonly lodManager: LodManager;
   readonly root: THREE.Group;
+  readonly roadGroup: THREE.Group;
   readonly silhouetteGroup: THREE.Group;
   readonly colliders: THREE.Object3D[] = [];
   readonly staticBoxDescs: StaticBoxDesc[] = [];
 
   readonly loadedDistricts: Set<DistrictId> = new Set();
   readonly districtChunkObjects: Map<DistrictId, PositionedObj[]> = new Map();
+  readonly districtRoadGroups: Map<DistrictId, { bounds: DistrictBounds; group: THREE.Group }> = new Map();
   readonly districtColliders: Map<DistrictId, THREE.Object3D[]> = new Map();
   readonly districtPhysicsColliders: Map<DistrictId, StaticBoxHandle[]> = new Map();
   readonly districtStaticBoxDescs: Map<DistrictId, StaticBoxDesc[]> = new Map();
@@ -102,8 +111,8 @@ export class CityBuilder {
   constructor(opts: CityBuilderOptions = {}) {
     this.signageAtlas = opts.signageAtlas ?? new SignageAtlas();
     this.roadBuilder = new RoadMeshBuilder();
-    this.buildingBuilder = new BuildingBuilder(this.signageAtlas);
-    this.lodManager = new LodManager(opts.chunkSize ?? 100);
+    this.buildingBuilder = new BuildingBuilder(this.signageAtlas, this.canonicalPropMaterials);
+    this.lodManager = new LodManager(opts.chunkSize ?? DEFAULT_QUADRANT_SIZE);
 
     this.root = new THREE.Group();
     this.root.name = 'city_builder_root';
@@ -111,6 +120,10 @@ export class CityBuilder {
     this.silhouetteGroup = new THREE.Group();
     this.silhouetteGroup.name = 'city_silhouettes';
     this.root.add(this.silhouetteGroup);
+
+    this.roadGroup = new THREE.Group();
+    this.roadGroup.name = 'city_district_roads';
+    this.root.add(this.roadGroup);
 
     this.root.add(this.lodManager.root);
   }
@@ -196,8 +209,8 @@ export class CityBuilder {
       }
     }
 
-    const batched = this.batchStaticGroups(meshes, protectedGeos);
-    const mergedLines = this.mergeLineSegmentsPerChunk(lines);
+    const batched = this.mergeRoadMeshes(meshes, protectedGeos, true);
+    const mergedLines = this.mergeLineSegments(lines, true);
     for (const item of [...batched, ...mergedLines]) {
       this.lodManager.addObject(item.obj, item.x, item.z);
       this.connectorObjects.push(item);
@@ -357,7 +370,7 @@ export class CityBuilder {
       proto.geometry.userData.shared = true;
       const mat = this.resolvePropMaterial(modelId, proto.material);
       const mesh = new THREE.Mesh(proto.geometry, mat);
-      mesh.castShadow = true;
+      mesh.castShadow = false;
       mesh.receiveShadow = true;
       return mesh;
     }
@@ -597,9 +610,27 @@ export class CityBuilder {
    */
   private stepTask(task: BuildDistrictTask): boolean {
     if (task.stage === 'roads') {
-      const roadResult = this.roadBuilder.build(task.district);
-      task.roadColliders.push(...roadResult.colliders);
-      for (const child of roadResult.group.children) {
+      if (!task.roadSliceCtx) {
+        const nodeMap = new Map<string, RoadNode>();
+        for (const node of task.district.nodes) {
+          nodeMap.set(node.nodeId, node);
+        }
+        task.roadSliceCtx = this.roadBuilder.createSliceContext(
+          task.district.segments,
+          nodeMap,
+          task.district.segments
+        );
+      }
+
+      const sliceObjs: THREE.Object3D[] = [];
+      const finished = this.roadBuilder.stepSlice(
+        task.roadSliceCtx,
+        ROAD_SLICE_BATCH,
+        sliceObjs,
+        task.roadColliders
+      );
+
+      for (const child of sliceObjs) {
         if (child instanceof THREE.LineSegments) {
           task.roadLines.push({
             obj: child,
@@ -621,7 +652,10 @@ export class CityBuilder {
           });
         }
       }
-      task.stage = 'lots';
+
+      if (finished) {
+        task.stage = 'lots';
+      }
       return false;
     }
 
@@ -631,7 +665,7 @@ export class CityBuilder {
         task.stage = 'lot_colliders';
         return false;
       }
-      const batch = lots.slice(task.lotIndex, task.lotIndex + 12);
+      const batch = lots.slice(task.lotIndex, task.lotIndex + 24);
       const bResult = this.buildingBuilder.build(batch);
       task.buildingColliders.push(...bResult.colliders);
       for (const bGroup of bResult.group.children) {
@@ -654,7 +688,7 @@ export class CityBuilder {
         task.stage = 'kerb_colliders';
         return false;
       }
-      const batch = lots.slice(task.lotColliderIndex, task.lotColliderIndex + 20);
+      const batch = lots.slice(task.lotColliderIndex, task.lotColliderIndex + 40);
       for (const lot of batch) {
         const storeys = 4 + (Math.abs(Math.floor(lot.x * 13 + lot.z * 7)) % 5);
         const totalHeight = storeys * 3.2;
@@ -700,7 +734,7 @@ export class CityBuilder {
         return false;
       }
       const nodeMap = new Map(task.district.nodes.map((n) => [n.nodeId, n]));
-      const batch = segments.slice(task.kerbIndex, task.kerbIndex + 20);
+      const batch = segments.slice(task.kerbIndex, task.kerbIndex + 30);
       const trimContext =
         this.allWorldSegments.length > 0 ? this.allWorldSegments : segments;
 
@@ -730,8 +764,7 @@ export class CityBuilder {
     }
 
     if (task.stage === 'finalize') {
-      // 0. Batch static meshes (roads, buildings, trees, streetlights) per spatial chunk
-      //    and material into BatchedMesh to stay well within draw-call budgets.
+      // 0. Merge static road meshes once per district & material; batch buildings & props into quadrant BatchedMeshes.
       const protectedGeos = new Set<THREE.BufferGeometry>();
       for (const col of task.roadColliders) {
         if (col instanceof THREE.Mesh && col.geometry) {
@@ -739,14 +772,26 @@ export class CityBuilder {
         }
       }
 
-      const batchedAll = this.batchStaticGroups(
-        [...task.roadMeshes, ...task.buildingGroups, ...task.batchedPropGroups],
+      const mergedRoads = this.mergeRoadMeshes(task.roadMeshes, protectedGeos, false);
+      const mergedLines = this.mergeLineSegments(task.roadLines, false);
+      const districtRoadGroup = new THREE.Group();
+      districtRoadGroup.name = `district_roads_${task.districtId}`;
+      for (const item of [...mergedRoads, ...mergedLines]) {
+        districtRoadGroup.add(item.obj);
+      }
+      this.roadGroup.add(districtRoadGroup);
+      this.districtRoadGroups.set(task.districtId, {
+        bounds: this.computeDistrictBounds(task.district),
+        group: districtRoadGroup,
+      });
+
+      const batchedBuildingsAndProps = this.batchStaticGroups(
+        [...task.buildingGroups, ...task.batchedPropGroups],
         protectedGeos
       );
-      const mergedLines = this.mergeLineSegmentsPerChunk(task.roadLines);
-      task.chunkObjects.push(...batchedAll, ...mergedLines);
+      task.chunkObjects.push(...batchedBuildingsAndProps);
 
-      // 1. Commit objects to LodManager
+      // 1. Commit quadrant chunk objects to LodManager
       for (const item of task.chunkObjects) {
         this.lodManager.addObject(item.obj, item.x, item.z);
       }
@@ -759,8 +804,11 @@ export class CityBuilder {
       this.signalVisuals.push(...task.signalVisuals);
       this.districtSignalVisuals.set(task.districtId, task.signalVisuals);
 
-      // 4. Save district state for unloading
-      this.districtChunkObjects.set(task.districtId, task.chunkObjects);
+      // 4. Save district state for unloading (include districtRoadGroup so disposal/tests see all renderables)
+      this.districtChunkObjects.set(task.districtId, [
+        ...task.chunkObjects,
+        { obj: districtRoadGroup, x: 0, z: 0 },
+      ]);
       this.districtColliders.set(task.districtId, [
         ...task.roadColliders,
         ...task.buildingColliders,
@@ -779,6 +827,27 @@ export class CityBuilder {
     }
 
     return true;
+  }
+
+  private computeDistrictBounds(district: DistrictData): DistrictBounds {
+    const worldRef = this.worldData?.districts.find((d) => d.districtId === district.districtId);
+    if (worldRef?.bounds) {
+      return worldRef.bounds;
+    }
+    let minX = Infinity;
+    let minZ = Infinity;
+    let maxX = -Infinity;
+    let maxZ = -Infinity;
+    for (const node of district.nodes) {
+      if (node.x < minX) minX = node.x;
+      if (node.z < minZ) minZ = node.z;
+      if (node.x > maxX) maxX = node.x;
+      if (node.z > maxZ) maxZ = node.z;
+    }
+    if (!Number.isFinite(minX)) {
+      return { minX: 0, minZ: 0, maxX: 0, maxZ: 0 };
+    }
+    return { minX: minX - 20, minZ: minZ - 20, maxX: maxX + 20, maxZ: maxZ + 20 };
   }
 
   /**
@@ -803,20 +872,53 @@ export class CityBuilder {
     }
   }
 
+  private cleanupTaskResources(task: BuildDistrictTask): void {
+    const objs = [
+      ...task.roadMeshes,
+      ...task.roadLines,
+      ...task.buildingGroups,
+      ...task.batchedPropGroups,
+      ...task.chunkObjects,
+    ];
+    for (const item of objs) {
+      disposeHierarchy(item.obj);
+    }
+    for (const c of task.roadColliders) disposeHierarchy(c);
+    for (const c of task.buildingColliders) disposeHierarchy(c);
+    if (task.physicsWorld) {
+      for (const col of task.physicsColliders) {
+        task.physicsWorld.removeCollider(col);
+      }
+    }
+  }
+
   /**
    * Unloads and disposes a district that has moved beyond the unload radius.
    * Removes physics colliders, disposes Three.js non-shared meshes/geometries/materials,
    * and restores the distant low-poly silhouette.
    */
   unloadDistrict(districtId: DistrictId): void {
+    for (let i = this.buildQueue.length - 1; i >= 0; i--) {
+      if (this.buildQueue[i]!.districtId === districtId) {
+        const [aborted] = this.buildQueue.splice(i, 1);
+        if (aborted) this.cleanupTaskResources(aborted);
+      }
+    }
+
     if (!this.loadedDistricts.has(districtId)) return;
 
-    // 1. Remove and dispose chunk objects
+    // 1. Remove and dispose chunk & district-road objects
+    const roadEntry = this.districtRoadGroups.get(districtId);
     const chunkObjs = this.districtChunkObjects.get(districtId) ?? [];
     for (const item of chunkObjs) {
-      this.lodManager.removeObject(item.obj, item.x, item.z);
+      if (roadEntry && item.obj === roadEntry.group) {
+        this.roadGroup.remove(item.obj);
+      } else {
+        this.lodManager.removeObject(item.obj, item.x, item.z);
+      }
       disposeHierarchy(item.obj);
     }
+    this.districtRoadGroups.delete(districtId);
     this.districtChunkObjects.delete(districtId);
 
     // 2. Unregister district traffic signals
@@ -936,11 +1038,14 @@ export class CityBuilder {
       }
     }
 
-    // 4. Update spatial chunk visibility culling
+    // 4. Update spatial chunk and district-road visibility culling
     this.lodManager.update(cameraPos, maxDistance);
+    for (const entry of this.districtRoadGroups.values()) {
+      entry.group.visible = distanceToDistrictBounds(entry.bounds, cameraPos) <= maxDistance;
+    }
   }
 
-  private mergeLineSegmentsPerChunk(lines: PositionedObj[]): PositionedObj[] {
+  private mergeLineSegments(lines: PositionedObj[], perChunk: boolean): PositionedObj[] {
     if (lines.length === 0) return [];
     const chunkSize = this.lodManager.chunkSize;
     const buckets = new Map<
@@ -955,15 +1060,15 @@ export class CityBuilder {
       const posAttr = lineObj.geometry.getAttribute('position');
       if (!posAttr) continue;
 
-      const cx = Math.floor(entry.x / chunkSize);
-      const cz = Math.floor(entry.z / chunkSize);
+      const cx = perChunk ? Math.floor((entry.x - 1e-3) / chunkSize) : 0;
+      const cz = perChunk ? Math.floor((entry.z - 1e-3) / chunkSize) : 0;
       const mat = Array.isArray(lineObj.material) ? lineObj.material[0]! : lineObj.material;
       const key = `${cx},${cz}|${mat.uuid}`;
       let bucket = buckets.get(key);
       if (!bucket) {
         bucket = {
-          cx: (cx + 0.5) * chunkSize,
-          cz: (cz + 0.5) * chunkSize,
+          cx: perChunk ? (cx + 0.5) * chunkSize : 0,
+          cz: perChunk ? (cz + 0.5) * chunkSize : 0,
           material: mat,
           verts: [],
         };
@@ -991,6 +1096,146 @@ export class CityBuilder {
     return result;
   }
 
+  private mergeRoadMeshes(
+    entries: PositionedObj[],
+    protectedGeos: Set<THREE.BufferGeometry> = new Set(),
+    perChunk = true
+  ): PositionedObj[] {
+    if (entries.length === 0) return [];
+    const chunkSize = this.lodManager.chunkSize;
+    const result: PositionedObj[] = [];
+
+    type RoadItem = { geometry: THREE.BufferGeometry; matrix: THREE.Matrix4 };
+    type Bucket = {
+      chunkX: number;
+      chunkZ: number;
+      material: THREE.Material;
+      castShadow: boolean;
+      receiveShadow: boolean;
+      items: RoadItem[];
+      hasColor: boolean;
+      hasUv: boolean;
+      hasIndex: boolean;
+      hasNonIndex: boolean;
+    };
+    const buckets = new Map<string, Bucket>();
+
+    for (const entry of entries) {
+      entry.obj.updateMatrixWorld(true);
+      const cx = perChunk ? Math.floor((entry.x - 1e-3) / chunkSize) : 0;
+      const cz = perChunk ? Math.floor((entry.z - 1e-3) / chunkSize) : 0;
+      const chunkCenterX = perChunk ? (cx + 0.5) * chunkSize : 0;
+      const chunkCenterZ = perChunk ? (cz + 0.5) * chunkSize : 0;
+
+      entry.obj.traverse((child) => {
+        if (!(child instanceof THREE.Mesh)) return;
+        const mat = child.material;
+        if (Array.isArray(mat)) {
+          const worldClone = new THREE.Mesh(child.geometry, child.material);
+          worldClone.name = child.name;
+          worldClone.castShadow = child.castShadow;
+          worldClone.receiveShadow = child.receiveShadow;
+          child.matrixWorld.decompose(
+            worldClone.position,
+            worldClone.quaternion,
+            worldClone.scale
+          );
+          worldClone.updateMatrix();
+          result.push({ obj: worldClone, x: entry.x, z: entry.z });
+          return;
+        }
+        const geo = child.geometry;
+        if (!geo.getAttribute('position')) return;
+
+        const key = `${cx},${cz}|${mat.uuid}|${child.castShadow ? 1 : 0}|${child.receiveShadow ? 1 : 0}`;
+        let bucket = buckets.get(key);
+        if (!bucket) {
+          bucket = {
+            chunkX: chunkCenterX,
+            chunkZ: chunkCenterZ,
+            material: mat,
+            castShadow: child.castShadow,
+            receiveShadow: child.receiveShadow,
+            items: [],
+            hasColor: false,
+            hasUv: false,
+            hasIndex: false,
+            hasNonIndex: false,
+          };
+          buckets.set(key, bucket);
+        }
+        if (geo.getAttribute('color')) bucket.hasColor = true;
+        if (geo.getAttribute('uv')) bucket.hasUv = true;
+        if (geo.index) bucket.hasIndex = true;
+        else bucket.hasNonIndex = true;
+        bucket.items.push({ geometry: geo, matrix: child.matrixWorld.clone() });
+      });
+    }
+
+    for (const bucket of buckets.values()) {
+      const useNonIndexed = bucket.hasNonIndex || (bucket.hasIndex && bucket.hasNonIndex);
+      const clones: THREE.BufferGeometry[] = [];
+
+      for (const item of bucket.items) {
+        const g = useNonIndexed && item.geometry.index
+          ? item.geometry.toNonIndexed()
+          : item.geometry.clone();
+        g.applyMatrix4(item.matrix);
+        g.translate(-bucket.chunkX, 0, -bucket.chunkZ);
+
+        const posCount = g.getAttribute('position')?.count ?? 0;
+        if (!g.getAttribute('normal')) {
+          g.computeVertexNormals();
+        }
+        if (bucket.hasUv && !g.getAttribute('uv')) {
+          g.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(posCount * 2), 2));
+        }
+        if (bucket.hasColor && !g.getAttribute('color')) {
+          const white = new Float32Array(posCount * 3);
+          white.fill(1);
+          g.setAttribute('color', new THREE.BufferAttribute(white, 3));
+        }
+        for (const attrName of Object.keys(g.attributes)) {
+          if (
+            attrName !== 'position' &&
+            attrName !== 'normal' &&
+            attrName !== 'uv' &&
+            attrName !== 'color'
+          ) {
+            g.deleteAttribute(attrName);
+          }
+          if (attrName === 'uv' && !bucket.hasUv) g.deleteAttribute('uv');
+          if (attrName === 'color' && !bucket.hasColor) g.deleteAttribute('color');
+        }
+        clones.push(g);
+      }
+
+      const merged = clones.length === 1 ? clones[0]! : mergeGeometries(clones, false);
+      if (clones.length > 1) {
+        for (const g of clones) g.dispose();
+      } else if (!merged && clones[0]) {
+        clones[0].dispose();
+      }
+
+      for (const item of bucket.items) {
+        if (!item.geometry.userData?.shared && !protectedGeos.has(item.geometry)) {
+          item.geometry.dispose();
+        }
+      }
+
+      if (merged) {
+        merged.computeBoundingSphere();
+        const mesh = new THREE.Mesh(merged, bucket.material);
+        mesh.position.set(bucket.chunkX, 0, bucket.chunkZ);
+        mesh.castShadow = bucket.castShadow;
+        mesh.receiveShadow = bucket.receiveShadow;
+        result.push({ obj: mesh, x: bucket.chunkX, z: bucket.chunkZ });
+      }
+    }
+
+    return result;
+  }
+
   private batchStaticGroups(
     entries: PositionedObj[],
     protectedGeos: Set<THREE.BufferGeometry> = new Set()
@@ -1007,8 +1252,6 @@ export class CityBuilder {
       castShadow: boolean;
       receiveShadow: boolean;
       items: BatchItem[];
-      vertexCount: number;
-      indexCount: number;
     };
     const buckets = new Map<string, Bucket>();
 
@@ -1038,13 +1281,9 @@ export class CityBuilder {
           return;
         }
         const geo = child.geometry;
-        const posAttr = geo.getAttribute('position');
-        if (!posAttr) return;
+        if (!geo.getAttribute('position')) return;
 
-        const hasIndex = geo.index !== null;
-        const hasColor = geo.getAttribute('color') !== undefined ? 1 : 0;
-        const hasUv = geo.getAttribute('uv') !== undefined ? 1 : 0;
-        const key = `${cx},${cz}|${mat.uuid}|${hasIndex ? 1 : 0}|${hasColor}|${hasUv}|${child.castShadow ? 1 : 0}|${child.receiveShadow ? 1 : 0}`;
+        const key = `${cx},${cz}|${mat.uuid}|${child.castShadow ? 1 : 0}|${child.receiveShadow ? 1 : 0}`;
         let bucket = buckets.get(key);
         if (!bucket) {
           bucket = {
@@ -1054,29 +1293,86 @@ export class CityBuilder {
             castShadow: child.castShadow,
             receiveShadow: child.receiveShadow,
             items: [],
-            vertexCount: 0,
-            indexCount: 0,
           };
           buckets.set(key, bucket);
         }
         bucket.items.push({ geometry: geo, matrix: child.matrixWorld.clone() });
-        bucket.vertexCount += posAttr.count;
-        bucket.indexCount += geo.index ? geo.index.count : posAttr.count;
       });
     }
 
     for (const bucket of buckets.values()) {
+      let hasIndex = false;
+      let hasNonIndex = false;
+      let anyColor = false;
+      let allColor = true;
+      let anyUv = false;
+      let allUv = true;
+      let anyNormal = false;
+      let allNormal = true;
+
+      for (const item of bucket.items) {
+        const g = item.geometry;
+        if (g.index) hasIndex = true;
+        else hasNonIndex = true;
+        if (g.getAttribute('color')) anyColor = true;
+        else allColor = false;
+        if (g.getAttribute('uv')) anyUv = true;
+        else allUv = false;
+        if (g.getAttribute('normal')) anyNormal = true;
+        else allNormal = false;
+      }
+
+      const needsNormalize =
+        (hasIndex && hasNonIndex) ||
+        (anyColor && !allColor) ||
+        (anyUv && !allUv) ||
+        (anyNormal && !allNormal);
+
+      const tempNormalized = new Map<string, THREE.BufferGeometry>();
+      const resolveGeo = (src: THREE.BufferGeometry): THREE.BufferGeometry => {
+        if (!needsNormalize) return src;
+        const cached = tempNormalized.get(src.uuid);
+        if (cached) return cached;
+        const g = hasIndex && hasNonIndex && src.index ? src.toNonIndexed() : src.clone();
+        const count = g.getAttribute('position')?.count ?? 0;
+        if (anyNormal && !g.getAttribute('normal')) {
+          g.computeVertexNormals();
+        }
+        if (anyUv && !g.getAttribute('uv')) {
+          g.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(count * 2), 2));
+        }
+        if (anyColor && !g.getAttribute('color')) {
+          const white = new Float32Array(count * 3);
+          white.fill(1);
+          g.setAttribute('color', new THREE.BufferAttribute(white, 3));
+        }
+        tempNormalized.set(src.uuid, g);
+        return g;
+      };
+
+      let vertexCount = 0;
+      let indexCount = 0;
+      const resolvedItems: BatchItem[] = [];
+      for (const item of bucket.items) {
+        const g = resolveGeo(item.geometry);
+        const posAttr = g.getAttribute('position');
+        if (!posAttr) continue;
+        vertexCount += posAttr.count;
+        indexCount += g.index ? g.index.count : posAttr.count;
+        resolvedItems.push({ geometry: g, matrix: item.matrix });
+      }
+
       const batched = new THREE.BatchedMesh(
-        bucket.items.length,
-        bucket.vertexCount,
-        Math.max(bucket.indexCount, bucket.vertexCount),
+        resolvedItems.length,
+        vertexCount,
+        Math.max(indexCount, vertexCount),
         bucket.material
       );
       batched.castShadow = bucket.castShadow;
       batched.receiveShadow = bucket.receiveShadow;
 
       const geoIdMap = new Map<string, number>();
-      for (const item of bucket.items) {
+      for (const item of resolvedItems) {
         let geoId = geoIdMap.get(item.geometry.uuid);
         if (geoId === undefined) {
           geoId = batched.addGeometry(item.geometry);
@@ -1086,6 +1382,9 @@ export class CityBuilder {
         batched.setMatrixAt(instId, item.matrix);
       }
 
+      for (const tempGeo of tempNormalized.values()) {
+        tempGeo.dispose();
+      }
       for (const item of bucket.items) {
         if (!item.geometry.userData?.shared && !protectedGeos.has(item.geometry)) {
           item.geometry.dispose();
@@ -1097,5 +1396,52 @@ export class CityBuilder {
     }
 
     return result;
+  }
+
+  dispose(): void {
+    for (const task of this.buildQueue) {
+      this.cleanupTaskResources(task);
+    }
+    this.buildQueue.length = 0;
+
+    for (const id of Array.from(this.loadedDistricts)) {
+      this.unloadDistrict(id);
+    }
+
+    for (const item of this.connectorObjects) {
+      this.lodManager.removeObject(item.obj, item.x, item.z);
+      disposeHierarchy(item.obj);
+    }
+    this.connectorObjects.length = 0;
+
+    for (const col of this.connectorColliders) {
+      const idx = this.colliders.indexOf(col);
+      if (idx !== -1) this.colliders.splice(idx, 1);
+      disposeHierarchy(col);
+    }
+    this.connectorColliders.length = 0;
+
+    if (this.physicsWorld) {
+      for (const pCol of this.connectorPhysicsColliders) {
+        this.physicsWorld.removeCollider(pCol);
+      }
+    }
+    this.connectorPhysicsColliders.length = 0;
+
+    for (const sil of this.silhouettes.values()) {
+      this.silhouetteGroup.remove(sil);
+      disposeHierarchy(sil);
+    }
+    this.silhouettes.clear();
+
+    this.signageAtlas.dispose();
+    this.roadBuilder.dispose();
+    this.buildingBuilder.dispose();
+    this.canonicalPropMaterials.clear();
+    this.districtRoadGroups.clear();
+    this.roadGroup.clear();
+    this.lodManager.chunks.clear();
+    this.lodManager.root.clear();
+    this.root.clear();
   }
 }

@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import * as THREE from 'three';
@@ -14,6 +14,7 @@ import {
   districtsToUnload,
   distanceToDistrictBounds,
   createDistrictSilhouette,
+  SpatialChunk,
 } from '../../../src/render/lod';
 import { CityBuilder } from '../../../src/render/CityBuilder';
 import { PhysicsWorld } from '../../../src/physics/PhysicsWorld';
@@ -167,6 +168,137 @@ describe('District Streaming and LOD (T5.2)', () => {
       expect(city.isDistrictLoaded('fulgate')).toBe(false);
       // Its silhouette is restored
       expect(city.getSilhouette('fulgate')?.visible).toBe(true);
+    });
+
+    it('unloadDistrict disposes BatchedMesh textures and chunk geometries without disposing shared CityBuilder materials', async () => {
+      const physics = await PhysicsWorld.create();
+      const city = new CityBuilder();
+      const mirpara = districtsMap.get('mirpara')!;
+      const fulgate = districtsMap.get('fulgate')!;
+
+      city.initWorldStreaming(
+        worldData,
+        (id) => districtsMap.get(id),
+        physics,
+        { x: 300, z: 300 }
+      );
+      let ticks = 0;
+      while (city.getBuildQueueLength() > 0 && ticks < 200) {
+        city.update({ x: 300, z: 300 }, 300, 10);
+        ticks++;
+      }
+      expect(city.isDistrictLoaded('mirpara')).toBe(true);
+      expect(city.isDistrictLoaded('fulgate')).toBe(true);
+
+      const fulgateObjs = city.districtChunkObjects.get('fulgate') ?? [];
+      expect(fulgateObjs.length).toBeGreaterThan(0);
+
+      const batchedSpies: ReturnType<typeof vi.spyOn>[] = [];
+      const lineGeoSpies: ReturnType<typeof vi.spyOn>[] = [];
+      const nonSharedGeoSpies: ReturnType<typeof vi.spyOn>[] = [];
+      fulgateObjs.forEach(({ obj }) => {
+        obj.traverse((child) => {
+          if (child instanceof THREE.BatchedMesh) {
+            batchedSpies.push(vi.spyOn(child, 'dispose'));
+          } else if (child instanceof THREE.LineSegments) {
+            lineGeoSpies.push(vi.spyOn(child.geometry, 'dispose'));
+          } else if (child instanceof THREE.Mesh && !child.geometry.userData?.shared) {
+            nonSharedGeoSpies.push(vi.spyOn(child.geometry, 'dispose'));
+          }
+        });
+      });
+      expect(batchedSpies.length).toBeGreaterThan(0);
+      expect(nonSharedGeoSpies.length).toBeGreaterThan(0);
+
+      // Shared CityBuilder materials must NEVER be disposed on district unload
+      const sharedSignSpy = vi.spyOn(city.signageAtlas.material, 'dispose');
+      const roadMats = Object.values(city.roadBuilder).filter(
+        (v): v is THREE.Material => v instanceof THREE.Material
+      );
+      const bldgMats = Object.values(city.buildingBuilder).filter(
+        (v): v is THREE.Material => v instanceof THREE.Material
+      );
+      const sharedMatSpies = [...roadMats, ...bldgMats].map((m) => vi.spyOn(m, 'dispose'));
+
+      // Verify Fulgate buildings exist in PhysicsWorld before unload
+      const fulgateLot = fulgate.lots![0]!;
+      const hitBefore = physics.castRay2D(
+        fulgateLot.x - fulgateLot.width - 5,
+        fulgateLot.z,
+        1.0,
+        1,
+        0,
+        fulgateLot.width + 10,
+        ['building']
+      );
+      expect(hitBefore).not.toBeNull();
+
+      // Unload Fulgate
+      city.unloadDistrict('fulgate');
+
+      expect(city.isDistrictLoaded('fulgate')).toBe(false);
+      expect(city.isDistrictLoaded('mirpara')).toBe(true);
+
+      for (const spy of batchedSpies) {
+        expect(spy).toHaveBeenCalledTimes(1);
+      }
+      for (const spy of lineGeoSpies) {
+        expect(spy).toHaveBeenCalledTimes(1);
+      }
+      for (const spy of nonSharedGeoSpies) {
+        expect(spy).toHaveBeenCalledTimes(1);
+      }
+      expect(sharedSignSpy).not.toHaveBeenCalled();
+      for (const spy of sharedMatSpies) {
+        expect(spy).not.toHaveBeenCalled();
+      }
+
+      // Fulgate physics building colliders must be removed; Mirpara colliders remain
+      const hitAfter = physics.castRay2D(
+        fulgateLot.x - fulgateLot.width - 5,
+        fulgateLot.z,
+        1.0,
+        1,
+        0,
+        fulgateLot.width + 10,
+        ['building']
+      );
+      expect(hitAfter).toBeNull();
+
+      const mirparaLot = mirpara.lots![0]!;
+      const mirparaHit = physics.castRay2D(
+        mirparaLot.x - mirparaLot.width - 5,
+        mirparaLot.z,
+        1.0,
+        1,
+        0,
+        mirparaLot.width + 10,
+        ['building']
+      );
+      expect(mirparaHit).not.toBeNull();
+    });
+
+    it('SpatialChunk.updateVisibility includes chunk radius and CityBuilder batches at quadrant granularity with merged roads', async () => {
+      // 300m quadrant centered at (450, 150) has radius ~212.1m; camera at (14, 184) is ~437m away
+      // which is within maxDistance(300) + radius(212.1) and must remain visible
+      const chunk = new SpatialChunk(1, 0, 300);
+      expect(chunk.radius).toBeCloseTo(Math.hypot(150, 150), 2);
+      chunk.updateVisibility({ x: 14, z: 184 }, 300);
+      expect(chunk.root.visible).toBe(true);
+
+      chunk.updateVisibility({ x: -100, z: 184 }, 300);
+      expect(chunk.root.visible).toBe(false);
+
+      // CityBuilder merges static road strips per spatial quadrant & material (no castShadow on ground roads)
+      const physics = await PhysicsWorld.create();
+      const city = new CityBuilder();
+      const mirpara = districtsMap.get('mirpara')!;
+      city.buildDistrict(mirpara, physics);
+
+      expect(city.lodManager.chunkSize).toBeGreaterThanOrEqual(250);
+      const objs = city.districtChunkObjects.get('mirpara') ?? [];
+      // Merged roads + quadrant BatchedMeshes + signal/POI objects should be compact (< 65 total for all 4 quadrants)
+      expect(objs.length).toBeLessThan(65);
     });
   });
 });

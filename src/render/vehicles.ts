@@ -23,6 +23,67 @@ const WHEEL_RADIUS_M = 0.32;
 const BOARDING_DURATION_S = 0.3;
 const TWO_PI = Math.PI * 2;
 
+function applyVertexColor(geo: THREE.BufferGeometry, colorHex: number): void {
+  const pos = geo.getAttribute('position');
+  if (!pos) return;
+  const c = new THREE.Color(colorHex);
+  const colors = new Float32Array(pos.count * 3);
+  for (let i = 0; i < pos.count; i++) {
+    colors[i * 3] = c.r;
+    colors[i * 3 + 1] = c.g;
+    colors[i * 3 + 2] = c.b;
+  }
+  geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+}
+
+function normalizeForVertexColorMerge(geo: THREE.BufferGeometry, colorHex: number): THREE.BufferGeometry {
+  const g = geo.index ? geo.toNonIndexed() : geo.clone();
+  if (!g.getAttribute('normal')) g.computeVertexNormals();
+  const pos = g.getAttribute('position');
+  if (!g.getAttribute('uv') && pos) {
+    g.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(pos.count * 2), 2));
+  }
+  applyVertexColor(g, colorHex);
+  return g;
+}
+
+interface VertexPartSpec {
+  geo: THREE.BufferGeometry;
+  hex: number;
+  pos: [number, number, number];
+  rx?: number;
+  rz?: number;
+}
+
+/** Merges transformed sub-parts into one vertex-colored mesh and disposes temporary inputs. */
+function buildMergedVertexPartMesh(
+  parts: readonly VertexPartSpec[],
+  roughness: number,
+  metalness = 0.05
+): THREE.Mesh {
+  const m = new THREE.Matrix4();
+  const euler = new THREE.Euler();
+  const geos: THREE.BufferGeometry[] = [];
+  for (const part of parts) {
+    euler.set(part.rx ?? 0, 0, part.rz ?? 0);
+    m.makeRotationFromEuler(euler);
+    m.setPosition(part.pos[0], part.pos[1], part.pos[2]);
+    const g = normalizeForVertexColorMerge(part.geo, part.hex);
+    g.applyMatrix4(m);
+    part.geo.dispose();
+    geos.push(g);
+  }
+  const merged = mergeGeometries(geos, false)!;
+  for (const g of geos) g.dispose();
+  const mat = new THREE.MeshStandardMaterial({
+    color: 0xffffff,
+    vertexColors: true,
+    roughness,
+    metalness,
+  });
+  return new THREE.Mesh(merged, mat);
+}
+
 export class MotorcycleMesh {
   readonly root: THREE.Group;
   private leanGroup: THREE.Group;
@@ -106,14 +167,6 @@ export class MotorcycleMesh {
     this.brakeLight.position.set(0, 0.62, -0.78);
     this.leanGroup.add(this.brakeLight);
 
-    // Rear mudguard
-    const rearGuardGeo = new THREE.BoxGeometry(0.18, 0.06, 0.34);
-    const guardMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.5 });
-    const rearGuard = new THREE.Mesh(rearGuardGeo, guardMat);
-    rearGuard.position.set(0, 0.54, -0.66);
-    rearGuard.rotation.x = -0.25;
-    this.leanGroup.add(rearGuard);
-
     // Exhaust
     const exhaustGeo = new THREE.CylinderGeometry(0.04, 0.05, 0.7, 8);
     const exhaustMat = new THREE.MeshStandardMaterial({
@@ -126,24 +179,28 @@ export class MotorcycleMesh {
     this.exhaust.position.set(0.18, 0.25, -0.35);
     this.leanGroup.add(this.exhaust);
 
-    // Wheels (pre-rotated so rotation.x spins cleanly around axle)
-    const wheelGeo = new THREE.CylinderGeometry(WHEEL_RADIUS_M, WHEEL_RADIUS_M, 0.12, 16);
-    wheelGeo.rotateZ(Math.PI / 2);
+    // Wheels (pre-rotated so rotation.x spins cleanly around axle; tyre + spoke merged via vertex color)
+    const wheelRing = new THREE.CylinderGeometry(WHEEL_RADIUS_M, WHEEL_RADIUS_M, 0.12, 16);
+    wheelRing.rotateZ(Math.PI / 2);
+    const spokeBox = new THREE.BoxGeometry(0.14, 0.44, 0.04);
+    const wheelParts = [
+      normalizeForVertexColorMerge(wheelRing, 0x222222),
+      normalizeForVertexColorMerge(spokeBox, 0x94a3b8),
+    ];
+    wheelRing.dispose();
+    spokeBox.dispose();
+    const wheelGeo = mergeGeometries(wheelParts, false) ?? new THREE.CylinderGeometry(WHEEL_RADIUS_M, WHEEL_RADIUS_M, 0.12, 16);
+    for (const wp of wheelParts) wp.dispose();
     const wheelMat = new THREE.MeshStandardMaterial({
-      color: 0x222222,
-      roughness: 0.8,
-    });
-    const spokeGeo = new THREE.BoxGeometry(0.14, 0.44, 0.04);
-    const spokeMat = new THREE.MeshStandardMaterial({
-      color: 0x94a3b8,
-      metalness: 0.7,
-      roughness: 0.35,
+      color: 0xffffff,
+      vertexColors: true,
+      roughness: 0.75,
+      metalness: 0.15,
     });
 
     // Rear wheel
     this.rearWheel = new THREE.Mesh(wheelGeo, wheelMat);
     this.rearWheel.position.set(0, WHEEL_RADIUS_M, -0.6);
-    this.rearWheel.add(new THREE.Mesh(spokeGeo, spokeMat));
     this.leanGroup.add(this.rearWheel);
 
     // Front fork group (steerable; keep at (0, 0.32, 0.65) inside leanGroup)
@@ -153,37 +210,21 @@ export class MotorcycleMesh {
 
     // Front wheel
     this.frontWheel = new THREE.Mesh(wheelGeo, wheelMat);
-    this.frontWheel.add(new THREE.Mesh(spokeGeo, spokeMat));
     this.forkGroup.add(this.frontWheel);
 
-    // Front fork tubes (left & right stanchions + mudguard)
-    const forkTubeGeo = new THREE.CylinderGeometry(0.025, 0.025, 0.62, 8);
-    const forkTubeMat = new THREE.MeshStandardMaterial({
-      color: 0xcbd5e1,
-      metalness: 0.8,
-      roughness: 0.25,
-    });
-    const leftFork = new THREE.Mesh(forkTubeGeo, forkTubeMat);
-    leftFork.position.set(0.11, 0.28, -0.04);
-    leftFork.rotation.x = -0.18;
-    this.forkGroup.add(leftFork);
-
-    const rightFork = new THREE.Mesh(forkTubeGeo, forkTubeMat);
-    rightFork.position.set(-0.11, 0.28, -0.04);
-    rightFork.rotation.x = -0.18;
-    this.forkGroup.add(rightFork);
-
-    const frontGuard = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.05, 0.3), guardMat);
-    frontGuard.position.set(0, 0.28, 0.04);
-    this.forkGroup.add(frontGuard);
-
-    // Handlebars
-    const barGeo = new THREE.CylinderGeometry(0.02, 0.02, 0.62, 8);
-    const barMat = new THREE.MeshStandardMaterial({ color: 0x333333 });
-    const bar = new THREE.Mesh(barGeo, barMat);
-    bar.rotation.z = Math.PI / 2;
-    bar.position.set(0, 0.55, -0.08);
-    this.forkGroup.add(bar);
+    // Static front fork assembly (stanchions + front mudguard + handlebars merged into 1 draw call)
+    this.forkGroup.add(
+      buildMergedVertexPartMesh(
+        [
+          { geo: new THREE.CylinderGeometry(0.025, 0.025, 0.62, 8), hex: 0xcbd5e1, pos: [0.11, 0.28, -0.04], rx: -0.18 },
+          { geo: new THREE.CylinderGeometry(0.025, 0.025, 0.62, 8), hex: 0xcbd5e1, pos: [-0.11, 0.28, -0.04], rx: -0.18 },
+          { geo: new THREE.BoxGeometry(0.16, 0.05, 0.3), hex: 0x1e293b, pos: [0, 0.28, 0.04] },
+          { geo: new THREE.CylinderGeometry(0.02, 0.02, 0.62, 8), hex: 0x333333, pos: [0, 0.55, -0.08], rz: Math.PI / 2 },
+        ],
+        0.35,
+        0.5
+      )
+    );
 
     // Headlight
     const lightGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.08, 12);
@@ -197,107 +238,42 @@ export class MotorcycleMesh {
     this.headlight.position.set(0, 0.46, 0.08);
     this.forkGroup.add(this.headlight);
 
-    // Rider
+    // Rider + rear mudguard + helmet merged into 1 vertex-colored mesh
     const riderGroup = new THREE.Group();
     this.leanGroup.add(riderGroup);
+    riderGroup.add(
+      buildMergedVertexPartMesh(
+        [
+          { geo: new THREE.BoxGeometry(0.18, 0.06, 0.34), hex: 0x1e293b, pos: [0, 0.54, -0.66], rx: -0.25 },
+          { geo: new THREE.BoxGeometry(0.35, 0.45, 0.25), hex: 0x2b2b2b, pos: [0, 0.95, -0.15], rx: 0.2 },
+          { geo: new THREE.BoxGeometry(0.09, 0.36, 0.09), hex: 0x2b2b2b, pos: [0.21, 0.95, 0.06], rx: 0.9, rz: -0.1 },
+          { geo: new THREE.BoxGeometry(0.09, 0.36, 0.09), hex: 0x2b2b2b, pos: [-0.21, 0.95, 0.06], rx: 0.9, rz: 0.1 },
+          { geo: new THREE.BoxGeometry(0.12, 0.42, 0.12), hex: 0x1e293b, pos: [0.19, 0.56, -0.05], rx: -0.35 },
+          { geo: new THREE.BoxGeometry(0.12, 0.42, 0.12), hex: 0x1e293b, pos: [-0.19, 0.56, -0.05], rx: -0.35 },
+          { geo: new THREE.BoxGeometry(0.18, 0.08, 0.08), hex: 0x111111, pos: [0, 1.3, 0.08] },
+          { geo: new THREE.SphereGeometry(0.16, 12, 10), hex: 0xdd2222, pos: [0, 1.3, -0.05] },
+        ],
+        0.55
+      )
+    );
 
-    const torsoGeo = new THREE.BoxGeometry(0.35, 0.45, 0.25);
-    const torsoMat = new THREE.MeshStandardMaterial({ color: 0x2b2b2b, roughness: 0.65 });
-    const torso = new THREE.Mesh(torsoGeo, torsoMat);
-    torso.position.set(0, 0.95, -0.15);
-    torso.rotation.x = 0.2;
-    riderGroup.add(torso);
-
-    // Rider arms reaching toward handlebars
-    const armGeo = new THREE.BoxGeometry(0.09, 0.36, 0.09);
-    const rLeftArm = new THREE.Mesh(armGeo, torsoMat);
-    rLeftArm.position.set(0.21, 0.95, 0.06);
-    rLeftArm.rotation.x = 0.9;
-    rLeftArm.rotation.z = -0.1;
-    riderGroup.add(rLeftArm);
-
-    const rRightArm = new THREE.Mesh(armGeo, torsoMat);
-    rRightArm.position.set(-0.21, 0.95, 0.06);
-    rRightArm.rotation.x = 0.9;
-    rRightArm.rotation.z = 0.1;
-    riderGroup.add(rRightArm);
-
-    // Rider legs on pegs
-    const legGeo = new THREE.BoxGeometry(0.12, 0.42, 0.12);
-    const pantsMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.8 });
-    const rLeftLeg = new THREE.Mesh(legGeo, pantsMat);
-    rLeftLeg.position.set(0.19, 0.56, -0.05);
-    rLeftLeg.rotation.x = -0.35;
-    riderGroup.add(rLeftLeg);
-
-    const rRightLeg = new THREE.Mesh(legGeo, pantsMat);
-    rRightLeg.position.set(-0.19, 0.56, -0.05);
-    rRightLeg.rotation.x = -0.35;
-    riderGroup.add(rRightLeg);
-
-    // Helmet / head + visor
-    const helmetGeo = new THREE.SphereGeometry(0.16, 12, 10);
-    const helmetMat = new THREE.MeshStandardMaterial({
-      color: 0xdd2222,
-      roughness: 0.3,
-    });
-    const helmet = new THREE.Mesh(helmetGeo, helmetMat);
-    helmet.position.set(0, 1.3, -0.05);
-    riderGroup.add(helmet);
-
-    const visorGeo = new THREE.BoxGeometry(0.18, 0.08, 0.08);
-    const visorMat = new THREE.MeshStandardMaterial({
-      color: 0x111111,
-      roughness: 0.1,
-    });
-    const visor = new THREE.Mesh(visorGeo, visorMat);
-    visor.position.set(0, 1.3, 0.08);
-    riderGroup.add(visor);
-
-    // Passenger (pillion rider) with limbs
+    // Passenger (pillion rider) + helmet merged into 1 vertex-colored mesh
     this.passengerGroup = new THREE.Group();
     this.passengerGroup.visible = false;
     this.leanGroup.add(this.passengerGroup);
-
-    const pTorsoGeo = new THREE.BoxGeometry(0.32, 0.42, 0.22);
-    const pTorsoMat = new THREE.MeshStandardMaterial({
-      color: 0x008080, // Teal
-      roughness: 0.5,
-    });
-    const pTorso = new THREE.Mesh(pTorsoGeo, pTorsoMat);
-    pTorso.position.set(0, 0.92, -0.44);
-    pTorso.rotation.x = 0.1;
-    this.passengerGroup.add(pTorso);
-
-    const pArmGeo = new THREE.BoxGeometry(0.08, 0.32, 0.08);
-    const pLeftArm = new THREE.Mesh(pArmGeo, pTorsoMat);
-    pLeftArm.position.set(0.19, 0.9, -0.3);
-    pLeftArm.rotation.x = 0.7;
-    this.passengerGroup.add(pLeftArm);
-
-    const pRightArm = new THREE.Mesh(pArmGeo, pTorsoMat);
-    pRightArm.position.set(-0.19, 0.9, -0.3);
-    pRightArm.rotation.x = 0.7;
-    this.passengerGroup.add(pRightArm);
-
-    const pLeftLeg = new THREE.Mesh(legGeo, pantsMat);
-    pLeftLeg.position.set(0.18, 0.54, -0.38);
-    pLeftLeg.rotation.x = -0.2;
-    this.passengerGroup.add(pLeftLeg);
-
-    const pRightLeg = new THREE.Mesh(legGeo, pantsMat);
-    pRightLeg.position.set(-0.18, 0.54, -0.38);
-    pRightLeg.rotation.x = -0.2;
-    this.passengerGroup.add(pRightLeg);
-
-    const pHelmetGeo = new THREE.SphereGeometry(0.15, 12, 10);
-    const pHelmetMat = new THREE.MeshStandardMaterial({
-      color: 0xffbb00, // Gold / Yellow helmet
-      roughness: 0.3,
-    });
-    const pHelmet = new THREE.Mesh(pHelmetGeo, pHelmetMat);
-    pHelmet.position.set(0, 1.25, -0.4);
-    this.passengerGroup.add(pHelmet);
+    this.passengerGroup.add(
+      buildMergedVertexPartMesh(
+        [
+          { geo: new THREE.BoxGeometry(0.32, 0.42, 0.22), hex: 0x008080, pos: [0, 0.92, -0.44], rx: 0.1 },
+          { geo: new THREE.BoxGeometry(0.08, 0.32, 0.08), hex: 0x008080, pos: [0.19, 0.9, -0.3], rx: 0.7 },
+          { geo: new THREE.BoxGeometry(0.08, 0.32, 0.08), hex: 0x008080, pos: [-0.19, 0.9, -0.3], rx: 0.7 },
+          { geo: new THREE.BoxGeometry(0.12, 0.42, 0.12), hex: 0x1e293b, pos: [0.18, 0.54, -0.38], rx: -0.2 },
+          { geo: new THREE.BoxGeometry(0.12, 0.42, 0.12), hex: 0x1e293b, pos: [-0.18, 0.54, -0.38], rx: -0.2 },
+          { geo: new THREE.SphereGeometry(0.15, 12, 10), hex: 0xffbb00, pos: [0, 1.25, -0.4] },
+        ],
+        0.55
+      )
+    );
 
     // Enable shadow casting & receiving across all motorcycle and rider meshes
     this.root.traverse((obj) => {
@@ -423,6 +399,23 @@ export class MotorcycleMesh {
     if (pose.dt !== undefined) {
       this.update(pose.dt, pose.speed ?? 0);
     }
+  }
+
+  dispose(): void {
+    const geos = new Set<THREE.BufferGeometry>();
+    const mats = new Set<THREE.Material>();
+    this.root.traverse((obj) => {
+      if (obj instanceof THREE.Mesh) {
+        if (obj.geometry) geos.add(obj.geometry);
+        if (Array.isArray(obj.material)) {
+          for (const m of obj.material) mats.add(m);
+        } else if (obj.material) {
+          mats.add(obj.material);
+        }
+      }
+    });
+    for (const g of geos) g.dispose();
+    for (const m of mats) m.dispose();
   }
 }
 
@@ -894,10 +887,23 @@ function normalizeGeometryToNonIndexed(geo: THREE.BufferGeometry): THREE.BufferG
   return nonIndexed;
 }
 
+const PRESERVED_VEHICLE_COLORS = new Set([
+  0x187a38, // CNG green
+  0xf2b705, // CNG yellow
+  0xdd3322, // Rickshaw canopy crimson
+  0xffaa00, // Rickshaw folk plate
+  0x1e88e5, // Bus blue
+  0xfdd835, // Bus stripe yellow
+  0xd32f2f, // Bus destination red
+  0xb91c1c, // Traffic motorcycle tank
+  0x0d9488, // Scooter body
+]);
+
 /**
- * Collapses a hierarchical procedural vehicle group into a single multi-material
+ * Collapses a hierarchical procedural vehicle group into a lean multi-material
  * BufferGeometry + Material[] prototype suitable for InstancedMesh rendering,
- * bucketing parts with identical material color/roughness/metalness to keep draw calls low.
+ * preserving key brand/livery materials and baking remaining neutral/trim parts into
+ * a single vertex-colored material bucket to minimize draw calls.
  */
 export function buildMultiMaterialPrototype(root: THREE.Object3D): {
   geometry: THREE.BufferGeometry;
@@ -906,32 +912,44 @@ export function buildMultiMaterialPrototype(root: THREE.Object3D): {
   root.updateMatrixWorld(true);
   const buckets = new Map<string, { mat: THREE.Material; geos: THREE.BufferGeometry[] }>();
   const matOrder: string[] = [];
+  const detailGeos: THREE.BufferGeometry[] = [];
+  let hasPreserved = false;
 
   root.traverse((child) => {
     if (!(child instanceof THREE.Mesh) || !child.geometry) return;
     const rawMat = Array.isArray(child.material) ? child.material[0] : child.material;
     if (!rawMat) return;
     const std = rawMat as THREE.MeshStandardMaterial;
-    const key = [
-      std.color ? std.color.getHex() : 0xffffff,
-      std.emissive ? std.emissive.getHex() : 0x000000,
-      std.roughness ?? 0.5,
-      std.metalness ?? 0,
-      std.emissiveIntensity ?? 1,
-    ].join('|');
+    const hex = std.color ? std.color.getHex() : 0xffffff;
+    if (PRESERVED_VEHICLE_COLORS.has(hex)) {
+      hasPreserved = true;
+      const key = [
+        hex,
+        std.emissive ? std.emissive.getHex() : 0x000000,
+        std.roughness ?? 0.5,
+        std.metalness ?? 0,
+        std.emissiveIntensity ?? 1,
+      ].join('|');
 
-    let bucket = buckets.get(key);
-    if (!bucket) {
-      bucket = { mat: rawMat, geos: [] };
-      buckets.set(key, bucket);
-      matOrder.push(key);
+      let bucket = buckets.get(key);
+      if (!bucket) {
+        bucket = { mat: rawMat, geos: [] };
+        buckets.set(key, bucket);
+        matOrder.push(key);
+      }
+      const geo = normalizeGeometryToNonIndexed(child.geometry);
+      applyVertexColor(geo, 0xffffff);
+      geo.applyMatrix4(child.matrixWorld);
+      bucket.geos.push(geo);
+    } else {
+      const geo = normalizeGeometryToNonIndexed(child.geometry);
+      applyVertexColor(geo, hex);
+      geo.applyMatrix4(child.matrixWorld);
+      detailGeos.push(geo);
     }
-    const geo = normalizeGeometryToNonIndexed(child.geometry);
-    geo.applyMatrix4(child.matrixWorld);
-    bucket.geos.push(geo);
   });
 
-  if (matOrder.length === 0) {
+  if (matOrder.length === 0 && detailGeos.length === 0) {
     const geo = new THREE.BoxGeometry(1.4, 1.2, 2.5);
     const mat = new THREE.MeshStandardMaterial({ color: 0x64748b });
     geo.userData.shared = true;
@@ -956,6 +974,25 @@ export function buildMultiMaterialPrototype(root: THREE.Object3D): {
     }
   }
 
+  if (detailGeos.length > 0) {
+    const mergedDetail =
+      detailGeos.length === 1 ? detailGeos[0]! : mergeGeometries(detailGeos, false);
+    if (detailGeos.length > 1) {
+      for (const g of detailGeos) g.dispose();
+    }
+    if (mergedDetail) {
+      const detailMat = new THREE.MeshStandardMaterial({
+        color: 0xffffff,
+        vertexColors: true,
+        roughness: 0.7,
+        metalness: 0.15,
+      });
+      detailMat.userData.shared = true;
+      bucketGeos.push(mergedDetail);
+      materials.push(detailMat);
+    }
+  }
+
   const finalGeo =
     bucketGeos.length === 1
       ? bucketGeos[0]!
@@ -969,7 +1006,7 @@ export function buildMultiMaterialPrototype(root: THREE.Object3D): {
 
   return {
     geometry: finalGeo,
-    material: materials.length === 1 ? materials[0]! : materials,
+    material: !hasPreserved && materials.length === 1 ? materials[0]! : materials,
   };
 }
 

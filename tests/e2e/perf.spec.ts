@@ -93,4 +93,51 @@ test.describe('Performance check (T3.3)', () => {
     console.log(`[${testInfo.project.name}] Cross-district drive avg FPS = ${avgFps}`);
     expect(avgFps).toBeGreaterThanOrEqual(30);
   });
+
+  test('medium quality with shadows stays <= 100 draw calls and camera never clips into buildings', async ({
+    page,
+  }, testInfo) => {
+    test.skip(testInfo.project.name !== 'desktop-chrome', 'Desktop Chrome medium shadow profile');
+    test.setTimeout(60000);
+
+    await page.goto('/?debug=1&quality=medium');
+    await page.waitForSelector('#game-canvas');
+    await page.waitForTimeout(1000);
+
+    await page.evaluate(() => {
+      window.__uthao?.autopilot(true);
+    });
+
+    const samples: { drawCalls: number; triangles: number; clipping: boolean; shadowsOn: boolean }[] = [];
+    const durationMs = 20000;
+    const intervalMs = 2000;
+    const startTime = Date.now();
+
+    while (Date.now() - startTime < durationMs) {
+      await page.waitForTimeout(intervalMs);
+      const metrics = await page.evaluate(() => {
+        const api = window.__uthao;
+        return {
+          drawCalls: api?.getDrawCalls() ?? 0,
+          triangles: api?.getTriangles() ?? 0,
+          clipping: api?.isCameraClipping() ?? true,
+          shadowsOn: Boolean(api?.renderer?.dirLight.castShadow && api?.renderer?.webglRenderer.shadowMap.enabled),
+        };
+      });
+      samples.push(metrics);
+      expect(metrics.shadowsOn).toBe(true);
+      expect(metrics.clipping).toBe(false);
+      expect(metrics.drawCalls).toBeLessThanOrEqual(100);
+    }
+
+    const maxDrawCalls = Math.max(...samples.map((s) => s.drawCalls));
+    const maxTriangles = Math.max(...samples.map((s) => s.triangles));
+    console.log(
+      `[${testInfo.project.name}] Medium+Shadows Autopilot Perf Summary: ` +
+        `Max Draw Calls = ${maxDrawCalls} (budget <= 100), ` +
+        `Max Triangles = ${maxTriangles}`
+    );
+    expect(maxDrawCalls).toBeGreaterThan(0);
+    expect(maxDrawCalls).toBeLessThanOrEqual(100);
+  });
 });

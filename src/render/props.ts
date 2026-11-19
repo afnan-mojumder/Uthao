@@ -7,41 +7,76 @@ function sharedMat<T extends THREE.Material>(mat: T): T {
   return mat;
 }
 
+const SHARED_POI_MAT = sharedMat(
+  new THREE.MeshStandardMaterial({
+    color: 0xffffff,
+    vertexColors: true,
+    roughness: 0.65,
+    metalness: 0.25,
+  })
+);
+
+interface ColoredGeoPart {
+  geo: THREE.BufferGeometry;
+  color: number;
+  pos?: [number, number, number];
+  rotX?: number;
+}
+
+/**
+ * Normalizes and merges colored sub-geometries into a single draw call using SHARED_POI_MAT.
+ * Disposes all input geometries.
+ */
+function buildVertexColoredMesh(
+  parts: readonly ColoredGeoPart[],
+  receiveShadow = true
+): THREE.Mesh | null {
+  const geos: THREE.BufferGeometry[] = [];
+  const color = new THREE.Color();
+  const m = new THREE.Matrix4();
+  const euler = new THREE.Euler();
+
+  for (const part of parts) {
+    const g = part.geo.index ? part.geo.toNonIndexed() : part.geo.clone();
+    part.geo.dispose();
+    if (part.rotX) {
+      euler.set(part.rotX, 0, 0);
+      m.makeRotationFromEuler(euler);
+    } else {
+      m.identity();
+    }
+    if (part.pos) {
+      m.setPosition(part.pos[0], part.pos[1], part.pos[2]);
+    }
+    g.applyMatrix4(m);
+    if (!g.getAttribute('normal')) g.computeVertexNormals();
+    const pos = g.getAttribute('position');
+    if (pos) {
+      if (!g.getAttribute('uv')) {
+        g.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(pos.count * 2), 2));
+      }
+      color.setHex(part.color);
+      const cols = new Float32Array(pos.count * 3);
+      for (let i = 0; i < pos.count; i++) {
+        cols[i * 3] = color.r;
+        cols[i * 3 + 1] = color.g;
+        cols[i * 3 + 2] = color.b;
+      }
+      g.setAttribute('color', new THREE.BufferAttribute(cols, 3));
+    }
+    geos.push(g);
+  }
+
+  const merged = mergeGeometries(geos, false);
+  for (const g of geos) g.dispose();
+  if (!merged) return null;
+  const mesh = new THREE.Mesh(merged, SHARED_POI_MAT);
+  mesh.castShadow = false;
+  mesh.receiveShadow = receiveShadow;
+  return mesh;
+}
+
 const PROP_MATS = {
-  tinRoof: sharedMat(
-    new THREE.MeshStandardMaterial({ color: 0x5a6577, roughness: 0.7, metalness: 0.5 })
-  ),
-  wood: sharedMat(new THREE.MeshStandardMaterial({ color: 0x6e4726, roughness: 0.9 })),
-  kettle: sharedMat(
-    new THREE.MeshStandardMaterial({ color: 0xdcdcdc, metalness: 0.9, roughness: 0.2 })
-  ),
-  fuelCanopy: sharedMat(
-    new THREE.MeshStandardMaterial({ color: 0x117733, roughness: 0.4 })
-  ),
-  fuelTrim: sharedMat(
-    new THREE.MeshStandardMaterial({ color: 0xfacc15, roughness: 0.35 })
-  ),
-  fuelPillar: sharedMat(
-    new THREE.MeshStandardMaterial({ color: 0xdddddd, roughness: 0.3 })
-  ),
-  fuelPump: sharedMat(
-    new THREE.MeshStandardMaterial({ color: 0xdd2222, roughness: 0.5 })
-  ),
-  garageFrame: sharedMat(
-    new THREE.MeshStandardMaterial({ color: 0xa8422b, roughness: 0.9 })
-  ),
-  garageShutter: sharedMat(
-    new THREE.MeshStandardMaterial({ color: 0x4a6984, roughness: 0.6, metalness: 0.6 })
-  ),
-  garageSign: sharedMat(
-    new THREE.MeshStandardMaterial({ color: 0xffbb00, roughness: 0.4 })
-  ),
-  footbridgeSteel: sharedMat(
-    new THREE.MeshStandardMaterial({ color: 0x3d70b2, roughness: 0.5, metalness: 0.7 })
-  ),
-  footbridgeRail: sharedMat(
-    new THREE.MeshStandardMaterial({ color: 0xdbeafe, roughness: 0.5, metalness: 0.5 })
-  ),
   concreteStand: sharedMat(
     new THREE.MeshStandardMaterial({ color: 0x888888, roughness: 0.9 })
   ),
@@ -53,12 +88,6 @@ const PROP_MATS = {
   ),
   signBorder: sharedMat(
     new THREE.MeshStandardMaterial({ color: 0xdddddd, roughness: 0.5 })
-  ),
-  signalPole: sharedMat(
-    new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.5, metalness: 0.65 })
-  ),
-  signalHousing: sharedMat(
-    new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.6, metalness: 0.3 })
   ),
   treeTrunk: sharedMat(
     new THREE.MeshStandardMaterial({ color: 0x5c4033, roughness: 0.95 })
@@ -144,13 +173,10 @@ const SHARED_LENS_GEO = new THREE.CylinderGeometry(0.11, 0.11, 0.32, 10);
 SHARED_LENS_GEO.rotateX(Math.PI / 2);
 SHARED_LENS_GEO.userData.shared = true;
 
-const SHARED_HOUSING_GEO = new THREE.BoxGeometry(0.36, 1.02, 0.26);
-SHARED_HOUSING_GEO.userData.shared = true;
-
 /**
  * Builds a 3D Dhaka cantilever traffic signal pole with live-swappable
- * red/yellow/green emissive lenses. Static mast/arm/housing stay separate from
- * the 3 lens meshes so per-frame signal updates swap materials with zero allocations.
+ * red/yellow/green emissive lenses. Static mast, arm, and housing merge into 1
+ * vertex-colored mesh while the 3 lens meshes stay separate for zero-alloc material swaps.
  */
 export function createTrafficSignalPole(
   nodeId: string,
@@ -160,28 +186,16 @@ export function createTrafficSignalPole(
   group.name = `traffic_signal_${nodeId}_${approachIndex}`;
   group.userData = { nodeId, approachIndex };
 
-  // Vertical pole + horizontal cantilever arm merged into 1 static pole mesh
-  const mastGeo = new THREE.CylinderGeometry(0.09, 0.12, 5.5, 8);
-  mastGeo.translate(0, 2.75, 0);
-  const armGeo = new THREE.BoxGeometry(2.4, 0.12, 0.12);
-  armGeo.translate(1.1, 5.35, 0);
-  const poleMerged = mergeGeometries([mastGeo, armGeo], false);
-  mastGeo.dispose();
-  armGeo.dispose();
-  if (poleMerged) {
-    const poleMesh = new THREE.Mesh(poleMerged, PROP_MATS.signalPole);
-    poleMesh.castShadow = true;
-    poleMesh.receiveShadow = true;
-    group.add(poleMesh);
-  }
-
-  // Signal housing suspended at end of cantilever arm (faces ±Z locally)
   const headX = 1.9;
   const headY = 4.9;
-  const housing = new THREE.Mesh(SHARED_HOUSING_GEO, PROP_MATS.signalHousing);
-  housing.position.set(headX, headY, 0);
-  housing.castShadow = true;
-  group.add(housing);
+  const poleHousing = buildVertexColoredMesh([
+    { geo: new THREE.CylinderGeometry(0.09, 0.12, 5.5, 8), color: 0x334155, pos: [0, 2.75, 0] },
+    { geo: new THREE.BoxGeometry(2.4, 0.12, 0.12), color: 0x334155, pos: [1.1, 5.35, 0] },
+    { geo: new THREE.BoxGeometry(0.36, 1.02, 0.26), color: 0x111827, pos: [headX, headY, 0] },
+  ]);
+  if (poleHousing) {
+    group.add(poleHousing);
+  }
 
   const redLens = new THREE.Mesh(SHARED_LENS_GEO, SIGNAL_LENS_MATS.redOff);
   redLens.name = 'lens_red';
@@ -292,6 +306,19 @@ export class RideMarker {
     const s = 1.0 + Math.sin(this.animTime * 2.5) * 0.12;
     this.groundRing.scale.set(s, s, s);
   }
+
+  dispose(): void {
+    this.root.traverse((obj) => {
+      if (obj instanceof THREE.Mesh) {
+        obj.geometry.dispose();
+        if (Array.isArray(obj.material)) {
+          for (const m of obj.material) m.dispose();
+        } else {
+          obj.material.dispose();
+        }
+      }
+    });
+  }
 }
 
 export class RideMarkers {
@@ -321,149 +348,77 @@ export class RideMarkers {
     this.pickup.update(dt);
     this.dropoff.update(dt);
   }
+
+  dispose(): void {
+    this.pickup.dispose();
+    this.dropoff.dispose();
+  }
 }
 
 /**
- * Procedural Dhaka Tea Stall (Tong Dokan) with kettle, counter, and roadside benches.
+ * Procedural Dhaka Tea Stall (Tong Dokan) merged into a single vertex-colored mesh.
  */
 export function createTeaStallMesh(): THREE.Group {
   const root = new THREE.Group();
   root.name = 'teaStall';
 
-  // Corrugated roof canopy
-  const roofGeo = new THREE.BoxGeometry(3.2, 0.1, 2.6);
-  const roof = new THREE.Mesh(roofGeo, PROP_MATS.tinRoof);
-  roof.position.set(0, 2.5, 0);
-  roof.rotation.x = 0.08;
-  roof.castShadow = true;
-  roof.receiveShadow = true;
-  root.add(roof);
-
-  // Merge 4 wooden posts + counter + roadside bench into 1 draw call
-  const woodParts: THREE.BufferGeometry[] = [];
+  const parts: ColoredGeoPart[] = [
+    { geo: new THREE.BoxGeometry(3.2, 0.1, 2.6), color: 0x5a6577, pos: [0, 2.5, 0], rotX: 0.08 },
+    { geo: new THREE.BoxGeometry(2.4, 0.9, 0.8), color: 0x6e4726, pos: [0, 0.45, 0] },
+    { geo: new THREE.BoxGeometry(2.6, 0.45, 0.35), color: 0x6e4726, pos: [0, 0.225, 1.4] },
+    { geo: new THREE.CylinderGeometry(0.18, 0.22, 0.35, 12), color: 0xdcdcdc, pos: [-0.5, 1.075, 0] },
+  ];
   for (const [px, pz] of [
     [-1.4, -1.1],
     [1.4, -1.1],
     [-1.4, 1.1],
     [1.4, 1.1],
   ] as const) {
-    const p = new THREE.CylinderGeometry(0.05, 0.05, 2.4, 8);
-    p.translate(px, 1.2, pz);
-    woodParts.push(p);
-  }
-  const counterGeo = new THREE.BoxGeometry(2.4, 0.9, 0.8);
-  counterGeo.translate(0, 0.45, 0);
-  woodParts.push(counterGeo);
-
-  const benchGeo = new THREE.BoxGeometry(2.6, 0.45, 0.35);
-  benchGeo.translate(0, 0.225, 1.4);
-  woodParts.push(benchGeo);
-
-  const mergedWood = mergeGeometries(woodParts, false);
-  for (const g of woodParts) g.dispose();
-  if (mergedWood) {
-    const woodMesh = new THREE.Mesh(mergedWood, PROP_MATS.wood);
-    woodMesh.castShadow = true;
-    woodMesh.receiveShadow = true;
-    root.add(woodMesh);
+    parts.push({ geo: new THREE.CylinderGeometry(0.05, 0.05, 2.4, 8), color: 0x6e4726, pos: [px, 1.2, pz] });
   }
 
-  // Tea kettle on counter
-  const kettleGeo = new THREE.CylinderGeometry(0.18, 0.22, 0.35, 12);
-  const kettle = new THREE.Mesh(kettleGeo, PROP_MATS.kettle);
-  kettle.position.set(-0.5, 1.075, 0);
-  kettle.castShadow = true;
-  root.add(kettle);
-
+  const mesh = buildVertexColoredMesh(parts);
+  if (mesh) root.add(mesh);
   return root;
 }
 
 /**
- * Procedural Fuel Station Canopy with pumps.
+ * Procedural Fuel Station Canopy with pumps merged into a single draw call.
  */
 export function createFuelCanopyMesh(): THREE.Group {
   const root = new THREE.Group();
   root.name = 'fuelCanopy';
 
-  // Tall illuminated roof canopy + yellow trim band
-  const canopyGeo = new THREE.BoxGeometry(8.0, 0.8, 6.0);
-  const canopy = new THREE.Mesh(canopyGeo, PROP_MATS.fuelCanopy);
-  canopy.position.set(0, 4.4, 0);
-  canopy.castShadow = true;
-  canopy.receiveShadow = true;
-  root.add(canopy);
-
-  const trimGeo = new THREE.BoxGeometry(8.08, 0.16, 6.08);
-  const trim = new THREE.Mesh(trimGeo, PROP_MATS.fuelTrim);
-  trim.position.set(0, 4.12, 0);
-  root.add(trim);
-
-  // Support pillars merged
-  const pil1 = new THREE.CylinderGeometry(0.3, 0.3, 4.0, 12);
-  pil1.translate(-2.8, 2.0, 0);
-  const pil2 = new THREE.CylinderGeometry(0.3, 0.3, 4.0, 12);
-  pil2.translate(2.8, 2.0, 0);
-  const mergedPillars = mergeGeometries([pil1, pil2], false);
-  pil1.dispose();
-  pil2.dispose();
-  if (mergedPillars) {
-    const pilMesh = new THREE.Mesh(mergedPillars, PROP_MATS.fuelPillar);
-    pilMesh.castShadow = true;
-    pilMesh.receiveShadow = true;
-    root.add(pilMesh);
-  }
-
-  // Fuel pumps merged
-  const p1 = new THREE.BoxGeometry(0.8, 1.8, 0.6);
-  p1.translate(-1.0, 0.9, 0);
-  const p2 = new THREE.BoxGeometry(0.8, 1.8, 0.6);
-  p2.translate(1.0, 0.9, 0);
-  const mergedPumps = mergeGeometries([p1, p2], false);
-  p1.dispose();
-  p2.dispose();
-  if (mergedPumps) {
-    const pumpMesh = new THREE.Mesh(mergedPumps, PROP_MATS.fuelPump);
-    pumpMesh.castShadow = true;
-    pumpMesh.receiveShadow = true;
-    root.add(pumpMesh);
-  }
-
+  const mesh = buildVertexColoredMesh([
+    { geo: new THREE.BoxGeometry(8.0, 0.8, 6.0), color: 0x117733, pos: [0, 4.4, 0] },
+    { geo: new THREE.BoxGeometry(8.08, 0.16, 6.08), color: 0xfacc15, pos: [0, 4.12, 0] },
+    { geo: new THREE.CylinderGeometry(0.3, 0.3, 4.0, 12), color: 0xdddddd, pos: [-2.8, 2.0, 0] },
+    { geo: new THREE.CylinderGeometry(0.3, 0.3, 4.0, 12), color: 0xdddddd, pos: [2.8, 2.0, 0] },
+    { geo: new THREE.BoxGeometry(0.8, 1.8, 0.6), color: 0xdd2222, pos: [-1.0, 0.9, 0] },
+    { geo: new THREE.BoxGeometry(0.8, 1.8, 0.6), color: 0xdd2222, pos: [1.0, 0.9, 0] },
+  ]);
+  if (mesh) root.add(mesh);
   return root;
 }
 
 /**
- * Procedural Mechanic Garage Shutter door with signage.
+ * Procedural Mechanic Garage Shutter door merged into a single draw call.
  */
 export function createGarageShutterMesh(): THREE.Group {
   const root = new THREE.Group();
   root.name = 'garageShutter';
 
-  // Brick workshop frame
-  const frameGeo = new THREE.BoxGeometry(4.2, 3.2, 0.5);
-  const frame = new THREE.Mesh(frameGeo, PROP_MATS.garageFrame);
-  frame.position.set(0, 1.6, 0);
-  frame.castShadow = true;
-  frame.receiveShadow = true;
-  root.add(frame);
-
-  // Corrugated steel roll-up shutter (half open)
-  const shutterGeo = new THREE.BoxGeometry(3.2, 2.2, 0.1);
-  const shutter = new THREE.Mesh(shutterGeo, PROP_MATS.garageShutter);
-  shutter.position.set(0, 1.7, 0.22);
-  shutter.castShadow = true;
-  root.add(shutter);
-
-  // Yellow workshop header signboard
-  const signGeo = new THREE.BoxGeometry(3.6, 0.6, 0.12);
-  const sign = new THREE.Mesh(signGeo, PROP_MATS.garageSign);
-  sign.position.set(0, 3.1, 0.28);
-  root.add(sign);
-
+  const mesh = buildVertexColoredMesh([
+    { geo: new THREE.BoxGeometry(4.2, 3.2, 0.5), color: 0xa8422b, pos: [0, 1.6, 0] },
+    { geo: new THREE.BoxGeometry(3.2, 2.2, 0.1), color: 0x4a6984, pos: [0, 1.7, 0.22] },
+    { geo: new THREE.BoxGeometry(3.6, 0.6, 0.12), color: 0xffbb00, pos: [0, 3.1, 0.28] },
+  ]);
+  if (mesh) root.add(mesh);
   return root;
 }
 
 /**
- * Procedural Overhead Footbridge spanning road traffic cleanly outside kerbs.
+ * Procedural Overhead Footbridge merged into a single draw call.
  */
 export function createFootbridgeMesh(spanWidth = 14.0): THREE.Group {
   const root = new THREE.Group();
@@ -472,45 +427,18 @@ export function createFootbridgeMesh(spanWidth = 14.0): THREE.Group {
   const safeSpan = Math.max(11.2, spanWidth);
   const towerOffset = safeSpan / 2;
 
-  // Central walkway + left and right stair towers merged into 1 steel mesh
-  const steelParts: THREE.BufferGeometry[] = [];
-  const walkwayGeo = new THREE.BoxGeometry(safeSpan + 1.2, 0.4, 2.2);
-  walkwayGeo.translate(0, 5.2, 0);
-  steelParts.push(walkwayGeo);
-
-  const t1 = new THREE.BoxGeometry(1.4, 5.2, 2.2);
-  t1.translate(-towerOffset, 2.6, 0);
-  steelParts.push(t1);
-
-  const t2 = new THREE.BoxGeometry(1.4, 5.2, 2.2);
-  t2.translate(towerOffset, 2.6, 0);
-  steelParts.push(t2);
-
-  const mergedSteel = mergeGeometries(steelParts, false);
-  for (const g of steelParts) g.dispose();
-  if (mergedSteel) {
-    const steelMesh = new THREE.Mesh(mergedSteel, PROP_MATS.footbridgeSteel);
-    steelMesh.castShadow = true;
-    steelMesh.receiveShadow = true;
-    root.add(steelMesh);
-  }
-
-  // Safety railings (solid slim bars instead of wireframe for clean shading + low draw calls)
-  const railParts: THREE.BufferGeometry[] = [];
+  const parts: ColoredGeoPart[] = [
+    { geo: new THREE.BoxGeometry(safeSpan + 1.2, 0.4, 2.2), color: 0x3d70b2, pos: [0, 5.2, 0] },
+    { geo: new THREE.BoxGeometry(1.4, 5.2, 2.2), color: 0x3d70b2, pos: [-towerOffset, 2.6, 0] },
+    { geo: new THREE.BoxGeometry(1.4, 5.2, 2.2), color: 0x3d70b2, pos: [towerOffset, 2.6, 0] },
+  ];
   for (const zOff of [-1.05, 1.05]) {
-    const topBar = new THREE.BoxGeometry(safeSpan + 1.2, 0.08, 0.08);
-    topBar.translate(0, 6.25, zOff);
-    railParts.push(topBar);
-    const midBar = new THREE.BoxGeometry(safeSpan + 1.2, 0.06, 0.06);
-    midBar.translate(0, 5.8, zOff);
-    railParts.push(midBar);
-  }
-  const mergedRail = mergeGeometries(railParts, false);
-  for (const g of railParts) g.dispose();
-  if (mergedRail) {
-    root.add(new THREE.Mesh(mergedRail, PROP_MATS.footbridgeRail));
+    parts.push({ geo: new THREE.BoxGeometry(safeSpan + 1.2, 0.08, 0.08), color: 0xdbeafe, pos: [0, 6.25, zOff] });
+    parts.push({ geo: new THREE.BoxGeometry(safeSpan + 1.2, 0.06, 0.06), color: 0xdbeafe, pos: [0, 5.8, zOff] });
   }
 
+  const mesh = buildVertexColoredMesh(parts);
+  if (mesh) root.add(mesh);
   return root;
 }
 
@@ -593,7 +521,7 @@ export function createStreetlightFallback(): THREE.Group {
   arm.dispose();
   if (merged) {
     const m = new THREE.Mesh(merged, PROP_MATS.lampPole);
-    m.castShadow = true;
+    m.castShadow = false;
     root.add(m);
   }
   const bulb = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.1, 0.5), PROP_MATS.lampBulb);
@@ -611,12 +539,12 @@ export function createTreeFallback(large = true): THREE.Group {
   const r = large ? 1.5 : 1.05;
   const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.22, h, 6), PROP_MATS.treeTrunk);
   trunk.position.y = h / 2;
-  trunk.castShadow = true;
+  trunk.castShadow = false;
   root.add(trunk);
 
   const crown = new THREE.Mesh(new THREE.DodecahedronGeometry(r, 0), PROP_MATS.treeFoliage);
   crown.position.y = h + r * 0.7;
-  crown.castShadow = true;
+  crown.castShadow = false;
   crown.receiveShadow = true;
   root.add(crown);
   return root;

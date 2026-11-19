@@ -71,25 +71,45 @@ export function districtsToUnload(
 }
 
 /**
- * Recursively disposes geometries and non-shared materials attached to an Object3D hierarchy.
+ * Recursively disposes GPU resources (BatchedMesh textures, InstancedMesh buffers,
+ * non-shared geometries, non-shared materials + textures, and LineSegments) attached to an Object3D hierarchy.
+ * Resources tagged `userData.shared === true` are preserved.
  */
 export function disposeHierarchy(obj: THREE.Object3D): void {
+  const disposedGeos = new Set<THREE.BufferGeometry>();
+  const disposedMats = new Set<THREE.Material>();
+  const disposedTexs = new Set<THREE.Texture>();
+
   obj.traverse((child) => {
-    const maybeRenderable = child as {
-      geometry?: THREE.BufferGeometry;
-      material?: THREE.Material | THREE.Material[];
-    };
-    if (maybeRenderable.geometry && !maybeRenderable.geometry.userData?.shared) {
-      maybeRenderable.geometry.dispose();
+    if (child instanceof THREE.BatchedMesh) {
+      child.dispose();
+    } else if (child instanceof THREE.InstancedMesh) {
+      child.dispose();
+      if (child.geometry && !child.geometry.userData?.shared && !disposedGeos.has(child.geometry)) {
+        disposedGeos.add(child.geometry);
+        child.geometry.dispose();
+      }
+    } else {
+      const geo = (child as { geometry?: THREE.BufferGeometry }).geometry;
+      if (geo && !geo.userData?.shared && !disposedGeos.has(geo)) {
+        disposedGeos.add(geo);
+        geo.dispose();
+      }
     }
-    if (maybeRenderable.material) {
-      const mats = Array.isArray(maybeRenderable.material)
-        ? maybeRenderable.material
-        : [maybeRenderable.material];
+
+    const material = (child as { material?: THREE.Material | THREE.Material[] }).material;
+    if (material) {
+      const mats = Array.isArray(material) ? material : [material];
       for (const m of mats) {
-        if (m && !m.userData?.shared) {
-          m.dispose();
+        if (!m || m.userData?.shared || disposedMats.has(m)) continue;
+        disposedMats.add(m);
+        for (const val of Object.values(m)) {
+          if (val instanceof THREE.Texture && !val.userData?.shared && !disposedTexs.has(val)) {
+            disposedTexs.add(val);
+            val.dispose();
+          }
         }
+        m.dispose();
       }
     }
   });
@@ -173,7 +193,7 @@ export class SpatialChunk {
 
   updateVisibility(cameraPos: { x: number; z: number }, maxDistance: number): void {
     const dist = Math.hypot(this.center.x - cameraPos.x, this.center.z - cameraPos.z);
-    this.root.visible = dist <= maxDistance;
+    this.root.visible = dist <= maxDistance + this.radius;
   }
 }
 

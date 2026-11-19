@@ -37,7 +37,7 @@ export class WeatherFx {
   readonly scene: THREE.Scene;
   readonly dirLight?: THREE.DirectionalLight;
   readonly hemiLight?: THREE.HemisphereLight;
-  readonly drawDistance: number;
+  drawDistance: number;
 
   readonly rainGroup: THREE.Group;
   private rainGeometry: THREE.BufferGeometry;
@@ -52,9 +52,11 @@ export class WeatherFx {
   /** Two vertices per drop (top and bottom of the streak), drawn as line segments. */
   private rainLineVerts: Float32Array;
   private rainInitialized = false;
-  private readonly rainCount: number;
+  private rainCount: number;
+  private maxAllocatedRainCount: number;
   private readonly rainBoxSize = 50;
-  private readonly splashCount: number;
+  private splashCount: number;
+  private maxAllocatedSplashCount: number;
   /** Per splash: wx, wz, age, maxAge. */
   private splashData: Float32Array;
   /** 4 vertices (2 line segments) per splash. */
@@ -81,6 +83,9 @@ export class WeatherFx {
 
   readonly waterGroup: THREE.Group;
   private waterMaterial: THREE.MeshStandardMaterial;
+  private waterUnitGeo: THREE.PlaneGeometry;
+  private waterInstancedMesh?: THREE.InstancedMesh;
+  private waterInstancedCap = 0;
   private activeFloodedIds: string[] = [];
 
   private readonly _skyTopColor = new THREE.Color(0x2563eb);
@@ -115,7 +120,9 @@ export class WeatherFx {
     this.hemiLight = opts.hemiLight;
     this.drawDistance = opts.drawDistance ?? 250;
     this.rainCount = opts.rainCount ?? 800;
+    this.maxAllocatedRainCount = this.rainCount;
     this.splashCount = Math.max(40, Math.floor(this.rainCount * 0.25));
+    this.maxAllocatedSplashCount = this.splashCount;
     this.maxPointLights = Math.max(0, Math.min(MAX_POOL_LIGHTS, opts.maxPointLights ?? MAX_POOL_LIGHTS));
     this.windX = opts.wind?.x ?? 0;
     this.windZ = opts.wind?.z ?? 0;
@@ -201,8 +208,9 @@ export class WeatherFx {
     }
     this.scene.add(this.streetlightsGroup);
 
-    // 4. Water plane overlay for flooded segments
+    // 4. Water plane overlay for flooded segments (unit geo shared; rendered in 1 InstancedMesh draw call)
     this.waterGroup = new THREE.Group();
+    this.waterUnitGeo = new THREE.PlaneGeometry(1, 1);
     this.waterMaterial = new THREE.MeshStandardMaterial({
       color: 0x265469,
       transparent: true,
@@ -220,6 +228,54 @@ export class WeatherFx {
 
   getSkyHorizonColor(): THREE.Color {
     return this._skyHorizonColor;
+  }
+
+  setDrawDistance(drawDistance: number): void {
+    this.drawDistance = drawDistance;
+    if (this.scene.fog instanceof THREE.Fog) {
+      this.scene.fog.far = drawDistance;
+    }
+  }
+
+  setRainCount(count: number): void {
+    const nextRain = Math.max(1, Math.floor(count));
+    const nextSplash = Math.max(40, Math.floor(nextRain * 0.25));
+    const prevRain = this.rainCount;
+    this.rainCount = nextRain;
+    this.splashCount = nextSplash;
+
+    if (nextRain <= this.maxAllocatedRainCount && nextSplash <= this.maxAllocatedSplashCount) {
+      this.rainGeometry.setDrawRange(0, nextRain * 2);
+      this.splashGeometry.setDrawRange(0, nextSplash * 4);
+      if (nextRain > prevRain) {
+        this.rainInitialized = false;
+      }
+      return;
+    }
+
+    this.maxAllocatedRainCount = nextRain;
+    this.maxAllocatedSplashCount = nextSplash;
+    this.rainPositions = new Float32Array(nextRain * 3);
+    this.rainLineVerts = new Float32Array(nextRain * 6);
+    this.rainGeometry.setAttribute('position', new THREE.BufferAttribute(this.rainLineVerts, 3));
+    this.rainGeometry.setDrawRange(0, nextRain * 2);
+
+    this.splashData = new Float32Array(nextSplash * 4);
+    this.splashVerts = new Float32Array(nextSplash * 12);
+    for (let i = 0; i < nextSplash; i++) {
+      const maxAge = 0.22 + Math.random() * 0.18;
+      this.splashData[i * 4 + 2] = Math.random() * maxAge;
+      this.splashData[i * 4 + 3] = maxAge;
+    }
+    this.splashGeometry.setAttribute('position', new THREE.BufferAttribute(this.splashVerts, 3));
+    this.splashGeometry.setDrawRange(0, nextSplash * 4);
+    this.rainInitialized = false;
+  }
+
+  setQuality(opts: { drawDistance: number; rainCount: number; maxPointLights: number }): void {
+    this.setDrawDistance(opts.drawDistance);
+    this.setRainCount(opts.rainCount);
+    this.setMaxPointLights(opts.maxPointLights);
   }
 
   setMaxPointLights(max: number): void {
@@ -648,19 +704,11 @@ export class WeatherFx {
       if (same) return;
     }
 
-    // Clear old water meshes cleanly
-    for (let i = this.waterGroup.children.length - 1; i >= 0; i--) {
-      const child = this.waterGroup.children[i];
-      if (child) {
-        this.waterGroup.remove(child);
-        if (child instanceof THREE.Mesh) {
-          child.geometry.dispose();
-        }
-      }
-    }
-
+    // Clear old water entries cleanly
+    this.waterGroup.clear();
     this.activeFloodedIds.length = 0;
 
+    let validCount = 0;
     for (let i = 0; i < floodedSegments.length; i++) {
       const seg = floodedSegments[i]!;
       this.activeFloodedIds.push(seg.segmentId);
@@ -680,13 +728,50 @@ export class WeatherFx {
       const midY = ((start.y ?? 0) + (end.y ?? 0)) * 0.5;
       const angle = Math.atan2(dx, dz);
 
-      const geo = new THREE.PlaneGeometry(seg.width * 1.1, length);
-      const mesh = new THREE.Mesh(geo, this.waterMaterial);
+      const mesh = new THREE.Mesh(this.waterUnitGeo, this.waterMaterial);
       mesh.rotation.x = -Math.PI / 2;
       mesh.rotation.z = angle;
       mesh.position.set(midX, midY + 0.04, midZ);
+      mesh.scale.set(seg.width * 1.1, length, 1);
+      mesh.castShadow = false;
       mesh.receiveShadow = true;
+      mesh.visible = false; // Rendered via single waterInstancedMesh draw call
+      mesh.updateMatrix();
       this.waterGroup.add(mesh);
+      validCount++;
+    }
+
+    if (validCount > 0) {
+      if (!this.waterInstancedMesh || this.waterInstancedCap < validCount) {
+        if (this.waterInstancedMesh) {
+          this.scene.remove(this.waterInstancedMesh);
+          this.waterInstancedMesh.dispose();
+        }
+        this.waterInstancedCap = Math.max(32, validCount);
+        const inst = new THREE.InstancedMesh(
+          this.waterUnitGeo,
+          this.waterMaterial,
+          this.waterInstancedCap
+        );
+        inst.name = 'flooded_roads_instanced';
+        inst.castShadow = false;
+        inst.receiveShadow = true;
+        inst.frustumCulled = false;
+        this.waterInstancedMesh = inst;
+        this.scene.add(inst);
+      }
+
+      let instIdx = 0;
+      for (let i = 0; i < this.waterGroup.children.length; i++) {
+        const child = this.waterGroup.children[i]!;
+        this.waterInstancedMesh.setMatrixAt(instIdx++, child.matrix);
+      }
+      this.waterInstancedMesh.count = instIdx;
+      this.waterInstancedMesh.visible = true;
+      this.waterInstancedMesh.instanceMatrix.needsUpdate = true;
+    } else if (this.waterInstancedMesh) {
+      this.waterInstancedMesh.count = 0;
+      this.waterInstancedMesh.visible = false;
     }
   }
 
@@ -699,13 +784,21 @@ export class WeatherFx {
     this.lampHeadMat.dispose();
     if (this.lampInstancedMesh) {
       this.lampInstancedMesh.dispose();
+      this.lampInstancedMesh = undefined;
     }
+    this.lampCount = 0;
+    this.waterUnitGeo.dispose();
     this.waterMaterial.dispose();
-    for (let i = this.waterGroup.children.length - 1; i >= 0; i--) {
-      const child = this.waterGroup.children[i];
-      if (child instanceof THREE.Mesh) {
-        child.geometry.dispose();
-      }
+    if (this.waterInstancedMesh) {
+      this.waterInstancedMesh.dispose();
+      this.scene.remove(this.waterInstancedMesh);
+      this.waterInstancedMesh = undefined;
+    }
+    this.waterGroup.clear();
+    this.activeFloodedIds.length = 0;
+    this.headlight.dispose();
+    for (const pl of this.pointLightPool) {
+      pl.dispose();
     }
     this.scene.remove(this.rainGroup);
     this.scene.remove(this.headlight);

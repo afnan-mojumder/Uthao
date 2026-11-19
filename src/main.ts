@@ -208,10 +208,18 @@ async function bootGame(): Promise<void> {
   });
   const rideManager = session.ride;
 
+  // T7.3: spawn on the road network at the player's home node before streaming so
+  // CityBuilder initializes around the actual player spawn position.
+  session.spawnAtHome();
+
   const canvas = typeof document !== 'undefined'
     ? (document.getElementById('game-canvas') as HTMLCanvasElement)
     : null;
   let renderer: Renderer | undefined;
+  const urlQualityParam = urlParams?.get('quality');
+  const hasValidUrlQuality = Boolean(
+    urlQualityParam === 'low' || urlQualityParam === 'medium' || urlQualityParam === 'high'
+  );
 
   function loadRendererScene(r: Renderer) {
     if (isSingleDistrict) {
@@ -221,7 +229,7 @@ async function bootGame(): Promise<void> {
         worldDataJson as WorldData,
         (id: DistrictId) => allDistrictsMap[id],
         physics,
-        { x: 300, z: 300 }
+        { x: session.bike.x, z: session.bike.z }
       );
     }
   }
@@ -234,11 +242,16 @@ async function bootGame(): Promise<void> {
 
   if (canvas) {
     setLoadingStage('loading.world', 55);
+    setDefaultSignLanguage(settingsSignal.value.language);
     renderer = Renderer.init(canvas, qualityChoice);
+    if (hasValidUrlQuality) {
+      renderer.setAdaptiveQualityEnabled(false);
+    }
     await renderer.preloadAssets((pct) => {
       setLoadingStage('loading.world', 55 + Math.round(pct * 0.25));
     });
     loadRendererScene(renderer);
+    renderer.cityBuilder?.signageAtlas.setLanguage(settingsSignal.value.language);
     syncBikeAppearance(renderer);
     gm.bus.on('bike/swapped', () => syncBikeAppearance(renderer));
     gm.bus.on('upgrade/purchased', () => syncBikeAppearance(renderer));
@@ -273,10 +286,41 @@ async function bootGame(): Promise<void> {
     canvas.addEventListener('webglcontextrestored', () => {
       contextLostSignal.value = false;
       if (canvas) {
+        const s = settingsSignal.value;
+        const restoredQuality = resolveQualityLevel(urlParams?.get('quality'), s.quality);
+        const prevCamMode = renderer?.cameraRig.mode ?? 'chase';
+
+        renderer?.dispose();
         physics.clearAllColliders();
-        renderer = Renderer.init(canvas, qualityChoice);
-        loadRendererScene(renderer);
-        syncBikeAppearance(renderer);
+        setLanguage(s.language);
+        setDefaultSignLanguage(s.language);
+
+        const nextRenderer = Renderer.init(canvas, restoredQuality);
+        renderer = nextRenderer;
+        if (hasValidUrlQuality) {
+          nextRenderer.setAdaptiveQualityEnabled(false);
+        }
+        nextRenderer.cameraRig.setReduceMotion(s.reduceMotion);
+        nextRenderer.cameraRig.setMode(prevCamMode);
+        if (typeof window !== 'undefined' && window.__uthao) {
+          window.__uthao.renderer = nextRenderer;
+        }
+
+        nextRenderer.peopleRenderer.refreshPrototypes();
+        loadRendererScene(nextRenderer);
+        nextRenderer.cityBuilder?.signageAtlas.setLanguage(s.language);
+        syncBikeAppearance(nextRenderer);
+        const restoredView = deriveRideView(rideManager);
+        nextRenderer.setPassengerVisible(restoredView.dropoffVisible);
+        nextRenderer.snapBikeState(session.bike);
+        nextRenderer.syncFloodedSegments(gm.weatherSystem, roadNetwork);
+        nextRenderer.render(gm.snapshot(), 1.0, trafficManager.signals);
+
+        void nextRenderer.preloadAssets().then(() => {
+          if (renderer === nextRenderer) {
+            nextRenderer.peopleRenderer.refreshPrototypes();
+          }
+        });
       }
     });
   }
@@ -354,8 +398,8 @@ if (isSingleDistrict) {
   spawnTestRequest(rideManager, 120);
 }
 
-// T7.3: spawn on the road network at the player's home node, aligned to the
-// road, instead of the old off-road `activeDistrict.nodes[0].x - 9` offset.
+// T7.3: confirm bike spawn is clear of newly loaded static colliders and snap camera
+// directly to initial spawn pose (no 180m swoop on the first frame).
 session.spawnAtHome();
 
 // A new career requested from the menu before this reload: start it on this fresh game.
@@ -365,6 +409,8 @@ if (consumeFreshCareer()) {
   tutorialSignal.value = { active: true, step: 'alarm', agreedFare: 100 };
   screenSignal.value = 'game';
 }
+
+renderer?.snapBikeState(session.bike);
 
 // All systems, scene, SaveSystem, debug API, and UI callbacks are now bound;
 // hide <Loading /> so <MainMenu /> (or the active game screen) can accept input.
@@ -442,6 +488,9 @@ function frame(now: number) {
     }
 
     session.step(input, SIM_DT);
+    if (s >= steps - 2) {
+      renderer?.setBikeState(session.bike);
+    }
     engineThrottle = input.throttle;
     lastBikeBrake = input.brake;
     if (rawInput.horn) audio.startHorn();
@@ -479,7 +528,6 @@ function frame(now: number) {
       now / 1000
     );
 
-    renderer.setBikeState(session.bike);
     renderer.setBrakeLight(lastBikeBrake > 0.05);
     renderer.syncFloodedSegments(gm.weatherSystem, roadNetwork);
     const alpha = gm.accumulator / SIM_DT;

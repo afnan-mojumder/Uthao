@@ -15,6 +15,7 @@ vi.mock('three', async (importOriginal) => {
     setPixelRatio(): void {}
     setSize(): void {}
     render(): void {}
+    dispose(): void {}
   }
   return { ...actual, WebGLRenderer: FakeWebGLRenderer };
 });
@@ -322,5 +323,93 @@ describe('Renderer P2.5 lighting, shadows, streetlights, LED headlight & flood F
     const fog = r.scene.fog as THREE.Fog;
     expect(fog.color.getHex()).toBe(bg.getHex());
     expect(fog.color.getHex()).toBe(0x64748b);
+  });
+});
+
+describe('Renderer P2.6 real dt, AdaptiveQuality, WeatherFx quality sync & dispose()', () => {
+  it('passes real frame dt (not hardcoded 1/60) and active bike vmax to CameraRig & RideMarkers', () => {
+    let fakeNow = 1000;
+    const nowSpy = vi.spyOn(performance, 'now').mockImplementation(() => fakeNow);
+
+    const r = Renderer.init(canvas, 'medium');
+    const camSpy = vi.spyOn(r.cameraRig, 'update');
+    const markerSpy = vi.spyOn(r.markers, 'update');
+
+    const snap150 = {
+      clock: { minutes: 12 * 60 },
+      weather: 'clear',
+      economy: { currentBikeId: 'new150', installedCosmetics: {}, ownedUpgrades: [] },
+    } as unknown as SimSnapshot;
+
+    r.render(snap150);
+    fakeNow += 40; // 40ms frameDt = 0.04s
+    r.render(snap150);
+
+    expect(camSpy.mock.calls.at(-1)![4]).toBeCloseTo(0.04, 4);
+    expect(camSpy.mock.calls.at(-1)![6]).toBe(28);
+    expect(markerSpy.mock.calls.at(-1)![0]).toBeCloseTo(0.04, 4);
+
+    nowSpy.mockRestore();
+  });
+
+  it('wires AdaptiveQualityManager into render() and dynamically updates WeatherFx & shadow map on setQuality()', () => {
+    let fakeNow = 1000;
+    const nowSpy = vi.spyOn(performance, 'now').mockImplementation(() => fakeNow);
+
+    const r = Renderer.init(canvas, 'high');
+    expect(r.weatherFx.drawDistance).toBe(450);
+
+    // Simulate fake shadow map render target attached to dirLight
+    const fakeShadowMap = { dispose: vi.fn() } as unknown as THREE.WebGLRenderTarget;
+    r.dirLight.shadow.map = fakeShadowMap;
+
+    // Feed 15 FPS frames over 2.1 seconds so AdaptiveQualityManager triggers high -> medium
+    const setQualitySpy = vi.spyOn(r, 'setQuality');
+    for (let i = 0; i < 34; i++) {
+      fakeNow += 66.7;
+      r.render(snapshot);
+    }
+    expect(setQualitySpy).toHaveBeenCalledWith('medium');
+    expect(r.qualityManager.config.level).toBe('medium');
+    expect(r.weatherFx.drawDistance).toBe(300);
+    expect((r.scene.fog as THREE.Fog).far).toBe(300);
+
+    // Switching to low disposes dirLight.shadow.map and updates WeatherFx rain/fog
+    r.dirLight.shadow.map = fakeShadowMap;
+    r.setQuality('low');
+    expect(fakeShadowMap.dispose).toHaveBeenCalled();
+    expect(r.dirLight.shadow.map).toBeNull();
+    expect(r.dirLight.castShadow).toBe(false);
+    expect(r.weatherFx.drawDistance).toBe(200);
+    r.render(snapshot);
+    expect((r.scene.fog as THREE.Fog).far).toBe(200);
+
+    nowSpy.mockRestore();
+  });
+
+  it('Renderer.dispose() cleans up CityBuilder, PeopleRenderer, WeatherFx, MotorcycleMesh, skyDome, shadows, and WebGLRenderer', () => {
+    const r = Renderer.init(canvas, 'medium');
+    const { districts } = loadWorld();
+    const mirpara = districts.get('mirpara')!;
+    r.loadDistrict(mirpara);
+
+    const fakeShadowMap = { dispose: vi.fn() } as unknown as THREE.WebGLRenderTarget;
+    r.dirLight.shadow.map = fakeShadowMap;
+
+    const cityDisposeSpy = vi.spyOn(r.cityBuilder!, 'dispose');
+    const peopleDisposeSpy = vi.spyOn(r.peopleRenderer, 'dispose');
+    const weatherDisposeSpy = vi.spyOn(r.weatherFx, 'dispose');
+    const bikeDisposeSpy = vi.spyOn(r.bikeMesh, 'dispose');
+    const webglDisposeSpy = vi.spyOn(r.webglRenderer, 'dispose');
+
+    r.dispose();
+
+    expect(cityDisposeSpy).toHaveBeenCalledTimes(1);
+    expect(peopleDisposeSpy).toHaveBeenCalledTimes(1);
+    expect(weatherDisposeSpy).toHaveBeenCalledTimes(1);
+    expect(bikeDisposeSpy).toHaveBeenCalledTimes(1);
+    expect(webglDisposeSpy).toHaveBeenCalledTimes(1);
+    expect(fakeShadowMap.dispose).toHaveBeenCalledTimes(1);
+    expect(r.dirLight.shadow.map).toBeNull();
   });
 });
