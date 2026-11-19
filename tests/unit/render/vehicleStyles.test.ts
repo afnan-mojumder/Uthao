@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import * as THREE from 'three';
 import { PeopleRenderer } from '../../../src/render/people';
-import { MotorcycleMesh } from '../../../src/render/vehicles';
+import { MotorcycleMesh, buildMultiMaterialPrototype } from '../../../src/render/vehicles';
 import {
   VEHICLE_COLOR,
   VEHICLE_MODEL_IDS,
@@ -371,5 +371,19 @@ describe('PeopleRenderer multi-material Dhaka vehicles, GLTF cars, and animated 
     }
     const diffMb = (process.memoryUsage().heapUsed - before) / (1024 * 1024);
     expect(diffMb).toBeLessThan(5);
+  });
+
+  it('buildMultiMaterialPrototype unwraps a single preserved material instead of returning a 1-element Material[]', () => {
+    const group = new THREE.Group();
+    const preservedMat = new THREE.MeshStandardMaterial({ color: 0x187a38, roughness: 0.5 });
+    const partA = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), preservedMat);
+    const partB = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), preservedMat);
+    partB.position.set(0, 1, 0);
+    group.add(partA, partB);
+
+    const proto = buildMultiMaterialPrototype(group);
+    expect(Array.isArray(proto.material)).toBe(false);
+    expect(proto.material).toBe(preservedMat);
+    expect(proto.geometry.groups.length).toBe(0);
   });
 });

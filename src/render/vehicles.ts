@@ -913,7 +913,6 @@ export function buildMultiMaterialPrototype(root: THREE.Object3D): {
   const buckets = new Map<string, { mat: THREE.Material; geos: THREE.BufferGeometry[] }>();
   const matOrder: string[] = [];
   const detailGeos: THREE.BufferGeometry[] = [];
-  let hasPreserved = false;
 
   root.traverse((child) => {
     if (!(child instanceof THREE.Mesh) || !child.geometry) return;
@@ -922,7 +921,6 @@ export function buildMultiMaterialPrototype(root: THREE.Object3D): {
     const std = rawMat as THREE.MeshStandardMaterial;
     const hex = std.color ? std.color.getHex() : 0xffffff;
     if (PRESERVED_VEHICLE_COLORS.has(hex)) {
-      hasPreserved = true;
       const key = [
         hex,
         std.emissive ? std.emissive.getHex() : 0x000000,
@@ -1006,7 +1004,7 @@ export function buildMultiMaterialPrototype(root: THREE.Object3D): {
 
   return {
     geometry: finalGeo,
-    material: !hasPreserved && materials.length === 1 ? materials[0]! : materials,
+    material: materials.length === 1 ? materials[0]! : materials,
   };
 }
 

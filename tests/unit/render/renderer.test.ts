@@ -412,4 +412,41 @@ describe('Renderer P2.6 real dt, AdaptiveQuality, WeatherFx quality sync & dispo
     expect(fakeShadowMap.dispose).toHaveBeenCalledTimes(1);
     expect(r.dirLight.shadow.map).toBeNull();
   });
+
+  it('initDebugApi closures read live reassigned api.renderer after webglcontextrestored', async () => {
+    const { initDebugApi } = await import('../../../src/debug/debugApi');
+    const { EventBus } = await import('../../../src/core/events');
+    const r1 = Renderer.init(canvas, 'medium');
+    const r2 = Renderer.init(canvas, 'high');
+    vi.spyOn(r1, 'getFps').mockReturnValue(24);
+    vi.spyOn(r1, 'getDrawCalls').mockReturnValue(299);
+    vi.spyOn(r1, 'getTriangles').mockReturnValue(111111);
+    vi.spyOn(r1, 'isCameraClipping').mockReturnValue(false);
+
+    vi.spyOn(r2, 'getFps').mockReturnValue(60);
+    vi.spyOn(r2, 'getDrawCalls').mockReturnValue(72);
+    vi.spyOn(r2, 'getTriangles').mockReturnValue(88000);
+    vi.spyOn(r2, 'isCameraClipping').mockReturnValue(true);
+    const toggleSpy2 = vi.spyOn(r2.cameraRig, 'toggleMode');
+
+    const fakeGm = { bus: new EventBus() } as unknown as import('../../../src/sim/GameManager').GameManager;
+    initDebugApi(fakeGm, { renderer: r1 });
+
+    const api = (window as unknown as { __uthao: import('../../../src/debug/debugApi').DebugApi }).__uthao;
+    expect(api.getFps()).toBe(24);
+    expect(api.getDrawCalls()).toBe(299);
+    expect(api.getTriangles()).toBe(111111);
+    expect(api.isCameraClipping()).toBe(false);
+
+    // Simulate webglcontextrestored replacing window.__uthao.renderer
+    r1.dispose();
+    api.renderer = r2;
+
+    expect(api.getFps()).toBe(60);
+    expect(api.getDrawCalls()).toBe(72);
+    expect(api.getTriangles()).toBe(88000);
+    expect(api.isCameraClipping()).toBe(true);
+    api.toggleCamera();
+    expect(toggleSpy2).toHaveBeenCalledTimes(1);
+  });
 });

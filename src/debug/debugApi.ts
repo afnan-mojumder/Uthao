@@ -111,7 +111,7 @@ export function initDebugApi(
     lastReceipt = receipt;
   });
 
-  window.__uthao = {
+  const api: DebugApi = {
     gm,
     renderer: options.renderer,
     rideManager: options.rideManager,
@@ -151,11 +151,11 @@ export function initDebugApi(
       const p = pos ?? { x: 0, z: 0 };
       options.trafficManager?.triggerHorn(p);
     },
-    getFps: () => options.renderer?.getFps() ?? 60,
-    getDrawCalls: () => options.renderer?.getDrawCalls() ?? 0,
-    getTriangles: () => options.renderer?.getTriangles() ?? 0,
-    toggleCamera: () => options.renderer?.cameraRig.toggleMode(),
-    isCameraClipping: () => options.renderer?.isCameraClipping() ?? false,
+    getFps: () => api.renderer?.getFps() ?? 60,
+    getDrawCalls: () => api.renderer?.getDrawCalls() ?? 0,
+    getTriangles: () => api.renderer?.getTriangles() ?? 0,
+    toggleCamera: () => api.renderer?.cameraRig.toggleMode(),
+    isCameraClipping: () => api.renderer?.isCameraClipping() ?? false,
     spawnBargainer: (fare = 100) => {
       const allNodes = options.rideManager?.roadNetwork.getAllNodes() ?? [];
       const pNodeId = allNodes[0]?.nodeId ?? 'N1';
@@ -202,4 +202,5 @@ export function initDebugApi(
     },
     isPaused: () => gm.paused,
   };
+  window.__uthao = api;
 }
