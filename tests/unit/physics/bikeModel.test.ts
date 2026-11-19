@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import * as THREE from 'three';
 import {
   stepBike,
   type BikeSpec,
@@ -174,5 +175,33 @@ describe('bikeModel (pure math)', () => {
     }
 
     expect(statePass.speed / stateSolo.speed).toBeCloseTo(0.9, 2);
+  });
+
+  it('steer = -1 turns screen-left and steer = +1 turns screen-right in Three.js chase camera', () => {
+    const cam = new THREE.PerspectiveCamera(60, 16 / 9, 0.1, 200);
+    cam.position.set(0, 3, -5);
+    cam.lookAt(0, 1, 2);
+    cam.updateMatrixWorld();
+
+    const spec = createDefaultBikeSpec();
+    const dryEnv = { wet: false, surface: 1.0, hasPassenger: false, conditionPct: 100 };
+
+    let leftState = createDefaultBikeState();
+    leftState.speed = 10;
+    for (let i = 0; i < 30; i++) {
+      leftState = stepBike(leftState, { throttle: 0.5, brake: 0, steer: -1 }, spec, dryEnv, 1 / 60);
+    }
+    const ndcLeft = new THREE.Vector3(leftState.x, 0, leftState.z).project(cam);
+    expect(ndcLeft.x).toBeLessThan(-0.05);
+    expect(leftState.lean).toBeLessThan(0);
+
+    let rightState = createDefaultBikeState();
+    rightState.speed = 10;
+    for (let i = 0; i < 30; i++) {
+      rightState = stepBike(rightState, { throttle: 0.5, brake: 0, steer: 1 }, spec, dryEnv, 1 / 60);
+    }
+    const ndcRight = new THREE.Vector3(rightState.x, 0, rightState.z).project(cam);
+    expect(ndcRight.x).toBeGreaterThan(0.05);
+    expect(rightState.lean).toBeGreaterThan(0);
   });
 });

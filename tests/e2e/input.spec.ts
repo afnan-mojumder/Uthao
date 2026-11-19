@@ -197,3 +197,102 @@ test.describe('gamepad map', () => {
     await expect(page.getByTestId('map-poi-card')).toBeVisible();
   });
 });
+
+test.describe('human steering direction', () => {
+  test('KeyA turns screen-left and KeyD turns screen-right in chase camera', async ({ page }) => {
+    const driveAndMeasure = async (steerKey: 'KeyA' | 'KeyD') => {
+      await page.goto('/?debug=1&district=testloop&encounters=0');
+      await page.waitForFunction(() => {
+        const u = (
+          window as unknown as {
+            __uthao?: {
+              renderer?: {
+                bikeMesh?: { root: { rotation: { y: number } } };
+                cameraRig?: { camera: { matrixWorld: { elements: number[] }; updateMatrixWorld: (f?: boolean) => void } };
+              };
+            };
+          }
+        ).__uthao;
+        const bm = u?.renderer?.bikeMesh;
+        const cam = u?.renderer?.cameraRig?.camera;
+        if (!bm || !cam) return false;
+        cam.updateMatrixWorld(true);
+        const e = cam.matrixWorld.elements;
+        const h = bm.root.rotation.y;
+        // Wait until chase camera has settled behind the bike (-Z_cam aligns with bike forward).
+        const dotForward = -e[8]! * Math.sin(h) + -e[10]! * Math.cos(h);
+        return dotForward > 0.9;
+      });
+
+      // Snapshot initial bike pose and chase camera world-right vector (+X_cam).
+      const start = await page.evaluate(() => {
+        const r = (
+          window as unknown as {
+            __uthao: {
+              renderer: {
+                bikeMesh: { root: { position: { x: number; z: number }; rotation: { y: number } } };
+                cameraRig: { camera: { matrixWorld: { elements: number[] }; updateMatrixWorld: (f?: boolean) => void } };
+              };
+            };
+          }
+        ).__uthao.renderer;
+        r.cameraRig.camera.updateMatrixWorld(true);
+        const e = r.cameraRig.camera.matrixWorld.elements;
+        return {
+          x: r.bikeMesh.root.position.x,
+          z: r.bikeMesh.root.position.z,
+          heading: r.bikeMesh.root.rotation.y,
+          camRightX: e[0]!,
+          camRightZ: e[2]!,
+        };
+      });
+
+      await page.keyboard.down('KeyW');
+      await page.keyboard.down(steerKey);
+      try {
+        let measured = { lateralDot: 0, headingDelta: 0, dist: 0 };
+        await expect
+          .poll(
+            async () => {
+              measured = await page.evaluate((s) => {
+                const root = (
+                  window as unknown as {
+                    __uthao: {
+                      renderer: {
+                        bikeMesh: { root: { position: { x: number; z: number }; rotation: { y: number } } };
+                      };
+                    };
+                  }
+                ).__uthao.renderer.bikeMesh.root;
+                const dx = root.position.x - s.x;
+                const dz = root.position.z - s.z;
+                let dh = (root.rotation.y - s.heading) % (Math.PI * 2);
+                if (dh < -Math.PI) dh += Math.PI * 2;
+                if (dh > Math.PI) dh -= Math.PI * 2;
+                return {
+                  lateralDot: dx * s.camRightX + dz * s.camRightZ,
+                  headingDelta: dh,
+                  dist: Math.hypot(dx, dz),
+                };
+              }, start);
+              return measured.dist > 1.5 && Math.abs(measured.headingDelta) > 0.08;
+            },
+            { timeout: 15000 }
+          )
+          .toBe(true);
+        return measured;
+      } finally {
+        await page.keyboard.up(steerKey);
+        await page.keyboard.up('KeyW');
+      }
+    };
+
+    const left = await driveAndMeasure('KeyA');
+    expect(left.lateralDot).toBeLessThan(-0.05);
+    expect(left.headingDelta).toBeGreaterThan(0.05);
+
+    const right = await driveAndMeasure('KeyD');
+    expect(right.lateralDot).toBeGreaterThan(0.05);
+    expect(right.headingDelta).toBeLessThan(-0.05);
+  });
+});

@@ -1,7 +1,7 @@
 export interface InputState {
   throttle: number; // 0..1
   brake: number; // 0..1
-  steer: number; // -1..1 (negative left, positive right)
+  steer: number; // -1..1 (-1 = turn left / screen-left in chase cam, +1 = turn right / screen-right in chase cam)
   horn: boolean;
   camera: boolean;
   phone: boolean;

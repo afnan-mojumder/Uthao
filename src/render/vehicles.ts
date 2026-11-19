@@ -206,8 +206,10 @@ export class MotorcycleMesh {
   setPose(pose: VehiclePose): void {
     this.root.position.set(pose.x, pose.y, pose.z);
     this.root.rotation.y = pose.heading;
-    this.leanGroup.rotation.z = -pose.lean;
-    this.forkGroup.rotation.y = pose.steer;
+    // Bike faces local +Z; +rotation.z tilts top toward -X (screen-right), matching lean > 0 = right.
+    this.leanGroup.rotation.z = pose.lean;
+    // +rotation.y turns fork toward +X (screen-left), matching steer < 0 = left.
+    this.forkGroup.rotation.y = -pose.steer;
   }
 }
 

@@ -103,12 +103,12 @@ export class AutopilotController {
       return this.step(bike);
     }
 
-    // Steering
+    // Steering: canonical BikeInput uses -1 = left (+heading), +1 = right (-heading)
     const dx = targetNode.x - bike.x;
     const dz = targetNode.z - bike.z;
     const desiredHeading = Math.atan2(dx, dz);
     const diff = angleDiff(bike.heading, desiredHeading);
-    const steer = clamp(diff * 2.5, -1, 1);
+    const steer = clamp(-diff * 2.5, -1, 1);
 
     // Speed Control
     let throttle: number;

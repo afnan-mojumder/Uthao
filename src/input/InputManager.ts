@@ -311,8 +311,8 @@ export class InputManager {
           if (!t) continue;
           if (t.identifier === this.touchSteerTouchId) {
             const deltaX = t.clientX - this.touchSteerStartX;
-            // Drag distance across ~100px gives full steer
-            const maxDrag = Math.min(120, w * 0.15);
+            // Drag distance across ~100px gives full steer (-1 left, +1 right)
+            const maxDrag = Math.max(1, Math.min(120, w * 0.15));
             this.touchSteer = Math.max(-1.0, Math.min(1.0, deltaX / maxDrag));
           }
         }

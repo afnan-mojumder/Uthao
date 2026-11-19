@@ -245,3 +245,121 @@ describe('quick key taps are not lost between frames (audit: tap of C dropped)',
     }
   });
 });
+
+describe('Canonical steer sign (-1 = left, +1 = right) across all input devices', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('keyboard KeyA and ArrowLeft output -1; KeyD and ArrowRight output +1', () => {
+    const handlers: Record<string, (e: KeyboardEvent) => void> = {};
+    vi.stubGlobal('window', {
+      innerWidth: 1280,
+      innerHeight: 720,
+      addEventListener: (type: string, fn: (e: KeyboardEvent) => void) => {
+        handlers[type] = fn;
+      },
+      removeEventListener: () => {},
+    });
+
+    const input = new InputManager({ bindings: DEFAULT_BINDINGS });
+    for (const code of ['KeyA', 'ArrowLeft']) {
+      handlers.keydown!({ code } as KeyboardEvent);
+      for (let i = 0; i < 20; i++) input.update(0.016);
+      expect(input.read().steer, code).toBe(-1);
+      handlers.keyup!({ code } as KeyboardEvent);
+      for (let i = 0; i < 20; i++) input.update(0.016);
+      expect(input.read().steer).toBe(0);
+    }
+
+    for (const code of ['KeyD', 'ArrowRight']) {
+      handlers.keydown!({ code } as KeyboardEvent);
+      for (let i = 0; i < 20; i++) input.update(0.016);
+      expect(input.read().steer, code).toBe(1);
+      handlers.keyup!({ code } as KeyboardEvent);
+      for (let i = 0; i < 20; i++) input.update(0.016);
+      expect(input.read().steer).toBe(0);
+    }
+  });
+
+  it('touch drag left outputs -1 and touch drag right outputs +1', () => {
+    const listeners: Record<string, (e: unknown) => void> = {};
+    vi.stubGlobal('window', {
+      innerWidth: 1000,
+      innerHeight: 500,
+      addEventListener: (type: string, fn: (e: unknown) => void) => {
+        listeners[type] = fn;
+      },
+      removeEventListener: () => {},
+    });
+
+    const input = new InputManager({ bindings: DEFAULT_BINDINGS });
+    listeners.touchstart!({
+      changedTouches: [{ identifier: 1, clientX: 200, clientY: 250 }],
+      touches: { length: 1 },
+    });
+
+    listeners.touchmove!({
+      changedTouches: [{ identifier: 1, clientX: 50, clientY: 250 }],
+    });
+    input.update(0.016);
+    expect(input.read().steer).toBe(-1);
+
+    listeners.touchmove!({
+      changedTouches: [{ identifier: 1, clientX: 350, clientY: 250 }],
+    });
+    input.update(0.016);
+    expect(input.read().steer).toBe(1);
+
+    listeners.touchend!({
+      changedTouches: [{ identifier: 1, clientX: 350, clientY: 250 }],
+      touches: { length: 0 },
+    });
+    input.update(0.016);
+    expect(input.read().steer).toBe(0);
+  });
+
+  it('gamepad left stick X outputs -1 for left and +1 for right', () => {
+    let axis0 = 0;
+    vi.stubGlobal('navigator', {
+      getGamepads: () => [
+        {
+          axes: [axis0, 0, 0, 0],
+          buttons: Array.from({ length: 17 }, () => ({ pressed: false, value: 0 })),
+        },
+      ],
+    });
+
+    const input = new InputManager({ useWindowListeners: false, bindings: DEFAULT_BINDINGS });
+    axis0 = -1;
+    input.update(0.016);
+    expect(input.read().steer).toBe(-1);
+
+    axis0 = 1;
+    input.update(0.016);
+    expect(input.read().steer).toBe(1);
+  });
+
+  it('tilt controls output -1 for left tilt and +1 for right tilt', () => {
+    const listeners: Record<string, (e: unknown) => void> = {};
+    vi.stubGlobal('window', {
+      innerWidth: 1000,
+      innerHeight: 500,
+      addEventListener: (type: string, fn: (e: unknown) => void) => {
+        listeners[type] = fn;
+      },
+      removeEventListener: () => {},
+    });
+
+    const input = new InputManager({
+      bindings: { ...DEFAULT_BINDINGS, tiltEnabled: true, tiltSensitivity: 1.0 },
+    });
+    listeners.deviceorientation!({ gamma: -30 });
+    input.update(0.016);
+    expect(input.read().steer).toBe(-1);
+
+    listeners.deviceorientation!({ gamma: 30 });
+    input.update(0.016);
+    expect(input.read().steer).toBe(1);
+  });
+});

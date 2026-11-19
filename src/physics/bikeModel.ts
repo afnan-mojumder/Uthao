@@ -21,10 +21,10 @@ export interface BikeSpec {
 export interface BikeState {
   x: number;
   z: number;
-  heading: number; // radians
+  heading: number; // radians (0 = +Z, +PI/2 = +X; positive delta turns left / screen-left)
   speed: number; // m/s
-  lean: number; // radians
-  steer: number; // radians
+  lean: number; // radians (< 0 leans left, > 0 leans right)
+  steer: number; // radians (< 0 steered left, > 0 steered right)
   wobble?: boolean;
   crashed?: boolean;
 }
@@ -32,7 +32,7 @@ export interface BikeState {
 export interface BikeInput {
   throttle: number; // 0..1
   brake: number; // 0..1
-  steer: number; // -1..1
+  steer: number; // -1..1 (-1 = turn left / screen-left in chase cam, +1 = turn right / screen-right in chase cam)
 }
 
 export interface BikeEnvironment {
@@ -141,8 +141,9 @@ export function stepBike(
   const maxYawRate =
     absSpeed > 0.5 ? (gripLimit * STEER_SLIDE_ALLOWANCE) / absSpeed : Infinity;
 
-  // Yaw rate from kinematic bicycle model, within the grip budget
-  const rawYawRate = (newSpeed * Math.tan(newSteer)) / WHEELBASE;
+  // Yaw rate from kinematic bicycle model, within the grip budget.
+  // Heading increases toward +X (screen-left when facing +Z), so steer < 0 (left) produces yawRate > 0.
+  const rawYawRate = -(newSpeed * Math.tan(newSteer)) / WHEELBASE;
   const yawRate = clamp(rawYawRate, -maxYawRate, maxYawRate);
   const newHeading = angleDiff(0, state.heading + yawRate * dt);
 
@@ -153,9 +154,10 @@ export function stepBike(
   const wobble = gripRatio > 1.0;
   const crashed = false;
 
-  // Lean angle derived from lateral acceleration (capped at leanMaxDeg)
+  // Lean angle derived from lateral acceleration (capped at leanMaxDeg):
+  // lean > 0 leans right (yawRate < 0 when moving forward), lean < 0 leans left.
   const maxLean = degToRad(spec.leanMaxDeg);
-  const targetLean = clamp(Math.atan2(newSpeed * yawRate, 9.81), -maxLean, maxLean);
+  const targetLean = clamp(Math.atan2(-newSpeed * yawRate, 9.81), -maxLean, maxLean);
   const newLean = lerp(state.lean, targetLean, clamp(dt * 12, 0, 1));
 
   // Position integration

@@ -143,6 +143,8 @@ export class CameraRig {
 
       this.camera.lookAt(this.currentLookAt);
 
+      // Camera looks down -Z, so +Z_cam points opposite bike +Z; negative rotateZ tilts
+      // camera-up toward -X (screen-right), aligning roll with MotorcycleMesh's right lean (lean > 0).
       const targetRoll = this.reduceMotion ? 0 : clamp(-lean * 0.32, -0.18, 0.18);
       this.currentRoll = lerp(this.currentRoll, targetRoll, clamp(dt * 8, 0, 1));
       if (Math.abs(this.currentRoll) > 0.0005) {

@@ -85,4 +85,58 @@ describe('AutopilotController', () => {
 
     expect(completed).toBe(true);
   });
+
+  it('emits negative steer for left turns and positive steer for right turns, and completes a 90-degree turn', () => {
+    const autopilot = new AutopilotController(roadNetwork);
+    autopilot.setEnabled(true);
+
+    // Facing +Z (heading = 0) at N1 (0, 0): N2 (100, 0) is to the LEFT (+X)
+    const bikeLeft = {
+      ...createDefaultBikeState(),
+      x: 0,
+      z: 0,
+      heading: 0,
+      speed: 8,
+    };
+    autopilot.setDestination(bikeLeft.x, bikeLeft.z, 'N2');
+    const leftInput = autopilot.step(bikeLeft);
+    expect(leftInput.steer).toBeLessThan(0);
+
+    // Facing +Z (heading = 0) at N3 (100, 100): N4 (0, 100) is to the RIGHT (-X)
+    const autopilotRight = new AutopilotController(roadNetwork);
+    autopilotRight.setEnabled(true);
+    const bikeRight = {
+      ...createDefaultBikeState(),
+      x: 100,
+      z: 100,
+      heading: 0,
+      speed: 8,
+    };
+    autopilotRight.setDestination(bikeRight.x, bikeRight.z, 'N4');
+    const rightInput = autopilotRight.step(bikeRight);
+    expect(rightInput.steer).toBeGreaterThan(0);
+
+    // Drive from N1 facing +Z around the corner to N3 (100, 100)
+    const navAutopilot = new AutopilotController(roadNetwork);
+    navAutopilot.setEnabled(true);
+    let bike = {
+      ...createDefaultBikeState(),
+      x: 0,
+      z: 0,
+      heading: 0,
+      speed: 0,
+    };
+    navAutopilot.setDestination(bike.x, bike.z, 'N3');
+    let arrived = false;
+    for (let tick = 0; tick < 2000; tick++) {
+      const input = navAutopilot.step(bike);
+      bike = stepBike(bike, input, bikeSpec, env, 1 / 60);
+      const target = roadNetwork.getNode('N3')!;
+      if (Math.hypot(bike.x - target.x, bike.z - target.z) <= 8.0 && bike.speed < 2.0) {
+        arrived = true;
+        break;
+      }
+    }
+    expect(arrived).toBe(true);
+  });
 });
