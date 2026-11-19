@@ -320,4 +320,208 @@ test.describe('T3.10 Menus, Settings, Pause and Dhaka Map E2E', () => {
     await page.keyboard.press('KeyG');
     await expect(page.getByTestId('garage-screen')).toHaveCount(0);
   });
+
+  test('system overlays block G/J/M/N/Tab/Escape in game and behind open panels', async ({ page }) => {
+    test.setTimeout(60000);
+    await page.goto('/?debug=1&district=testloop&encounters=0');
+    await page.waitForSelector('#game-canvas');
+    await expect(page.locator('#hud')).toBeVisible();
+
+    const mutedBefore = await page.evaluate(() => {
+      const ui = (window as unknown as { __uthaoUi?: { settingsSignal: { value: { muted: boolean } } } }).__uthaoUi;
+      return ui?.settingsSignal.value.muted ?? false;
+    });
+
+    // Activate RotateOverlay during game
+    await page.evaluate(() => {
+      const ui = (window as unknown as { __uthaoUi?: { rotateOverlaySignal: { value: boolean } } }).__uthaoUi;
+      if (ui) ui.rotateOverlaySignal.value = true;
+    });
+    await expect(page.getByTestId('rotate-overlay')).toBeVisible();
+
+    const readUiState = () =>
+      page.evaluate(() => {
+        const ui = (window as unknown as {
+          __uthaoUi?: {
+            screenSignal: { value: string };
+            pausedSignal: { value: boolean };
+            garageSignal: { value: { open: boolean } };
+            journalSignal: { value: boolean };
+            phoneSignal: { value: { open: boolean } };
+            settingsSignal: { value: { muted: boolean } };
+          };
+        }).__uthaoUi;
+        return {
+          screen: ui?.screenSignal.value,
+          paused: ui?.pausedSignal.value,
+          garageOpen: ui?.garageSignal.value.open,
+          journalOpen: ui?.journalSignal.value,
+          phoneOpen: ui?.phoneSignal.value.open,
+          muted: ui?.settingsSignal.value.muted,
+        };
+      });
+
+    const expectedUnchanged = {
+      screen: 'game',
+      paused: false,
+      garageOpen: false,
+      journalOpen: false,
+      phoneOpen: false,
+      muted: mutedBefore,
+    };
+
+    for (const key of ['KeyG', 'KeyJ', 'KeyM', 'KeyN', 'Tab', 'Escape']) {
+      await page.keyboard.press(key);
+      expect(await readUiState(), `key ${key} should be blocked behind rotateOverlay`).toEqual(expectedUnchanged);
+    }
+    await expect(page.getByTestId('pause-menu')).toHaveCount(0);
+
+    // Clear RotateOverlay, open Garage, then show Unsupported overlay -> G & Escape must not close Garage
+    await page.evaluate(() => {
+      const ui = (window as unknown as { __uthaoUi?: { rotateOverlaySignal: { value: boolean } } }).__uthaoUi;
+      if (ui) ui.rotateOverlaySignal.value = false;
+    });
+    await page.keyboard.press('KeyG');
+    await expect(page.getByTestId('garage-screen')).toBeVisible();
+
+    await page.evaluate(() => {
+      const ui = (window as unknown as { __uthaoUi?: { unsupportedSignal: { value: string | null } } }).__uthaoUi;
+      if (ui) ui.unsupportedSignal.value = 'WebGL2 unsupported';
+    });
+    await expect(page.getByTestId('unsupported-overlay')).toBeVisible();
+
+    await page.keyboard.press('KeyG');
+    await page.keyboard.press('Escape');
+    await expect(page.getByTestId('garage-screen')).toBeVisible();
+
+    await page.evaluate(() => {
+      const ui = (window as unknown as { __uthaoUi?: { unsupportedSignal: { value: string | null } } }).__uthaoUi;
+      if (ui) ui.unsupportedSignal.value = null;
+    });
+    await page.keyboard.press('Escape');
+    await expect(page.getByTestId('garage-screen')).toHaveCount(0);
+  });
+
+  test('Escape does not open Pause underneath Ending, DayEnd, TripSummary, ChoiceCard, or NegotiationPanel', async ({
+    page,
+  }) => {
+    test.setTimeout(60000);
+    await page.goto('/?debug=1&district=testloop&encounters=0');
+    await page.waitForSelector('#game-canvas');
+    await expect(page.locator('#hud')).toBeVisible();
+
+    const assertPauseDidNotOpen = async () => {
+      await expect(page.getByTestId('pause-menu')).toHaveCount(0);
+      const state = await page.evaluate(() => {
+        const ui = (window as unknown as {
+          __uthaoUi?: { screenSignal: { value: string }; pausedSignal: { value: boolean } };
+        }).__uthaoUi;
+        return { screen: ui?.screenSignal.value, paused: ui?.pausedSignal.value };
+      });
+      expect(state).toEqual({ screen: 'game', paused: false });
+    };
+
+    // 1. Ending
+    await page.evaluate(() => {
+      const ui = (window as unknown as { __uthaoUi?: { endingSignal: { value: unknown } } }).__uthaoUi;
+      if (ui) {
+        ui.endingSignal.value = {
+          active: true,
+          result: {
+            endingId: 'independent_rider',
+            titleKey: 'ending_independent_rider_title',
+            descKey: 'ending_independent_rider_desc',
+            dominantIdentity: 'professional',
+            tendencies: { professional: 45, negotiator: 20, hustler: 15, regular: 20 },
+            summary: { cash: 8500, savings: 22000, debt: 0, rating: 4.85, localTrust: 75, completedMissions: 4 },
+          },
+        };
+      }
+    });
+    await expect(page.getByTestId('ending-screen')).toBeVisible();
+    await page.keyboard.press('Escape');
+    await assertPauseDidNotOpen();
+    await expect(page.getByTestId('ending-screen')).toBeVisible();
+    await page.evaluate(() => {
+      const ui = (window as unknown as { __uthaoUi?: { endingSignal: { value: unknown } } }).__uthaoUi;
+      if (ui) ui.endingSignal.value = { active: false, result: null };
+    });
+
+    // 2. DayEnd
+    await page.evaluate(() => {
+      const ui = (window as unknown as { __uthaoUi?: { dayEndSignal: { value: unknown } } }).__uthaoUi;
+      if (ui) {
+        ui.dayEndSignal.value = {
+          active: true,
+          summary: {
+            day: 1,
+            revenue: 500,
+            expenses: 180,
+            net: 320,
+            ratingDelta: 0.1,
+            completedRides: 3,
+            relationshipsDelta: {},
+          },
+        };
+      }
+    });
+    await expect(page.getByTestId('day-end-screen')).toBeVisible();
+    await page.keyboard.press('Escape');
+    await assertPauseDidNotOpen();
+    await page.evaluate(() => {
+      const ui = (window as unknown as { __uthaoUi?: { dayEndSignal: { value: unknown } } }).__uthaoUi;
+      if (ui) ui.dayEndSignal.value = { active: false, summary: null };
+    });
+
+    // 3. TripSummary
+    await page.evaluate(() => {
+      const ui = (window as unknown as { __uthaoUi?: { tripSummarySignal: { value: unknown } } }).__uthaoUi;
+      if (ui) {
+        ui.tripSummarySignal.value = {
+          requestId: 'req_1',
+          fare: 100,
+          tip: 0,
+          commission: 15,
+          fuelCost: 10,
+          otherCosts: 0,
+          bonus: 0,
+          penalties: 0,
+          compensation: 0,
+          fuelLiters: 0.1,
+          net: 75,
+          durationMin: 8,
+          distanceKm: 2,
+          rating: 5,
+          consequences: [],
+        };
+      }
+    });
+    await expect(page.locator('#trip-summary-overlay')).toBeVisible();
+    await page.keyboard.press('Escape');
+    await assertPauseDidNotOpen();
+    await page.evaluate(() => {
+      const ui = (window as unknown as { __uthaoUi?: { tripSummarySignal: { value: unknown } } }).__uthaoUi;
+      if (ui) ui.tripSummarySignal.value = null;
+    });
+
+    // 4. ChoiceCard
+    await page.evaluate(() => {
+      (window as unknown as { __uthao?: { startEncounter: (id: string) => boolean } }).__uthao?.startEncounter(
+        'enc_friend_package'
+      );
+    });
+    await expect(page.getByTestId('choice-card')).toBeVisible();
+    await page.keyboard.press('Escape');
+    await assertPauseDidNotOpen();
+    await page.getByTestId('choice-btn-2').click();
+    await expect(page.getByTestId('choice-card')).toHaveCount(0);
+
+    // 5. NegotiationPanel
+    await page.evaluate(() => {
+      (window as unknown as { __uthao?: { spawnBargainer: (fare: number) => void } }).__uthao?.spawnBargainer(90);
+    });
+    await expect(page.getByTestId('negotiation-panel')).toBeVisible();
+    await page.keyboard.press('Escape');
+    await assertPauseDidNotOpen();
+  });
 });

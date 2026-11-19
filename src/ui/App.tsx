@@ -70,7 +70,7 @@ import { Journal } from './journal/Journal';
 import { t } from './i18n';
 import { loadBindings } from '../input/bindings';
 import { toggleMute } from './store';
-import { startGamepadNav, uiModalOpen } from './gamepadNav';
+import { hasSystemOverlay, startGamepadNav, uiModalOpen } from './gamepadNav';
 
 export function App(): JSX.Element {
   const [showSettings, setShowSettings] = useState(false);
@@ -88,6 +88,7 @@ export function App(): JSX.Element {
     };
 
     const hasBlockingOverlay = (except?: 'garage' | 'journal' | 'map') =>
+      hasSystemOverlay() ||
       showSettingsRef.current ||
       saveSlotsSignal.value.isOpen ||
       choiceSignal.value.active ||
@@ -149,6 +150,7 @@ export function App(): JSX.Element {
         toggleMute();
       }
       if (pressed(bound.pause)) {
+        if (hasSystemOverlay()) return;
         // Close the innermost open panel first, then fall through to pause.
         if (showSettingsRef.current) {
           if (settingsCancelRef.current) {
@@ -158,6 +160,14 @@ export function App(): JSX.Element {
           }
         } else if (saveSlotsSignal.value.isOpen) {
           saveSlotsSignal.value = { ...saveSlotsSignal.value, isOpen: false };
+        } else if (
+          endingSignal.value.active ||
+          dayEndSignal.value.active ||
+          tripSummarySignal.value !== null ||
+          choiceSignal.value.active ||
+          negotiationSignal.value.active
+        ) {
+          return;
         } else if (garageSignal.value.open) {
           garageSignal.value = { ...garageSignal.value, open: false };
           if (screenSignal.value === 'garage') screenSignal.value = 'game';

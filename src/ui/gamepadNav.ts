@@ -17,17 +17,21 @@ import { loadBindings } from '../input/bindings';
 import { effect } from '@preact/signals';
 import {
   choiceSignal,
+  contextLostSignal,
   dayEndSignal,
   endingSignal,
   garageSignal,
   journalSignal,
+  loadingSignal,
   negotiationSignal,
   pausedSignal,
   phoneSignal,
+  rotateOverlaySignal,
   saveSlotsSignal,
   screenSignal,
   tripSummarySignal,
   tutorialSignal,
+  unsupportedSignal,
   chooseChoiceOption,
 } from './store';
 
@@ -40,9 +44,20 @@ const BTN_PAUSE = 9;
 const FOCUSABLE =
   'button, [role="button"], a[href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
 
+/** True when any system overlay (`Z_LAYER.SYSTEM_OVERLAY`) owns the entire screen. */
+export function hasSystemOverlay(): boolean {
+  return (
+    loadingSignal.value ||
+    contextLostSignal.value ||
+    rotateOverlaySignal.value ||
+    Boolean(unsupportedSignal.value)
+  );
+}
+
 /** True when a menu, panel or overlay owns the screen, so the pad navigates it. */
 export function uiModalOpen(settingsOpen: boolean, opts: { ignoreTutorial?: boolean } = {}): boolean {
   return (
+    hasSystemOverlay() ||
     settingsOpen ||
     screenSignal.value !== 'game' ||
     choiceSignal.value.active ||
@@ -125,20 +140,22 @@ export function startGamepadNav(isSettingsOpen: () => boolean): () => void {
     if (!running) return;
     const snap = edges.poll(firstGamepad());
 
-    if (choiceSignal.value.active) {
-      for (const btn of snap.pressed) {
-        const idx = choiceButtons.indexOf(btn);
-        if (idx >= 0) chooseChoiceOption(idx);
+    if (!hasSystemOverlay()) {
+      if (choiceSignal.value.active) {
+        for (const btn of snap.pressed) {
+          const idx = choiceButtons.indexOf(btn);
+          if (idx >= 0) chooseChoiceOption(idx);
+        }
+      } else if (uiModalOpen(isSettingsOpen())) {
+        if (snap.dir) moveFocus(snap.dir);
+        if (snap.pressed.includes(BTN_CONFIRM)) confirmFocus();
+        if (snap.pressed.includes(BTN_BACK)) dispatchKey('Escape', 'Escape');
       }
-    } else if (uiModalOpen(isSettingsOpen())) {
-      if (snap.dir) moveFocus(snap.dir);
-      if (snap.pressed.includes(BTN_CONFIRM)) confirmFocus();
-      if (snap.pressed.includes(BTN_BACK)) dispatchKey('Escape', 'Escape');
-    }
 
-    if (snap.pressed.includes(BTN_PAUSE)) dispatchKey('Escape', 'Escape');
-    if (snap.pressed.includes(BTN_PHONE)) dispatchKey('Tab', 'Tab');
-    if (snap.pressed.includes(BTN_MAP)) dispatchKey('m', 'KeyM');
+      if (snap.pressed.includes(BTN_PAUSE)) dispatchKey('Escape', 'Escape');
+      if (snap.pressed.includes(BTN_PHONE)) dispatchKey('Tab', 'Tab');
+      if (snap.pressed.includes(BTN_MAP)) dispatchKey('m', 'KeyM');
+    }
 
     frame = requestAnimationFrame(tick);
   };
@@ -174,7 +191,7 @@ export function watchOverlayFocus(): () => void {
     last = key;
     // Render first, then move focus, so the overlay's controls exist.
     setTimeout(() => {
-      if (!uiModalOpen(false)) return;
+      if (hasSystemOverlay() || !uiModalOpen(false)) return;
       const active = document.activeElement as HTMLElement | null;
       if (!active || active === document.body) focusables()[0]?.focus();
     }, 0);
