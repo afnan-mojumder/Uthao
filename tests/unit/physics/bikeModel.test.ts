@@ -7,7 +7,8 @@ import {
   createDefaultBikeSpec,
   createDefaultBikeState,
 } from '../../../src/physics/bikeModel';
-import type { BikeId } from '../../../src/core/types';
+import { WeatherSystem } from '../../../src/sim/world/WeatherSystem';
+import type { BikeId, RoadSegment } from '../../../src/core/types';
 
 describe('bikeModel (pure math)', () => {
   const dt = 1 / 60;
@@ -46,7 +47,7 @@ describe('bikeModel (pure math)', () => {
     }
   });
 
-  it('releasing the throttle slows the bike, with no brake', () => {
+  it('releasing the throttle slows the bike at ~2.0 m/s², with no brake', () => {
     const spec = createDefaultBikeSpec();
     let state = { ...createDefaultBikeState(), speed: 11 };
     const env = { wet: false, surface: 1.0, hasPassenger: false, conditionPct: 100 };
@@ -54,9 +55,9 @@ describe('bikeModel (pure math)', () => {
 
     for (let i = 0; i < 60; i++) state = stepBike(state, coast, spec, env, dt);
 
-    // About 0.6 m/s lost per second: between 10.2 and 10.8 m/s after one second.
-    expect(state.speed).toBeLessThan(10.8);
-    expect(state.speed).toBeGreaterThan(10.2);
+    // COAST_DECEL = 2.0 m/s²: from 11 m/s to ~9.0 m/s after one second.
+    expect(state.speed).toBeLessThan(9.3);
+    expect(state.speed).toBeGreaterThan(8.7);
   });
 
   it('a full-lock turn at 40 km/h keeps most of its speed after one second (audit H-3)', () => {
@@ -203,5 +204,127 @@ describe('bikeModel (pure math)', () => {
     const ndcRight = new THREE.Vector3(rightState.x, 0, rightState.z).project(cam);
     expect(ndcRight.x).toBeGreaterThan(0.05);
     expect(rightState.lean).toBeGreaterThan(0);
+  });
+
+  it('gear shifts 1 -> 5 cleanly across acceleration, updates rpmNorm, and preserves y', () => {
+    const spec = createDefaultBikeSpec();
+    const env = { wet: false, surface: 1.0, hasPassenger: false, conditionPct: 100 };
+    const input = { throttle: 1.0, brake: 0, steer: 0 };
+
+    let state = createDefaultBikeState();
+    expect(state.gear).toBe(1);
+    expect(state.rpmNorm).toBeCloseTo(0.15, 5);
+    expect(state.y).toBe(0);
+
+    state = { ...state, y: 4.5 };
+    const gearsSeen: number[] = [state.gear];
+    let upshiftRpmDropObserved = false;
+
+    for (let i = 0; i < 15 / dt; i++) {
+      const prevGear = state.gear;
+      const prevRpm = state.rpmNorm;
+      state = stepBike(state, input, spec, env, dt);
+      expect(state.y).toBe(4.5);
+      expect(state.rpmNorm).toBeGreaterThanOrEqual(0.15);
+      expect(state.rpmNorm).toBeLessThanOrEqual(1.0);
+      if (state.gear !== prevGear) {
+        expect(state.gear).toBeGreaterThan(prevGear);
+        gearsSeen.push(state.gear);
+        if (state.rpmNorm < prevRpm) upshiftRpmDropObserved = true;
+      }
+    }
+
+    expect(gearsSeen).toEqual([1, 2, 3, 4, 5]);
+    expect(upshiftRpmDropObserved).toBe(true);
+  });
+
+  it('speed-dependent torque curve pulls stronger at low speed than near vmax', () => {
+    const spec = createDefaultBikeSpec();
+    const env = { wet: false, surface: 1.0, hasPassenger: false, conditionPct: 100 };
+    const input = { throttle: 1.0, brake: 0, steer: 0 };
+
+    const lowStart = { ...createDefaultBikeState(), speed: 1.0 };
+    const lowEnd = stepBike(lowStart, input, spec, env, dt);
+    const lowAccel = (lowEnd.speed - lowStart.speed) / dt;
+
+    const highStart = { ...createDefaultBikeState(), speed: spec.vmax * 0.9 };
+    const highEnd = stepBike(highStart, input, spec, env, dt);
+    const highAccel = (highEnd.speed - highStart.speed) / dt;
+
+    expect(lowAccel).toBeGreaterThan(highAccel * 1.5);
+  });
+
+  it('ignores brake noise < 0.05 so slight trigger drift does not kill throttle', () => {
+    const spec = createDefaultBikeSpec();
+    const env = { wet: false, surface: 1.0, hasPassenger: false, conditionPct: 100 };
+
+    let noisyState = createDefaultBikeState();
+    for (let i = 0; i < 60; i++) {
+      noisyState = stepBike(noisyState, { throttle: 1.0, brake: 0.04, steer: 0 }, spec, env, dt);
+    }
+    expect(noisyState.speed).toBeGreaterThan(2.5);
+
+    let brakedState = { ...createDefaultBikeState(), speed: 5.0 };
+    brakedState = stepBike(brakedState, { throttle: 1.0, brake: 0.2, steer: 0 }, spec, env, dt);
+    expect(brakedState.speed).toBeLessThan(5.0);
+  });
+
+  it('floodSpeedCapMs caps acceleration and bleeds down higher entry speed', () => {
+    const spec = createDefaultBikeSpec();
+    const floodCap = 10 / 3.6;
+    const env = {
+      wet: true,
+      surface: 0.5,
+      hasPassenger: false,
+      conditionPct: 100,
+      floodSpeedCapMs: floodCap,
+    };
+
+    let fromRest = createDefaultBikeState();
+    for (let i = 0; i < 300; i++) {
+      fromRest = stepBike(fromRest, { throttle: 1.0, brake: 0, steer: 0 }, spec, env, dt);
+    }
+    expect(fromRest.speed).toBeLessThanOrEqual(floodCap + 1e-6);
+    expect(fromRest.speed).toBeCloseTo(floodCap, 2);
+
+    let fromFast = { ...createDefaultBikeState(), speed: 15 };
+    for (let i = 0; i < 240; i++) {
+      fromFast = stepBike(fromFast, { throttle: 1.0, brake: 0, steer: 0 }, spec, env, dt);
+    }
+    expect(fromFast.speed).toBeCloseTo(floodCap, 2);
+  });
+
+  it('WeatherSystem wet surface avoids double-penalizing wetLateralGrip while flooding caps speed', () => {
+    const ws = new WeatherSystem({ initialWeather: 'heavyRain' });
+    const drySeg: RoadSegment = {
+      segmentId: 'S_WET',
+      startNodeId: 'N1',
+      endNodeId: 'N2',
+      width: 10,
+      surfaceCondition: 1.0,
+      trafficDensity: 0.2,
+      speedLimit: 40,
+      turnRestrictions: [],
+      motorcycleAccessible: true,
+      pedestrianDensity: 0.1,
+      riskLevel: 0.1,
+      oneWay: false,
+      divided: false,
+      lanes: 2,
+      roadType: 'main',
+      floodSensitivity: 0.9,
+      pickupPractical: true,
+      district: 'testloop',
+      tags: [],
+    };
+
+    const wetEnv = ws.getBikeEnvironment(drySeg);
+    expect(wetEnv.wet).toBe(true);
+    expect(wetEnv.surface).toBe(1.0);
+
+    ws.update(30, [drySeg]);
+    const floodedEnv = ws.getBikeEnvironment(drySeg);
+    expect(floodedEnv.surface).toBeCloseTo(0.5, 5);
+    expect(floodedEnv.floodSpeedCapMs).toBeCloseTo(10 / 3.6, 5);
   });
 });

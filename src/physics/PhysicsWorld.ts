@@ -453,6 +453,98 @@ export class PhysicsWorld {
     slideOut.z = (p1z - z) + remZ * t2;
   }
 
+  resolveDynamicOverlap(
+    x: number,
+    z: number,
+    y: number,
+    radius: number,
+    out: SweepHit,
+    pushOut: { x: number; z: number }
+  ): boolean {
+    out.hit = false;
+    out.toi = 1;
+    out.normalX = 0;
+    out.normalZ = 0;
+    out.otherKind = 'building';
+    out.otherId = undefined;
+    out.otherVx = 0;
+    out.otherVz = 0;
+
+    let curX = x;
+    let curZ = z;
+    let any = false;
+    const rSq = radius * radius;
+
+    for (let i = 0; i < this.dynamicCount; i++) {
+      const dyn = this.dynamicVehicles[i]!;
+      if (y + CAPSULE_HEIGHT_M < dyn.minY || y > dyn.maxY) continue;
+      if (
+        curX + radius < dyn.aabbMinX ||
+        curX - radius > dyn.aabbMaxX ||
+        curZ + radius < dyn.aabbMinZ ||
+        curZ - radius > dyn.aabbMaxZ
+      ) {
+        continue;
+      }
+
+      const rx = curX - dyn.x;
+      const rz = curZ - dyn.z;
+      const sx = rx * dyn.cos - rz * dyn.sin;
+      const sz = rx * dyn.sin + rz * dyn.cos;
+
+      const cx = sx < -dyn.halfX ? -dyn.halfX : sx > dyn.halfX ? dyn.halfX : sx;
+      const cz = sz < -dyn.halfZ ? -dyn.halfZ : sz > dyn.halfZ ? dyn.halfZ : sz;
+      const vx = sx - cx;
+      const vz = sz - cz;
+      const distSq = vx * vx + vz * vz;
+
+      if (distSq >= rSq) continue;
+
+      let nlx: number;
+      let nlz: number;
+      let pen: number;
+      if (distSq > 1e-12) {
+        const d = Math.sqrt(distSq);
+        nlx = vx / d;
+        nlz = vz / d;
+        pen = radius - d + SKIN_BACKOFF_M;
+      } else {
+        const penX = dyn.halfX - Math.abs(sx);
+        const penZ = dyn.halfZ - Math.abs(sz);
+        if (penX < penZ) {
+          nlx = sx >= 0 ? 1 : -1;
+          nlz = 0;
+          pen = penX + radius + SKIN_BACKOFF_M;
+        } else {
+          nlx = 0;
+          nlz = sz >= 0 ? 1 : -1;
+          pen = penZ + radius + SKIN_BACKOFF_M;
+        }
+      }
+
+      const nx = nlx * dyn.cos + nlz * dyn.sin;
+      const nz = -nlx * dyn.sin + nlz * dyn.cos;
+      curX += nx * pen;
+      curZ += nz * pen;
+
+      if (!any) {
+        out.hit = true;
+        out.toi = 0;
+        out.normalX = nx;
+        out.normalZ = nz;
+        out.otherKind = 'traffic';
+        out.otherId = dyn.id;
+        out.otherVx = dyn.vx;
+        out.otherVz = dyn.vz;
+        any = true;
+      }
+    }
+
+    pushOut.x = curX - x;
+    pushOut.z = curZ - z;
+    return any;
+  }
+
   castRay2D(
     ox: number,
     oz: number,
@@ -462,7 +554,13 @@ export class PhysicsWorld {
     maxDist: number,
     filterKinds?: readonly StaticColliderKind[]
   ): number | null {
-    if (this.boxesById.size === 0 || maxDist <= 0) return null;
+    const includeDynamic = filterKinds === undefined;
+    if (
+      maxDist <= 0 ||
+      (this.boxesById.size === 0 && (!includeDynamic || this.dynamicCount === 0))
+    ) {
+      return null;
+    }
 
     const dirLen = Math.sqrt(dirX * dirX + dirZ * dirZ);
     if (dirLen < 1e-9) return null;
@@ -476,82 +574,95 @@ export class PhysicsWorld {
     const minZ = oz < endZ ? oz : endZ;
     const maxZ = oz > endZ ? oz : endZ;
 
-    let cMinX = Math.floor(minX / CELL_SIZE);
-    let cMaxX = Math.floor(maxX / CELL_SIZE);
-    let cMinZ = Math.floor(minZ / CELL_SIZE);
-    let cMaxZ = Math.floor(maxZ / CELL_SIZE);
-
-    if (cMinX < this.minGridCx) cMinX = this.minGridCx;
-    if (cMaxX > this.maxGridCx) cMaxX = this.maxGridCx;
-    if (cMinZ < this.minGridCz) cMinZ = this.minGridCz;
-    if (cMaxZ > this.maxGridCz) cMaxZ = this.maxGridCz;
-    if (cMinX > cMaxX || cMinZ > cMaxZ) return null;
-
-    const stamp = ++this.queryStamp;
     let bestDist = maxDist;
     let hitAny = false;
 
-    for (let cx = cMinX; cx <= cMaxX; cx++) {
-      for (let cz = cMinZ; cz <= cMaxZ; cz++) {
-        const cell = this.grid.get(cellKey(cx, cz));
-        if (!cell) continue;
-        for (let i = 0; i < cell.length; i++) {
-          const box = cell[i]!;
-          if (box.stamp === stamp) continue;
-          box.stamp = stamp;
+    if (this.boxesById.size > 0) {
+      let cMinX = Math.floor(minX / CELL_SIZE);
+      let cMaxX = Math.floor(maxX / CELL_SIZE);
+      let cMinZ = Math.floor(minZ / CELL_SIZE);
+      let cMaxZ = Math.floor(maxZ / CELL_SIZE);
 
-          if (y + CAPSULE_HEIGHT_M < box.minY || y > box.maxY) continue;
-          if (filterKinds !== undefined && !matchesKind(box.kind, filterKinds)) continue;
-          if (box.aabbMaxX < minX || box.aabbMinX > maxX || box.aabbMaxZ < minZ || box.aabbMinZ > maxZ) {
-            continue;
-          }
+      if (cMinX < this.minGridCx) cMinX = this.minGridCx;
+      if (cMaxX > this.maxGridCx) cMaxX = this.maxGridCx;
+      if (cMinZ < this.minGridCz) cMinZ = this.minGridCz;
+      if (cMaxZ > this.maxGridCz) cMaxZ = this.maxGridCz;
 
-          const rx = ox - box.x;
-          const rz = oz - box.z;
-          const lx = rx * box.cos - rz * box.sin;
-          const lz = rx * box.sin + rz * box.cos;
-          const ldx = ndx * box.cos - ndz * box.sin;
-          const ldz = ndx * box.sin + ndz * box.cos;
+      if (cMinX <= cMaxX && cMinZ <= cMaxZ) {
+        const stamp = ++this.queryStamp;
 
-          let tMin = 0;
-          let tMax = bestDist;
+        for (let cx = cMinX; cx <= cMaxX; cx++) {
+          for (let cz = cMinZ; cz <= cMaxZ; cz++) {
+            const cell = this.grid.get(cellKey(cx, cz));
+            if (!cell) continue;
+            for (let i = 0; i < cell.length; i++) {
+              const box = cell[i]!;
+              if (box.stamp === stamp) continue;
+              box.stamp = stamp;
 
-          if (Math.abs(ldx) < 1e-12) {
-            if (lx < -box.halfX || lx > box.halfX) continue;
-          } else {
-            const invX = 1 / ldx;
-            let t1 = (-box.halfX - lx) * invX;
-            let t2 = (box.halfX - lx) * invX;
-            if (t1 > t2) {
-              const tmp = t1;
-              t1 = t2;
-              t2 = tmp;
+              if (y + CAPSULE_HEIGHT_M < box.minY || y > box.maxY) continue;
+              if (filterKinds !== undefined && !matchesKind(box.kind, filterKinds)) continue;
+              if (
+                box.aabbMaxX < minX ||
+                box.aabbMinX > maxX ||
+                box.aabbMaxZ < minZ ||
+                box.aabbMinZ > maxZ
+              ) {
+                continue;
+              }
+
+              const hitT = intersectRayObb(
+                ox,
+                oz,
+                ndx,
+                ndz,
+                box.x,
+                box.z,
+                box.halfX,
+                box.halfZ,
+                box.cos,
+                box.sin,
+                bestDist
+              );
+              if (hitT >= 0 && (!hitAny || hitT < bestDist)) {
+                bestDist = hitT;
+                hitAny = true;
+              }
             }
-            if (t1 > tMin) tMin = t1;
-            if (t2 < tMax) tMax = t2;
-            if (tMin > tMax) continue;
           }
+        }
+      }
+    }
 
-          if (Math.abs(ldz) < 1e-12) {
-            if (lz < -box.halfZ || lz > box.halfZ) continue;
-          } else {
-            const invZ = 1 / ldz;
-            let t1 = (-box.halfZ - lz) * invZ;
-            let t2 = (box.halfZ - lz) * invZ;
-            if (t1 > t2) {
-              const tmp = t1;
-              t1 = t2;
-              t2 = tmp;
-            }
-            if (t1 > tMin) tMin = t1;
-            if (t2 < tMax) tMax = t2;
-            if (tMin > tMax) continue;
-          }
+    if (includeDynamic && this.dynamicCount > 0) {
+      for (let i = 0; i < this.dynamicCount; i++) {
+        const dyn = this.dynamicVehicles[i]!;
+        if (y + CAPSULE_HEIGHT_M < dyn.minY || y > dyn.maxY) continue;
+        if (
+          dyn.aabbMaxX < minX ||
+          dyn.aabbMinX > maxX ||
+          dyn.aabbMaxZ < minZ ||
+          dyn.aabbMinZ > maxZ
+        ) {
+          continue;
+        }
 
-          if (tMin >= 0 && tMin <= tMax && (!hitAny || tMin < bestDist)) {
-            bestDist = tMin;
-            hitAny = true;
-          }
+        const hitT = intersectRayObb(
+          ox,
+          oz,
+          ndx,
+          ndz,
+          dyn.x,
+          dyn.z,
+          dyn.halfX,
+          dyn.halfZ,
+          dyn.cos,
+          dyn.sin,
+          bestDist
+        );
+        if (hitT >= 0 && (!hitAny || hitT < bestDist)) {
+          bestDist = hitT;
+          hitAny = true;
         }
       }
     }
@@ -900,4 +1011,62 @@ function matchesKind(
     if (filterKinds[i] === kind) return true;
   }
   return false;
+}
+
+function intersectRayObb(
+  ox: number,
+  oz: number,
+  ndx: number,
+  ndz: number,
+  bx: number,
+  bz: number,
+  hx: number,
+  hz: number,
+  cos: number,
+  sin: number,
+  maxDist: number
+): number {
+  const rx = ox - bx;
+  const rz = oz - bz;
+  const lx = rx * cos - rz * sin;
+  const lz = rx * sin + rz * cos;
+  const ldx = ndx * cos - ndz * sin;
+  const ldz = ndx * sin + ndz * cos;
+
+  let tMin = 0;
+  let tMax = maxDist;
+
+  if (Math.abs(ldx) < 1e-12) {
+    if (lx < -hx || lx > hx) return -1;
+  } else {
+    const invX = 1 / ldx;
+    let t1 = (-hx - lx) * invX;
+    let t2 = (hx - lx) * invX;
+    if (t1 > t2) {
+      const tmp = t1;
+      t1 = t2;
+      t2 = tmp;
+    }
+    if (t1 > tMin) tMin = t1;
+    if (t2 < tMax) tMax = t2;
+    if (tMin > tMax) return -1;
+  }
+
+  if (Math.abs(ldz) < 1e-12) {
+    if (lz < -hz || lz > hz) return -1;
+  } else {
+    const invZ = 1 / ldz;
+    let t1 = (-hz - lz) * invZ;
+    let t2 = (hz - lz) * invZ;
+    if (t1 > t2) {
+      const tmp = t1;
+      t1 = t2;
+      t2 = tmp;
+    }
+    if (t1 > tMin) tMin = t1;
+    if (t2 < tMax) tMax = t2;
+    if (tMin > tMax) return -1;
+  }
+
+  return tMin >= 0 && tMin <= tMax ? tMin : -1;
 }

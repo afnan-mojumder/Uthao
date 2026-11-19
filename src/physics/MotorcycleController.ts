@@ -18,15 +18,15 @@ export interface MotorcycleControllerOptions {
   spec?: BikeSpec;
 }
 
-/** Bike swept collision radius in meters (matches previous capsule radius 0.35m). */
+/** Bike swept collision radius in meters (matches capsule radius 0.35m). */
 const BIKE_RADIUS_M = 0.35;
-/** Ground elevation of the bike for 2.5D physics band overlap. */
-const BIKE_GROUND_Y_M = 0;
-/** Raycast elevation for near-miss detection against walls/buildings. */
-const NEAR_MISS_RAY_Y_M = 0.5;
-/** Minimum seconds between two bike/nearMiss reports. */
+/** Raycast height offset above bike ground elevation for near-miss detection. */
+const NEAR_MISS_RAY_Y_M = 0.25;
+/** Surface-to-surface clearance threshold for near-miss reporting (meters). */
+const NEAR_MISS_CLEARANCE_M = 1.0;
+/** Minimum seconds between two bike/nearMiss reports (shared across static & traffic). */
 const NEAR_MISS_COOLDOWN_S = 1.0;
-/** A static contact that drops out and restarts within this window counts as one contact. */
+/** A contact that drops out and restarts within this window counts as one contact. */
 const CONTACT_RELEASE_S = 0.25;
 
 export class MotorcycleController {
@@ -50,6 +50,16 @@ export class MotorcycleController {
     otherVz: 0,
   };
   private readonly _slide = { x: 0, z: 0 };
+  private readonly _overlapHit: SweepHit = {
+    hit: false,
+    toi: 1,
+    normalX: 0,
+    normalZ: 0,
+    otherKind: 'building',
+    otherVx: 0,
+    otherVz: 0,
+  };
+  private readonly _pushOut = { x: 0, z: 0 };
 
   constructor(opts: MotorcycleControllerOptions) {
     this.world = opts.world;
@@ -76,7 +86,7 @@ export class MotorcycleController {
     this.world.sweepCapsule(
       this.state.x,
       this.state.z,
-      BIKE_GROUND_Y_M,
+      this.state.y,
       BIKE_RADIUS_M,
       dx,
       dz,
@@ -84,29 +94,62 @@ export class MotorcycleController {
       this._slide
     );
 
+    let nextX = this.state.x + this._slide.x;
+    let nextZ = this.state.z + this._slide.z;
+
+    const pushed = this.world.resolveDynamicOverlap(
+      nextX,
+      nextZ,
+      this.state.y,
+      BIKE_RADIUS_M,
+      this._overlapHit,
+      this._pushOut
+    );
+    if (pushed) {
+      nextX += this._pushOut.x;
+      nextZ += this._pushOut.z;
+      if (!this._hit.hit) {
+        this._hit.hit = true;
+        this._hit.toi = 0;
+        this._hit.normalX = this._overlapHit.normalX;
+        this._hit.normalZ = this._overlapHit.normalZ;
+        this._hit.otherKind = 'traffic';
+        this._hit.otherId = this._overlapHit.otherId;
+        this._hit.otherVx = this._overlapHit.otherVx;
+        this._hit.otherVz = this._overlapHit.otherVz;
+      }
+    }
+
     const safeDt = dt > 1e-6 ? dt : 1e-6;
     let collisionSeverity: BikeCollisionSeverity | null = null;
     const totalSpeedKmh = Math.abs(this.state.speed) * 3.6;
 
     if (this._hit.hit) {
-      const relVx = dx / safeDt - this._hit.otherVx;
-      const relVz = dz / safeDt - this._hit.otherVz;
-      const normalImpact = -(relVx * this._hit.normalX + relVz * this._hit.normalZ);
-      let impactKmh = normalImpact * 3.6;
-      if (impactKmh <= 0) {
-        impactKmh = totalSpeedKmh;
+      const bikeVx = dx / safeDt;
+      const bikeVz = dz / safeDt;
+      let impactKmh: number;
+      if (this._hit.otherKind === 'traffic') {
+        impactKmh = Math.hypot(bikeVx - this._hit.otherVx, bikeVz - this._hit.otherVz) * 3.6;
+      } else {
+        const normalImpact = -(bikeVx * this._hit.normalX + bikeVz * this._hit.normalZ);
+        impactKmh = Math.max(0, normalImpact * 3.6);
       }
 
       if (impactKmh > 25) {
         collisionSeverity = 'crash';
         desiredState.speed = 0;
+        desiredState.gear = 1;
+        desiredState.rpmNorm = 0.15;
       } else if (impactKmh >= 8) {
         collisionSeverity = 'bump';
         desiredState.speed *= 0.4;
       } else {
         collisionSeverity = 'scuff';
         const tangentialSpeed = Math.hypot(this._slide.x, this._slide.z) / safeDt;
-        desiredState.speed = tangentialSpeed * 0.95;
+        const contactLoss = this.contactHoldS <= 0 ? 0.95 : 1.0;
+        const slideDrag = Math.max(0, 1 - 0.3 * dt);
+        const scuffedSpeed = tangentialSpeed * contactLoss * slideDrag;
+        desiredState.speed = desiredState.speed < 0 ? -scuffedSpeed : scuffedSpeed;
       }
 
       // The physical response above applies every frame of contact, but the
@@ -119,55 +162,48 @@ export class MotorcycleController {
         });
       }
     } else if (totalSpeedKmh > 20) {
-      // Near miss check: raycast left and right
-      const rayDist = 1.0;
+      // Near miss check: raycast left and right, subtracting capsule radius.
+      const rayDist = BIKE_RADIUS_M + NEAR_MISS_CLEARANCE_M;
       const cosH = Math.cos(this.state.heading);
       const sinH = Math.sin(this.state.heading);
+      const rayY = this.state.y + NEAR_MISS_RAY_Y_M;
 
-      const hitLeft = this.world.castRay2D(
-        this.state.x,
-        this.state.z,
-        NEAR_MISS_RAY_Y_M,
-        -cosH,
-        sinH,
-        rayDist
-      );
-      const hitRight = this.world.castRay2D(
-        this.state.x,
-        this.state.z,
-        NEAR_MISS_RAY_Y_M,
-        cosH,
-        -sinH,
-        rayDist
-      );
+      // Forward = (sinH, cosH); left (+heading) = (cosH, -sinH); right = (-cosH, sinH).
+      const hitLeft = this.world.castRay2D(this.state.x, this.state.z, rayY, cosH, -sinH, rayDist);
+      const hitRight = this.world.castRay2D(this.state.x, this.state.z, rayY, -cosH, sinH, rayDist);
 
       let minClearance: number | null = null;
-      if (hitLeft !== null) minClearance = hitLeft;
+      if (hitLeft !== null) minClearance = Math.max(0, hitLeft - BIKE_RADIUS_M);
       if (hitRight !== null) {
-        minClearance = minClearance === null ? hitRight : Math.min(minClearance, hitRight);
+        const rightClearance = Math.max(0, hitRight - BIKE_RADIUS_M);
+        minClearance = minClearance === null ? rightClearance : Math.min(minClearance, rightClearance);
       }
 
-      if (minClearance !== null && minClearance < 1.0 && this.nearMissCooldownS <= 0) {
+      if (minClearance !== null && minClearance < NEAR_MISS_CLEARANCE_M && this.nearMissCooldownS <= 0) {
         this.bus?.emit('bike/nearMiss', {
           distanceM: minClearance,
           speedKmh: totalSpeedKmh,
         });
-        // A near miss is a moment, not a state: one report per second at most.
+        // A near miss is a moment, not a state: one report per second at most across static & traffic.
         this.nearMissCooldownS = NEAR_MISS_COOLDOWN_S;
       }
     }
 
     if (this._hit.hit) this.contactHoldS = CONTACT_RELEASE_S;
 
-    // Apply swept movement
-    this.state.x += this._slide.x;
-    this.state.z += this._slide.z;
+    // Apply swept & depenetrated movement
+    this.state.x = nextX;
+    this.state.z = nextZ;
     this.state.heading = desiredState.heading;
     this.state.speed = desiredState.speed;
     this.state.lean = desiredState.lean;
     this.state.steer = desiredState.steer;
+    this.state.gear = desiredState.gear;
+    this.state.rpmNorm = desiredState.rpmNorm;
+    this.state.y = desiredState.y;
     this.state.wobble = desiredState.wobble;
     this.state.crashed = desiredState.crashed || collisionSeverity === 'crash';
+    this.state.reverseHoldS = desiredState.reverseHoldS;
 
     return this.state;
   }

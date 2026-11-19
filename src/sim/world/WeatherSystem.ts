@@ -109,29 +109,34 @@ export class WeatherSystem {
   }
 
   /**
+   * True when flooding or heavy rain on a flood-sensitive segment caps road speed.
+   */
+  isSegmentFloodCapped(segment: RoadSegment): boolean {
+    return (
+      this.isFlooded(segment.segmentId) ||
+      (this.weather === 'heavyRain' && segment.floodSensitivity > 0.6)
+    );
+  }
+
+  /**
    * Speed limit cap on road segment taking into account flooding and standing water.
    * Flooded segments cap speed at 10 km/h (water resistance / wake hazards).
    */
   getSpeedCap(segment: RoadSegment): number {
-    if (this.isFlooded(segment.segmentId)) {
-      return 10;
-    }
-    if (this.weather === 'heavyRain' && segment.floodSensitivity > 0.6) {
+    if (this.isSegmentFloodCapped(segment)) {
       return 10;
     }
     return segment.speedLimit;
   }
 
   /**
-   * Surface grip modifier taking into account wetness and flooding.
+   * Surface grip modifier taking into account flooding (wet asphalt grip is
+   * handled by bikeModel via env.wet and spec.wetLateralGrip).
    */
   getSurfaceModifier(segment: RoadSegment): number {
     const base = segment.surfaceCondition;
     if (this.isFlooded(segment.segmentId)) {
       return base * 0.5; // Flooded standing water
-    }
-    if (this.isRoadWet()) {
-      return base * 0.85; // Wet asphalt
     }
     return base;
   }
@@ -146,9 +151,11 @@ export class WeatherSystem {
   ): BikeEnvironment {
     return {
       wet: this.isRoadWet(),
-      surface: segment ? this.getSurfaceModifier(segment) : (this.isRoadWet() ? 0.85 : 1.0),
+      surface: segment ? this.getSurfaceModifier(segment) : 1.0,
       hasPassenger,
       conditionPct,
+      floodSpeedCapMs:
+        segment && this.isSegmentFloodCapped(segment) ? this.getSpeedCap(segment) / 3.6 : undefined,
     };
   }
 

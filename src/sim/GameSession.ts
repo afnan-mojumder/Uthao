@@ -5,7 +5,7 @@ import { TrafficManager } from './traffic/TrafficManager';
 import type { RoadNetwork } from './road/RoadNetwork';
 import { encounterPhaseFor, type RidePhaseInput } from './events/phase';
 import type { EncounterPhase } from './events/conditions';
-import type { PhysicsWorld } from '../physics/PhysicsWorld';
+import type { PhysicsWorld, DynamicObb } from '../physics/PhysicsWorld';
 import { MotorcycleController } from '../physics/MotorcycleController';
 import {
   createDefaultBikeSpec,
@@ -36,6 +36,8 @@ const TRAFFIC_COLLISION_MARGIN_M = 0.6;
 const WEDGED_RECOVER_S = 2.0;
 const TRAFFIC_NEAR_MISS_MARGIN_M = 1.5;
 const TRAFFIC_NEAR_MISS_MIN_SPEED_MS = 20 / 3.6;
+const TRAFFIC_NEAR_MISS_COOLDOWN_S = 1.0;
+const DYNAMIC_TRAFFIC_RANGE_SQ = 80 * 80;
 
 export interface GameSessionOptions {
   gm: GameManager;
@@ -99,9 +101,23 @@ export class GameSession {
   /** Seconds the bike has been wedged against an obstacle (see recoverBike). */
   private wedgedSec = 0;
   private wobbling = false;
-  /** Traffic agents the bike is currently touching; a hit is reported once per contact. */
+  private nearMissCooldownS = 0;
+  /** Traffic agents the bike is currently touching (fallback when physics is omitted). */
   private readonly trafficContacts = new Set<string>();
   private readonly stalledInput: BikeInput = { throttle: 0, brake: 0.6, steer: 0 };
+  private readonly dynamicVehicleScratch: DynamicObb = {
+    id: '',
+    kind: 'car',
+    x: 0,
+    z: 0,
+    halfX: 0.9,
+    halfZ: 2.25,
+    minY: 0,
+    maxY: 2.5,
+    yaw: 0,
+    vx: 0,
+    vz: 0,
+  };
 
   constructor(opts: GameSessionOptions) {
     this.gm = opts.gm;
@@ -164,6 +180,11 @@ export class GameSession {
         spec: this.bikeSpec,
       });
       this.bike = this.controller.state;
+      this.gm.bus.on('bike/collision', (ev) => {
+        if (ev.otherKind === 'traffic' && ev.severity === 'crash') {
+          this.maybeStartAccidentEncounter();
+        }
+      });
     } else {
       this.bike = createDefaultBikeState();
     }
@@ -417,14 +438,59 @@ export class GameSession {
     this.bike.z = z;
     this.bike.heading = heading;
     this.bike.speed = 0;
+    this.bike.gear = 1;
+    this.bike.rpmNorm = 0.15;
+    this.bike.crashed = false;
+    this.bike.reverseHoldS = 0;
   }
 
-  /** Traffic agents aren't static colliders in this step, so (with or without
-   * physics) a bike/traffic hit is detected here by proximity rather than
-   * by the physics world. Runs every tick, so it must stay allocation-free:
-   * iterates the traffic Map directly instead of `getAgents()`'s array copy. */
-  private checkTrafficCollisions(): void {
+  private maybeStartAccidentEncounter(): void {
+    if (
+      this.gm.eventDirector.enabled &&
+      this.gm.eventDirector.activeEncounter === null &&
+      this.gm.clock.minutes - this.lastAccidentEncounterMin >= 60
+    ) {
+      this.lastAccidentEncounterMin = this.gm.clock.minutes;
+      this.gm.eventDirector.forceStart('enc_accident_aftermath', this.gm.bus);
+    }
+  }
+
+  /** Syncs nearby traffic agents (<= 80m) as dynamic OBBs into PhysicsWorld. */
+  private syncDynamicVehicles(): void {
+    if (!this.physics) return;
+    this.physics.clearDynamicVehicles();
+    const bx = this.bike.x;
+    const bz = this.bike.z;
+    const obb = this.dynamicVehicleScratch;
+    for (const agent of this.traffic.agents.values()) {
+      const dx = agent.x - bx;
+      const dz = agent.z - bz;
+      if (dx * dx + dz * dz > DYNAMIC_TRAFFIC_RANGE_SQ) continue;
+      const yaw = agent.heading ?? 0;
+      const speed = agent.speed ?? 0;
+      obb.id = agent.id;
+      obb.kind = agent.kind;
+      obb.x = agent.x;
+      obb.z = agent.z;
+      obb.halfX = agent.width * 0.5;
+      obb.halfZ = agent.length * 0.5;
+      obb.minY = 0;
+      obb.maxY = 2.5;
+      obb.yaw = yaw;
+      obb.vx = Math.sin(yaw) * speed;
+      obb.vz = Math.cos(yaw) * speed;
+      this.physics.upsertDynamicVehicle(obb);
+    }
+  }
+
+  /** Fallback proximity traffic collision for headless sessions without PhysicsWorld.
+   * When PhysicsWorld is present, MotorcycleController resolves traffic OBB hits and
+   * near-misses directly inside sweepCapsule/castRay2D. Runs allocation-free. */
+  private checkTrafficCollisions(dt: number): void {
+    this.nearMissCooldownS = Math.max(0, this.nearMissCooldownS - dt);
     const speedKmh = Math.abs(this.bike.speed) * 3.6;
+    const bikeVx = Math.sin(this.bike.heading) * this.bike.speed;
+    const bikeVz = Math.cos(this.bike.heading) * this.bike.speed;
     let nearestGapM = Infinity;
 
     let touching = false;
@@ -447,7 +513,11 @@ export class GameSession {
       if (this.trafficContacts.has(agent.id)) continue;
       this.trafficContacts.add(agent.id);
 
-      const relSpeedKmh = Math.abs(speedKmh - agent.speed * 3.6);
+      const agentYaw = agent.heading ?? 0;
+      const agentSpeed = agent.speed ?? 0;
+      const agentVx = Math.sin(agentYaw) * agentSpeed;
+      const agentVz = Math.cos(agentYaw) * agentSpeed;
+      const relSpeedKmh = Math.hypot(bikeVx - agentVx, bikeVz - agentVz) * 3.6;
       let severity: BikeCollisionSeverity;
       if (relSpeedKmh > 25) {
         severity = 'crash';
@@ -460,26 +530,22 @@ export class GameSession {
         this.bike.speed *= 0.95;
       }
       this.gm.bus.emit('bike/collision', { severity, relSpeedKmh, otherKind: 'traffic' });
-      if (
-        severity === 'crash' &&
-        this.gm.eventDirector.enabled &&
-        this.gm.eventDirector.activeEncounter === null &&
-        this.gm.clock.minutes - this.lastAccidentEncounterMin >= 60
-      ) {
-        this.lastAccidentEncounterMin = this.gm.clock.minutes;
-        this.gm.eventDirector.forceStart('enc_accident_aftermath', this.gm.bus);
+      if (severity === 'crash') {
+        this.maybeStartAccidentEncounter();
       }
     }
     if (touching) return;
 
     if (
       nearestGapM < TRAFFIC_NEAR_MISS_MARGIN_M &&
-      this.bike.speed > TRAFFIC_NEAR_MISS_MIN_SPEED_MS
+      this.bike.speed > TRAFFIC_NEAR_MISS_MIN_SPEED_MS &&
+      this.nearMissCooldownS <= 0
     ) {
       this.gm.bus.emit('bike/nearMiss', {
         distanceM: Math.max(0, nearestGapM),
         speedKmh,
       });
+      this.nearMissCooldownS = TRAFFIC_NEAR_MISS_COOLDOWN_S;
     }
   }
 
@@ -531,11 +597,11 @@ export class GameSession {
 
     const segment = this.road.segmentAt(this.bike.x, this.bike.z);
     this.env.wet = this.gm.weatherSystem.isRoadWet();
-    this.env.surface = segment
-      ? this.gm.weatherSystem.getSurfaceModifier(segment)
-      : this.env.wet
-        ? 0.85
-        : 1.0;
+    this.env.surface = segment ? this.gm.weatherSystem.getSurfaceModifier(segment) : 1.0;
+    this.env.floodSpeedCapMs =
+      segment && this.gm.weatherSystem.isSegmentFloodCapped(segment)
+        ? this.gm.weatherSystem.getSpeedCap(segment) / 3.6
+        : undefined;
     this.env.hasPassenger = activeReq?.status === 'OnTrip';
     this.env.conditionPct = this.gm.economyManager.motorcycleCondition;
     this.env.fuelEmpty = this.gm.economyManager.fuelLevel <= 0;
@@ -555,6 +621,9 @@ export class GameSession {
 
     const prevX = this.bike.x;
     const prevZ = this.bike.z;
+    if (this.controller) {
+      this.syncDynamicVehicles();
+    }
     this.bike = this.controller
       ? this.controller.update(input, this.env, dt)
       : stepBike(this.bike, input, this.bikeSpec, this.env, dt, this.bike);
@@ -592,7 +661,9 @@ export class GameSession {
 
     this.traffic.maintainDensity(this.camView, this.gm.clock.minutes);
     this.traffic.update(dt, this.camView, this.pose);
-    this.checkTrafficCollisions();
+    if (!this.controller) {
+      this.checkTrafficCollisions(dt);
+    }
 
     this.ride.update(this.pose, dt);
     this.checkMissionPois();

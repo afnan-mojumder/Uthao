@@ -25,8 +25,13 @@ export interface BikeState {
   speed: number; // m/s
   lean: number; // radians (< 0 leans left, > 0 leans right)
   steer: number; // radians (< 0 steered left, > 0 steered right)
+  gear: 1 | 2 | 3 | 4 | 5;
+  rpmNorm: number;
+  y: number;
   wobble?: boolean;
   crashed?: boolean;
+  /** Seconds the brake has been held near standstill before engaging reverse. */
+  reverseHoldS?: number;
 }
 
 export interface BikeInput {
@@ -42,6 +47,8 @@ export interface BikeEnvironment {
   conditionPct: number; // 0-100
   /** T8.3: empty tank, the bike can only be pushed. */
   fuelEmpty?: boolean;
+  /** Optional speed cap (m/s) imposed by flooded standing water. */
+  floodSpeedCapMs?: number;
 }
 
 export function createDefaultBikeSpec(): BikeSpec {
@@ -64,20 +71,32 @@ export function createDefaultBikeState(): BikeState {
     speed: 0,
     lean: 0,
     steer: 0,
+    gear: 1,
+    rpmNorm: 0.15,
+    y: 0,
     wobble: false,
     crashed: false,
+    reverseHoldS: 0,
   };
 }
 
 const WHEELBASE = 1.35; // metres
-/** Reverse: entered from a standstill with the brake held; capped at a walking pace. */
-const REVERSE_ENTRY_MS = 0.5;
+/** Reverse: requires near-standstill (< 0.15 m/s) and brake held for 0.25s; capped at walking pace. */
+const REVERSE_ENTRY_MS = 0.15;
+const REVERSE_HOLD_S = 0.25;
 const REVERSE_MAX_MS = 1.5;
 const REVERSE_ACCEL = 1.0;
 /** Coast-down deceleration (m/s^2) with the throttle released and no brake. */
-const COAST_DECEL = 0.6;
+const COAST_DECEL = 2.0;
+/** Brake inputs below this threshold are treated as trigger noise. */
+const BRAKE_DEADZONE = 0.05;
 /** Steering may ask for up to this multiple of the grip limit before it is clamped. */
 const STEER_SLIDE_ALLOWANCE = 1.2;
+
+const GEAR_UPSHIFT_RATIOS = [0, 0.2, 0.38, 0.58, 0.78, 1.01] as const;
+const GEAR_DOWNSHIFT_RATIOS = [0, 0.0, 0.15, 0.32, 0.51, 0.7] as const;
+const GEAR_MIN_RATIOS = [0, 0.0, 0.08, 0.2, 0.35, 0.52] as const;
+const GEAR_MAX_RATIOS = [0, 0.2, 0.38, 0.58, 0.78, 1.0] as const;
 
 export function stepBike(
   state: BikeState,
@@ -87,7 +106,15 @@ export function stepBike(
   dt: number,
   out?: BikeState
 ): BikeState {
-  let effectiveAccel = spec.accel * clamp(input.throttle, 0, 1);
+  const cleanThrottle = clamp(input.throttle, 0, 1);
+  const rawBrake = clamp(input.brake, 0, 1);
+  const cleanBrake = rawBrake < BRAKE_DEADZONE ? 0 : rawBrake;
+
+  // Speed-dependent torque curve: strong low-end pull, tapering smoothly toward vmax.
+  const fwdRatio = clamp(Math.max(0, state.speed) / spec.vmax, 0, 1);
+  const torqueMult = 1.1 - 0.15 * fwdRatio - 0.55 * fwdRatio * fwdRatio;
+
+  let effectiveAccel = spec.accel * torqueMult * cleanThrottle;
   let vmax = spec.vmax;
   if (env.conditionPct < spec.conditionPenaltyThreshold) {
     effectiveAccel *= spec.conditionPenaltyMult;
@@ -95,34 +122,79 @@ export function stepBike(
   }
   if (env.fuelEmpty) {
     vmax = BALANCE.FUEL.pushSpeedMs;
-    effectiveAccel = Math.min(effectiveAccel, BALANCE.FUEL.pushAccel * clamp(input.throttle, 0, 1));
+    effectiveAccel = Math.min(effectiveAccel, BALANCE.FUEL.pushAccel * cleanThrottle);
   }
   if (env.hasPassenger) {
     effectiveAccel *= spec.passengerAccelMult;
+  }
+  if (env.floodSpeedCapMs !== undefined) {
+    vmax = Math.min(vmax, Math.max(0, env.floodSpeedCapMs));
   }
 
   let baseBrake = env.wet ? spec.brakeDecelWet : spec.brakeDecelDry;
   if (spec.brakeUpgrade) {
     baseBrake /= 0.8; // -20% stopping distance
   }
-  const effectiveBrake = baseBrake * clamp(input.brake, 0, 1);
+  const effectiveBrake = baseBrake * cleanBrake;
 
   // Speed update
+  const prevHold = state.reverseHoldS ?? 0;
+  let newReverseHoldS = 0;
   let newSpeed = state.speed;
-  if (effectiveBrake > 0 && state.speed <= REVERSE_ENTRY_MS && input.throttle <= 0) {
-    // Stopped with the brake held and no throttle: the bike backs up slowly (audit H-8).
-    newSpeed = Math.max(-REVERSE_MAX_MS, newSpeed - REVERSE_ACCEL * dt);
-  } else if (effectiveBrake > 0) {
-    newSpeed = Math.max(0, newSpeed - effectiveBrake * dt);
+
+  if (effectiveBrake > 0) {
+    if (cleanThrottle <= 0) {
+      if (state.speed < 0) {
+        newReverseHoldS = REVERSE_HOLD_S;
+        newSpeed = Math.max(-REVERSE_MAX_MS, newSpeed - REVERSE_ACCEL * dt);
+      } else if (Math.abs(state.speed) < REVERSE_ENTRY_MS) {
+        newReverseHoldS = Math.min(REVERSE_HOLD_S, prevHold + dt);
+        if (prevHold >= REVERSE_HOLD_S - 1e-6) {
+          newSpeed = Math.max(-REVERSE_MAX_MS, newSpeed - REVERSE_ACCEL * dt);
+        } else {
+          newSpeed = Math.max(0, newSpeed - effectiveBrake * dt);
+        }
+      } else {
+        newSpeed = Math.max(0, newSpeed - effectiveBrake * dt);
+      }
+    } else if (state.speed < 0) {
+      newSpeed = Math.min(0, newSpeed + effectiveBrake * dt);
+    } else {
+      newSpeed = Math.max(0, newSpeed - effectiveBrake * dt);
+    }
   } else if (effectiveAccel > 0 && newSpeed < vmax) {
     newSpeed = Math.min(vmax, newSpeed + effectiveAccel * dt);
-  } else if (input.throttle <= 0) {
-    // Off the throttle the bike coasts down: rolling resistance and engine drag.
-    newSpeed = Math.max(0, newSpeed - COAST_DECEL * dt);
+  } else if (cleanThrottle <= 0) {
+    // Off the throttle the bike coasts down smoothly: rolling resistance and engine drag.
+    if (newSpeed > 0) {
+      newSpeed = Math.max(0, newSpeed - COAST_DECEL * dt);
+    } else if (newSpeed < 0) {
+      newSpeed = Math.min(0, newSpeed + COAST_DECEL * dt);
+    }
   }
   if (newSpeed > vmax) {
-    // Throttle cut or worn: bleed speed down to the cap instead of snapping.
+    // Throttle cut, worn, or flood drag: bleed speed down to the cap instead of snapping.
     newSpeed = Math.max(vmax, newSpeed - 4.0 * dt);
+  }
+
+  // 5-speed automatic shift schedule + normalized engine RPM
+  let newGear: 1 | 2 | 3 | 4 | 5 = state.gear ?? 1;
+  let newRpmNorm: number;
+  if (newSpeed <= 0) {
+    newGear = 1;
+    newRpmNorm = clamp(0.15 + (Math.abs(newSpeed) / REVERSE_MAX_MS) * 0.2, 0.15, 1.0);
+  } else {
+    const ratio = clamp(newSpeed / spec.vmax, 0, 1);
+    while (newGear < 5 && ratio >= GEAR_UPSHIFT_RATIOS[newGear]!) {
+      newGear = (newGear + 1) as 1 | 2 | 3 | 4 | 5;
+    }
+    while (newGear > 1 && ratio < GEAR_DOWNSHIFT_RATIOS[newGear]!) {
+      newGear = (newGear - 1) as 1 | 2 | 3 | 4 | 5;
+    }
+    const minR = GEAR_MIN_RATIOS[newGear]!;
+    const maxR = GEAR_MAX_RATIOS[newGear]!;
+    const band = clamp((ratio - minR) / (maxR - minR), 0, 1);
+    newRpmNorm = clamp(0.15 + band * 0.8 + cleanThrottle * 0.05, 0.15, 1.0);
   }
 
   // Speed-scaled steering angle
@@ -172,8 +244,12 @@ export function stepBike(
     out.speed = newSpeed;
     out.lean = newLean;
     out.steer = newSteer;
+    out.gear = newGear;
+    out.rpmNorm = newRpmNorm;
+    out.y = state.y;
     out.wobble = wobble;
     out.crashed = crashed;
+    out.reverseHoldS = newReverseHoldS;
     return out;
   }
 
@@ -184,7 +260,11 @@ export function stepBike(
     speed: newSpeed,
     lean: newLean,
     steer: newSteer,
+    gear: newGear,
+    rpmNorm: newRpmNorm,
+    y: state.y,
     wobble,
     crashed,
+    reverseHoldS: newReverseHoldS,
   };
 }
