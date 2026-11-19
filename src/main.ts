@@ -234,6 +234,13 @@ async function bootGame(): Promise<void> {
       if (severity === 'crash') renderer?.cameraRig.triggerShake(0.45);
       else if (severity === 'bump') renderer?.cameraRig.triggerShake(0.18);
     });
+    gm.bus.on('bike/wobble', () => {
+      renderer?.cameraRig.triggerShake(0.12);
+    });
+    gm.bus.on('bike/speedBump', ({ speedKmh }) => {
+      const intensity = Math.max(0.06, Math.min(0.18, 0.06 + (speedKmh / 60) * 0.12));
+      renderer?.cameraRig.triggerShake(intensity);
+    });
     // Storefront signs follow a language change while playing.
     settingsSignal.subscribe((s) => renderer?.cityBuilder?.signageAtlas.setLanguage(s.language));
     // A quality change in Settings reaches the running renderer. A URL override still wins.
@@ -494,7 +501,7 @@ function frame(now: number) {
     // Speed is signed (negative when reversing); the dial shows the magnitude.
     const currentSpeedKmh = Math.abs(session.bike.speed) * 3.6;
     const fuelL = gm.economyManager.fuelLevel;
-    const fuelMaxL = BALANCE.FUEL.tankL;
+    const fuelMaxL = gm.economyManager.maxFuelL();
     const todayNetEarnings = gm.economy.dailyRevenue - gm.economy.dailyExpenses;
     const shiftClock = gm.clock.hhmm();
     const shiftDay = gm.clock.day;

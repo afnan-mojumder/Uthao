@@ -3,6 +3,7 @@ import type { BikeId } from '../../core/types';
 import type { BikeDef } from '../schemas';
 import type { BikeSpec } from '../../physics/bikeModel';
 import { BALANCE } from '../../config/balance';
+import { effectiveWetGrip } from './maintenance';
 
 export const BIKES: BikeDef[] = defaultBikes as BikeDef[];
 
@@ -45,7 +46,11 @@ export function calculateNetBikePurchaseCost(
 /**
  * Converts a BikeDef into a physics BikeSpec, applying any active mechanical upgrades.
  */
-export function bikeDefToSpec(bikeDef: BikeDef, brakeUpgrade: boolean = false): BikeSpec {
+export function bikeDefToSpec(
+  bikeDef: BikeDef,
+  brakeUpgrade: boolean = false,
+  goodTires: boolean = false
+): BikeSpec {
   const base = BALANCE.BIKE[bikeDef.id] ?? BALANCE.BIKE.old100;
   return {
     ...base,
@@ -53,6 +58,7 @@ export function bikeDefToSpec(bikeDef: BikeDef, brakeUpgrade: boolean = false): 
     accel: bikeDef.accel,
     brakeDecelDry: bikeDef.brakeDecelDry,
     brakeDecelWet: bikeDef.brakeDecelWet,
+    wetLateralGrip: effectiveWetGrip(base.wetLateralGrip, goodTires),
     brakeUpgrade,
   };
 }

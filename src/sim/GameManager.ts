@@ -141,6 +141,8 @@ export class GameManager {
   phoneChargeNearby?: (location: 'home' | 'teaStall') => boolean;
   /** Provided by GameSession so encounter `spawnRequest` effects offer live rides. */
   spawnSpecialRequest?: (templateId: string) => void;
+  /** Provided by GameSession so `{ type: 'recoverBike' }` resets the bike safely onto the road. */
+  recoverBikeHandler?: () => boolean;
 
   paused: boolean = false;
   accumulator: number = 0;
@@ -469,6 +471,14 @@ export class GameManager {
       case 'setWaypoint':
         this.waypointNodeId = cmd.nodeId;
         return { success: true };
+      case 'recoverBike': {
+        if (!this.recoverBikeHandler) {
+          return { success: false, reason: 'No active bike session' };
+        }
+        return this.recoverBikeHandler()
+          ? { success: true }
+          : { success: false, reason: 'Recovery unavailable' };
+      }
       case 'selectCareerChoice': {
         const kamalRel = this.reputationSystem.getRelationship('char_kamal');
         const opt = getAvailableCareerChoices(this.economy.savings, kamalRel).find(
@@ -863,6 +873,8 @@ export class GameManager {
         this.roadEvents.addEvent(ev);
       }
     }
+
+    this.bus.emit('state/restored', {});
   }
 }
 

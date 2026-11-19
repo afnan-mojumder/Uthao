@@ -2,7 +2,6 @@ import type { GameSession } from '../sim/GameSession';
 import type { SaveSystem } from '../sim/save/SaveSystem';
 import { respond } from '../sim/negotiation/NegotiationSystem';
 import type { BikeId } from '../core/types';
-import { BALANCE } from '../config/balance';
 import { requestFreshCareer } from './freshCareer';
 import {
   setChoiceDispatcher,
@@ -123,7 +122,7 @@ export function bindUi(session: GameSession, saveSystem?: SaveSystem): void {
     () =>
       void gm.dispatch({
         type: 'refuelAtStation',
-        liters: BALANCE.FUEL.tankL - gm.economyManager.fuelLevel,
+        liters: gm.economyManager.maxFuelL() - gm.economyManager.fuelLevel,
       }),
     () => void gm.dispatch({ type: 'callFuelRescue' })
   );

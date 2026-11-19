@@ -5,7 +5,7 @@ import { TrafficManager } from './traffic/TrafficManager';
 import type { RoadNetwork } from './road/RoadNetwork';
 import { encounterPhaseFor, type RidePhaseInput } from './events/phase';
 import type { EncounterPhase } from './events/conditions';
-import type { PhysicsWorld, DynamicObb } from '../physics/PhysicsWorld';
+import type { PhysicsWorld, DynamicObb, StaticBoxHandle } from '../physics/PhysicsWorld';
 import { MotorcycleController } from '../physics/MotorcycleController';
 import {
   createDefaultBikeSpec,
@@ -22,6 +22,8 @@ import type { Rng } from '../core/rng';
 import { TIME_SCALE } from '../core/clock';
 import { clamp } from '../core/math';
 import { receipt as buildReceipt, fuelUsed, type FuelOptions } from './economy/fuel';
+import { bikeDefToSpec, getBikeDef } from './economy/bikes';
+import { checkPuncture } from './economy/maintenance';
 import type { TripReceipt, PassengerProfile } from '../core/types';
 import { startNegotiation, type NegotiationSession } from './negotiation/NegotiationSystem';
 import { fairFare, isRushHourMinute } from './negotiation/fare';
@@ -75,7 +77,7 @@ export class GameSession {
   private readonly controller?: MotorcycleController;
 
   private autoRequests: boolean;
-  private readonly bikeSpec: BikeSpec;
+  readonly bikeSpec: BikeSpec;
   private readonly env: BikeEnvironment;
   // Reused each step to keep the hot path allocation-free.
   private readonly camView: { x: number; z: number; heading: number; fovRad: number };
@@ -90,11 +92,18 @@ export class GameSession {
   // T8.3 live fuel/wear state, all reused to keep step() allocation-free.
   private readonly fuelOpts: FuelOptions = {};
   private readonly breakdownRng: Rng;
+  private readonly punctureRng: Rng;
   private readonly fuelStations: { x: number; z: number }[] = [];
   private readonly teaStalls: { x: number; z: number }[] = [];
   private readonly poiPositions: { id: string; kind: string; nameKey: string; x: number; z: number }[] = [];
   private readonly nearbyPoiIds = new Set<string>();
+  private readonly speedBumps = new Map<string, { midX: number; midZ: number; ux: number; uz: number }>();
+  private readonly recoveryAabbOut: StaticBoxHandle[] = [];
   private lastAccidentEncounterMin = -Infinity;
+  private lastPunctureMin = -Infinity;
+  private lastSpeedBumpSegId: string | null = null;
+  private hasGoodTires = false;
+  private envFlooded = false;
   private tripReqId: string | null = null;
   private warnedWorn = false;
   private stallSec = 0;
@@ -194,6 +203,7 @@ export class GameSession {
     this.pose = { x: 0, z: 0, speed: 0, heading: 0 };
 
     this.breakdownRng = this.gm.rng.fork('breakdown');
+    this.punctureRng = this.gm.rng.fork('puncture');
     for (const poi of this.road.getPois()) {
       const node = this.road.getNode(poi.nodeId);
       if (node) {
@@ -202,8 +212,25 @@ export class GameSession {
         if (poi.kind === 'teaStall') this.teaStalls.push({ x: node.x, z: node.z });
       }
     }
+    for (const seg of this.road.getAllSegments()) {
+      if (!seg.tags || (!seg.tags.includes('speed_bump') && !seg.tags.includes('school'))) continue;
+      const sNode = this.road.getNode(seg.startNodeId);
+      const eNode = this.road.getNode(seg.endNodeId);
+      if (!sNode || !eNode) continue;
+      const dx = eNode.x - sNode.x;
+      const dz = eNode.z - sNode.z;
+      const len = Math.hypot(dx, dz);
+      if (len <= 0) continue;
+      this.speedBumps.set(seg.segmentId, {
+        midX: (sNode.x + eNode.x) * 0.5,
+        midZ: (sNode.z + eNode.z) * 0.5,
+        ux: dx / len,
+        uz: dz / len,
+      });
+    }
     this.gm.fuelStationNearby = () => this.nearFuelStation();
     this.gm.phoneChargeNearby = (where) => this.nearChargeSpot(where);
+    this.gm.recoverBikeHandler = () => this.requestManualRecovery();
     this.gm.spawnSpecialRequest = (templateId) => {
       const res = this.requests.sampleRequest(
         this.gm.clock.minutes,
@@ -212,6 +239,31 @@ export class GameSession {
       );
       if (res) this.ride.offer(res.request);
     };
+
+    this.gm.bus.on('bike/swapped', () => this.syncBikeSpec());
+    this.gm.bus.on('upgrade/purchased', () => this.syncBikeSpec());
+    this.gm.bus.on('state/restored', () => this.syncBikeSpec());
+    this.syncBikeSpec();
+  }
+
+  /** Rebuilds live bike specs and upgrade modifiers from EconomyManager and pushes
+   * them to Physics/MotorcycleController, RideManager, and EconomyManager. */
+  syncBikeSpec(): void {
+    const em = this.gm.economyManager;
+    const bikeDef = getBikeDef(em.currentBikeId);
+    const hasDiscBrakes = em.hasUpgrade('upgrade_disc_brakes');
+    const hasGoodTires = em.hasUpgrade('upgrade_good_tires');
+    const hasEngineTune = em.hasUpgrade('upgrade_engine_tune');
+    const hasPhoneMount = em.hasUpgrade('upgrade_phone_mount');
+
+    const nextSpec = bikeDefToSpec(bikeDef, hasDiscBrakes, hasGoodTires);
+    Object.assign(this.bikeSpec, nextSpec);
+    this.controller?.setSpec(this.bikeSpec);
+
+    this.ride.activeBikeId = bikeDef.id;
+    this.ride.hasEngineTune = hasEngineTune;
+    this.hasGoodTires = hasGoodTires;
+    em.setBatteryDrainMultiplier(hasPhoneMount ? 0.5 : 1);
   }
 
   /** T8.5: starts a negotiation with the actual passenger of `requestId`: its own profile
@@ -351,6 +403,7 @@ export class GameSession {
     if (km > 0) {
       em.applyWear(km);
       this.rollBreakdown(km);
+      this.rollPuncture(km);
     }
 
     if (em.fuelLevel <= 0) return;
@@ -390,6 +443,17 @@ export class GameSession {
     }
   }
 
+  private rollPuncture(km: number): void {
+    if (this.gm.clock.minutes - this.lastPunctureMin < 180) return;
+    if (checkPuncture(km, this.env.surface, this.envFlooded, this.hasGoodTires, this.punctureRng)) {
+      this.lastPunctureMin = this.gm.clock.minutes;
+      this.gm.bus.emit('bike/puncture', {});
+      if (this.gm.eventDirector.enabled && this.gm.eventDirector.activeEncounter === null) {
+        this.gm.eventDirector.forceStart('enc_puncture', this.gm.bus);
+      }
+    }
+  }
+
   /** T7.3: places the bike on the road network at `gm.homeNodeId`, aligned
    * to the nearest segment's direction, instead of the old off-road
    * `activeDistrict.nodes[0].x - 9` offset. Falls back to the network's
@@ -407,9 +471,41 @@ export class GameSession {
     this.placeOnRoadNear(this.bike.x, this.bike.z);
   }
 
-  /** Puts the bike, stopped, on the road segment nearest (anchorX, anchorZ), aligned to it. */
+  /** Manual recovery triggered by `{ type: 'recoverBike' }` command. */
+  requestManualRecovery(): boolean {
+    if (this.road.getAllSegments().length === 0 && this.road.getAllNodes().length === 0) {
+      return false;
+    }
+    this.wedgedSec = 0;
+    this.recoverBike();
+    return true;
+  }
+
+  private isClearOfStaticColliders(x: number, z: number): boolean {
+    if (!this.physics) return true;
+    const pad = 0.6;
+    this.physics.queryAabb(x - pad, z - pad, x + pad, z + pad, this.recoveryAabbOut);
+    for (let i = 0; i < this.recoveryAabbOut.length; i++) {
+      const box = this.recoveryAabbOut[i]!;
+      if (box.maxY <= 0 || box.minY >= 1.5) continue;
+      // Local OBB containment check with bike capsule padding
+      const rx = x - box.x;
+      const rz = z - box.z;
+      const lx = Math.abs(rx * box.cos - rz * box.sin);
+      const lz = Math.abs(rx * box.sin + rz * box.cos);
+      if (lx < box.halfX + 0.4 && lz < box.halfZ + 0.4) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /** Puts the bike, stopped, on the road segment nearest (anchorX, anchorZ), aligned to it.
+   * On divided roads, offsets into the nearest clear carriageway lane to avoid medians. */
   private placeOnRoadNear(anchorX: number, anchorZ: number): void {
-    const segment = this.road.segmentAt(anchorX, anchorZ, 30);
+    const segment =
+      this.road.segmentAt(anchorX, anchorZ, 30) ??
+      this.road.segmentAt(anchorX, anchorZ, Infinity);
     const startNode = segment ? this.road.getNode(segment.startNodeId) : undefined;
     const endNode = segment ? this.road.getNode(segment.endNodeId) : undefined;
 
@@ -417,10 +513,11 @@ export class GameSession {
     let z = anchorZ;
     let heading = this.bike.heading;
 
-    if (startNode && endNode) {
+    if (segment && startNode && endNode) {
       const dx = endNode.x - startNode.x;
       const dz = endNode.z - startNode.z;
       const lenSq = dx * dx + dz * dz;
+      const len = Math.sqrt(lenSq);
       const t =
         lenSq > 0
           ? clamp(
@@ -429,9 +526,37 @@ export class GameSession {
               1
             )
           : 0;
-      x = startNode.x + t * dx;
-      z = startNode.z + t * dz;
+      const cx = startNode.x + t * dx;
+      const cz = startNode.z + t * dz;
+      x = cx;
+      z = cz;
       heading = Math.atan2(dx, dz);
+
+      if (segment.divided && len > 0) {
+        const ux = dx / len;
+        const uz = dz / len;
+        const leftX = uz;
+        const leftZ = -ux;
+        const signedLat = (anchorX - cx) * leftX + (anchorZ - cz) * leftZ;
+        let side = signedLat >= 0 ? 1 : -1;
+        const laneOffset = Math.max(1.5, Math.min(segment.width * 0.25, 3.5));
+
+        const candX = cx + leftX * side * laneOffset;
+        const candZ = cz + leftZ * side * laneOffset;
+        if (!this.isClearOfStaticColliders(candX, candZ)) {
+          const altX = cx - leftX * side * laneOffset;
+          const altZ = cz - leftZ * side * laneOffset;
+          if (this.isClearOfStaticColliders(altX, altZ)) {
+            side = -side;
+          }
+        }
+
+        x = cx + leftX * side * laneOffset;
+        z = cz + leftZ * side * laneOffset;
+        if (!segment.oneWay && side < 0) {
+          heading = Math.atan2(-dx, -dz);
+        }
+      }
     }
 
     this.bike.x = x;
@@ -440,6 +565,9 @@ export class GameSession {
     this.bike.speed = 0;
     this.bike.gear = 1;
     this.bike.rpmNorm = 0.15;
+    this.bike.lean = 0;
+    this.bike.steer = 0;
+    this.bike.wobble = false;
     this.bike.crashed = false;
     this.bike.reverseHoldS = 0;
   }
@@ -598,6 +726,7 @@ export class GameSession {
     const segment = this.road.segmentAt(this.bike.x, this.bike.z);
     this.env.wet = this.gm.weatherSystem.isRoadWet();
     this.env.surface = segment ? this.gm.weatherSystem.getSurfaceModifier(segment) : 1.0;
+    this.envFlooded = segment ? this.gm.weatherSystem.isFlooded(segment.segmentId) : false;
     this.env.floodSpeedCapMs =
       segment && this.gm.weatherSystem.isSegmentFloodCapped(segment)
         ? this.gm.weatherSystem.getSpeedCap(segment) / 3.6
@@ -641,6 +770,27 @@ export class GameSession {
       this.gm.bus.emit('bike/wobble', {});
     }
     this.wobbling = wobbleNow;
+
+    // Speed bump crossing pulse (once per crossing over the segment's midpoint bump)
+    const speedBump = segment ? this.speedBumps.get(segment.segmentId) : undefined;
+    if (speedBump) {
+      const alongDist = Math.abs(
+        (this.bike.x - speedBump.midX) * speedBump.ux +
+        (this.bike.z - speedBump.midZ) * speedBump.uz
+      );
+      if (alongDist <= 1.0 && Math.abs(this.bike.speed) > 1.5) {
+        if (this.lastSpeedBumpSegId !== segment!.segmentId) {
+          this.lastSpeedBumpSegId = segment!.segmentId;
+          this.gm.bus.emit('bike/speedBump', {
+            speedKmh: Math.abs(this.bike.speed) * 3.6,
+          });
+        }
+      } else if (alongDist > 3.0 && this.lastSpeedBumpSegId === segment!.segmentId) {
+        this.lastSpeedBumpSegId = null;
+      }
+    } else {
+      this.lastSpeedBumpSegId = null;
+    }
 
     // Wedged against kerb or wall: nearly stopped while the rider is still on the
     // throttle, or just crashed. After a short wait, put the bike back on the road.

@@ -61,6 +61,7 @@ export class EconomyManager {
   installedCosmetics: { paint?: string; seatCover?: string } = {};
   currentBikeId: BikeId = 'old100';
   ownedBikes: BikeId[] = ['old100'];
+  private batteryDrainMultiplier: number = 1;
 
   constructor(
     bus: EventBus<GameEvents>,
@@ -91,6 +92,7 @@ export class EconomyManager {
       this.ownedBikes.push(this.currentBikeId);
     }
     this.motorcycleCondition = this.getOverallCondition();
+    this.syncUpgradeEffects();
 
     // Normalize any invalid initial state
     if (!Number.isFinite(this.cash)) this.cash = 0;
@@ -221,8 +223,13 @@ export class EconomyManager {
     }
   }
 
+  /** Tank capacity in litres for the active motorcycle. */
+  maxFuelL(): number {
+    return getBikeDef(this.currentBikeId).tankCapacityL;
+  }
+
   refuel(liters: number, pricePerL = BALANCE.FUEL.pricePerL, day = 1, minute = 0): number {
-    const space = Math.max(0, BALANCE.FUEL.tankL - this.fuelLevel);
+    const space = Math.max(0, this.maxFuelL() - this.fuelLevel);
     const added = Math.min(space, Math.max(0, liters));
     if (added <= 0) return 0;
 
@@ -249,7 +256,7 @@ export class EconomyManager {
       kind: 'family',
       amount: -r.cost,
     });
-    this.fuelLevel = Math.min(BALANCE.FUEL.tankL, this.fuelLevel + r.liters);
+    this.fuelLevel = Math.min(this.maxFuelL(), this.fuelLevel + r.liters);
     return { fuelAdded: r.liters, timeCostMin: r.waitMin };
   }
 
@@ -270,9 +277,17 @@ export class EconomyManager {
     );
   }
 
+  private syncUpgradeEffects(): void {
+    this.batteryDrainMultiplier = this.hasUpgrade('upgrade_phone_mount') ? 0.5 : 1;
+  }
+
+  setBatteryDrainMultiplier(mult: number): void {
+    this.batteryDrainMultiplier = Number.isFinite(mult) ? Math.max(0, mult) : 1;
+  }
+
   drainBattery(percent: number): void {
     if (!Number.isFinite(percent) || percent <= 0) return;
-    this.phoneBattery = Math.max(0, this.phoneBattery - percent);
+    this.phoneBattery = Math.max(0, this.phoneBattery - percent * this.batteryDrainMultiplier);
   }
 
   chargeBattery(amount: number = 100, cost: number = 10, day = 1, minute = 0): void {
@@ -514,6 +529,7 @@ export class EconomyManager {
     });
 
     this.ownedUpgrades.push(upgrade.id);
+    this.syncUpgradeEffects();
 
     if (upgrade.category === 'cosmetic') {
       if (upgrade.color) {
@@ -524,6 +540,10 @@ export class EconomyManager {
       }
     }
 
+    this.bus.emit('upgrade/purchased', {
+      upgradeId: upgrade.id,
+      category: upgrade.category,
+    });
     return { success: true, cost };
   }
 
@@ -663,5 +683,6 @@ export class EconomyManager {
     } else {
       this.motorcycleCondition = this.getOverallCondition();
     }
+    this.syncUpgradeEffects();
   }
 }

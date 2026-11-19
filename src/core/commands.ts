@@ -27,6 +27,7 @@ export type Command =
   | { type: 'endShift' }
   | { type: 'sleep' }
   | { type: 'setWaypoint'; nodeId: string | null }
+  | { type: 'recoverBike' }
   | { type: 'pause' }
   | { type: 'resume' }
   | { type: 'selectCareerChoice'; choice: 'workshop' | 'bike' | 'continue' };

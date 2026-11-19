@@ -75,7 +75,10 @@ export interface GameEvents extends Record<string, unknown> {
   'bike/conditionWarning': { conditionPct: number };
   /** T8.3: the engine stalled from wear; repairable at the garage. */
   'bike/breakdown': { conditionPct: number };
+  'bike/speedBump': { speedKmh: number };
   'bike/swapped': { bikeId: BikeId; prevBikeId: BikeId };
+  'upgrade/purchased': { upgradeId: string; category: 'mechanical' | 'cosmetic' };
+  'state/restored': Record<string, never>;
   'delivery/offered': { delivery: DeliveryJob };
   'delivery/accepted': { deliveryId: string };
   'delivery/pickedUp': { deliveryId: string };

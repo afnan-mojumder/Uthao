@@ -1,5 +1,11 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { GameManager } from '../../../src/sim/GameManager';
+import { GameSession } from '../../../src/sim/GameSession';
+import { RoadNetwork } from '../../../src/sim/road/RoadNetwork';
+import { PhysicsWorld } from '../../../src/physics/PhysicsWorld';
+import { SIM_DT } from '../../../src/config/constants';
+import type { DistrictData } from '../../../src/sim/schemas';
+import testloopData from '../../../data/districts/testloop.json';
 import { EconomyManager } from '../../../src/sim/economy/EconomyManager';
 import { EventBus, type GameEvents } from '../../../src/core/events';
 import { MotorcycleMesh } from '../../../src/render/vehicles';
@@ -12,6 +18,28 @@ import {
   getBikeFuelEfficiency,
 } from '../../../src/sim/economy/bikes';
 import { fuelUsed } from '../../../src/sim/economy/fuel';
+
+function makeSessionWithCash(cash: number, physics?: PhysicsWorld): GameSession {
+  const road = RoadNetwork.fromDistricts([testloopData as DistrictData]);
+  const gm = new GameManager({ seed: 42, mode: 'career', data: {} });
+  gm.economyManager.cash = cash;
+  gm.economy.cash = cash;
+  const session = new GameSession({ gm, road, physics, autoRequests: false });
+  session.spawnAtHome();
+  return session;
+}
+
+function measureStoppingDistance(session: GameSession): number {
+  session.spawnAtHome();
+  session.gm.economyManager.fuelLevel = session.gm.economyManager.maxFuelL();
+  session.bike.speed = 15;
+  const startX = session.bike.x;
+  const startZ = session.bike.z;
+  for (let i = 0; i < 300 && session.bike.speed > 0.01; i++) {
+    session.step({ throttle: 0, brake: 1, steer: 0 }, SIM_DT);
+  }
+  return Math.hypot(session.bike.x - startX, session.bike.z - startZ);
+}
 
 describe('T5.6 Additional motorcycles', () => {
   let bus: EventBus<GameEvents>;
@@ -172,5 +200,61 @@ describe('T5.6 Additional motorcycles', () => {
     audio.setEnginePitch(1.3);
     // Audio engine pitch updated without throwing
     expect(() => audio.updateEngine(20, 0.8)).not.toThrow();
+  });
+
+  it('buying used125 and disc_brakes updates live GameSession bikeSpec, tankCapacityL, and braking distance', () => {
+    const s = makeSessionWithCash(50000);
+    const dryStopOld = measureStoppingDistance(s);
+    s.gm.dispatch({ type: 'buyBike', bikeId: 'used125', useTradeIn: false });
+    s.gm.dispatch({ type: 'switchBike', bikeId: 'used125' });
+    s.gm.dispatch({ type: 'buyUpgrade', upgradeId: 'upgrade_disc_brakes' });
+    expect(s.bikeSpec.vmax).toBe(25);
+    expect(s.gm.economyManager.maxFuelL()).toBe(10);
+    expect(measureStoppingDistance(s)).toBeLessThan(dryStopOld);
+  });
+
+  it('syncs physics controller, good_tires, engine_tune, phone_mount, dynamic tank, and applySnapshot()', async () => {
+    const physics = await PhysicsWorld.create();
+    const s = makeSessionWithCash(80000, physics);
+    expect(s.gm.economyManager.maxFuelL()).toBe(8);
+
+    // Upgrade good_tires, engine_tune, phone_mount
+    expect(s.gm.dispatch({ type: 'buyUpgrade', upgradeId: 'upgrade_good_tires' }).success).toBe(true);
+    expect(s.gm.dispatch({ type: 'buyUpgrade', upgradeId: 'upgrade_engine_tune' }).success).toBe(true);
+    expect(s.gm.dispatch({ type: 'buyUpgrade', upgradeId: 'upgrade_phone_mount' }).success).toBe(true);
+
+    expect(s.bikeSpec.wetLateralGrip).toBeCloseTo(0.88, 2);
+    expect(s.ride.hasEngineTune).toBe(true);
+
+    // Buy new150 -> 12L tank and vmax 28
+    expect(s.gm.dispatch({ type: 'buyBike', bikeId: 'new150', useTradeIn: false }).success).toBe(true);
+    expect(s.gm.economyManager.maxFuelL()).toBe(12);
+    expect(s.bikeSpec.vmax).toBe(28);
+    const beforeRefuel = s.gm.economyManager.fuelLevel;
+    expect(s.gm.economyManager.refuel(15)).toBeCloseTo(12 - beforeRefuel, 4);
+    expect(s.gm.economyManager.fuelLevel).toBeCloseTo(12, 4);
+
+    // Phone mount halves battery drain while navigating
+    const drainTestBaseline = makeSessionWithCash(5000);
+    drainTestBaseline.gm.isNavigating = true;
+    drainTestBaseline.gm.economyManager.phoneBattery = 100;
+    for (let i = 0; i < 600; i++) drainTestBaseline.gm.tick(SIM_DT, 0);
+    const baselineDrain = 100 - drainTestBaseline.gm.economyManager.phoneBattery;
+
+    s.gm.isNavigating = true;
+    s.gm.economyManager.phoneBattery = 100;
+    for (let i = 0; i < 600; i++) s.gm.tick(SIM_DT, 0);
+    const mountedDrain = 100 - s.gm.economyManager.phoneBattery;
+    expect(mountedDrain).toBeCloseTo(baselineDrain * 0.5, 4);
+
+    // applySnapshot restores live bikeSpec and ride.hasEngineTune
+    const snap = s.gm.snapshot();
+    const fresh = makeSessionWithCash(600);
+    expect(fresh.bikeSpec.vmax).toBe(22);
+    expect(fresh.ride.hasEngineTune).toBe(false);
+    fresh.gm.applySnapshot(snap);
+    expect(fresh.bikeSpec.vmax).toBe(28);
+    expect(fresh.ride.hasEngineTune).toBe(true);
+    expect(fresh.gm.economyManager.maxFuelL()).toBe(12);
   });
 });

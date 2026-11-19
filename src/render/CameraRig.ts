@@ -21,6 +21,8 @@ export class CameraRig {
   private readonly _idealLookAt = new THREE.Vector3();
   private readonly _rayOrigin = new THREE.Vector3();
   private readonly _rayDir = new THREE.Vector3();
+  private readonly _shakeRight = new THREE.Vector3();
+  private readonly _shakeUp = new THREE.Vector3();
 
   constructor(fov = 60, aspect = 16 / 9, near = 0.1, far = 450) {
     this.camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
@@ -49,6 +51,22 @@ export class CameraRig {
   triggerShake(intensity: number): void {
     if (this.reduceMotion) return;
     this.shakeIntensity = Math.max(this.shakeIntensity, clamp(intensity, 0, 0.8));
+  }
+
+  /** Applies camera-local right/up shake using pre-allocated scratch vectors (zero allocations). */
+  private applyShakeOffset(dt: number): void {
+    if (this.shakeIntensity > 0.005) {
+      this.shakePhase += dt * 55;
+      const sx = Math.sin(this.shakePhase) * this.shakeIntensity;
+      const sy = Math.cos(this.shakePhase * 1.3) * this.shakeIntensity * 0.7;
+      this._shakeRight.set(1, 0, 0).applyQuaternion(this.camera.quaternion);
+      this._shakeUp.set(0, 1, 0).applyQuaternion(this.camera.quaternion);
+      this.camera.position.addScaledVector(this._shakeRight, sx);
+      this.camera.position.addScaledVector(this._shakeUp, sy);
+      this.shakeIntensity = Math.max(0, this.shakeIntensity - dt * 2.4);
+    } else {
+      this.shakeIntensity = 0;
+    }
   }
 
   update(
@@ -84,6 +102,7 @@ export class CameraRig {
         targetPos.z + Math.cos(heading) * lookDist
       );
       this.camera.lookAt(this._lookAt);
+      this.applyShakeOffset(dt);
     } else {
       // Chase camera mode:
       // Ideal position: behind the bike along heading (-heading)
@@ -132,15 +151,6 @@ export class CameraRig {
       this.currentLookAt.lerp(this._idealLookAt, lookDamping);
 
       this.camera.position.copy(this.currentPos);
-      if (this.shakeIntensity > 0.005) {
-        this.shakePhase += dt * 55;
-        this.camera.position.x += Math.sin(this.shakePhase) * this.shakeIntensity;
-        this.camera.position.y += Math.cos(this.shakePhase * 1.3) * this.shakeIntensity * 0.7;
-        this.shakeIntensity = Math.max(0, this.shakeIntensity - dt * 2.4);
-      } else {
-        this.shakeIntensity = 0;
-      }
-
       this.camera.lookAt(this.currentLookAt);
 
       // Camera looks down -Z, so +Z_cam points opposite bike +Z; negative rotateZ tilts
@@ -150,6 +160,8 @@ export class CameraRig {
       if (Math.abs(this.currentRoll) > 0.0005) {
         this.camera.rotateZ(this.currentRoll);
       }
+
+      this.applyShakeOffset(dt);
     }
   }
 }
