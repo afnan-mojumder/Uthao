@@ -481,6 +481,7 @@ function frame(now: number) {
 
     renderer.setBikeState(session.bike);
     renderer.setBrakeLight(lastBikeBrake > 0.05);
+    renderer.syncFloodedSegments(gm.weatherSystem, roadNetwork);
     const alpha = gm.accumulator / SIM_DT;
     renderer.render(gm.snapshot(), alpha, trafficManager.signals);
   }

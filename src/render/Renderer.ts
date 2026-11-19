@@ -5,12 +5,15 @@ import { RideMarkers } from './props';
 import {
   AdaptiveQualityManager,
   getQualityConfig,
+  type QualityConfig,
   type QualityLevel,
 } from './quality';
 import type { SimSnapshot } from '../sim/GameManager';
 import { lerp, angleDiff } from '../core/math';
 import { WeatherFx } from './WeatherFx';
-import type { BikeId, DistrictId } from '../core/types';
+import type { WeatherSystem } from '../sim/world/WeatherSystem';
+import type { RoadNetwork } from '../sim/road/RoadNetwork';
+import type { BikeId, DistrictId, RoadNode, RoadSegment } from '../core/types';
 import type { DistrictData, WorldData } from '../sim/schemas';
 import type { PhysicsWorld } from '../physics/PhysicsWorld';
 import { CityBuilder } from './CityBuilder';
@@ -41,10 +44,15 @@ export class Renderer {
   /** H-6: one ground plane in every mode, kept under the bike out to draw distance. */
   private ground: THREE.Mesh;
   private skyDome: THREE.Mesh;
+  private readonly skyDomeBaseRadius: number;
   private skyUniforms: {
     uTopColor: { value: THREE.Color };
     uHorizonColor: { value: THREE.Color };
   };
+  private shadowsInitialized = false;
+  private configuredShadowMapSize = 0;
+  private lastFloodVersion = -1;
+  private readonly _floodedSegmentsScratch: RoadSegment[] = [];
   private testSceneGroup?: THREE.Group;
   private prevBikePose = { x: 0, y: 0, z: 0, heading: 0, lean: 0, steer: 0 };
   private currBikePose = { x: 0, y: 0, z: 0, heading: 0, lean: 0, steer: 0 };
@@ -90,11 +98,12 @@ export class Renderer {
     );
 
     this.skyUniforms = {
-      uTopColor: { value: new THREE.Color(0x3b82f6) },
-      uHorizonColor: { value: new THREE.Color(0xbae6fd) },
+      uTopColor: { value: new THREE.Color(0x2563eb) },
+      uHorizonColor: { value: new THREE.Color(0xc7e8fb) },
     };
+    this.skyDomeBaseRadius = Math.max(120, this.qualityManager.config.drawDistance * 0.92);
     this.skyDome = new THREE.Mesh(
-      new THREE.SphereGeometry(Math.max(120, this.qualityManager.config.drawDistance * 0.92), 16, 12),
+      new THREE.SphereGeometry(this.skyDomeBaseRadius, 16, 12),
       new THREE.ShaderMaterial({
         uniforms: this.skyUniforms,
         side: THREE.BackSide,
@@ -147,31 +156,23 @@ export class Renderer {
 
     this.buildTestScene();
 
-    this.hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.8);
+    this.hemiLight = new THREE.HemisphereLight(0xe8f4ff, 0x7a7062, 1.0);
     this.hemiLight.position.set(0, 50, 0);
     this.scene.add(this.hemiLight);
 
-    this.dirLight = new THREE.DirectionalLight(0xfffaed, 1.2);
-    this.dirLight.position.set(50, 80, 50);
-    this.dirLight.castShadow = this.qualityManager.config.shadows;
-    if (this.dirLight.castShadow) {
-      this.dirLight.shadow.mapSize.width = 1024;
-      this.dirLight.shadow.mapSize.height = 1024;
-      this.dirLight.shadow.camera.near = 0.5;
-      this.dirLight.shadow.camera.far = 250;
-      const d = 50;
-      this.dirLight.shadow.camera.left = -d;
-      this.dirLight.shadow.camera.right = d;
-      this.dirLight.shadow.camera.top = d;
-      this.dirLight.shadow.camera.bottom = -d;
-    }
+    this.dirLight = new THREE.DirectionalLight(0xfff8e7, 1.75);
+    this.dirLight.position.set(50, 150, 35);
     this.scene.add(this.dirLight);
+    this.scene.add(this.dirLight.target);
+    this.configureShadows(this.qualityManager.config);
 
     this.weatherFx = new WeatherFx(this.scene, {
       dirLight: this.dirLight,
       hemiLight: this.hemiLight,
       drawDistance: this.qualityManager.config.drawDistance,
       rainCount: this.qualityManager.config.rainParticles,
+      maxPointLights: this.qualityManager.config.maxStreetlights,
+      wind: { x: 2.5, z: 1.2 },
     });
 
     this.peopleRenderer = new PeopleRenderer();
@@ -224,6 +225,33 @@ export class Renderer {
     }
   }
 
+  private configureShadows(cfg: QualityConfig): void {
+    this.dirLight.castShadow = cfg.shadows;
+    if (!cfg.shadows) return;
+
+    const targetMapSize = cfg.shadowMapSize || 1024;
+    if (!this.shadowsInitialized || this.configuredShadowMapSize !== targetMapSize) {
+      if (this.dirLight.shadow.map) {
+        this.dirLight.shadow.map.dispose();
+        this.dirLight.shadow.map = null;
+      }
+      this.dirLight.shadow.mapSize.width = targetMapSize;
+      this.dirLight.shadow.mapSize.height = targetMapSize;
+      this.dirLight.shadow.camera.near = 0.5;
+      this.dirLight.shadow.camera.far = 350;
+      const d = 55;
+      this.dirLight.shadow.camera.left = -d;
+      this.dirLight.shadow.camera.right = d;
+      this.dirLight.shadow.camera.top = d;
+      this.dirLight.shadow.camera.bottom = -d;
+      this.dirLight.shadow.bias = -0.0005;
+      this.dirLight.shadow.normalBias = 0.02;
+      this.dirLight.shadow.camera.updateProjectionMatrix();
+      this.shadowsInitialized = true;
+      this.configuredShadowMapSize = targetMapSize;
+    }
+  }
+
   /** Applies a quality level chosen in Settings to the running renderer. */
   setQuality(level: QualityLevel): void {
     const dpr = window.devicePixelRatio || 1;
@@ -231,11 +259,14 @@ export class Renderer {
     const cfg = this.qualityManager.config;
     this.applyQuality();
     void assetManager.init(this.webglRenderer);
-    this.dirLight.castShadow = cfg.shadows;
+    this.configureShadows(cfg);
+    this.weatherFx.setMaxPointLights(cfg.maxStreetlights);
     const fog = this.scene.fog;
     if (fog instanceof THREE.Fog) fog.far = cfg.drawDistance;
     this.cameraRig.camera.far = cfg.drawDistance;
     this.cameraRig.camera.updateProjectionMatrix();
+    const targetRadius = Math.max(120, cfg.drawDistance * 0.92);
+    this.skyDome.scale.setScalar(targetRadius / this.skyDomeBaseRadius);
   }
 
   resize(): void {
@@ -349,6 +380,12 @@ export class Renderer {
     this.cityBuilder.buildDistrict(district, physicsWorld);
     this.scene.add(this.cityBuilder.root);
     this.colliders = this.cityBuilder.colliders;
+
+    const nodeMap = new Map<string, RoadNode>();
+    for (const node of district.nodes) {
+      nodeMap.set(node.nodeId, node);
+    }
+    this.weatherFx.populateStreetlights(district.segments, nodeMap);
   }
 
   loadWorld(
@@ -368,6 +405,30 @@ export class Renderer {
     this.cityBuilder.initWorldStreaming(world, districtProvider, physicsWorld, initialPos);
     this.scene.add(this.cityBuilder.root);
     this.colliders = this.cityBuilder.colliders;
+
+    const nodeMap = new Map<string, RoadNode>();
+    const allSegments: RoadSegment[] = [];
+    for (const dRef of world.districts) {
+      const dist = districtProvider(dRef.districtId as DistrictId);
+      if (!dist) continue;
+      for (const node of dist.nodes) nodeMap.set(node.nodeId, node);
+      allSegments.push(...dist.segments);
+    }
+    if (world.connectors) {
+      allSegments.push(...world.connectors);
+    }
+    this.weatherFx.populateStreetlights(allSegments, nodeMap);
+  }
+
+  /** Syncs flooded road segment water overlays when WeatherSystem flood state changes. */
+  syncFloodedSegments(weatherSystem: WeatherSystem, roadNetwork: RoadNetwork): void {
+    if (weatherSystem.floodVersion === this.lastFloodVersion) return;
+    this.lastFloodVersion = weatherSystem.floodVersion;
+    const flooded = weatherSystem.getFloodedSegments(
+      roadNetwork.getAllSegments(),
+      this._floodedSegmentsScratch
+    );
+    this.weatherFx.updateFloodedSegments(flooded, roadNetwork.getNodesMap());
   }
 
   setBikeState(state: {
@@ -455,25 +516,23 @@ export class Renderer {
     this._bikeGroundPos.x = x;
     this._bikeGroundPos.y = y;
     this._bikeGroundPos.z = z;
+    const hasLedUpgrade = Boolean(
+      snapshot.economy?.ownedUpgrades?.includes('upgrade_led_headlight')
+    );
     this.weatherFx.update(
-      1 / 60,
+      frameDt > 0 ? frameDt : 1 / 60,
       snapshot.clock.minutes,
       snapshot.weather,
       this._bikeGroundPos,
       heading,
-      false
+      hasLedUpgrade,
+      this.bikeSpeed
     );
 
-    // Update sky dome gradient & position
-    this.skyDome.position.set(x, 0, z);
-    if (this.scene.background instanceof THREE.Color) {
-      this.skyUniforms.uTopColor.value.copy(this.scene.background);
-      if (this.scene.fog instanceof THREE.Fog) {
-        this.skyUniforms.uHorizonColor.value.copy(this.scene.fog.color);
-      } else {
-        this.skyUniforms.uHorizonColor.value.copy(this.scene.background);
-      }
-    }
+    // Update sky dome gradient & position centered on camera so it never clips (zero allocations)
+    this.skyDome.position.copy(this.cameraRig.camera.position);
+    this.skyUniforms.uTopColor.value.copy(this.weatherFx.getSkyTopColor());
+    this.skyUniforms.uHorizonColor.value.copy(this.weatherFx.getSkyHorizonColor());
 
     // Update CityBuilder LOD chunks, streaming, monsoon road wetness & night windows
     if (this.cityBuilder) {

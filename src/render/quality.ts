@@ -4,6 +4,8 @@ export interface QualityConfig {
   level: QualityLevel;
   pixelRatio: number;
   shadows: boolean;
+  shadowMapSize: number;
+  maxStreetlights: number;
   drawDistance: number;
   resolutionScale: number;
   rainParticles: number;
@@ -32,6 +34,8 @@ export function getQualityConfig(level: QualityLevel, dpr = 1): QualityConfig {
         level: 'low',
         pixelRatio: 0.75,
         shadows: false,
+        shadowMapSize: 0,
+        maxStreetlights: 0,
         drawDistance: 200,
         resolutionScale: 1.0,
         rainParticles: 350,
@@ -41,6 +45,8 @@ export function getQualityConfig(level: QualityLevel, dpr = 1): QualityConfig {
         level: 'medium',
         pixelRatio: 1.0,
         shadows: true,
+        shadowMapSize: 1024,
+        maxStreetlights: 2,
         drawDistance: 300,
         resolutionScale: 1.0,
         rainParticles: 750,
@@ -50,6 +56,8 @@ export function getQualityConfig(level: QualityLevel, dpr = 1): QualityConfig {
         level: 'high',
         pixelRatio: Math.min(dpr, 2),
         shadows: true,
+        shadowMapSize: 2048,
+        maxStreetlights: 4,
         drawDistance: 450,
         resolutionScale: 1.0,
         rainParticles: 1500,

@@ -338,3 +338,123 @@ describe('WeatherFx night and rain (T9.19)', () => {
     }
   });
 });
+
+describe('P2.5 TimeOfDay smooth cosine ramps, sky dome & WeatherFx rain/streetlights', () => {
+  it('TimeOfDay has no 05:30/06:00 color or sun intensity pop across all 1440 minutes', () => {
+    const channelDiff = (a: number, b: number) =>
+      Math.max(
+        Math.abs(((a >> 16) & 255) - ((b >> 16) & 255)),
+        Math.abs(((a >> 8) & 255) - ((b >> 8) & 255)),
+        Math.abs((a & 255) - (b & 255))
+      );
+
+    let maxSkyJump = 0;
+    let maxFogJump = 0;
+    let maxSunIntJump = 0;
+    let maxAmbIntJump = 0;
+
+    for (let m = 0; m < 1440; m++) {
+      const curr = TimeOfDay.getSunSkyState(m);
+      const next = TimeOfDay.getSunSkyState((m + 1) % 1440);
+      maxSkyJump = Math.max(maxSkyJump, channelDiff(curr.skyColor, next.skyColor));
+      maxFogJump = Math.max(maxFogJump, channelDiff(curr.fogColor, next.fogColor));
+      maxSunIntJump = Math.max(maxSunIntJump, Math.abs(curr.sunIntensity - next.sunIntensity));
+      maxAmbIntJump = Math.max(maxAmbIntJump, Math.abs(curr.ambientIntensity - next.ambientIntensity));
+    }
+
+    expect(maxSkyJump).toBeLessThanOrEqual(8);
+    expect(maxFogJump).toBeLessThanOrEqual(8);
+    expect(maxSunIntJump).toBeLessThanOrEqual(0.05);
+    expect(maxAmbIntJump).toBeLessThanOrEqual(0.03);
+
+    // Balanced hemisphere ground bounce & sky dome top/horizon gradient
+    const noon = TimeOfDay.getSunSkyState(12 * 60);
+    expect(noon.groundColor).toBeTypeOf('number');
+    expect(noon.skyTopColor).toBeTypeOf('number');
+    expect(noon.skyHorizonColor).toBeTypeOf('number');
+    expect(noon.skyTopColor).not.toBe(noon.skyHorizonColor);
+    expect(noon.sunIntensity).toBeGreaterThanOrEqual(1.2);
+
+    // Dusk streetlight fade transitions smoothly
+    expect(TimeOfDay.getStreetlightIntensity(12 * 60)).toBe(0);
+    expect(TimeOfDay.getStreetlightIntensity(18 * 60 + 30)).toBeGreaterThan(0.2);
+    expect(TimeOfDay.getStreetlightIntensity(22 * 60)).toBe(1);
+  });
+
+  it('WeatherFx wraps rain in world space, slants by bike speed, and emits ground splash particles', () => {
+    const fx = new WeatherFx(new THREE.Scene(), { rainCount: 40 });
+    fx.update(1 / 60, 12 * 60, 'heavyRain', { x: 400, y: 0, z: 300 }, 0, false, 18);
+
+    // Rain group stays in world coordinates (0,0,0) while drops wrap around bikePos
+    expect(fx.rainGroup.position.x).toBe(0);
+    expect(fx.rainGroup.position.z).toBe(0);
+    expect(fx.rainGroup.children.length).toBeGreaterThanOrEqual(2);
+
+    const drops = fx.rainGroup.children[0] as THREE.LineSegments;
+    const pos = drops.geometry.getAttribute('position');
+    let hasZSlant = false;
+    for (let i = 0; i < pos.count; i += 2) {
+      expect(Math.abs(pos.getX(i) - 400)).toBeLessThanOrEqual(26);
+      expect(Math.abs(pos.getZ(i) - 300)).toBeLessThanOrEqual(26);
+      if (Math.abs(pos.getZ(i) - pos.getZ(i + 1)) > 0.05) {
+        hasZSlant = true;
+      }
+    }
+    expect(hasZSlant).toBe(true);
+
+    // Ground splash LineSegments
+    const splashes = fx.rainGroup.children[1] as THREE.LineSegments;
+    expect(splashes).toBeInstanceOf(THREE.LineSegments);
+    expect(splashes.geometry.getAttribute('position').count).toBeGreaterThan(0);
+  });
+
+  it('WeatherFx populates streetlights, fades emissive at dusk, and pools PointLights by quality cap', () => {
+    const nodes: RoadNode[] = [
+      { nodeId: 'A', x: 0, z: 0, kind: 'junction' },
+      { nodeId: 'B', x: 120, z: 0, kind: 'junction' },
+    ];
+    const seg: RoadSegment = {
+      segmentId: 'AB',
+      startNodeId: 'A',
+      endNodeId: 'B',
+      width: 10,
+      surfaceCondition: 1,
+      trafficDensity: 0.2,
+      speedLimit: 40,
+      turnRestrictions: [],
+      motorcycleAccessible: true,
+      pedestrianDensity: 0.1,
+      riskLevel: 0.1,
+      oneWay: false,
+      divided: false,
+      lanes: 2,
+      roadType: 'main',
+      floodSensitivity: 0.2,
+      pickupPractical: true,
+      district: 'testloop',
+      tags: [],
+    };
+    const nodeMap = new Map(nodes.map((n) => [n.nodeId, n]));
+
+    const fx = new WeatherFx(new THREE.Scene(), { maxPointLights: 2 });
+    fx.populateStreetlights([seg], nodeMap);
+    expect(fx.streetlightsGroup.children.length).toBeGreaterThan(0);
+
+    // Daytime -> PointLights off
+    fx.update(1 / 60, 12 * 60, 'clear', { x: 60, y: 0, z: 0 }, 0);
+    const lights = fx.streetlightsGroup.children.filter(
+      (c): c is THREE.PointLight => c instanceof THREE.PointLight
+    );
+    expect(lights.every((l) => l.intensity === 0)).toBe(true);
+
+    // Night -> up to 2 PointLights active near player
+    fx.update(1 / 60, 22 * 60, 'clear', { x: 60, y: 0, z: 0 }, 0);
+    const activeLights = lights.filter((l) => l.visible && l.intensity > 0);
+    expect(activeLights.length).toBe(2);
+
+    // Quality cap 0 disables active PointLights
+    fx.setMaxPointLights(0);
+    fx.update(1 / 60, 22 * 60, 'clear', { x: 60, y: 0, z: 0 }, 0);
+    expect(lights.some((l) => l.visible && l.intensity > 0)).toBe(false);
+  });
+});

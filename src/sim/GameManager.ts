@@ -12,6 +12,7 @@ import type { Command, CommandResult } from '../core/commands';
 import type {
   DaySummary,
   PlayerEconomy,
+  RoadSegment,
   StoryState,
   WeatherKind,
   TransactionKind,
@@ -143,6 +144,12 @@ export class GameManager {
   spawnSpecialRequest?: (templateId: string) => void;
   /** Provided by GameSession so `{ type: 'recoverBike' }` resets the bike safely onto the road. */
   recoverBikeHandler?: () => boolean;
+  /** Optional road segments registered by GameSession for monsoon flood accumulation. */
+  private roadSegments?: readonly RoadSegment[];
+
+  setRoadSegments(segments: readonly RoadSegment[]): void {
+    this.roadSegments = segments;
+  }
 
   paused: boolean = false;
   accumulator: number = 0;
@@ -342,7 +349,7 @@ export class GameManager {
     const currHour = Math.floor(this.clock.minutes / 60);
 
     const dtMinutes = (dt * TIME_SCALE) / 60;
-    this.weatherSystem.update(dtMinutes);
+    this.weatherSystem.update(dtMinutes, this.roadSegments);
     this.weather = this.weatherSystem.weather;
     this.roadEvents.tick(dtMinutes, this.clock.minutes);
 

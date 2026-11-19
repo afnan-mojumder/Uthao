@@ -11,11 +11,29 @@ export class WeatherSystem {
   roadWetness: number; // 0 (bone dry) to 1 (slick/soaked)
   rainDurationMinutes: number; // Continuous minutes of current rainfall
   private segmentFloodLevels: Map<string, number> = new Map();
+  private floodedIds: Set<string> = new Set();
+  private _floodVersion = 0;
 
   constructor(opts: WeatherSystemOptions = {}) {
     this.weather = opts.initialWeather ?? 'clear';
     this.roadWetness = this.weather === 'lightRain' || this.weather === 'heavyRain' ? 1.0 : 0.0;
     this.rainDurationMinutes = 0;
+  }
+
+  get floodVersion(): number {
+    return this._floodVersion;
+  }
+
+  private setSegmentFloodInternal(segmentId: string, level: number): void {
+    const clamped = clamp(level, 0, 1);
+    this.segmentFloodLevels.set(segmentId, clamped);
+    const flooded = clamped >= 0.5;
+    if (flooded && !this.floodedIds.has(segmentId)) {
+      this.floodedIds.add(segmentId);
+      this._floodVersion++;
+    } else if (!flooded && this.floodedIds.delete(segmentId)) {
+      this._floodVersion++;
+    }
   }
 
   setWeather(w: WeatherKind): void {
@@ -41,7 +59,7 @@ export class WeatherSystem {
       if (segments) {
         for (const seg of segments) {
           const level = clamp(accumulation * seg.floodSensitivity, 0, 1);
-          this.segmentFloodLevels.set(seg.segmentId, level);
+          this.setSegmentFloodInternal(seg.segmentId, level);
         }
       }
     } else if (this.weather === 'lightRain') {
@@ -54,7 +72,9 @@ export class WeatherSystem {
           const current = this.segmentFloodLevels.get(seg.segmentId) ?? 0;
           const target = Math.min(0.25, seg.floodSensitivity * 0.3);
           const next = current < target ? Math.min(target, current + dtMinutes / 60) : current;
-          this.segmentFloodLevels.set(seg.segmentId, next);
+          if (next !== current) {
+            this.setSegmentFloodInternal(seg.segmentId, next);
+          }
         }
       }
     } else {
@@ -64,18 +84,19 @@ export class WeatherSystem {
       this.roadWetness = Math.max(0, this.roadWetness - dtMinutes / 15);
 
       // Flood drains over ~20 minutes
-      if (segments) {
-        for (const seg of segments) {
-          const current = this.segmentFloodLevels.get(seg.segmentId) ?? 0;
-          if (current > 0) {
-            const next = Math.max(0, current - dtMinutes / 20);
-            this.segmentFloodLevels.set(seg.segmentId, next);
+      if (this.segmentFloodLevels.size > 0) {
+        if (segments) {
+          for (const seg of segments) {
+            const current = this.segmentFloodLevels.get(seg.segmentId) ?? 0;
+            if (current > 0) {
+              this.setSegmentFloodInternal(seg.segmentId, Math.max(0, current - dtMinutes / 20));
+            }
           }
-        }
-      } else {
-        for (const [id, current] of this.segmentFloodLevels.entries()) {
-          if (current > 0) {
-            this.segmentFloodLevels.set(id, Math.max(0, current - dtMinutes / 20));
+        } else {
+          for (const [id, current] of this.segmentFloodLevels.entries()) {
+            if (current > 0) {
+              this.setSegmentFloodInternal(id, Math.max(0, current - dtMinutes / 20));
+            }
           }
         }
       }
@@ -95,7 +116,7 @@ export class WeatherSystem {
   }
 
   setFloodLevel(segmentId: string, level: number): void {
-    this.segmentFloodLevels.set(segmentId, clamp(level, 0, 1));
+    this.setSegmentFloodInternal(segmentId, level);
   }
 
   /**
@@ -161,9 +182,11 @@ export class WeatherSystem {
 
   /**
    * Returns all segments that are currently flooded.
+   * When `out` is provided, reuses it in-place with zero allocations.
    */
-  getFloodedSegments(segments: Iterable<RoadSegment>): RoadSegment[] {
-    const res: RoadSegment[] = [];
+  getFloodedSegments(segments: Iterable<RoadSegment>, out?: RoadSegment[]): RoadSegment[] {
+    const res = out ?? [];
+    res.length = 0;
     for (const seg of segments) {
       if (this.isFlooded(seg.segmentId)) {
         res.push(seg);

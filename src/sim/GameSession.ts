@@ -163,6 +163,7 @@ export class GameSession {
     });
     // T7.5: lets effect handlers (e.g. `endTrip`) reach the live ride state.
     this.gm.rideManager = this.ride;
+    this.gm.setRoadSegments(this.road.getAllSegments());
     this.ride.enableNegotiation = opts.negotiation ?? true;
     // H: an agreed fare well above fair adds an overcharge mark, a fair one slowly rebuilds goodwill.
     this.gm.bus.on('negotiation/result', (ev) => {

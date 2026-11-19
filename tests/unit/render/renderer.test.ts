@@ -168,3 +168,117 @@ describe('Renderer P2.4 wiring (bike cosmetics, brake light, flyover y, people p
     vi.restoreAllMocks();
   });
 });
+
+describe('Renderer P2.5 lighting, shadows, streetlights, LED headlight & flood FX', () => {
+  it('tracks directional shadow frustum target to player bike across the 1800m city and lazily inits shadows', () => {
+    const r = Renderer.init(canvas, 'low');
+
+    // Low quality starts with shadows disabled; dirLight.target must still be in the scene
+    expect(r.dirLight.castShadow).toBe(false);
+    expect(r.scene.children).toContain(r.dirLight.target);
+
+    // Transition low -> medium lazily initializes ±55m shadow frustum and >=1024 mapSize
+    r.setQuality('medium');
+    expect(r.dirLight.castShadow).toBe(true);
+    expect(r.webglRenderer.shadowMap.enabled).toBe(true);
+    expect(r.dirLight.shadow.mapSize.width).toBeGreaterThanOrEqual(1024);
+    expect(r.dirLight.shadow.mapSize.height).toBeGreaterThanOrEqual(1024);
+    expect(r.dirLight.shadow.camera.left).toBe(-55);
+    expect(r.dirLight.shadow.camera.right).toBe(55);
+    expect(r.dirLight.shadow.camera.top).toBe(55);
+    expect(r.dirLight.shadow.camera.bottom).toBe(-55);
+
+    // Ride far across the 1800m city
+    const bikeX = 1523.4;
+    const bikeY = 2.0;
+    const bikeZ = 1147.8;
+    r.setBikeState({ x: bikeX, y: bikeY, z: bikeZ, heading: 0, speed: 12, lean: 0, steer: 0 });
+    r.setBikeState({ x: bikeX, y: bikeY, z: bikeZ, heading: 0, speed: 12, lean: 0, steer: 0 });
+    r.render(snapshot);
+
+    const texelSize = (2 * 55) / r.dirLight.shadow.mapSize.width;
+    expect(Math.abs(r.dirLight.target.position.x - bikeX)).toBeLessThanOrEqual(texelSize * 0.5 + 1e-6);
+    expect(Math.abs(r.dirLight.target.position.z - bikeZ)).toBeLessThanOrEqual(texelSize * 0.5 + 1e-6);
+    // Snapped to exact texel grid
+    expect(Math.abs(r.dirLight.target.position.x / texelSize - Math.round(r.dirLight.target.position.x / texelSize))).toBeLessThan(1e-5);
+    expect(Math.abs(r.dirLight.target.position.z / texelSize - Math.round(r.dirLight.target.position.z / texelSize))).toBeLessThan(1e-5);
+
+    // Light position is offset along sun direction from target
+    expect(r.dirLight.position.x).toBeCloseTo(r.dirLight.target.position.x, 1);
+    expect(r.dirLight.position.y).toBeGreaterThan(r.dirLight.target.position.y + 100);
+    expect(r.dirLight.position.z).toBeGreaterThan(r.dirLight.target.position.z);
+  });
+
+  it('populates streetlights, applies upgrade_led_headlight, and syncs WeatherFx flood segments', async () => {
+    const { RoadNetwork } = await import('../../../src/sim/road/RoadNetwork');
+    const { WeatherSystem } = await import('../../../src/sim/world/WeatherSystem');
+    const { TimeOfDay } = await import('../../../src/sim/world/TimeOfDay');
+
+    const r = Renderer.init(canvas, 'medium');
+    const { districts } = loadWorld();
+    const mirpara = districts.get('mirpara')!;
+    r.loadDistrict(mirpara);
+
+    // Streetlights group populated along roads
+    expect(r.weatherFx.streetlightsGroup.children.length).toBeGreaterThan(0);
+
+    // Night render without LED upgrade -> stock halogen headlight + active streetlights
+    const nightSnapStock = {
+      clock: { minutes: 22 * 60 },
+      weather: 'clear',
+      economy: {
+        currentBikeId: 'old100',
+        installedCosmetics: {},
+        ownedUpgrades: [],
+      },
+    } as unknown as SimSnapshot;
+
+    const firstNode = mirpara.nodes[0]!;
+    r.setBikeState({ x: firstNode.x, z: firstNode.z, heading: 0, speed: 0, lean: 0, steer: 0 });
+    r.setBikeState({ x: firstNode.x, z: firstNode.z, heading: 0, speed: 0, lean: 0, steer: 0 });
+    r.render(nightSnapStock);
+
+    const stockSpec = TimeOfDay.getHeadlightSpec(false);
+    expect(r.weatherFx.headlight.visible).toBe(true);
+    expect(r.weatherFx.headlight.angle).toBeCloseTo(stockSpec.angle);
+    expect(r.weatherFx.headlight.distance).toBeCloseTo(stockSpec.distance);
+    expect(r.weatherFx.headlight.intensity).toBeCloseTo(stockSpec.intensity);
+
+    const pointLights = r.weatherFx.streetlightsGroup.children.filter(
+      (c): c is THREE.PointLight => c instanceof THREE.PointLight
+    );
+    expect(pointLights.length).toBeGreaterThan(0);
+    expect(pointLights.some((pl) => pl.visible && pl.intensity > 0)).toBe(true);
+
+    // Night render WITH upgrade_led_headlight -> wider, brighter cool-white LED cone
+    const nightSnapLed = {
+      clock: { minutes: 22 * 60 },
+      weather: 'clear',
+      economy: {
+        currentBikeId: 'old100',
+        installedCosmetics: {},
+        ownedUpgrades: ['upgrade_led_headlight'],
+      },
+    } as unknown as SimSnapshot;
+
+    r.render(nightSnapLed);
+    const ledSpec = TimeOfDay.getHeadlightSpec(true);
+    expect(r.weatherFx.headlight.angle).toBeCloseTo(ledSpec.angle);
+    expect(r.weatherFx.headlight.distance).toBeCloseTo(ledSpec.distance);
+    expect(r.weatherFx.headlight.intensity).toBeCloseTo(ledSpec.intensity);
+
+    // Flooded segments sync from WeatherSystem without rebuilding on unchanged frames
+    const roadNet = RoadNetwork.fromDistricts([mirpara]);
+    const ws = new WeatherSystem({ initialWeather: 'heavyRain' });
+    ws.update(30, roadNet.getAllSegments());
+
+    r.syncFloodedSegments(ws, roadNet);
+    const expectedFloodCount = ws.getFloodedSegments(roadNet.getAllSegments()).length;
+    expect(expectedFloodCount).toBeGreaterThan(0);
+    expect(r.weatherFx.waterGroup.children.length).toBe(expectedFloodCount);
+
+    const firstWaterMesh = r.weatherFx.waterGroup.children[0];
+    r.syncFloodedSegments(ws, roadNet);
+    expect(r.weatherFx.waterGroup.children[0]).toBe(firstWaterMesh);
+  });
+});
