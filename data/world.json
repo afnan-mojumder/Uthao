@@ -219,8 +219,8 @@
     },
     {
       "segmentId": "CONN_fulgate_mohakhal_2",
-      "startNodeId": "fulgate_res_s2_2",
-      "endNodeId": "mohakhal_res_n1_2",
+      "startNodeId": "fulgate_res_s2_3",
+      "endNodeId": "mohakhal_res_n1_3",
       "width": 9,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.75,
@@ -290,7 +290,7 @@
     },
     {
       "segmentId": "CONN_mohakhal_gulbari_n",
-      "startNodeId": "mohakhal_art_n_4",
+      "startNodeId": "mohakhal_art_n_5",
       "endNodeId": "gulbari_art_n_0",
       "width": 14,
       "surfaceCondition": 0.98,
@@ -315,7 +315,7 @@
     {
       "segmentId": "CONN_gulbari_mohakhal_s",
       "startNodeId": "gulbari_art_s_0",
-      "endNodeId": "mohakhal_art_s_4",
+      "endNodeId": "mohakhal_art_s_5",
       "width": 14,
       "surfaceCondition": 0.98,
       "trafficDensity": 0.6,
@@ -339,7 +339,7 @@
     {
       "segmentId": "CONN_dhanbagh_puranpara_1",
       "startNodeId": "dhanbagh_res_s2_1",
-      "endNodeId": "puranpara_res_n1_1",
+      "endNodeId": "puranpara_res_n1_2",
       "width": 7,
       "surfaceCondition": 0.75,
       "trafficDensity": 0.65,
@@ -362,7 +362,7 @@
     {
       "segmentId": "CONN_dhanbagh_puranpara_2",
       "startNodeId": "dhanbagh_res_s2_2",
-      "endNodeId": "puranpara_res_n1_2",
+      "endNodeId": "puranpara_res_n1_4",
       "width": 7,
       "surfaceCondition": 0.75,
       "trafficDensity": 0.65,
@@ -407,7 +407,7 @@
     },
     {
       "segmentId": "CONN_mohakhal_motinagar_2",
-      "startNodeId": "mohakhal_res_s2_2",
+      "startNodeId": "mohakhal_res_s2_3",
       "endNodeId": "motinagar_res_n1_2",
       "width": 9,
       "surfaceCondition": 0.9,
@@ -430,7 +430,7 @@
     },
     {
       "segmentId": "CONN_puranpara_motinagar_n",
-      "startNodeId": "puranpara_art_n_4",
+      "startNodeId": "puranpara_art_7",
       "endNodeId": "motinagar_art_n_0",
       "width": 10,
       "surfaceCondition": 0.85,
@@ -455,7 +455,7 @@
     {
       "segmentId": "CONN_motinagar_puranpara_s",
       "startNodeId": "motinagar_art_s_0",
-      "endNodeId": "puranpara_art_s_4",
+      "endNodeId": "puranpara_art_7",
       "width": 10,
       "surfaceCondition": 0.85,
       "trafficDensity": 0.7,

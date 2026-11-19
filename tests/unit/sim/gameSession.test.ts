@@ -451,3 +451,113 @@ describe('P1.3 puncture cooldown across day boundaries and resets', () => {
     chanceSpy.mockRestore();
   });
 });
+
+describe('P2.1 bike.y flyover elevation tracking', () => {
+  it('bike.y smoothly rises onto an elevated flyover (y >= 5.5m) without snapping to ground lanes underneath', async () => {
+    const flyDistrict: DistrictData = {
+      districtId: 'mohakhal',
+      name: { bn: 'মহাখাল', en: 'Mohakhal' },
+      nodes: [
+        { nodeId: 'ramp_start', x: 0, y: 0, z: 0, kind: 'junction' },
+        { nodeId: 'fly_w', x: 100, y: 6.0, z: 0, kind: 'junction', tags: ['flyover'] },
+        { nodeId: 'fly_e', x: 300, y: 6.0, z: 0, kind: 'junction', tags: ['flyover'] },
+        { nodeId: 'under_n', x: 200, y: 0, z: -40, kind: 'junction' },
+        { nodeId: 'under_s', x: 200, y: 0, z: 40, kind: 'junction' },
+      ],
+      segments: [
+        {
+          segmentId: 'seg_ramp',
+          startNodeId: 'ramp_start',
+          endNodeId: 'fly_w',
+          width: 8,
+          surfaceCondition: 0.95,
+          trafficDensity: 0.3,
+          speedLimit: 45,
+          turnRestrictions: [],
+          motorcycleAccessible: true,
+          pedestrianDensity: 0,
+          riskLevel: 0.05,
+          oneWay: true,
+          divided: false,
+          lanes: 1,
+          roadType: 'flyover',
+          floodSensitivity: 0,
+          pickupPractical: false,
+          district: 'mohakhal',
+          tags: ['flyover', 'ramp'],
+        },
+        {
+          segmentId: 'seg_deck',
+          startNodeId: 'fly_w',
+          endNodeId: 'fly_e',
+          width: 10,
+          surfaceCondition: 0.98,
+          trafficDensity: 0.3,
+          speedLimit: 60,
+          turnRestrictions: [],
+          motorcycleAccessible: true,
+          pedestrianDensity: 0,
+          riskLevel: 0.05,
+          oneWay: true,
+          divided: false,
+          lanes: 2,
+          roadType: 'flyover',
+          floodSensitivity: 0,
+          pickupPractical: false,
+          district: 'mohakhal',
+          tags: ['flyover'],
+        },
+        {
+          segmentId: 'seg_ground_cross',
+          startNodeId: 'under_n',
+          endNodeId: 'under_s',
+          width: 10,
+          surfaceCondition: 0.9,
+          trafficDensity: 0.5,
+          speedLimit: 40,
+          turnRestrictions: [],
+          motorcycleAccessible: true,
+          pedestrianDensity: 0.2,
+          riskLevel: 0.1,
+          oneWay: false,
+          divided: false,
+          lanes: 2,
+          roadType: 'main',
+          floodSensitivity: 0.1,
+          pickupPractical: true,
+          district: 'mohakhal',
+          tags: [],
+        },
+      ],
+      pois: [],
+      lots: [],
+    };
+
+    const road = RoadNetwork.fromDistricts([flyDistrict]);
+    const gm = new GameManager({ seed: 21, mode: 'career', data: {} });
+    const physics = await PhysicsWorld.create();
+    // Ground-level crossing kerb collider that sits at y = 0..0.18 across x=200, z=0
+    physics.addStaticBox(200, 0.09, 0, 5, 0.09, 0.5, 0, 'kerb');
+
+    const session = new GameSession({ gm, road, physics, autoRequests: false });
+    session.bike.x = 5;
+    session.bike.z = 0;
+    session.bike.y = 0;
+    session.bike.heading = Math.PI / 2; // heading +X
+
+    const ys: number[] = [];
+    for (let i = 0; i < 1800 && session.bike.x < 250; i++) {
+      session.step({ throttle: 1, brake: 0, steer: 0 }, SIM_DT);
+      ys.push(session.bike.y);
+    }
+
+    // Must rise smoothly up the ramp onto the elevated deck (y >= 5.5m)
+    expect(session.bike.x).toBeGreaterThan(220);
+    expect(session.bike.y).toBeGreaterThanOrEqual(5.5);
+    expect(Math.max(...ys)).toBeCloseTo(6.0, 2);
+
+    // Must never snap down to y = 0 while crossing over the ground street at x = 200
+    const postDeckYs = ys.slice(Math.floor(ys.length * 0.7));
+    expect(Math.min(...postDeckYs)).toBeGreaterThanOrEqual(5.5);
+  });
+});

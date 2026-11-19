@@ -7,8 +7,8 @@
   "nodes": [
     {
       "nodeId": "art_n_0",
-      "x": 0,
-      "z": 295,
+      "x": 14,
+      "z": 291,
       "kind": "uturn",
       "tags": [
         "uturn"
@@ -16,8 +16,8 @@
     },
     {
       "nodeId": "art_s_0",
-      "x": 0,
-      "z": 305,
+      "x": 14,
+      "z": 309,
       "kind": "uturn",
       "tags": [
         "uturn"
@@ -25,8 +25,8 @@
     },
     {
       "nodeId": "art_n_1",
-      "x": 150,
-      "z": 295,
+      "x": 153,
+      "z": 291,
       "kind": "uturn",
       "tags": [
         "uturn"
@@ -34,8 +34,8 @@
     },
     {
       "nodeId": "art_s_1",
-      "x": 150,
-      "z": 305,
+      "x": 153,
+      "z": 309,
       "kind": "uturn",
       "tags": [
         "uturn"
@@ -43,26 +43,28 @@
     },
     {
       "nodeId": "art_n_2",
-      "x": 300,
-      "z": 295,
+      "x": 303,
+      "z": 291,
       "kind": "junction",
+      "signal": true,
       "tags": [
         "crossing"
       ]
     },
     {
       "nodeId": "art_s_2",
-      "x": 300,
-      "z": 305,
+      "x": 303,
+      "z": 309,
       "kind": "junction",
+      "signal": true,
       "tags": [
         "crossing"
       ]
     },
     {
       "nodeId": "art_n_3",
-      "x": 450,
-      "z": 295,
+      "x": 443,
+      "z": 291,
       "kind": "uturn",
       "tags": [
         "uturn"
@@ -70,8 +72,8 @@
     },
     {
       "nodeId": "art_s_3",
-      "x": 450,
-      "z": 305,
+      "x": 443,
+      "z": 309,
       "kind": "uturn",
       "tags": [
         "uturn"
@@ -79,8 +81,8 @@
     },
     {
       "nodeId": "art_n_4",
-      "x": 600,
-      "z": 295,
+      "x": 586,
+      "z": 291,
       "kind": "uturn",
       "tags": [
         "uturn"
@@ -88,8 +90,8 @@
     },
     {
       "nodeId": "art_s_4",
-      "x": 600,
-      "z": 305,
+      "x": 586,
+      "z": 309,
       "kind": "uturn",
       "tags": [
         "uturn"
@@ -97,17 +99,8 @@
     },
     {
       "nodeId": "res_n1_0",
-      "x": 0,
-      "z": 77,
-      "kind": "junction",
-      "tags": [
-        "speed_bump"
-      ]
-    },
-    {
-      "nodeId": "res_n2_0",
-      "x": 0,
-      "z": 177,
+      "x": 14,
+      "z": 78,
       "kind": "junction",
       "tags": [
         "speed_bump"
@@ -116,16 +109,7 @@
     {
       "nodeId": "res_n1_1",
       "x": 153,
-      "z": 80,
-      "kind": "junction",
-      "tags": [
-        "speed_bump"
-      ]
-    },
-    {
-      "nodeId": "res_n2_1",
-      "x": 153,
-      "z": 180,
+      "z": 78,
       "kind": "junction",
       "tags": [
         "speed_bump"
@@ -133,17 +117,8 @@
     },
     {
       "nodeId": "res_n1_2",
-      "x": 302,
-      "z": 79,
-      "kind": "junction",
-      "tags": [
-        "speed_bump"
-      ]
-    },
-    {
-      "nodeId": "res_n2_2",
-      "x": 302,
-      "z": 179,
+      "x": 303,
+      "z": 78,
       "kind": "junction",
       "tags": [
         "speed_bump"
@@ -151,17 +126,8 @@
     },
     {
       "nodeId": "res_n1_3",
-      "x": 452,
-      "z": 81,
-      "kind": "junction",
-      "tags": [
-        "speed_bump"
-      ]
-    },
-    {
-      "nodeId": "res_n2_3",
-      "x": 452,
-      "z": 181,
+      "x": 443,
+      "z": 78,
       "kind": "junction",
       "tags": [
         "speed_bump"
@@ -169,8 +135,44 @@
     },
     {
       "nodeId": "res_n1_4",
-      "x": 600,
-      "z": 83,
+      "x": 586,
+      "z": 78,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "res_n2_0",
+      "x": 14,
+      "z": 184,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "res_n2_1",
+      "x": 152,
+      "z": 184,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "res_n2_2",
+      "x": 304,
+      "z": 186,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "res_n2_3",
+      "x": 441,
+      "z": 180,
       "kind": "junction",
       "tags": [
         "speed_bump"
@@ -178,8 +180,8 @@
     },
     {
       "nodeId": "res_n2_4",
-      "x": 600,
-      "z": 183,
+      "x": 586,
+      "z": 182,
       "kind": "junction",
       "tags": [
         "speed_bump"
@@ -187,87 +189,108 @@
     },
     {
       "nodeId": "res_s1_0",
-      "x": 0,
-      "z": 418,
-      "kind": "junction"
-    },
-    {
-      "nodeId": "res_s2_0",
-      "x": 0,
-      "z": 518,
-      "kind": "junction"
-    },
-    {
-      "nodeId": "res_s1_1",
-      "x": 146,
+      "x": 14,
       "z": 419,
       "kind": "junction"
     },
     {
-      "nodeId": "res_s2_1",
-      "x": 146,
-      "z": 519,
+      "nodeId": "res_s1_1",
+      "x": 152,
+      "z": 420,
       "kind": "junction"
     },
     {
       "nodeId": "res_s1_2",
       "x": 303,
-      "z": 419,
+      "z": 414,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "res_s1_3",
+      "x": 439,
+      "z": 416,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "res_s1_4",
+      "x": 586,
+      "z": 414,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "res_s2_0",
+      "x": 14,
+      "z": 522,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "res_s2_1",
+      "x": 153,
+      "z": 522,
       "kind": "junction"
     },
     {
       "nodeId": "res_s2_2",
       "x": 303,
-      "z": 519,
-      "kind": "junction"
-    },
-    {
-      "nodeId": "res_s1_3",
-      "x": 454,
-      "z": 420,
+      "z": 522,
       "kind": "junction"
     },
     {
       "nodeId": "res_s2_3",
-      "x": 454,
-      "z": 520,
-      "kind": "junction"
-    },
-    {
-      "nodeId": "res_s1_4",
-      "x": 600,
-      "z": 417,
+      "x": 443,
+      "z": 522,
       "kind": "junction"
     },
     {
       "nodeId": "res_s2_4",
-      "x": 600,
-      "z": 517,
+      "x": 586,
+      "z": 522,
       "kind": "junction"
     },
     {
-      "nodeId": "alley_nw_mid",
-      "x": 75,
-      "z": 130,
-      "kind": "junction"
+      "nodeId": "alley_dead_1",
+      "x": 509,
+      "z": 129,
+      "kind": "deadEnd",
+      "tags": [
+        "alley"
+      ]
     },
     {
-      "nodeId": "alley_ne_gate",
-      "x": 375,
-      "z": 50,
-      "kind": "junction"
+      "nodeId": "alley_mid_2",
+      "x": 376,
+      "z": 468,
+      "kind": "junction",
+      "tags": [
+        "alley"
+      ]
     },
     {
-      "nodeId": "alley_sc_mid",
-      "x": 225,
-      "z": 470,
-      "kind": "junction"
+      "nodeId": "alley_mid_3",
+      "x": 86,
+      "z": 474,
+      "kind": "junction",
+      "tags": [
+        "alley"
+      ]
     },
     {
-      "nodeId": "alley_se_deadend",
-      "x": 525,
-      "z": 490,
-      "kind": "deadEnd"
+      "nodeId": "alley_dead_4",
+      "x": 374,
+      "z": 127,
+      "kind": "deadEnd",
+      "tags": [
+        "alley"
+      ]
+    },
+    {
+      "nodeId": "alley_mid_5",
+      "x": 79,
+      "z": 128,
+      "kind": "junction",
+      "tags": [
+        "alley"
+      ]
     }
   ],
   "segments": [
@@ -284,14 +307,15 @@
       "pedestrianDensity": 0.2,
       "riskLevel": 0.1,
       "oneWay": true,
-      "divided": true,
+      "divided": false,
       "lanes": 2,
       "roadType": "main",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "mirpara",
       "tags": [
-        "arterial"
+        "arterial",
+        "arterial_outer_north"
       ]
     },
     {
@@ -307,14 +331,15 @@
       "pedestrianDensity": 0.2,
       "riskLevel": 0.1,
       "oneWay": true,
-      "divided": true,
+      "divided": false,
       "lanes": 2,
       "roadType": "main",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "mirpara",
       "tags": [
-        "arterial"
+        "arterial",
+        "arterial_outer_south"
       ]
     },
     {
@@ -330,14 +355,15 @@
       "pedestrianDensity": 0.2,
       "riskLevel": 0.1,
       "oneWay": true,
-      "divided": true,
+      "divided": false,
       "lanes": 2,
       "roadType": "main",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "mirpara",
       "tags": [
-        "arterial"
+        "arterial",
+        "arterial_outer_north"
       ]
     },
     {
@@ -353,14 +379,15 @@
       "pedestrianDensity": 0.2,
       "riskLevel": 0.1,
       "oneWay": true,
-      "divided": true,
+      "divided": false,
       "lanes": 2,
       "roadType": "main",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "mirpara",
       "tags": [
-        "arterial"
+        "arterial",
+        "arterial_outer_south"
       ]
     },
     {
@@ -376,14 +403,15 @@
       "pedestrianDensity": 0.2,
       "riskLevel": 0.1,
       "oneWay": true,
-      "divided": true,
+      "divided": false,
       "lanes": 2,
       "roadType": "main",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "mirpara",
       "tags": [
-        "arterial"
+        "arterial",
+        "arterial_outer_north"
       ]
     },
     {
@@ -399,14 +427,15 @@
       "pedestrianDensity": 0.2,
       "riskLevel": 0.1,
       "oneWay": true,
-      "divided": true,
+      "divided": false,
       "lanes": 2,
       "roadType": "main",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "mirpara",
       "tags": [
-        "arterial"
+        "arterial",
+        "arterial_outer_south"
       ]
     },
     {
@@ -422,14 +451,15 @@
       "pedestrianDensity": 0.2,
       "riskLevel": 0.1,
       "oneWay": true,
-      "divided": true,
+      "divided": false,
       "lanes": 2,
       "roadType": "main",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "mirpara",
       "tags": [
-        "arterial"
+        "arterial",
+        "arterial_outer_north"
       ]
     },
     {
@@ -445,14 +475,15 @@
       "pedestrianDensity": 0.2,
       "riskLevel": 0.1,
       "oneWay": true,
-      "divided": true,
+      "divided": false,
       "lanes": 2,
       "roadType": "main",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "mirpara",
       "tags": [
-        "arterial"
+        "arterial",
+        "arterial_outer_south"
       ]
     },
     {
@@ -575,7 +606,7 @@
       "segmentId": "S_mirpara_14",
       "startNodeId": "res_n1_0",
       "endNodeId": "res_n1_1",
-      "width": 7,
+      "width": 8,
       "surfaceCondition": 0.6,
       "trafficDensity": 0.3,
       "speedLimit": 30,
@@ -596,10 +627,10 @@
     },
     {
       "segmentId": "S_mirpara_15",
-      "startNodeId": "res_n2_0",
-      "endNodeId": "res_n2_1",
-      "width": 7,
-      "surfaceCondition": 0.9,
+      "startNodeId": "res_n1_1",
+      "endNodeId": "res_n1_2",
+      "width": 8,
+      "surfaceCondition": 0.85,
       "trafficDensity": 0.3,
       "speedLimit": 30,
       "turnRestrictions": [],
@@ -619,9 +650,9 @@
     },
     {
       "segmentId": "S_mirpara_16",
-      "startNodeId": "res_n1_1",
-      "endNodeId": "res_n1_2",
-      "width": 7,
+      "startNodeId": "res_n1_2",
+      "endNodeId": "res_n1_3",
+      "width": 8,
       "surfaceCondition": 0.85,
       "trafficDensity": 0.3,
       "speedLimit": 30,
@@ -642,10 +673,10 @@
     },
     {
       "segmentId": "S_mirpara_17",
-      "startNodeId": "res_n2_1",
-      "endNodeId": "res_n2_2",
-      "width": 7,
-      "surfaceCondition": 0.9,
+      "startNodeId": "res_n1_3",
+      "endNodeId": "res_n1_4",
+      "width": 8,
+      "surfaceCondition": 0.85,
       "trafficDensity": 0.3,
       "speedLimit": 30,
       "turnRestrictions": [],
@@ -665,9 +696,9 @@
     },
     {
       "segmentId": "S_mirpara_18",
-      "startNodeId": "res_n1_2",
-      "endNodeId": "res_n1_3",
-      "width": 7,
+      "startNodeId": "res_n2_0",
+      "endNodeId": "res_n2_1",
+      "width": 8,
       "surfaceCondition": 0.85,
       "trafficDensity": 0.3,
       "speedLimit": 30,
@@ -688,10 +719,10 @@
     },
     {
       "segmentId": "S_mirpara_19",
-      "startNodeId": "res_n2_2",
-      "endNodeId": "res_n2_3",
-      "width": 7,
-      "surfaceCondition": 0.9,
+      "startNodeId": "res_n2_1",
+      "endNodeId": "res_n2_2",
+      "width": 8,
+      "surfaceCondition": 0.85,
       "trafficDensity": 0.3,
       "speedLimit": 30,
       "turnRestrictions": [],
@@ -711,9 +742,9 @@
     },
     {
       "segmentId": "S_mirpara_20",
-      "startNodeId": "res_n1_3",
-      "endNodeId": "res_n1_4",
-      "width": 7,
+      "startNodeId": "res_n2_2",
+      "endNodeId": "res_n2_3",
+      "width": 8,
       "surfaceCondition": 0.85,
       "trafficDensity": 0.3,
       "speedLimit": 30,
@@ -736,8 +767,8 @@
       "segmentId": "S_mirpara_21",
       "startNodeId": "res_n2_3",
       "endNodeId": "res_n2_4",
-      "width": 7,
-      "surfaceCondition": 0.9,
+      "width": 8,
+      "surfaceCondition": 0.85,
       "trafficDensity": 0.3,
       "speedLimit": 30,
       "turnRestrictions": [],
@@ -759,7 +790,7 @@
       "segmentId": "S_mirpara_22",
       "startNodeId": "res_n1_0",
       "endNodeId": "res_n2_0",
-      "width": 7,
+      "width": 8,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
       "speedLimit": 30,
@@ -782,7 +813,7 @@
       "segmentId": "S_mirpara_23",
       "startNodeId": "res_n2_0",
       "endNodeId": "art_n_0",
-      "width": 8,
+      "width": 9,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
       "speedLimit": 35,
@@ -803,7 +834,7 @@
       "segmentId": "S_mirpara_24",
       "startNodeId": "res_n1_1",
       "endNodeId": "res_n2_1",
-      "width": 7,
+      "width": 8,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
       "speedLimit": 30,
@@ -826,28 +857,30 @@
       "segmentId": "S_mirpara_25",
       "startNodeId": "res_n2_1",
       "endNodeId": "art_n_1",
-      "width": 8,
+      "width": 14,
       "surfaceCondition": 0.9,
-      "trafficDensity": 0.3,
-      "speedLimit": 35,
+      "trafficDensity": 0.49500000000000005,
+      "speedLimit": 45,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
       "pedestrianDensity": 0.2,
       "riskLevel": 0.1,
       "oneWay": false,
-      "divided": false,
-      "lanes": 2,
+      "divided": true,
+      "lanes": 4,
       "roadType": "main",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "mirpara",
-      "tags": []
+      "tags": [
+        "arterial"
+      ]
     },
     {
       "segmentId": "S_mirpara_26",
       "startNodeId": "res_n1_2",
       "endNodeId": "res_n2_2",
-      "width": 7,
+      "width": 8,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
       "speedLimit": 30,
@@ -870,7 +903,7 @@
       "segmentId": "S_mirpara_27",
       "startNodeId": "res_n2_2",
       "endNodeId": "art_n_2",
-      "width": 8,
+      "width": 9,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
       "speedLimit": 35,
@@ -891,7 +924,7 @@
       "segmentId": "S_mirpara_28",
       "startNodeId": "res_n1_3",
       "endNodeId": "res_n2_3",
-      "width": 7,
+      "width": 8,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
       "speedLimit": 30,
@@ -914,7 +947,7 @@
       "segmentId": "S_mirpara_29",
       "startNodeId": "res_n2_3",
       "endNodeId": "art_n_3",
-      "width": 8,
+      "width": 9,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
       "speedLimit": 35,
@@ -935,7 +968,7 @@
       "segmentId": "S_mirpara_30",
       "startNodeId": "res_n1_4",
       "endNodeId": "res_n2_4",
-      "width": 7,
+      "width": 8,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
       "speedLimit": 30,
@@ -958,7 +991,7 @@
       "segmentId": "S_mirpara_31",
       "startNodeId": "res_n2_4",
       "endNodeId": "art_n_4",
-      "width": 8,
+      "width": 9,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
       "speedLimit": 35,
@@ -979,10 +1012,10 @@
       "segmentId": "S_mirpara_32",
       "startNodeId": "res_s1_0",
       "endNodeId": "res_s1_1",
-      "width": 9,
+      "width": 7,
       "surfaceCondition": 0.65,
-      "trafficDensity": 0.7,
-      "speedLimit": 25,
+      "trafficDensity": 0.72,
+      "speedLimit": 22,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
       "pedestrianDensity": 0.85,
@@ -990,7 +1023,7 @@
       "oneWay": false,
       "divided": false,
       "lanes": 2,
-      "roadType": "residential",
+      "roadType": "market",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "mirpara",
@@ -1000,33 +1033,12 @@
     },
     {
       "segmentId": "S_mirpara_33",
-      "startNodeId": "res_s2_0",
-      "endNodeId": "res_s2_1",
-      "width": 7,
-      "surfaceCondition": 0.9,
-      "trafficDensity": 0.3,
-      "speedLimit": 30,
-      "turnRestrictions": [],
-      "motorcycleAccessible": true,
-      "pedestrianDensity": 0.2,
-      "riskLevel": 0.1,
-      "oneWay": false,
-      "divided": false,
-      "lanes": 2,
-      "roadType": "residential",
-      "floodSensitivity": 0.2,
-      "pickupPractical": true,
-      "district": "mirpara",
-      "tags": []
-    },
-    {
-      "segmentId": "S_mirpara_34",
       "startNodeId": "res_s1_1",
       "endNodeId": "res_s1_2",
-      "width": 9,
+      "width": 7,
       "surfaceCondition": 0.65,
-      "trafficDensity": 0.7,
-      "speedLimit": 25,
+      "trafficDensity": 0.72,
+      "speedLimit": 22,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
       "pedestrianDensity": 0.85,
@@ -1034,7 +1046,30 @@
       "oneWay": false,
       "divided": false,
       "lanes": 2,
-      "roadType": "residential",
+      "roadType": "market",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mirpara",
+      "tags": [
+        "market"
+      ]
+    },
+    {
+      "segmentId": "S_mirpara_34",
+      "startNodeId": "res_s1_2",
+      "endNodeId": "res_s1_3",
+      "width": 7,
+      "surfaceCondition": 0.65,
+      "trafficDensity": 0.72,
+      "speedLimit": 22,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.85,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "market",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "mirpara",
@@ -1044,10 +1079,33 @@
     },
     {
       "segmentId": "S_mirpara_35",
-      "startNodeId": "res_s2_1",
-      "endNodeId": "res_s2_2",
+      "startNodeId": "res_s1_3",
+      "endNodeId": "res_s1_4",
       "width": 7,
-      "surfaceCondition": 0.9,
+      "surfaceCondition": 0.65,
+      "trafficDensity": 0.72,
+      "speedLimit": 22,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.85,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "market",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mirpara",
+      "tags": [
+        "market"
+      ]
+    },
+    {
+      "segmentId": "S_mirpara_36",
+      "startNodeId": "res_s2_0",
+      "endNodeId": "res_s2_1",
+      "width": 8,
+      "surfaceCondition": 0.85,
       "trafficDensity": 0.3,
       "speedLimit": 30,
       "turnRestrictions": [],
@@ -1064,34 +1122,11 @@
       "tags": []
     },
     {
-      "segmentId": "S_mirpara_36",
-      "startNodeId": "res_s1_2",
-      "endNodeId": "res_s1_3",
-      "width": 9,
-      "surfaceCondition": 0.65,
-      "trafficDensity": 0.7,
-      "speedLimit": 25,
-      "turnRestrictions": [],
-      "motorcycleAccessible": true,
-      "pedestrianDensity": 0.85,
-      "riskLevel": 0.1,
-      "oneWay": false,
-      "divided": false,
-      "lanes": 2,
-      "roadType": "residential",
-      "floodSensitivity": 0.2,
-      "pickupPractical": true,
-      "district": "mirpara",
-      "tags": [
-        "market"
-      ]
-    },
-    {
       "segmentId": "S_mirpara_37",
-      "startNodeId": "res_s2_2",
-      "endNodeId": "res_s2_3",
-      "width": 7,
-      "surfaceCondition": 0.9,
+      "startNodeId": "res_s2_1",
+      "endNodeId": "res_s2_2",
+      "width": 8,
+      "surfaceCondition": 0.85,
       "trafficDensity": 0.3,
       "speedLimit": 30,
       "turnRestrictions": [],
@@ -1109,15 +1144,15 @@
     },
     {
       "segmentId": "S_mirpara_38",
-      "startNodeId": "res_s1_3",
-      "endNodeId": "res_s1_4",
-      "width": 9,
-      "surfaceCondition": 0.65,
-      "trafficDensity": 0.7,
-      "speedLimit": 25,
+      "startNodeId": "res_s2_2",
+      "endNodeId": "res_s2_3",
+      "width": 8,
+      "surfaceCondition": 0.85,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
-      "pedestrianDensity": 0.85,
+      "pedestrianDensity": 0.2,
       "riskLevel": 0.1,
       "oneWay": false,
       "divided": false,
@@ -1126,16 +1161,14 @@
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "mirpara",
-      "tags": [
-        "market"
-      ]
+      "tags": []
     },
     {
       "segmentId": "S_mirpara_39",
       "startNodeId": "res_s2_3",
       "endNodeId": "res_s2_4",
-      "width": 7,
-      "surfaceCondition": 0.9,
+      "width": 8,
+      "surfaceCondition": 0.85,
       "trafficDensity": 0.3,
       "speedLimit": 30,
       "turnRestrictions": [],
@@ -1153,12 +1186,12 @@
     },
     {
       "segmentId": "S_mirpara_40",
-      "startNodeId": "art_s_0",
-      "endNodeId": "res_s1_0",
+      "startNodeId": "res_s1_0",
+      "endNodeId": "res_s2_0",
       "width": 8,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
-      "speedLimit": 35,
+      "speedLimit": 30,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
       "pedestrianDensity": 0.2,
@@ -1166,7 +1199,7 @@
       "oneWay": false,
       "divided": false,
       "lanes": 2,
-      "roadType": "main",
+      "roadType": "residential",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "mirpara",
@@ -1174,12 +1207,12 @@
     },
     {
       "segmentId": "S_mirpara_41",
-      "startNodeId": "res_s1_0",
-      "endNodeId": "res_s2_0",
-      "width": 7,
+      "startNodeId": "art_s_0",
+      "endNodeId": "res_s1_0",
+      "width": 9,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
-      "speedLimit": 30,
+      "speedLimit": 35,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
       "pedestrianDensity": 0.2,
@@ -1187,7 +1220,7 @@
       "oneWay": false,
       "divided": false,
       "lanes": 2,
-      "roadType": "residential",
+      "roadType": "main",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "mirpara",
@@ -1195,12 +1228,12 @@
     },
     {
       "segmentId": "S_mirpara_42",
-      "startNodeId": "art_s_1",
-      "endNodeId": "res_s1_1",
+      "startNodeId": "res_s1_1",
+      "endNodeId": "res_s2_1",
       "width": 8,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
-      "speedLimit": 35,
+      "speedLimit": 30,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
       "pedestrianDensity": 0.2,
@@ -1208,7 +1241,7 @@
       "oneWay": false,
       "divided": false,
       "lanes": 2,
-      "roadType": "main",
+      "roadType": "residential",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "mirpara",
@@ -1216,12 +1249,12 @@
     },
     {
       "segmentId": "S_mirpara_43",
-      "startNodeId": "res_s1_1",
-      "endNodeId": "res_s2_1",
-      "width": 7,
+      "startNodeId": "art_s_1",
+      "endNodeId": "res_s1_1",
+      "width": 9,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
-      "speedLimit": 30,
+      "speedLimit": 35,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
       "pedestrianDensity": 0.2,
@@ -1229,7 +1262,7 @@
       "oneWay": false,
       "divided": false,
       "lanes": 2,
-      "roadType": "residential",
+      "roadType": "main",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "mirpara",
@@ -1237,12 +1270,12 @@
     },
     {
       "segmentId": "S_mirpara_44",
-      "startNodeId": "art_s_2",
-      "endNodeId": "res_s1_2",
+      "startNodeId": "res_s1_2",
+      "endNodeId": "res_s2_2",
       "width": 8,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
-      "speedLimit": 35,
+      "speedLimit": 30,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
       "pedestrianDensity": 0.2,
@@ -1250,7 +1283,7 @@
       "oneWay": false,
       "divided": false,
       "lanes": 2,
-      "roadType": "main",
+      "roadType": "residential",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "mirpara",
@@ -1258,12 +1291,12 @@
     },
     {
       "segmentId": "S_mirpara_45",
-      "startNodeId": "res_s1_2",
-      "endNodeId": "res_s2_2",
-      "width": 7,
+      "startNodeId": "art_s_2",
+      "endNodeId": "res_s1_2",
+      "width": 9,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
-      "speedLimit": 30,
+      "speedLimit": 35,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
       "pedestrianDensity": 0.2,
@@ -1271,7 +1304,7 @@
       "oneWay": false,
       "divided": false,
       "lanes": 2,
-      "roadType": "residential",
+      "roadType": "main",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "mirpara",
@@ -1279,12 +1312,12 @@
     },
     {
       "segmentId": "S_mirpara_46",
-      "startNodeId": "art_s_3",
-      "endNodeId": "res_s1_3",
+      "startNodeId": "res_s1_3",
+      "endNodeId": "res_s2_3",
       "width": 8,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
-      "speedLimit": 35,
+      "speedLimit": 30,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
       "pedestrianDensity": 0.2,
@@ -1292,7 +1325,7 @@
       "oneWay": false,
       "divided": false,
       "lanes": 2,
-      "roadType": "main",
+      "roadType": "residential",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "mirpara",
@@ -1300,30 +1333,9 @@
     },
     {
       "segmentId": "S_mirpara_47",
-      "startNodeId": "res_s1_3",
-      "endNodeId": "res_s2_3",
-      "width": 7,
-      "surfaceCondition": 0.9,
-      "trafficDensity": 0.3,
-      "speedLimit": 30,
-      "turnRestrictions": [],
-      "motorcycleAccessible": true,
-      "pedestrianDensity": 0.2,
-      "riskLevel": 0.1,
-      "oneWay": false,
-      "divided": false,
-      "lanes": 2,
-      "roadType": "residential",
-      "floodSensitivity": 0.2,
-      "pickupPractical": true,
-      "district": "mirpara",
-      "tags": []
-    },
-    {
-      "segmentId": "S_mirpara_48",
-      "startNodeId": "art_s_4",
-      "endNodeId": "res_s1_4",
-      "width": 8,
+      "startNodeId": "art_s_3",
+      "endNodeId": "res_s1_3",
+      "width": 9,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
       "speedLimit": 35,
@@ -1341,10 +1353,10 @@
       "tags": []
     },
     {
-      "segmentId": "S_mirpara_49",
+      "segmentId": "S_mirpara_48",
       "startNodeId": "res_s1_4",
       "endNodeId": "res_s2_4",
-      "width": 7,
+      "width": 8,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
       "speedLimit": 30,
@@ -1362,13 +1374,13 @@
       "tags": []
     },
     {
-      "segmentId": "S_mirpara_50",
-      "startNodeId": "res_n1_0",
-      "endNodeId": "alley_nw_mid",
-      "width": 3.5,
+      "segmentId": "S_mirpara_49",
+      "startNodeId": "art_s_4",
+      "endNodeId": "res_s1_4",
+      "width": 9,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
-      "speedLimit": 20,
+      "speedLimit": 35,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
       "pedestrianDensity": 0.2,
@@ -1376,25 +1388,47 @@
       "oneWay": false,
       "divided": false,
       "lanes": 2,
-      "roadType": "alley",
+      "roadType": "main",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "mirpara",
+      "tags": []
+    },
+    {
+      "segmentId": "S_mirpara_50",
+      "startNodeId": "res_n2_4",
+      "endNodeId": "alley_dead_1",
+      "width": 2.5,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 15,
+      "turnRestrictions": [],
+      "motorcycleAccessible": false,
+      "pedestrianDensity": 0.65,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "alley",
+      "floodSensitivity": 0.2,
+      "pickupPractical": false,
+      "district": "mirpara",
       "tags": [
-        "alley"
+        "alley",
+        "deadend"
       ]
     },
     {
       "segmentId": "S_mirpara_51",
-      "startNodeId": "alley_nw_mid",
-      "endNodeId": "res_n2_1",
+      "startNodeId": "res_s1_3",
+      "endNodeId": "alley_mid_2",
       "width": 3.5,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
       "speedLimit": 20,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
-      "pedestrianDensity": 0.2,
+      "pedestrianDensity": 0.45,
       "riskLevel": 0.1,
       "oneWay": false,
       "divided": false,
@@ -1409,63 +1443,61 @@
     },
     {
       "segmentId": "S_mirpara_52",
-      "startNodeId": "res_n1_2",
-      "endNodeId": "alley_ne_gate",
-      "width": 2.5,
-      "surfaceCondition": 0.9,
-      "trafficDensity": 0.3,
-      "speedLimit": 15,
-      "turnRestrictions": [],
-      "motorcycleAccessible": false,
-      "pedestrianDensity": 0.2,
-      "riskLevel": 0.1,
-      "oneWay": false,
-      "divided": false,
-      "lanes": 2,
-      "roadType": "alley",
-      "floodSensitivity": 0.2,
-      "pickupPractical": false,
-      "district": "mirpara",
-      "tags": [
-        "alley",
-        "pedestrian_only"
-      ]
-    },
-    {
-      "segmentId": "S_mirpara_53",
-      "startNodeId": "alley_ne_gate",
-      "endNodeId": "res_n1_3",
-      "width": 2.5,
-      "surfaceCondition": 0.9,
-      "trafficDensity": 0.3,
-      "speedLimit": 15,
-      "turnRestrictions": [],
-      "motorcycleAccessible": false,
-      "pedestrianDensity": 0.2,
-      "riskLevel": 0.1,
-      "oneWay": false,
-      "divided": false,
-      "lanes": 2,
-      "roadType": "alley",
-      "floodSensitivity": 0.2,
-      "pickupPractical": false,
-      "district": "mirpara",
-      "tags": [
-        "alley",
-        "pedestrian_only"
-      ]
-    },
-    {
-      "segmentId": "S_mirpara_54",
-      "startNodeId": "res_s1_1",
-      "endNodeId": "alley_sc_mid",
+      "startNodeId": "alley_mid_2",
+      "endNodeId": "res_s2_2",
       "width": 3.5,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
       "speedLimit": 20,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
-      "pedestrianDensity": 0.2,
+      "pedestrianDensity": 0.45,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "alley",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mirpara",
+      "tags": [
+        "alley"
+      ]
+    },
+    {
+      "segmentId": "S_mirpara_53",
+      "startNodeId": "res_s1_0",
+      "endNodeId": "alley_mid_3",
+      "width": 3.5,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 20,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.45,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "alley",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mirpara",
+      "tags": [
+        "alley"
+      ]
+    },
+    {
+      "segmentId": "S_mirpara_54",
+      "startNodeId": "alley_mid_3",
+      "endNodeId": "res_s2_1",
+      "width": 3.5,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 20,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.45,
       "riskLevel": 0.1,
       "oneWay": false,
       "divided": false,
@@ -1480,15 +1512,39 @@
     },
     {
       "segmentId": "S_mirpara_55",
-      "startNodeId": "alley_sc_mid",
-      "endNodeId": "res_s2_2",
+      "startNodeId": "res_n2_3",
+      "endNodeId": "alley_dead_4",
+      "width": 2.5,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 15,
+      "turnRestrictions": [],
+      "motorcycleAccessible": false,
+      "pedestrianDensity": 0.65,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "alley",
+      "floodSensitivity": 0.2,
+      "pickupPractical": false,
+      "district": "mirpara",
+      "tags": [
+        "alley",
+        "deadend"
+      ]
+    },
+    {
+      "segmentId": "S_mirpara_56",
+      "startNodeId": "res_n1_0",
+      "endNodeId": "alley_mid_5",
       "width": 3.5,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
       "speedLimit": 20,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
-      "pedestrianDensity": 0.2,
+      "pedestrianDensity": 0.45,
       "riskLevel": 0.1,
       "oneWay": false,
       "divided": false,
@@ -1502,27 +1558,26 @@
       ]
     },
     {
-      "segmentId": "S_mirpara_56",
-      "startNodeId": "res_s2_3",
-      "endNodeId": "alley_se_deadend",
-      "width": 2.5,
+      "segmentId": "S_mirpara_57",
+      "startNodeId": "alley_mid_5",
+      "endNodeId": "res_n2_1",
+      "width": 3.5,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
-      "speedLimit": 15,
+      "speedLimit": 20,
       "turnRestrictions": [],
-      "motorcycleAccessible": false,
-      "pedestrianDensity": 0.2,
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.45,
       "riskLevel": 0.1,
       "oneWay": false,
       "divided": false,
       "lanes": 2,
       "roadType": "alley",
       "floodSensitivity": 0.2,
-      "pickupPractical": false,
+      "pickupPractical": true,
       "district": "mirpara",
       "tags": [
-        "alley",
-        "deadend"
+        "alley"
       ]
     }
   ],
@@ -1603,479 +1658,3125 @@
   "lots": [
     {
       "lotId": "lot_mirpara_1",
-      "x": 75,
-      "z": 283,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5707963267948966,
+      "x": 34,
+      "z": 276.1,
+      "width": 16,
+      "depth": 11,
+      "facingHeading": 0,
       "zone": "commercial"
     },
     {
       "lotId": "lot_mirpara_2",
-      "x": 75,
-      "z": 317,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": -1.5707963267948966,
+      "x": 51.3,
+      "z": 275.6,
+      "width": 13,
+      "depth": 12,
+      "facingHeading": 0,
       "zone": "commercial"
     },
     {
       "lotId": "lot_mirpara_3",
-      "x": 225,
-      "z": 283,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5707963267948966,
+      "x": 69.4,
+      "z": 275.1,
+      "width": 20,
+      "depth": 13,
+      "facingHeading": 0,
       "zone": "commercial"
     },
     {
       "lotId": "lot_mirpara_4",
-      "x": 225,
-      "z": 317,
+      "x": 90.2,
+      "z": 275.6,
       "width": 18,
-      "depth": 16,
-      "facingHeading": -1.5707963267948966,
+      "depth": 12,
+      "facingHeading": 0,
       "zone": "commercial"
     },
     {
       "lotId": "lot_mirpara_5",
-      "x": 375,
-      "z": 283,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5707963267948966,
+      "x": 109.2,
+      "z": 275.1,
+      "width": 14,
+      "depth": 13,
+      "facingHeading": 0,
       "zone": "commercial"
     },
     {
       "lotId": "lot_mirpara_6",
-      "x": 375,
-      "z": 317,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": -1.5707963267948966,
+      "x": 126,
+      "z": 275.6,
+      "width": 13,
+      "depth": 12,
+      "facingHeading": 0,
       "zone": "commercial"
     },
     {
       "lotId": "lot_mirpara_7",
-      "x": 525,
-      "z": 283,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5707963267948966,
+      "x": 131,
+      "z": 324.9,
+      "width": 20,
+      "depth": 13,
+      "facingHeading": -3.1416,
       "zone": "commercial"
     },
     {
       "lotId": "lot_mirpara_8",
-      "x": 525,
-      "z": 317,
+      "x": 109.8,
+      "z": 323.9,
       "width": 18,
-      "depth": 16,
-      "facingHeading": -1.5707963267948966,
+      "depth": 11,
+      "facingHeading": -3.1416,
       "zone": "commercial"
     },
     {
       "lotId": "lot_mirpara_9",
-      "x": 12,
-      "z": 300,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0,
+      "x": 89.1,
+      "z": 324.9,
+      "width": 17,
+      "depth": 13,
+      "facingHeading": -3.1416,
       "zone": "commercial"
     },
     {
       "lotId": "lot_mirpara_10",
-      "x": 162,
-      "z": 300,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0,
+      "x": 68.7,
+      "z": 324.4,
+      "width": 19,
+      "depth": 12,
+      "facingHeading": -3.1416,
       "zone": "commercial"
     },
     {
       "lotId": "lot_mirpara_11",
-      "x": 312,
-      "z": 300,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0,
+      "x": 50.8,
+      "z": 324.4,
+      "width": 13,
+      "depth": 12,
+      "facingHeading": -3.1416,
       "zone": "commercial"
     },
     {
       "lotId": "lot_mirpara_12",
-      "x": 462,
-      "z": 300,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0,
+      "x": 34,
+      "z": 323.9,
+      "width": 15,
+      "depth": 11,
+      "facingHeading": -3.1416,
       "zone": "commercial"
     },
     {
       "lotId": "lot_mirpara_13",
-      "x": 612,
-      "z": 300,
+      "x": 174,
+      "z": 276.1,
       "width": 18,
-      "depth": 16,
+      "depth": 11,
       "facingHeading": 0,
       "zone": "commercial"
     },
     {
       "lotId": "lot_mirpara_14",
-      "x": 77,
-      "z": 67,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.551190995937692,
-      "zone": "residential"
+      "x": 194.5,
+      "z": 275.1,
+      "width": 17,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_mirpara_15",
-      "x": 77,
-      "z": 167,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.551190995937692,
-      "zone": "residential"
+      "x": 213.5,
+      "z": 274.6,
+      "width": 17,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_mirpara_16",
-      "x": 227,
-      "z": 68,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5775076354262194,
-      "zone": "residential"
+      "x": 234.3,
+      "z": 275.6,
+      "width": 19,
+      "depth": 12,
+      "facingHeading": 0,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_mirpara_17",
-      "x": 227,
-      "z": 168,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5775076354262194,
-      "zone": "residential"
+      "x": 256.6,
+      "z": 274.6,
+      "width": 19,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_mirpara_18",
-      "x": 377,
-      "z": 68,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.557463783500751,
-      "zone": "residential"
+      "x": 276.9,
+      "z": 275.6,
+      "width": 16,
+      "depth": 12,
+      "facingHeading": 0,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_mirpara_19",
-      "x": 377,
-      "z": 168,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.557463783500751,
-      "zone": "residential"
+      "x": 283,
+      "z": 324.4,
+      "width": 16,
+      "depth": 12,
+      "facingHeading": -3.1416,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_mirpara_20",
-      "x": 526,
-      "z": 70,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5572836357815685,
-      "zone": "residential"
+      "x": 262.4,
+      "z": 325.4,
+      "width": 20,
+      "depth": 14,
+      "facingHeading": -3.1416,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_mirpara_21",
-      "x": 526,
-      "z": 170,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5572836357815685,
-      "zone": "residential"
+      "x": 243.3,
+      "z": 324.4,
+      "width": 13,
+      "depth": 12,
+      "facingHeading": -3.1416,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_mirpara_22",
-      "x": 12,
-      "z": 127,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0,
-      "zone": "residential"
+      "x": 224,
+      "z": 323.9,
+      "width": 20,
+      "depth": 11,
+      "facingHeading": -3.1416,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_mirpara_23",
-      "x": 12,
-      "z": 236,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0,
+      "x": 203.2,
+      "z": 324.9,
+      "width": 17,
+      "depth": 13,
+      "facingHeading": -3.1416,
       "zone": "commercial"
     },
     {
       "lotId": "lot_mirpara_24",
-      "x": 165,
-      "z": 130,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0,
-      "zone": "residential"
+      "x": 183.5,
+      "z": 323.9,
+      "width": 19,
+      "depth": 11,
+      "facingHeading": -3.1416,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_mirpara_25",
-      "x": 163,
-      "z": 238,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": -0.026081041290752262,
+      "x": 323.5,
+      "z": 274.6,
+      "width": 17,
+      "depth": 14,
+      "facingHeading": 0,
       "zone": "commercial"
     },
     {
       "lotId": "lot_mirpara_26",
-      "x": 314,
-      "z": 129,
-      "width": 18,
-      "depth": 16,
+      "x": 341.9,
+      "z": 275.1,
+      "width": 15,
+      "depth": 13,
       "facingHeading": 0,
-      "zone": "residential"
+      "zone": "commercial"
     },
     {
       "lotId": "lot_mirpara_27",
-      "x": 313,
-      "z": 237,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": -0.017239671194529696,
+      "x": 359.5,
+      "z": 276.1,
+      "width": 16,
+      "depth": 11,
+      "facingHeading": 0,
       "zone": "commercial"
     },
     {
       "lotId": "lot_mirpara_28",
-      "x": 464,
-      "z": 131,
+      "x": 378.8,
+      "z": 275.1,
       "width": 18,
-      "depth": 16,
+      "depth": 13,
       "facingHeading": 0,
-      "zone": "residential"
+      "zone": "commercial"
     },
     {
       "lotId": "lot_mirpara_29",
-      "x": 463,
-      "z": 238,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": -0.017542060057402487,
+      "x": 398.5,
+      "z": 275.1,
+      "width": 16,
+      "depth": 13,
+      "facingHeading": 0,
       "zone": "commercial"
     },
     {
       "lotId": "lot_mirpara_30",
-      "x": 612,
-      "z": 133,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0,
-      "zone": "residential"
-    },
-    {
-      "lotId": "lot_mirpara_31",
-      "x": 612,
-      "z": 239,
-      "width": 18,
-      "depth": 16,
+      "x": 415.6,
+      "z": 275.1,
+      "width": 14,
+      "depth": 13,
       "facingHeading": 0,
       "zone": "commercial"
     },
     {
+      "lotId": "lot_mirpara_31",
+      "x": 424,
+      "z": 325.4,
+      "width": 14,
+      "depth": 14,
+      "facingHeading": -3.1416,
+      "zone": "commercial"
+    },
+    {
       "lotId": "lot_mirpara_32",
-      "x": 73,
-      "z": 407,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5639471188309615,
-      "zone": "market"
+      "x": 404.2,
+      "z": 325.4,
+      "width": 19,
+      "depth": 14,
+      "facingHeading": -3.1416,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_mirpara_33",
-      "x": 73,
-      "z": 507,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5639471188309615,
-      "zone": "residential"
+      "x": 385.7,
+      "z": 324.4,
+      "width": 14,
+      "depth": 12,
+      "facingHeading": -3.1416,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_mirpara_34",
-      "x": 225,
-      "z": 407,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5707963267948966,
-      "zone": "market"
+      "x": 369.6,
+      "z": 324.4,
+      "width": 14,
+      "depth": 12,
+      "facingHeading": -3.1416,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_mirpara_35",
-      "x": 225,
-      "z": 507,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5707963267948966,
-      "zone": "residential"
+      "x": 349.2,
+      "z": 325.4,
+      "width": 20,
+      "depth": 14,
+      "facingHeading": -3.1416,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_mirpara_36",
-      "x": 379,
-      "z": 408,
+      "x": 327.4,
+      "z": 325.4,
       "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5641739070522287,
-      "zone": "market"
+      "depth": 14,
+      "facingHeading": -3.1416,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_mirpara_37",
-      "x": 379,
-      "z": 508,
+      "x": 464,
+      "z": 274.6,
       "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5641739070522287,
-      "zone": "residential"
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_mirpara_38",
-      "x": 527,
-      "z": 407,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.591341380828297,
-      "zone": "market"
+      "x": 483.8,
+      "z": 274.6,
+      "width": 17,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_mirpara_39",
-      "x": 527,
-      "z": 507,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.591341380828297,
-      "zone": "residential"
+      "x": 503.6,
+      "z": 275.6,
+      "width": 16,
+      "depth": 12,
+      "facingHeading": 0,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_mirpara_40",
-      "x": 12,
-      "z": 362,
+      "x": 522.7,
+      "z": 276.1,
       "width": 18,
-      "depth": 16,
+      "depth": 11,
       "facingHeading": 0,
       "zone": "commercial"
     },
     {
       "lotId": "lot_mirpara_41",
-      "x": 12,
-      "z": 468,
-      "width": 18,
-      "depth": 16,
+      "x": 540.8,
+      "z": 275.1,
+      "width": 15,
+      "depth": 13,
       "facingHeading": 0,
-      "zone": "residential"
+      "zone": "commercial"
     },
     {
       "lotId": "lot_mirpara_42",
-      "x": 160,
-      "z": 362,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": -0.035073330533225366,
+      "x": 559.4,
+      "z": 275.1,
+      "width": 19,
+      "depth": 13,
+      "facingHeading": 0,
       "zone": "commercial"
     },
     {
       "lotId": "lot_mirpara_43",
-      "x": 158,
-      "z": 469,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0,
-      "zone": "residential"
+      "x": 566.5,
+      "z": 324.4,
+      "width": 15,
+      "depth": 12,
+      "facingHeading": -3.1416,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_mirpara_44",
-      "x": 313,
-      "z": 362,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0.02630971725292219,
+      "x": 548.5,
+      "z": 324.9,
+      "width": 17,
+      "depth": 13,
+      "facingHeading": -3.1416,
       "zone": "commercial"
     },
     {
       "lotId": "lot_mirpara_45",
-      "x": 315,
-      "z": 469,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0,
-      "zone": "residential"
+      "x": 531.4,
+      "z": 324.9,
+      "width": 14,
+      "depth": 13,
+      "facingHeading": -3.1416,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_mirpara_46",
-      "x": 464,
-      "z": 362,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0.03476859185608236,
+      "x": 515.2,
+      "z": 325.4,
+      "width": 15,
+      "depth": 14,
+      "facingHeading": -3.1416,
       "zone": "commercial"
     },
     {
       "lotId": "lot_mirpara_47",
-      "x": 466,
-      "z": 470,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0,
-      "zone": "residential"
+      "x": 497.3,
+      "z": 324.4,
+      "width": 16,
+      "depth": 12,
+      "facingHeading": -3.1416,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_mirpara_48",
-      "x": 612,
-      "z": 361,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0,
+      "x": 478,
+      "z": 325.4,
+      "width": 17,
+      "depth": 14,
+      "facingHeading": -3.1416,
       "zone": "commercial"
     },
     {
       "lotId": "lot_mirpara_49",
-      "x": 612,
-      "z": 467,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0,
-      "zone": "residential"
+      "x": 461.2,
+      "z": 325.9,
+      "width": 12,
+      "depth": 15,
+      "facingHeading": -3.1416,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_mirpara_50",
-      "x": 44,
-      "z": 94,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0.9556100886829226,
+      "x": 55.9,
+      "z": 92.4,
+      "width": 19,
+      "depth": 14,
+      "facingHeading": 3.1416,
       "zone": "residential"
     },
     {
       "lotId": "lot_mirpara_51",
-      "x": 120,
-      "z": 145,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.0007558630951863,
+      "x": 76.5,
+      "z": 91.4,
+      "width": 17,
+      "depth": 12,
+      "facingHeading": 3.1416,
       "zone": "residential"
     },
     {
       "lotId": "lot_mirpara_52",
-      "x": 192,
-      "z": 434,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0.9975419164019239,
+      "x": 96.8,
+      "z": 90.9,
+      "width": 17,
+      "depth": 11,
+      "facingHeading": 3.1416,
       "zone": "residential"
     },
     {
       "lotId": "lot_mirpara_53",
-      "x": 270,
-      "z": 484,
+      "x": 114,
+      "z": 91.9,
+      "width": 12,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_54",
+      "x": 131.3,
+      "z": 92.9,
       "width": 18,
-      "depth": 16,
-      "facingHeading": 1.0098955195425248,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_55",
+      "x": 34,
+      "z": 65.1,
+      "width": 16,
+      "depth": 11,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_56",
+      "x": 53.9,
+      "z": 64.6,
+      "width": 17,
+      "depth": 12,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_57",
+      "x": 71.2,
+      "z": 64.6,
+      "width": 14,
+      "depth": 12,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_58",
+      "x": 87.4,
+      "z": 64.1,
+      "width": 14,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_59",
+      "x": 103.9,
+      "z": 64.1,
+      "width": 14,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_60",
+      "x": 122.2,
+      "z": 65.1,
+      "width": 17,
+      "depth": 11,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_61",
+      "x": 172.5,
+      "z": 91.4,
+      "width": 15,
+      "depth": 12,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_62",
+      "x": 191.4,
+      "z": 90.9,
+      "width": 18,
+      "depth": 11,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_63",
+      "x": 211.1,
+      "z": 92.4,
+      "width": 16,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_64",
+      "x": 231.2,
+      "z": 91.4,
+      "width": 18,
+      "depth": 12,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_65",
+      "x": 250.1,
+      "z": 91.9,
+      "width": 16,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_66",
+      "x": 269.1,
+      "z": 91.4,
+      "width": 18,
+      "depth": 12,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_67",
+      "x": 285.1,
+      "z": 91.4,
+      "width": 10,
+      "depth": 12,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_68",
+      "x": 171,
+      "z": 64.6,
+      "width": 12,
+      "depth": 12,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_69",
+      "x": 187.8,
+      "z": 63.6,
+      "width": 16,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_70",
+      "x": 207,
+      "z": 64.6,
+      "width": 17,
+      "depth": 12,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_71",
+      "x": 224.5,
+      "z": 63.6,
+      "width": 15,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_72",
+      "x": 243.9,
+      "z": 63.6,
+      "width": 17,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_73",
+      "x": 262.8,
+      "z": 64.1,
+      "width": 16,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_74",
+      "x": 280.6,
+      "z": 63.1,
+      "width": 13,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_75",
+      "x": 325,
+      "z": 92.4,
+      "width": 20,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_76",
+      "x": 345.6,
+      "z": 90.9,
+      "width": 15,
+      "depth": 11,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_77",
+      "x": 361.9,
+      "z": 91.9,
+      "width": 14,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_78",
+      "x": 379.2,
+      "z": 91.9,
+      "width": 15,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_79",
+      "x": 396.6,
+      "z": 92.4,
+      "width": 13,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_80",
+      "x": 413.8,
+      "z": 91.4,
+      "width": 16,
+      "depth": 12,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_81",
+      "x": 321.5,
+      "z": 63.6,
+      "width": 13,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_82",
+      "x": 337.6,
+      "z": 64.1,
+      "width": 14,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_83",
+      "x": 353,
+      "z": 64.6,
+      "width": 13,
+      "depth": 12,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_84",
+      "x": 370.4,
+      "z": 64.1,
+      "width": 16,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_85",
+      "x": 387,
+      "z": 65.1,
+      "width": 14,
+      "depth": 11,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_86",
+      "x": 403.2,
+      "z": 63.6,
+      "width": 14,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_87",
+      "x": 419.6,
+      "z": 63.6,
+      "width": 15,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_88",
+      "x": 464,
+      "z": 92.4,
+      "width": 18,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_89",
+      "x": 485,
+      "z": 90.9,
+      "width": 17,
+      "depth": 11,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_90",
+      "x": 502,
+      "z": 91.4,
+      "width": 13,
+      "depth": 12,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_91",
+      "x": 519.9,
+      "z": 91.9,
+      "width": 17,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_92",
+      "x": 537.9,
+      "z": 91.4,
+      "width": 15,
+      "depth": 12,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_93",
+      "x": 555.1,
+      "z": 91.4,
+      "width": 13,
+      "depth": 12,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_94",
+      "x": 568.1,
+      "z": 92.9,
+      "width": 10,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_95",
+      "x": 462,
+      "z": 65.1,
+      "width": 14,
+      "depth": 11,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_96",
+      "x": 480.4,
+      "z": 64.1,
+      "width": 19,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_97",
+      "x": 501.4,
+      "z": 64.6,
+      "width": 19,
+      "depth": 12,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_98",
+      "x": 521.9,
+      "z": 64.1,
+      "width": 19,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_99",
+      "x": 540.7,
+      "z": 65.1,
+      "width": 15,
+      "depth": 11,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_100",
+      "x": 557.7,
+      "z": 63.6,
+      "width": 16,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_101",
+      "x": 32.5,
+      "z": 197.9,
+      "width": 13,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_102",
+      "x": 51.3,
+      "z": 197.9,
+      "width": 18,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_103",
+      "x": 70.9,
+      "z": 196.9,
+      "width": 15,
+      "depth": 11,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_104",
+      "x": 87.8,
+      "z": 197.9,
+      "width": 13,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_105",
+      "x": 103.4,
+      "z": 196.9,
+      "width": 13,
+      "depth": 11,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_106",
+      "x": 118,
+      "z": 197.9,
+      "width": 12,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_107",
+      "x": 133.1,
+      "z": 197.4,
+      "width": 12,
+      "depth": 12,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_108",
+      "x": 33,
+      "z": 170.1,
+      "width": 14,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_109",
+      "x": 52.4,
+      "z": 171.1,
+      "width": 18,
+      "depth": 11,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_110",
+      "x": 72.4,
+      "z": 169.1,
+      "width": 15,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_111",
+      "x": 91.7,
+      "z": 170.6,
+      "width": 18,
+      "depth": 12,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_112",
+      "x": 110.4,
+      "z": 170.6,
+      "width": 15,
+      "depth": 12,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_113",
+      "x": 173.3,
+      "z": 198.2,
+      "width": 19,
+      "depth": 13,
+      "facingHeading": 3.1284,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_114",
+      "x": 192.5,
+      "z": 197.9,
+      "width": 13,
+      "depth": 12,
+      "facingHeading": 3.1284,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_115",
+      "x": 210.9,
+      "z": 197.7,
+      "width": 19,
+      "depth": 11,
+      "facingHeading": 3.1284,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_116",
+      "x": 232.1,
+      "z": 197.9,
+      "width": 17,
+      "depth": 11,
+      "facingHeading": 3.1284,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_117",
+      "x": 249.4,
+      "z": 198.7,
+      "width": 12,
+      "depth": 12,
+      "facingHeading": 3.1284,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_118",
+      "x": 264,
+      "z": 198.4,
+      "width": 13,
+      "depth": 11,
+      "facingHeading": 3.1284,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_119",
+      "x": 278.6,
+      "z": 199.5,
+      "width": 12,
+      "depth": 13,
+      "facingHeading": 3.1284,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_120",
+      "x": 172.2,
+      "z": 169.9,
+      "width": 16,
+      "depth": 14,
+      "facingHeading": -0.0132,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_121",
+      "x": 188.3,
+      "z": 169.6,
+      "width": 12,
+      "depth": 15,
+      "facingHeading": -0.0132,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_122",
+      "x": 205.3,
+      "z": 169.8,
+      "width": 18,
+      "depth": 15,
+      "facingHeading": -0.0132,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_123",
+      "x": 226.8,
+      "z": 172.1,
+      "width": 19,
+      "depth": 11,
+      "facingHeading": -0.0132,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_124",
+      "x": 246.8,
+      "z": 171.9,
+      "width": 14,
+      "depth": 12,
+      "facingHeading": -0.0132,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_125",
+      "x": 262.4,
+      "z": 172.1,
+      "width": 14,
+      "depth": 12,
+      "facingHeading": -0.0132,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_126",
+      "x": 278.8,
+      "z": 171.3,
+      "width": 12,
+      "depth": 14,
+      "facingHeading": -0.0132,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_127",
+      "x": 325.1,
+      "z": 198.5,
+      "width": 17,
+      "depth": 12,
+      "facingHeading": -3.0978,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_128",
+      "x": 342.7,
+      "z": 198.7,
+      "width": 14,
+      "depth": 14,
+      "facingHeading": -3.0978,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_129",
+      "x": 359.6,
+      "z": 198,
+      "width": 16,
+      "depth": 14,
+      "facingHeading": -3.0978,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_130",
+      "x": 378.5,
+      "z": 196.6,
+      "width": 16,
+      "depth": 13,
+      "facingHeading": -3.0978,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_131",
+      "x": 397.2,
+      "z": 194.8,
+      "width": 16,
+      "depth": 11,
+      "facingHeading": -3.0978,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_132",
+      "x": 413.7,
+      "z": 194.6,
+      "width": 13,
+      "depth": 12,
+      "facingHeading": -3.0978,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_133",
+      "x": 324.9,
+      "z": 172.2,
+      "width": 19,
+      "depth": 11,
+      "facingHeading": 0.0438,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_134",
+      "x": 345.1,
+      "z": 170.8,
+      "width": 17,
+      "depth": 12,
+      "facingHeading": 0.0438,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_135",
+      "x": 362.5,
+      "z": 169,
+      "width": 12,
+      "depth": 14,
+      "facingHeading": 0.0438,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_136",
+      "x": 376.7,
+      "z": 167.9,
+      "width": 13,
+      "depth": 15,
+      "facingHeading": 0.0438,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_137",
+      "x": 392.8,
+      "z": 169.2,
+      "width": 15,
+      "depth": 11,
+      "facingHeading": 0.0438,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_138",
+      "x": 460.8,
+      "z": 194.7,
+      "width": 16,
+      "depth": 14,
+      "facingHeading": 3.1278,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_139",
+      "x": 479.6,
+      "z": 194.9,
+      "width": 18,
+      "depth": 14,
+      "facingHeading": 3.1278,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_140",
+      "x": 497.1,
+      "z": 195.2,
+      "width": 12,
+      "depth": 14,
+      "facingHeading": 3.1278,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_141",
+      "x": 515.2,
+      "z": 195.4,
+      "width": 20,
+      "depth": 14,
+      "facingHeading": 3.1278,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_142",
+      "x": 537.9,
+      "z": 195.2,
+      "width": 19,
+      "depth": 13,
+      "facingHeading": 3.1278,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_143",
+      "x": 557,
+      "z": 194.5,
+      "width": 14,
+      "depth": 11,
+      "facingHeading": 3.1278,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_144",
+      "x": 459.7,
+      "z": 166.4,
+      "width": 13,
+      "depth": 13,
+      "facingHeading": -0.0138,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_145",
+      "x": 475.9,
+      "z": 165.6,
+      "width": 15,
+      "depth": 15,
+      "facingHeading": -0.0138,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_146",
+      "x": 494,
+      "z": 166.3,
+      "width": 15,
+      "depth": 14,
+      "facingHeading": -0.0138,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_147",
+      "x": 511,
+      "z": 167.6,
+      "width": 13,
+      "depth": 12,
+      "facingHeading": -0.0138,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_148",
+      "x": 530.3,
+      "z": 167.4,
+      "width": 19,
+      "depth": 13,
+      "facingHeading": -0.0138,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_149",
+      "x": 27.4,
+      "z": 115.1,
+      "width": 18,
+      "depth": 12,
+      "facingHeading": -1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_150",
+      "x": 27.4,
+      "z": 134.1,
+      "width": 14,
+      "depth": 12,
+      "facingHeading": -1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_151",
+      "x": 28.9,
+      "z": 152.8,
+      "width": 19,
+      "depth": 15,
+      "facingHeading": -1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_152",
+      "x": 29.9,
+      "z": 225.6,
+      "width": 18,
+      "depth": 15,
+      "facingHeading": -1.5708,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_153",
+      "x": 27.9,
+      "z": 245.2,
+      "width": 16,
+      "depth": 11,
+      "facingHeading": -1.5708,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_154",
+      "x": 137.8,
+      "z": 116.3,
+      "width": 16,
+      "depth": 15,
+      "facingHeading": 1.5614,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_155",
+      "x": 138.6,
+      "z": 133.4,
+      "width": 14,
+      "depth": 13,
+      "facingHeading": 1.5614,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_156",
+      "x": 138.4,
+      "z": 149.7,
+      "width": 15,
+      "depth": 13,
+      "facingHeading": 1.5614,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_157",
+      "x": 166,
+      "z": 118.9,
+      "width": 16,
+      "depth": 12,
+      "facingHeading": -1.5802,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_158",
+      "x": 166.3,
+      "z": 138,
+      "width": 18,
+      "depth": 13,
+      "facingHeading": -1.5802,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_159",
+      "x": 134.5,
+      "z": 224,
+      "width": 13,
+      "depth": 15,
+      "facingHeading": 1.5801,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_160",
+      "x": 136.2,
+      "z": 241.3,
+      "width": 18,
+      "depth": 12,
+      "facingHeading": 1.5801,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_161",
+      "x": 169.8,
+      "z": 225.5,
+      "width": 14,
+      "depth": 14,
+      "facingHeading": -1.5615,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_162",
+      "x": 169.9,
+      "z": 242.4,
+      "width": 13,
+      "depth": 14,
+      "facingHeading": -1.5615,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_163",
+      "x": 169.6,
+      "z": 257.2,
+      "width": 13,
+      "depth": 13,
+      "facingHeading": -1.5615,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_164",
+      "x": 289,
+      "z": 119.9,
+      "width": 20,
+      "depth": 14,
+      "facingHeading": 1.5801,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_165",
+      "x": 289.7,
+      "z": 141.9,
+      "width": 18,
+      "depth": 13,
+      "facingHeading": 1.5801,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_166",
+      "x": 316.7,
+      "z": 113.9,
+      "width": 14,
+      "depth": 12,
+      "facingHeading": -1.5615,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_167",
+      "x": 316.4,
+      "z": 132.9,
+      "width": 17,
+      "depth": 11,
+      "facingHeading": -1.5615,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_168",
+      "x": 317.6,
+      "z": 153.8,
+      "width": 19,
+      "depth": 13,
+      "facingHeading": -1.5615,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_169",
+      "x": 288.8,
+      "z": 220.9,
+      "width": 18,
+      "depth": 13,
+      "facingHeading": 1.5613,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_170",
+      "x": 287.6,
+      "z": 239,
+      "width": 13,
+      "depth": 15,
+      "facingHeading": 1.5613,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_171",
+      "x": 287.9,
+      "z": 257.8,
+      "width": 19,
+      "depth": 14,
+      "facingHeading": 1.5613,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_172",
+      "x": 319,
+      "z": 221.3,
+      "width": 17,
+      "depth": 14,
+      "facingHeading": -1.5803,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_173",
+      "x": 318.9,
+      "z": 239.7,
+      "width": 14,
+      "depth": 14,
+      "facingHeading": -1.5803,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_174",
+      "x": 428.4,
+      "z": 115.3,
+      "width": 15,
+      "depth": 13,
+      "facingHeading": 1.5512,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_175",
+      "x": 427,
+      "z": 134.3,
+      "width": 19,
+      "depth": 15,
+      "facingHeading": 1.5512,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_176",
+      "x": 427.6,
+      "z": 153.1,
+      "width": 13,
+      "depth": 13,
+      "facingHeading": 1.5512,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_177",
+      "x": 455.6,
+      "z": 119,
+      "width": 19,
+      "depth": 12,
+      "facingHeading": -1.5904,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_178",
+      "x": 456.7,
+      "z": 137.3,
+      "width": 14,
+      "depth": 15,
+      "facingHeading": -1.5904,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_179",
+      "x": 427.3,
+      "z": 218.3,
+      "width": 18,
+      "depth": 12,
+      "facingHeading": 1.5888,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_180",
+      "x": 426.6,
+      "z": 237.2,
+      "width": 13,
+      "depth": 14,
+      "facingHeading": 1.5888,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_181",
+      "x": 426.9,
+      "z": 251.6,
+      "width": 12,
+      "depth": 14,
+      "facingHeading": 1.5888,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_182",
+      "x": 455.7,
+      "z": 222.8,
+      "width": 18,
+      "depth": 11,
+      "facingHeading": -1.5528,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_183",
+      "x": 458,
+      "z": 243.6,
+      "width": 17,
+      "depth": 15,
+      "facingHeading": -1.5528,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_184",
+      "x": 572.6,
+      "z": 115.8,
+      "width": 17,
+      "depth": 12,
+      "facingHeading": 1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_185",
+      "x": 571.6,
+      "z": 137,
+      "width": 20,
+      "depth": 14,
+      "facingHeading": 1.5708,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_186",
+      "x": 572.6,
+      "z": 155.7,
+      "width": 13,
+      "depth": 12,
+      "facingHeading": 1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_187",
+      "x": 571.6,
+      "z": 202.5,
+      "width": 17,
+      "depth": 12,
+      "facingHeading": 1.5708,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_188",
+      "x": 571.1,
+      "z": 220.6,
+      "width": 13,
+      "depth": 13,
+      "facingHeading": 1.5708,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_189",
+      "x": 571.1,
+      "z": 238.1,
+      "width": 17,
+      "depth": 13,
+      "facingHeading": 1.5708,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_190",
+      "x": 570.6,
+      "z": 255.1,
+      "width": 13,
+      "depth": 14,
+      "facingHeading": 1.5708,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_191",
+      "x": 54.3,
+      "z": 432.2,
+      "width": 17,
+      "depth": 12,
+      "facingHeading": 3.1343,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_mirpara_192",
+      "x": 72.7,
+      "z": 431.8,
+      "width": 15,
+      "depth": 11,
+      "facingHeading": 3.1343,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_mirpara_193",
+      "x": 92.3,
+      "z": 433.4,
+      "width": 20,
+      "depth": 14,
+      "facingHeading": 3.1343,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_mirpara_194",
+      "x": 110.8,
+      "z": 432.6,
+      "width": 13,
+      "depth": 12,
+      "facingHeading": 3.1343,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_mirpara_195",
+      "x": 127.3,
+      "z": 433.2,
+      "width": 15,
+      "depth": 13,
+      "facingHeading": 3.1343,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_mirpara_196",
+      "x": 35.6,
+      "z": 406.3,
+      "width": 19,
+      "depth": 12,
+      "facingHeading": -0.0072,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_mirpara_197",
+      "x": 54.8,
+      "z": 404.9,
+      "width": 13,
+      "depth": 15,
+      "facingHeading": -0.0072,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_mirpara_198",
+      "x": 71.6,
+      "z": 406.5,
+      "width": 16,
+      "depth": 12,
+      "facingHeading": -0.0072,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_mirpara_199",
+      "x": 88.7,
+      "z": 406.7,
+      "width": 15,
+      "depth": 12,
+      "facingHeading": -0.0072,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_mirpara_200",
+      "x": 104.8,
+      "z": 405.8,
+      "width": 14,
+      "depth": 14,
+      "facingHeading": -0.0072,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_mirpara_201",
+      "x": 122.6,
+      "z": 406.9,
+      "width": 18,
+      "depth": 12,
+      "facingHeading": -0.0072,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_mirpara_202",
+      "x": 173,
+      "z": 431.6,
+      "width": 17,
+      "depth": 11,
+      "facingHeading": -3.1019,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_mirpara_203",
+      "x": 191.7,
+      "z": 431.8,
+      "width": 16,
+      "depth": 13,
+      "facingHeading": -3.1019,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_mirpara_204",
+      "x": 210,
+      "z": 430.1,
+      "width": 14,
+      "depth": 11,
+      "facingHeading": -3.1019,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_mirpara_205",
+      "x": 226.3,
+      "z": 430.4,
+      "width": 15,
+      "depth": 13,
+      "facingHeading": -3.1019,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_mirpara_206",
+      "x": 246.3,
+      "z": 428.6,
+      "width": 20,
+      "depth": 11,
+      "facingHeading": -3.1019,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_mirpara_207",
+      "x": 268.6,
+      "z": 428.3,
+      "width": 19,
+      "depth": 12,
+      "facingHeading": -3.1019,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_mirpara_208",
+      "x": 285.8,
+      "z": 428.1,
+      "width": 11,
+      "depth": 13,
+      "facingHeading": -3.1019,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_mirpara_209",
+      "x": 173,
+      "z": 405.8,
+      "width": 19,
+      "depth": 13,
+      "facingHeading": 0.0397,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_mirpara_210",
+      "x": 191.8,
+      "z": 404.5,
+      "width": 15,
+      "depth": 14,
+      "facingHeading": 0.0397,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_mirpara_211",
+      "x": 210.9,
+      "z": 403.8,
+      "width": 20,
+      "depth": 14,
+      "facingHeading": 0.0397,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_mirpara_212",
+      "x": 231.5,
+      "z": 403,
+      "width": 18,
+      "depth": 14,
+      "facingHeading": 0.0397,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_mirpara_213",
+      "x": 251.5,
+      "z": 402.2,
+      "width": 16,
+      "depth": 14,
+      "facingHeading": 0.0397,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_mirpara_214",
+      "x": 270.3,
+      "z": 402.9,
+      "width": 17,
+      "depth": 11,
+      "facingHeading": 0.0397,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_mirpara_215",
+      "x": 323.3,
+      "z": 427.2,
+      "width": 17,
+      "depth": 12,
+      "facingHeading": 3.1269,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_mirpara_216",
+      "x": 341.6,
+      "z": 427.4,
+      "width": 13,
+      "depth": 12,
+      "facingHeading": 3.1269,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_mirpara_217",
+      "x": 360.2,
+      "z": 428.7,
+      "width": 20,
+      "depth": 14,
+      "facingHeading": 3.1269,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_mirpara_218",
+      "x": 379.8,
+      "z": 428.5,
+      "width": 16,
+      "depth": 13,
+      "facingHeading": 3.1269,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_mirpara_219",
+      "x": 397.7,
+      "z": 428.8,
+      "width": 14,
+      "depth": 13,
+      "facingHeading": 3.1269,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_mirpara_220",
+      "x": 324.7,
+      "z": 399.9,
+      "width": 19,
+      "depth": 15,
+      "facingHeading": -0.0147,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_mirpara_221",
+      "x": 344.4,
+      "z": 401.7,
+      "width": 14,
+      "depth": 12,
+      "facingHeading": -0.0147,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_mirpara_222",
+      "x": 360.5,
+      "z": 401.5,
+      "width": 15,
+      "depth": 13,
+      "facingHeading": -0.0147,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_mirpara_223",
+      "x": 379.7,
+      "z": 402.2,
+      "width": 18,
+      "depth": 12,
+      "facingHeading": -0.0147,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_mirpara_224",
+      "x": 401.3,
+      "z": 402.6,
+      "width": 19,
+      "depth": 12,
+      "facingHeading": -0.0147,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_mirpara_225",
+      "x": 420,
+      "z": 401.8,
+      "width": 13,
+      "depth": 14,
+      "facingHeading": -0.0147,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_mirpara_226",
+      "x": 459.2,
+      "z": 429.6,
+      "width": 16,
+      "depth": 14,
+      "facingHeading": -3.128,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_mirpara_227",
+      "x": 476.8,
+      "z": 428.9,
+      "width": 16,
+      "depth": 13,
+      "facingHeading": -3.128,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_mirpara_228",
+      "x": 494.6,
+      "z": 428.6,
+      "width": 14,
+      "depth": 13,
+      "facingHeading": -3.128,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_mirpara_229",
+      "x": 510.2,
+      "z": 427.9,
+      "width": 12,
+      "depth": 12,
+      "facingHeading": -3.128,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_mirpara_230",
+      "x": 529.5,
+      "z": 428.6,
+      "width": 20,
+      "depth": 14,
+      "facingHeading": -3.128,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_mirpara_231",
+      "x": 552.5,
+      "z": 428.3,
+      "width": 19,
+      "depth": 14,
+      "facingHeading": -3.128,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_mirpara_232",
+      "x": 459.8,
+      "z": 401.8,
+      "width": 18,
+      "depth": 14,
+      "facingHeading": 0.0136,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_mirpara_233",
+      "x": 480.6,
+      "z": 401.6,
+      "width": 19,
+      "depth": 14,
+      "facingHeading": 0.0136,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_mirpara_234",
+      "x": 502.7,
+      "z": 402.3,
+      "width": 19,
+      "depth": 12,
+      "facingHeading": 0.0136,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_mirpara_235",
+      "x": 520.5,
+      "z": 401,
+      "width": 13,
+      "depth": 14,
+      "facingHeading": 0.0136,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_mirpara_236",
+      "x": 535.9,
+      "z": 401.3,
+      "width": 12,
+      "depth": 13,
+      "facingHeading": 0.0136,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_mirpara_237",
+      "x": 552.1,
+      "z": 402.1,
+      "width": 15,
+      "depth": 11,
+      "facingHeading": 0.0136,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_mirpara_238",
+      "x": 567.3,
+      "z": 401.4,
+      "width": 11,
+      "depth": 12,
+      "facingHeading": 0.0136,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_mirpara_239",
+      "x": 32.5,
+      "z": 536.9,
+      "width": 13,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_240",
+      "x": 49,
+      "z": 536.4,
+      "width": 16,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_241",
+      "x": 66.7,
+      "z": 536.4,
+      "width": 13,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_242",
+      "x": 83.4,
+      "z": 536.9,
+      "width": 17,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_243",
+      "x": 104,
+      "z": 535.4,
+      "width": 18,
+      "depth": 12,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_244",
+      "x": 121,
+      "z": 534.9,
+      "width": 12,
+      "depth": 11,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_245",
+      "x": 135.2,
+      "z": 536.4,
+      "width": 10,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_246",
+      "x": 33,
+      "z": 508.6,
+      "width": 14,
+      "depth": 12,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_247",
+      "x": 49,
+      "z": 507.1,
+      "width": 14,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_248",
+      "x": 68.8,
+      "z": 508.1,
+      "width": 19,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_249",
+      "x": 90.1,
+      "z": 509.1,
+      "width": 18,
+      "depth": 11,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_250",
+      "x": 107.9,
+      "z": 507.1,
+      "width": 13,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_251",
+      "x": 171.5,
+      "z": 535.9,
+      "width": 13,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_252",
+      "x": 187.4,
+      "z": 536.9,
+      "width": 13,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_253",
+      "x": 206.2,
+      "z": 535.4,
+      "width": 19,
+      "depth": 12,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_254",
+      "x": 225,
+      "z": 535.9,
+      "width": 14,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_255",
+      "x": 244.1,
+      "z": 535.9,
+      "width": 19,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_256",
+      "x": 262.9,
+      "z": 535.4,
+      "width": 14,
+      "depth": 12,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_257",
+      "x": 280.9,
+      "z": 536.4,
+      "width": 18,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_258",
+      "x": 172,
+      "z": 508.1,
+      "width": 14,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_259",
+      "x": 190.6,
+      "z": 509.1,
+      "width": 17,
+      "depth": 11,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_260",
+      "x": 208.6,
+      "z": 507.6,
+      "width": 16,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_261",
+      "x": 225.5,
+      "z": 507.6,
+      "width": 13,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_262",
+      "x": 241.4,
+      "z": 508.6,
+      "width": 13,
+      "depth": 12,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_263",
+      "x": 259.5,
+      "z": 509.1,
+      "width": 20,
+      "depth": 11,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_264",
+      "x": 279.5,
+      "z": 508.6,
+      "width": 16,
+      "depth": 12,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_265",
+      "x": 323.5,
+      "z": 534.9,
+      "width": 17,
+      "depth": 11,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_266",
+      "x": 341.6,
+      "z": 534.9,
+      "width": 16,
+      "depth": 11,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_267",
+      "x": 360.6,
+      "z": 534.9,
+      "width": 16,
+      "depth": 11,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_268",
+      "x": 378.4,
+      "z": 536.9,
+      "width": 15,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_269",
+      "x": 394.1,
+      "z": 536.4,
+      "width": 13,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_270",
+      "x": 411.9,
+      "z": 535.4,
+      "width": 16,
+      "depth": 12,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_271",
+      "x": 342.9,
+      "z": 509.1,
+      "width": 14,
+      "depth": 11,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_272",
+      "x": 361.4,
+      "z": 508.6,
+      "width": 17,
+      "depth": 12,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_273",
+      "x": 379.9,
+      "z": 507.6,
+      "width": 14,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_274",
+      "x": 399.1,
+      "z": 507.6,
+      "width": 19,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_275",
+      "x": 418.5,
+      "z": 507.6,
+      "width": 14,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_276",
+      "x": 464,
+      "z": 536.9,
+      "width": 18,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_277",
+      "x": 485,
+      "z": 536.4,
+      "width": 19,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_278",
+      "x": 505.9,
+      "z": 534.9,
+      "width": 17,
+      "depth": 11,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_279",
+      "x": 526.3,
+      "z": 535.4,
+      "width": 19,
+      "depth": 12,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_280",
+      "x": 546.1,
+      "z": 535.4,
+      "width": 15,
+      "depth": 12,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_281",
+      "x": 562.9,
+      "z": 536.4,
+      "width": 13,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_282",
+      "x": 462.5,
+      "z": 507.6,
+      "width": 15,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_283",
+      "x": 479.2,
+      "z": 507.6,
+      "width": 14,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_284",
+      "x": 497.2,
+      "z": 507.6,
+      "width": 16,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_285",
+      "x": 515.9,
+      "z": 508.1,
+      "width": 15,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_286",
+      "x": 533.8,
+      "z": 509.1,
+      "width": 16,
+      "depth": 11,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_287",
+      "x": 553.2,
+      "z": 509.1,
+      "width": 16,
+      "depth": 11,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_288",
+      "x": 568.6,
+      "z": 507.6,
+      "width": 10,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_289",
+      "x": 27.4,
+      "z": 457.1,
+      "width": 15,
+      "depth": 12,
+      "facingHeading": -1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_290",
+      "x": 27.9,
+      "z": 474.8,
+      "width": 14,
+      "depth": 13,
+      "facingHeading": -1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_291",
+      "x": 28.4,
+      "z": 350.4,
+      "width": 19,
+      "depth": 12,
+      "facingHeading": -1.5708,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_292",
+      "x": 27.9,
+      "z": 369.9,
+      "width": 14,
+      "depth": 11,
+      "facingHeading": -1.5708,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_293",
+      "x": 27.9,
+      "z": 387.5,
+      "width": 17,
+      "depth": 11,
+      "facingHeading": -1.5708,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_294",
+      "x": 137.5,
+      "z": 454.9,
+      "width": 14,
+      "depth": 15,
+      "facingHeading": 1.5806,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_295",
+      "x": 139.1,
+      "z": 471.3,
+      "width": 13,
+      "depth": 12,
+      "facingHeading": 1.5806,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_296",
+      "x": 138.8,
+      "z": 490.6,
+      "width": 20,
+      "depth": 13,
+      "facingHeading": 1.5806,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_297",
+      "x": 165.8,
+      "z": 463.2,
+      "width": 20,
+      "depth": 12,
+      "facingHeading": -1.561,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_298",
+      "x": 165.5,
+      "z": 483.2,
+      "width": 17,
+      "depth": 11,
+      "facingHeading": -1.561,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_299",
+      "x": 137.8,
+      "z": 347.1,
+      "width": 17,
+      "depth": 13,
+      "facingHeading": 1.5618,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_300",
+      "x": 138.1,
+      "z": 366,
+      "width": 15,
+      "depth": 12,
+      "facingHeading": 1.5618,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_301",
+      "x": 137,
+      "z": 382.5,
+      "width": 14,
+      "depth": 14,
+      "facingHeading": 1.5618,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_302",
+      "x": 167.2,
+      "z": 329.6,
+      "width": 17,
+      "depth": 12,
+      "facingHeading": -1.5798,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_303",
+      "x": 168,
+      "z": 347.4,
+      "width": 14,
+      "depth": 14,
+      "facingHeading": -1.5798,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_304",
+      "x": 168.4,
+      "z": 363.7,
+      "width": 12,
+      "depth": 15,
+      "facingHeading": -1.5798,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_305",
+      "x": 167.2,
+      "z": 381.7,
+      "width": 19,
+      "depth": 13,
+      "facingHeading": -1.5798,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_306",
+      "x": 289.6,
+      "z": 453.4,
+      "width": 14,
+      "depth": 12,
+      "facingHeading": 1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_307",
+      "x": 289.1,
+      "z": 470,
+      "width": 16,
+      "depth": 13,
+      "facingHeading": 1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_308",
+      "x": 288.1,
+      "z": 487.2,
+      "width": 13,
+      "depth": 15,
+      "facingHeading": 1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_309",
+      "x": 316.9,
+      "z": 450.7,
+      "width": 15,
+      "depth": 13,
+      "facingHeading": -1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_310",
+      "x": 316.9,
+      "z": 467.6,
+      "width": 13,
+      "depth": 13,
+      "facingHeading": -1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_311",
+      "x": 317.4,
+      "z": 481.7,
+      "width": 12,
+      "depth": 14,
+      "facingHeading": -1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_312",
+      "x": 288.1,
+      "z": 347.3,
+      "width": 18,
+      "depth": 13,
+      "facingHeading": 1.5708,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_313",
+      "x": 288.1,
+      "z": 368,
+      "width": 19,
+      "depth": 13,
+      "facingHeading": 1.5708,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_314",
+      "x": 288.1,
+      "z": 387.2,
+      "width": 13,
+      "depth": 13,
+      "facingHeading": 1.5708,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_315",
+      "x": 317.9,
+      "z": 348.2,
+      "width": 15,
+      "depth": 13,
+      "facingHeading": -1.5708,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_316",
+      "x": 318.4,
+      "z": 365.8,
+      "width": 15,
+      "depth": 14,
+      "facingHeading": -1.5708,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_317",
+      "x": 426.5,
+      "z": 453.3,
+      "width": 18,
+      "depth": 13,
+      "facingHeading": 1.6085,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_318",
+      "x": 428.3,
+      "z": 473.5,
+      "width": 18,
+      "depth": 11,
+      "facingHeading": 1.6085,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_319",
+      "x": 454.9,
+      "z": 455.4,
+      "width": 17,
+      "depth": 14,
+      "facingHeading": -1.5331,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_320",
+      "x": 455.6,
+      "z": 473.3,
+      "width": 15,
+      "depth": 14,
+      "facingHeading": -1.5331,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_321",
+      "x": 425.7,
+      "z": 347.1,
+      "width": 17,
+      "depth": 15,
+      "facingHeading": 1.5334,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_322",
+      "x": 427,
+      "z": 366.2,
+      "width": 16,
+      "depth": 11,
+      "facingHeading": 1.5334,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_323",
+      "x": 424.8,
+      "z": 383.6,
+      "width": 15,
+      "depth": 14,
+      "facingHeading": 1.5334,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_324",
+      "x": 456.6,
+      "z": 344.8,
+      "width": 13,
+      "depth": 13,
+      "facingHeading": -1.6082,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_325",
+      "x": 456.5,
+      "z": 360.7,
+      "width": 15,
+      "depth": 14,
+      "facingHeading": -1.6082,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_326",
+      "x": 456.4,
+      "z": 376.2,
+      "width": 12,
+      "depth": 15,
+      "facingHeading": -1.6082,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_327",
+      "x": 572.6,
+      "z": 432.5,
+      "width": 13,
+      "depth": 12,
+      "facingHeading": 1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_328",
+      "x": 572.1,
+      "z": 451,
+      "width": 19,
+      "depth": 13,
+      "facingHeading": 1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_329",
+      "x": 572.6,
+      "z": 473.5,
+      "width": 20,
+      "depth": 12,
+      "facingHeading": 1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_330",
+      "x": 571.1,
+      "z": 491.8,
+      "width": 13,
+      "depth": 15,
+      "facingHeading": 1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_331",
+      "x": 571.6,
+      "z": 352.5,
+      "width": 19,
+      "depth": 12,
+      "facingHeading": 1.5708,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_332",
+      "x": 571.1,
+      "z": 370.6,
+      "width": 14,
+      "depth": 13,
+      "facingHeading": 1.5708,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_333",
+      "x": 541.9,
+      "z": 139.8,
+      "width": 15,
+      "depth": 12,
+      "facingHeading": -0.6028,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_334",
+      "x": 529.8,
+      "z": 130.3,
+      "width": 11,
+      "depth": 14,
+      "facingHeading": -0.6028,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_335",
+      "x": 385.2,
+      "z": 447,
+      "width": 16,
+      "depth": 13,
+      "facingHeading": 0.69,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_336",
+      "x": 405.2,
+      "z": 457.9,
+      "width": 13,
+      "depth": 14,
+      "facingHeading": -2.4516,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_337",
+      "x": 353,
+      "z": 472.2,
+      "width": 18,
+      "depth": 13,
+      "facingHeading": 0.6369,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_338",
+      "x": 365.6,
+      "z": 488.5,
+      "width": 17,
+      "depth": 13,
+      "facingHeading": -2.5047,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_339",
+      "x": 55.6,
+      "z": 463.7,
+      "width": 13,
+      "depth": 13,
+      "facingHeading": 2.4893,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_340",
+      "x": 77.6,
+      "z": 454.7,
+      "width": 12,
+      "depth": 13,
+      "facingHeading": -0.6523,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mirpara_341",
+      "x": 108.5,
+      "z": 478.7,
+      "width": 18,
+      "depth": 11,
+      "facingHeading": -0.6217,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_342",
+      "x": 401.5,
+      "z": 135.7,
+      "width": 18,
+      "depth": 13,
+      "facingHeading": -0.6693,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_343",
+      "x": 390.9,
+      "z": 152.2,
+      "width": 16,
+      "depth": 11,
+      "facingHeading": 2.4723,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_344",
+      "x": 55.2,
+      "z": 122,
+      "width": 14,
+      "depth": 12,
+      "facingHeading": 2.4859,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_345",
+      "x": 87.6,
+      "z": 148.8,
+      "width": 15,
+      "depth": 15,
+      "facingHeading": 2.4872,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_346",
+      "x": 102.7,
+      "z": 133.2,
+      "width": 20,
+      "depth": 13,
+      "facingHeading": -0.6544,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mirpara_347",
+      "x": 118.9,
+      "z": 146.9,
+      "width": 17,
+      "depth": 11,
+      "facingHeading": -0.6544,
       "zone": "residential"
     }
   ]

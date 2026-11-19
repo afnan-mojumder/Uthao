@@ -7,8 +7,8 @@
   "nodes": [
     {
       "nodeId": "motinagar_art_n_0",
-      "x": 600,
-      "z": 1495,
+      "x": 614,
+      "z": 1491,
       "kind": "uturn",
       "tags": [
         "uturn"
@@ -16,8 +16,8 @@
     },
     {
       "nodeId": "motinagar_art_s_0",
-      "x": 600,
-      "z": 1505,
+      "x": 614,
+      "z": 1509,
       "kind": "uturn",
       "tags": [
         "uturn"
@@ -25,8 +25,8 @@
     },
     {
       "nodeId": "motinagar_art_n_1",
-      "x": 750,
-      "z": 1495,
+      "x": 759,
+      "z": 1491,
       "kind": "uturn",
       "tags": [
         "uturn"
@@ -34,8 +34,8 @@
     },
     {
       "nodeId": "motinagar_art_s_1",
-      "x": 750,
-      "z": 1505,
+      "x": 759,
+      "z": 1509,
       "kind": "uturn",
       "tags": [
         "uturn"
@@ -43,26 +43,28 @@
     },
     {
       "nodeId": "motinagar_art_n_2",
-      "x": 900,
-      "z": 1495,
+      "x": 899,
+      "z": 1491,
       "kind": "junction",
+      "signal": true,
       "tags": [
         "crossing"
       ]
     },
     {
       "nodeId": "motinagar_art_s_2",
-      "x": 900,
-      "z": 1505,
+      "x": 899,
+      "z": 1509,
       "kind": "junction",
+      "signal": true,
       "tags": [
         "crossing"
       ]
     },
     {
       "nodeId": "motinagar_art_n_3",
-      "x": 1050,
-      "z": 1495,
+      "x": 1044,
+      "z": 1491,
       "kind": "uturn",
       "tags": [
         "uturn"
@@ -70,8 +72,8 @@
     },
     {
       "nodeId": "motinagar_art_s_3",
-      "x": 1050,
-      "z": 1505,
+      "x": 1044,
+      "z": 1509,
       "kind": "uturn",
       "tags": [
         "uturn"
@@ -79,8 +81,8 @@
     },
     {
       "nodeId": "motinagar_art_n_4",
-      "x": 1200,
-      "z": 1495,
+      "x": 1186,
+      "z": 1491,
       "kind": "uturn",
       "tags": [
         "uturn"
@@ -88,8 +90,8 @@
     },
     {
       "nodeId": "motinagar_art_s_4",
-      "x": 1200,
-      "z": 1505,
+      "x": 1186,
+      "z": 1509,
       "kind": "uturn",
       "tags": [
         "uturn"
@@ -97,17 +99,8 @@
     },
     {
       "nodeId": "motinagar_res_n1_0",
-      "x": 600,
-      "z": 1281,
-      "kind": "junction",
-      "tags": [
-        "speed_bump"
-      ]
-    },
-    {
-      "nodeId": "motinagar_res_n2_0",
-      "x": 600,
-      "z": 1381,
+      "x": 614,
+      "z": 1278,
       "kind": "junction",
       "tags": [
         "speed_bump"
@@ -115,17 +108,8 @@
     },
     {
       "nodeId": "motinagar_res_n1_1",
-      "x": 749,
-      "z": 1281,
-      "kind": "junction",
-      "tags": [
-        "speed_bump"
-      ]
-    },
-    {
-      "nodeId": "motinagar_res_n2_1",
-      "x": 749,
-      "z": 1381,
+      "x": 759,
+      "z": 1278,
       "kind": "junction",
       "tags": [
         "speed_bump"
@@ -133,17 +117,8 @@
     },
     {
       "nodeId": "motinagar_res_n1_2",
-      "x": 900,
-      "z": 1281,
-      "kind": "junction",
-      "tags": [
-        "speed_bump"
-      ]
-    },
-    {
-      "nodeId": "motinagar_res_n2_2",
-      "x": 900,
-      "z": 1381,
+      "x": 899,
+      "z": 1278,
       "kind": "junction",
       "tags": [
         "speed_bump"
@@ -151,17 +126,8 @@
     },
     {
       "nodeId": "motinagar_res_n1_3",
-      "x": 1049,
-      "z": 1279,
-      "kind": "junction",
-      "tags": [
-        "speed_bump"
-      ]
-    },
-    {
-      "nodeId": "motinagar_res_n2_3",
-      "x": 1049,
-      "z": 1379,
+      "x": 1044,
+      "z": 1278,
       "kind": "junction",
       "tags": [
         "speed_bump"
@@ -169,8 +135,45 @@
     },
     {
       "nodeId": "motinagar_res_n1_4",
-      "x": 1200,
-      "z": 1281,
+      "x": 1186,
+      "z": 1278,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "motinagar_res_n2_0",
+      "x": 614,
+      "z": 1383,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "motinagar_res_n2_1",
+      "x": 761,
+      "z": 1383,
+      "kind": "junction",
+      "signal": true,
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "motinagar_res_n2_2",
+      "x": 898,
+      "z": 1384,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "motinagar_res_n2_3",
+      "x": 1043,
+      "z": 1383,
       "kind": "junction",
       "tags": [
         "speed_bump"
@@ -178,8 +181,8 @@
     },
     {
       "nodeId": "motinagar_res_n2_4",
-      "x": 1200,
-      "z": 1381,
+      "x": 1186,
+      "z": 1382,
       "kind": "junction",
       "tags": [
         "speed_bump"
@@ -187,87 +190,99 @@
     },
     {
       "nodeId": "motinagar_res_s1_0",
-      "x": 600,
-      "z": 1619,
-      "kind": "junction"
-    },
-    {
-      "nodeId": "motinagar_res_s2_0",
-      "x": 600,
-      "z": 1719,
+      "x": 614,
+      "z": 1617,
       "kind": "junction"
     },
     {
       "nodeId": "motinagar_res_s1_1",
-      "x": 749,
-      "z": 1619,
-      "kind": "junction"
-    },
-    {
-      "nodeId": "motinagar_res_s2_1",
-      "x": 749,
-      "z": 1719,
+      "x": 760,
+      "z": 1617,
       "kind": "junction"
     },
     {
       "nodeId": "motinagar_res_s1_2",
-      "x": 900,
-      "z": 1621,
-      "kind": "junction"
-    },
-    {
-      "nodeId": "motinagar_res_s2_2",
-      "x": 900,
-      "z": 1721,
+      "x": 897,
+      "z": 1616,
       "kind": "junction"
     },
     {
       "nodeId": "motinagar_res_s1_3",
-      "x": 1050,
-      "z": 1619,
-      "kind": "junction"
-    },
-    {
-      "nodeId": "motinagar_res_s2_3",
-      "x": 1050,
-      "z": 1719,
+      "x": 1042,
+      "z": 1618,
       "kind": "junction"
     },
     {
       "nodeId": "motinagar_res_s1_4",
-      "x": 1200,
-      "z": 1619,
+      "x": 1186,
+      "z": 1616,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "motinagar_res_s2_0",
+      "x": 614,
+      "z": 1722,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "motinagar_res_s2_1",
+      "x": 759,
+      "z": 1722,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "motinagar_res_s2_2",
+      "x": 899,
+      "z": 1722,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "motinagar_res_s2_3",
+      "x": 1044,
+      "z": 1722,
       "kind": "junction"
     },
     {
       "nodeId": "motinagar_res_s2_4",
-      "x": 1200,
-      "z": 1719,
+      "x": 1186,
+      "z": 1722,
       "kind": "junction"
     },
     {
-      "nodeId": "motinagar_alley_nw_mid",
-      "x": 675,
+      "nodeId": "motinagar_alley_dead_1",
+      "x": 1113,
       "z": 1330,
-      "kind": "junction"
+      "kind": "deadEnd",
+      "tags": [
+        "alley"
+      ]
     },
     {
-      "nodeId": "motinagar_alley_ne_gate",
-      "x": 975,
-      "z": 1250,
-      "kind": "junction"
-    },
-    {
-      "nodeId": "motinagar_alley_sc_mid",
-      "x": 825,
+      "nodeId": "motinagar_alley_mid_2",
+      "x": 831,
       "z": 1670,
-      "kind": "junction"
+      "kind": "junction",
+      "tags": [
+        "alley"
+      ]
     },
     {
-      "nodeId": "motinagar_alley_se_deadend",
-      "x": 1125,
-      "z": 1690,
-      "kind": "deadEnd"
+      "nodeId": "motinagar_alley_mid_3",
+      "x": 829,
+      "z": 1332,
+      "kind": "junction",
+      "tags": [
+        "alley"
+      ]
+    },
+    {
+      "nodeId": "motinagar_alley_dead_4",
+      "x": 973,
+      "z": 1669,
+      "kind": "deadEnd",
+      "tags": [
+        "alley"
+      ]
     }
   ],
   "segments": [
@@ -284,14 +299,15 @@
       "pedestrianDensity": 0.2,
       "riskLevel": 0.1,
       "oneWay": true,
-      "divided": true,
+      "divided": false,
       "lanes": 2,
       "roadType": "main",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "motinagar",
       "tags": [
-        "arterial"
+        "arterial",
+        "arterial_outer_north"
       ]
     },
     {
@@ -307,14 +323,15 @@
       "pedestrianDensity": 0.2,
       "riskLevel": 0.1,
       "oneWay": true,
-      "divided": true,
+      "divided": false,
       "lanes": 2,
       "roadType": "main",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "motinagar",
       "tags": [
-        "arterial"
+        "arterial",
+        "arterial_outer_south"
       ]
     },
     {
@@ -330,14 +347,15 @@
       "pedestrianDensity": 0.2,
       "riskLevel": 0.1,
       "oneWay": true,
-      "divided": true,
+      "divided": false,
       "lanes": 2,
       "roadType": "main",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "motinagar",
       "tags": [
-        "arterial"
+        "arterial",
+        "arterial_outer_north"
       ]
     },
     {
@@ -353,14 +371,15 @@
       "pedestrianDensity": 0.2,
       "riskLevel": 0.1,
       "oneWay": true,
-      "divided": true,
+      "divided": false,
       "lanes": 2,
       "roadType": "main",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "motinagar",
       "tags": [
-        "arterial"
+        "arterial",
+        "arterial_outer_south"
       ]
     },
     {
@@ -376,14 +395,15 @@
       "pedestrianDensity": 0.2,
       "riskLevel": 0.1,
       "oneWay": true,
-      "divided": true,
+      "divided": false,
       "lanes": 2,
       "roadType": "main",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "motinagar",
       "tags": [
-        "arterial"
+        "arterial",
+        "arterial_outer_north"
       ]
     },
     {
@@ -399,14 +419,15 @@
       "pedestrianDensity": 0.2,
       "riskLevel": 0.1,
       "oneWay": true,
-      "divided": true,
+      "divided": false,
       "lanes": 2,
       "roadType": "main",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "motinagar",
       "tags": [
-        "arterial"
+        "arterial",
+        "arterial_outer_south"
       ]
     },
     {
@@ -422,14 +443,15 @@
       "pedestrianDensity": 0.2,
       "riskLevel": 0.1,
       "oneWay": true,
-      "divided": true,
+      "divided": false,
       "lanes": 2,
       "roadType": "main",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "motinagar",
       "tags": [
-        "arterial"
+        "arterial",
+        "arterial_outer_north"
       ]
     },
     {
@@ -445,14 +467,15 @@
       "pedestrianDensity": 0.2,
       "riskLevel": 0.1,
       "oneWay": true,
-      "divided": true,
+      "divided": false,
       "lanes": 2,
       "roadType": "main",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "motinagar",
       "tags": [
-        "arterial"
+        "arterial",
+        "arterial_outer_south"
       ]
     },
     {
@@ -575,7 +598,7 @@
       "segmentId": "S_motinagar_14",
       "startNodeId": "motinagar_res_n1_0",
       "endNodeId": "motinagar_res_n1_1",
-      "width": 7,
+      "width": 8,
       "surfaceCondition": 0.6,
       "trafficDensity": 0.3,
       "speedLimit": 30,
@@ -596,10 +619,10 @@
     },
     {
       "segmentId": "S_motinagar_15",
-      "startNodeId": "motinagar_res_n2_0",
-      "endNodeId": "motinagar_res_n2_1",
-      "width": 7,
-      "surfaceCondition": 0.9,
+      "startNodeId": "motinagar_res_n1_1",
+      "endNodeId": "motinagar_res_n1_2",
+      "width": 8,
+      "surfaceCondition": 0.85,
       "trafficDensity": 0.3,
       "speedLimit": 30,
       "turnRestrictions": [],
@@ -619,9 +642,9 @@
     },
     {
       "segmentId": "S_motinagar_16",
-      "startNodeId": "motinagar_res_n1_1",
-      "endNodeId": "motinagar_res_n1_2",
-      "width": 7,
+      "startNodeId": "motinagar_res_n1_2",
+      "endNodeId": "motinagar_res_n1_3",
+      "width": 8,
       "surfaceCondition": 0.85,
       "trafficDensity": 0.3,
       "speedLimit": 30,
@@ -642,10 +665,10 @@
     },
     {
       "segmentId": "S_motinagar_17",
-      "startNodeId": "motinagar_res_n2_1",
-      "endNodeId": "motinagar_res_n2_2",
-      "width": 7,
-      "surfaceCondition": 0.9,
+      "startNodeId": "motinagar_res_n1_3",
+      "endNodeId": "motinagar_res_n1_4",
+      "width": 8,
+      "surfaceCondition": 0.85,
       "trafficDensity": 0.3,
       "speedLimit": 30,
       "turnRestrictions": [],
@@ -665,9 +688,9 @@
     },
     {
       "segmentId": "S_motinagar_18",
-      "startNodeId": "motinagar_res_n1_2",
-      "endNodeId": "motinagar_res_n1_3",
-      "width": 7,
+      "startNodeId": "motinagar_res_n2_0",
+      "endNodeId": "motinagar_res_n2_1",
+      "width": 8,
       "surfaceCondition": 0.85,
       "trafficDensity": 0.3,
       "speedLimit": 30,
@@ -688,10 +711,10 @@
     },
     {
       "segmentId": "S_motinagar_19",
-      "startNodeId": "motinagar_res_n2_2",
-      "endNodeId": "motinagar_res_n2_3",
-      "width": 7,
-      "surfaceCondition": 0.9,
+      "startNodeId": "motinagar_res_n2_1",
+      "endNodeId": "motinagar_res_n2_2",
+      "width": 8,
+      "surfaceCondition": 0.85,
       "trafficDensity": 0.3,
       "speedLimit": 30,
       "turnRestrictions": [],
@@ -711,9 +734,9 @@
     },
     {
       "segmentId": "S_motinagar_20",
-      "startNodeId": "motinagar_res_n1_3",
-      "endNodeId": "motinagar_res_n1_4",
-      "width": 7,
+      "startNodeId": "motinagar_res_n2_2",
+      "endNodeId": "motinagar_res_n2_3",
+      "width": 8,
       "surfaceCondition": 0.85,
       "trafficDensity": 0.3,
       "speedLimit": 30,
@@ -736,8 +759,8 @@
       "segmentId": "S_motinagar_21",
       "startNodeId": "motinagar_res_n2_3",
       "endNodeId": "motinagar_res_n2_4",
-      "width": 7,
-      "surfaceCondition": 0.9,
+      "width": 8,
+      "surfaceCondition": 0.85,
       "trafficDensity": 0.3,
       "speedLimit": 30,
       "turnRestrictions": [],
@@ -759,7 +782,7 @@
       "segmentId": "S_motinagar_22",
       "startNodeId": "motinagar_res_n1_0",
       "endNodeId": "motinagar_res_n2_0",
-      "width": 7,
+      "width": 8,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
       "speedLimit": 30,
@@ -782,7 +805,7 @@
       "segmentId": "S_motinagar_23",
       "startNodeId": "motinagar_res_n2_0",
       "endNodeId": "motinagar_art_n_0",
-      "width": 8,
+      "width": 9,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
       "speedLimit": 35,
@@ -803,7 +826,7 @@
       "segmentId": "S_motinagar_24",
       "startNodeId": "motinagar_res_n1_1",
       "endNodeId": "motinagar_res_n2_1",
-      "width": 7,
+      "width": 8,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
       "speedLimit": 30,
@@ -826,7 +849,7 @@
       "segmentId": "S_motinagar_25",
       "startNodeId": "motinagar_res_n2_1",
       "endNodeId": "motinagar_art_n_1",
-      "width": 8,
+      "width": 9,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
       "speedLimit": 35,
@@ -847,7 +870,7 @@
       "segmentId": "S_motinagar_26",
       "startNodeId": "motinagar_res_n1_2",
       "endNodeId": "motinagar_res_n2_2",
-      "width": 7,
+      "width": 8,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
       "speedLimit": 30,
@@ -870,28 +893,30 @@
       "segmentId": "S_motinagar_27",
       "startNodeId": "motinagar_res_n2_2",
       "endNodeId": "motinagar_art_n_2",
-      "width": 8,
+      "width": 14,
       "surfaceCondition": 0.9,
-      "trafficDensity": 0.3,
-      "speedLimit": 35,
+      "trafficDensity": 0.81,
+      "speedLimit": 45,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
       "pedestrianDensity": 0.2,
       "riskLevel": 0.1,
       "oneWay": false,
-      "divided": false,
-      "lanes": 2,
+      "divided": true,
+      "lanes": 4,
       "roadType": "main",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "motinagar",
-      "tags": []
+      "tags": [
+        "arterial"
+      ]
     },
     {
       "segmentId": "S_motinagar_28",
       "startNodeId": "motinagar_res_n1_3",
       "endNodeId": "motinagar_res_n2_3",
-      "width": 7,
+      "width": 8,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
       "speedLimit": 30,
@@ -914,7 +939,7 @@
       "segmentId": "S_motinagar_29",
       "startNodeId": "motinagar_res_n2_3",
       "endNodeId": "motinagar_art_n_3",
-      "width": 8,
+      "width": 9,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
       "speedLimit": 35,
@@ -935,7 +960,7 @@
       "segmentId": "S_motinagar_30",
       "startNodeId": "motinagar_res_n1_4",
       "endNodeId": "motinagar_res_n2_4",
-      "width": 7,
+      "width": 8,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
       "speedLimit": 30,
@@ -958,7 +983,7 @@
       "segmentId": "S_motinagar_31",
       "startNodeId": "motinagar_res_n2_4",
       "endNodeId": "motinagar_art_n_4",
-      "width": 8,
+      "width": 9,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
       "speedLimit": 35,
@@ -979,10 +1004,10 @@
       "segmentId": "S_motinagar_32",
       "startNodeId": "motinagar_res_s1_0",
       "endNodeId": "motinagar_res_s1_1",
-      "width": 9,
+      "width": 7,
       "surfaceCondition": 0.65,
-      "trafficDensity": 0.7,
-      "speedLimit": 25,
+      "trafficDensity": 0.72,
+      "speedLimit": 22,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
       "pedestrianDensity": 0.85,
@@ -990,7 +1015,7 @@
       "oneWay": false,
       "divided": false,
       "lanes": 2,
-      "roadType": "residential",
+      "roadType": "market",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "motinagar",
@@ -1000,33 +1025,12 @@
     },
     {
       "segmentId": "S_motinagar_33",
-      "startNodeId": "motinagar_res_s2_0",
-      "endNodeId": "motinagar_res_s2_1",
-      "width": 7,
-      "surfaceCondition": 0.9,
-      "trafficDensity": 0.3,
-      "speedLimit": 30,
-      "turnRestrictions": [],
-      "motorcycleAccessible": true,
-      "pedestrianDensity": 0.2,
-      "riskLevel": 0.1,
-      "oneWay": false,
-      "divided": false,
-      "lanes": 2,
-      "roadType": "residential",
-      "floodSensitivity": 0.2,
-      "pickupPractical": true,
-      "district": "motinagar",
-      "tags": []
-    },
-    {
-      "segmentId": "S_motinagar_34",
       "startNodeId": "motinagar_res_s1_1",
       "endNodeId": "motinagar_res_s1_2",
-      "width": 9,
+      "width": 7,
       "surfaceCondition": 0.65,
-      "trafficDensity": 0.7,
-      "speedLimit": 25,
+      "trafficDensity": 0.72,
+      "speedLimit": 22,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
       "pedestrianDensity": 0.85,
@@ -1034,7 +1038,30 @@
       "oneWay": false,
       "divided": false,
       "lanes": 2,
-      "roadType": "residential",
+      "roadType": "market",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "motinagar",
+      "tags": [
+        "market"
+      ]
+    },
+    {
+      "segmentId": "S_motinagar_34",
+      "startNodeId": "motinagar_res_s1_2",
+      "endNodeId": "motinagar_res_s1_3",
+      "width": 7,
+      "surfaceCondition": 0.65,
+      "trafficDensity": 0.72,
+      "speedLimit": 22,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.85,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "market",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "motinagar",
@@ -1044,10 +1071,33 @@
     },
     {
       "segmentId": "S_motinagar_35",
-      "startNodeId": "motinagar_res_s2_1",
-      "endNodeId": "motinagar_res_s2_2",
+      "startNodeId": "motinagar_res_s1_3",
+      "endNodeId": "motinagar_res_s1_4",
       "width": 7,
-      "surfaceCondition": 0.9,
+      "surfaceCondition": 0.65,
+      "trafficDensity": 0.72,
+      "speedLimit": 22,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.85,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "market",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "motinagar",
+      "tags": [
+        "market"
+      ]
+    },
+    {
+      "segmentId": "S_motinagar_36",
+      "startNodeId": "motinagar_res_s2_0",
+      "endNodeId": "motinagar_res_s2_1",
+      "width": 8,
+      "surfaceCondition": 0.85,
       "trafficDensity": 0.3,
       "speedLimit": 30,
       "turnRestrictions": [],
@@ -1064,34 +1114,11 @@
       "tags": []
     },
     {
-      "segmentId": "S_motinagar_36",
-      "startNodeId": "motinagar_res_s1_2",
-      "endNodeId": "motinagar_res_s1_3",
-      "width": 9,
-      "surfaceCondition": 0.65,
-      "trafficDensity": 0.7,
-      "speedLimit": 25,
-      "turnRestrictions": [],
-      "motorcycleAccessible": true,
-      "pedestrianDensity": 0.85,
-      "riskLevel": 0.1,
-      "oneWay": false,
-      "divided": false,
-      "lanes": 2,
-      "roadType": "residential",
-      "floodSensitivity": 0.2,
-      "pickupPractical": true,
-      "district": "motinagar",
-      "tags": [
-        "market"
-      ]
-    },
-    {
       "segmentId": "S_motinagar_37",
-      "startNodeId": "motinagar_res_s2_2",
-      "endNodeId": "motinagar_res_s2_3",
-      "width": 7,
-      "surfaceCondition": 0.9,
+      "startNodeId": "motinagar_res_s2_1",
+      "endNodeId": "motinagar_res_s2_2",
+      "width": 8,
+      "surfaceCondition": 0.85,
       "trafficDensity": 0.3,
       "speedLimit": 30,
       "turnRestrictions": [],
@@ -1109,15 +1136,15 @@
     },
     {
       "segmentId": "S_motinagar_38",
-      "startNodeId": "motinagar_res_s1_3",
-      "endNodeId": "motinagar_res_s1_4",
-      "width": 9,
-      "surfaceCondition": 0.65,
-      "trafficDensity": 0.7,
-      "speedLimit": 25,
+      "startNodeId": "motinagar_res_s2_2",
+      "endNodeId": "motinagar_res_s2_3",
+      "width": 8,
+      "surfaceCondition": 0.85,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
-      "pedestrianDensity": 0.85,
+      "pedestrianDensity": 0.2,
       "riskLevel": 0.1,
       "oneWay": false,
       "divided": false,
@@ -1126,16 +1153,14 @@
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "motinagar",
-      "tags": [
-        "market"
-      ]
+      "tags": []
     },
     {
       "segmentId": "S_motinagar_39",
       "startNodeId": "motinagar_res_s2_3",
       "endNodeId": "motinagar_res_s2_4",
-      "width": 7,
-      "surfaceCondition": 0.9,
+      "width": 8,
+      "surfaceCondition": 0.85,
       "trafficDensity": 0.3,
       "speedLimit": 30,
       "turnRestrictions": [],
@@ -1153,12 +1178,12 @@
     },
     {
       "segmentId": "S_motinagar_40",
-      "startNodeId": "motinagar_art_s_0",
-      "endNodeId": "motinagar_res_s1_0",
+      "startNodeId": "motinagar_res_s1_0",
+      "endNodeId": "motinagar_res_s2_0",
       "width": 8,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
-      "speedLimit": 35,
+      "speedLimit": 30,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
       "pedestrianDensity": 0.2,
@@ -1166,7 +1191,7 @@
       "oneWay": false,
       "divided": false,
       "lanes": 2,
-      "roadType": "main",
+      "roadType": "residential",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "motinagar",
@@ -1174,12 +1199,12 @@
     },
     {
       "segmentId": "S_motinagar_41",
-      "startNodeId": "motinagar_res_s1_0",
-      "endNodeId": "motinagar_res_s2_0",
-      "width": 7,
+      "startNodeId": "motinagar_art_s_0",
+      "endNodeId": "motinagar_res_s1_0",
+      "width": 9,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
-      "speedLimit": 30,
+      "speedLimit": 35,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
       "pedestrianDensity": 0.2,
@@ -1187,7 +1212,7 @@
       "oneWay": false,
       "divided": false,
       "lanes": 2,
-      "roadType": "residential",
+      "roadType": "main",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "motinagar",
@@ -1195,12 +1220,12 @@
     },
     {
       "segmentId": "S_motinagar_42",
-      "startNodeId": "motinagar_art_s_1",
-      "endNodeId": "motinagar_res_s1_1",
+      "startNodeId": "motinagar_res_s1_1",
+      "endNodeId": "motinagar_res_s2_1",
       "width": 8,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
-      "speedLimit": 35,
+      "speedLimit": 30,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
       "pedestrianDensity": 0.2,
@@ -1208,7 +1233,7 @@
       "oneWay": false,
       "divided": false,
       "lanes": 2,
-      "roadType": "main",
+      "roadType": "residential",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "motinagar",
@@ -1216,12 +1241,12 @@
     },
     {
       "segmentId": "S_motinagar_43",
-      "startNodeId": "motinagar_res_s1_1",
-      "endNodeId": "motinagar_res_s2_1",
-      "width": 7,
+      "startNodeId": "motinagar_art_s_1",
+      "endNodeId": "motinagar_res_s1_1",
+      "width": 9,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
-      "speedLimit": 30,
+      "speedLimit": 35,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
       "pedestrianDensity": 0.2,
@@ -1229,7 +1254,7 @@
       "oneWay": false,
       "divided": false,
       "lanes": 2,
-      "roadType": "residential",
+      "roadType": "main",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "motinagar",
@@ -1237,12 +1262,12 @@
     },
     {
       "segmentId": "S_motinagar_44",
-      "startNodeId": "motinagar_art_s_2",
-      "endNodeId": "motinagar_res_s1_2",
+      "startNodeId": "motinagar_res_s1_2",
+      "endNodeId": "motinagar_res_s2_2",
       "width": 8,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
-      "speedLimit": 35,
+      "speedLimit": 30,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
       "pedestrianDensity": 0.2,
@@ -1250,7 +1275,7 @@
       "oneWay": false,
       "divided": false,
       "lanes": 2,
-      "roadType": "main",
+      "roadType": "residential",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "motinagar",
@@ -1258,12 +1283,12 @@
     },
     {
       "segmentId": "S_motinagar_45",
-      "startNodeId": "motinagar_res_s1_2",
-      "endNodeId": "motinagar_res_s2_2",
-      "width": 7,
+      "startNodeId": "motinagar_art_s_2",
+      "endNodeId": "motinagar_res_s1_2",
+      "width": 9,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
-      "speedLimit": 30,
+      "speedLimit": 35,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
       "pedestrianDensity": 0.2,
@@ -1271,7 +1296,7 @@
       "oneWay": false,
       "divided": false,
       "lanes": 2,
-      "roadType": "residential",
+      "roadType": "main",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "motinagar",
@@ -1279,12 +1304,12 @@
     },
     {
       "segmentId": "S_motinagar_46",
-      "startNodeId": "motinagar_art_s_3",
-      "endNodeId": "motinagar_res_s1_3",
+      "startNodeId": "motinagar_res_s1_3",
+      "endNodeId": "motinagar_res_s2_3",
       "width": 8,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
-      "speedLimit": 35,
+      "speedLimit": 30,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
       "pedestrianDensity": 0.2,
@@ -1292,7 +1317,7 @@
       "oneWay": false,
       "divided": false,
       "lanes": 2,
-      "roadType": "main",
+      "roadType": "residential",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "motinagar",
@@ -1300,30 +1325,9 @@
     },
     {
       "segmentId": "S_motinagar_47",
-      "startNodeId": "motinagar_res_s1_3",
-      "endNodeId": "motinagar_res_s2_3",
-      "width": 7,
-      "surfaceCondition": 0.9,
-      "trafficDensity": 0.3,
-      "speedLimit": 30,
-      "turnRestrictions": [],
-      "motorcycleAccessible": true,
-      "pedestrianDensity": 0.2,
-      "riskLevel": 0.1,
-      "oneWay": false,
-      "divided": false,
-      "lanes": 2,
-      "roadType": "residential",
-      "floodSensitivity": 0.2,
-      "pickupPractical": true,
-      "district": "motinagar",
-      "tags": []
-    },
-    {
-      "segmentId": "S_motinagar_48",
-      "startNodeId": "motinagar_art_s_4",
-      "endNodeId": "motinagar_res_s1_4",
-      "width": 8,
+      "startNodeId": "motinagar_art_s_3",
+      "endNodeId": "motinagar_res_s1_3",
+      "width": 9,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
       "speedLimit": 35,
@@ -1341,10 +1345,10 @@
       "tags": []
     },
     {
-      "segmentId": "S_motinagar_49",
+      "segmentId": "S_motinagar_48",
       "startNodeId": "motinagar_res_s1_4",
       "endNodeId": "motinagar_res_s2_4",
-      "width": 7,
+      "width": 8,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
       "speedLimit": 30,
@@ -1362,13 +1366,13 @@
       "tags": []
     },
     {
-      "segmentId": "S_motinagar_50",
-      "startNodeId": "motinagar_res_n1_0",
-      "endNodeId": "motinagar_alley_nw_mid",
-      "width": 3.5,
+      "segmentId": "S_motinagar_49",
+      "startNodeId": "motinagar_art_s_4",
+      "endNodeId": "motinagar_res_s1_4",
+      "width": 9,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
-      "speedLimit": 20,
+      "speedLimit": 35,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
       "pedestrianDensity": 0.2,
@@ -1376,25 +1380,47 @@
       "oneWay": false,
       "divided": false,
       "lanes": 2,
-      "roadType": "alley",
+      "roadType": "main",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "motinagar",
+      "tags": []
+    },
+    {
+      "segmentId": "S_motinagar_50",
+      "startNodeId": "motinagar_res_n2_4",
+      "endNodeId": "motinagar_alley_dead_1",
+      "width": 2.5,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 15,
+      "turnRestrictions": [],
+      "motorcycleAccessible": false,
+      "pedestrianDensity": 0.65,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "alley",
+      "floodSensitivity": 0.2,
+      "pickupPractical": false,
+      "district": "motinagar",
       "tags": [
-        "alley"
+        "alley",
+        "deadend"
       ]
     },
     {
       "segmentId": "S_motinagar_51",
-      "startNodeId": "motinagar_alley_nw_mid",
-      "endNodeId": "motinagar_res_n2_1",
+      "startNodeId": "motinagar_res_s1_2",
+      "endNodeId": "motinagar_alley_mid_2",
       "width": 3.5,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
       "speedLimit": 20,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
-      "pedestrianDensity": 0.2,
+      "pedestrianDensity": 0.45,
       "riskLevel": 0.1,
       "oneWay": false,
       "divided": false,
@@ -1409,63 +1435,61 @@
     },
     {
       "segmentId": "S_motinagar_52",
-      "startNodeId": "motinagar_res_n1_2",
-      "endNodeId": "motinagar_alley_ne_gate",
-      "width": 2.5,
-      "surfaceCondition": 0.9,
-      "trafficDensity": 0.3,
-      "speedLimit": 15,
-      "turnRestrictions": [],
-      "motorcycleAccessible": false,
-      "pedestrianDensity": 0.2,
-      "riskLevel": 0.1,
-      "oneWay": false,
-      "divided": false,
-      "lanes": 2,
-      "roadType": "alley",
-      "floodSensitivity": 0.2,
-      "pickupPractical": false,
-      "district": "motinagar",
-      "tags": [
-        "alley",
-        "pedestrian_only"
-      ]
-    },
-    {
-      "segmentId": "S_motinagar_53",
-      "startNodeId": "motinagar_alley_ne_gate",
-      "endNodeId": "motinagar_res_n1_3",
-      "width": 2.5,
-      "surfaceCondition": 0.9,
-      "trafficDensity": 0.3,
-      "speedLimit": 15,
-      "turnRestrictions": [],
-      "motorcycleAccessible": false,
-      "pedestrianDensity": 0.2,
-      "riskLevel": 0.1,
-      "oneWay": false,
-      "divided": false,
-      "lanes": 2,
-      "roadType": "alley",
-      "floodSensitivity": 0.2,
-      "pickupPractical": false,
-      "district": "motinagar",
-      "tags": [
-        "alley",
-        "pedestrian_only"
-      ]
-    },
-    {
-      "segmentId": "S_motinagar_54",
-      "startNodeId": "motinagar_res_s1_1",
-      "endNodeId": "motinagar_alley_sc_mid",
+      "startNodeId": "motinagar_alley_mid_2",
+      "endNodeId": "motinagar_res_s2_1",
       "width": 3.5,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
       "speedLimit": 20,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
-      "pedestrianDensity": 0.2,
+      "pedestrianDensity": 0.45,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "alley",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "motinagar",
+      "tags": [
+        "alley"
+      ]
+    },
+    {
+      "segmentId": "S_motinagar_53",
+      "startNodeId": "motinagar_res_n1_1",
+      "endNodeId": "motinagar_alley_mid_3",
+      "width": 3.5,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 20,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.45,
+      "riskLevel": 0.1,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "alley",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "motinagar",
+      "tags": [
+        "alley"
+      ]
+    },
+    {
+      "segmentId": "S_motinagar_54",
+      "startNodeId": "motinagar_alley_mid_3",
+      "endNodeId": "motinagar_res_n2_2",
+      "width": 3.5,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 20,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.45,
       "riskLevel": 0.1,
       "oneWay": false,
       "divided": false,
@@ -1480,38 +1504,15 @@
     },
     {
       "segmentId": "S_motinagar_55",
-      "startNodeId": "motinagar_alley_sc_mid",
-      "endNodeId": "motinagar_res_s2_2",
-      "width": 3.5,
-      "surfaceCondition": 0.9,
-      "trafficDensity": 0.3,
-      "speedLimit": 20,
-      "turnRestrictions": [],
-      "motorcycleAccessible": true,
-      "pedestrianDensity": 0.2,
-      "riskLevel": 0.1,
-      "oneWay": false,
-      "divided": false,
-      "lanes": 2,
-      "roadType": "alley",
-      "floodSensitivity": 0.2,
-      "pickupPractical": true,
-      "district": "motinagar",
-      "tags": [
-        "alley"
-      ]
-    },
-    {
-      "segmentId": "S_motinagar_56",
       "startNodeId": "motinagar_res_s2_3",
-      "endNodeId": "motinagar_alley_se_deadend",
+      "endNodeId": "motinagar_alley_dead_4",
       "width": 2.5,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
       "speedLimit": 15,
       "turnRestrictions": [],
       "motorcycleAccessible": false,
-      "pedestrianDensity": 0.2,
+      "pedestrianDensity": 0.65,
       "riskLevel": 0.1,
       "oneWay": false,
       "divided": false,
@@ -1567,479 +1568,2693 @@
   "lots": [
     {
       "lotId": "lot_motinagar_1",
-      "x": 675,
-      "z": 1483,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5707963267948966,
+      "x": 636.5,
+      "z": 1475.6,
+      "width": 21,
+      "depth": 12,
+      "facingHeading": 0,
       "zone": "commercial"
     },
     {
       "lotId": "lot_motinagar_2",
-      "x": 675,
-      "z": 1517,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": -1.5707963267948966,
+      "x": 660.6,
+      "z": 1475.6,
+      "width": 21,
+      "depth": 12,
+      "facingHeading": 0,
       "zone": "commercial"
     },
     {
       "lotId": "lot_motinagar_3",
-      "x": 825,
-      "z": 1483,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5707963267948966,
+      "x": 681.5,
+      "z": 1474.6,
+      "width": 15,
+      "depth": 14,
+      "facingHeading": 0,
       "zone": "commercial"
     },
     {
       "lotId": "lot_motinagar_4",
-      "x": 825,
-      "z": 1517,
-      "width": 18,
+      "x": 700.5,
+      "z": 1473.6,
+      "width": 19,
       "depth": 16,
-      "facingHeading": -1.5707963267948966,
+      "facingHeading": 0,
       "zone": "commercial"
     },
     {
       "lotId": "lot_motinagar_5",
-      "x": 975,
-      "z": 1483,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5707963267948966,
+      "x": 721.1,
+      "z": 1475.1,
+      "width": 17,
+      "depth": 13,
+      "facingHeading": 0,
       "zone": "commercial"
     },
     {
       "lotId": "lot_motinagar_6",
-      "x": 975,
-      "z": 1517,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": -1.5707963267948966,
+      "x": 739.8,
+      "z": 1475.1,
+      "width": 14,
+      "depth": 13,
+      "facingHeading": 0,
       "zone": "commercial"
     },
     {
       "lotId": "lot_motinagar_7",
-      "x": 1125,
-      "z": 1483,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5707963267948966,
+      "x": 737.5,
+      "z": 1525.9,
+      "width": 19,
+      "depth": 15,
+      "facingHeading": -3.1416,
       "zone": "commercial"
     },
     {
       "lotId": "lot_motinagar_8",
-      "x": 1125,
-      "z": 1517,
-      "width": 18,
+      "x": 716.6,
+      "z": 1526.4,
+      "width": 19,
       "depth": 16,
-      "facingHeading": -1.5707963267948966,
+      "facingHeading": -3.1416,
       "zone": "commercial"
     },
     {
       "lotId": "lot_motinagar_9",
-      "x": 612,
-      "z": 1500,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0,
+      "x": 694.1,
+      "z": 1524.9,
+      "width": 19,
+      "depth": 13,
+      "facingHeading": -3.1416,
       "zone": "commercial"
     },
     {
       "lotId": "lot_motinagar_10",
-      "x": 762,
-      "z": 1500,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0,
+      "x": 672.8,
+      "z": 1525.4,
+      "width": 20,
+      "depth": 14,
+      "facingHeading": -3.1416,
       "zone": "commercial"
     },
     {
       "lotId": "lot_motinagar_11",
-      "x": 912,
-      "z": 1500,
+      "x": 651.9,
+      "z": 1525.4,
       "width": 18,
-      "depth": 16,
-      "facingHeading": 0,
+      "depth": 14,
+      "facingHeading": -3.1416,
       "zone": "commercial"
     },
     {
       "lotId": "lot_motinagar_12",
-      "x": 1062,
-      "z": 1500,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0,
+      "x": 633.1,
+      "z": 1525.9,
+      "width": 13,
+      "depth": 15,
+      "facingHeading": -3.1416,
       "zone": "commercial"
     },
     {
       "lotId": "lot_motinagar_13",
-      "x": 1212,
-      "z": 1500,
-      "width": 18,
-      "depth": 16,
+      "x": 778.5,
+      "z": 1474.6,
+      "width": 15,
+      "depth": 14,
       "facingHeading": 0,
       "zone": "commercial"
     },
     {
       "lotId": "lot_motinagar_14",
-      "x": 675,
-      "z": 1269,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5707963267948966,
-      "zone": "residential"
+      "x": 799,
+      "z": 1475.1,
+      "width": 19,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_motinagar_15",
-      "x": 675,
-      "z": 1369,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5707963267948966,
-      "zone": "residential"
+      "x": 820.7,
+      "z": 1474.6,
+      "width": 21,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_motinagar_16",
-      "x": 825,
-      "z": 1269,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5707963267948966,
-      "zone": "residential"
+      "x": 840.5,
+      "z": 1474.6,
+      "width": 15,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_motinagar_17",
-      "x": 825,
-      "z": 1369,
+      "x": 860.3,
+      "z": 1474.1,
       "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5707963267948966,
-      "zone": "residential"
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_motinagar_18",
-      "x": 974,
-      "z": 1268,
-      "width": 18,
+      "x": 878.9,
+      "z": 1473.6,
+      "width": 16,
       "depth": 16,
-      "facingHeading": 1.5842183395349878,
-      "zone": "residential"
+      "facingHeading": 0,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_motinagar_19",
-      "x": 974,
-      "z": 1368,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5842183395349878,
-      "zone": "residential"
+      "x": 877,
+      "z": 1524.4,
+      "width": 20,
+      "depth": 12,
+      "facingHeading": -3.1416,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_motinagar_20",
-      "x": 1125,
-      "z": 1268,
+      "x": 855.5,
+      "z": 1524.4,
       "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5575520681301676,
-      "zone": "residential"
+      "depth": 12,
+      "facingHeading": -3.1416,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_motinagar_21",
-      "x": 1125,
-      "z": 1368,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5575520681301676,
-      "zone": "residential"
+      "x": 835.9,
+      "z": 1525.9,
+      "width": 15,
+      "depth": 15,
+      "facingHeading": -3.1416,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_motinagar_22",
-      "x": 612,
-      "z": 1331,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0,
-      "zone": "residential"
+      "x": 817.6,
+      "z": 1525.9,
+      "width": 16,
+      "depth": 15,
+      "facingHeading": -3.1416,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_motinagar_23",
-      "x": 612,
-      "z": 1438,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0,
+      "x": 798.5,
+      "z": 1525.4,
+      "width": 16,
+      "depth": 14,
+      "facingHeading": -3.1416,
       "zone": "commercial"
     },
     {
       "lotId": "lot_motinagar_24",
-      "x": 761,
-      "z": 1331,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0,
-      "zone": "residential"
+      "x": 779.4,
+      "z": 1525.9,
+      "width": 16,
+      "depth": 15,
+      "facingHeading": -3.1416,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_motinagar_25",
-      "x": 761,
-      "z": 1438,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0.008771704844442806,
+      "x": 918.5,
+      "z": 1474.6,
+      "width": 15,
+      "depth": 14,
+      "facingHeading": 0,
       "zone": "commercial"
     },
     {
       "lotId": "lot_motinagar_26",
-      "x": 912,
-      "z": 1331,
-      "width": 18,
-      "depth": 16,
+      "x": 938.6,
+      "z": 1474.1,
+      "width": 20,
+      "depth": 15,
       "facingHeading": 0,
-      "zone": "residential"
+      "zone": "commercial"
     },
     {
       "lotId": "lot_motinagar_27",
-      "x": 912,
-      "z": 1438,
-      "width": 18,
-      "depth": 16,
+      "x": 962.1,
+      "z": 1474.6,
+      "width": 22,
+      "depth": 14,
       "facingHeading": 0,
       "zone": "commercial"
     },
     {
       "lotId": "lot_motinagar_28",
-      "x": 1061,
-      "z": 1329,
-      "width": 18,
-      "depth": 16,
+      "x": 985.7,
+      "z": 1475.1,
+      "width": 21,
+      "depth": 13,
       "facingHeading": 0,
-      "zone": "residential"
+      "zone": "commercial"
     },
     {
       "lotId": "lot_motinagar_29",
-      "x": 1061,
-      "z": 1437,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0.008620476112136321,
+      "x": 1007.8,
+      "z": 1474.1,
+      "width": 17,
+      "depth": 15,
+      "facingHeading": 0,
       "zone": "commercial"
     },
     {
       "lotId": "lot_motinagar_30",
-      "x": 1212,
-      "z": 1331,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0,
-      "zone": "residential"
-    },
-    {
-      "lotId": "lot_motinagar_31",
-      "x": 1212,
-      "z": 1438,
-      "width": 18,
-      "depth": 16,
+      "x": 1024.9,
+      "z": 1475.6,
+      "width": 14,
+      "depth": 12,
       "facingHeading": 0,
       "zone": "commercial"
     },
     {
+      "lotId": "lot_motinagar_31",
+      "x": 1022,
+      "z": 1525.9,
+      "width": 20,
+      "depth": 15,
+      "facingHeading": -3.1416,
+      "zone": "commercial"
+    },
+    {
       "lotId": "lot_motinagar_32",
-      "x": 675,
-      "z": 1607,
-      "width": 18,
+      "x": 999.5,
+      "z": 1526.4,
+      "width": 22,
       "depth": 16,
-      "facingHeading": 1.5707963267948966,
-      "zone": "market"
+      "facingHeading": -3.1416,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_motinagar_33",
-      "x": 675,
-      "z": 1707,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5707963267948966,
-      "zone": "residential"
+      "x": 977.5,
+      "z": 1525.4,
+      "width": 16,
+      "depth": 14,
+      "facingHeading": -3.1416,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_motinagar_34",
-      "x": 825,
-      "z": 1608,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5575520681301676,
-      "zone": "market"
+      "x": 957.5,
+      "z": 1524.9,
+      "width": 19,
+      "depth": 13,
+      "facingHeading": -3.1416,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_motinagar_35",
-      "x": 825,
-      "z": 1708,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5575520681301676,
-      "zone": "residential"
+      "x": 937.2,
+      "z": 1525.9,
+      "width": 17,
+      "depth": 15,
+      "facingHeading": -3.1416,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_motinagar_36",
-      "x": 975,
-      "z": 1608,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5841288700890424,
-      "zone": "market"
+      "x": 919.3,
+      "z": 1524.4,
+      "width": 15,
+      "depth": 12,
+      "facingHeading": -3.1416,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_motinagar_37",
-      "x": 975,
-      "z": 1708,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5841288700890424,
-      "zone": "residential"
+      "x": 1066.5,
+      "z": 1475.1,
+      "width": 21,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_motinagar_38",
-      "x": 1125,
-      "z": 1607,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5707963267948966,
-      "zone": "market"
+      "x": 1087.7,
+      "z": 1475.1,
+      "width": 16,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_motinagar_39",
-      "x": 1125,
-      "z": 1707,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5707963267948966,
-      "zone": "residential"
+      "x": 1106.5,
+      "z": 1475.1,
+      "width": 15,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_motinagar_40",
-      "x": 612,
-      "z": 1562,
-      "width": 18,
-      "depth": 16,
+      "x": 1126.1,
+      "z": 1475.1,
+      "width": 21,
+      "depth": 13,
       "facingHeading": 0,
       "zone": "commercial"
     },
     {
       "lotId": "lot_motinagar_41",
-      "x": 612,
-      "z": 1669,
-      "width": 18,
-      "depth": 16,
+      "x": 1149,
+      "z": 1474.1,
+      "width": 21,
+      "depth": 15,
       "facingHeading": 0,
-      "zone": "residential"
+      "zone": "commercial"
     },
     {
       "lotId": "lot_motinagar_42",
-      "x": 761,
-      "z": 1562,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": -0.008771704844442806,
+      "x": 1168.3,
+      "z": 1474.1,
+      "width": 11,
+      "depth": 15,
+      "facingHeading": 0,
       "zone": "commercial"
     },
     {
       "lotId": "lot_motinagar_43",
-      "x": 761,
-      "z": 1669,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0,
-      "zone": "residential"
+      "x": 1166,
+      "z": 1524.4,
+      "width": 16,
+      "depth": 12,
+      "facingHeading": -3.1416,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_motinagar_44",
-      "x": 912,
-      "z": 1563,
-      "width": 18,
+      "x": 1144.4,
+      "z": 1526.4,
+      "width": 21,
       "depth": 16,
-      "facingHeading": 0,
+      "facingHeading": -3.1416,
       "zone": "commercial"
     },
     {
       "lotId": "lot_motinagar_45",
-      "x": 912,
-      "z": 1671,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0,
-      "zone": "residential"
+      "x": 1121.1,
+      "z": 1525.4,
+      "width": 20,
+      "depth": 14,
+      "facingHeading": -3.1416,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_motinagar_46",
-      "x": 1062,
-      "z": 1562,
+      "x": 1099.3,
+      "z": 1524.9,
       "width": 18,
-      "depth": 16,
-      "facingHeading": 0,
+      "depth": 13,
+      "facingHeading": -3.1416,
       "zone": "commercial"
     },
     {
       "lotId": "lot_motinagar_47",
-      "x": 1062,
-      "z": 1669,
-      "width": 18,
+      "x": 1076.4,
+      "z": 1524.4,
+      "width": 22,
+      "depth": 12,
+      "facingHeading": -3.1416,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_48",
+      "x": 634.5,
+      "z": 1293.4,
+      "width": 17,
       "depth": 16,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_49",
+      "x": 655.9,
+      "z": 1291.9,
+      "width": 20,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_50",
+      "x": 677.1,
+      "z": 1291.4,
+      "width": 16,
+      "depth": 12,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_51",
+      "x": 695.6,
+      "z": 1292.9,
+      "width": 16,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_52",
+      "x": 715.9,
+      "z": 1291.4,
+      "width": 20,
+      "depth": 12,
+      "facingHeading": 3.1416,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_53",
+      "x": 737.4,
+      "z": 1292.4,
+      "width": 18,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_54",
+      "x": 635,
+      "z": 1263.1,
+      "width": 18,
+      "depth": 15,
       "facingHeading": 0,
       "zone": "residential"
     },
     {
-      "lotId": "lot_motinagar_48",
-      "x": 1212,
-      "z": 1562,
-      "width": 18,
+      "lotId": "lot_motinagar_55",
+      "x": 654.3,
+      "z": 1264.1,
+      "width": 16,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_56",
+      "x": 672,
+      "z": 1263.6,
+      "width": 16,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_57",
+      "x": 692.9,
+      "z": 1263.1,
+      "width": 20,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_58",
+      "x": 716.3,
+      "z": 1262.6,
+      "width": 20,
       "depth": 16,
       "facingHeading": 0,
       "zone": "commercial"
     },
     {
-      "lotId": "lot_motinagar_49",
-      "x": 1212,
-      "z": 1669,
+      "lotId": "lot_motinagar_59",
+      "x": 737.4,
+      "z": 1263.6,
       "width": 18,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_60",
+      "x": 801,
+      "z": 1292.4,
+      "width": 15,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_61",
+      "x": 820.1,
+      "z": 1292.9,
+      "width": 17,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_62",
+      "x": 838.5,
+      "z": 1292.4,
+      "width": 16,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_63",
+      "x": 857.4,
+      "z": 1292.4,
+      "width": 17,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_64",
+      "x": 877.7,
+      "z": 1291.4,
+      "width": 18,
+      "depth": 12,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_65",
+      "x": 781.5,
+      "z": 1264.1,
+      "width": 21,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_66",
+      "x": 803.1,
+      "z": 1263.6,
+      "width": 19,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_67",
+      "x": 825.1,
+      "z": 1262.6,
+      "width": 22,
       "depth": 16,
       "facingHeading": 0,
       "zone": "residential"
     },
     {
-      "lotId": "lot_motinagar_50",
-      "x": 644,
-      "z": 1295,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0.9920813818816976,
+      "lotId": "lot_motinagar_68",
+      "x": 848.6,
+      "z": 1264.1,
+      "width": 19,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_69",
+      "x": 867.8,
+      "z": 1263.6,
+      "width": 15,
+      "depth": 14,
+      "facingHeading": 0,
       "zone": "residential"
     },
     {
-      "lotId": "lot_motinagar_51",
-      "x": 719,
-      "z": 1346,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0.9673628493566343,
+      "lotId": "lot_motinagar_70",
+      "x": 921,
+      "z": 1292.4,
+      "width": 20,
+      "depth": 14,
+      "facingHeading": 3.1416,
       "zone": "residential"
     },
     {
-      "lotId": "lot_motinagar_52",
-      "x": 794,
-      "z": 1635,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0.9797634294924663,
+      "lotId": "lot_motinagar_71",
+      "x": 944.6,
+      "z": 1292.4,
+      "width": 22,
+      "depth": 14,
+      "facingHeading": 3.1416,
       "zone": "residential"
     },
     {
-      "lotId": "lot_motinagar_53",
-      "x": 869,
+      "lotId": "lot_motinagar_72",
+      "x": 968.4,
+      "z": 1292.9,
+      "width": 19,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_73",
+      "x": 987.1,
+      "z": 1291.9,
+      "width": 14,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_74",
+      "x": 1006.5,
+      "z": 1292.9,
+      "width": 19,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_75",
+      "x": 1024.5,
+      "z": 1292.9,
+      "width": 13,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_76",
+      "x": 942.5,
+      "z": 1262.6,
+      "width": 17,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_77",
+      "x": 963.2,
+      "z": 1264.6,
+      "width": 20,
+      "depth": 12,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_78",
+      "x": 983.4,
+      "z": 1263.1,
+      "width": 15,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_79",
+      "x": 1003,
+      "z": 1264.1,
+      "width": 20,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_80",
+      "x": 1023.4,
+      "z": 1264.1,
+      "width": 16,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_81",
+      "x": 1067,
+      "z": 1292.4,
+      "width": 22,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_82",
+      "x": 1088.1,
+      "z": 1292.9,
+      "width": 17,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_83",
+      "x": 1109.4,
+      "z": 1291.9,
+      "width": 21,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_84",
+      "x": 1132.9,
+      "z": 1292.4,
+      "width": 21,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_85",
+      "x": 1153.5,
+      "z": 1293.4,
+      "width": 17,
+      "depth": 16,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_86",
+      "x": 1064.5,
+      "z": 1263.1,
+      "width": 17,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_87",
+      "x": 1084.4,
+      "z": 1263.6,
+      "width": 17,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_88",
+      "x": 1106.6,
+      "z": 1264.1,
+      "width": 22,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_89",
+      "x": 1128.2,
+      "z": 1263.6,
+      "width": 18,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_90",
+      "x": 1150.8,
+      "z": 1263.1,
+      "width": 22,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_91",
+      "x": 1169,
+      "z": 1263.1,
+      "width": 10,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_92",
+      "x": 636,
+      "z": 1397.4,
+      "width": 20,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_93",
+      "x": 656,
+      "z": 1397.4,
+      "width": 14,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_94",
+      "x": 672.2,
+      "z": 1396.9,
+      "width": 15,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_95",
+      "x": 691.4,
+      "z": 1396.9,
+      "width": 19,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_96",
+      "x": 713.8,
+      "z": 1398.4,
+      "width": 19,
+      "depth": 16,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_97",
+      "x": 736.7,
+      "z": 1396.9,
+      "width": 20,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_98",
+      "x": 634,
+      "z": 1367.6,
+      "width": 16,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_99",
+      "x": 653.6,
+      "z": 1368.6,
+      "width": 17,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_100",
+      "x": 674.7,
+      "z": 1368.1,
+      "width": 21,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_101",
+      "x": 697.9,
+      "z": 1369.6,
+      "width": 19,
+      "depth": 12,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_102",
+      "x": 718.3,
+      "z": 1368.6,
+      "width": 16,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_103",
+      "x": 738.8,
+      "z": 1369.1,
+      "width": 19,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_104",
+      "x": 783.9,
+      "z": 1397,
+      "width": 22,
+      "depth": 13,
+      "facingHeading": 3.1343,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_105",
+      "x": 807.3,
+      "z": 1398.2,
+      "width": 21,
+      "depth": 15,
+      "facingHeading": 3.1343,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_106",
+      "x": 829.5,
+      "z": 1398.4,
+      "width": 19,
+      "depth": 15,
+      "facingHeading": 3.1343,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_107",
+      "x": 853,
+      "z": 1397.6,
+      "width": 21,
+      "depth": 13,
+      "facingHeading": 3.1343,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_108",
+      "x": 876,
+      "z": 1397.2,
+      "width": 19,
+      "depth": 12,
+      "facingHeading": 3.1343,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_109",
+      "x": 783.6,
+      "z": 1368.3,
+      "width": 21,
+      "depth": 15,
+      "facingHeading": -0.0073,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_110",
+      "x": 805.1,
+      "z": 1367.9,
+      "width": 15,
+      "depth": 16,
+      "facingHeading": -0.0073,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_111",
+      "x": 825.6,
+      "z": 1368.6,
+      "width": 21,
+      "depth": 15,
+      "facingHeading": -0.0073,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_112",
+      "x": 845.8,
+      "z": 1369.2,
+      "width": 16,
+      "depth": 14,
+      "facingHeading": -0.0073,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_113",
+      "x": 919.6,
+      "z": 1398.7,
+      "width": 19,
+      "depth": 15,
+      "facingHeading": -3.1347,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_114",
+      "x": 939.9,
+      "z": 1398.1,
+      "width": 16,
+      "depth": 14,
+      "facingHeading": -3.1347,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_115",
+      "x": 960.7,
+      "z": 1397.9,
+      "width": 20,
+      "depth": 14,
+      "facingHeading": -3.1347,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_116",
+      "x": 982.6,
+      "z": 1398.3,
+      "width": 18,
+      "depth": 15,
+      "facingHeading": -3.1347,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_117",
+      "x": 1002.3,
+      "z": 1397.7,
+      "width": 17,
+      "depth": 14,
+      "facingHeading": -3.1347,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_118",
+      "x": 1021.8,
+      "z": 1397,
+      "width": 17,
+      "depth": 13,
+      "facingHeading": -3.1347,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_119",
+      "x": 920.9,
+      "z": 1369,
+      "width": 22,
+      "depth": 15,
+      "facingHeading": 0.0069,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_120",
+      "x": 942.4,
+      "z": 1369.8,
+      "width": 16,
+      "depth": 13,
+      "facingHeading": 0.0069,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_121",
+      "x": 963.1,
+      "z": 1369.2,
+      "width": 22,
+      "depth": 14,
+      "facingHeading": 0.0069,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_122",
+      "x": 985.9,
+      "z": 1369,
+      "width": 19,
+      "depth": 14,
+      "facingHeading": 0.0069,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_123",
+      "x": 1008.4,
+      "z": 1369.9,
+      "width": 20,
+      "depth": 12,
+      "facingHeading": 0.0069,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_124",
+      "x": 1025,
+      "z": 1369.2,
+      "width": 10,
+      "depth": 13,
+      "facingHeading": 0.0069,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_125",
+      "x": 1065.1,
+      "z": 1398.2,
+      "width": 20,
+      "depth": 16,
+      "facingHeading": -3.1346,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_126",
+      "x": 1088.6,
+      "z": 1398.1,
+      "width": 21,
+      "depth": 16,
+      "facingHeading": -3.1346,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_127",
+      "x": 1111.4,
+      "z": 1396.9,
+      "width": 20,
+      "depth": 14,
+      "facingHeading": -3.1346,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_128",
+      "x": 1133.1,
+      "z": 1397.8,
+      "width": 19,
+      "depth": 16,
+      "facingHeading": -3.1346,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_129",
+      "x": 1155.1,
+      "z": 1396.1,
+      "width": 21,
+      "depth": 13,
+      "facingHeading": -3.1346,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_130",
+      "x": 1063.4,
+      "z": 1368.5,
+      "width": 17,
+      "depth": 14,
+      "facingHeading": 0.007,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_131",
+      "x": 1084.6,
+      "z": 1367.8,
+      "width": 20,
+      "depth": 15,
+      "facingHeading": 0.007,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_132",
+      "x": 1104.3,
+      "z": 1368.2,
+      "width": 15,
+      "depth": 14,
+      "facingHeading": 0.007,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_133",
+      "x": 1124.8,
+      "z": 1368.5,
+      "width": 20,
+      "depth": 13,
+      "facingHeading": 0.007,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_134",
+      "x": 1144.7,
+      "z": 1368.9,
+      "width": 15,
+      "depth": 12,
+      "facingHeading": 0.007,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_135",
+      "x": 628.4,
+      "z": 1324.3,
+      "width": 19,
+      "depth": 14,
+      "facingHeading": -1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_136",
+      "x": 627.9,
+      "z": 1345.7,
+      "width": 19,
+      "depth": 13,
+      "facingHeading": -1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_137",
+      "x": 628.4,
+      "z": 1422.1,
+      "width": 17,
+      "depth": 12,
+      "facingHeading": -1.5708,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_138",
+      "x": 628.9,
+      "z": 1443.7,
+      "width": 21,
+      "depth": 13,
+      "facingHeading": -1.5708,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_139",
+      "x": 744.3,
+      "z": 1315.9,
+      "width": 15,
+      "depth": 16,
+      "facingHeading": 1.5898,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_140",
+      "x": 745.7,
+      "z": 1333.9,
+      "width": 18,
+      "depth": 14,
+      "facingHeading": 1.5898,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_141",
+      "x": 773.7,
+      "z": 1320.6,
+      "width": 19,
+      "depth": 13,
+      "facingHeading": -1.5518,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_142",
+      "x": 774.1,
+      "z": 1340.4,
+      "width": 14,
+      "depth": 13,
+      "facingHeading": -1.5518,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_143",
+      "x": 744.4,
+      "z": 1423.9,
+      "width": 18,
+      "depth": 15,
+      "facingHeading": 1.5523,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_144",
+      "x": 745,
+      "z": 1442.6,
+      "width": 15,
+      "depth": 13,
+      "facingHeading": 1.5523,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_145",
+      "x": 775.5,
+      "z": 1428.9,
+      "width": 19,
+      "depth": 14,
+      "facingHeading": -1.5893,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_146",
+      "x": 774.7,
+      "z": 1448.8,
+      "width": 15,
+      "depth": 13,
+      "facingHeading": -1.5893,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_147",
+      "x": 883.2,
+      "z": 1322.6,
+      "width": 16,
+      "depth": 16,
+      "facingHeading": 1.5614,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_148",
+      "x": 885,
+      "z": 1343.1,
+      "width": 21,
+      "depth": 12,
+      "facingHeading": 1.5614,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_149",
+      "x": 913.5,
+      "z": 1317.7,
+      "width": 16,
+      "depth": 15,
+      "facingHeading": -1.5802,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_150",
+      "x": 912.3,
+      "z": 1334.6,
+      "width": 14,
+      "depth": 13,
+      "facingHeading": -1.5802,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_151",
+      "x": 913.7,
+      "z": 1352.6,
+      "width": 16,
+      "depth": 16,
+      "facingHeading": -1.5802,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_152",
+      "x": 881,
+      "z": 1425.9,
+      "width": 16,
+      "depth": 14,
+      "facingHeading": 1.5801,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_153",
+      "x": 880.2,
+      "z": 1444,
+      "width": 15,
+      "depth": 16,
+      "facingHeading": 1.5801,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_154",
+      "x": 916.2,
+      "z": 1421.6,
+      "width": 15,
+      "depth": 15,
+      "facingHeading": -1.5615,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_155",
+      "x": 914.9,
+      "z": 1441.5,
+      "width": 20,
+      "depth": 12,
+      "facingHeading": -1.5615,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_156",
+      "x": 1028.7,
+      "z": 1320.2,
+      "width": 18,
+      "depth": 15,
+      "facingHeading": 1.5613,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_157",
+      "x": 1028.5,
+      "z": 1339,
+      "width": 15,
+      "depth": 15,
+      "facingHeading": 1.5613,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_158",
+      "x": 1058,
+      "z": 1317,
+      "width": 20,
+      "depth": 14,
+      "facingHeading": -1.5803,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_159",
+      "x": 1056.8,
+      "z": 1340.3,
+      "width": 20,
+      "depth": 12,
+      "facingHeading": -1.5803,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_160",
+      "x": 1027,
+      "z": 1423.9,
+      "width": 21,
+      "depth": 16,
+      "facingHeading": 1.5801,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_161",
+      "x": 1029.2,
+      "z": 1447,
+      "width": 20,
+      "depth": 12,
+      "facingHeading": 1.5801,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_162",
+      "x": 1059.3,
+      "z": 1424.3,
+      "width": 19,
+      "depth": 15,
+      "facingHeading": -1.5615,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_163",
+      "x": 1058.9,
+      "z": 1444.2,
+      "width": 16,
+      "depth": 14,
+      "facingHeading": -1.5615,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_164",
+      "x": 1172.6,
+      "z": 1299,
+      "width": 18,
+      "depth": 12,
+      "facingHeading": 1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_165",
+      "x": 1172.6,
+      "z": 1318.5,
+      "width": 16,
+      "depth": 12,
+      "facingHeading": 1.5708,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_166",
+      "x": 1171.6,
+      "z": 1339.3,
+      "width": 20,
+      "depth": 14,
+      "facingHeading": 1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_167",
+      "x": 1170.6,
+      "z": 1421.1,
+      "width": 19,
+      "depth": 14,
+      "facingHeading": 1.5708,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_168",
+      "x": 1170.1,
+      "z": 1442.7,
+      "width": 20,
+      "depth": 15,
+      "facingHeading": 1.5708,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_169",
+      "x": 633,
+      "z": 1629.9,
+      "width": 14,
+      "depth": 12,
+      "facingHeading": 3.1416,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_motinagar_170",
+      "x": 653.3,
+      "z": 1631.4,
+      "width": 21,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_motinagar_171",
+      "x": 676.8,
+      "z": 1629.9,
+      "width": 19,
+      "depth": 12,
+      "facingHeading": 3.1416,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_motinagar_172",
+      "x": 696.4,
+      "z": 1630.9,
+      "width": 17,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_motinagar_173",
+      "x": 714.4,
+      "z": 1631.4,
+      "width": 15,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_motinagar_174",
+      "x": 731.5,
+      "z": 1630.9,
+      "width": 16,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_motinagar_175",
+      "x": 634,
+      "z": 1604.1,
+      "width": 16,
+      "depth": 12,
+      "facingHeading": 0,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_motinagar_176",
+      "x": 654.4,
+      "z": 1602.1,
+      "width": 19,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_motinagar_177",
+      "x": 678.2,
+      "z": 1604.1,
+      "width": 22,
+      "depth": 12,
+      "facingHeading": 0,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_motinagar_178",
+      "x": 701.5,
+      "z": 1603.6,
+      "width": 20,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_motinagar_179",
+      "x": 722.7,
+      "z": 1602.1,
+      "width": 17,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_motinagar_180",
+      "x": 740.3,
+      "z": 1602.6,
+      "width": 15,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_motinagar_181",
+      "x": 779.6,
+      "z": 1631.7,
+      "width": 15,
+      "depth": 16,
+      "facingHeading": -3.1343,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_motinagar_182",
+      "x": 798.3,
+      "z": 1630.6,
+      "width": 16,
+      "depth": 14,
+      "facingHeading": -3.1343,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_motinagar_183",
+      "x": 817.7,
+      "z": 1631.5,
+      "width": 19,
+      "depth": 16,
+      "facingHeading": -3.1343,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_motinagar_184",
+      "x": 840.1,
+      "z": 1630.8,
+      "width": 21,
+      "depth": 15,
+      "facingHeading": -3.1343,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_motinagar_185",
+      "x": 780.4,
+      "z": 1603.5,
+      "width": 17,
+      "depth": 13,
+      "facingHeading": 0.0073,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_motinagar_186",
+      "x": 801.7,
+      "z": 1602.3,
+      "width": 22,
+      "depth": 15,
+      "facingHeading": 0.0073,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_motinagar_187",
+      "x": 824.2,
+      "z": 1602.2,
+      "width": 19,
+      "depth": 15,
+      "facingHeading": 0.0073,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_motinagar_188",
+      "x": 847.4,
+      "z": 1602.5,
+      "width": 21,
+      "depth": 14,
+      "facingHeading": 0.0073,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_motinagar_189",
+      "x": 869.4,
+      "z": 1603.3,
+      "width": 19,
+      "depth": 12,
+      "facingHeading": 0.0073,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_motinagar_190",
+      "x": 919.8,
+      "z": 1630.2,
+      "width": 22,
+      "depth": 14,
+      "facingHeading": 3.1278,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_motinagar_191",
+      "x": 943.2,
+      "z": 1631,
+      "width": 19,
+      "depth": 15,
+      "facingHeading": 3.1278,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_motinagar_192",
+      "x": 965.3,
+      "z": 1631.3,
+      "width": 21,
+      "depth": 15,
+      "facingHeading": 3.1278,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_motinagar_193",
+      "x": 987.9,
+      "z": 1630.1,
+      "width": 21,
+      "depth": 12,
+      "facingHeading": 3.1278,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_motinagar_194",
+      "x": 1007.7,
+      "z": 1630.9,
+      "width": 15,
+      "depth": 13,
+      "facingHeading": 3.1278,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_motinagar_195",
+      "x": 1024.2,
+      "z": 1631.6,
+      "width": 11,
+      "depth": 14,
+      "facingHeading": 3.1278,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_motinagar_196",
+      "x": 918.7,
+      "z": 1602.9,
+      "width": 19,
+      "depth": 13,
+      "facingHeading": -0.0138,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_motinagar_197",
+      "x": 941.6,
+      "z": 1602.7,
+      "width": 20,
+      "depth": 14,
+      "facingHeading": -0.0138,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_motinagar_198",
+      "x": 962.9,
+      "z": 1604,
+      "width": 19,
+      "depth": 12,
+      "facingHeading": -0.0138,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_motinagar_199",
+      "x": 984.6,
+      "z": 1603.3,
+      "width": 19,
+      "depth": 14,
+      "facingHeading": -0.0138,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_motinagar_200",
+      "x": 1004.4,
+      "z": 1602.6,
+      "width": 16,
+      "depth": 16,
+      "facingHeading": -0.0138,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_motinagar_201",
+      "x": 1022.4,
+      "z": 1602.8,
+      "width": 15,
+      "depth": 16,
+      "facingHeading": -0.0138,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_motinagar_202",
+      "x": 1062.2,
+      "z": 1632.6,
+      "width": 16,
+      "depth": 16,
+      "facingHeading": -3.1277,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_motinagar_203",
+      "x": 1083.3,
+      "z": 1631.8,
+      "width": 22,
+      "depth": 15,
+      "facingHeading": -3.1277,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_motinagar_204",
+      "x": 1105.6,
+      "z": 1632,
+      "width": 16,
+      "depth": 16,
+      "facingHeading": -3.1277,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_motinagar_205",
+      "x": 1124.6,
+      "z": 1631.7,
+      "width": 16,
+      "depth": 16,
+      "facingHeading": -3.1277,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_motinagar_206",
+      "x": 1144.1,
+      "z": 1631,
+      "width": 17,
+      "depth": 15,
+      "facingHeading": -3.1277,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_motinagar_207",
+      "x": 1164.2,
+      "z": 1630.7,
+      "width": 19,
+      "depth": 15,
+      "facingHeading": -3.1277,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_motinagar_208",
+      "x": 1062.3,
+      "z": 1604.3,
+      "width": 17,
+      "depth": 13,
+      "facingHeading": 0.0139,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_motinagar_209",
+      "x": 1080.9,
+      "z": 1603.1,
+      "width": 16,
+      "depth": 15,
+      "facingHeading": 0.0139,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_motinagar_210",
+      "x": 1098.7,
+      "z": 1603.3,
+      "width": 16,
+      "depth": 14,
+      "facingHeading": 0.0139,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_motinagar_211",
+      "x": 1116.1,
+      "z": 1603.6,
+      "width": 15,
+      "depth": 13,
+      "facingHeading": 0.0139,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_motinagar_212",
+      "x": 1133.7,
+      "z": 1602.8,
+      "width": 17,
+      "depth": 14,
+      "facingHeading": 0.0139,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_motinagar_213",
+      "x": 1153.9,
+      "z": 1603.1,
+      "width": 19,
+      "depth": 13,
+      "facingHeading": 0.0139,
+      "zone": "market"
+    },
+    {
+      "lotId": "lot_motinagar_214",
+      "x": 634.5,
+      "z": 1735.9,
+      "width": 17,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_215",
+      "x": 654.1,
+      "z": 1735.9,
+      "width": 16,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_216",
+      "x": 675.5,
+      "z": 1736.4,
+      "width": 20,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_217",
+      "x": 695.4,
+      "z": 1735.4,
+      "width": 15,
+      "depth": 12,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_218",
+      "x": 715.3,
+      "z": 1735.4,
+      "width": 20,
+      "depth": 12,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_219",
+      "x": 735,
+      "z": 1736.9,
+      "width": 15,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_220",
+      "x": 634.5,
+      "z": 1707.1,
+      "width": 17,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_221",
+      "x": 655.1,
+      "z": 1707.1,
+      "width": 18,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_222",
+      "x": 676.9,
+      "z": 1708.1,
+      "width": 20,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_223",
+      "x": 696.8,
+      "z": 1707.6,
+      "width": 15,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_224",
+      "x": 717.5,
+      "z": 1706.6,
+      "width": 20,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_225",
+      "x": 738.5,
+      "z": 1706.6,
+      "width": 17,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_226",
+      "x": 779,
+      "z": 1736.9,
+      "width": 16,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_227",
+      "x": 797.2,
+      "z": 1737.4,
+      "width": 16,
+      "depth": 16,
+      "facingHeading": 3.1416,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_228",
+      "x": 815.2,
+      "z": 1735.9,
+      "width": 15,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_229",
+      "x": 832.6,
+      "z": 1736.4,
+      "width": 16,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_230",
+      "x": 849.4,
+      "z": 1735.4,
+      "width": 14,
+      "depth": 12,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_231",
+      "x": 869.3,
+      "z": 1735.4,
+      "width": 22,
+      "depth": 12,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_232",
+      "x": 814.6,
+      "z": 1707.1,
+      "width": 14,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_233",
+      "x": 834,
+      "z": 1707.6,
+      "width": 19,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_234",
+      "x": 856.4,
+      "z": 1708.1,
+      "width": 19,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_235",
+      "x": 876.7,
+      "z": 1707.1,
+      "width": 16,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_236",
+      "x": 918.5,
+      "z": 1736.9,
+      "width": 15,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_237",
+      "x": 937.9,
+      "z": 1736.4,
+      "width": 18,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_238",
+      "x": 960.1,
+      "z": 1737.4,
+      "width": 20,
+      "depth": 16,
+      "facingHeading": 3.1416,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_239",
+      "x": 980.9,
+      "z": 1736.9,
+      "width": 16,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_240",
+      "x": 1001.4,
+      "z": 1735.9,
+      "width": 22,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_241",
+      "x": 1022.5,
+      "z": 1736.9,
+      "width": 17,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_242",
+      "x": 919.5,
+      "z": 1708.1,
+      "width": 17,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_243",
+      "x": 940,
+      "z": 1708.6,
+      "width": 21,
+      "depth": 12,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_244",
+      "x": 962.1,
+      "z": 1706.6,
+      "width": 19,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_245",
+      "x": 983.8,
+      "z": 1708.1,
+      "width": 19,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_246",
+      "x": 1063.5,
+      "z": 1735.9,
+      "width": 15,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_247",
+      "x": 1080.3,
+      "z": 1735.4,
+      "width": 15,
+      "depth": 12,
+      "facingHeading": 3.1416,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_248",
+      "x": 1097.4,
+      "z": 1735.4,
+      "width": 14,
+      "depth": 12,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_249",
+      "x": 1115,
+      "z": 1735.9,
+      "width": 17,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_250",
+      "x": 1134.6,
+      "z": 1736.9,
+      "width": 16,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_251",
+      "x": 1152.7,
+      "z": 1735.9,
+      "width": 15,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_252",
+      "x": 1167.7,
+      "z": 1736.4,
+      "width": 11,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_253",
+      "x": 1064.5,
+      "z": 1708.1,
+      "width": 17,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_254",
+      "x": 1084.5,
+      "z": 1707.1,
+      "width": 16,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_255",
+      "x": 1103.6,
+      "z": 1708.1,
+      "width": 17,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_256",
+      "x": 1126.4,
+      "z": 1708.6,
+      "width": 22,
+      "depth": 12,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_257",
+      "x": 1149.7,
+      "z": 1708.1,
+      "width": 18,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_258",
+      "x": 1167.4,
+      "z": 1708.6,
+      "width": 12,
+      "depth": 12,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_259",
+      "x": 628.9,
+      "z": 1658.4,
+      "width": 21,
+      "depth": 15,
+      "facingHeading": -1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_260",
+      "x": 627.9,
+      "z": 1678.8,
+      "width": 14,
+      "depth": 13,
+      "facingHeading": -1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_261",
+      "x": 629.4,
+      "z": 1555.4,
+      "width": 20,
+      "depth": 14,
+      "facingHeading": -1.5708,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_262",
+      "x": 629.9,
+      "z": 1577.5,
+      "width": 19,
+      "depth": 15,
+      "facingHeading": -1.5708,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_263",
+      "x": 745.7,
+      "z": 1661.4,
+      "width": 21,
+      "depth": 13,
+      "facingHeading": 1.5613,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_264",
+      "x": 744.5,
+      "z": 1683.9,
+      "width": 20,
+      "depth": 15,
+      "facingHeading": 1.5613,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_265",
+      "x": 774.5,
+      "z": 1661.3,
+      "width": 19,
+      "depth": 15,
+      "facingHeading": -1.5803,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_266",
+      "x": 772.8,
+      "z": 1679.9,
+      "width": 15,
+      "depth": 12,
+      "facingHeading": -1.5803,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_267",
+      "x": 743,
+      "z": 1550.3,
+      "width": 20,
+      "depth": 16,
+      "facingHeading": 1.5801,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_268",
+      "x": 743.2,
+      "z": 1572.1,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5801,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_269",
+      "x": 774.2,
+      "z": 1546.5,
+      "width": 14,
+      "depth": 13,
+      "facingHeading": -1.5615,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_270",
+      "x": 774.9,
+      "z": 1566.8,
+      "width": 21,
+      "depth": 14,
+      "facingHeading": -1.5615,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_271",
+      "x": 882.3,
+      "z": 1652,
+      "width": 14,
+      "depth": 16,
+      "facingHeading": 1.5897,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_272",
+      "x": 883.1,
+      "z": 1668.9,
+      "width": 16,
+      "depth": 15,
+      "facingHeading": 1.5897,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_273",
+      "x": 883.9,
       "z": 1686,
+      "width": 14,
+      "depth": 14,
+      "facingHeading": 1.5897,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_274",
+      "x": 911.6,
+      "z": 1655.4,
+      "width": 20,
+      "depth": 13,
+      "facingHeading": -1.5519,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_275",
+      "x": 912.1,
+      "z": 1677.9,
+      "width": 21,
+      "depth": 13,
+      "facingHeading": -1.5519,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_276",
+      "x": 883.3,
+      "z": 1551.6,
+      "width": 21,
+      "depth": 13,
+      "facingHeading": 1.5521,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_277",
+      "x": 882.4,
+      "z": 1573.5,
       "width": 18,
+      "depth": 14,
+      "facingHeading": 1.5521,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_278",
+      "x": 913,
+      "z": 1554.4,
+      "width": 19,
+      "depth": 13,
+      "facingHeading": -1.5895,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_279",
+      "x": 913.6,
+      "z": 1575.1,
+      "width": 17,
+      "depth": 15,
+      "facingHeading": -1.5895,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_280",
+      "x": 1028,
+      "z": 1662.4,
+      "width": 19,
+      "depth": 15,
+      "facingHeading": 1.59,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_281",
+      "x": 1028.4,
+      "z": 1683.5,
+      "width": 18,
+      "depth": 15,
+      "facingHeading": 1.59,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_282",
+      "x": 1057.7,
+      "z": 1659.9,
+      "width": 21,
+      "depth": 15,
+      "facingHeading": -1.5516,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_283",
+      "x": 1058.7,
+      "z": 1684.1,
+      "width": 21,
       "depth": 16,
-      "facingHeading": 0.973619668702219,
+      "facingHeading": -1.5516,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_284",
+      "x": 1027.9,
+      "z": 1548.2,
+      "width": 21,
+      "depth": 14,
+      "facingHeading": 1.5524,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_285",
+      "x": 1027,
+      "z": 1571.7,
+      "width": 20,
+      "depth": 15,
+      "facingHeading": 1.5524,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_286",
+      "x": 1059.2,
+      "z": 1546.8,
+      "width": 15,
+      "depth": 15,
+      "facingHeading": -1.5891,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_287",
+      "x": 1058.3,
+      "z": 1566.5,
+      "width": 19,
+      "depth": 14,
+      "facingHeading": -1.5891,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_288",
+      "x": 1172.1,
+      "z": 1658.4,
+      "width": 20,
+      "depth": 13,
+      "facingHeading": 1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_289",
+      "x": 1171.1,
+      "z": 1680.7,
+      "width": 20,
+      "depth": 15,
+      "facingHeading": 1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_290",
+      "x": 1170.1,
+      "z": 1550.9,
+      "width": 19,
+      "depth": 15,
+      "facingHeading": 1.5708,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_291",
+      "x": 1171.1,
+      "z": 1572.1,
+      "width": 17,
+      "depth": 13,
+      "facingHeading": 1.5708,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_motinagar_292",
+      "x": 1139.5,
+      "z": 1336.3,
+      "width": 21,
+      "depth": 13,
+      "facingHeading": -0.619,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_293",
+      "x": 853.3,
+      "z": 1666.9,
+      "width": 13,
+      "depth": 16,
+      "facingHeading": -2.4559,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_294",
+      "x": 808.5,
+      "z": 1673,
+      "width": 16,
+      "depth": 14,
+      "facingHeading": 0.6255,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_295",
+      "x": 793.5,
+      "z": 1683.8,
+      "width": 16,
+      "depth": 14,
+      "facingHeading": 0.6255,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_296",
+      "x": 803.5,
+      "z": 1325.9,
+      "width": 19,
+      "depth": 14,
+      "facingHeading": 2.4845,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_297",
+      "x": 838.7,
+      "z": 1351.5,
+      "width": 15,
+      "depth": 12,
+      "facingHeading": 2.4958,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_298",
+      "x": 853.8,
+      "z": 1336.5,
+      "width": 21,
+      "depth": 15,
+      "facingHeading": -0.6458,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_motinagar_299",
+      "x": 1000.9,
+      "z": 1675.7,
+      "width": 16,
+      "depth": 15,
+      "facingHeading": -0.6412,
       "zone": "residential"
     }
   ]

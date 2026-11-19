@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
-import type { DistrictId } from '../../../src/core/types';
+import type { DistrictId, RoadSegment } from '../../../src/core/types';
 import {
   DistrictSchema,
   WorldDataSchema,
@@ -9,8 +9,53 @@ import {
   type WorldData,
 } from '../../../src/sim/schemas';
 import { RoadNetwork } from '../../../src/sim/road/RoadNetwork';
+import { getRoadWidth } from '../../../src/render/roadMesh';
+import { CityBuilder } from '../../../src/render/CityBuilder';
+import { PhysicsWorld } from '../../../src/physics/PhysicsWorld';
+import { GameManager } from '../../../src/sim/GameManager';
+import { GameSession } from '../../../src/sim/GameSession';
+import { angleDiff, clamp } from '../../../src/core/math';
+import { SIM_DT } from '../../../src/config/constants';
 import bnUi from '../../../data/dialogue/bn/ui.json';
 import enUi from '../../../data/dialogue/en/ui.json';
+
+function obbOverlaps(
+  ax: number,
+  az: number,
+  ahx: number,
+  ahz: number,
+  ayaw: number,
+  bx: number,
+  bz: number,
+  bhx: number,
+  bhz: number,
+  byaw: number
+): boolean {
+  const aux = Math.cos(ayaw);
+  const auz = -Math.sin(ayaw);
+  const avx = Math.sin(ayaw);
+  const avz = Math.cos(ayaw);
+  const bux = Math.cos(byaw);
+  const buz = -Math.sin(byaw);
+  const bvx = Math.sin(byaw);
+  const bvz = Math.cos(byaw);
+  const dx = bx - ax;
+  const dz = bz - az;
+
+  const separated = (tx: number, tz: number) => {
+    const dist = Math.abs(dx * tx + dz * tz);
+    const rA = ahx * Math.abs(aux * tx + auz * tz) + ahz * Math.abs(avx * tx + avz * tz);
+    const rB = bhx * Math.abs(bux * tx + buz * tz) + bhz * Math.abs(bvx * tx + bvz * tz);
+    return dist >= rA + rB - 1e-4;
+  };
+
+  return !(
+    separated(aux, auz) ||
+    separated(avx, avz) ||
+    separated(bux, buz) ||
+    separated(bvx, bvz)
+  );
+}
 
 describe('Districts and World Network (T5.1)', () => {
   const districtIds: DistrictId[] = [
@@ -137,7 +182,7 @@ describe('Districts and World Network (T5.1)', () => {
     expect(route1!.lengthM).toBeGreaterThan(1000);
 
     // Puranpara (SW) to Gulbari (NE)
-    const route2 = network.route('puranpara_art_s_0', 'gulbari_art_n_4', {
+    const route2 = network.route('puranpara_art_0', 'gulbari_art_n_3', {
       mode: 'motorcycle',
     });
     expect(route2).not.toBeNull();
@@ -208,5 +253,164 @@ describe('Districts and World Network (T5.1)', () => {
         expect(r.segmentIds).not.toContain(inacc.segmentId);
       }
     }
+  });
+
+  it('zero building lots overlap any road or sidewalk polygon across all 7 districts', () => {
+    const network = RoadNetwork.fromWorld(worldData, districts);
+    const allNodes = network.getNodesMap();
+    const allSegments = network.getAllSegments();
+
+    let totalLots = 0;
+    let overlaps = 0;
+
+    for (const d of districts) {
+      const lots = d.lots ?? [];
+      expect(lots.length).toBeGreaterThan(0);
+
+      for (const lot of lots) {
+        totalLots++;
+        expect(lot.width).toBeGreaterThanOrEqual(10);
+        expect(lot.width).toBeLessThanOrEqual(22);
+        expect(lot.depth).toBeGreaterThanOrEqual(10);
+        expect(lot.depth).toBeLessThanOrEqual(16);
+
+        for (const seg of allSegments) {
+          if (seg.roadType === 'flyover') continue;
+          const sNode = allNodes.get(seg.startNodeId);
+          const eNode = allNodes.get(seg.endNodeId);
+          if (!sNode || !eNode) continue;
+
+          const dx = eNode.x - sNode.x;
+          const dz = eNode.z - sNode.z;
+          const len = Math.hypot(dx, dz);
+          if (len < 0.1) continue;
+
+          const roadW = Math.max(seg.width, getRoadWidth(seg as RoadSegment));
+          const sidewalkW = seg.roadType === 'alley' ? 0.28 : 1.88;
+          const roadYaw = Math.atan2(dx, dz);
+
+          if (
+            obbOverlaps(
+              lot.x,
+              lot.z,
+              lot.width / 2,
+              lot.depth / 2,
+              lot.facingHeading,
+              (sNode.x + eNode.x) / 2,
+              (sNode.z + eNode.z) / 2,
+              roadW / 2 + sidewalkW,
+              len / 2,
+              roadYaw
+            )
+          ) {
+            overlaps++;
+          }
+        }
+      }
+    }
+
+    expect(totalLots).toBeGreaterThan(100);
+    expect(overlaps).toBe(0);
+  });
+
+  it('has zero zero-length segments or connectors, >= 12 signaled junctions, and real market segments', () => {
+    const network = RoadNetwork.fromWorld(worldData, districts);
+    const nodesMap = network.getNodesMap();
+
+    for (const seg of network.getAllSegments()) {
+      const s = nodesMap.get(seg.startNodeId)!;
+      const e = nodesMap.get(seg.endNodeId)!;
+      const len = Math.hypot(e.x - s.x, e.z - s.z);
+      expect(len, `segment ${seg.segmentId} length`).toBeGreaterThan(0);
+      expect(seg.oneWay && seg.divided, `one-way ${seg.segmentId} must not have divided median`).toBe(false);
+    }
+
+    for (const conn of worldData.connectors) {
+      const s = nodesMap.get(conn.startNodeId)!;
+      const e = nodesMap.get(conn.endNodeId)!;
+      const len = Math.hypot(e.x - s.x, e.z - s.z);
+      expect(len, `connector ${conn.segmentId} length`).toBeGreaterThanOrEqual(20);
+    }
+
+    const totalSignals = districts.reduce(
+      (sum, d) => sum + d.nodes.filter((n) => n.signal === true).length,
+      0
+    );
+    expect(totalSignals).toBeGreaterThanOrEqual(12);
+
+    for (const dId of ['mirpara', 'fulgate', 'puranpara', 'motinagar'] as const) {
+      const d = districts.find((x) => x.districtId === dId)!;
+      const marketSegs = d.segments.filter((s) => s.roadType === 'market');
+      expect(marketSegs.length, `${dId} must have roadType === 'market' segments`).toBeGreaterThan(0);
+    }
+  });
+
+  it('each district has distinct street density/topology and Mohakhali flyover rises to y >= 5.5m', () => {
+    const puranpara = districts.find((d) => d.districtId === 'puranpara')!;
+    const gulbari = districts.find((d) => d.districtId === 'gulbari')!;
+    const mohakhal = districts.find((d) => d.districtId === 'mohakhal')!;
+
+    // Puranpara is undivided, denser, and much more alley-rich than Gulbari
+    expect(puranpara.segments.some((s) => s.divided)).toBe(false);
+    expect(puranpara.segments.length).toBeGreaterThan(gulbari.segments.length);
+    const puranAlleys = puranpara.segments.filter((s) => s.roadType === 'alley').length;
+    const gulbariAlleys = gulbari.segments.filter((s) => s.roadType === 'alley').length;
+    expect(puranAlleys).toBeGreaterThan(gulbariAlleys * 3);
+    expect(gulbari.segments.filter((s) => s.roadType === 'market')).toHaveLength(0);
+
+    // Divided arterial carriageways art_n / art_s are cleanly separated by >= width + 3.0m
+    for (const d of districts) {
+      if (d.districtId === 'puranpara') continue;
+      const prefix = d.districtId === 'mirpara' ? '' : `${d.districtId}_`;
+      const artN = d.nodes.find((n) => n.nodeId === `${prefix}art_n_0`);
+      const artS = d.nodes.find((n) => n.nodeId === `${prefix}art_s_0`);
+      const artSeg = d.segments.find((s) => s.startNodeId === `${prefix}art_n_0` && s.endNodeId === `${prefix}art_n_1`);
+      expect(artN).toBeDefined();
+      expect(artS).toBeDefined();
+      expect(artSeg).toBeDefined();
+      expect(Math.abs(artS!.z - artN!.z)).toBeGreaterThanOrEqual(artSeg!.width + 3.0);
+    }
+
+    // Mohakhali flyover deck nodes sit at y >= 5.5m with ramps climbing from y = 0
+    const flyW = mohakhal.nodes.find((n) => n.nodeId === 'mohakhal_fly_w')!;
+    const flyMid = mohakhal.nodes.find((n) => n.nodeId === 'mohakhal_fly_mid')!;
+    const flyE = mohakhal.nodes.find((n) => n.nodeId === 'mohakhal_fly_e')!;
+    expect(flyW.y ?? 0).toBeGreaterThanOrEqual(5.5);
+    expect(flyMid.y ?? 0).toBeGreaterThanOrEqual(5.5);
+    expect(flyE.y ?? 0).toBeGreaterThanOrEqual(5.5);
+  });
+
+  it('GameSession bike.y smoothly rises onto the real Mohakhali flyover without snapping to ground lanes underneath', async () => {
+    const mohakhal = districts.find((d) => d.districtId === 'mohakhal')!;
+    const network = RoadNetwork.fromDistricts([mohakhal]);
+    const physics = await PhysicsWorld.create();
+    const city = new CityBuilder();
+    city.buildDistrict(mohakhal, physics);
+
+    const gm = new GameManager({ seed: 33, mode: 'career', data: {} });
+    const session = new GameSession({ gm, road: network, physics, autoRequests: false });
+
+    const rampStart = network.getNode('mohakhal_art_n_0')!;
+    const flyW = network.getNode('mohakhal_fly_w')!;
+    const flyMid = network.getNode('mohakhal_fly_mid')!;
+
+    // Place on the on-ramp heading toward fly_w, then ride onto the flyover deck across ground cross-streets
+    session.bike.x = rampStart.x;
+    session.bike.z = rampStart.z;
+    session.bike.y = 0;
+    session.bike.heading = Math.atan2(flyW.x - rampStart.x, flyW.z - rampStart.z);
+
+    let maxY = 0;
+    for (let i = 0; i < 1800 && session.bike.x < flyMid.x; i++) {
+      const target = session.bike.x < flyW.x ? flyW : flyMid;
+      const desired = Math.atan2(target.x - session.bike.x, target.z - session.bike.z);
+      const steer = clamp(-angleDiff(session.bike.heading, desired) * 2.5, -1, 1);
+      session.step({ throttle: 1, brake: 0, steer }, SIM_DT);
+      if (session.bike.y > maxY) maxY = session.bike.y;
+    }
+
+    expect(session.bike.x).toBeGreaterThanOrEqual(flyMid.x - 5);
+    expect(maxY).toBeGreaterThanOrEqual(5.5);
+    expect(session.bike.y).toBeGreaterThanOrEqual(5.5);
   });
 });

@@ -258,13 +258,18 @@ export class CityBuilder {
           const midX = sNode.x + (dx / len) * mid;
           const midZ = sNode.z + (dz / len) * mid;
 
+          const y1 = sNode.y ?? 0;
+          const y2 = eNode.y ?? 0;
+          if (Math.abs(y1 - y2) > 0.1) continue; // Sloped ramps cannot use flat horizontal kerb boxes
+          const segY = (y1 + y2) * 0.5;
+
           const kerbW = 0.28;
           const kerbH = 0.18;
 
           // Left kerb
           const leftCol = task.physicsWorld.addStaticBox(
             midX - nx * (width / 2 + kerbW / 2),
-            kerbH / 2,
+            segY + kerbH / 2,
             midZ - nz * (width / 2 + kerbW / 2),
             kerbW / 2,
             kerbH / 2,
@@ -277,7 +282,7 @@ export class CityBuilder {
           // Right kerb
           const rightCol = task.physicsWorld.addStaticBox(
             midX + nx * (width / 2 + kerbW / 2),
-            kerbH / 2,
+            segY + kerbH / 2,
             midZ + nz * (width / 2 + kerbW / 2),
             kerbW / 2,
             kerbH / 2,
@@ -287,11 +292,11 @@ export class CityBuilder {
           );
           task.physicsColliders.push(rightCol);
 
-          // Median
-          if (seg.divided) {
+          // Median (only for two-way divided roads, never one-way carriageways)
+          if (seg.divided && !seg.oneWay) {
             const medCol = task.physicsWorld.addStaticBox(
               (sNode.x + eNode.x) / 2,
-              0.11,
+              segY + 0.11,
               (sNode.z + eNode.z) / 2,
               0.45,
               0.11,

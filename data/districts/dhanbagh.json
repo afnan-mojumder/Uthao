@@ -7,8 +7,8 @@
   "nodes": [
     {
       "nodeId": "dhanbagh_art_n_0",
-      "x": 0,
-      "z": 895,
+      "x": 14,
+      "z": 888,
       "kind": "uturn",
       "tags": [
         "uturn"
@@ -16,8 +16,8 @@
     },
     {
       "nodeId": "dhanbagh_art_s_0",
-      "x": 0,
-      "z": 905,
+      "x": 14,
+      "z": 912,
       "kind": "uturn",
       "tags": [
         "uturn"
@@ -25,8 +25,8 @@
     },
     {
       "nodeId": "dhanbagh_art_n_1",
-      "x": 150,
-      "z": 895,
+      "x": 155,
+      "z": 888,
       "kind": "uturn",
       "tags": [
         "uturn"
@@ -34,8 +34,8 @@
     },
     {
       "nodeId": "dhanbagh_art_s_1",
-      "x": 150,
-      "z": 905,
+      "x": 155,
+      "z": 912,
       "kind": "uturn",
       "tags": [
         "uturn"
@@ -43,26 +43,28 @@
     },
     {
       "nodeId": "dhanbagh_art_n_2",
-      "x": 300,
-      "z": 895,
+      "x": 304,
+      "z": 888,
       "kind": "junction",
+      "signal": true,
       "tags": [
         "crossing"
       ]
     },
     {
       "nodeId": "dhanbagh_art_s_2",
-      "x": 300,
-      "z": 905,
+      "x": 304,
+      "z": 912,
       "kind": "junction",
+      "signal": true,
       "tags": [
         "crossing"
       ]
     },
     {
       "nodeId": "dhanbagh_art_n_3",
-      "x": 450,
-      "z": 895,
+      "x": 440,
+      "z": 888,
       "kind": "uturn",
       "tags": [
         "uturn"
@@ -70,8 +72,8 @@
     },
     {
       "nodeId": "dhanbagh_art_s_3",
-      "x": 450,
-      "z": 905,
+      "x": 440,
+      "z": 912,
       "kind": "uturn",
       "tags": [
         "uturn"
@@ -79,8 +81,8 @@
     },
     {
       "nodeId": "dhanbagh_art_n_4",
-      "x": 600,
-      "z": 895,
+      "x": 586,
+      "z": 888,
       "kind": "uturn",
       "tags": [
         "uturn"
@@ -88,8 +90,8 @@
     },
     {
       "nodeId": "dhanbagh_art_s_4",
-      "x": 600,
-      "z": 905,
+      "x": 586,
+      "z": 912,
       "kind": "uturn",
       "tags": [
         "uturn"
@@ -97,17 +99,8 @@
     },
     {
       "nodeId": "dhanbagh_res_n1_0",
-      "x": 0,
-      "z": 679,
-      "kind": "junction",
-      "tags": [
-        "speed_bump"
-      ]
-    },
-    {
-      "nodeId": "dhanbagh_res_n2_0",
-      "x": 0,
-      "z": 779,
+      "x": 14,
+      "z": 678,
       "kind": "junction",
       "tags": [
         "speed_bump"
@@ -115,17 +108,8 @@
     },
     {
       "nodeId": "dhanbagh_res_n1_1",
-      "x": 153,
+      "x": 155,
       "z": 678,
-      "kind": "junction",
-      "tags": [
-        "speed_bump"
-      ]
-    },
-    {
-      "nodeId": "dhanbagh_res_n2_1",
-      "x": 153,
-      "z": 778,
       "kind": "junction",
       "tags": [
         "speed_bump"
@@ -133,43 +117,7 @@
     },
     {
       "nodeId": "dhanbagh_res_n1_2",
-      "x": 303,
-      "z": 679,
-      "kind": "junction",
-      "tags": [
-        "speed_bump"
-      ]
-    },
-    {
-      "nodeId": "dhanbagh_res_n2_2",
-      "x": 303,
-      "z": 779,
-      "kind": "junction",
-      "tags": [
-        "speed_bump"
-      ]
-    },
-    {
-      "nodeId": "dhanbagh_res_n1_3",
-      "x": 448,
-      "z": 680,
-      "kind": "junction",
-      "tags": [
-        "speed_bump"
-      ]
-    },
-    {
-      "nodeId": "dhanbagh_res_n2_3",
-      "x": 448,
-      "z": 780,
-      "kind": "junction",
-      "tags": [
-        "speed_bump"
-      ]
-    },
-    {
-      "nodeId": "dhanbagh_res_n1_4",
-      "x": 600,
+      "x": 304,
       "z": 678,
       "kind": "junction",
       "tags": [
@@ -177,9 +125,63 @@
       ]
     },
     {
+      "nodeId": "dhanbagh_res_n1_3",
+      "x": 440,
+      "z": 678,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "dhanbagh_res_n1_4",
+      "x": 586,
+      "z": 678,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "dhanbagh_res_n2_0",
+      "x": 14,
+      "z": 785,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "dhanbagh_res_n2_1",
+      "x": 154,
+      "z": 782,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "dhanbagh_res_n2_2",
+      "x": 304,
+      "z": 781,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "dhanbagh_res_n2_3",
+      "x": 441,
+      "z": 781,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
       "nodeId": "dhanbagh_res_n2_4",
-      "x": 600,
-      "z": 778,
+      "x": 586,
+      "z": 781,
       "kind": "junction",
       "tags": [
         "speed_bump"
@@ -187,87 +189,99 @@
     },
     {
       "nodeId": "dhanbagh_res_s1_0",
-      "x": 0,
-      "z": 1021,
-      "kind": "junction"
-    },
-    {
-      "nodeId": "dhanbagh_res_s2_0",
-      "x": 0,
-      "z": 1121,
+      "x": 14,
+      "z": 1015,
       "kind": "junction"
     },
     {
       "nodeId": "dhanbagh_res_s1_1",
-      "x": 147,
-      "z": 1018,
-      "kind": "junction"
-    },
-    {
-      "nodeId": "dhanbagh_res_s2_1",
-      "x": 147,
-      "z": 1118,
+      "x": 153,
+      "z": 1017,
       "kind": "junction"
     },
     {
       "nodeId": "dhanbagh_res_s1_2",
-      "x": 297,
-      "z": 1019,
-      "kind": "junction"
-    },
-    {
-      "nodeId": "dhanbagh_res_s2_2",
-      "x": 297,
-      "z": 1119,
+      "x": 303,
+      "z": 1015,
       "kind": "junction"
     },
     {
       "nodeId": "dhanbagh_res_s1_3",
-      "x": 450,
-      "z": 1019,
-      "kind": "junction"
-    },
-    {
-      "nodeId": "dhanbagh_res_s2_3",
-      "x": 450,
-      "z": 1119,
-      "kind": "junction"
-    },
-    {
-      "nodeId": "dhanbagh_res_s1_4",
-      "x": 600,
+      "x": 439,
       "z": 1018,
       "kind": "junction"
     },
     {
+      "nodeId": "dhanbagh_res_s1_4",
+      "x": 586,
+      "z": 1018,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "dhanbagh_res_s2_0",
+      "x": 14,
+      "z": 1122,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "dhanbagh_res_s2_1",
+      "x": 155,
+      "z": 1122,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "dhanbagh_res_s2_2",
+      "x": 304,
+      "z": 1122,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "dhanbagh_res_s2_3",
+      "x": 440,
+      "z": 1122,
+      "kind": "junction"
+    },
+    {
       "nodeId": "dhanbagh_res_s2_4",
-      "x": 600,
-      "z": 1118,
+      "x": 586,
+      "z": 1122,
       "kind": "junction"
     },
     {
-      "nodeId": "dhanbagh_alley_nw_mid",
-      "x": 75,
+      "nodeId": "dhanbagh_alley_dead_1",
+      "x": 368,
+      "z": 1072,
+      "kind": "deadEnd",
+      "tags": [
+        "alley"
+      ]
+    },
+    {
+      "nodeId": "dhanbagh_alley_mid_2",
+      "x": 80,
+      "z": 733,
+      "kind": "junction",
+      "tags": [
+        "alley"
+      ]
+    },
+    {
+      "nodeId": "dhanbagh_alley_mid_3",
+      "x": 229,
       "z": 730,
-      "kind": "junction"
+      "kind": "junction",
+      "tags": [
+        "alley"
+      ]
     },
     {
-      "nodeId": "dhanbagh_alley_ne_gate",
-      "x": 375,
-      "z": 650,
-      "kind": "junction"
-    },
-    {
-      "nodeId": "dhanbagh_alley_sc_mid",
-      "x": 225,
-      "z": 1070,
-      "kind": "junction"
-    },
-    {
-      "nodeId": "dhanbagh_alley_se_deadend",
-      "x": 525,
-      "z": 1090,
-      "kind": "deadEnd"
+      "nodeId": "dhanbagh_alley_dead_4",
+      "x": 510,
+      "z": 1072,
+      "kind": "deadEnd",
+      "tags": [
+        "alley"
+      ]
     }
   ],
   "segments": [
@@ -284,14 +298,15 @@
       "pedestrianDensity": 0.2,
       "riskLevel": 0.08,
       "oneWay": true,
-      "divided": true,
+      "divided": false,
       "lanes": 2,
       "roadType": "main",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "dhanbagh",
       "tags": [
-        "arterial"
+        "arterial",
+        "arterial_outer_north"
       ]
     },
     {
@@ -307,14 +322,15 @@
       "pedestrianDensity": 0.2,
       "riskLevel": 0.08,
       "oneWay": true,
-      "divided": true,
+      "divided": false,
       "lanes": 2,
       "roadType": "main",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "dhanbagh",
       "tags": [
-        "arterial"
+        "arterial",
+        "arterial_outer_south"
       ]
     },
     {
@@ -330,14 +346,15 @@
       "pedestrianDensity": 0.2,
       "riskLevel": 0.08,
       "oneWay": true,
-      "divided": true,
+      "divided": false,
       "lanes": 2,
       "roadType": "main",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "dhanbagh",
       "tags": [
-        "arterial"
+        "arterial",
+        "arterial_outer_north"
       ]
     },
     {
@@ -353,14 +370,15 @@
       "pedestrianDensity": 0.2,
       "riskLevel": 0.08,
       "oneWay": true,
-      "divided": true,
+      "divided": false,
       "lanes": 2,
       "roadType": "main",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "dhanbagh",
       "tags": [
-        "arterial"
+        "arterial",
+        "arterial_outer_south"
       ]
     },
     {
@@ -376,14 +394,15 @@
       "pedestrianDensity": 0.2,
       "riskLevel": 0.08,
       "oneWay": true,
-      "divided": true,
+      "divided": false,
       "lanes": 2,
       "roadType": "main",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "dhanbagh",
       "tags": [
-        "arterial"
+        "arterial",
+        "arterial_outer_north"
       ]
     },
     {
@@ -399,14 +418,15 @@
       "pedestrianDensity": 0.2,
       "riskLevel": 0.08,
       "oneWay": true,
-      "divided": true,
+      "divided": false,
       "lanes": 2,
       "roadType": "main",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "dhanbagh",
       "tags": [
-        "arterial"
+        "arterial",
+        "arterial_outer_south"
       ]
     },
     {
@@ -422,14 +442,15 @@
       "pedestrianDensity": 0.2,
       "riskLevel": 0.08,
       "oneWay": true,
-      "divided": true,
+      "divided": false,
       "lanes": 2,
       "roadType": "main",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "dhanbagh",
       "tags": [
-        "arterial"
+        "arterial",
+        "arterial_outer_north"
       ]
     },
     {
@@ -445,14 +466,15 @@
       "pedestrianDensity": 0.2,
       "riskLevel": 0.08,
       "oneWay": true,
-      "divided": true,
+      "divided": false,
       "lanes": 2,
       "roadType": "main",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "dhanbagh",
       "tags": [
-        "arterial"
+        "arterial",
+        "arterial_outer_south"
       ]
     },
     {
@@ -575,7 +597,7 @@
       "segmentId": "S_dhanbagh_14",
       "startNodeId": "dhanbagh_res_n1_0",
       "endNodeId": "dhanbagh_res_n1_1",
-      "width": 7,
+      "width": 8,
       "surfaceCondition": 0.6,
       "trafficDensity": 0.3,
       "speedLimit": 30,
@@ -596,10 +618,10 @@
     },
     {
       "segmentId": "S_dhanbagh_15",
-      "startNodeId": "dhanbagh_res_n2_0",
-      "endNodeId": "dhanbagh_res_n2_1",
-      "width": 7,
-      "surfaceCondition": 0.9,
+      "startNodeId": "dhanbagh_res_n1_1",
+      "endNodeId": "dhanbagh_res_n1_2",
+      "width": 8,
+      "surfaceCondition": 0.85,
       "trafficDensity": 0.3,
       "speedLimit": 30,
       "turnRestrictions": [],
@@ -619,9 +641,9 @@
     },
     {
       "segmentId": "S_dhanbagh_16",
-      "startNodeId": "dhanbagh_res_n1_1",
-      "endNodeId": "dhanbagh_res_n1_2",
-      "width": 7,
+      "startNodeId": "dhanbagh_res_n1_2",
+      "endNodeId": "dhanbagh_res_n1_3",
+      "width": 8,
       "surfaceCondition": 0.85,
       "trafficDensity": 0.3,
       "speedLimit": 30,
@@ -642,10 +664,10 @@
     },
     {
       "segmentId": "S_dhanbagh_17",
-      "startNodeId": "dhanbagh_res_n2_1",
-      "endNodeId": "dhanbagh_res_n2_2",
-      "width": 7,
-      "surfaceCondition": 0.9,
+      "startNodeId": "dhanbagh_res_n1_3",
+      "endNodeId": "dhanbagh_res_n1_4",
+      "width": 8,
+      "surfaceCondition": 0.85,
       "trafficDensity": 0.3,
       "speedLimit": 30,
       "turnRestrictions": [],
@@ -665,9 +687,9 @@
     },
     {
       "segmentId": "S_dhanbagh_18",
-      "startNodeId": "dhanbagh_res_n1_2",
-      "endNodeId": "dhanbagh_res_n1_3",
-      "width": 7,
+      "startNodeId": "dhanbagh_res_n2_0",
+      "endNodeId": "dhanbagh_res_n2_1",
+      "width": 8,
       "surfaceCondition": 0.85,
       "trafficDensity": 0.3,
       "speedLimit": 30,
@@ -688,10 +710,10 @@
     },
     {
       "segmentId": "S_dhanbagh_19",
-      "startNodeId": "dhanbagh_res_n2_2",
-      "endNodeId": "dhanbagh_res_n2_3",
-      "width": 7,
-      "surfaceCondition": 0.9,
+      "startNodeId": "dhanbagh_res_n2_1",
+      "endNodeId": "dhanbagh_res_n2_2",
+      "width": 8,
+      "surfaceCondition": 0.85,
       "trafficDensity": 0.3,
       "speedLimit": 30,
       "turnRestrictions": [],
@@ -711,9 +733,9 @@
     },
     {
       "segmentId": "S_dhanbagh_20",
-      "startNodeId": "dhanbagh_res_n1_3",
-      "endNodeId": "dhanbagh_res_n1_4",
-      "width": 7,
+      "startNodeId": "dhanbagh_res_n2_2",
+      "endNodeId": "dhanbagh_res_n2_3",
+      "width": 8,
       "surfaceCondition": 0.85,
       "trafficDensity": 0.3,
       "speedLimit": 30,
@@ -736,8 +758,8 @@
       "segmentId": "S_dhanbagh_21",
       "startNodeId": "dhanbagh_res_n2_3",
       "endNodeId": "dhanbagh_res_n2_4",
-      "width": 7,
-      "surfaceCondition": 0.9,
+      "width": 8,
+      "surfaceCondition": 0.85,
       "trafficDensity": 0.3,
       "speedLimit": 30,
       "turnRestrictions": [],
@@ -759,7 +781,7 @@
       "segmentId": "S_dhanbagh_22",
       "startNodeId": "dhanbagh_res_n1_0",
       "endNodeId": "dhanbagh_res_n2_0",
-      "width": 7,
+      "width": 8,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
       "speedLimit": 30,
@@ -782,7 +804,7 @@
       "segmentId": "S_dhanbagh_23",
       "startNodeId": "dhanbagh_res_n2_0",
       "endNodeId": "dhanbagh_art_n_0",
-      "width": 8,
+      "width": 9,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
       "speedLimit": 35,
@@ -803,7 +825,7 @@
       "segmentId": "S_dhanbagh_24",
       "startNodeId": "dhanbagh_res_n1_1",
       "endNodeId": "dhanbagh_res_n2_1",
-      "width": 7,
+      "width": 8,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
       "speedLimit": 30,
@@ -826,7 +848,7 @@
       "segmentId": "S_dhanbagh_25",
       "startNodeId": "dhanbagh_res_n2_1",
       "endNodeId": "dhanbagh_art_n_1",
-      "width": 8,
+      "width": 9,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
       "speedLimit": 35,
@@ -847,7 +869,7 @@
       "segmentId": "S_dhanbagh_26",
       "startNodeId": "dhanbagh_res_n1_2",
       "endNodeId": "dhanbagh_res_n2_2",
-      "width": 7,
+      "width": 8,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
       "speedLimit": 30,
@@ -870,28 +892,30 @@
       "segmentId": "S_dhanbagh_27",
       "startNodeId": "dhanbagh_res_n2_2",
       "endNodeId": "dhanbagh_art_n_2",
-      "width": 8,
+      "width": 14,
       "surfaceCondition": 0.9,
-      "trafficDensity": 0.3,
-      "speedLimit": 35,
+      "trafficDensity": 0.45,
+      "speedLimit": 45,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
       "pedestrianDensity": 0.2,
       "riskLevel": 0.08,
       "oneWay": false,
-      "divided": false,
-      "lanes": 2,
+      "divided": true,
+      "lanes": 4,
       "roadType": "main",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "dhanbagh",
-      "tags": []
+      "tags": [
+        "arterial"
+      ]
     },
     {
       "segmentId": "S_dhanbagh_28",
       "startNodeId": "dhanbagh_res_n1_3",
       "endNodeId": "dhanbagh_res_n2_3",
-      "width": 7,
+      "width": 8,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
       "speedLimit": 30,
@@ -914,7 +938,7 @@
       "segmentId": "S_dhanbagh_29",
       "startNodeId": "dhanbagh_res_n2_3",
       "endNodeId": "dhanbagh_art_n_3",
-      "width": 8,
+      "width": 9,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
       "speedLimit": 35,
@@ -935,7 +959,7 @@
       "segmentId": "S_dhanbagh_30",
       "startNodeId": "dhanbagh_res_n1_4",
       "endNodeId": "dhanbagh_res_n2_4",
-      "width": 7,
+      "width": 8,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
       "speedLimit": 30,
@@ -958,7 +982,7 @@
       "segmentId": "S_dhanbagh_31",
       "startNodeId": "dhanbagh_res_n2_4",
       "endNodeId": "dhanbagh_art_n_4",
-      "width": 8,
+      "width": 9,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
       "speedLimit": 35,
@@ -979,13 +1003,13 @@
       "segmentId": "S_dhanbagh_32",
       "startNodeId": "dhanbagh_res_s1_0",
       "endNodeId": "dhanbagh_res_s1_1",
-      "width": 9,
-      "surfaceCondition": 0.65,
-      "trafficDensity": 0.7,
-      "speedLimit": 25,
+      "width": 8,
+      "surfaceCondition": 0.85,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
-      "pedestrianDensity": 0.85,
+      "pedestrianDensity": 0.2,
       "riskLevel": 0.08,
       "oneWay": false,
       "divided": false,
@@ -994,16 +1018,14 @@
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "dhanbagh",
-      "tags": [
-        "market"
-      ]
+      "tags": []
     },
     {
       "segmentId": "S_dhanbagh_33",
-      "startNodeId": "dhanbagh_res_s2_0",
-      "endNodeId": "dhanbagh_res_s2_1",
-      "width": 7,
-      "surfaceCondition": 0.9,
+      "startNodeId": "dhanbagh_res_s1_1",
+      "endNodeId": "dhanbagh_res_s1_2",
+      "width": 8,
+      "surfaceCondition": 0.85,
       "trafficDensity": 0.3,
       "speedLimit": 30,
       "turnRestrictions": [],
@@ -1021,15 +1043,15 @@
     },
     {
       "segmentId": "S_dhanbagh_34",
-      "startNodeId": "dhanbagh_res_s1_1",
-      "endNodeId": "dhanbagh_res_s1_2",
-      "width": 9,
-      "surfaceCondition": 0.65,
-      "trafficDensity": 0.7,
-      "speedLimit": 25,
+      "startNodeId": "dhanbagh_res_s1_2",
+      "endNodeId": "dhanbagh_res_s1_3",
+      "width": 8,
+      "surfaceCondition": 0.85,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
-      "pedestrianDensity": 0.85,
+      "pedestrianDensity": 0.2,
       "riskLevel": 0.08,
       "oneWay": false,
       "divided": false,
@@ -1038,16 +1060,14 @@
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "dhanbagh",
-      "tags": [
-        "market"
-      ]
+      "tags": []
     },
     {
       "segmentId": "S_dhanbagh_35",
-      "startNodeId": "dhanbagh_res_s2_1",
-      "endNodeId": "dhanbagh_res_s2_2",
-      "width": 7,
-      "surfaceCondition": 0.9,
+      "startNodeId": "dhanbagh_res_s1_3",
+      "endNodeId": "dhanbagh_res_s1_4",
+      "width": 8,
+      "surfaceCondition": 0.85,
       "trafficDensity": 0.3,
       "speedLimit": 30,
       "turnRestrictions": [],
@@ -1065,15 +1085,15 @@
     },
     {
       "segmentId": "S_dhanbagh_36",
-      "startNodeId": "dhanbagh_res_s1_2",
-      "endNodeId": "dhanbagh_res_s1_3",
-      "width": 9,
-      "surfaceCondition": 0.65,
-      "trafficDensity": 0.7,
-      "speedLimit": 25,
+      "startNodeId": "dhanbagh_res_s2_0",
+      "endNodeId": "dhanbagh_res_s2_1",
+      "width": 8,
+      "surfaceCondition": 0.85,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
-      "pedestrianDensity": 0.85,
+      "pedestrianDensity": 0.2,
       "riskLevel": 0.08,
       "oneWay": false,
       "divided": false,
@@ -1082,16 +1102,14 @@
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "dhanbagh",
-      "tags": [
-        "market"
-      ]
+      "tags": []
     },
     {
       "segmentId": "S_dhanbagh_37",
-      "startNodeId": "dhanbagh_res_s2_2",
-      "endNodeId": "dhanbagh_res_s2_3",
-      "width": 7,
-      "surfaceCondition": 0.9,
+      "startNodeId": "dhanbagh_res_s2_1",
+      "endNodeId": "dhanbagh_res_s2_2",
+      "width": 8,
+      "surfaceCondition": 0.85,
       "trafficDensity": 0.3,
       "speedLimit": 30,
       "turnRestrictions": [],
@@ -1109,15 +1127,15 @@
     },
     {
       "segmentId": "S_dhanbagh_38",
-      "startNodeId": "dhanbagh_res_s1_3",
-      "endNodeId": "dhanbagh_res_s1_4",
-      "width": 9,
-      "surfaceCondition": 0.65,
-      "trafficDensity": 0.7,
-      "speedLimit": 25,
+      "startNodeId": "dhanbagh_res_s2_2",
+      "endNodeId": "dhanbagh_res_s2_3",
+      "width": 8,
+      "surfaceCondition": 0.85,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
-      "pedestrianDensity": 0.85,
+      "pedestrianDensity": 0.2,
       "riskLevel": 0.08,
       "oneWay": false,
       "divided": false,
@@ -1126,16 +1144,14 @@
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "dhanbagh",
-      "tags": [
-        "market"
-      ]
+      "tags": []
     },
     {
       "segmentId": "S_dhanbagh_39",
       "startNodeId": "dhanbagh_res_s2_3",
       "endNodeId": "dhanbagh_res_s2_4",
-      "width": 7,
-      "surfaceCondition": 0.9,
+      "width": 8,
+      "surfaceCondition": 0.85,
       "trafficDensity": 0.3,
       "speedLimit": 30,
       "turnRestrictions": [],
@@ -1153,12 +1169,12 @@
     },
     {
       "segmentId": "S_dhanbagh_40",
-      "startNodeId": "dhanbagh_art_s_0",
-      "endNodeId": "dhanbagh_res_s1_0",
+      "startNodeId": "dhanbagh_res_s1_0",
+      "endNodeId": "dhanbagh_res_s2_0",
       "width": 8,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
-      "speedLimit": 35,
+      "speedLimit": 30,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
       "pedestrianDensity": 0.2,
@@ -1166,7 +1182,7 @@
       "oneWay": false,
       "divided": false,
       "lanes": 2,
-      "roadType": "main",
+      "roadType": "residential",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "dhanbagh",
@@ -1174,12 +1190,12 @@
     },
     {
       "segmentId": "S_dhanbagh_41",
-      "startNodeId": "dhanbagh_res_s1_0",
-      "endNodeId": "dhanbagh_res_s2_0",
-      "width": 7,
+      "startNodeId": "dhanbagh_art_s_0",
+      "endNodeId": "dhanbagh_res_s1_0",
+      "width": 9,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
-      "speedLimit": 30,
+      "speedLimit": 35,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
       "pedestrianDensity": 0.2,
@@ -1187,7 +1203,7 @@
       "oneWay": false,
       "divided": false,
       "lanes": 2,
-      "roadType": "residential",
+      "roadType": "main",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "dhanbagh",
@@ -1195,12 +1211,12 @@
     },
     {
       "segmentId": "S_dhanbagh_42",
-      "startNodeId": "dhanbagh_art_s_1",
-      "endNodeId": "dhanbagh_res_s1_1",
+      "startNodeId": "dhanbagh_res_s1_1",
+      "endNodeId": "dhanbagh_res_s2_1",
       "width": 8,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
-      "speedLimit": 35,
+      "speedLimit": 30,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
       "pedestrianDensity": 0.2,
@@ -1208,7 +1224,7 @@
       "oneWay": false,
       "divided": false,
       "lanes": 2,
-      "roadType": "main",
+      "roadType": "residential",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "dhanbagh",
@@ -1216,12 +1232,12 @@
     },
     {
       "segmentId": "S_dhanbagh_43",
-      "startNodeId": "dhanbagh_res_s1_1",
-      "endNodeId": "dhanbagh_res_s2_1",
-      "width": 7,
+      "startNodeId": "dhanbagh_art_s_1",
+      "endNodeId": "dhanbagh_res_s1_1",
+      "width": 9,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
-      "speedLimit": 30,
+      "speedLimit": 35,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
       "pedestrianDensity": 0.2,
@@ -1229,7 +1245,7 @@
       "oneWay": false,
       "divided": false,
       "lanes": 2,
-      "roadType": "residential",
+      "roadType": "main",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "dhanbagh",
@@ -1237,12 +1253,12 @@
     },
     {
       "segmentId": "S_dhanbagh_44",
-      "startNodeId": "dhanbagh_art_s_2",
-      "endNodeId": "dhanbagh_res_s1_2",
+      "startNodeId": "dhanbagh_res_s1_2",
+      "endNodeId": "dhanbagh_res_s2_2",
       "width": 8,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
-      "speedLimit": 35,
+      "speedLimit": 30,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
       "pedestrianDensity": 0.2,
@@ -1250,7 +1266,7 @@
       "oneWay": false,
       "divided": false,
       "lanes": 2,
-      "roadType": "main",
+      "roadType": "residential",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "dhanbagh",
@@ -1258,12 +1274,12 @@
     },
     {
       "segmentId": "S_dhanbagh_45",
-      "startNodeId": "dhanbagh_res_s1_2",
-      "endNodeId": "dhanbagh_res_s2_2",
-      "width": 7,
+      "startNodeId": "dhanbagh_art_s_2",
+      "endNodeId": "dhanbagh_res_s1_2",
+      "width": 9,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
-      "speedLimit": 30,
+      "speedLimit": 35,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
       "pedestrianDensity": 0.2,
@@ -1271,7 +1287,7 @@
       "oneWay": false,
       "divided": false,
       "lanes": 2,
-      "roadType": "residential",
+      "roadType": "main",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "dhanbagh",
@@ -1279,12 +1295,12 @@
     },
     {
       "segmentId": "S_dhanbagh_46",
-      "startNodeId": "dhanbagh_art_s_3",
-      "endNodeId": "dhanbagh_res_s1_3",
+      "startNodeId": "dhanbagh_res_s1_3",
+      "endNodeId": "dhanbagh_res_s2_3",
       "width": 8,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
-      "speedLimit": 35,
+      "speedLimit": 30,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
       "pedestrianDensity": 0.2,
@@ -1292,7 +1308,7 @@
       "oneWay": false,
       "divided": false,
       "lanes": 2,
-      "roadType": "main",
+      "roadType": "residential",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "dhanbagh",
@@ -1300,30 +1316,9 @@
     },
     {
       "segmentId": "S_dhanbagh_47",
-      "startNodeId": "dhanbagh_res_s1_3",
-      "endNodeId": "dhanbagh_res_s2_3",
-      "width": 7,
-      "surfaceCondition": 0.9,
-      "trafficDensity": 0.3,
-      "speedLimit": 30,
-      "turnRestrictions": [],
-      "motorcycleAccessible": true,
-      "pedestrianDensity": 0.2,
-      "riskLevel": 0.08,
-      "oneWay": false,
-      "divided": false,
-      "lanes": 2,
-      "roadType": "residential",
-      "floodSensitivity": 0.2,
-      "pickupPractical": true,
-      "district": "dhanbagh",
-      "tags": []
-    },
-    {
-      "segmentId": "S_dhanbagh_48",
-      "startNodeId": "dhanbagh_art_s_4",
-      "endNodeId": "dhanbagh_res_s1_4",
-      "width": 8,
+      "startNodeId": "dhanbagh_art_s_3",
+      "endNodeId": "dhanbagh_res_s1_3",
+      "width": 9,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
       "speedLimit": 35,
@@ -1341,10 +1336,10 @@
       "tags": []
     },
     {
-      "segmentId": "S_dhanbagh_49",
+      "segmentId": "S_dhanbagh_48",
       "startNodeId": "dhanbagh_res_s1_4",
       "endNodeId": "dhanbagh_res_s2_4",
-      "width": 7,
+      "width": 8,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
       "speedLimit": 30,
@@ -1362,13 +1357,13 @@
       "tags": []
     },
     {
-      "segmentId": "S_dhanbagh_50",
-      "startNodeId": "dhanbagh_res_n1_0",
-      "endNodeId": "dhanbagh_alley_nw_mid",
-      "width": 3.5,
+      "segmentId": "S_dhanbagh_49",
+      "startNodeId": "dhanbagh_art_s_4",
+      "endNodeId": "dhanbagh_res_s1_4",
+      "width": 9,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
-      "speedLimit": 20,
+      "speedLimit": 35,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
       "pedestrianDensity": 0.2,
@@ -1376,25 +1371,47 @@
       "oneWay": false,
       "divided": false,
       "lanes": 2,
-      "roadType": "alley",
+      "roadType": "main",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "dhanbagh",
+      "tags": []
+    },
+    {
+      "segmentId": "S_dhanbagh_50",
+      "startNodeId": "dhanbagh_res_s2_3",
+      "endNodeId": "dhanbagh_alley_dead_1",
+      "width": 2.5,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 15,
+      "turnRestrictions": [],
+      "motorcycleAccessible": false,
+      "pedestrianDensity": 0.65,
+      "riskLevel": 0.08,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "alley",
+      "floodSensitivity": 0.2,
+      "pickupPractical": false,
+      "district": "dhanbagh",
       "tags": [
-        "alley"
+        "alley",
+        "deadend"
       ]
     },
     {
       "segmentId": "S_dhanbagh_51",
-      "startNodeId": "dhanbagh_alley_nw_mid",
-      "endNodeId": "dhanbagh_res_n2_1",
+      "startNodeId": "dhanbagh_res_n1_1",
+      "endNodeId": "dhanbagh_alley_mid_2",
       "width": 3.5,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
       "speedLimit": 20,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
-      "pedestrianDensity": 0.2,
+      "pedestrianDensity": 0.45,
       "riskLevel": 0.08,
       "oneWay": false,
       "divided": false,
@@ -1409,63 +1426,61 @@
     },
     {
       "segmentId": "S_dhanbagh_52",
-      "startNodeId": "dhanbagh_res_n1_2",
-      "endNodeId": "dhanbagh_alley_ne_gate",
-      "width": 2.5,
-      "surfaceCondition": 0.9,
-      "trafficDensity": 0.3,
-      "speedLimit": 15,
-      "turnRestrictions": [],
-      "motorcycleAccessible": false,
-      "pedestrianDensity": 0.2,
-      "riskLevel": 0.08,
-      "oneWay": false,
-      "divided": false,
-      "lanes": 2,
-      "roadType": "alley",
-      "floodSensitivity": 0.2,
-      "pickupPractical": false,
-      "district": "dhanbagh",
-      "tags": [
-        "alley",
-        "pedestrian_only"
-      ]
-    },
-    {
-      "segmentId": "S_dhanbagh_53",
-      "startNodeId": "dhanbagh_alley_ne_gate",
-      "endNodeId": "dhanbagh_res_n1_3",
-      "width": 2.5,
-      "surfaceCondition": 0.9,
-      "trafficDensity": 0.3,
-      "speedLimit": 15,
-      "turnRestrictions": [],
-      "motorcycleAccessible": false,
-      "pedestrianDensity": 0.2,
-      "riskLevel": 0.08,
-      "oneWay": false,
-      "divided": false,
-      "lanes": 2,
-      "roadType": "alley",
-      "floodSensitivity": 0.2,
-      "pickupPractical": false,
-      "district": "dhanbagh",
-      "tags": [
-        "alley",
-        "pedestrian_only"
-      ]
-    },
-    {
-      "segmentId": "S_dhanbagh_54",
-      "startNodeId": "dhanbagh_res_s1_1",
-      "endNodeId": "dhanbagh_alley_sc_mid",
+      "startNodeId": "dhanbagh_alley_mid_2",
+      "endNodeId": "dhanbagh_res_n2_0",
       "width": 3.5,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
       "speedLimit": 20,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
-      "pedestrianDensity": 0.2,
+      "pedestrianDensity": 0.45,
+      "riskLevel": 0.08,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "alley",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "dhanbagh",
+      "tags": [
+        "alley"
+      ]
+    },
+    {
+      "segmentId": "S_dhanbagh_53",
+      "startNodeId": "dhanbagh_res_n1_1",
+      "endNodeId": "dhanbagh_alley_mid_3",
+      "width": 3.5,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 20,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.45,
+      "riskLevel": 0.08,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "alley",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "dhanbagh",
+      "tags": [
+        "alley"
+      ]
+    },
+    {
+      "segmentId": "S_dhanbagh_54",
+      "startNodeId": "dhanbagh_alley_mid_3",
+      "endNodeId": "dhanbagh_res_n2_2",
+      "width": 3.5,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 20,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.45,
       "riskLevel": 0.08,
       "oneWay": false,
       "divided": false,
@@ -1480,38 +1495,15 @@
     },
     {
       "segmentId": "S_dhanbagh_55",
-      "startNodeId": "dhanbagh_alley_sc_mid",
-      "endNodeId": "dhanbagh_res_s2_2",
-      "width": 3.5,
-      "surfaceCondition": 0.9,
-      "trafficDensity": 0.3,
-      "speedLimit": 20,
-      "turnRestrictions": [],
-      "motorcycleAccessible": true,
-      "pedestrianDensity": 0.2,
-      "riskLevel": 0.08,
-      "oneWay": false,
-      "divided": false,
-      "lanes": 2,
-      "roadType": "alley",
-      "floodSensitivity": 0.2,
-      "pickupPractical": true,
-      "district": "dhanbagh",
-      "tags": [
-        "alley"
-      ]
-    },
-    {
-      "segmentId": "S_dhanbagh_56",
-      "startNodeId": "dhanbagh_res_s2_3",
-      "endNodeId": "dhanbagh_alley_se_deadend",
+      "startNodeId": "dhanbagh_res_s2_4",
+      "endNodeId": "dhanbagh_alley_dead_4",
       "width": 2.5,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
       "speedLimit": 15,
       "turnRestrictions": [],
       "motorcycleAccessible": false,
-      "pedestrianDensity": 0.2,
+      "pedestrianDensity": 0.65,
       "riskLevel": 0.08,
       "oneWay": false,
       "divided": false,
@@ -1567,479 +1559,2891 @@
   "lots": [
     {
       "lotId": "lot_dhanbagh_1",
-      "x": 75,
-      "z": 883,
+      "x": 35,
+      "z": 872.6,
       "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5707963267948966,
+      "depth": 12,
+      "facingHeading": 0,
       "zone": "commercial"
     },
     {
       "lotId": "lot_dhanbagh_2",
-      "x": 75,
-      "z": 917,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": -1.5707963267948966,
+      "x": 55.6,
+      "z": 871.1,
+      "width": 20,
+      "depth": 15,
+      "facingHeading": 0,
       "zone": "commercial"
     },
     {
       "lotId": "lot_dhanbagh_3",
-      "x": 225,
-      "z": 883,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5707963267948966,
+      "x": 75.9,
+      "z": 872.1,
+      "width": 15,
+      "depth": 13,
+      "facingHeading": 0,
       "zone": "commercial"
     },
     {
       "lotId": "lot_dhanbagh_4",
-      "x": 225,
-      "z": 917,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": -1.5707963267948966,
+      "x": 92.4,
+      "z": 872.1,
+      "width": 14,
+      "depth": 13,
+      "facingHeading": 0,
       "zone": "commercial"
     },
     {
       "lotId": "lot_dhanbagh_5",
-      "x": 375,
-      "z": 883,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5707963267948966,
+      "x": 112.2,
+      "z": 872.1,
+      "width": 19,
+      "depth": 13,
+      "facingHeading": 0,
       "zone": "commercial"
     },
     {
       "lotId": "lot_dhanbagh_6",
-      "x": 375,
-      "z": 917,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": -1.5707963267948966,
-      "zone": "commercial"
+      "x": 132.5,
+      "z": 871.6,
+      "width": 17,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "civic"
     },
     {
       "lotId": "lot_dhanbagh_7",
-      "x": 525,
-      "z": 883,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5707963267948966,
+      "x": 135,
+      "z": 928.9,
+      "width": 16,
+      "depth": 15,
+      "facingHeading": -3.1416,
       "zone": "commercial"
     },
     {
       "lotId": "lot_dhanbagh_8",
-      "x": 525,
-      "z": 917,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": -1.5707963267948966,
+      "x": 115.1,
+      "z": 928.4,
+      "width": 19,
+      "depth": 14,
+      "facingHeading": -3.1416,
       "zone": "commercial"
     },
     {
       "lotId": "lot_dhanbagh_9",
-      "x": 12,
-      "z": 900,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0,
+      "x": 95.6,
+      "z": 927.4,
+      "width": 14,
+      "depth": 12,
+      "facingHeading": -3.1416,
       "zone": "commercial"
     },
     {
       "lotId": "lot_dhanbagh_10",
-      "x": 162,
-      "z": 900,
+      "x": 77.9,
+      "z": 928.4,
       "width": 18,
-      "depth": 16,
-      "facingHeading": 0,
+      "depth": 14,
+      "facingHeading": -3.1416,
       "zone": "commercial"
     },
     {
       "lotId": "lot_dhanbagh_11",
-      "x": 312,
-      "z": 900,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0,
+      "x": 58.1,
+      "z": 928.4,
+      "width": 16,
+      "depth": 14,
+      "facingHeading": -3.1416,
       "zone": "commercial"
     },
     {
       "lotId": "lot_dhanbagh_12",
-      "x": 462,
-      "z": 900,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0,
+      "x": 37.2,
+      "z": 927.9,
+      "width": 20,
+      "depth": 13,
+      "facingHeading": -3.1416,
       "zone": "commercial"
     },
     {
       "lotId": "lot_dhanbagh_13",
-      "x": 612,
-      "z": 900,
-      "width": 18,
-      "depth": 16,
+      "x": 174,
+      "z": 871.6,
+      "width": 14,
+      "depth": 14,
       "facingHeading": 0,
-      "zone": "commercial"
+      "zone": "civic"
     },
     {
       "lotId": "lot_dhanbagh_14",
-      "x": 76,
-      "z": 667,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5773321814408279,
-      "zone": "residential"
-    },
-    {
-      "lotId": "lot_dhanbagh_15",
-      "x": 76,
-      "z": 767,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5773321814408279,
-      "zone": "residential"
-    },
-    {
-      "lotId": "lot_dhanbagh_16",
-      "x": 228,
-      "z": 667,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5641297588910283,
-      "zone": "residential"
-    },
-    {
-      "lotId": "lot_dhanbagh_17",
-      "x": 228,
-      "z": 767,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5641297588910283,
-      "zone": "residential"
-    },
-    {
-      "lotId": "lot_dhanbagh_18",
-      "x": 376,
-      "z": 668,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5638998844065481,
-      "zone": "residential"
-    },
-    {
-      "lotId": "lot_dhanbagh_19",
-      "x": 376,
-      "z": 768,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5638998844065481,
-      "zone": "residential"
-    },
-    {
-      "lotId": "lot_dhanbagh_20",
-      "x": 524,
-      "z": 667,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5839534622676525,
-      "zone": "residential"
-    },
-    {
-      "lotId": "lot_dhanbagh_21",
-      "x": 524,
-      "z": 767,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5839534622676525,
-      "zone": "residential"
-    },
-    {
-      "lotId": "lot_dhanbagh_22",
-      "x": 12,
-      "z": 729,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0,
-      "zone": "residential"
-    },
-    {
-      "lotId": "lot_dhanbagh_23",
-      "x": 12,
-      "z": 837,
-      "width": 18,
+      "x": 192.4,
+      "z": 870.6,
+      "width": 17,
       "depth": 16,
       "facingHeading": 0,
       "zone": "commercial"
     },
     {
-      "lotId": "lot_dhanbagh_24",
-      "x": 165,
-      "z": 728,
-      "width": 18,
+      "lotId": "lot_dhanbagh_15",
+      "x": 213.6,
+      "z": 870.6,
+      "width": 19,
       "depth": 16,
       "facingHeading": 0,
-      "zone": "residential"
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_16",
+      "x": 233.1,
+      "z": 870.6,
+      "width": 16,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_17",
+      "x": 254.2,
+      "z": 871.6,
+      "width": 21,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_18",
+      "x": 276.7,
+      "z": 870.6,
+      "width": 19,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "civic"
+    },
+    {
+      "lotId": "lot_dhanbagh_19",
+      "x": 282,
+      "z": 927.4,
+      "width": 20,
+      "depth": 12,
+      "facingHeading": -3.1416,
+      "zone": "civic"
+    },
+    {
+      "lotId": "lot_dhanbagh_20",
+      "x": 259.4,
+      "z": 928.9,
+      "width": 19,
+      "depth": 15,
+      "facingHeading": -3.1416,
+      "zone": "civic"
+    },
+    {
+      "lotId": "lot_dhanbagh_21",
+      "x": 236.9,
+      "z": 928.4,
+      "width": 20,
+      "depth": 14,
+      "facingHeading": -3.1416,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_22",
+      "x": 215.1,
+      "z": 927.4,
+      "width": 19,
+      "depth": 12,
+      "facingHeading": -3.1416,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_23",
+      "x": 195.5,
+      "z": 927.9,
+      "width": 15,
+      "depth": 13,
+      "facingHeading": -3.1416,
+      "zone": "civic"
+    },
+    {
+      "lotId": "lot_dhanbagh_24",
+      "x": 178.5,
+      "z": 927.9,
+      "width": 16,
+      "depth": 13,
+      "facingHeading": -3.1416,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_dhanbagh_25",
-      "x": 163,
-      "z": 837,
-      "width": 18,
+      "x": 324.5,
+      "z": 870.6,
+      "width": 17,
       "depth": 16,
-      "facingHeading": -0.02563540852167748,
+      "facingHeading": 0,
       "zone": "commercial"
     },
     {
       "lotId": "lot_dhanbagh_26",
-      "x": 315,
-      "z": 729,
-      "width": 18,
-      "depth": 16,
+      "x": 344.3,
+      "z": 871.6,
+      "width": 17,
+      "depth": 14,
       "facingHeading": 0,
-      "zone": "residential"
+      "zone": "commercial"
     },
     {
       "lotId": "lot_dhanbagh_27",
-      "x": 313,
-      "z": 837,
+      "x": 363.6,
+      "z": 870.6,
       "width": 18,
       "depth": 16,
-      "facingHeading": -0.025856305359259733,
+      "facingHeading": 0,
       "zone": "commercial"
     },
     {
       "lotId": "lot_dhanbagh_28",
-      "x": 460,
-      "z": 730,
-      "width": 18,
-      "depth": 16,
+      "x": 386,
+      "z": 871.6,
+      "width": 21,
+      "depth": 14,
       "facingHeading": 0,
-      "zone": "residential"
+      "zone": "civic"
     },
     {
       "lotId": "lot_dhanbagh_29",
-      "x": 461,
-      "z": 837,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0.017389551289330653,
+      "x": 408.2,
+      "z": 872.1,
+      "width": 17,
+      "depth": 13,
+      "facingHeading": 0,
       "zone": "commercial"
     },
     {
       "lotId": "lot_dhanbagh_30",
-      "x": 612,
-      "z": 728,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0,
-      "zone": "residential"
+      "x": 421,
+      "z": 928.4,
+      "width": 14,
+      "depth": 14,
+      "facingHeading": -3.1416,
+      "zone": "civic"
     },
     {
       "lotId": "lot_dhanbagh_31",
-      "x": 612,
-      "z": 837,
-      "width": 18,
-      "depth": 16,
+      "x": 405.3,
+      "z": 927.9,
+      "width": 14,
+      "depth": 13,
+      "facingHeading": -3.1416,
+      "zone": "civic"
+    },
+    {
+      "lotId": "lot_dhanbagh_32",
+      "x": 389,
+      "z": 927.9,
+      "width": 14,
+      "depth": 13,
+      "facingHeading": -3.1416,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_33",
+      "x": 368.5,
+      "z": 927.4,
+      "width": 21,
+      "depth": 12,
+      "facingHeading": -3.1416,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_34",
+      "x": 346.3,
+      "z": 927.9,
+      "width": 17,
+      "depth": 13,
+      "facingHeading": -3.1416,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_35",
+      "x": 329.2,
+      "z": 928.9,
+      "width": 13,
+      "depth": 15,
+      "facingHeading": -3.1416,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_36",
+      "x": 461.5,
+      "z": 872.6,
+      "width": 19,
+      "depth": 12,
       "facingHeading": 0,
       "zone": "commercial"
     },
     {
-      "lotId": "lot_dhanbagh_32",
-      "x": 73,
-      "z": 1008,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5912016574814347,
-      "zone": "market"
-    },
-    {
-      "lotId": "lot_dhanbagh_33",
-      "x": 73,
-      "z": 1108,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5912016574814347,
-      "zone": "residential"
-    },
-    {
-      "lotId": "lot_dhanbagh_34",
-      "x": 222,
-      "z": 1007,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5641297588910283,
-      "zone": "market"
-    },
-    {
-      "lotId": "lot_dhanbagh_35",
-      "x": 222,
-      "z": 1107,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5641297588910283,
-      "zone": "residential"
-    },
-    {
-      "lotId": "lot_dhanbagh_36",
-      "x": 374,
-      "z": 1007,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5707963267948966,
-      "zone": "market"
-    },
-    {
       "lotId": "lot_dhanbagh_37",
-      "x": 374,
-      "z": 1107,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5707963267948966,
-      "zone": "residential"
+      "x": 481,
+      "z": 871.6,
+      "width": 14,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "civic"
     },
     {
       "lotId": "lot_dhanbagh_38",
-      "x": 525,
-      "z": 1007,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.577462894698765,
-      "zone": "market"
+      "x": 501.3,
+      "z": 871.6,
+      "width": 20,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_dhanbagh_39",
-      "x": 525,
-      "z": 1107,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.577462894698765,
-      "zone": "residential"
+      "x": 521.1,
+      "z": 871.1,
+      "width": 16,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_dhanbagh_40",
-      "x": 12,
-      "z": 963,
-      "width": 18,
-      "depth": 16,
+      "x": 540,
+      "z": 872.1,
+      "width": 15,
+      "depth": 13,
       "facingHeading": 0,
       "zone": "commercial"
     },
     {
       "lotId": "lot_dhanbagh_41",
-      "x": 12,
-      "z": 1071,
-      "width": 18,
-      "depth": 16,
+      "x": 560.6,
+      "z": 871.6,
+      "width": 20,
+      "depth": 14,
       "facingHeading": 0,
-      "zone": "residential"
+      "zone": "civic"
     },
     {
       "lotId": "lot_dhanbagh_42",
-      "x": 160,
-      "z": 962,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": -0.026542437751397186,
+      "x": 565.5,
+      "z": 927.4,
+      "width": 17,
+      "depth": 12,
+      "facingHeading": -3.1416,
       "zone": "commercial"
     },
     {
       "lotId": "lot_dhanbagh_43",
-      "x": 159,
-      "z": 1068,
-      "width": 18,
+      "x": 545.4,
+      "z": 929.4,
+      "width": 19,
       "depth": 16,
-      "facingHeading": 0,
-      "zone": "residential"
+      "facingHeading": -3.1416,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_dhanbagh_44",
-      "x": 310,
-      "z": 962,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": -0.02630971725292219,
+      "x": 526,
+      "z": 927.4,
+      "width": 14,
+      "depth": 12,
+      "facingHeading": -3.1416,
       "zone": "commercial"
     },
     {
       "lotId": "lot_dhanbagh_45",
-      "x": 309,
-      "z": 1069,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0,
-      "zone": "residential"
+      "x": 508.3,
+      "z": 927.9,
+      "width": 17,
+      "depth": 13,
+      "facingHeading": -3.1416,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_dhanbagh_46",
-      "x": 462,
-      "z": 962,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0,
+      "x": 488.4,
+      "z": 927.9,
+      "width": 19,
+      "depth": 13,
+      "facingHeading": -3.1416,
       "zone": "commercial"
     },
     {
       "lotId": "lot_dhanbagh_47",
-      "x": 462,
-      "z": 1069,
+      "x": 467,
+      "z": 928.9,
+      "width": 20,
+      "depth": 15,
+      "facingHeading": -3.1416,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_48",
+      "x": 35.5,
+      "z": 692.9,
+      "width": 19,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_49",
+      "x": 56.5,
+      "z": 692.4,
+      "width": 17,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_50",
+      "x": 76.4,
+      "z": 692.9,
+      "width": 18,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_51",
+      "x": 94.3,
+      "z": 692.9,
+      "width": 14,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_52",
+      "x": 112.2,
+      "z": 692.4,
+      "width": 16,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_53",
+      "x": 34.5,
+      "z": 663.6,
+      "width": 17,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_54",
+      "x": 54.7,
+      "z": 662.6,
+      "width": 19,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_55",
+      "x": 74.4,
+      "z": 662.6,
+      "width": 14,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_56",
+      "x": 93.3,
+      "z": 664.1,
+      "width": 17,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_57",
+      "x": 111.3,
+      "z": 664.6,
+      "width": 14,
+      "depth": 12,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_58",
+      "x": 126.9,
+      "z": 662.6,
+      "width": 14,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_59",
+      "x": 215.7,
+      "z": 692.9,
+      "width": 17,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_60",
+      "x": 233.5,
+      "z": 691.9,
+      "width": 13,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_61",
+      "x": 253.4,
+      "z": 692.4,
+      "width": 20,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_62",
+      "x": 272.2,
+      "z": 693.4,
+      "width": 14,
+      "depth": 16,
+      "facingHeading": 3.1416,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_63",
+      "x": 286.5,
+      "z": 691.9,
+      "width": 10,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_64",
+      "x": 174,
+      "z": 663.1,
+      "width": 14,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_65",
+      "x": 191.2,
+      "z": 663.1,
+      "width": 17,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_66",
+      "x": 209.8,
+      "z": 664.1,
+      "width": 16,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_67",
+      "x": 231.6,
+      "z": 662.6,
+      "width": 21,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_68",
+      "x": 250.6,
+      "z": 663.6,
+      "width": 13,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_69",
+      "x": 267.6,
+      "z": 663.6,
+      "width": 15,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_70",
+      "x": 284.2,
+      "z": 663.1,
+      "width": 14,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_71",
+      "x": 323.5,
+      "z": 692.4,
+      "width": 15,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_72",
+      "x": 344.1,
+      "z": 691.9,
+      "width": 21,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_73",
+      "x": 367.9,
+      "z": 692.4,
+      "width": 20,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_74",
+      "x": 388.1,
+      "z": 691.4,
+      "width": 15,
+      "depth": 12,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_75",
+      "x": 405.8,
+      "z": 691.9,
+      "width": 16,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_76",
+      "x": 421.7,
+      "z": 691.4,
+      "width": 11,
+      "depth": 12,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_77",
+      "x": 323.5,
+      "z": 663.1,
+      "width": 15,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_78",
+      "x": 340.8,
+      "z": 664.6,
+      "width": 15,
+      "depth": 12,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_79",
+      "x": 357.9,
+      "z": 663.1,
+      "width": 14,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_80",
+      "x": 377.8,
+      "z": 664.6,
+      "width": 19,
+      "depth": 12,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_81",
+      "x": 398.4,
+      "z": 662.6,
       "width": 18,
       "depth": 16,
       "facingHeading": 0,
       "zone": "residential"
     },
     {
-      "lotId": "lot_dhanbagh_48",
-      "x": 612,
-      "z": 962,
+      "lotId": "lot_dhanbagh_82",
+      "x": 415.8,
+      "z": 663.1,
+      "width": 13,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_83",
+      "x": 460,
+      "z": 692.9,
+      "width": 16,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_84",
+      "x": 478.7,
+      "z": 691.9,
       "width": 18,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_85",
+      "x": 500.6,
+      "z": 691.4,
+      "width": 20,
+      "depth": 12,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_86",
+      "x": 521.9,
+      "z": 692.4,
+      "width": 19,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_87",
+      "x": 543.4,
+      "z": 691.4,
+      "width": 19,
+      "depth": 12,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_88",
+      "x": 562.4,
+      "z": 691.9,
+      "width": 14,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_89",
+      "x": 462,
+      "z": 664.1,
+      "width": 20,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_90",
+      "x": 481,
+      "z": 662.6,
+      "width": 14,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_91",
+      "x": 498.1,
+      "z": 663.1,
+      "width": 16,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_92",
+      "x": 516.8,
+      "z": 663.1,
+      "width": 15,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_93",
+      "x": 537.3,
+      "z": 663.1,
+      "width": 20,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_94",
+      "x": 557.8,
+      "z": 662.6,
+      "width": 15,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_95",
+      "x": 35.8,
+      "z": 799.9,
+      "width": 19,
+      "depth": 16,
+      "facingHeading": -3.1202,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_96",
+      "x": 55.4,
+      "z": 799.5,
+      "width": 17,
+      "depth": 16,
+      "facingHeading": -3.1202,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_97",
+      "x": 73.7,
+      "z": 798.1,
+      "width": 14,
+      "depth": 14,
+      "facingHeading": -3.1202,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_98",
+      "x": 92,
+      "z": 796.7,
+      "width": 17,
+      "depth": 12,
+      "facingHeading": -3.1202,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_99",
+      "x": 111.5,
+      "z": 798.3,
+      "width": 15,
+      "depth": 16,
+      "facingHeading": -3.1202,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_100",
+      "x": 130.4,
+      "z": 796.9,
+      "width": 18,
+      "depth": 14,
+      "facingHeading": -3.1202,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_101",
+      "x": 70.8,
+      "z": 769.9,
+      "width": 18,
+      "depth": 13,
+      "facingHeading": 0.0214,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_102",
+      "x": 91.4,
+      "z": 770,
+      "width": 19,
+      "depth": 12,
+      "facingHeading": 0.0214,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_103",
+      "x": 110.9,
+      "z": 768,
+      "width": 17,
+      "depth": 15,
+      "facingHeading": 0.0214,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_104",
+      "x": 129.7,
+      "z": 768.1,
+      "width": 17,
+      "depth": 14,
+      "facingHeading": 0.0214,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_105",
+      "x": 174.6,
+      "z": 796.2,
+      "width": 17,
+      "depth": 14,
+      "facingHeading": -3.1349,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_106",
+      "x": 193.9,
+      "z": 796.6,
+      "width": 15,
+      "depth": 15,
+      "facingHeading": -3.1349,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_107",
+      "x": 213.9,
+      "z": 797,
+      "width": 21,
+      "depth": 16,
+      "facingHeading": -3.1349,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_108",
+      "x": 236.6,
+      "z": 795.8,
+      "width": 19,
+      "depth": 14,
+      "facingHeading": -3.1349,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_109",
+      "x": 258.8,
+      "z": 795.7,
+      "width": 20,
+      "depth": 14,
+      "facingHeading": -3.1349,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_110",
+      "x": 278.2,
+      "z": 794.6,
+      "width": 14,
+      "depth": 12,
+      "facingHeading": -3.1349,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_111",
+      "x": 173.9,
+      "z": 768,
+      "width": 16,
+      "depth": 13,
+      "facingHeading": 0.0067,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_112",
+      "x": 193.9,
+      "z": 767.9,
+      "width": 20,
+      "depth": 13,
+      "facingHeading": 0.0067,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_113",
+      "x": 215.8,
+      "z": 767.7,
+      "width": 19,
+      "depth": 13,
+      "facingHeading": 0.0067,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_114",
+      "x": 238.1,
+      "z": 767.1,
+      "width": 19,
+      "depth": 14,
+      "facingHeading": 0.0067,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_115",
+      "x": 256.5,
+      "z": 766.4,
+      "width": 14,
+      "depth": 15,
+      "facingHeading": 0.0067,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_116",
+      "x": 323.5,
+      "z": 795.4,
+      "width": 15,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_117",
+      "x": 343.7,
+      "z": 795.4,
+      "width": 20,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_118",
+      "x": 364.9,
+      "z": 795.9,
+      "width": 17,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_119",
+      "x": 384.2,
+      "z": 794.9,
+      "width": 18,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_120",
+      "x": 403.8,
+      "z": 794.9,
+      "width": 17,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_121",
+      "x": 421,
+      "z": 796.4,
+      "width": 14,
+      "depth": 16,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_122",
+      "x": 325.5,
+      "z": 766.6,
+      "width": 19,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_123",
+      "x": 348.3,
+      "z": 766.6,
+      "width": 20,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_124",
+      "x": 368.8,
+      "z": 765.6,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_125",
+      "x": 387.6,
+      "z": 766.1,
+      "width": 15,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_126",
+      "x": 403.2,
+      "z": 766.1,
+      "width": 13,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_127",
+      "x": 418.8,
+      "z": 765.6,
+      "width": 15,
       "depth": 16,
       "facingHeading": 0,
       "zone": "commercial"
     },
     {
-      "lotId": "lot_dhanbagh_49",
-      "x": 612,
-      "z": 1068,
+      "lotId": "lot_dhanbagh_128",
+      "x": 462.5,
+      "z": 796.4,
+      "width": 19,
+      "depth": 16,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_129",
+      "x": 482.1,
+      "z": 795.4,
+      "width": 14,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_130",
+      "x": 502.5,
+      "z": 796.4,
+      "width": 20,
+      "depth": 16,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_131",
+      "x": 524.7,
+      "z": 795.4,
       "width": 18,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_132",
+      "x": 542.4,
+      "z": 796.4,
+      "width": 14,
+      "depth": 16,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_133",
+      "x": 560,
+      "z": 794.4,
+      "width": 16,
+      "depth": 12,
+      "facingHeading": 3.1416,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_134",
+      "x": 463.5,
+      "z": 766.6,
+      "width": 21,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_135",
+      "x": 484.8,
+      "z": 767.1,
+      "width": 15,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_136",
+      "x": 504,
+      "z": 767.1,
+      "width": 19,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_137",
+      "x": 522.1,
+      "z": 767.6,
+      "width": 14,
+      "depth": 12,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_138",
+      "x": 538.3,
+      "z": 767.6,
+      "width": 14,
+      "depth": 12,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_139",
+      "x": 558.2,
+      "z": 767.6,
+      "width": 20,
+      "depth": 12,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_140",
+      "x": 29.4,
+      "z": 719.7,
+      "width": 20,
+      "depth": 16,
+      "facingHeading": -1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_141",
+      "x": 27.4,
+      "z": 743.2,
+      "width": 21,
+      "depth": 12,
+      "facingHeading": -1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_142",
+      "x": 29.4,
+      "z": 823.7,
+      "width": 19,
+      "depth": 14,
+      "facingHeading": -1.5708,
+      "zone": "civic"
+    },
+    {
+      "lotId": "lot_dhanbagh_143",
+      "x": 28.9,
+      "z": 846.4,
+      "width": 21,
+      "depth": 13,
+      "facingHeading": -1.5708,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_144",
+      "x": 140.3,
+      "z": 716,
+      "width": 17,
+      "depth": 14,
+      "facingHeading": 1.5612,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_145",
+      "x": 141.1,
+      "z": 734.2,
+      "width": 15,
+      "depth": 12,
+      "facingHeading": 1.5612,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_146",
+      "x": 139.9,
+      "z": 750.5,
+      "width": 14,
+      "depth": 14,
+      "facingHeading": 1.5612,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_147",
+      "x": 170,
+      "z": 713.7,
+      "width": 14,
+      "depth": 16,
+      "facingHeading": -1.5804,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_148",
+      "x": 169.9,
+      "z": 729,
+      "width": 13,
+      "depth": 16,
+      "facingHeading": -1.5804,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_149",
+      "x": 168.2,
+      "z": 746.6,
+      "width": 16,
+      "depth": 13,
+      "facingHeading": -1.5804,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_150",
+      "x": 139,
+      "z": 823.9,
+      "width": 18,
+      "depth": 14,
+      "facingHeading": 1.5802,
+      "zone": "civic"
+    },
+    {
+      "lotId": "lot_dhanbagh_151",
+      "x": 139.7,
+      "z": 844.4,
+      "width": 19,
+      "depth": 13,
+      "facingHeading": 1.5802,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_152",
+      "x": 169.7,
+      "z": 820.3,
+      "width": 18,
+      "depth": 14,
+      "facingHeading": -1.5614,
+      "zone": "civic"
+    },
+    {
+      "lotId": "lot_dhanbagh_153",
+      "x": 169.4,
+      "z": 841.1,
+      "width": 17,
+      "depth": 13,
+      "facingHeading": -1.5614,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_154",
+      "x": 289.6,
+      "z": 717.7,
+      "width": 15,
+      "depth": 14,
+      "facingHeading": 1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_155",
+      "x": 289.6,
+      "z": 734.9,
+      "width": 15,
+      "depth": 14,
+      "facingHeading": 1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_156",
+      "x": 290.6,
+      "z": 754.4,
+      "width": 18,
+      "depth": 12,
+      "facingHeading": 1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_157",
+      "x": 317.4,
+      "z": 716.9,
+      "width": 19,
+      "depth": 12,
+      "facingHeading": -1.5708,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_158",
+      "x": 318.9,
+      "z": 735.7,
+      "width": 15,
+      "depth": 15,
+      "facingHeading": -1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_159",
+      "x": 287.1,
+      "z": 821.5,
+      "width": 13,
+      "depth": 13,
+      "facingHeading": 1.5708,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_160",
+      "x": 286.1,
+      "z": 836.7,
+      "width": 14,
+      "depth": 15,
+      "facingHeading": 1.5708,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_161",
+      "x": 320.9,
+      "z": 824.4,
+      "width": 16,
+      "depth": 13,
+      "facingHeading": -1.5708,
+      "zone": "civic"
+    },
+    {
+      "lotId": "lot_dhanbagh_162",
+      "x": 320.9,
+      "z": 841.4,
+      "width": 15,
+      "depth": 13,
+      "facingHeading": -1.5708,
+      "zone": "civic"
+    },
+    {
+      "lotId": "lot_dhanbagh_163",
+      "x": 426.6,
+      "z": 723.1,
+      "width": 19,
+      "depth": 13,
+      "facingHeading": 1.5805,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_164",
+      "x": 425.3,
+      "z": 744.7,
+      "width": 21,
+      "depth": 16,
+      "facingHeading": 1.5805,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_165",
+      "x": 453.8,
+      "z": 720.9,
+      "width": 21,
+      "depth": 12,
+      "facingHeading": -1.5611,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_166",
+      "x": 454.5,
+      "z": 744.6,
+      "width": 20,
+      "depth": 13,
+      "facingHeading": -1.5611,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_167",
+      "x": 424.2,
+      "z": 821.6,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 1.5615,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_168",
+      "x": 425.5,
+      "z": 842.9,
+      "width": 19,
+      "depth": 13,
+      "facingHeading": 1.5615,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_169",
+      "x": 425.4,
+      "z": 862.3,
+      "width": 16,
+      "depth": 13,
+      "facingHeading": 1.5615,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_170",
+      "x": 455.5,
+      "z": 817.9,
+      "width": 15,
+      "depth": 13,
+      "facingHeading": -1.5801,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_171",
+      "x": 454.9,
+      "z": 835.5,
+      "width": 14,
+      "depth": 12,
+      "facingHeading": -1.5801,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_172",
+      "x": 455.7,
+      "z": 854.2,
+      "width": 19,
+      "depth": 14,
+      "facingHeading": -1.5801,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_173",
+      "x": 571.1,
+      "z": 713.9,
+      "width": 15,
+      "depth": 15,
+      "facingHeading": 1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_174",
+      "x": 571.1,
+      "z": 731.2,
+      "width": 14,
+      "depth": 15,
+      "facingHeading": 1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_175",
+      "x": 571.6,
+      "z": 749.8,
+      "width": 17,
+      "depth": 14,
+      "facingHeading": 1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_176",
+      "x": 570.1,
+      "z": 821.8,
+      "width": 16,
+      "depth": 15,
+      "facingHeading": 1.5708,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_177",
+      "x": 571.6,
+      "z": 840.7,
+      "width": 15,
+      "depth": 12,
+      "facingHeading": 1.5708,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_178",
+      "x": 33.3,
+      "z": 1029.2,
+      "width": 15,
+      "depth": 13,
+      "facingHeading": 3.1272,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_179",
+      "x": 49.7,
+      "z": 1029.4,
+      "width": 13,
+      "depth": 13,
+      "facingHeading": 3.1272,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_180",
+      "x": 65.6,
+      "z": 1029.6,
+      "width": 14,
+      "depth": 13,
+      "facingHeading": 3.1272,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_181",
+      "x": 81.7,
+      "z": 1030.4,
+      "width": 15,
+      "depth": 14,
+      "facingHeading": 3.1272,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_182",
+      "x": 101.7,
+      "z": 1031.1,
+      "width": 18,
+      "depth": 15,
+      "facingHeading": 3.1272,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_183",
+      "x": 120.6,
+      "z": 1030.4,
+      "width": 13,
+      "depth": 13,
+      "facingHeading": 3.1272,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_184",
+      "x": 135.2,
+      "z": 1030.1,
+      "width": 10,
+      "depth": 12,
+      "facingHeading": 3.1272,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_185",
+      "x": 35.7,
+      "z": 999.9,
+      "width": 19,
+      "depth": 16,
+      "facingHeading": -0.0144,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_186",
+      "x": 57,
+      "z": 1000.7,
+      "width": 18,
+      "depth": 15,
+      "facingHeading": -0.0144,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_187",
+      "x": 77.3,
+      "z": 1002.5,
+      "width": 17,
+      "depth": 12,
+      "facingHeading": -0.0144,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_188",
+      "x": 95.7,
+      "z": 1002.8,
+      "width": 16,
+      "depth": 12,
+      "facingHeading": -0.0144,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_189",
+      "x": 116.3,
+      "z": 1003.1,
+      "width": 21,
+      "depth": 12,
+      "facingHeading": -0.0144,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_190",
+      "x": 134.4,
+      "z": 1002.9,
+      "width": 12,
+      "depth": 13,
+      "facingHeading": -0.0144,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_191",
+      "x": 173.7,
+      "z": 1031.6,
+      "width": 17,
+      "depth": 15,
+      "facingHeading": -3.1283,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_192",
+      "x": 194.3,
+      "z": 1030.3,
+      "width": 18,
+      "depth": 13,
+      "facingHeading": -3.1283,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_193",
+      "x": 215.3,
+      "z": 1031.6,
+      "width": 17,
+      "depth": 16,
+      "facingHeading": -3.1283,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_194",
+      "x": 234.6,
+      "z": 1030.8,
+      "width": 17,
+      "depth": 15,
+      "facingHeading": -3.1283,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_195",
+      "x": 255.7,
+      "z": 1030,
+      "width": 21,
+      "depth": 14,
+      "facingHeading": -3.1283,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_196",
+      "x": 278.4,
+      "z": 1030.7,
+      "width": 21,
+      "depth": 16,
+      "facingHeading": -3.1283,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_197",
+      "x": 173.8,
+      "z": 1001.3,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0.0133,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_198",
+      "x": 194.9,
+      "z": 1002.1,
+      "width": 19,
+      "depth": 14,
+      "facingHeading": 0.0133,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_199",
+      "x": 215.2,
+      "z": 1000.8,
+      "width": 16,
+      "depth": 16,
+      "facingHeading": 0.0133,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_200",
+      "x": 233.2,
+      "z": 1002,
+      "width": 15,
+      "depth": 13,
+      "facingHeading": 0.0133,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_201",
+      "x": 250.9,
+      "z": 1001.3,
+      "width": 15,
+      "depth": 14,
+      "facingHeading": 0.0133,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_202",
+      "x": 266.9,
+      "z": 1000.6,
+      "width": 13,
+      "depth": 15,
+      "facingHeading": 0.0133,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_203",
+      "x": 281.9,
+      "z": 1000.4,
+      "width": 14,
+      "depth": 15,
+      "facingHeading": 0.0133,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_204",
+      "x": 323.7,
+      "z": 1029.3,
+      "width": 18,
+      "depth": 13,
+      "facingHeading": 3.1195,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_205",
+      "x": 343.6,
+      "z": 1030.8,
+      "width": 18,
+      "depth": 15,
+      "facingHeading": 3.1195,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_206",
+      "x": 361.5,
+      "z": 1031.2,
+      "width": 14,
+      "depth": 15,
+      "facingHeading": 3.1195,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_207",
+      "x": 380.9,
+      "z": 1030.6,
+      "width": 19,
+      "depth": 13,
+      "facingHeading": 3.1195,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_208",
+      "x": 400.9,
+      "z": 1031.5,
+      "width": 15,
+      "depth": 14,
+      "facingHeading": 3.1195,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_209",
+      "x": 419.2,
+      "z": 1030.9,
+      "width": 15,
+      "depth": 12,
+      "facingHeading": 3.1195,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_210",
+      "x": 325.8,
+      "z": 1000.6,
+      "width": 21,
+      "depth": 15,
+      "facingHeading": -0.0221,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_211",
+      "x": 346.2,
+      "z": 1001.6,
+      "width": 15,
+      "depth": 14,
+      "facingHeading": -0.0221,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_212",
+      "x": 364.7,
+      "z": 1002,
+      "width": 16,
+      "depth": 14,
+      "facingHeading": -0.0221,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_213",
+      "x": 385,
+      "z": 1002.4,
+      "width": 18,
+      "depth": 14,
+      "facingHeading": -0.0221,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_214",
+      "x": 406.8,
+      "z": 1002.9,
+      "width": 19,
+      "depth": 14,
+      "facingHeading": -0.0221,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_215",
+      "x": 461.5,
+      "z": 1033.4,
+      "width": 21,
+      "depth": 16,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_216",
+      "x": 483.1,
+      "z": 1032.4,
+      "width": 19,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_217",
+      "x": 501.3,
+      "z": 1032.9,
+      "width": 14,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_218",
+      "x": 518.3,
+      "z": 1032.9,
+      "width": 14,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_219",
+      "x": 533.6,
+      "z": 1031.9,
+      "width": 13,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_220",
+      "x": 549.1,
+      "z": 1032.9,
+      "width": 14,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_221",
+      "x": 565.6,
+      "z": 1032.9,
+      "width": 16,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_222",
+      "x": 458,
+      "z": 1004.1,
+      "width": 14,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_223",
+      "x": 474.1,
+      "z": 1003.6,
+      "width": 14,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_224",
+      "x": 492,
+      "z": 1003.6,
+      "width": 17,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_225",
+      "x": 510.8,
+      "z": 1003.1,
+      "width": 14,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_226",
+      "x": 527.9,
+      "z": 1004.1,
+      "width": 14,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_227",
+      "x": 546.1,
+      "z": 1004.1,
+      "width": 17,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_228",
+      "x": 564.3,
+      "z": 1002.6,
+      "width": 15,
       "depth": 16,
       "facingHeading": 0,
       "zone": "residential"
     },
     {
-      "lotId": "lot_dhanbagh_50",
-      "x": 44,
-      "z": 695,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0.973619668702219,
+      "lotId": "lot_dhanbagh_229",
+      "x": 34.5,
+      "z": 1136.4,
+      "width": 17,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_230",
+      "x": 54.2,
+      "z": 1136.4,
+      "width": 16,
+      "depth": 14,
+      "facingHeading": 3.1416,
       "zone": "residential"
     },
     {
-      "lotId": "lot_dhanbagh_51",
-      "x": 120,
-      "z": 744,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.0191413442663497,
+      "lotId": "lot_dhanbagh_231",
+      "x": 73.9,
+      "z": 1136.4,
+      "width": 20,
+      "depth": 14,
+      "facingHeading": 3.1416,
       "zone": "residential"
     },
     {
-      "lotId": "lot_dhanbagh_52",
-      "x": 193,
-      "z": 1034,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0.982793723247329,
+      "lotId": "lot_dhanbagh_232",
+      "x": 95.3,
+      "z": 1136.9,
+      "width": 17,
+      "depth": 15,
+      "facingHeading": 3.1416,
       "zone": "residential"
     },
     {
-      "lotId": "lot_dhanbagh_53",
-      "x": 268,
-      "z": 1085,
+      "lotId": "lot_dhanbagh_233",
+      "x": 115,
+      "z": 1136.4,
+      "width": 19,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_234",
+      "x": 134.3,
+      "z": 1136.4,
+      "width": 16,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_235",
+      "x": 36,
+      "z": 1107.6,
+      "width": 20,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_236",
+      "x": 55.4,
+      "z": 1108.1,
+      "width": 13,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_237",
+      "x": 72.7,
+      "z": 1108.6,
+      "width": 18,
+      "depth": 12,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_238",
+      "x": 94.2,
+      "z": 1107.1,
+      "width": 21,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_239",
+      "x": 115.5,
+      "z": 1107.6,
+      "width": 17,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_240",
+      "x": 134.2,
+      "z": 1107.1,
+      "width": 17,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_241",
+      "x": 174.5,
+      "z": 1135.9,
+      "width": 15,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_242",
+      "x": 194.2,
+      "z": 1135.9,
+      "width": 20,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_243",
+      "x": 217,
+      "z": 1135.9,
+      "width": 20,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_244",
+      "x": 235.1,
+      "z": 1136.4,
+      "width": 13,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_245",
+      "x": 251.6,
+      "z": 1135.4,
+      "width": 16,
+      "depth": 12,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_246",
+      "x": 269.8,
+      "z": 1136.4,
+      "width": 17,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_247",
+      "x": 285.9,
+      "z": 1135.9,
+      "width": 12,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_248",
+      "x": 175,
+      "z": 1107.6,
+      "width": 16,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_249",
+      "x": 193.8,
+      "z": 1107.6,
+      "width": 15,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_250",
+      "x": 211.8,
+      "z": 1108.6,
+      "width": 16,
+      "depth": 12,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_251",
+      "x": 228.7,
+      "z": 1107.6,
+      "width": 13,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_252",
+      "x": 247,
+      "z": 1107.6,
+      "width": 18,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_253",
+      "x": 268.9,
+      "z": 1107.1,
+      "width": 20,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_254",
+      "x": 286.4,
+      "z": 1108.6,
+      "width": 11,
+      "depth": 12,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_255",
+      "x": 343.2,
+      "z": 1135.9,
+      "width": 15,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_256",
+      "x": 360.1,
+      "z": 1135.9,
+      "width": 14,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_257",
+      "x": 377.1,
+      "z": 1135.9,
+      "width": 13,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_258",
+      "x": 394.7,
+      "z": 1135.4,
+      "width": 18,
+      "depth": 12,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_259",
+      "x": 413.9,
+      "z": 1135.4,
+      "width": 15,
+      "depth": 12,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_260",
+      "x": 326,
+      "z": 1108.1,
+      "width": 20,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_261",
+      "x": 345.6,
+      "z": 1107.6,
+      "width": 14,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_262",
+      "x": 363.1,
+      "z": 1107.1,
+      "width": 18,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_263",
+      "x": 384.8,
+      "z": 1108.1,
+      "width": 20,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_264",
+      "x": 460.5,
+      "z": 1137.4,
+      "width": 17,
+      "depth": 16,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_265",
+      "x": 480.1,
+      "z": 1136.4,
+      "width": 18,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_266",
+      "x": 498.6,
+      "z": 1136.9,
+      "width": 13,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_267",
+      "x": 513.7,
+      "z": 1137.4,
+      "width": 14,
+      "depth": 16,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_268",
+      "x": 531.5,
+      "z": 1135.9,
+      "width": 18,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_269",
+      "x": 552.9,
+      "z": 1136.9,
+      "width": 18,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_270",
+      "x": 568.9,
+      "z": 1137.4,
+      "width": 10,
+      "depth": 16,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_271",
+      "x": 460,
+      "z": 1108.1,
+      "width": 16,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_272",
+      "x": 478.1,
+      "z": 1108.6,
+      "width": 15,
+      "depth": 12,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_273",
+      "x": 495.6,
+      "z": 1107.1,
+      "width": 15,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_274",
+      "x": 513.5,
+      "z": 1107.1,
+      "width": 14,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_275",
+      "x": 531,
+      "z": 1107.6,
+      "width": 18,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_276",
+      "x": 27.9,
+      "z": 1055.5,
+      "width": 16,
+      "depth": 13,
+      "facingHeading": -1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_277",
+      "x": 29.4,
+      "z": 1075.3,
       "width": 18,
       "depth": 16,
-      "facingHeading": 0.973239873809732,
+      "facingHeading": -1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_278",
+      "x": 29.4,
+      "z": 951.8,
+      "width": 20,
+      "depth": 14,
+      "facingHeading": -1.5708,
+      "zone": "civic"
+    },
+    {
+      "lotId": "lot_dhanbagh_279",
+      "x": 29.4,
+      "z": 973.9,
+      "width": 18,
+      "depth": 14,
+      "facingHeading": -1.5708,
+      "zone": "civic"
+    },
+    {
+      "lotId": "lot_dhanbagh_280",
+      "x": 140,
+      "z": 1061.9,
+      "width": 20,
+      "depth": 13,
+      "facingHeading": 1.5898,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_281",
+      "x": 140.4,
+      "z": 1084,
+      "width": 18,
+      "depth": 13,
+      "facingHeading": 1.5898,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_282",
+      "x": 167.6,
+      "z": 1054.7,
+      "width": 15,
+      "depth": 13,
+      "facingHeading": -1.5518,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_283",
+      "x": 169,
+      "z": 1073.1,
+      "width": 15,
+      "depth": 15,
+      "facingHeading": -1.5518,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_284",
+      "x": 139.8,
+      "z": 952.5,
+      "width": 15,
+      "depth": 12,
+      "facingHeading": 1.5518,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_285",
+      "x": 138,
+      "z": 972,
+      "width": 21,
+      "depth": 15,
+      "facingHeading": 1.5518,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_286",
+      "x": 170.7,
+      "z": 949.6,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": -1.5898,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_287",
+      "x": 170.3,
+      "z": 969.5,
+      "width": 15,
+      "depth": 16,
+      "facingHeading": -1.5898,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_288",
+      "x": 289,
+      "z": 1053.4,
+      "width": 20,
+      "depth": 14,
+      "facingHeading": 1.5801,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_289",
+      "x": 289.2,
+      "z": 1073.6,
+      "width": 17,
+      "depth": 14,
+      "facingHeading": 1.5801,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_290",
+      "x": 288.8,
+      "z": 1090.9,
+      "width": 14,
+      "depth": 15,
+      "facingHeading": 1.5801,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_291",
+      "x": 318.8,
+      "z": 1057.6,
+      "width": 15,
+      "depth": 16,
+      "facingHeading": -1.5615,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_292",
+      "x": 318.9,
+      "z": 1075.4,
+      "width": 17,
+      "depth": 16,
+      "facingHeading": -1.5615,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_293",
+      "x": 289.2,
+      "z": 952.3,
+      "width": 18,
+      "depth": 12,
+      "facingHeading": 1.5611,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_294",
+      "x": 288.1,
+      "z": 970.3,
+      "width": 14,
+      "depth": 14,
+      "facingHeading": 1.5611,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_295",
+      "x": 319,
+      "z": 950.4,
+      "width": 14,
+      "depth": 14,
+      "facingHeading": -1.5805,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_296",
+      "x": 318.3,
+      "z": 968.4,
+      "width": 15,
+      "depth": 13,
+      "facingHeading": -1.5805,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_297",
+      "x": 425.5,
+      "z": 1054.5,
+      "width": 14,
+      "depth": 13,
+      "facingHeading": 1.5804,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_298",
+      "x": 425.6,
+      "z": 1071.4,
+      "width": 14,
+      "depth": 13,
+      "facingHeading": 1.5804,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_299",
+      "x": 424.8,
+      "z": 1088.9,
+      "width": 17,
+      "depth": 15,
+      "facingHeading": 1.5804,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_300",
+      "x": 454.3,
+      "z": 1062.2,
+      "width": 21,
+      "depth": 15,
+      "facingHeading": -1.5612,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_301",
+      "x": 453.5,
+      "z": 1085.1,
+      "width": 19,
+      "depth": 13,
+      "facingHeading": -1.5612,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_302",
+      "x": 423.8,
+      "z": 946.6,
+      "width": 14,
+      "depth": 15,
+      "facingHeading": 1.5614,
+      "zone": "civic"
+    },
+    {
+      "lotId": "lot_dhanbagh_303",
+      "x": 424.6,
+      "z": 962.8,
+      "width": 14,
+      "depth": 13,
+      "facingHeading": 1.5614,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_304",
+      "x": 424.5,
+      "z": 980.3,
+      "width": 16,
+      "depth": 13,
+      "facingHeading": 1.5614,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_305",
+      "x": 455,
+      "z": 949,
+      "width": 18,
+      "depth": 14,
+      "facingHeading": -1.5802,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_306",
+      "x": 455.3,
+      "z": 970.4,
+      "width": 20,
+      "depth": 15,
+      "facingHeading": -1.5802,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_307",
+      "x": 453.7,
+      "z": 989.1,
+      "width": 13,
+      "depth": 12,
+      "facingHeading": -1.5802,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_308",
+      "x": 571.1,
+      "z": 1058.5,
+      "width": 16,
+      "depth": 15,
+      "facingHeading": 1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_309",
+      "x": 572.1,
+      "z": 1079,
+      "width": 18,
+      "depth": 13,
+      "facingHeading": 1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_310",
+      "x": 571.1,
+      "z": 951.9,
+      "width": 16,
+      "depth": 13,
+      "facingHeading": 1.5708,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_311",
+      "x": 570.1,
+      "z": 971.9,
+      "width": 18,
+      "depth": 15,
+      "facingHeading": 1.5708,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_dhanbagh_312",
+      "x": 398.6,
+      "z": 1078.9,
+      "width": 16,
+      "depth": 16,
+      "facingHeading": -0.607,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_313",
+      "x": 89,
+      "z": 713.7,
+      "width": 13,
+      "depth": 13,
+      "facingHeading": 0.6327,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_314",
+      "x": 112.8,
+      "z": 722.3,
+      "width": 20,
+      "depth": 14,
+      "facingHeading": -2.5088,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_315",
+      "x": 57.7,
+      "z": 736.2,
+      "width": 15,
+      "depth": 15,
+      "facingHeading": 0.6673,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_316",
+      "x": 195,
+      "z": 719.9,
+      "width": 19,
+      "depth": 15,
+      "facingHeading": 2.5291,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_317",
+      "x": 207.9,
+      "z": 729.5,
+      "width": 10,
+      "depth": 16,
+      "facingHeading": 2.5291,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_318",
+      "x": 251.2,
+      "z": 732.1,
+      "width": 15,
+      "depth": 14,
+      "facingHeading": -0.5972,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_319",
+      "x": 267.5,
+      "z": 742.6,
+      "width": 18,
+      "depth": 15,
+      "facingHeading": -0.5972,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_320",
+      "x": 544.4,
+      "z": 1082.9,
+      "width": 20,
+      "depth": 12,
+      "facingHeading": -0.5819,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_dhanbagh_321",
+      "x": 530.4,
+      "z": 1073.1,
+      "width": 11,
+      "depth": 13,
+      "facingHeading": -0.5819,
       "zone": "residential"
     }
   ]

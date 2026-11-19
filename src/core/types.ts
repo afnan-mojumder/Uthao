@@ -163,6 +163,7 @@ export type RoadNodeKind = 'junction' | 'uturn' | 'deadEnd' | 'poi';
 export interface RoadNode {
   nodeId: string;
   x: number;
+  y?: number;
   z: number;
   kind: RoadNodeKind;
   signal?: boolean;

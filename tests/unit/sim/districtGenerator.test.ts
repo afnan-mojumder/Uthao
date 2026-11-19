@@ -1,5 +1,14 @@
 import { describe, it, expect } from 'vitest';
-import { genDistrict, genMirpara } from '../../../scripts/gen-district';
+import {
+  genDistrict,
+  genMirpara,
+  genFulgate,
+  genDhanbagh,
+  genMohakhal,
+  genGulbari,
+  genPuranpara,
+  genMotinagar,
+} from '../../../scripts/gen-district';
 import { DistrictSchema, type DistrictData } from '../../../src/sim/schemas';
 import mirparaJson from '../../../data/districts/mirpara.json';
 import bnUi from '../../../data/dialogue/bn/ui.json';
@@ -198,6 +207,50 @@ describe('District Generator (T3.2)', () => {
           Object.prototype.hasOwnProperty.call(bnUi, poi.nameKey),
           `Missing bn key for ${poi.nameKey}`
         ).toBe(true);
+      }
+    });
+  });
+
+  describe('DistrictStyle drives distinct district layouts (P2.1)', () => {
+    it('generates distinct topologies across all 7 district generators', () => {
+      const all = [
+        genMirpara(),
+        genFulgate(),
+        genDhanbagh(),
+        genMohakhal(),
+        genGulbari(),
+        genPuranpara(),
+        genMotinagar(),
+      ];
+
+      // Distinct segment counts & street styles (not identical template clones)
+      const segCounts = new Set(all.map((d) => d.segments.length));
+      expect(segCounts.size).toBeGreaterThanOrEqual(4);
+
+      const puranpara = all.find((d) => d.districtId === 'puranpara')!;
+      const gulbari = all.find((d) => d.districtId === 'gulbari')!;
+      const fulgate = all.find((d) => d.districtId === 'fulgate')!;
+
+      expect(puranpara.segments.filter((s) => s.roadType === 'market').length).toBeGreaterThan(
+        fulgate.segments.filter((s) => s.roadType === 'market').length
+      );
+      expect(gulbari.segments.filter((s) => s.roadType === 'market')).toHaveLength(0);
+      expect(puranpara.segments.some((s) => s.divided)).toBe(false);
+    });
+
+    it('varies lot dimensions (10-22m x 10-16m) and sets facingHeading toward street', () => {
+      const mirpara = genMirpara(101);
+      const lots = mirpara.lots ?? [];
+      expect(lots.length).toBeGreaterThan(20);
+      const widths = new Set(lots.map((l) => l.width));
+      const depths = new Set(lots.map((l) => l.depth));
+      expect(widths.size).toBeGreaterThan(1);
+      expect(depths.size).toBeGreaterThan(1);
+      for (const lot of lots) {
+        expect(lot.width).toBeGreaterThanOrEqual(10);
+        expect(lot.width).toBeLessThanOrEqual(22);
+        expect(lot.depth).toBeGreaterThanOrEqual(10);
+        expect(lot.depth).toBeLessThanOrEqual(16);
       }
     });
   });

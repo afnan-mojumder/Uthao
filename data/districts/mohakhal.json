@@ -7,8 +7,8 @@
   "nodes": [
     {
       "nodeId": "mohakhal_art_n_0",
-      "x": 600,
-      "z": 895,
+      "x": 614,
+      "z": 888,
       "kind": "uturn",
       "tags": [
         "uturn"
@@ -16,8 +16,8 @@
     },
     {
       "nodeId": "mohakhal_art_s_0",
-      "x": 600,
-      "z": 905,
+      "x": 614,
+      "z": 912,
       "kind": "uturn",
       "tags": [
         "uturn"
@@ -25,8 +25,8 @@
     },
     {
       "nodeId": "mohakhal_art_n_1",
-      "x": 750,
-      "z": 895,
+      "x": 733,
+      "z": 888,
       "kind": "uturn",
       "tags": [
         "uturn"
@@ -34,8 +34,8 @@
     },
     {
       "nodeId": "mohakhal_art_s_1",
-      "x": 750,
-      "z": 905,
+      "x": 733,
+      "z": 912,
       "kind": "uturn",
       "tags": [
         "uturn"
@@ -43,44 +43,48 @@
     },
     {
       "nodeId": "mohakhal_art_n_2",
-      "x": 900,
-      "z": 895,
-      "kind": "junction",
+      "x": 847,
+      "z": 888,
+      "kind": "uturn",
+      "signal": true,
       "tags": [
-        "crossing"
+        "uturn"
       ]
     },
     {
       "nodeId": "mohakhal_art_s_2",
-      "x": 900,
-      "z": 905,
+      "x": 847,
+      "z": 912,
+      "kind": "uturn",
+      "signal": true,
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "nodeId": "mohakhal_art_n_3",
+      "x": 959,
+      "z": 888,
       "kind": "junction",
+      "signal": true,
       "tags": [
         "crossing"
       ]
     },
     {
-      "nodeId": "mohakhal_art_n_3",
-      "x": 1050,
-      "z": 895,
-      "kind": "uturn",
-      "tags": [
-        "uturn"
-      ]
-    },
-    {
       "nodeId": "mohakhal_art_s_3",
-      "x": 1050,
-      "z": 905,
-      "kind": "uturn",
+      "x": 959,
+      "z": 912,
+      "kind": "junction",
+      "signal": true,
       "tags": [
-        "uturn"
+        "crossing"
       ]
     },
     {
       "nodeId": "mohakhal_art_n_4",
-      "x": 1200,
-      "z": 895,
+      "x": 1069,
+      "z": 888,
       "kind": "uturn",
       "tags": [
         "uturn"
@@ -88,8 +92,26 @@
     },
     {
       "nodeId": "mohakhal_art_s_4",
-      "x": 1200,
-      "z": 905,
+      "x": 1069,
+      "z": 912,
+      "kind": "uturn",
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "nodeId": "mohakhal_art_n_5",
+      "x": 1186,
+      "z": 888,
+      "kind": "uturn",
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "nodeId": "mohakhal_art_s_5",
+      "x": 1186,
+      "z": 912,
       "kind": "uturn",
       "tags": [
         "uturn"
@@ -97,17 +119,8 @@
     },
     {
       "nodeId": "mohakhal_res_n1_0",
-      "x": 600,
-      "z": 683,
-      "kind": "junction",
-      "tags": [
-        "speed_bump"
-      ]
-    },
-    {
-      "nodeId": "mohakhal_res_n2_0",
-      "x": 600,
-      "z": 783,
+      "x": 614,
+      "z": 678,
       "kind": "junction",
       "tags": [
         "speed_bump"
@@ -115,17 +128,8 @@
     },
     {
       "nodeId": "mohakhal_res_n1_1",
-      "x": 754,
-      "z": 681,
-      "kind": "junction",
-      "tags": [
-        "speed_bump"
-      ]
-    },
-    {
-      "nodeId": "mohakhal_res_n2_1",
-      "x": 754,
-      "z": 781,
+      "x": 733,
+      "z": 678,
       "kind": "junction",
       "tags": [
         "speed_bump"
@@ -133,17 +137,8 @@
     },
     {
       "nodeId": "mohakhal_res_n1_2",
-      "x": 898,
-      "z": 680,
-      "kind": "junction",
-      "tags": [
-        "speed_bump"
-      ]
-    },
-    {
-      "nodeId": "mohakhal_res_n2_2",
-      "x": 898,
-      "z": 780,
+      "x": 847,
+      "z": 678,
       "kind": "junction",
       "tags": [
         "speed_bump"
@@ -151,17 +146,8 @@
     },
     {
       "nodeId": "mohakhal_res_n1_3",
-      "x": 1046,
-      "z": 682,
-      "kind": "junction",
-      "tags": [
-        "speed_bump"
-      ]
-    },
-    {
-      "nodeId": "mohakhal_res_n2_3",
-      "x": 1046,
-      "z": 782,
+      "x": 959,
+      "z": 678,
       "kind": "junction",
       "tags": [
         "speed_bump"
@@ -169,8 +155,53 @@
     },
     {
       "nodeId": "mohakhal_res_n1_4",
-      "x": 1200,
-      "z": 680,
+      "x": 1069,
+      "z": 678,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "mohakhal_res_n1_5",
+      "x": 1186,
+      "z": 678,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "mohakhal_res_n2_0",
+      "x": 614,
+      "z": 783,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "mohakhal_res_n2_1",
+      "x": 730,
+      "z": 785,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "mohakhal_res_n2_2",
+      "x": 847,
+      "z": 781,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "mohakhal_res_n2_3",
+      "x": 956,
+      "z": 786,
       "kind": "junction",
       "tags": [
         "speed_bump"
@@ -178,8 +209,17 @@
     },
     {
       "nodeId": "mohakhal_res_n2_4",
-      "x": 1200,
-      "z": 780,
+      "x": 1070,
+      "z": 785,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "mohakhal_res_n2_5",
+      "x": 1186,
+      "z": 783,
       "kind": "junction",
       "tags": [
         "speed_bump"
@@ -187,91 +227,125 @@
     },
     {
       "nodeId": "mohakhal_res_s1_0",
-      "x": 600,
-      "z": 1018,
-      "kind": "junction"
-    },
-    {
-      "nodeId": "mohakhal_res_s2_0",
-      "x": 600,
-      "z": 1118,
+      "x": 614,
+      "z": 1017,
       "kind": "junction"
     },
     {
       "nodeId": "mohakhal_res_s1_1",
-      "x": 746,
-      "z": 1023,
-      "kind": "junction"
-    },
-    {
-      "nodeId": "mohakhal_res_s2_1",
-      "x": 746,
-      "z": 1123,
+      "x": 736,
+      "z": 1016,
       "kind": "junction"
     },
     {
       "nodeId": "mohakhal_res_s1_2",
-      "x": 901,
-      "z": 1022,
-      "kind": "junction"
-    },
-    {
-      "nodeId": "mohakhal_res_s2_2",
-      "x": 901,
-      "z": 1122,
+      "x": 850,
+      "z": 1016,
       "kind": "junction"
     },
     {
       "nodeId": "mohakhal_res_s1_3",
-      "x": 1050,
-      "z": 1020,
-      "kind": "junction"
-    },
-    {
-      "nodeId": "mohakhal_res_s2_3",
-      "x": 1050,
-      "z": 1120,
+      "x": 960,
+      "z": 1018,
       "kind": "junction"
     },
     {
       "nodeId": "mohakhal_res_s1_4",
-      "x": 1200,
-      "z": 1023,
+      "x": 1065,
+      "z": 1018,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "mohakhal_res_s1_5",
+      "x": 1186,
+      "z": 1015,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "mohakhal_res_s2_0",
+      "x": 614,
+      "z": 1122,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "mohakhal_res_s2_1",
+      "x": 733,
+      "z": 1122,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "mohakhal_res_s2_2",
+      "x": 847,
+      "z": 1122,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "mohakhal_res_s2_3",
+      "x": 959,
+      "z": 1122,
       "kind": "junction"
     },
     {
       "nodeId": "mohakhal_res_s2_4",
-      "x": 1200,
-      "z": 1123,
+      "x": 1069,
+      "z": 1122,
       "kind": "junction"
     },
     {
-      "nodeId": "mohakhal_alley_nw_mid",
-      "x": 675,
-      "z": 730,
+      "nodeId": "mohakhal_res_s2_5",
+      "x": 1186,
+      "z": 1122,
       "kind": "junction"
     },
     {
-      "nodeId": "mohakhal_alley_ne_gate",
-      "x": 975,
-      "z": 650,
-      "kind": "junction"
+      "nodeId": "mohakhal_alley_dead_1",
+      "x": 903,
+      "z": 733,
+      "kind": "deadEnd",
+      "tags": [
+        "alley"
+      ]
     },
     {
-      "nodeId": "mohakhal_alley_sc_mid",
-      "x": 825,
-      "z": 1070,
-      "kind": "junction"
+      "nodeId": "mohakhal_alley_mid_2",
+      "x": 678,
+      "z": 1071,
+      "kind": "junction",
+      "tags": [
+        "alley"
+      ]
     },
     {
-      "nodeId": "mohakhal_alley_se_deadend",
+      "nodeId": "mohakhal_alley_mid_3",
+      "x": 670,
+      "z": 728,
+      "kind": "junction",
+      "tags": [
+        "alley"
+      ]
+    },
+    {
+      "nodeId": "mohakhal_alley_dead_4",
+      "x": 1013,
+      "z": 1068,
+      "kind": "deadEnd",
+      "tags": [
+        "alley"
+      ]
+    },
+    {
+      "nodeId": "mohakhal_alley_mid_5",
       "x": 1125,
-      "z": 1090,
-      "kind": "deadEnd"
+      "z": 732,
+      "kind": "junction",
+      "tags": [
+        "alley"
+      ]
     },
     {
       "nodeId": "mohakhal_fly_w",
-      "x": 650,
+      "x": 714,
+      "y": 6,
       "z": 900,
       "kind": "junction",
       "tags": [
@@ -281,6 +355,7 @@
     {
       "nodeId": "mohakhal_fly_mid",
       "x": 900,
+      "y": 6,
       "z": 900,
       "kind": "junction",
       "tags": [
@@ -289,7 +364,8 @@
     },
     {
       "nodeId": "mohakhal_fly_e",
-      "x": 1150,
+      "x": 1086,
+      "y": 6,
       "z": 900,
       "kind": "junction",
       "tags": [
@@ -311,14 +387,15 @@
       "pedestrianDensity": 0.2,
       "riskLevel": 0.12,
       "oneWay": true,
-      "divided": true,
+      "divided": false,
       "lanes": 2,
       "roadType": "main",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "mohakhal",
       "tags": [
-        "arterial"
+        "arterial",
+        "arterial_outer_north"
       ]
     },
     {
@@ -334,14 +411,15 @@
       "pedestrianDensity": 0.2,
       "riskLevel": 0.12,
       "oneWay": true,
-      "divided": true,
+      "divided": false,
       "lanes": 2,
       "roadType": "main",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "mohakhal",
       "tags": [
-        "arterial"
+        "arterial",
+        "arterial_outer_south"
       ]
     },
     {
@@ -357,14 +435,15 @@
       "pedestrianDensity": 0.2,
       "riskLevel": 0.12,
       "oneWay": true,
-      "divided": true,
+      "divided": false,
       "lanes": 2,
       "roadType": "main",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "mohakhal",
       "tags": [
-        "arterial"
+        "arterial",
+        "arterial_outer_north"
       ]
     },
     {
@@ -380,14 +459,15 @@
       "pedestrianDensity": 0.2,
       "riskLevel": 0.12,
       "oneWay": true,
-      "divided": true,
+      "divided": false,
       "lanes": 2,
       "roadType": "main",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "mohakhal",
       "tags": [
-        "arterial"
+        "arterial",
+        "arterial_outer_south"
       ]
     },
     {
@@ -403,14 +483,15 @@
       "pedestrianDensity": 0.2,
       "riskLevel": 0.12,
       "oneWay": true,
-      "divided": true,
+      "divided": false,
       "lanes": 2,
       "roadType": "main",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "mohakhal",
       "tags": [
-        "arterial"
+        "arterial",
+        "arterial_outer_north"
       ]
     },
     {
@@ -426,14 +507,15 @@
       "pedestrianDensity": 0.2,
       "riskLevel": 0.12,
       "oneWay": true,
-      "divided": true,
+      "divided": false,
       "lanes": 2,
       "roadType": "main",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "mohakhal",
       "tags": [
-        "arterial"
+        "arterial",
+        "arterial_outer_south"
       ]
     },
     {
@@ -449,14 +531,15 @@
       "pedestrianDensity": 0.2,
       "riskLevel": 0.12,
       "oneWay": true,
-      "divided": true,
+      "divided": false,
       "lanes": 2,
       "roadType": "main",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "mohakhal",
       "tags": [
-        "arterial"
+        "arterial",
+        "arterial_outer_north"
       ]
     },
     {
@@ -472,18 +555,67 @@
       "pedestrianDensity": 0.2,
       "riskLevel": 0.12,
       "oneWay": true,
-      "divided": true,
+      "divided": false,
       "lanes": 2,
       "roadType": "main",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "mohakhal",
       "tags": [
-        "arterial"
+        "arterial",
+        "arterial_outer_south"
       ]
     },
     {
       "segmentId": "S_mohakhal_9",
+      "startNodeId": "mohakhal_art_n_4",
+      "endNodeId": "mohakhal_art_n_5",
+      "width": 12,
+      "surfaceCondition": 0.95,
+      "trafficDensity": 0.85,
+      "speedLimit": 45,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.12,
+      "oneWay": true,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": [
+        "arterial",
+        "arterial_outer_north"
+      ]
+    },
+    {
+      "segmentId": "S_mohakhal_10",
+      "startNodeId": "mohakhal_art_s_5",
+      "endNodeId": "mohakhal_art_s_4",
+      "width": 12,
+      "surfaceCondition": 0.95,
+      "trafficDensity": 0.85,
+      "speedLimit": 45,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.12,
+      "oneWay": true,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": [
+        "arterial",
+        "arterial_outer_south"
+      ]
+    },
+    {
+      "segmentId": "S_mohakhal_11",
       "startNodeId": "mohakhal_art_n_0",
       "endNodeId": "mohakhal_art_s_0",
       "width": 8,
@@ -506,7 +638,7 @@
       ]
     },
     {
-      "segmentId": "S_mohakhal_10",
+      "segmentId": "S_mohakhal_12",
       "startNodeId": "mohakhal_art_n_1",
       "endNodeId": "mohakhal_art_s_1",
       "width": 8,
@@ -529,9 +661,32 @@
       ]
     },
     {
-      "segmentId": "S_mohakhal_11",
+      "segmentId": "S_mohakhal_13",
       "startNodeId": "mohakhal_art_n_2",
       "endNodeId": "mohakhal_art_s_2",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 25,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.12,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "segmentId": "S_mohakhal_14",
+      "startNodeId": "mohakhal_art_n_3",
+      "endNodeId": "mohakhal_art_s_3",
       "width": 8,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
@@ -553,30 +708,7 @@
       ]
     },
     {
-      "segmentId": "S_mohakhal_12",
-      "startNodeId": "mohakhal_art_n_3",
-      "endNodeId": "mohakhal_art_s_3",
-      "width": 8,
-      "surfaceCondition": 0.9,
-      "trafficDensity": 0.3,
-      "speedLimit": 25,
-      "turnRestrictions": [],
-      "motorcycleAccessible": true,
-      "pedestrianDensity": 0.2,
-      "riskLevel": 0.12,
-      "oneWay": false,
-      "divided": false,
-      "lanes": 2,
-      "roadType": "main",
-      "floodSensitivity": 0.2,
-      "pickupPractical": true,
-      "district": "mohakhal",
-      "tags": [
-        "uturn"
-      ]
-    },
-    {
-      "segmentId": "S_mohakhal_13",
+      "segmentId": "S_mohakhal_15",
       "startNodeId": "mohakhal_art_n_4",
       "endNodeId": "mohakhal_art_s_4",
       "width": 8,
@@ -599,10 +731,33 @@
       ]
     },
     {
-      "segmentId": "S_mohakhal_14",
+      "segmentId": "S_mohakhal_16",
+      "startNodeId": "mohakhal_art_n_5",
+      "endNodeId": "mohakhal_art_s_5",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 25,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.12,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": [
+        "uturn"
+      ]
+    },
+    {
+      "segmentId": "S_mohakhal_17",
       "startNodeId": "mohakhal_res_n1_0",
       "endNodeId": "mohakhal_res_n1_1",
-      "width": 7,
+      "width": 8,
       "surfaceCondition": 0.6,
       "trafficDensity": 0.3,
       "speedLimit": 30,
@@ -622,79 +777,10 @@
       ]
     },
     {
-      "segmentId": "S_mohakhal_15",
-      "startNodeId": "mohakhal_res_n2_0",
-      "endNodeId": "mohakhal_res_n2_1",
-      "width": 7,
-      "surfaceCondition": 0.9,
-      "trafficDensity": 0.3,
-      "speedLimit": 30,
-      "turnRestrictions": [],
-      "motorcycleAccessible": true,
-      "pedestrianDensity": 0.2,
-      "riskLevel": 0.12,
-      "oneWay": false,
-      "divided": false,
-      "lanes": 2,
-      "roadType": "residential",
-      "floodSensitivity": 0.2,
-      "pickupPractical": true,
-      "district": "mohakhal",
-      "tags": [
-        "speed_bump"
-      ]
-    },
-    {
-      "segmentId": "S_mohakhal_16",
+      "segmentId": "S_mohakhal_18",
       "startNodeId": "mohakhal_res_n1_1",
       "endNodeId": "mohakhal_res_n1_2",
-      "width": 7,
-      "surfaceCondition": 0.85,
-      "trafficDensity": 0.3,
-      "speedLimit": 30,
-      "turnRestrictions": [],
-      "motorcycleAccessible": true,
-      "pedestrianDensity": 0.2,
-      "riskLevel": 0.12,
-      "oneWay": false,
-      "divided": false,
-      "lanes": 2,
-      "roadType": "residential",
-      "floodSensitivity": 0.2,
-      "pickupPractical": true,
-      "district": "mohakhal",
-      "tags": [
-        "speed_bump"
-      ]
-    },
-    {
-      "segmentId": "S_mohakhal_17",
-      "startNodeId": "mohakhal_res_n2_1",
-      "endNodeId": "mohakhal_res_n2_2",
-      "width": 7,
-      "surfaceCondition": 0.9,
-      "trafficDensity": 0.3,
-      "speedLimit": 30,
-      "turnRestrictions": [],
-      "motorcycleAccessible": true,
-      "pedestrianDensity": 0.2,
-      "riskLevel": 0.12,
-      "oneWay": false,
-      "divided": false,
-      "lanes": 2,
-      "roadType": "residential",
-      "floodSensitivity": 0.2,
-      "pickupPractical": true,
-      "district": "mohakhal",
-      "tags": [
-        "speed_bump"
-      ]
-    },
-    {
-      "segmentId": "S_mohakhal_18",
-      "startNodeId": "mohakhal_res_n1_2",
-      "endNodeId": "mohakhal_res_n1_3",
-      "width": 7,
+      "width": 8,
       "surfaceCondition": 0.85,
       "trafficDensity": 0.3,
       "speedLimit": 30,
@@ -715,10 +801,10 @@
     },
     {
       "segmentId": "S_mohakhal_19",
-      "startNodeId": "mohakhal_res_n2_2",
-      "endNodeId": "mohakhal_res_n2_3",
-      "width": 7,
-      "surfaceCondition": 0.9,
+      "startNodeId": "mohakhal_res_n1_2",
+      "endNodeId": "mohakhal_res_n1_3",
+      "width": 8,
+      "surfaceCondition": 0.85,
       "trafficDensity": 0.3,
       "speedLimit": 30,
       "turnRestrictions": [],
@@ -740,7 +826,7 @@
       "segmentId": "S_mohakhal_20",
       "startNodeId": "mohakhal_res_n1_3",
       "endNodeId": "mohakhal_res_n1_4",
-      "width": 7,
+      "width": 8,
       "surfaceCondition": 0.85,
       "trafficDensity": 0.3,
       "speedLimit": 30,
@@ -761,10 +847,10 @@
     },
     {
       "segmentId": "S_mohakhal_21",
-      "startNodeId": "mohakhal_res_n2_3",
-      "endNodeId": "mohakhal_res_n2_4",
-      "width": 7,
-      "surfaceCondition": 0.9,
+      "startNodeId": "mohakhal_res_n1_4",
+      "endNodeId": "mohakhal_res_n1_5",
+      "width": 8,
+      "surfaceCondition": 0.85,
       "trafficDensity": 0.3,
       "speedLimit": 30,
       "turnRestrictions": [],
@@ -784,10 +870,10 @@
     },
     {
       "segmentId": "S_mohakhal_22",
-      "startNodeId": "mohakhal_res_n1_0",
-      "endNodeId": "mohakhal_res_n2_0",
-      "width": 7,
-      "surfaceCondition": 0.9,
+      "startNodeId": "mohakhal_res_n2_0",
+      "endNodeId": "mohakhal_res_n2_1",
+      "width": 8,
+      "surfaceCondition": 0.85,
       "trafficDensity": 0.3,
       "speedLimit": 30,
       "turnRestrictions": [],
@@ -807,12 +893,12 @@
     },
     {
       "segmentId": "S_mohakhal_23",
-      "startNodeId": "mohakhal_res_n2_0",
-      "endNodeId": "mohakhal_art_n_0",
+      "startNodeId": "mohakhal_res_n2_1",
+      "endNodeId": "mohakhal_res_n2_2",
       "width": 8,
-      "surfaceCondition": 0.9,
+      "surfaceCondition": 0.85,
       "trafficDensity": 0.3,
-      "speedLimit": 35,
+      "speedLimit": 30,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
       "pedestrianDensity": 0.2,
@@ -820,18 +906,20 @@
       "oneWay": false,
       "divided": false,
       "lanes": 2,
-      "roadType": "main",
+      "roadType": "residential",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "mohakhal",
-      "tags": []
+      "tags": [
+        "speed_bump"
+      ]
     },
     {
       "segmentId": "S_mohakhal_24",
-      "startNodeId": "mohakhal_res_n1_1",
-      "endNodeId": "mohakhal_res_n2_1",
-      "width": 7,
-      "surfaceCondition": 0.9,
+      "startNodeId": "mohakhal_res_n2_2",
+      "endNodeId": "mohakhal_res_n2_3",
+      "width": 8,
+      "surfaceCondition": 0.85,
       "trafficDensity": 0.3,
       "speedLimit": 30,
       "turnRestrictions": [],
@@ -851,12 +939,12 @@
     },
     {
       "segmentId": "S_mohakhal_25",
-      "startNodeId": "mohakhal_res_n2_1",
-      "endNodeId": "mohakhal_art_n_1",
+      "startNodeId": "mohakhal_res_n2_3",
+      "endNodeId": "mohakhal_res_n2_4",
       "width": 8,
-      "surfaceCondition": 0.9,
+      "surfaceCondition": 0.85,
       "trafficDensity": 0.3,
-      "speedLimit": 35,
+      "speedLimit": 30,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
       "pedestrianDensity": 0.2,
@@ -864,18 +952,20 @@
       "oneWay": false,
       "divided": false,
       "lanes": 2,
-      "roadType": "main",
+      "roadType": "residential",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "mohakhal",
-      "tags": []
+      "tags": [
+        "speed_bump"
+      ]
     },
     {
       "segmentId": "S_mohakhal_26",
-      "startNodeId": "mohakhal_res_n1_2",
-      "endNodeId": "mohakhal_res_n2_2",
-      "width": 7,
-      "surfaceCondition": 0.9,
+      "startNodeId": "mohakhal_res_n2_4",
+      "endNodeId": "mohakhal_res_n2_5",
+      "width": 8,
+      "surfaceCondition": 0.85,
       "trafficDensity": 0.3,
       "speedLimit": 30,
       "turnRestrictions": [],
@@ -895,12 +985,12 @@
     },
     {
       "segmentId": "S_mohakhal_27",
-      "startNodeId": "mohakhal_res_n2_2",
-      "endNodeId": "mohakhal_art_n_2",
+      "startNodeId": "mohakhal_res_n1_0",
+      "endNodeId": "mohakhal_res_n2_0",
       "width": 8,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
-      "speedLimit": 35,
+      "speedLimit": 30,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
       "pedestrianDensity": 0.2,
@@ -908,20 +998,22 @@
       "oneWay": false,
       "divided": false,
       "lanes": 2,
-      "roadType": "main",
+      "roadType": "residential",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "mohakhal",
-      "tags": []
+      "tags": [
+        "speed_bump"
+      ]
     },
     {
       "segmentId": "S_mohakhal_28",
-      "startNodeId": "mohakhal_res_n1_3",
-      "endNodeId": "mohakhal_res_n2_3",
-      "width": 7,
+      "startNodeId": "mohakhal_res_n2_0",
+      "endNodeId": "mohakhal_art_n_0",
+      "width": 9,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
-      "speedLimit": 30,
+      "speedLimit": 35,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
       "pedestrianDensity": 0.2,
@@ -929,40 +1021,17 @@
       "oneWay": false,
       "divided": false,
       "lanes": 2,
-      "roadType": "residential",
+      "roadType": "main",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "mohakhal",
-      "tags": [
-        "speed_bump"
-      ]
+      "tags": []
     },
     {
       "segmentId": "S_mohakhal_29",
-      "startNodeId": "mohakhal_res_n2_3",
-      "endNodeId": "mohakhal_art_n_3",
+      "startNodeId": "mohakhal_res_n1_1",
+      "endNodeId": "mohakhal_res_n2_1",
       "width": 8,
-      "surfaceCondition": 0.9,
-      "trafficDensity": 0.3,
-      "speedLimit": 35,
-      "turnRestrictions": [],
-      "motorcycleAccessible": true,
-      "pedestrianDensity": 0.2,
-      "riskLevel": 0.12,
-      "oneWay": false,
-      "divided": false,
-      "lanes": 2,
-      "roadType": "main",
-      "floodSensitivity": 0.2,
-      "pickupPractical": true,
-      "district": "mohakhal",
-      "tags": []
-    },
-    {
-      "segmentId": "S_mohakhal_30",
-      "startNodeId": "mohakhal_res_n1_4",
-      "endNodeId": "mohakhal_res_n2_4",
-      "width": 7,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
       "speedLimit": 30,
@@ -982,10 +1051,10 @@
       ]
     },
     {
-      "segmentId": "S_mohakhal_31",
-      "startNodeId": "mohakhal_res_n2_4",
-      "endNodeId": "mohakhal_art_n_4",
-      "width": 8,
+      "segmentId": "S_mohakhal_30",
+      "startNodeId": "mohakhal_res_n2_1",
+      "endNodeId": "mohakhal_art_n_1",
+      "width": 9,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
       "speedLimit": 35,
@@ -1003,33 +1072,10 @@
       "tags": []
     },
     {
-      "segmentId": "S_mohakhal_32",
-      "startNodeId": "mohakhal_res_s1_0",
-      "endNodeId": "mohakhal_res_s1_1",
-      "width": 9,
-      "surfaceCondition": 0.65,
-      "trafficDensity": 0.7,
-      "speedLimit": 25,
-      "turnRestrictions": [],
-      "motorcycleAccessible": true,
-      "pedestrianDensity": 0.85,
-      "riskLevel": 0.12,
-      "oneWay": false,
-      "divided": false,
-      "lanes": 2,
-      "roadType": "residential",
-      "floodSensitivity": 0.2,
-      "pickupPractical": true,
-      "district": "mohakhal",
-      "tags": [
-        "market"
-      ]
-    },
-    {
-      "segmentId": "S_mohakhal_33",
-      "startNodeId": "mohakhal_res_s2_0",
-      "endNodeId": "mohakhal_res_s2_1",
-      "width": 7,
+      "segmentId": "S_mohakhal_31",
+      "startNodeId": "mohakhal_res_n1_2",
+      "endNodeId": "mohakhal_res_n2_2",
+      "width": 8,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
       "speedLimit": 30,
@@ -1044,19 +1090,42 @@
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "mohakhal",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_mohakhal_32",
+      "startNodeId": "mohakhal_res_n2_2",
+      "endNodeId": "mohakhal_art_n_2",
+      "width": 9,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 35,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.12,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
       "tags": []
     },
     {
-      "segmentId": "S_mohakhal_34",
-      "startNodeId": "mohakhal_res_s1_1",
-      "endNodeId": "mohakhal_res_s1_2",
-      "width": 9,
-      "surfaceCondition": 0.65,
-      "trafficDensity": 0.7,
-      "speedLimit": 25,
+      "segmentId": "S_mohakhal_33",
+      "startNodeId": "mohakhal_res_n1_3",
+      "endNodeId": "mohakhal_res_n2_3",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
-      "pedestrianDensity": 0.85,
+      "pedestrianDensity": 0.2,
       "riskLevel": 0.12,
       "oneWay": false,
       "divided": false,
@@ -1066,14 +1135,37 @@
       "pickupPractical": true,
       "district": "mohakhal",
       "tags": [
-        "market"
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_mohakhal_34",
+      "startNodeId": "mohakhal_res_n2_3",
+      "endNodeId": "mohakhal_art_n_3",
+      "width": 14,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.765,
+      "speedLimit": 45,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.12,
+      "oneWay": false,
+      "divided": true,
+      "lanes": 4,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": [
+        "arterial"
       ]
     },
     {
       "segmentId": "S_mohakhal_35",
-      "startNodeId": "mohakhal_res_s2_1",
-      "endNodeId": "mohakhal_res_s2_2",
-      "width": 7,
+      "startNodeId": "mohakhal_res_n1_4",
+      "endNodeId": "mohakhal_res_n2_4",
+      "width": 8,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
       "speedLimit": 30,
@@ -1088,36 +1180,36 @@
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "mohakhal",
-      "tags": []
+      "tags": [
+        "speed_bump"
+      ]
     },
     {
       "segmentId": "S_mohakhal_36",
-      "startNodeId": "mohakhal_res_s1_2",
-      "endNodeId": "mohakhal_res_s1_3",
+      "startNodeId": "mohakhal_res_n2_4",
+      "endNodeId": "mohakhal_art_n_4",
       "width": 9,
-      "surfaceCondition": 0.65,
-      "trafficDensity": 0.7,
-      "speedLimit": 25,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 35,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
-      "pedestrianDensity": 0.85,
+      "pedestrianDensity": 0.2,
       "riskLevel": 0.12,
       "oneWay": false,
       "divided": false,
       "lanes": 2,
-      "roadType": "residential",
+      "roadType": "main",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "mohakhal",
-      "tags": [
-        "market"
-      ]
+      "tags": []
     },
     {
       "segmentId": "S_mohakhal_37",
-      "startNodeId": "mohakhal_res_s2_2",
-      "endNodeId": "mohakhal_res_s2_3",
-      "width": 7,
+      "startNodeId": "mohakhal_res_n1_5",
+      "endNodeId": "mohakhal_res_n2_5",
+      "width": 8,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
       "speedLimit": 30,
@@ -1132,37 +1224,37 @@
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "mohakhal",
-      "tags": []
+      "tags": [
+        "speed_bump"
+      ]
     },
     {
       "segmentId": "S_mohakhal_38",
-      "startNodeId": "mohakhal_res_s1_3",
-      "endNodeId": "mohakhal_res_s1_4",
+      "startNodeId": "mohakhal_res_n2_5",
+      "endNodeId": "mohakhal_art_n_5",
       "width": 9,
-      "surfaceCondition": 0.65,
-      "trafficDensity": 0.7,
-      "speedLimit": 25,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 35,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
-      "pedestrianDensity": 0.85,
+      "pedestrianDensity": 0.2,
       "riskLevel": 0.12,
       "oneWay": false,
       "divided": false,
       "lanes": 2,
-      "roadType": "residential",
+      "roadType": "main",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "mohakhal",
-      "tags": [
-        "market"
-      ]
+      "tags": []
     },
     {
       "segmentId": "S_mohakhal_39",
-      "startNodeId": "mohakhal_res_s2_3",
-      "endNodeId": "mohakhal_res_s2_4",
-      "width": 7,
-      "surfaceCondition": 0.9,
+      "startNodeId": "mohakhal_res_s1_0",
+      "endNodeId": "mohakhal_res_s1_1",
+      "width": 8,
+      "surfaceCondition": 0.85,
       "trafficDensity": 0.3,
       "speedLimit": 30,
       "turnRestrictions": [],
@@ -1180,12 +1272,12 @@
     },
     {
       "segmentId": "S_mohakhal_40",
-      "startNodeId": "mohakhal_art_s_0",
-      "endNodeId": "mohakhal_res_s1_0",
+      "startNodeId": "mohakhal_res_s1_1",
+      "endNodeId": "mohakhal_res_s1_2",
       "width": 8,
-      "surfaceCondition": 0.9,
+      "surfaceCondition": 0.85,
       "trafficDensity": 0.3,
-      "speedLimit": 35,
+      "speedLimit": 30,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
       "pedestrianDensity": 0.2,
@@ -1193,7 +1285,7 @@
       "oneWay": false,
       "divided": false,
       "lanes": 2,
-      "roadType": "main",
+      "roadType": "residential",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "mohakhal",
@@ -1201,10 +1293,10 @@
     },
     {
       "segmentId": "S_mohakhal_41",
-      "startNodeId": "mohakhal_res_s1_0",
-      "endNodeId": "mohakhal_res_s2_0",
-      "width": 7,
-      "surfaceCondition": 0.9,
+      "startNodeId": "mohakhal_res_s1_2",
+      "endNodeId": "mohakhal_res_s1_3",
+      "width": 8,
+      "surfaceCondition": 0.85,
       "trafficDensity": 0.3,
       "speedLimit": 30,
       "turnRestrictions": [],
@@ -1222,12 +1314,12 @@
     },
     {
       "segmentId": "S_mohakhal_42",
-      "startNodeId": "mohakhal_art_s_1",
-      "endNodeId": "mohakhal_res_s1_1",
+      "startNodeId": "mohakhal_res_s1_3",
+      "endNodeId": "mohakhal_res_s1_4",
       "width": 8,
-      "surfaceCondition": 0.9,
+      "surfaceCondition": 0.85,
       "trafficDensity": 0.3,
-      "speedLimit": 35,
+      "speedLimit": 30,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
       "pedestrianDensity": 0.2,
@@ -1235,7 +1327,7 @@
       "oneWay": false,
       "divided": false,
       "lanes": 2,
-      "roadType": "main",
+      "roadType": "residential",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "mohakhal",
@@ -1243,10 +1335,10 @@
     },
     {
       "segmentId": "S_mohakhal_43",
-      "startNodeId": "mohakhal_res_s1_1",
-      "endNodeId": "mohakhal_res_s2_1",
-      "width": 7,
-      "surfaceCondition": 0.9,
+      "startNodeId": "mohakhal_res_s1_4",
+      "endNodeId": "mohakhal_res_s1_5",
+      "width": 8,
+      "surfaceCondition": 0.85,
       "trafficDensity": 0.3,
       "speedLimit": 30,
       "turnRestrictions": [],
@@ -1264,12 +1356,12 @@
     },
     {
       "segmentId": "S_mohakhal_44",
-      "startNodeId": "mohakhal_art_s_2",
-      "endNodeId": "mohakhal_res_s1_2",
+      "startNodeId": "mohakhal_res_s2_0",
+      "endNodeId": "mohakhal_res_s2_1",
       "width": 8,
-      "surfaceCondition": 0.9,
+      "surfaceCondition": 0.85,
       "trafficDensity": 0.3,
-      "speedLimit": 35,
+      "speedLimit": 30,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
       "pedestrianDensity": 0.2,
@@ -1277,7 +1369,7 @@
       "oneWay": false,
       "divided": false,
       "lanes": 2,
-      "roadType": "main",
+      "roadType": "residential",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "mohakhal",
@@ -1285,10 +1377,10 @@
     },
     {
       "segmentId": "S_mohakhal_45",
-      "startNodeId": "mohakhal_res_s1_2",
+      "startNodeId": "mohakhal_res_s2_1",
       "endNodeId": "mohakhal_res_s2_2",
-      "width": 7,
-      "surfaceCondition": 0.9,
+      "width": 8,
+      "surfaceCondition": 0.85,
       "trafficDensity": 0.3,
       "speedLimit": 30,
       "turnRestrictions": [],
@@ -1306,12 +1398,12 @@
     },
     {
       "segmentId": "S_mohakhal_46",
-      "startNodeId": "mohakhal_art_s_3",
-      "endNodeId": "mohakhal_res_s1_3",
+      "startNodeId": "mohakhal_res_s2_2",
+      "endNodeId": "mohakhal_res_s2_3",
       "width": 8,
-      "surfaceCondition": 0.9,
+      "surfaceCondition": 0.85,
       "trafficDensity": 0.3,
-      "speedLimit": 35,
+      "speedLimit": 30,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
       "pedestrianDensity": 0.2,
@@ -1319,7 +1411,7 @@
       "oneWay": false,
       "divided": false,
       "lanes": 2,
-      "roadType": "main",
+      "roadType": "residential",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "mohakhal",
@@ -1327,10 +1419,10 @@
     },
     {
       "segmentId": "S_mohakhal_47",
-      "startNodeId": "mohakhal_res_s1_3",
-      "endNodeId": "mohakhal_res_s2_3",
-      "width": 7,
-      "surfaceCondition": 0.9,
+      "startNodeId": "mohakhal_res_s2_3",
+      "endNodeId": "mohakhal_res_s2_4",
+      "width": 8,
+      "surfaceCondition": 0.85,
       "trafficDensity": 0.3,
       "speedLimit": 30,
       "turnRestrictions": [],
@@ -1348,12 +1440,12 @@
     },
     {
       "segmentId": "S_mohakhal_48",
-      "startNodeId": "mohakhal_art_s_4",
-      "endNodeId": "mohakhal_res_s1_4",
+      "startNodeId": "mohakhal_res_s2_4",
+      "endNodeId": "mohakhal_res_s2_5",
       "width": 8,
-      "surfaceCondition": 0.9,
+      "surfaceCondition": 0.85,
       "trafficDensity": 0.3,
-      "speedLimit": 35,
+      "speedLimit": 30,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
       "pedestrianDensity": 0.2,
@@ -1361,7 +1453,7 @@
       "oneWay": false,
       "divided": false,
       "lanes": 2,
-      "roadType": "main",
+      "roadType": "residential",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "mohakhal",
@@ -1369,9 +1461,9 @@
     },
     {
       "segmentId": "S_mohakhal_49",
-      "startNodeId": "mohakhal_res_s1_4",
-      "endNodeId": "mohakhal_res_s2_4",
-      "width": 7,
+      "startNodeId": "mohakhal_res_s1_0",
+      "endNodeId": "mohakhal_res_s2_0",
+      "width": 8,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
       "speedLimit": 30,
@@ -1390,12 +1482,12 @@
     },
     {
       "segmentId": "S_mohakhal_50",
-      "startNodeId": "mohakhal_res_n1_0",
-      "endNodeId": "mohakhal_alley_nw_mid",
-      "width": 3.5,
+      "startNodeId": "mohakhal_art_s_0",
+      "endNodeId": "mohakhal_res_s1_0",
+      "width": 9,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
-      "speedLimit": 20,
+      "speedLimit": 35,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
       "pedestrianDensity": 0.2,
@@ -1403,22 +1495,20 @@
       "oneWay": false,
       "divided": false,
       "lanes": 2,
-      "roadType": "alley",
+      "roadType": "main",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "mohakhal",
-      "tags": [
-        "alley"
-      ]
+      "tags": []
     },
     {
       "segmentId": "S_mohakhal_51",
-      "startNodeId": "mohakhal_alley_nw_mid",
-      "endNodeId": "mohakhal_res_n2_1",
-      "width": 3.5,
+      "startNodeId": "mohakhal_res_s1_1",
+      "endNodeId": "mohakhal_res_s2_1",
+      "width": 8,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
-      "speedLimit": 20,
+      "speedLimit": 30,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
       "pedestrianDensity": 0.2,
@@ -1426,70 +1516,62 @@
       "oneWay": false,
       "divided": false,
       "lanes": 2,
-      "roadType": "alley",
+      "roadType": "residential",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "mohakhal",
-      "tags": [
-        "alley"
-      ]
+      "tags": []
     },
     {
       "segmentId": "S_mohakhal_52",
-      "startNodeId": "mohakhal_res_n1_2",
-      "endNodeId": "mohakhal_alley_ne_gate",
-      "width": 2.5,
+      "startNodeId": "mohakhal_art_s_1",
+      "endNodeId": "mohakhal_res_s1_1",
+      "width": 9,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
-      "speedLimit": 15,
+      "speedLimit": 35,
       "turnRestrictions": [],
-      "motorcycleAccessible": false,
+      "motorcycleAccessible": true,
       "pedestrianDensity": 0.2,
       "riskLevel": 0.12,
       "oneWay": false,
       "divided": false,
       "lanes": 2,
-      "roadType": "alley",
+      "roadType": "main",
       "floodSensitivity": 0.2,
-      "pickupPractical": false,
+      "pickupPractical": true,
       "district": "mohakhal",
-      "tags": [
-        "alley",
-        "pedestrian_only"
-      ]
+      "tags": []
     },
     {
       "segmentId": "S_mohakhal_53",
-      "startNodeId": "mohakhal_alley_ne_gate",
-      "endNodeId": "mohakhal_res_n1_3",
-      "width": 2.5,
+      "startNodeId": "mohakhal_res_s1_2",
+      "endNodeId": "mohakhal_res_s2_2",
+      "width": 8,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
-      "speedLimit": 15,
+      "speedLimit": 30,
       "turnRestrictions": [],
-      "motorcycleAccessible": false,
+      "motorcycleAccessible": true,
       "pedestrianDensity": 0.2,
       "riskLevel": 0.12,
       "oneWay": false,
       "divided": false,
       "lanes": 2,
-      "roadType": "alley",
+      "roadType": "residential",
       "floodSensitivity": 0.2,
-      "pickupPractical": false,
+      "pickupPractical": true,
       "district": "mohakhal",
-      "tags": [
-        "alley",
-        "pedestrian_only"
-      ]
+      "tags": []
     },
     {
       "segmentId": "S_mohakhal_54",
-      "startNodeId": "mohakhal_res_s1_1",
-      "endNodeId": "mohakhal_alley_sc_mid",
-      "width": 3.5,
+      "startNodeId": "mohakhal_art_s_2",
+      "endNodeId": "mohakhal_res_s1_2",
+      "width": 9,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
-      "speedLimit": 20,
+      "speedLimit": 35,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
       "pedestrianDensity": 0.2,
@@ -1497,22 +1579,20 @@
       "oneWay": false,
       "divided": false,
       "lanes": 2,
-      "roadType": "alley",
+      "roadType": "main",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "mohakhal",
-      "tags": [
-        "alley"
-      ]
+      "tags": []
     },
     {
       "segmentId": "S_mohakhal_55",
-      "startNodeId": "mohakhal_alley_sc_mid",
-      "endNodeId": "mohakhal_res_s2_2",
-      "width": 3.5,
+      "startNodeId": "mohakhal_res_s1_3",
+      "endNodeId": "mohakhal_res_s2_3",
+      "width": 8,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
-      "speedLimit": 20,
+      "speedLimit": 30,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
       "pedestrianDensity": 0.2,
@@ -1520,25 +1600,128 @@
       "oneWay": false,
       "divided": false,
       "lanes": 2,
-      "roadType": "alley",
+      "roadType": "residential",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "mohakhal",
-      "tags": [
-        "alley"
-      ]
+      "tags": []
     },
     {
       "segmentId": "S_mohakhal_56",
-      "startNodeId": "mohakhal_res_s2_3",
-      "endNodeId": "mohakhal_alley_se_deadend",
+      "startNodeId": "mohakhal_art_s_3",
+      "endNodeId": "mohakhal_res_s1_3",
+      "width": 9,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 35,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.12,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": []
+    },
+    {
+      "segmentId": "S_mohakhal_57",
+      "startNodeId": "mohakhal_res_s1_4",
+      "endNodeId": "mohakhal_res_s2_4",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.12,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": []
+    },
+    {
+      "segmentId": "S_mohakhal_58",
+      "startNodeId": "mohakhal_art_s_4",
+      "endNodeId": "mohakhal_res_s1_4",
+      "width": 9,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 35,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.12,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": []
+    },
+    {
+      "segmentId": "S_mohakhal_59",
+      "startNodeId": "mohakhal_res_s1_5",
+      "endNodeId": "mohakhal_res_s2_5",
+      "width": 8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.12,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": []
+    },
+    {
+      "segmentId": "S_mohakhal_60",
+      "startNodeId": "mohakhal_art_s_5",
+      "endNodeId": "mohakhal_res_s1_5",
+      "width": 9,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 35,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.12,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": []
+    },
+    {
+      "segmentId": "S_mohakhal_61",
+      "startNodeId": "mohakhal_res_n2_3",
+      "endNodeId": "mohakhal_alley_dead_1",
       "width": 2.5,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
       "speedLimit": 15,
       "turnRestrictions": [],
       "motorcycleAccessible": false,
-      "pedestrianDensity": 0.2,
+      "pedestrianDensity": 0.65,
       "riskLevel": 0.12,
       "oneWay": false,
       "divided": false,
@@ -1550,6 +1733,168 @@
       "tags": [
         "alley",
         "deadend"
+      ]
+    },
+    {
+      "segmentId": "S_mohakhal_62",
+      "startNodeId": "mohakhal_res_s1_1",
+      "endNodeId": "mohakhal_alley_mid_2",
+      "width": 3.5,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 20,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.45,
+      "riskLevel": 0.12,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "alley",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": [
+        "alley"
+      ]
+    },
+    {
+      "segmentId": "S_mohakhal_63",
+      "startNodeId": "mohakhal_alley_mid_2",
+      "endNodeId": "mohakhal_res_s2_0",
+      "width": 3.5,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 20,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.45,
+      "riskLevel": 0.12,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "alley",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": [
+        "alley"
+      ]
+    },
+    {
+      "segmentId": "S_mohakhal_64",
+      "startNodeId": "mohakhal_res_n1_0",
+      "endNodeId": "mohakhal_alley_mid_3",
+      "width": 3.5,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 20,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.45,
+      "riskLevel": 0.12,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "alley",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": [
+        "alley"
+      ]
+    },
+    {
+      "segmentId": "S_mohakhal_65",
+      "startNodeId": "mohakhal_alley_mid_3",
+      "endNodeId": "mohakhal_res_n2_1",
+      "width": 3.5,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 20,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.45,
+      "riskLevel": 0.12,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "alley",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": [
+        "alley"
+      ]
+    },
+    {
+      "segmentId": "S_mohakhal_66",
+      "startNodeId": "mohakhal_res_s2_4",
+      "endNodeId": "mohakhal_alley_dead_4",
+      "width": 2.5,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 15,
+      "turnRestrictions": [],
+      "motorcycleAccessible": false,
+      "pedestrianDensity": 0.65,
+      "riskLevel": 0.12,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "alley",
+      "floodSensitivity": 0.2,
+      "pickupPractical": false,
+      "district": "mohakhal",
+      "tags": [
+        "alley",
+        "deadend"
+      ]
+    },
+    {
+      "segmentId": "S_mohakhal_67",
+      "startNodeId": "mohakhal_res_n1_4",
+      "endNodeId": "mohakhal_alley_mid_5",
+      "width": 3.5,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 20,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.45,
+      "riskLevel": 0.12,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "alley",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": [
+        "alley"
+      ]
+    },
+    {
+      "segmentId": "S_mohakhal_68",
+      "startNodeId": "mohakhal_alley_mid_5",
+      "endNodeId": "mohakhal_res_n2_5",
+      "width": 3.5,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 20,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.45,
+      "riskLevel": 0.12,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "alley",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "mohakhal",
+      "tags": [
+        "alley"
       ]
     },
     {
@@ -1671,7 +2016,7 @@
     {
       "segmentId": "S_mohakhal_ramp_eb_off",
       "startNodeId": "mohakhal_fly_e",
-      "endNodeId": "mohakhal_art_n_4",
+      "endNodeId": "mohakhal_art_n_5",
       "width": 8,
       "surfaceCondition": 0.95,
       "trafficDensity": 0.5,
@@ -1694,7 +2039,7 @@
     },
     {
       "segmentId": "S_mohakhal_ramp_wb_on",
-      "startNodeId": "mohakhal_art_s_4",
+      "startNodeId": "mohakhal_art_s_5",
       "endNodeId": "mohakhal_fly_e",
       "width": 8,
       "surfaceCondition": 0.95,
@@ -1782,479 +2127,3152 @@
   "lots": [
     {
       "lotId": "lot_mohakhal_1",
-      "x": 675,
-      "z": 883,
+      "x": 635,
+      "z": 872.1,
       "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5707963267948966,
+      "depth": 13,
+      "facingHeading": 0,
       "zone": "commercial"
     },
     {
       "lotId": "lot_mohakhal_2",
-      "x": 675,
-      "z": 917,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": -1.5707963267948966,
+      "x": 655.7,
+      "z": 872.1,
+      "width": 20,
+      "depth": 13,
+      "facingHeading": 0,
       "zone": "commercial"
     },
     {
       "lotId": "lot_mohakhal_3",
-      "x": 825,
-      "z": 883,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5707963267948966,
-      "zone": "commercial"
+      "x": 675.2,
+      "z": 872.6,
+      "width": 13,
+      "depth": 12,
+      "facingHeading": 0,
+      "zone": "civic"
     },
     {
       "lotId": "lot_mohakhal_4",
-      "x": 825,
-      "z": 917,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": -1.5707963267948966,
-      "zone": "commercial"
+      "x": 690.8,
+      "z": 872.6,
+      "width": 12,
+      "depth": 12,
+      "facingHeading": 0,
+      "zone": "civic"
     },
     {
       "lotId": "lot_mohakhal_5",
-      "x": 975,
-      "z": 883,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5707963267948966,
+      "x": 706,
+      "z": 873.1,
+      "width": 15,
+      "depth": 11,
+      "facingHeading": 0,
       "zone": "commercial"
     },
     {
       "lotId": "lot_mohakhal_6",
-      "x": 975,
-      "z": 917,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": -1.5707963267948966,
+      "x": 711,
+      "z": 928.4,
+      "width": 20,
+      "depth": 14,
+      "facingHeading": -3.1416,
       "zone": "commercial"
     },
     {
       "lotId": "lot_mohakhal_7",
-      "x": 1125,
-      "z": 883,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5707963267948966,
-      "zone": "commercial"
+      "x": 690.5,
+      "z": 928.9,
+      "width": 16,
+      "depth": 15,
+      "facingHeading": -3.1416,
+      "zone": "civic"
     },
     {
       "lotId": "lot_mohakhal_8",
-      "x": 1125,
-      "z": 917,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": -1.5707963267948966,
+      "x": 673.1,
+      "z": 927.9,
+      "width": 14,
+      "depth": 13,
+      "facingHeading": -3.1416,
       "zone": "commercial"
     },
     {
       "lotId": "lot_mohakhal_9",
-      "x": 612,
-      "z": 900,
+      "x": 654.8,
+      "z": 928.4,
       "width": 18,
-      "depth": 16,
-      "facingHeading": 0,
+      "depth": 14,
+      "facingHeading": -3.1416,
       "zone": "commercial"
     },
     {
       "lotId": "lot_mohakhal_10",
-      "x": 762,
-      "z": 900,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0,
+      "x": 635.2,
+      "z": 928.9,
+      "width": 17,
+      "depth": 15,
+      "facingHeading": -3.1416,
       "zone": "commercial"
     },
     {
       "lotId": "lot_mohakhal_11",
-      "x": 912,
-      "z": 900,
-      "width": 18,
-      "depth": 16,
+      "x": 751.5,
+      "z": 872.6,
+      "width": 13,
+      "depth": 12,
       "facingHeading": 0,
-      "zone": "commercial"
+      "zone": "civic"
     },
     {
       "lotId": "lot_mohakhal_12",
-      "x": 1062,
-      "z": 900,
-      "width": 18,
-      "depth": 16,
+      "x": 768.3,
+      "z": 872.6,
+      "width": 17,
+      "depth": 12,
       "facingHeading": 0,
       "zone": "commercial"
     },
     {
       "lotId": "lot_mohakhal_13",
-      "x": 1212,
-      "z": 900,
-      "width": 18,
-      "depth": 16,
+      "x": 788.8,
+      "z": 871.1,
+      "width": 20,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "civic"
+    },
+    {
+      "lotId": "lot_mohakhal_14",
+      "x": 809.7,
+      "z": 872.1,
+      "width": 15,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "civic"
+    },
+    {
+      "lotId": "lot_mohakhal_15",
+      "x": 825.3,
+      "z": 872.6,
+      "width": 13,
+      "depth": 12,
       "facingHeading": 0,
       "zone": "commercial"
     },
     {
-      "lotId": "lot_mohakhal_14",
-      "x": 677,
-      "z": 670,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5837826097150691,
-      "zone": "residential"
-    },
-    {
-      "lotId": "lot_mohakhal_15",
-      "x": 677,
-      "z": 770,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5837826097150691,
-      "zone": "residential"
-    },
-    {
       "lotId": "lot_mohakhal_16",
-      "x": 826,
-      "z": 669,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5777406596099122,
-      "zone": "residential"
+      "x": 826.5,
+      "z": 928.4,
+      "width": 17,
+      "depth": 14,
+      "facingHeading": -3.1416,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_mohakhal_17",
-      "x": 826,
-      "z": 769,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5777406596099122,
-      "zone": "residential"
+      "x": 806.6,
+      "z": 927.4,
+      "width": 19,
+      "depth": 12,
+      "facingHeading": -3.1416,
+      "zone": "civic"
     },
     {
       "lotId": "lot_mohakhal_18",
-      "x": 972,
-      "z": 669,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5572836357815685,
-      "zone": "residential"
+      "x": 788.2,
+      "z": 927.4,
+      "width": 13,
+      "depth": 12,
+      "facingHeading": -3.1416,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_mohakhal_19",
-      "x": 972,
-      "z": 769,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5572836357815685,
-      "zone": "residential"
+      "x": 770,
+      "z": 927.4,
+      "width": 20,
+      "depth": 12,
+      "facingHeading": -3.1416,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_mohakhal_20",
-      "x": 1123,
-      "z": 669,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5837826097150691,
-      "zone": "residential"
+      "x": 751.4,
+      "z": 927.9,
+      "width": 12,
+      "depth": 13,
+      "facingHeading": -3.1416,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_mohakhal_21",
-      "x": 1123,
-      "z": 769,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5837826097150691,
-      "zone": "residential"
+      "x": 865.5,
+      "z": 872.1,
+      "width": 13,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "civic"
     },
     {
       "lotId": "lot_mohakhal_22",
-      "x": 612,
-      "z": 733,
-      "width": 18,
-      "depth": 16,
+      "x": 881.8,
+      "z": 871.6,
+      "width": 16,
+      "depth": 14,
       "facingHeading": 0,
-      "zone": "residential"
+      "zone": "commercial"
     },
     {
       "lotId": "lot_mohakhal_23",
-      "x": 612,
-      "z": 839,
-      "width": 18,
-      "depth": 16,
+      "x": 900.8,
+      "z": 871.6,
+      "width": 17,
+      "depth": 14,
       "facingHeading": 0,
       "zone": "commercial"
     },
     {
       "lotId": "lot_mohakhal_24",
-      "x": 766,
-      "z": 731,
-      "width": 18,
-      "depth": 16,
+      "x": 919.3,
+      "z": 871.6,
+      "width": 16,
+      "depth": 14,
       "facingHeading": 0,
-      "zone": "residential"
+      "zone": "commercial"
     },
     {
       "lotId": "lot_mohakhal_25",
-      "x": 764,
-      "z": 838,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": -0.035073330533225366,
+      "x": 938.4,
+      "z": 873.1,
+      "width": 17,
+      "depth": 11,
+      "facingHeading": 0,
       "zone": "commercial"
     },
     {
       "lotId": "lot_mohakhal_26",
-      "x": 910,
-      "z": 730,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0,
-      "zone": "residential"
+      "x": 940.5,
+      "z": 928.4,
+      "width": 13,
+      "depth": 14,
+      "facingHeading": -3.1416,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_mohakhal_27",
-      "x": 911,
-      "z": 837,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0.017389551289330653,
+      "x": 922.7,
+      "z": 927.4,
+      "width": 17,
+      "depth": 12,
+      "facingHeading": -3.1416,
       "zone": "commercial"
     },
     {
       "lotId": "lot_mohakhal_28",
-      "x": 1058,
-      "z": 732,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0,
-      "zone": "residential"
+      "x": 906,
+      "z": 928.9,
+      "width": 12,
+      "depth": 15,
+      "facingHeading": -3.1416,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_mohakhal_29",
-      "x": 1060,
-      "z": 838,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0.03538345612415131,
+      "x": 888.6,
+      "z": 927.9,
+      "width": 17,
+      "depth": 13,
+      "facingHeading": -3.1416,
       "zone": "commercial"
     },
     {
       "lotId": "lot_mohakhal_30",
-      "x": 1212,
-      "z": 730,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0,
-      "zone": "residential"
+      "x": 868.5,
+      "z": 926.9,
+      "width": 19,
+      "depth": 11,
+      "facingHeading": -3.1416,
+      "zone": "civic"
     },
     {
       "lotId": "lot_mohakhal_31",
-      "x": 1212,
-      "z": 838,
+      "x": 980,
+      "z": 872.6,
       "width": 18,
-      "depth": 16,
+      "depth": 12,
       "facingHeading": 0,
       "zone": "commercial"
     },
     {
       "lotId": "lot_mohakhal_32",
-      "x": 673,
-      "z": 1009,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5365631304855158,
-      "zone": "market"
+      "x": 1000.8,
+      "z": 871.1,
+      "width": 19,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "civic"
     },
     {
       "lotId": "lot_mohakhal_33",
-      "x": 673,
-      "z": 1109,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5365631304855158,
-      "zone": "residential"
+      "x": 1023.1,
+      "z": 873.1,
+      "width": 19,
+      "depth": 11,
+      "facingHeading": 0,
+      "zone": "civic"
     },
     {
       "lotId": "lot_mohakhal_34",
-      "x": 823,
-      "z": 1011,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5772478501878653,
-      "zone": "market"
+      "x": 1044.6,
+      "z": 873.1,
+      "width": 19,
+      "depth": 11,
+      "facingHeading": 0,
+      "zone": "civic"
     },
     {
       "lotId": "lot_mohakhal_35",
-      "x": 823,
-      "z": 1111,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5772478501878653,
-      "zone": "residential"
+      "x": 1050,
+      "z": 928.9,
+      "width": 14,
+      "depth": 15,
+      "facingHeading": -3.1416,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_mohakhal_36",
-      "x": 975,
-      "z": 1009,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5842183395349878,
-      "zone": "market"
+      "x": 1031.5,
+      "z": 926.9,
+      "width": 19,
+      "depth": 11,
+      "facingHeading": -3.1416,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_mohakhal_37",
-      "x": 975,
-      "z": 1109,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5842183395349878,
-      "zone": "residential"
+      "x": 1012.3,
+      "z": 927.4,
+      "width": 15,
+      "depth": 12,
+      "facingHeading": -3.1416,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_mohakhal_38",
-      "x": 1125,
-      "z": 1010,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.550798992821746,
-      "zone": "market"
+      "x": 996.5,
+      "z": 927.4,
+      "width": 12,
+      "depth": 12,
+      "facingHeading": -3.1416,
+      "zone": "civic"
     },
     {
       "lotId": "lot_mohakhal_39",
-      "x": 1125,
-      "z": 1110,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.550798992821746,
-      "zone": "residential"
+      "x": 980.3,
+      "z": 928.4,
+      "width": 17,
+      "depth": 14,
+      "facingHeading": -3.1416,
+      "zone": "civic"
     },
     {
       "lotId": "lot_mohakhal_40",
-      "x": 612,
-      "z": 962,
-      "width": 18,
-      "depth": 16,
+      "x": 1088,
+      "z": 871.1,
+      "width": 14,
+      "depth": 15,
       "facingHeading": 0,
       "zone": "commercial"
     },
     {
       "lotId": "lot_mohakhal_41",
-      "x": 612,
-      "z": 1068,
-      "width": 18,
-      "depth": 16,
+      "x": 1106.4,
+      "z": 872.1,
+      "width": 19,
+      "depth": 13,
       "facingHeading": 0,
-      "zone": "residential"
+      "zone": "commercial"
     },
     {
       "lotId": "lot_mohakhal_42",
-      "x": 760,
-      "z": 964,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": -0.033885329904117606,
+      "x": 1127.4,
+      "z": 871.6,
+      "width": 19,
+      "depth": 14,
+      "facingHeading": 0,
       "zone": "commercial"
     },
     {
       "lotId": "lot_mohakhal_43",
-      "x": 758,
-      "z": 1073,
-      "width": 18,
-      "depth": 16,
+      "x": 1147.3,
+      "z": 872.1,
+      "width": 17,
+      "depth": 13,
       "facingHeading": 0,
-      "zone": "residential"
+      "zone": "commercial"
     },
     {
       "lotId": "lot_mohakhal_44",
-      "x": 912,
-      "z": 963,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0.008546800432611483,
+      "x": 1165.7,
+      "z": 872.6,
+      "width": 16,
+      "depth": 12,
+      "facingHeading": 0,
       "zone": "commercial"
     },
     {
       "lotId": "lot_mohakhal_45",
-      "x": 913,
-      "z": 1072,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0,
-      "zone": "residential"
+      "x": 1164.5,
+      "z": 926.9,
+      "width": 19,
+      "depth": 11,
+      "facingHeading": -3.1416,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_mohakhal_46",
-      "x": 1062,
-      "z": 963,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0,
+      "x": 1144.3,
+      "z": 927.4,
+      "width": 17,
+      "depth": 12,
+      "facingHeading": -3.1416,
       "zone": "commercial"
     },
     {
       "lotId": "lot_mohakhal_47",
-      "x": 1062,
-      "z": 1070,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0,
-      "zone": "residential"
+      "x": 1122.8,
+      "z": 926.9,
+      "width": 20,
+      "depth": 11,
+      "facingHeading": -3.1416,
+      "zone": "civic"
     },
     {
       "lotId": "lot_mohakhal_48",
-      "x": 1212,
-      "z": 964,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0,
+      "x": 1104.1,
+      "z": 927.9,
+      "width": 14,
+      "depth": 13,
+      "facingHeading": -3.1416,
       "zone": "commercial"
     },
     {
       "lotId": "lot_mohakhal_49",
-      "x": 1212,
-      "z": 1073,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0,
-      "zone": "residential"
+      "x": 1088.3,
+      "z": 927.9,
+      "width": 13,
+      "depth": 13,
+      "facingHeading": -3.1416,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_mohakhal_50",
-      "x": 644,
-      "z": 696,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.0109994072334723,
+      "x": 654.9,
+      "z": 692.4,
+      "width": 13,
+      "depth": 14,
+      "facingHeading": 3.1416,
       "zone": "residential"
     },
     {
       "lotId": "lot_mohakhal_51",
-      "x": 721,
-      "z": 745,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0.9975419164019239,
-      "zone": "residential"
+      "x": 672.1,
+      "z": 692.4,
+      "width": 16,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_mohakhal_52",
-      "x": 792,
-      "z": 1036,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.0341081524909712,
+      "x": 690.9,
+      "z": 691.4,
+      "width": 15,
+      "depth": 12,
+      "facingHeading": 3.1416,
       "zone": "residential"
     },
     {
       "lotId": "lot_mohakhal_53",
-      "x": 870,
-      "z": 1086,
+      "x": 707.8,
+      "z": 691.9,
+      "width": 14,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_54",
+      "x": 635.5,
+      "z": 663.6,
+      "width": 19,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_55",
+      "x": 656.4,
+      "z": 664.1,
+      "width": 17,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_56",
+      "x": 675.9,
+      "z": 663.6,
       "width": 18,
-      "depth": 16,
-      "facingHeading": 0.9707461133931431,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_57",
+      "x": 697.8,
+      "z": 664.1,
+      "width": 19,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_58",
+      "x": 715.2,
+      "z": 663.6,
+      "width": 10,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_59",
+      "x": 754,
+      "z": 691.4,
+      "width": 18,
+      "depth": 12,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_60",
+      "x": 773.9,
+      "z": 691.9,
+      "width": 18,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_61",
+      "x": 792.1,
+      "z": 691.9,
+      "width": 15,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_62",
+      "x": 811.8,
+      "z": 691.4,
+      "width": 19,
+      "depth": 12,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_63",
+      "x": 829.3,
+      "z": 691.9,
+      "width": 11,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_64",
+      "x": 751.5,
+      "z": 663.6,
+      "width": 13,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_65",
+      "x": 769.2,
+      "z": 664.6,
+      "width": 17,
+      "depth": 12,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_66",
+      "x": 788.9,
+      "z": 664.6,
+      "width": 16,
+      "depth": 12,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_67",
+      "x": 806.9,
+      "z": 663.6,
+      "width": 14,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_68",
+      "x": 823.4,
+      "z": 665.1,
+      "width": 16,
+      "depth": 11,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_69",
+      "x": 866,
+      "z": 691.9,
+      "width": 14,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_70",
+      "x": 884.8,
+      "z": 691.9,
+      "width": 18,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_71",
+      "x": 902.5,
+      "z": 691.9,
+      "width": 13,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_72",
+      "x": 917.6,
+      "z": 691.9,
+      "width": 12,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_73",
+      "x": 935.5,
+      "z": 691.9,
+      "width": 19,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_74",
+      "x": 867.5,
+      "z": 663.1,
+      "width": 17,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_75",
+      "x": 888.7,
+      "z": 663.1,
+      "width": 19,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_76",
+      "x": 911.1,
+      "z": 664.1,
+      "width": 19,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_77",
+      "x": 930.4,
+      "z": 665.1,
+      "width": 15,
+      "depth": 11,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_78",
+      "x": 978,
+      "z": 691.4,
+      "width": 14,
+      "depth": 12,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_79",
+      "x": 996.4,
+      "z": 692.4,
+      "width": 19,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_80",
+      "x": 1014.8,
+      "z": 691.9,
+      "width": 14,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_81",
+      "x": 1032.6,
+      "z": 691.9,
+      "width": 16,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_82",
+      "x": 1048.8,
+      "z": 690.9,
+      "width": 13,
+      "depth": 11,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_83",
+      "x": 978.5,
+      "z": 664.6,
+      "width": 15,
+      "depth": 12,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_84",
+      "x": 997.5,
+      "z": 664.1,
+      "width": 18,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_85",
+      "x": 1016,
+      "z": 663.6,
+      "width": 14,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_86",
+      "x": 1032.8,
+      "z": 663.6,
+      "width": 15,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_87",
+      "x": 1050.2,
+      "z": 664.1,
+      "width": 13,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_88",
+      "x": 1109.2,
+      "z": 691.4,
+      "width": 13,
+      "depth": 12,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_89",
+      "x": 1125,
+      "z": 690.9,
+      "width": 14,
+      "depth": 11,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_90",
+      "x": 1141.8,
+      "z": 692.4,
+      "width": 15,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_91",
+      "x": 1161.1,
+      "z": 690.9,
+      "width": 18,
+      "depth": 11,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_92",
+      "x": 1090,
+      "z": 663.6,
+      "width": 18,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_93",
+      "x": 1108.2,
+      "z": 664.6,
+      "width": 14,
+      "depth": 12,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_94",
+      "x": 1126.8,
+      "z": 663.6,
+      "width": 18,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_95",
+      "x": 1144.8,
+      "z": 663.1,
+      "width": 12,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_96",
+      "x": 1160,
+      "z": 663.6,
+      "width": 12,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_97",
+      "x": 633.3,
+      "z": 797.2,
+      "width": 15,
+      "depth": 13,
+      "facingHeading": 3.1244,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_98",
+      "x": 649.6,
+      "z": 796.5,
+      "width": 12,
+      "depth": 11,
+      "facingHeading": 3.1244,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_99",
+      "x": 668.5,
+      "z": 797.8,
+      "width": 20,
+      "depth": 13,
+      "facingHeading": 3.1244,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_100",
+      "x": 690.8,
+      "z": 798.2,
+      "width": 19,
+      "depth": 13,
+      "facingHeading": 3.1244,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_101",
+      "x": 710.7,
+      "z": 799,
+      "width": 14,
+      "depth": 14,
+      "facingHeading": 3.1244,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_102",
+      "x": 634.7,
+      "z": 770,
+      "width": 17,
+      "depth": 12,
+      "facingHeading": -0.0172,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_103",
+      "x": 654.1,
+      "z": 769.3,
+      "width": 15,
+      "depth": 14,
+      "facingHeading": -0.0172,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_104",
+      "x": 672.2,
+      "z": 770.1,
+      "width": 16,
+      "depth": 13,
+      "facingHeading": -0.0172,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_105",
+      "x": 688.7,
+      "z": 769.9,
+      "width": 13,
+      "depth": 14,
+      "facingHeading": -0.0172,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_106",
+      "x": 750,
+      "z": 798.2,
+      "width": 15,
+      "depth": 13,
+      "facingHeading": -3.1074,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_107",
+      "x": 769.1,
+      "z": 796.6,
+      "width": 17,
+      "depth": 11,
+      "facingHeading": -3.1074,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_108",
+      "x": 786.4,
+      "z": 796.5,
+      "width": 14,
+      "depth": 12,
+      "facingHeading": -3.1074,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_109",
+      "x": 803.8,
+      "z": 795.9,
+      "width": 15,
+      "depth": 12,
+      "facingHeading": -3.1074,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_110",
+      "x": 821.7,
+      "z": 794.8,
+      "width": 14,
+      "depth": 11,
+      "facingHeading": -3.1074,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_111",
+      "x": 748.5,
+      "z": 771,
+      "width": 14,
+      "depth": 12,
+      "facingHeading": 0.0342,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_112",
+      "x": 764.8,
+      "z": 768.9,
+      "width": 14,
+      "depth": 15,
+      "facingHeading": 0.0342,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_113",
+      "x": 781.4,
+      "z": 770.4,
+      "width": 13,
+      "depth": 11,
+      "facingHeading": 0.0342,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_114",
+      "x": 796.2,
+      "z": 769.3,
+      "width": 13,
+      "depth": 12,
+      "facingHeading": 0.0342,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_115",
+      "x": 813.8,
+      "z": 768.2,
+      "width": 17,
+      "depth": 13,
+      "facingHeading": 0.0342,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_116",
+      "x": 829.3,
+      "z": 767.2,
+      "width": 10,
+      "depth": 14,
+      "facingHeading": 0.0342,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_117",
+      "x": 865.8,
+      "z": 796.3,
+      "width": 15,
+      "depth": 14,
+      "facingHeading": 3.0958,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_118",
+      "x": 886.2,
+      "z": 796.7,
+      "width": 19,
+      "depth": 13,
+      "facingHeading": 3.0958,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_119",
+      "x": 904.3,
+      "z": 796.5,
+      "width": 12,
+      "depth": 11,
+      "facingHeading": 3.0958,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_120",
+      "x": 921.5,
+      "z": 798.3,
+      "width": 19,
+      "depth": 13,
+      "facingHeading": 3.0958,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_121",
+      "x": 868.1,
+      "z": 768.6,
+      "width": 17,
+      "depth": 12,
+      "facingHeading": -0.0458,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_122",
+      "x": 888.5,
+      "z": 769,
+      "width": 18,
+      "depth": 13,
+      "facingHeading": -0.0458,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_123",
+      "x": 907.4,
+      "z": 769.9,
+      "width": 13,
+      "depth": 13,
+      "facingHeading": -0.0458,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_124",
+      "x": 976.1,
+      "z": 798.7,
+      "width": 16,
+      "depth": 11,
+      "facingHeading": -3.1328,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_125",
+      "x": 995.9,
+      "z": 799.5,
+      "width": 17,
+      "depth": 13,
+      "facingHeading": -3.1328,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_126",
+      "x": 1013.3,
+      "z": 798.9,
+      "width": 13,
+      "depth": 12,
+      "facingHeading": -3.1328,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_127",
+      "x": 1030.7,
+      "z": 799.7,
+      "width": 18,
+      "depth": 14,
+      "facingHeading": -3.1328,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_128",
+      "x": 1049.8,
+      "z": 798.1,
+      "width": 15,
+      "depth": 11,
+      "facingHeading": -3.1328,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_129",
+      "x": 976.4,
+      "z": 771.4,
+      "width": 17,
+      "depth": 14,
+      "facingHeading": 0.0088,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_130",
+      "x": 995.6,
+      "z": 771.8,
+      "width": 18,
+      "depth": 13,
+      "facingHeading": 0.0088,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_131",
+      "x": 1014.1,
+      "z": 772.6,
+      "width": 16,
+      "depth": 11,
+      "facingHeading": 0.0088,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_132",
+      "x": 1032.5,
+      "z": 771.4,
+      "width": 17,
+      "depth": 13,
+      "facingHeading": 0.0088,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_133",
+      "x": 1050.2,
+      "z": 771.8,
+      "width": 13,
+      "depth": 12,
+      "facingHeading": 0.0088,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_134",
+      "x": 1089.7,
+      "z": 798,
+      "width": 15,
+      "depth": 12,
+      "facingHeading": -3.1244,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_135",
+      "x": 1108.7,
+      "z": 799.2,
+      "width": 19,
+      "depth": 15,
+      "facingHeading": -3.1244,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_136",
+      "x": 1126.4,
+      "z": 797.9,
+      "width": 13,
+      "depth": 13,
+      "facingHeading": -3.1244,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_137",
+      "x": 1144.4,
+      "z": 797.6,
+      "width": 19,
+      "depth": 13,
+      "facingHeading": -3.1244,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_138",
+      "x": 1164.9,
+      "z": 796.7,
+      "width": 17,
+      "depth": 12,
+      "facingHeading": -3.1244,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_139",
+      "x": 1089.8,
+      "z": 771.3,
+      "width": 16,
+      "depth": 12,
+      "facingHeading": 0.0172,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_140",
+      "x": 1109.6,
+      "z": 769.4,
+      "width": 19,
+      "depth": 15,
+      "facingHeading": 0.0172,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_141",
+      "x": 1127.7,
+      "z": 770.1,
+      "width": 14,
+      "depth": 13,
+      "facingHeading": 0.0172,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_142",
+      "x": 1144.7,
+      "z": 770.3,
+      "width": 16,
+      "depth": 12,
+      "facingHeading": 0.0172,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_143",
+      "x": 626.9,
+      "z": 716.6,
+      "width": 19,
+      "depth": 11,
+      "facingHeading": -1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_144",
+      "x": 626.9,
+      "z": 735.9,
+      "width": 13,
+      "depth": 11,
+      "facingHeading": -1.5708,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_145",
+      "x": 627.9,
+      "z": 754,
+      "width": 18,
+      "depth": 13,
+      "facingHeading": -1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_146",
+      "x": 627.9,
+      "z": 822.8,
+      "width": 15,
+      "depth": 11,
+      "facingHeading": -1.5708,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_147",
+      "x": 629.9,
+      "z": 838.3,
+      "width": 12,
+      "depth": 15,
+      "facingHeading": -1.5708,
+      "zone": "civic"
+    },
+    {
+      "lotId": "lot_mohakhal_148",
+      "x": 628.9,
+      "z": 853.6,
+      "width": 12,
+      "depth": 13,
+      "facingHeading": -1.5708,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_149",
+      "x": 718.1,
+      "z": 715.4,
+      "width": 20,
+      "depth": 13,
+      "facingHeading": 1.5428,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_150",
+      "x": 717.5,
+      "z": 734.2,
+      "width": 14,
+      "depth": 13,
+      "facingHeading": 1.5428,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_151",
+      "x": 717.1,
+      "z": 750.5,
+      "width": 13,
+      "depth": 13,
+      "facingHeading": 1.5428,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_152",
+      "x": 746.2,
+      "z": 719,
+      "width": 13,
+      "depth": 14,
+      "facingHeading": -1.5988,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_153",
+      "x": 744.7,
+      "z": 737.7,
+      "width": 19,
+      "depth": 12,
+      "facingHeading": -1.5988,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_154",
+      "x": 745.2,
+      "z": 755.4,
+      "width": 13,
+      "depth": 14,
+      "facingHeading": -1.5988,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_155",
+      "x": 715.7,
+      "z": 823.9,
+      "width": 14,
+      "depth": 14,
+      "facingHeading": 1.5999,
+      "zone": "civic"
+    },
+    {
+      "lotId": "lot_mohakhal_156",
+      "x": 716.3,
+      "z": 842.8,
+      "width": 19,
+      "depth": 14,
+      "facingHeading": 1.5999,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_157",
+      "x": 746.4,
+      "z": 821,
+      "width": 17,
+      "depth": 14,
+      "facingHeading": -1.5417,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_158",
+      "x": 746,
+      "z": 841.5,
+      "width": 20,
+      "depth": 12,
+      "facingHeading": -1.5417,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_159",
+      "x": 833.1,
+      "z": 713.8,
+      "width": 14,
+      "depth": 13,
+      "facingHeading": 1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_160",
+      "x": 833.6,
+      "z": 731.1,
+      "width": 17,
+      "depth": 12,
+      "facingHeading": 1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_161",
+      "x": 832.6,
+      "z": 749.5,
+      "width": 14,
+      "depth": 14,
+      "facingHeading": 1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_162",
+      "x": 861.9,
+      "z": 719.9,
+      "width": 16,
+      "depth": 15,
+      "facingHeading": -1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_163",
+      "x": 861.9,
+      "z": 740,
+      "width": 19,
+      "depth": 15,
+      "facingHeading": -1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_164",
+      "x": 833.1,
+      "z": 817.5,
+      "width": 18,
+      "depth": 11,
+      "facingHeading": 1.5708,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_165",
+      "x": 832.1,
+      "z": 837.7,
+      "width": 17,
+      "depth": 13,
+      "facingHeading": 1.5708,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_166",
+      "x": 832.6,
+      "z": 857,
+      "width": 16,
+      "depth": 12,
+      "facingHeading": 1.5708,
+      "zone": "civic"
+    },
+    {
+      "lotId": "lot_mohakhal_167",
+      "x": 861.9,
+      "z": 822.9,
+      "width": 15,
+      "depth": 13,
+      "facingHeading": -1.5708,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_168",
+      "x": 862.4,
+      "z": 839.5,
+      "width": 15,
+      "depth": 14,
+      "facingHeading": -1.5708,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_169",
+      "x": 862.9,
+      "z": 855.9,
+      "width": 14,
+      "depth": 15,
+      "facingHeading": -1.5708,
+      "zone": "civic"
+    },
+    {
+      "lotId": "lot_mohakhal_170",
+      "x": 943.5,
+      "z": 719.6,
+      "width": 20,
+      "depth": 14,
+      "facingHeading": 1.543,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_171",
+      "x": 942.8,
+      "z": 742.6,
+      "width": 20,
+      "depth": 14,
+      "facingHeading": 1.543,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_172",
+      "x": 971.3,
+      "z": 717.6,
+      "width": 14,
+      "depth": 12,
+      "facingHeading": -1.5986,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_173",
+      "x": 970.3,
+      "z": 735.8,
+      "width": 16,
+      "depth": 11,
+      "facingHeading": -1.5986,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_174",
+      "x": 971.3,
+      "z": 752.5,
+      "width": 14,
+      "depth": 14,
+      "facingHeading": -1.5986,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_175",
+      "x": 939.7,
+      "z": 807,
+      "width": 17,
+      "depth": 13,
+      "facingHeading": 1.6002,
+      "zone": "civic"
+    },
+    {
+      "lotId": "lot_mohakhal_176",
+      "x": 940.3,
+      "z": 825.1,
+      "width": 15,
+      "depth": 13,
+      "facingHeading": 1.6002,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_177",
+      "x": 939.8,
+      "z": 842.7,
+      "width": 13,
+      "depth": 15,
+      "facingHeading": 1.6002,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_178",
+      "x": 974.5,
+      "z": 824.4,
+      "width": 12,
+      "depth": 14,
+      "facingHeading": -1.5414,
+      "zone": "civic"
+    },
+    {
+      "lotId": "lot_mohakhal_179",
+      "x": 975.5,
+      "z": 839.9,
+      "width": 15,
+      "depth": 15,
+      "facingHeading": -1.5414,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_180",
+      "x": 976,
+      "z": 856.7,
+      "width": 13,
+      "depth": 15,
+      "facingHeading": -1.5414,
+      "zone": "civic"
+    },
+    {
+      "lotId": "lot_mohakhal_181",
+      "x": 1055,
+      "z": 714.6,
+      "width": 15,
+      "depth": 14,
+      "facingHeading": 1.5801,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_182",
+      "x": 1055.6,
+      "z": 730.9,
+      "width": 14,
+      "depth": 13,
+      "facingHeading": 1.5801,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_183",
+      "x": 1056.3,
+      "z": 747.6,
+      "width": 15,
+      "depth": 12,
+      "facingHeading": 1.5801,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_184",
+      "x": 1083.3,
+      "z": 718.2,
+      "width": 17,
+      "depth": 13,
+      "facingHeading": -1.5615,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_185",
+      "x": 1082.4,
+      "z": 738.6,
+      "width": 19,
+      "depth": 11,
+      "facingHeading": -1.5615,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_186",
+      "x": 1055.2,
+      "z": 824.5,
+      "width": 14,
+      "depth": 12,
+      "facingHeading": 1.5611,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_187",
+      "x": 1055.6,
+      "z": 841.6,
+      "width": 14,
+      "depth": 11,
+      "facingHeading": 1.5611,
+      "zone": "civic"
+    },
+    {
+      "lotId": "lot_mohakhal_188",
+      "x": 1084,
+      "z": 823.8,
+      "width": 14,
+      "depth": 12,
+      "facingHeading": -1.5805,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_189",
+      "x": 1083.8,
+      "z": 841.4,
+      "width": 17,
+      "depth": 12,
+      "facingHeading": -1.5805,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_190",
+      "x": 1172.1,
+      "z": 716.1,
+      "width": 14,
+      "depth": 13,
+      "facingHeading": 1.5708,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_191",
+      "x": 1172.1,
+      "z": 731.5,
+      "width": 12,
+      "depth": 13,
+      "facingHeading": 1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_192",
+      "x": 1171.6,
+      "z": 746,
+      "width": 13,
+      "depth": 14,
+      "facingHeading": 1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_193",
+      "x": 1171.6,
+      "z": 820,
+      "width": 14,
+      "depth": 12,
+      "facingHeading": 1.5708,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_194",
+      "x": 1171.1,
+      "z": 837.2,
+      "width": 14,
+      "depth": 13,
+      "facingHeading": 1.5708,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_195",
+      "x": 1171.1,
+      "z": 856.4,
+      "width": 19,
+      "depth": 13,
+      "facingHeading": 1.5708,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_196",
+      "x": 634.6,
+      "z": 1029.7,
+      "width": 17,
+      "depth": 11,
+      "facingHeading": -3.1334,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_197",
+      "x": 654.2,
+      "z": 1031.1,
+      "width": 19,
+      "depth": 14,
+      "facingHeading": -3.1334,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_198",
+      "x": 675.6,
+      "z": 1030.4,
+      "width": 17,
+      "depth": 13,
+      "facingHeading": -3.1334,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_199",
+      "x": 693.8,
+      "z": 1030.2,
+      "width": 15,
+      "depth": 13,
+      "facingHeading": -3.1334,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_200",
+      "x": 632.9,
+      "z": 1004,
+      "width": 14,
+      "depth": 11,
+      "facingHeading": 0.0082,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_201",
+      "x": 652.1,
+      "z": 1003.8,
+      "width": 19,
+      "depth": 11,
+      "facingHeading": 0.0082,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_202",
+      "x": 671.5,
+      "z": 1002.1,
+      "width": 14,
+      "depth": 14,
+      "facingHeading": 0.0082,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_203",
+      "x": 688.9,
+      "z": 1003,
+      "width": 16,
+      "depth": 12,
+      "facingHeading": 0.0082,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_204",
+      "x": 708.9,
+      "z": 1001.8,
+      "width": 20,
+      "depth": 14,
+      "facingHeading": 0.0082,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_205",
+      "x": 754.5,
+      "z": 1029.4,
+      "width": 13,
+      "depth": 12,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_206",
+      "x": 771,
+      "z": 1029.9,
+      "width": 13,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_207",
+      "x": 787.8,
+      "z": 1029.4,
+      "width": 16,
+      "depth": 12,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_208",
+      "x": 807.2,
+      "z": 1030.4,
+      "width": 16,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_209",
+      "x": 825.9,
+      "z": 1030.4,
+      "width": 17,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_210",
+      "x": 757,
+      "z": 1002.1,
+      "width": 18,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_211",
+      "x": 778.1,
+      "z": 1001.1,
+      "width": 18,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_212",
+      "x": 799.1,
+      "z": 1003.1,
+      "width": 20,
+      "depth": 11,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_213",
+      "x": 818.1,
+      "z": 1002.1,
+      "width": 15,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_214",
+      "x": 868.3,
+      "z": 1029.7,
+      "width": 13,
+      "depth": 12,
+      "facingHeading": 3.1234,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_215",
+      "x": 884.7,
+      "z": 1031,
+      "width": 14,
+      "depth": 14,
+      "facingHeading": 3.1234,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_216",
+      "x": 901.5,
+      "z": 1031.3,
+      "width": 14,
+      "depth": 14,
+      "facingHeading": 3.1234,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_217",
+      "x": 918.9,
+      "z": 1030.6,
+      "width": 15,
+      "depth": 12,
+      "facingHeading": 3.1234,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_218",
+      "x": 937.6,
+      "z": 1032,
+      "width": 17,
+      "depth": 14,
+      "facingHeading": 3.1234,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_219",
+      "x": 870.2,
+      "z": 1002.5,
+      "width": 16,
+      "depth": 13,
+      "facingHeading": -0.0182,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_220",
+      "x": 886.7,
+      "z": 1002.8,
+      "width": 13,
+      "depth": 13,
+      "facingHeading": -0.0182,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_221",
+      "x": 903,
+      "z": 1003.1,
+      "width": 14,
+      "depth": 13,
+      "facingHeading": -0.0182,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_222",
+      "x": 922.3,
+      "z": 1002.4,
+      "width": 19,
+      "depth": 15,
+      "facingHeading": -0.0182,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_223",
+      "x": 940.8,
+      "z": 1004.3,
+      "width": 13,
+      "depth": 12,
+      "facingHeading": -0.0182,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_224",
+      "x": 980.5,
+      "z": 1032.9,
+      "width": 17,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_225",
+      "x": 1001.7,
+      "z": 1032.4,
+      "width": 19,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_226",
+      "x": 1022.1,
+      "z": 1032.4,
+      "width": 16,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_227",
+      "x": 1038.7,
+      "z": 1031.4,
+      "width": 12,
+      "depth": 12,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_228",
+      "x": 980,
+      "z": 1003.6,
+      "width": 16,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_229",
+      "x": 997.7,
+      "z": 1003.6,
+      "width": 16,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_230",
+      "x": 1018.2,
+      "z": 1004.6,
+      "width": 20,
+      "depth": 12,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_231",
+      "x": 1036.8,
+      "z": 1004.1,
+      "width": 12,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_232",
+      "x": 1085.9,
+      "z": 1031.9,
+      "width": 17,
+      "depth": 14,
+      "facingHeading": -3.1168,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_233",
+      "x": 1105.4,
+      "z": 1029.9,
+      "width": 16,
+      "depth": 11,
+      "facingHeading": -3.1168,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_234",
+      "x": 1123.2,
+      "z": 1030.4,
+      "width": 15,
+      "depth": 13,
+      "facingHeading": -3.1168,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_235",
+      "x": 1140.1,
+      "z": 1029.5,
+      "width": 14,
+      "depth": 12,
+      "facingHeading": -3.1168,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_236",
+      "x": 1160,
+      "z": 1030,
+      "width": 19,
+      "depth": 14,
+      "facingHeading": -3.1168,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_237",
+      "x": 1086.2,
+      "z": 1004.1,
+      "width": 19,
+      "depth": 12,
+      "facingHeading": 0.0248,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_238",
+      "x": 1108,
+      "z": 1004,
+      "width": 18,
+      "depth": 11,
+      "facingHeading": 0.0248,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_239",
+      "x": 1127.5,
+      "z": 1002.6,
+      "width": 18,
+      "depth": 13,
+      "facingHeading": 0.0248,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_240",
+      "x": 1144.9,
+      "z": 1002.1,
+      "width": 13,
+      "depth": 13,
+      "facingHeading": 0.0248,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_241",
+      "x": 1160.9,
+      "z": 1001.2,
+      "width": 15,
+      "depth": 14,
+      "facingHeading": 0.0248,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_242",
+      "x": 634.5,
+      "z": 1135.4,
+      "width": 17,
+      "depth": 12,
+      "facingHeading": 3.1416,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_243",
+      "x": 651.5,
+      "z": 1135.9,
+      "width": 12,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_244",
+      "x": 668.6,
+      "z": 1135.9,
+      "width": 16,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_245",
+      "x": 689.9,
+      "z": 1135.9,
+      "width": 20,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_246",
+      "x": 711.2,
+      "z": 1135.9,
+      "width": 19,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_247",
+      "x": 671.4,
+      "z": 1108.6,
+      "width": 19,
+      "depth": 12,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_248",
+      "x": 691.7,
+      "z": 1108.6,
+      "width": 18,
+      "depth": 12,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_249",
+      "x": 711.6,
+      "z": 1107.6,
+      "width": 17,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_250",
+      "x": 753.5,
+      "z": 1136.4,
+      "width": 17,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_251",
+      "x": 773.7,
+      "z": 1136.9,
+      "width": 20,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_252",
+      "x": 794.7,
+      "z": 1135.4,
+      "width": 17,
+      "depth": 12,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_253",
+      "x": 813.3,
+      "z": 1136.9,
+      "width": 16,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_254",
+      "x": 829,
+      "z": 1135.9,
+      "width": 12,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_255",
+      "x": 752.5,
+      "z": 1108.1,
+      "width": 15,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_256",
+      "x": 768.9,
+      "z": 1108.6,
+      "width": 12,
+      "depth": 12,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_257",
+      "x": 783.4,
+      "z": 1109.1,
+      "width": 13,
+      "depth": 11,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_258",
+      "x": 800.6,
+      "z": 1107.1,
+      "width": 15,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_259",
+      "x": 818.6,
+      "z": 1109.1,
+      "width": 14,
+      "depth": 11,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_260",
+      "x": 865,
+      "z": 1135.9,
+      "width": 12,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_261",
+      "x": 881.9,
+      "z": 1135.9,
+      "width": 17,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_262",
+      "x": 900,
+      "z": 1136.9,
+      "width": 13,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_263",
+      "x": 916.8,
+      "z": 1135.9,
+      "width": 15,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_264",
+      "x": 865.5,
+      "z": 1108.1,
+      "width": 13,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_265",
+      "x": 883.4,
+      "z": 1108.6,
+      "width": 17,
+      "depth": 12,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_266",
+      "x": 902.4,
+      "z": 1109.1,
+      "width": 16,
+      "depth": 11,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_267",
+      "x": 920,
+      "z": 1107.6,
+      "width": 16,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_268",
+      "x": 938.7,
+      "z": 1107.6,
+      "width": 15,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_269",
+      "x": 979,
+      "z": 1135.9,
+      "width": 16,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_270",
+      "x": 997.9,
+      "z": 1135.4,
+      "width": 15,
+      "depth": 12,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_271",
+      "x": 1017.6,
+      "z": 1135.4,
+      "width": 20,
+      "depth": 12,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_272",
+      "x": 1036.7,
+      "z": 1135.4,
+      "width": 12,
+      "depth": 12,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_273",
+      "x": 1050.7,
+      "z": 1135.4,
+      "width": 12,
+      "depth": 12,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_274",
+      "x": 977.5,
+      "z": 1107.1,
+      "width": 13,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_275",
+      "x": 996.4,
+      "z": 1108.1,
+      "width": 18,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_276",
+      "x": 1015.3,
+      "z": 1107.6,
+      "width": 14,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_277",
+      "x": 1031.6,
+      "z": 1107.6,
+      "width": 14,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_278",
+      "x": 1088,
+      "z": 1135.4,
+      "width": 14,
+      "depth": 12,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_279",
+      "x": 1104.9,
+      "z": 1136.4,
+      "width": 13,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_280",
+      "x": 1120.4,
+      "z": 1135.9,
+      "width": 15,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_281",
+      "x": 1139.2,
+      "z": 1136.4,
+      "width": 17,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_282",
+      "x": 1156.1,
+      "z": 1135.4,
+      "width": 13,
+      "depth": 12,
+      "facingHeading": 3.1416,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_283",
+      "x": 1089.5,
+      "z": 1108.6,
+      "width": 17,
+      "depth": 12,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_284",
+      "x": 1110.4,
+      "z": 1108.6,
+      "width": 18,
+      "depth": 12,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_285",
+      "x": 1131.5,
+      "z": 1109.1,
+      "width": 18,
+      "depth": 11,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_286",
+      "x": 1152.9,
+      "z": 1107.6,
+      "width": 20,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_287",
+      "x": 626.9,
+      "z": 1059.2,
+      "width": 19,
+      "depth": 11,
+      "facingHeading": -1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_288",
+      "x": 627.9,
+      "z": 1077.6,
+      "width": 12,
+      "depth": 13,
+      "facingHeading": -1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_289",
+      "x": 628.4,
+      "z": 953.1,
+      "width": 16,
+      "depth": 12,
+      "facingHeading": -1.5708,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_290",
+      "x": 628.4,
+      "z": 970,
+      "width": 13,
+      "depth": 12,
+      "facingHeading": -1.5708,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_291",
+      "x": 629.9,
+      "z": 988.1,
+      "width": 18,
+      "depth": 15,
+      "facingHeading": -1.5708,
+      "zone": "civic"
+    },
+    {
+      "lotId": "lot_mohakhal_292",
+      "x": 721.9,
+      "z": 1057.8,
+      "width": 19,
+      "depth": 11,
+      "facingHeading": 1.5425,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_293",
+      "x": 720.4,
+      "z": 1076.3,
+      "width": 13,
+      "depth": 13,
+      "facingHeading": 1.5425,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_294",
+      "x": 748.3,
+      "z": 1053,
+      "width": 17,
+      "depth": 12,
+      "facingHeading": -1.5991,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_295",
+      "x": 748.8,
+      "z": 1071.2,
+      "width": 14,
+      "depth": 14,
+      "facingHeading": -1.5991,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_296",
+      "x": 747.8,
+      "z": 1090.2,
+      "width": 19,
+      "depth": 13,
+      "facingHeading": -1.5991,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_297",
+      "x": 718.8,
+      "z": 951.8,
+      "width": 14,
+      "depth": 14,
+      "facingHeading": 1.5996,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_298",
+      "x": 720.8,
+      "z": 970,
+      "width": 16,
+      "depth": 11,
+      "facingHeading": 1.5996,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_299",
+      "x": 748.5,
+      "z": 949.7,
+      "width": 16,
+      "depth": 12,
+      "facingHeading": -1.542,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_300",
+      "x": 749.1,
+      "z": 970.7,
+      "width": 19,
+      "depth": 12,
+      "facingHeading": -1.542,
+      "zone": "civic"
+    },
+    {
+      "lotId": "lot_mohakhal_301",
+      "x": 834.5,
+      "z": 1054,
+      "width": 13,
+      "depth": 14,
+      "facingHeading": 1.5425,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_302",
+      "x": 834.5,
+      "z": 1071.3,
+      "width": 16,
+      "depth": 13,
+      "facingHeading": 1.5425,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_303",
+      "x": 834.6,
+      "z": 1088.9,
+      "width": 14,
+      "depth": 12,
+      "facingHeading": 1.5425,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_304",
+      "x": 862.7,
+      "z": 1057.3,
+      "width": 14,
+      "depth": 13,
+      "facingHeading": -1.5991,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_305",
+      "x": 861.2,
+      "z": 1076.6,
+      "width": 19,
+      "depth": 11,
+      "facingHeading": -1.5991,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_306",
+      "x": 832.3,
+      "z": 951.5,
+      "width": 15,
+      "depth": 15,
+      "facingHeading": 1.5996,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_307",
+      "x": 833.3,
+      "z": 969.1,
+      "width": 14,
+      "depth": 14,
+      "facingHeading": 1.5996,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_308",
+      "x": 834.2,
+      "z": 985.9,
+      "width": 16,
+      "depth": 13,
+      "facingHeading": 1.5996,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_309",
+      "x": 862.6,
+      "z": 953.5,
+      "width": 15,
+      "depth": 12,
+      "facingHeading": -1.542,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_310",
+      "x": 863.6,
+      "z": 971.6,
+      "width": 17,
+      "depth": 13,
+      "facingHeading": -1.542,
+      "zone": "civic"
+    },
+    {
+      "lotId": "lot_mohakhal_311",
+      "x": 945.2,
+      "z": 1059.3,
+      "width": 20,
+      "depth": 14,
+      "facingHeading": 1.5612,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_312",
+      "x": 945.5,
+      "z": 1081.6,
+      "width": 18,
+      "depth": 13,
+      "facingHeading": 1.5612,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_313",
+      "x": 973.5,
+      "z": 1055.5,
+      "width": 19,
+      "depth": 13,
+      "facingHeading": -1.5804,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_314",
+      "x": 973.8,
+      "z": 1076.4,
+      "width": 16,
+      "depth": 14,
+      "facingHeading": -1.5804,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_315",
+      "x": 944,
+      "z": 948.1,
+      "width": 18,
+      "depth": 14,
+      "facingHeading": 1.5802,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_316",
+      "x": 945.1,
+      "z": 966.2,
+      "width": 15,
+      "depth": 12,
+      "facingHeading": 1.5802,
+      "zone": "civic"
+    },
+    {
+      "lotId": "lot_mohakhal_317",
+      "x": 944.8,
+      "z": 983.2,
+      "width": 15,
+      "depth": 13,
+      "facingHeading": 1.5802,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_318",
+      "x": 973.2,
+      "z": 947.7,
+      "width": 13,
+      "depth": 11,
+      "facingHeading": -1.5614,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_319",
+      "x": 973.9,
+      "z": 966.2,
+      "width": 18,
+      "depth": 12,
+      "facingHeading": -1.5614,
+      "zone": "civic"
+    },
+    {
+      "lotId": "lot_mohakhal_320",
+      "x": 1053.7,
+      "z": 1059.2,
+      "width": 14,
+      "depth": 11,
+      "facingHeading": 1.6092,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_321",
+      "x": 1053.8,
+      "z": 1074.5,
+      "width": 13,
+      "depth": 12,
+      "facingHeading": 1.6092,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_322",
+      "x": 1054.4,
+      "z": 1091.1,
+      "width": 15,
+      "depth": 12,
+      "facingHeading": 1.6092,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_323",
+      "x": 1080.3,
+      "z": 1054.7,
+      "width": 14,
+      "depth": 13,
+      "facingHeading": -1.5324,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_324",
+      "x": 1082,
+      "z": 1071.6,
+      "width": 15,
+      "depth": 15,
+      "facingHeading": -1.5324,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_325",
+      "x": 1082.7,
+      "z": 1090.7,
+      "width": 20,
+      "depth": 15,
+      "facingHeading": -1.5324,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_326",
+      "x": 1053.7,
+      "z": 948.8,
+      "width": 20,
+      "depth": 11,
+      "facingHeading": 1.5331,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_327",
+      "x": 1052,
+      "z": 967.8,
+      "width": 13,
+      "depth": 13,
+      "facingHeading": 1.5331,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_328",
+      "x": 1050.3,
+      "z": 985.6,
+      "width": 18,
+      "depth": 15,
+      "facingHeading": 1.5331,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_329",
+      "x": 1082,
+      "z": 949.7,
+      "width": 19,
+      "depth": 12,
+      "facingHeading": -1.6085,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_330",
+      "x": 1082.3,
+      "z": 968.4,
+      "width": 14,
+      "depth": 14,
+      "facingHeading": -1.6085,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_331",
+      "x": 1082.1,
+      "z": 986,
+      "width": 16,
+      "depth": 15,
+      "facingHeading": -1.6085,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_332",
+      "x": 1171.1,
+      "z": 1057.2,
+      "width": 15,
+      "depth": 15,
+      "facingHeading": 1.5708,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_333",
+      "x": 1172.1,
+      "z": 1075.1,
+      "width": 14,
+      "depth": 13,
+      "facingHeading": 1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_334",
+      "x": 1172.1,
+      "z": 1093.9,
+      "width": 18,
+      "depth": 13,
+      "facingHeading": 1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_335",
+      "x": 1171.6,
+      "z": 949.2,
+      "width": 13,
+      "depth": 12,
+      "facingHeading": 1.5708,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_336",
+      "x": 1170.1,
+      "z": 964.2,
+      "width": 13,
+      "depth": 15,
+      "facingHeading": 1.5708,
+      "zone": "civic"
+    },
+    {
+      "lotId": "lot_mohakhal_337",
+      "x": 1171.6,
+      "z": 981,
+      "width": 16,
+      "depth": 12,
+      "facingHeading": 1.5708,
+      "zone": "civic"
+    },
+    {
+      "lotId": "lot_mohakhal_338",
+      "x": 924.4,
+      "z": 739.9,
+      "width": 15,
+      "depth": 13,
+      "facingHeading": -0.7854,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_339",
+      "x": 687.1,
+      "z": 1048.2,
+      "width": 17,
+      "depth": 13,
+      "facingHeading": 0.7589,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_340",
+      "x": 655.3,
+      "z": 1074.6,
+      "width": 16,
+      "depth": 15,
+      "facingHeading": 0.6728,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_341",
+      "x": 641.3,
+      "z": 1087.7,
+      "width": 16,
+      "depth": 12,
+      "facingHeading": 0.6728,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_342",
+      "x": 670.6,
+      "z": 1091.4,
+      "width": 13,
+      "depth": 15,
+      "facingHeading": -2.4688,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_343",
+      "x": 650.3,
+      "z": 723.5,
+      "width": 11,
+      "depth": 12,
+      "facingHeading": 2.4127,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_344",
+      "x": 676.3,
+      "z": 747.5,
+      "width": 12,
+      "depth": 12,
+      "facingHeading": 2.3818,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_345",
+      "x": 692.6,
+      "z": 734.6,
+      "width": 18,
+      "depth": 14,
+      "facingHeading": -0.7598,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_346",
+      "x": 1035,
+      "z": 1074.3,
+      "width": 16,
+      "depth": 14,
+      "facingHeading": -0.7672,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_347",
+      "x": 1019.1,
+      "z": 1087.4,
+      "width": 11,
+      "depth": 12,
+      "facingHeading": 2.3744,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_348",
+      "x": 1117.8,
+      "z": 709.4,
+      "width": 16,
+      "depth": 15,
+      "facingHeading": -0.7672,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_mohakhal_349",
+      "x": 1133.7,
+      "z": 752,
+      "width": 15,
+      "depth": 12,
+      "facingHeading": 2.4452,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_mohakhal_350",
+      "x": 1146.6,
+      "z": 737.3,
+      "width": 16,
+      "depth": 12,
+      "facingHeading": -0.6963,
       "zone": "residential"
     }
   ]

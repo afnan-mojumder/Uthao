@@ -4,6 +4,7 @@ import type { RoadNode, RoadSegment, DistrictId, TransactionKind } from '../core
 export const RoadNodeSchema = z.object({
   nodeId: z.string(),
   x: z.number(),
+  y: z.number().optional(),
   z: z.number(),
   kind: z.enum(['junction', 'uturn', 'deadEnd', 'poi']),
   signal: z.boolean().optional(),

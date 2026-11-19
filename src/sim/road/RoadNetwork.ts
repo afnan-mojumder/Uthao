@@ -7,7 +7,7 @@ import {
   pickupOptions,
   type PickupOptionsResult,
 } from './routing';
-import { nearestNode, segmentAt } from './spatial';
+import { nearestNode, segmentAt, segmentAtElevation, type SegmentElevationHit } from './spatial';
 
 /** A segment a passenger can be picked up from: accessible, practical, and not a divided
  * carriageway. The single eligibility rule for generated and relocated pickups. */
@@ -84,6 +84,16 @@ export class RoadNetwork {
 
   segmentAt(x: number, z: number, tolerance: number = 10): RoadSegment | null {
     return segmentAt(this.segments, this.graph.getNodesMap(), x, z, tolerance);
+  }
+
+  segmentAtElevation(
+    x: number,
+    z: number,
+    y: number,
+    tolerance: number = 10,
+    out?: SegmentElevationHit
+  ): SegmentElevationHit {
+    return segmentAtElevation(this.segments, this.graph.getNodesMap(), x, z, y, tolerance, out);
   }
 
   route(

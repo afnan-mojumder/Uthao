@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { Rng, hashSeed } from '../src/core/rng';
+import { clamp } from '../src/core/math';
 import type {
   RoadNode,
   RoadSegment,
@@ -32,6 +33,153 @@ export interface DistrictStyle {
   customNodes?: RoadNode[];
   customSegments?: RoadSegment[];
   roadWidthMod?: number;
+  signalColumns?: number[];
+  signalExtraNodes?: string[];
+  northRows?: number;
+  southRows?: number;
+  dividedBoulevardCol?: number;
+  arterialYGap?: number;
+  lotWidthRange?: [number, number];
+  lotDepthRange?: [number, number];
+  /** External connector corridors exiting border nodes so lots never overlap cross-district roads. */
+  connectorExits?: { fromRawNodeId: string; toX: number; toZ: number; width: number }[];
+  /** Optional internal service loops (e.g. Gulbari diplomatic enclave service roads). */
+  serviceLoops?: boolean;
+}
+
+interface RoadObb {
+  cx: number;
+  cz: number;
+  halfX: number;
+  halfZ: number;
+  yaw: number;
+}
+
+export function renderRoadWidth(seg: Pick<RoadSegment, 'divided' | 'roadType'>): number {
+  if (seg.divided) return 14.0;
+  switch (seg.roadType) {
+    case 'flyover':
+      return 12.0;
+    case 'main':
+      return 10.0;
+    case 'residential':
+    case 'service':
+      return 8.0;
+    case 'market':
+      return 6.0;
+    case 'alley':
+      return 4.0;
+    default:
+      return 7.0;
+  }
+}
+
+function obbOverlaps(
+  ax: number,
+  az: number,
+  ahx: number,
+  ahz: number,
+  ayaw: number,
+  bx: number,
+  bz: number,
+  bhx: number,
+  bhz: number,
+  byaw: number,
+  margin = 0
+): boolean {
+  const aux = Math.cos(ayaw);
+  const auz = -Math.sin(ayaw);
+  const avx = Math.sin(ayaw);
+  const avz = Math.cos(ayaw);
+  const bux = Math.cos(byaw);
+  const buz = -Math.sin(byaw);
+  const bvx = Math.sin(byaw);
+  const bvz = Math.cos(byaw);
+  const dx = bx - ax;
+  const dz = bz - az;
+
+  const separated = (tx: number, tz: number) => {
+    const dist = Math.abs(dx * tx + dz * tz);
+    const rA = ahx * Math.abs(aux * tx + auz * tz) + ahz * Math.abs(avx * tx + avz * tz);
+    const rB = bhx * Math.abs(bux * tx + buz * tz) + bhz * Math.abs(bvx * tx + bvz * tz);
+    return dist >= rA + rB + margin - 1e-4;
+  };
+
+  return !(
+    separated(aux, auz) ||
+    separated(avx, avz) ||
+    separated(bux, buz) ||
+    separated(bvx, bvz)
+  );
+}
+
+function lotInsideBounds(
+  cx: number,
+  cz: number,
+  halfX: number,
+  halfZ: number,
+  yaw: number,
+  minX: number,
+  maxX: number,
+  minZ: number,
+  maxZ: number
+): boolean {
+  const absCos = Math.abs(Math.cos(yaw));
+  const absSin = Math.abs(Math.sin(yaw));
+  const ex = absCos * halfX + absSin * halfZ;
+  const ez = absSin * halfX + absCos * halfZ;
+  return cx - ex >= minX && cx + ex <= maxX && cz - ez >= minZ && cz + ez <= maxZ;
+}
+
+function buildColumns(
+  originX: number,
+  W: number,
+  edgeMargin: number,
+  blockM: [number, number],
+  organic: number,
+  rng: Rng
+): number[] {
+  const minB = Math.max(45, blockM[0]);
+  const maxB = Math.max(minB, blockM[1]);
+  const spanX = W - 2 * edgeMargin;
+  const targetB = (minB + maxB) / 2;
+  const intervals = clamp(Math.round(spanX / targetB), 3, 8);
+  const baseStep = spanX / intervals;
+
+  const cols: number[] = [];
+  for (let i = 0; i <= intervals; i++) {
+    if (i === 0) {
+      cols.push(originX + edgeMargin);
+    } else if (i === intervals) {
+      cols.push(originX + W - edgeMargin);
+    } else {
+      const maxShift = Math.min(baseStep * 0.18, 16) * organic;
+      const shift = rng.range(-maxShift, maxShift);
+      const prev = cols[i - 1]!;
+      const raw = originX + edgeMargin + i * baseStep + shift;
+      const minAllowed = prev + Math.max(50, minB * 0.75);
+      const remaining = intervals - i;
+      const maxAllowed = originX + W - edgeMargin - remaining * Math.max(50, minB * 0.75);
+      cols.push(Math.round(clamp(raw, minAllowed, maxAllowed)));
+    }
+  }
+  return cols;
+}
+
+function distPointToSeg(
+  px: number,
+  pz: number,
+  ax: number,
+  az: number,
+  bx: number,
+  bz: number
+): number {
+  const dx = bx - ax;
+  const dz = bz - az;
+  const lenSq = dx * dx + dz * dz;
+  if (lenSq <= 1e-6) return Math.hypot(px - ax, pz - az);
+  const t = clamp(((px - ax) * dx + (pz - az) * dz) / lenSq, 0, 1);
+  return Math.hypot(px - (ax + t * dx), pz - (az + t * dz));
 }
 
 /**
@@ -56,6 +204,7 @@ export function genDistrict(
   const originZ = style.origin.z;
   const W = style.size.width;
   const H = style.size.height;
+  const edgeMargin = Math.min(14, Math.floor(W * 0.05));
 
   const nodes: RoadNode[] = [];
   const segments: RoadSegment[] = [];
@@ -69,15 +218,15 @@ export function genDistrict(
     z: number,
     kind: RoadNode['kind'] = 'junction',
     tags: string[] = [],
-    signal = false
+    signal = false,
+    y?: number
   ): RoadNode {
-    const id = `${nodePrefix}${rawId}`;
-    const roundedX = Math.round(x);
-    const roundedZ = Math.round(z);
+    const id = rawId.startsWith(nodePrefix) && nodePrefix ? rawId : `${nodePrefix}${rawId}`;
     const node: RoadNode = {
       nodeId: id,
-      x: roundedX,
-      z: roundedZ,
+      x: Math.round(x),
+      ...(y !== undefined ? { y } : {}),
+      z: Math.round(z),
       kind,
       signal: signal ? true : undefined,
       tags: tags.length > 0 ? tags : undefined,
@@ -93,14 +242,20 @@ export function genDistrict(
     rawEndId: string,
     opts: Partial<RoadSegment> = {}
   ): RoadSegment {
-    const startId = rawStartId.startsWith(nodePrefix) ? rawStartId : `${nodePrefix}${rawStartId}`;
-    const endId = rawEndId.startsWith(nodePrefix) ? rawEndId : `${nodePrefix}${rawEndId}`;
+    const startId =
+      nodePrefix && !rawStartId.startsWith(nodePrefix)
+        ? `${nodePrefix}${rawStartId}`
+        : rawStartId;
+    const endId =
+      nodePrefix && !rawEndId.startsWith(nodePrefix)
+        ? `${nodePrefix}${rawEndId}`
+        : rawEndId;
     const id = `S_${districtId}_${segCounter++}`;
     const seg: RoadSegment = {
       segmentId: id,
       startNodeId: startId,
       endNodeId: endId,
-      width: (opts.width ?? 8) * (style.roadWidthMod ?? 1.0),
+      width: Math.round(((opts.width ?? 8) * (style.roadWidthMod ?? 1.0)) * 10) / 10,
       surfaceCondition: opts.surfaceCondition ?? 0.9,
       trafficDensity: opts.trafficDensity ?? 0.3,
       speedLimit: opts.speedLimit ?? 35,
@@ -121,379 +276,536 @@ export function genDistrict(
     return seg;
   }
 
-  // 1. Divided Arterial Avenue across the center of the district
-  // Runs West -> East at arterialZ
+  const colsX = buildColumns(originX, W, edgeMargin, style.blockM, style.organic, rng);
+  const numCols = colsX.length;
+  const midCol = Math.floor(numCols / 2);
+  const signalColSet = new Set<number>(
+    style.signalColumns ?? (style.arterial.signalJunction ? [midCol] : [])
+  );
+  const signalExtraSet = new Set<string>(style.signalExtraNodes ?? []);
+
+  // 1. Arterial Corridor across the center of the district
   const arterialZ = originZ + Math.round(H * 0.5);
-  const arterialSteps = [0, 150, 300, 450, 600].filter((x) => x <= W);
-
-  // Northern carriageway (Eastbound) & Southern carriageway (Westbound)
-  // Distance between North and South lanes: 10m
-  for (let i = 0; i < arterialSteps.length; i++) {
-    const x = originX + (arterialSteps[i] ?? 0);
-    const isUturn = i === 1 || i === 3 || i === 0 || i === arterialSteps.length - 1;
-    const isCrossing = i === 2; // Footbridge or central junction
-
-    const nTags: string[] = [];
-    const sTags: string[] = [];
-    if (isUturn) {
-      nTags.push('uturn');
-      sTags.push('uturn');
-    }
-    if (isCrossing) {
-      nTags.push('crossing');
-      sTags.push('crossing');
-    }
-
-    const isSignal = style.arterial.signalJunction && i === 2;
-
-    addNode(
-      `art_n_${i}`,
-      x,
-      arterialZ - 5,
-      isUturn ? 'uturn' : 'junction',
-      nTags,
-      isSignal
-    );
-    addNode(
-      `art_s_${i}`,
-      x,
-      arterialZ + 5,
-      isUturn ? 'uturn' : 'junction',
-      sTags,
-      isSignal
-    );
-  }
-
-  // Arterial segments along the corridor
   const arterialSpeed = style.arterial.speedLimit ?? 50;
   const arterialDensity = style.arterial.trafficDensity ?? 0.55;
-  const arterialWidth = style.arterial.width ?? 12;
+  const baseArterialWidth = style.arterial.width ?? 12;
+  const scaledArterialWidth = baseArterialWidth * (style.roadWidthMod ?? 1.0);
 
-  for (let i = 0; i < arterialSteps.length - 1; i++) {
-    // North carriageway: Eastbound
-    addSegment(`art_n_${i}`, `art_n_${i + 1}`, {
-      width: arterialWidth,
-      divided: true,
-      lanes: 2,
-      speedLimit: arterialSpeed,
-      trafficDensity: arterialDensity,
-      surfaceCondition: 0.95,
-      roadType: 'main',
-      oneWay: true,
-      pickupPractical: true,
-      tags: ['arterial'],
-    });
+  if (style.arterial.divided) {
+    // Separate divided carriageways art_n / art_s by >= width + 3.0m, with NO central medians on one-way carriageways
+    const carriagewaySep = Math.max(
+      style.arterialYGap ?? Math.ceil(scaledArterialWidth + 6.0),
+      Math.ceil(scaledArterialWidth + 4.0)
+    );
+    const halfSep = Math.round(carriagewaySep / 2);
+    const uturnStep = Math.max(1, Math.round(style.arterial.uturnEveryM / Math.max(80, (W - 2 * edgeMargin) / (numCols - 1))));
 
-    // South carriageway: Westbound
-    addSegment(`art_s_${i + 1}`, `art_s_${i}`, {
-      width: arterialWidth,
-      divided: true,
-      lanes: 2,
-      speedLimit: arterialSpeed,
-      trafficDensity: arterialDensity,
-      surfaceCondition: 0.95,
-      roadType: 'main',
-      oneWay: true,
-      pickupPractical: true,
-      tags: ['arterial'],
-    });
-  }
+    for (let i = 0; i < numCols; i++) {
+      const x = colsX[i]!;
+      const isEndpoint = i === 0 || i === numCols - 1;
+      const isCrossing = i === midCol;
+      const isUturn = !isCrossing && (isEndpoint || i === 1 || i === numCols - 2 || i % uturnStep === 0);
 
-  // Arterial U-turns (every 150m <= 400m)
-  for (let i = 0; i < arterialSteps.length; i++) {
-    if (i === 1 || i === 3 || i === 0 || i === arterialSteps.length - 1) {
+      const nTags: string[] = [];
+      const sTags: string[] = [];
+      if (isUturn) {
+        nTags.push('uturn');
+        sTags.push('uturn');
+      }
+      if (isCrossing) {
+        nTags.push('crossing');
+        sTags.push('crossing');
+      }
+
+      const isSignal = signalColSet.has(i);
+      const isCrossingSignal = isSignal;
+      const sSignal = isSignal && (i === midCol || signalColSet.size > 1);
+
+      addNode(
+        `art_n_${i}`,
+        x,
+        arterialZ - halfSep,
+        isUturn ? 'uturn' : 'junction',
+        nTags,
+        isCrossingSignal
+      );
+      addNode(
+        `art_s_${i}`,
+        x,
+        arterialZ + halfSep,
+        isUturn ? 'uturn' : 'junction',
+        sTags,
+        sSignal
+      );
+    }
+
+    for (let i = 0; i < numCols - 1; i++) {
+      // North carriageway: Eastbound (oneWay: true, divided: false -> NO central median on 1-way carriageway)
+      addSegment(`art_n_${i}`, `art_n_${i + 1}`, {
+        width: baseArterialWidth,
+        divided: false,
+        lanes: 2,
+        speedLimit: arterialSpeed,
+        trafficDensity: arterialDensity,
+        surfaceCondition: 0.95,
+        roadType: 'main',
+        oneWay: true,
+        pickupPractical: true,
+        tags: ['arterial', 'arterial_outer_north'],
+      });
+
+      // South carriageway: Westbound (oneWay: true, divided: false -> NO central median on 1-way carriageway)
+      addSegment(`art_s_${i + 1}`, `art_s_${i}`, {
+        width: baseArterialWidth,
+        divided: false,
+        lanes: 2,
+        speedLimit: arterialSpeed,
+        trafficDensity: arterialDensity,
+        surfaceCondition: 0.95,
+        roadType: 'main',
+        oneWay: true,
+        pickupPractical: true,
+        tags: ['arterial', 'arterial_outer_south'],
+      });
+    }
+
+    // Arterial U-turns & crossings linking art_n and art_s (combine tags if same column)
+    for (let i = 0; i < numCols; i++) {
+      const isEndpoint = i === 0 || i === numCols - 1;
+      const isCrossing = i === midCol;
+      const isUturn = !isCrossing && (isEndpoint || i === 1 || i === numCols - 2 || i % uturnStep === 0);
+      if (!isUturn && !isCrossing) continue;
+
+      const tags: string[] = [];
+      if (isUturn) tags.push('uturn');
+      if (isCrossing) tags.push('crossing', 'footbridge');
+
       addSegment(`art_n_${i}`, `art_s_${i}`, {
         width: 8,
         speedLimit: 25,
         roadType: 'main',
         oneWay: false,
         divided: false,
-        tags: ['uturn'],
+        pedestrianDensity: isCrossing ? 0.6 : 0.2,
+        tags,
       });
     }
-    if (i === 2) {
-      addSegment(`art_n_${i}`, `art_s_${i}`, {
-        width: 8,
-        speedLimit: 25,
+  } else {
+    // Undivided organic main bazaar spine (e.g. Puran Para: NO 8-lane divided clone)
+    for (let i = 0; i < numCols; i++) {
+      const x = colsX[i]!;
+      const isInterior = i > 0 && i < numCols - 1;
+      const jitterZ = isInterior ? rng.range(-18, 18) * style.organic : 0;
+      const isCrossing = i === midCol;
+      const tags = isCrossing ? ['crossing'] : [];
+      const isSignal = signalColSet.has(i);
+      addNode(`art_${i}`, x, arterialZ + jitterZ, 'junction', tags, isSignal);
+    }
+
+    for (let i = 0; i < numCols - 1; i++) {
+      addSegment(`art_${i}`, `art_${i + 1}`, {
+        width: baseArterialWidth,
+        divided: false,
+        lanes: 2,
+        speedLimit: arterialSpeed,
+        trafficDensity: arterialDensity,
+        surfaceCondition: 0.78,
+        pedestrianDensity: 0.55,
         roadType: 'main',
         oneWay: false,
-        divided: false,
-        pedestrianDensity: 0.6,
-        tags: ['crossing', 'footbridge'],
+        pickupPractical: true,
+        tags: ['arterial'],
       });
     }
   }
 
-  // 2. North Zone: Residential Lanes, Speed Bumps, and Alleys
-  // Grid lines: z = 80, z = 180
-  const northZ1 = originZ + 80;
-  const northZ2 = originZ + 180;
-  const xCols = [0, 150, 300, 450, 600].filter((x) => x <= W);
+  // 2. North & South Residential / Market Grids driven by blockM & marketStreets
+  const avgBlock = (style.blockM[0] + style.blockM[1]) / 2;
+  const numNorthRows = style.northRows ?? (avgBlock < 90 ? 3 : 2);
+  const numSouthRows = style.southRows ?? (avgBlock < 90 ? 3 : 2);
 
-  for (let col = 0; col < xCols.length; col++) {
-    const xBase = originX + (xCols[col] ?? 0);
-    const jitterX =
-      col > 0 && col < xCols.length - 1
-        ? rng.range(-15, 15) * style.organic
-        : 0;
-    const jitterZ = rng.range(-10, 10) * style.organic;
+  const computeRowZs = (count: number, isNorth: boolean): number[] => {
+    const zs: number[] = [];
+    if (count === 3) {
+      const ratios = isNorth ? [0.09, 0.225, 0.36] : [0.64, 0.775, 0.91];
+      for (const r of ratios) zs.push(originZ + Math.round(H * r));
+    } else {
+      const r1 = avgBlock >= 150 ? 0.115 : 0.13;
+      const r2 = avgBlock >= 150 ? 0.32 : 0.305;
+      const ratios = isNorth ? [r1, r2] : [1 - r2, 1 - r1];
+      for (const r of ratios) zs.push(originZ + Math.round(H * r));
+    }
+    return zs;
+  };
 
-    addNode(
-      `res_n1_${col}`,
-      xBase + jitterX,
-      northZ1 + jitterZ,
-      'junction',
-      ['speed_bump']
-    );
-    addNode(
-      `res_n2_${col}`,
-      xBase + jitterX,
-      northZ2 + jitterZ,
-      'junction',
-      ['speed_bump']
-    );
+  const northZs = computeRowZs(numNorthRows, true);
+  const southZs = computeRowZs(numSouthRows, false);
+
+  const divCol =
+    style.arterial.divided
+      ? (style.dividedBoulevardCol ?? (numCols > 3 ? 1 : undefined))
+      : undefined;
+
+  const createGridNodes = (prefix: 'n' | 's', rowZs: number[]) => {
+    for (let row = 0; row < rowZs.length; row++) {
+      const baseZ = rowZs[row]!;
+      const rowNum = row + 1;
+      for (let col = 0; col < numCols; col++) {
+        const xBase = colsX[col]!;
+        const isBorderX = col === 0 || col === numCols - 1;
+        const isNorthBorderLink = prefix === 'n' && row === 0;
+        const isSouthBorderLink = prefix === 's' && row === rowZs.length - 1;
+        const jitterX =
+          !isBorderX && !isNorthBorderLink && !isSouthBorderLink
+            ? rng.range(-12, 12) * style.organic
+            : 0;
+        const jitterZ =
+          !isNorthBorderLink && !isSouthBorderLink
+            ? rng.range(-10, 10) * style.organic
+            : 0;
+        const rawId = `res_${prefix}${rowNum}_${col}`;
+        const fullId = `${nodePrefix}${rawId}`;
+        const tags = prefix === 'n' ? ['speed_bump'] : [];
+        const sig = signalExtraSet.has(rawId) || signalExtraSet.has(fullId);
+        addNode(rawId, xBase + jitterX, baseZ + jitterZ, 'junction', tags, sig);
+      }
+    }
+  };
+
+  createGridNodes('n', northZs);
+  createGridNodes('s', southZs);
+
+  // Market street assignments based on style.marketStreets (0..3)
+  const isMarketRow = (prefix: 'n' | 's', rowNum: number): boolean => {
+    if (style.marketStreets <= 0) return false;
+    if (prefix === 's' && rowNum === 1) return true; // 1+ -> South Row 1
+    if (style.marketStreets >= 2 && prefix === 'n' && rowNum === numNorthRows) return true; // 2+ -> North Row 2
+    if (style.marketStreets >= 3 && prefix === 's' && rowNum === numSouthRows) return true; // 3+ -> South Row last
+    return false;
+  };
+
+  const addStreetSegments = (prefix: 'n' | 's', rowZs: number[]) => {
+    // Horizontal rows
+    for (let row = 0; row < rowZs.length; row++) {
+      const rowNum = row + 1;
+      const market = isMarketRow(prefix, rowNum);
+      for (let col = 0; col < numCols - 1; col++) {
+        const isFloodProne = prefix === 'n' && rowNum === 1 && col === 0;
+        if (market) {
+          addSegment(`res_${prefix}${rowNum}_${col}`, `res_${prefix}${rowNum}_${col + 1}`, {
+            width: 7,
+            speedLimit: 22,
+            surfaceCondition: 0.65,
+            trafficDensity: 0.72,
+            pedestrianDensity: 0.85,
+            roadType: 'market',
+            tags: ['market'],
+          });
+        } else {
+          addSegment(`res_${prefix}${rowNum}_${col}`, `res_${prefix}${rowNum}_${col + 1}`, {
+            width: 8,
+            speedLimit: 30,
+            surfaceCondition: isFloodProne ? 0.6 : 0.85,
+            floodSensitivity: isFloodProne ? 0.85 : 0.2,
+            roadType: 'residential',
+            tags: prefix === 'n' ? ['speed_bump'] : [],
+          });
+        }
+      }
+    }
+
+    // Vertical N-S connections between rows
+    for (let col = 0; col < numCols; col++) {
+      for (let row = 0; row < rowZs.length - 1; row++) {
+        const rA = row + 1;
+        const rB = row + 2;
+        const isMarketNs = style.marketStreets >= 3 && col === midCol;
+        if (isMarketNs) {
+          addSegment(`res_${prefix}${rA}_${col}`, `res_${prefix}${rB}_${col}`, {
+            width: 7,
+            speedLimit: 22,
+            surfaceCondition: 0.68,
+            trafficDensity: 0.7,
+            pedestrianDensity: 0.8,
+            roadType: 'market',
+            tags: ['market'],
+          });
+        } else {
+          addSegment(`res_${prefix}${rA}_${col}`, `res_${prefix}${rB}_${col}`, {
+            width: 8,
+            speedLimit: 30,
+            roadType: 'residential',
+            tags: prefix === 'n' ? ['speed_bump'] : [],
+          });
+        }
+      }
+
+      // Connect innermost row to arterial corridor
+      const innerRow = prefix === 'n' ? rowZs.length : 1;
+      const artTarget = style.arterial.divided
+        ? prefix === 'n'
+          ? `art_n_${col}`
+          : `art_s_${col}`
+        : `art_${col}`;
+
+      const isTwoWayDividedBoulevard =
+        style.arterial.divided && divCol !== undefined && col === divCol && prefix === 'n';
+
+      if (isTwoWayDividedBoulevard) {
+        // Two-way divided main boulevard (oneWay: false, divided: true -> real raised median between opposing lanes)
+        addSegment(`res_${prefix}${innerRow}_${col}`, artTarget, {
+          width: 14 / (style.roadWidthMod ?? 1.0),
+          speedLimit: 45,
+          trafficDensity: arterialDensity * 0.9,
+          lanes: 4,
+          oneWay: false,
+          divided: true,
+          roadType: 'main',
+          tags: ['arterial'],
+        });
+      } else {
+        addSegment(
+          prefix === 'n' ? `res_${prefix}${innerRow}_${col}` : artTarget,
+          prefix === 'n' ? artTarget : `res_${prefix}${innerRow}_${col}`,
+          {
+            width: 9,
+            speedLimit: 35,
+            roadType: 'main',
+          }
+        );
+      }
+    }
+  };
+
+  addStreetSegments('n', northZs);
+  addStreetSegments('s', southZs);
+
+  // 3. Procedural Service Loops (when enabled) & Alley Network driven by style.alleyDensity
+  // Generate inside block interiors so they never cross existing roads.
+  interface BlockBox {
+    tl: string;
+    tr: string;
+    bl: string;
+    br: string;
+  }
+  const blocks: BlockBox[] = [];
+  for (let row = 0; row < northZs.length - 1; row++) {
+    for (let col = 0; col < numCols - 1; col++) {
+      blocks.push({
+        tl: `res_n${row + 1}_${col}`,
+        tr: `res_n${row + 1}_${col + 1}`,
+        bl: `res_n${row + 2}_${col}`,
+        br: `res_n${row + 2}_${col + 1}`,
+      });
+    }
+  }
+  for (let row = 0; row < southZs.length - 1; row++) {
+    for (let col = 0; col < numCols - 1; col++) {
+      blocks.push({
+        tl: `res_s${row + 1}_${col}`,
+        tr: `res_s${row + 1}_${col + 1}`,
+        bl: `res_s${row + 2}_${col}`,
+        br: `res_s${row + 2}_${col + 1}`,
+      });
+    }
   }
 
-  // Horizontal residential connections in North
-  for (let col = 0; col < xCols.length - 1; col++) {
-    // Row 1
-    addSegment(`res_n1_${col}`, `res_n1_${col + 1}`, {
-      width: 7,
-      speedLimit: 30,
-      surfaceCondition: col === 0 ? 0.6 : 0.85,
-      floodSensitivity: col === 0 ? 0.85 : 0.2,
-      roadType: 'residential',
-      tags: ['speed_bump'],
-    });
+  const getNode = (rawId: string): RoadNode => {
+    const id = nodePrefix && !rawId.startsWith(nodePrefix) ? `${nodePrefix}${rawId}` : rawId;
+    return nodeMap.get(id)!;
+  };
 
-    // Row 2
-    addSegment(`res_n2_${col}`, `res_n2_${col + 1}`, {
-      width: 7,
-      speedLimit: 30,
-      roadType: 'residential',
-      tags: ['speed_bump'],
-    });
+  const usedBlockIndices = new Set<number>();
+
+  // Optional diplomatic/corporate service access roads inside large blocks (e.g. Gulbari)
+  if (style.serviceLoops && blocks.length >= 2) {
+    let svcIdx = 1;
+    let loopCount = 0;
+    for (let b = 0; b < blocks.length && loopCount < 4; b++) {
+      const blk = blocks[b]!;
+      const nTL = getNode(blk.tl);
+      const nTR = getNode(blk.tr);
+      const nBL = getNode(blk.bl);
+      const nBR = getNode(blk.br);
+      if (!nTL || !nTR || !nBL || !nBR) continue;
+      const bw = Math.min(nTR.x - nTL.x, nBR.x - nBL.x);
+      const bh = Math.min(nBL.z - nTL.z, nBR.z - nTR.z);
+      if (bw < 150 || bh < 100) continue;
+
+      const yMid = Math.round((nTL.z + nBL.z) / 2);
+      const x1 = Math.round(nTL.x + bw * 0.32);
+      const x2 = Math.round(nTL.x + bw * 0.68);
+      const s1 = addNode(`svc_${svcIdx++}`, x1, yMid, 'junction', ['service']);
+      const s2 = addNode(`svc_${svcIdx++}`, x2, yMid, 'junction', ['service']);
+      addSegment(blk.tl, s1.nodeId, {
+        width: 7,
+        speedLimit: 25,
+        roadType: 'service',
+        pickupPractical: true,
+        tags: ['service'],
+      });
+      addSegment(s1.nodeId, s2.nodeId, {
+        width: 7,
+        speedLimit: 25,
+        roadType: 'service',
+        pickupPractical: true,
+        tags: ['service'],
+      });
+      addSegment(s2.nodeId, blk.tr, {
+        width: 7,
+        speedLimit: 25,
+        roadType: 'service',
+        pickupPractical: true,
+        tags: ['service'],
+      });
+      usedBlockIndices.add(b);
+      loopCount++;
+    }
   }
 
-  // Vertical connections in North
-  for (let col = 0; col < xCols.length; col++) {
-    addSegment(`res_n1_${col}`, `res_n2_${col}`, {
-      width: 7,
-      speedLimit: 30,
-      roadType: 'residential',
-      tags: ['speed_bump'],
-    });
-    // Connect to arterial North carriageway
-    addSegment(`res_n2_${col}`, `art_n_${col}`, {
-      width: 8,
-      speedLimit: 35,
-      roadType: 'main',
-    });
-  }
+  const isClearOfSegments = (px: number, pz: number, minDistM: number): boolean => {
+    for (const seg of segments) {
+      const s = nodeMap.get(seg.startNodeId);
+      const e = nodeMap.get(seg.endNodeId);
+      if (!s || !e) continue;
+      if (distPointToSeg(px, pz, s.x, s.z, e.x, e.z) < minDistM) {
+        return false;
+      }
+    }
+    return true;
+  };
 
-  // 3. South Zone: Market Street, Alleys, and Residential/Commercial
-  // Grid lines: z = 420 (Market), z = 520 (Residential)
-  const southZ1 = originZ + 420;
-  const southZ2 = originZ + 520;
-
-  for (let col = 0; col < xCols.length; col++) {
-    const xBase = originX + (xCols[col] ?? 0);
-    const jitterX =
-      col > 0 && col < xCols.length - 1
-        ? rng.range(-15, 15) * style.organic
-        : 0;
-    const jitterZ = rng.range(-10, 10) * style.organic;
-
-    addNode(`res_s1_${col}`, xBase + jitterX, southZ1 + jitterZ, 'junction');
-    addNode(`res_s2_${col}`, xBase + jitterX, southZ2 + jitterZ, 'junction');
-  }
-
-  // South Row 1: Market Street
-  for (let col = 0; col < xCols.length - 1; col++) {
-    addSegment(`res_s1_${col}`, `res_s1_${col + 1}`, {
-      width: 9,
-      speedLimit: 25,
-      surfaceCondition: 0.65,
-      trafficDensity: 0.7,
-      pedestrianDensity: 0.85,
-      roadType: 'residential',
-      tags: ['market'],
-    });
-
-    // South Row 2
-    addSegment(`res_s2_${col}`, `res_s2_${col + 1}`, {
-      width: 7,
-      speedLimit: 30,
-      roadType: 'residential',
-    });
-  }
-
-  // Vertical connections in South
-  for (let col = 0; col < xCols.length; col++) {
-    // Connect arterial South carriageway to South Row 1
-    addSegment(`art_s_${col}`, `res_s1_${col}`, {
-      width: 8,
-      speedLimit: 35,
-      roadType: 'main',
-    });
-    addSegment(`res_s1_${col}`, `res_s2_${col}`, {
-      width: 7,
-      speedLimit: 30,
-      roadType: 'residential',
-    });
-  }
-
-  // 4. Narrow Alleys (3+ with some motorcycleAccessible: false)
-  const alleyNode1 = addNode('alley_nw_mid', originX + 75, northZ1 + 50);
-  addSegment('res_n1_0', alleyNode1.nodeId, {
-    width: 3.5,
-    speedLimit: 20,
-    roadType: 'alley',
-    motorcycleAccessible: true,
-    pickupPractical: true,
-    tags: ['alley'],
-  });
-  addSegment(alleyNode1.nodeId, 'res_n2_1', {
-    width: 3.5,
-    speedLimit: 20,
-    roadType: 'alley',
-    motorcycleAccessible: true,
-    pickupPractical: true,
-    tags: ['alley'],
-  });
-
-  const alleyNode2 = addNode('alley_ne_gate', originX + 375, northZ1 - 30);
-  addSegment('res_n1_2', alleyNode2.nodeId, {
-    width: 2.5,
-    speedLimit: 15,
-    roadType: 'alley',
-    motorcycleAccessible: false,
-    pickupPractical: false,
-    tags: ['alley', 'pedestrian_only'],
-  });
-  addSegment(alleyNode2.nodeId, 'res_n1_3', {
-    width: 2.5,
-    speedLimit: 15,
-    roadType: 'alley',
-    motorcycleAccessible: false,
-    pickupPractical: false,
-    tags: ['alley', 'pedestrian_only'],
-  });
-
-  const alleyNode3 = addNode('alley_sc_mid', originX + 225, southZ1 + 50);
-  addSegment('res_s1_1', alleyNode3.nodeId, {
-    width: 3.5,
-    speedLimit: 20,
-    roadType: 'alley',
-    motorcycleAccessible: true,
-    pickupPractical: true,
-    tags: ['alley'],
-  });
-  addSegment(alleyNode3.nodeId, 'res_s2_2', {
-    width: 3.5,
-    speedLimit: 20,
-    roadType: 'alley',
-    motorcycleAccessible: true,
-    pickupPractical: true,
-    tags: ['alley'],
-  });
-
-  const alleyNode4 = addNode(
-    'alley_se_deadend',
-    originX + 525,
-    southZ2 - 30,
-    'deadEnd'
+  // Desired alley chain count scales directly with alleyDensity * block count
+  const targetAlleyChains = Math.max(
+    2,
+    Math.min(blocks.length - usedBlockIndices.size, Math.round(style.alleyDensity * blocks.length * 1.6) + 1)
   );
-  addSegment('res_s2_3', alleyNode4.nodeId, {
-    width: 2.5,
-    speedLimit: 15,
-    roadType: 'alley',
-    motorcycleAccessible: false,
-    pickupPractical: false,
-    tags: ['alley', 'deadend'],
-  });
 
-  // 5. Place POIs (all on pickupPractical nodes)
+  // Deterministic order of available blocks via seeded shuffle
+  const blockOrder = blocks
+    .map((blk, idx) => ({ blk, idx }))
+    .filter(({ idx }) => !usedBlockIndices.has(idx))
+    .map(({ blk }) => blk);
+  for (let i = blockOrder.length - 1; i > 0; i--) {
+    const j = Math.floor(rng.next() * (i + 1));
+    const tmp = blockOrder[i]!;
+    blockOrder[i] = blockOrder[j]!;
+    blockOrder[j] = tmp;
+  }
+
+  let accessibleCount = 0;
+  let inaccessibleCount = 0;
+  let alleyIdx = 1;
+
+  for (let b = 0; b < blockOrder.length && (accessibleCount + inaccessibleCount < targetAlleyChains || inaccessibleCount === 0 || accessibleCount === 0); b++) {
+    const blk = blockOrder[b]!;
+    const nTL = getNode(blk.tl);
+    const nTR = getNode(blk.tr);
+    const nBL = getNode(blk.bl);
+    const nBR = getNode(blk.br);
+    if (!nTL || !nTR || !nBL || !nBR) continue;
+
+    const midX = (nTL.x + nTR.x + nBL.x + nBR.x) / 4;
+    const midZ = (nTL.z + nTR.z + nBL.z + nBR.z) / 4;
+    const blockW = Math.min(nTR.x - nTL.x, nBR.x - nBL.x);
+    const blockH = Math.min(nBL.z - nTL.z, nBR.z - nTR.z);
+    if (blockW < 55 || blockH < 55) continue;
+
+    const wantInaccessible =
+      inaccessibleCount === 0 ||
+      (accessibleCount > 0 && b % 2 === 1 && inaccessibleCount < Math.ceil(targetAlleyChains * 0.45));
+
+    const jitterX = rng.range(-blockW * 0.12, blockW * 0.12) * style.organic;
+    const jitterZ = rng.range(-blockH * 0.12, blockH * 0.12) * style.organic;
+    const cx = midX + jitterX;
+    const cz = midZ + jitterZ;
+
+    if (!isClearOfSegments(cx, cz, 16)) continue;
+
+    if (!wantInaccessible) {
+      // Motorcycle-accessible shortcut alley cutting diagonally through the block
+      const flip = b % 2 === 0;
+      const startCorner = flip ? blk.tl : blk.tr;
+      const endCorner = flip ? blk.br : blk.bl;
+      const midNode = addNode(`alley_mid_${alleyIdx++}`, cx, cz, 'junction', ['alley']);
+      addSegment(startCorner, midNode.nodeId, {
+        width: 3.5,
+        speedLimit: 20,
+        roadType: 'alley',
+        motorcycleAccessible: true,
+        pickupPractical: true,
+        pedestrianDensity: 0.45,
+        tags: ['alley'],
+      });
+      addSegment(midNode.nodeId, endCorner, {
+        width: 3.5,
+        speedLimit: 20,
+        roadType: 'alley',
+        motorcycleAccessible: true,
+        pickupPractical: true,
+        pedestrianDensity: 0.45,
+        tags: ['alley'],
+      });
+      accessibleCount++;
+    } else if (b % 3 === 0) {
+      // Narrow pedestrian-only dead-end gully inside the block
+      const deadNode = addNode(`alley_dead_${alleyIdx++}`, cx, cz, 'deadEnd', ['alley']);
+      addSegment(blk.br, deadNode.nodeId, {
+        width: 2.5,
+        speedLimit: 15,
+        roadType: 'alley',
+        motorcycleAccessible: false,
+        pickupPractical: false,
+        pedestrianDensity: 0.65,
+        tags: ['alley', 'deadend'],
+      });
+      inaccessibleCount++;
+    } else {
+      // Narrow pedestrian-only gated cut-through
+      const gateNode = addNode(`alley_gate_${alleyIdx++}`, cx, cz, 'junction', ['alley']);
+      addSegment(blk.tl, gateNode.nodeId, {
+        width: 2.5,
+        speedLimit: 15,
+        roadType: 'alley',
+        motorcycleAccessible: false,
+        pickupPractical: false,
+        pedestrianDensity: 0.7,
+        tags: ['alley', 'pedestrian_only'],
+      });
+      addSegment(gateNode.nodeId, blk.tr, {
+        width: 2.5,
+        speedLimit: 15,
+        roadType: 'alley',
+        motorcycleAccessible: false,
+        pickupPractical: false,
+        pedestrianDensity: 0.7,
+        tags: ['alley', 'pedestrian_only'],
+      });
+      inaccessibleCount++;
+    }
+  }
+
+  // 4. Place POIs (all on pickupPractical segments)
   if (style.pois && style.pois.length > 0) {
     pois.push(...style.pois);
   } else if (districtId === 'mirpara') {
     pois.push(
-      {
-        id: `poi_${districtId}_home`,
-        kind: 'home',
-        nodeId: 'res_n2_0',
-        nameKey: 'poi.mirpara.rafi_home',
-      },
-      {
-        id: `poi_${districtId}_tea_stall`,
-        kind: 'teaStall',
-        nodeId: 'res_n2_1',
-        nameKey: 'poi.mirpara.tea_stall',
-      },
-      {
-        id: `poi_${districtId}_fuel`,
-        kind: 'fuel',
-        nodeId: 'art_s_1',
-        nameKey: 'poi.mirpara.fuel',
-      },
-      {
-        id: `poi_${districtId}_garage`,
-        kind: 'garage',
-        nodeId: 'res_s1_0',
-        nameKey: 'poi.mirpara.garage',
-      },
-      {
-        id: `poi_${districtId}_school`,
-        kind: 'school',
-        nodeId: 'res_n1_2',
-        nameKey: 'poi.mirpara.school',
-      },
-      {
-        id: `poi_${districtId}_pharmacy`,
-        kind: 'pharmacy',
-        nodeId: 'res_s1_2',
-        nameKey: 'poi.mirpara.pharmacy',
-      },
-      {
-        id: `poi_${districtId}_campus_gate`,
-        kind: 'officeGate',
-        nodeId: 'res_n1_1',
-        nameKey: 'poi.mirpara.campus_gate',
-      },
-      {
-        id: `poi_${districtId}_footbridge`,
-        kind: 'crossing',
-        nodeId: 'art_n_2',
-        nameKey: 'poi.mirpara.footbridge',
-      },
-      {
-        id: `poi_${districtId}_bazaar`,
-        kind: 'market',
-        nodeId: 'res_s1_1',
-        nameKey: 'poi.mirpara.bazaar',
-      },
-      {
-        id: `poi_${districtId}_bus_stand`,
-        kind: 'busStop',
-        nodeId: 'art_s_3',
-        nameKey: 'poi.mirpara.bus_stand',
-      },
-      {
-        id: `poi_${districtId}_clinic`,
-        kind: 'hospital',
-        nodeId: 'res_s2_1',
-        nameKey: 'poi.mirpara.clinic',
-      },
-      {
-        id: `poi_${districtId}_green_tower`,
-        kind: 'apartment',
-        nodeId: 'res_n2_3',
-        nameKey: 'poi.mirpara.green_tower',
-      }
+      { id: 'poi_mirpara_home', kind: 'home', nodeId: 'res_n2_0', nameKey: 'poi.mirpara.rafi_home' },
+      { id: 'poi_mirpara_tea_stall', kind: 'teaStall', nodeId: 'res_n2_1', nameKey: 'poi.mirpara.tea_stall' },
+      { id: 'poi_mirpara_fuel', kind: 'fuel', nodeId: 'art_s_1', nameKey: 'poi.mirpara.fuel' },
+      { id: 'poi_mirpara_garage', kind: 'garage', nodeId: 'res_s1_0', nameKey: 'poi.mirpara.garage' },
+      { id: 'poi_mirpara_school', kind: 'school', nodeId: 'res_n1_2', nameKey: 'poi.mirpara.school' },
+      { id: 'poi_mirpara_pharmacy', kind: 'pharmacy', nodeId: 'res_s1_2', nameKey: 'poi.mirpara.pharmacy' },
+      { id: 'poi_mirpara_campus_gate', kind: 'officeGate', nodeId: 'res_n1_1', nameKey: 'poi.mirpara.campus_gate' },
+      { id: 'poi_mirpara_footbridge', kind: 'crossing', nodeId: 'art_n_2', nameKey: 'poi.mirpara.footbridge' },
+      { id: 'poi_mirpara_bazaar', kind: 'market', nodeId: 'res_s1_1', nameKey: 'poi.mirpara.bazaar' },
+      { id: 'poi_mirpara_bus_stand', kind: 'busStop', nodeId: 'art_s_3', nameKey: 'poi.mirpara.bus_stand' },
+      { id: 'poi_mirpara_clinic', kind: 'hospital', nodeId: 'res_s2_1', nameKey: 'poi.mirpara.clinic' },
+      { id: 'poi_mirpara_green_tower', kind: 'apartment', nodeId: 'res_n2_3', nameKey: 'poi.mirpara.green_tower' }
     );
   }
 
-  // 6. Custom extra nodes and segments (e.g. Mohakhal flyover)
+  // 5. Custom extra nodes and segments (e.g. Mohakhal flyover)
   if (style.customNodes) {
     for (const cn of style.customNodes) {
       nodeMap.set(cn.nodeId, cn);
@@ -506,34 +818,225 @@ export function genDistrict(
     }
   }
 
-  // 7. Generate Building Lots along pickupPractical segments
+  // 6. Precompute all non-flyover road+sidewalk OBBs for strict overlap-free lot placement
+  const roadObbs: RoadObb[] = [];
+  const nodeMaxClearance = new Map<string, number>();
+
+  for (const seg of segments) {
+    if (seg.roadType === 'flyover') continue;
+    const sNode = nodeMap.get(seg.startNodeId);
+    const eNode = nodeMap.get(seg.endNodeId);
+    if (!sNode || !eNode) continue;
+
+    const dx = eNode.x - sNode.x;
+    const dz = eNode.z - sNode.z;
+    const len = Math.hypot(dx, dz);
+    if (len < 0.1) continue;
+
+    const roadW = Math.max(seg.width, renderRoadWidth(seg));
+    const sidewalkW = seg.roadType === 'alley' ? 0.28 : 1.88;
+    const halfLateral = roadW / 2 + sidewalkW;
+
+    roadObbs.push({
+      cx: (sNode.x + eNode.x) / 2,
+      cz: (sNode.z + eNode.z) / 2,
+      halfX: halfLateral,
+      halfZ: len / 2,
+      yaw: Math.atan2(dx, dz),
+    });
+
+    nodeMaxClearance.set(
+      seg.startNodeId,
+      Math.max(nodeMaxClearance.get(seg.startNodeId) ?? 0, halfLateral)
+    );
+    nodeMaxClearance.set(
+      seg.endNodeId,
+      Math.max(nodeMaxClearance.get(seg.endNodeId) ?? 0, halfLateral)
+    );
+  }
+
+  // Also reserve a virtual median corridor OBB between split art_n / art_s carriageways
+  // so no buildings ever get dropped inside the divided arterial median or flyover footprint.
+  if (style.arterial.divided) {
+    const firstN = getNode('art_n_0');
+    const lastN = getNode(`art_n_${numCols - 1}`);
+    const firstS = getNode('art_s_0');
+    if (firstN && lastN && firstS) {
+      const medHalfZ = Math.abs(firstS.z - firstN.z) / 2 + 2;
+      roadObbs.push({
+        cx: (firstN.x + lastN.x) / 2,
+        cz: (firstN.z + firstS.z) / 2,
+        halfX: (lastN.x - firstN.x) / 2,
+        halfZ: medHalfZ,
+        yaw: 0,
+      });
+    }
+  }
+
+  if (style.connectorExits) {
+    for (const exit of style.connectorExits) {
+      const fromNode = getNode(exit.fromRawNodeId);
+      if (!fromNode) continue;
+      const dx = exit.toX - fromNode.x;
+      const dz = exit.toZ - fromNode.z;
+      const len = Math.hypot(dx, dz);
+      if (len < 0.1) continue;
+      roadObbs.push({
+        cx: (fromNode.x + exit.toX) / 2,
+        cz: (fromNode.z + exit.toZ) / 2,
+        halfX: exit.width / 2 + 1.88,
+        halfZ: len / 2,
+        yaw: Math.atan2(dx, dz),
+      });
+    }
+  }
+
+  // 7. Generate varied continuous building lots (width: 10-22m, depth: 10-16m) on streets >= 35m
+  const [lotWMin, lotWMax] = style.lotWidthRange ?? [11, 20];
+  const [lotDMin, lotDMax] = style.lotDepthRange ?? [11, 15];
+  const isCivicDistrict =
+    style.demandZones?.some((z) => z === 'embassy' || z === 'university' || z === 'medical') ?? false;
+
   let lotCounter = 1;
   for (const seg of segments) {
-    if (!seg.pickupPractical) continue;
-    const startNode = nodeMap.get(seg.startNodeId);
-    const endNode = nodeMap.get(seg.endNodeId);
-    if (!startNode || !endNode) continue;
-
-    const midX = (startNode.x + endNode.x) / 2;
-    const midZ = (startNode.z + endNode.z) / 2;
-    const heading = Math.atan2(endNode.x - startNode.x, endNode.z - startNode.z);
-
-    let zone: BuildingLot['zone'] = 'residential';
-    if (seg.tags.includes('market')) {
-      zone = 'market';
-    } else if (seg.tags.includes('arterial') || seg.roadType === 'main') {
-      zone = 'commercial';
+    if (seg.roadType === 'flyover') continue;
+    if (
+      seg.tags.includes('uturn') ||
+      seg.tags.includes('crossing') ||
+      seg.tags.includes('footbridge')
+    ) {
+      continue;
     }
 
-    lots.push({
-      lotId: `lot_${districtId}_${lotCounter++}`,
-      x: Math.round(midX + 12 * Math.cos(heading)),
-      z: Math.round(midZ - 12 * Math.sin(heading)),
-      width: 18,
-      depth: 16,
-      facingHeading: heading,
-      zone,
-    });
+    const sNode = nodeMap.get(seg.startNodeId);
+    const eNode = nodeMap.get(seg.endNodeId);
+    if (!sNode || !eNode) continue;
+
+    const dx = eNode.x - sNode.x;
+    const dz = eNode.z - sNode.z;
+    const len = Math.hypot(dx, dz);
+    if (len < 35) continue;
+
+    const ux = dx / len;
+    const uz = dz / len;
+    const nx = -uz;
+    const nz = ux;
+
+    const roadW = Math.max(seg.width, renderRoadWidth(seg));
+    const sidewalkW = seg.roadType === 'alley' ? 0.28 : 1.88;
+
+    const startClear = Math.max(12, (nodeMaxClearance.get(seg.startNodeId) ?? 6) + 2.5);
+    const endClear = Math.max(12, (nodeMaxClearance.get(seg.endNodeId) ?? 6) + 2.5);
+    if (len - startClear - endClear < 10) continue;
+
+    // On split one-way arterial carriageways, only build on the outer side away from the central median
+    const isOuterNorth = seg.tags.includes('arterial_outer_north');
+    const isOuterSouth = seg.tags.includes('arterial_outer_south');
+    const sides = isOuterNorth || isOuterSouth ? [-1] : [1, -1];
+
+    for (const side of sides) {
+      let s = startClear;
+      while (s + 10 <= len - endClear) {
+        let lotWidth = Math.round(rng.range(lotWMin, lotWMax));
+        lotWidth = clamp(lotWidth, 10, 22);
+        const remaining = len - endClear - s;
+        if (lotWidth > remaining) {
+          lotWidth = Math.floor(remaining);
+          if (lotWidth < 10) break;
+        }
+        const lotDepth = clamp(Math.round(rng.range(lotDMin, lotDMax)), 10, 16);
+
+        const along = s + lotWidth / 2;
+        const offset = roadW / 2 + sidewalkW + lotDepth / 2 + 1.5;
+        const cx = Math.round((sNode.x + ux * along + side * nx * offset) * 10) / 10;
+        const cz = Math.round((sNode.z + uz * along + side * nz * offset) * 10) / 10;
+        const facingHeading =
+          Math.round((side > 0 ? Math.atan2(-nx, -nz) : Math.atan2(nx, nz)) * 10000) / 10000;
+
+        let valid = lotInsideBounds(
+          cx,
+          cz,
+          lotWidth / 2,
+          lotDepth / 2,
+          facingHeading,
+          originX + 1.5,
+          originX + W - 1.5,
+          originZ + 1.5,
+          originZ + H - 1.5
+        );
+
+        if (valid) {
+          for (let r = 0; r < roadObbs.length; r++) {
+            const ro = roadObbs[r]!;
+            if (
+              obbOverlaps(
+                cx,
+                cz,
+                lotWidth / 2,
+                lotDepth / 2,
+                facingHeading,
+                ro.cx,
+                ro.cz,
+                ro.halfX,
+                ro.halfZ,
+                ro.yaw,
+                0.25
+              )
+            ) {
+              valid = false;
+              break;
+            }
+          }
+        }
+
+        if (valid) {
+          for (let l = 0; l < lots.length; l++) {
+            const other = lots[l]!;
+            if (
+              obbOverlaps(
+                cx,
+                cz,
+                lotWidth / 2,
+                lotDepth / 2,
+                facingHeading,
+                other.x,
+                other.z,
+                other.width / 2,
+                other.depth / 2,
+                other.facingHeading,
+                0.6
+              )
+            ) {
+              valid = false;
+              break;
+            }
+          }
+        }
+
+        if (valid) {
+          let zone: BuildingLot['zone'] = 'residential';
+          if (seg.roadType === 'market' || seg.tags.includes('market')) {
+            zone = 'market';
+          } else if (seg.tags.includes('arterial') || seg.roadType === 'main') {
+            zone = isCivicDistrict && rng.next() < 0.22 ? 'civic' : 'commercial';
+          } else if (rng.next() < 0.15) {
+            zone = 'commercial';
+          }
+
+          lots.push({
+            lotId: `lot_${districtId}_${lotCounter++}`,
+            x: cx,
+            z: cz,
+            width: lotWidth,
+            depth: lotDepth,
+            facingHeading,
+            zone,
+          });
+        }
+
+        s += lotWidth + rng.range(1.5, 3.5);
+      }
+    }
   }
 
   return {
@@ -556,7 +1059,7 @@ export function genMirpara(seed: number | string = 101): DistrictData {
       name: { bn: 'মিরপাড়া', en: 'Mirpara' },
       origin: { x: 0, z: 0 },
       size: { width: 600, height: 600 },
-      blockM: [80, 150],
+      blockM: [100, 160],
       arterial: {
         divided: true,
         uturnEveryM: 300,
@@ -566,6 +1069,17 @@ export function genMirpara(seed: number | string = 101): DistrictData {
       organic: 0.35,
       demandZones: ['residential', 'market', 'commercial', 'campus'],
       riskBase: 0.1,
+      signalColumns: [2],
+      dividedBoulevardCol: 1,
+      arterialYGap: 18,
+      lotWidthRange: [12, 20],
+      lotDepthRange: [11, 15],
+      connectorExits: [
+        { fromRawNodeId: 'art_n_4', toX: 614, toZ: 291, width: 12 },
+        { fromRawNodeId: 'art_s_4', toX: 614, toZ: 309, width: 12 },
+        { fromRawNodeId: 'res_s2_1', toX: 157, toZ: 678, width: 8 },
+        { fromRawNodeId: 'res_s2_2', toX: 300, toZ: 678, width: 8 },
+      ],
     },
     seed
   );
@@ -581,7 +1095,7 @@ export function genFulgate(seed: number | string = 102): DistrictData {
       name: { bn: 'ফুলগেট', en: 'Fulgate' },
       origin: { x: 600, z: 0 },
       size: { width: 600, height: 600 },
-      blockM: [80, 150],
+      blockM: [75, 135],
       arterial: {
         divided: true,
         uturnEveryM: 150,
@@ -594,6 +1108,18 @@ export function genFulgate(seed: number | string = 102): DistrictData {
       organic: 0.2,
       demandZones: ['transit_hub', 'commercial', 'office'],
       riskBase: 0.15,
+      signalColumns: [1, 2],
+      signalExtraNodes: ['fulgate_res_n2_2'],
+      dividedBoulevardCol: 2,
+      arterialYGap: 18,
+      lotWidthRange: [12, 21],
+      lotDepthRange: [12, 16],
+      connectorExits: [
+        { fromRawNodeId: 'fulgate_art_n_0', toX: 586, toZ: 291, width: 12 },
+        { fromRawNodeId: 'fulgate_art_s_0', toX: 586, toZ: 309, width: 12 },
+        { fromRawNodeId: 'fulgate_res_s2_1', toX: 728, toZ: 678, width: 10 },
+        { fromRawNodeId: 'fulgate_res_s2_3', toX: 957, toZ: 678, width: 10 },
+      ],
       pois: [
         {
           id: 'poi_fulgate_junction',
@@ -655,10 +1181,23 @@ export function genDhanbagh(seed: number | string = 103): DistrictData {
         trafficDensity: 0.5,
       },
       alleyDensity: 0.2,
-      marketStreets: 1,
+      marketStreets: 0,
       organic: 0.25,
       demandZones: ['residential', 'university', 'medical', 'dining'],
       riskBase: 0.08,
+      signalColumns: [2],
+      dividedBoulevardCol: 2,
+      arterialYGap: 24,
+      lotWidthRange: [13, 21],
+      lotDepthRange: [12, 16],
+      connectorExits: [
+        { fromRawNodeId: 'dhanbagh_res_n1_1', toX: 157, toZ: 522, width: 8 },
+        { fromRawNodeId: 'dhanbagh_res_n1_2', toX: 300, toZ: 522, width: 8 },
+        { fromRawNodeId: 'dhanbagh_art_n_4', toX: 614, toZ: 888, width: 12 },
+        { fromRawNodeId: 'dhanbagh_art_s_4', toX: 614, toZ: 912, width: 12 },
+        { fromRawNodeId: 'dhanbagh_res_s2_1', toX: 177, toZ: 1254, width: 8 },
+        { fromRawNodeId: 'dhanbagh_res_s2_2', toX: 341, toZ: 1254, width: 8 },
+      ],
       pois: [
         {
           id: 'poi_dhanbagh_hospital',
@@ -703,17 +1242,19 @@ export function genDhanbagh(seed: number | string = 103): DistrictData {
 }
 
 /**
- * Mohakhal (Mohakhali): Intercity terminal, flyover, bottlenecks.
+ * Mohakhal (Mohakhali): Intercity terminal, elevated flyover (y = 6.0m), bottlenecks.
  */
 export function genMohakhal(seed: number | string = 104): DistrictData {
   const originX = 600;
   const originZ = 600;
 
-  // Custom flyover nodes and ramps
+  // Elevated Mohakhali Flyover deck (y = 6.0m) centered in the 24m arterial corridor (z = 900)
+  // with sloped ramps rising from ground arterial endpoints (y = 0 -> 6.0)
   const flyNodes: RoadNode[] = [
     {
       nodeId: 'mohakhal_fly_w',
-      x: originX + 50,
+      x: originX + 114,
+      y: 6.0,
       z: originZ + 300,
       kind: 'junction',
       tags: ['flyover'],
@@ -721,13 +1262,15 @@ export function genMohakhal(seed: number | string = 104): DistrictData {
     {
       nodeId: 'mohakhal_fly_mid',
       x: originX + 300,
+      y: 6.0,
       z: originZ + 300,
       kind: 'junction',
       tags: ['flyover'],
     },
     {
       nodeId: 'mohakhal_fly_e',
-      x: originX + 550,
+      x: originX + 486,
+      y: 6.0,
       z: originZ + 300,
       kind: 'junction',
       tags: ['flyover'],
@@ -821,7 +1364,7 @@ export function genMohakhal(seed: number | string = 104): DistrictData {
       district: 'mohakhal',
       tags: ['flyover'],
     },
-    // Eastbound on-ramp from ground arterial
+    // Eastbound on-ramp from ground arterial (y = 0 -> 6.0)
     {
       segmentId: 'S_mohakhal_ramp_eb_on',
       startNodeId: 'mohakhal_art_n_0',
@@ -843,11 +1386,11 @@ export function genMohakhal(seed: number | string = 104): DistrictData {
       district: 'mohakhal',
       tags: ['flyover', 'ramp'],
     },
-    // Eastbound off-ramp to ground arterial
+    // Eastbound off-ramp to ground arterial (y = 6.0 -> 0)
     {
       segmentId: 'S_mohakhal_ramp_eb_off',
       startNodeId: 'mohakhal_fly_e',
-      endNodeId: 'mohakhal_art_n_4',
+      endNodeId: 'mohakhal_art_n_5',
       width: 8,
       surfaceCondition: 0.95,
       trafficDensity: 0.5,
@@ -865,10 +1408,10 @@ export function genMohakhal(seed: number | string = 104): DistrictData {
       district: 'mohakhal',
       tags: ['flyover', 'ramp'],
     },
-    // Westbound on-ramp from ground arterial
+    // Westbound on-ramp from ground arterial (y = 0 -> 6.0)
     {
       segmentId: 'S_mohakhal_ramp_wb_on',
-      startNodeId: 'mohakhal_art_s_4',
+      startNodeId: 'mohakhal_art_s_5',
       endNodeId: 'mohakhal_fly_e',
       width: 8,
       surfaceCondition: 0.95,
@@ -887,7 +1430,7 @@ export function genMohakhal(seed: number | string = 104): DistrictData {
       district: 'mohakhal',
       tags: ['flyover', 'ramp'],
     },
-    // Westbound off-ramp to ground arterial
+    // Westbound off-ramp to ground arterial (y = 6.0 -> 0)
     {
       segmentId: 'S_mohakhal_ramp_wb_off',
       startNodeId: 'mohakhal_fly_w',
@@ -925,10 +1468,25 @@ export function genMohakhal(seed: number | string = 104): DistrictData {
         trafficDensity: 0.85,
       },
       alleyDensity: 0.25,
-      marketStreets: 1,
+      marketStreets: 0,
       organic: 0.3,
       demandZones: ['bus_terminal', 'commercial', 'medical'],
       riskBase: 0.12,
+      signalColumns: [2, 3],
+      dividedBoulevardCol: 3,
+      arterialYGap: 24,
+      lotWidthRange: [12, 20],
+      lotDepthRange: [11, 15],
+      connectorExits: [
+        { fromRawNodeId: 'mohakhal_res_n1_1', toX: 714, toZ: 522, width: 10 },
+        { fromRawNodeId: 'mohakhal_res_n1_3', toX: 943, toZ: 522, width: 10 },
+        { fromRawNodeId: 'mohakhal_art_n_0', toX: 586, toZ: 888, width: 12 },
+        { fromRawNodeId: 'mohakhal_art_s_0', toX: 586, toZ: 912, width: 12 },
+        { fromRawNodeId: 'mohakhal_art_n_5', toX: 1214, toZ: 888, width: 14 },
+        { fromRawNodeId: 'mohakhal_art_s_5', toX: 1214, toZ: 912, width: 14 },
+        { fromRawNodeId: 'mohakhal_res_s2_1', toX: 757, toZ: 1278, width: 10 },
+        { fromRawNodeId: 'mohakhal_res_s2_3', toX: 900, toZ: 1278, width: 10 },
+      ],
       customNodes: flyNodes,
       customSegments: flySegments,
       pois: [
@@ -975,7 +1533,7 @@ export function genMohakhal(seed: number | string = 104): DistrictData {
 }
 
 /**
- * Gulbari (Gulshan/Banani): Wider roads, office towers, embassies, security gates.
+ * Gulbari (Gulshan/Banani): Wider roads, superblocks, office towers, embassies, security gates.
  */
 export function genGulbari(seed: number | string = 105): DistrictData {
   return genDistrict(
@@ -984,7 +1542,7 @@ export function genGulbari(seed: number | string = 105): DistrictData {
       name: { bn: 'গুলবাড়ি', en: 'Gulbari' },
       origin: { x: 1200, z: 600 },
       size: { width: 600, height: 600 },
-      blockM: [120, 200],
+      blockM: [130, 210],
       arterial: {
         divided: true,
         uturnEveryM: 150,
@@ -998,6 +1556,16 @@ export function genGulbari(seed: number | string = 105): DistrictData {
       roadWidthMod: 1.25,
       demandZones: ['corporate', 'embassy', 'luxury'],
       riskBase: 0.05,
+      signalColumns: [1, 2],
+      dividedBoulevardCol: 1,
+      arterialYGap: 24,
+      lotWidthRange: [16, 22],
+      lotDepthRange: [13, 16],
+      serviceLoops: true,
+      connectorExits: [
+        { fromRawNodeId: 'gulbari_art_n_0', toX: 1186, toZ: 888, width: 14 },
+        { fromRawNodeId: 'gulbari_art_s_0', toX: 1186, toZ: 912, width: 14 },
+      ],
       pois: [
         {
           id: 'poi_gulbari_circle_one',
@@ -1042,7 +1610,7 @@ export function genGulbari(seed: number | string = 105): DistrictData {
 }
 
 /**
- * Puran Para (Old Dhaka): Organic narrow lanes, inaccessible alleys, dense markets, difficult turns.
+ * Puran Para (Old Dhaka): Undivided organic narrow lanes, dense alleys & markets, difficult turns.
  */
 export function genPuranpara(seed: number | string = 106): DistrictData {
   return genDistrict(
@@ -1053,11 +1621,11 @@ export function genPuranpara(seed: number | string = 106): DistrictData {
       size: { width: 600, height: 600 },
       blockM: [60, 100],
       arterial: {
-        divided: true,
+        divided: false,
         uturnEveryM: 150,
         speedLimit: 35,
         trafficDensity: 0.75,
-        width: 10,
+        width: 9,
       },
       alleyDensity: 0.5,
       marketStreets: 3,
@@ -1065,6 +1633,17 @@ export function genPuranpara(seed: number | string = 106): DistrictData {
       roadWidthMod: 0.85,
       demandZones: ['heritage', 'spice_market', 'bakery', 'river_ghat'],
       riskBase: 0.22,
+      signalColumns: [3, 5],
+      northRows: 3,
+      southRows: 3,
+      lotWidthRange: [10, 15],
+      lotDepthRange: [10, 13],
+      connectorExits: [
+        { fromRawNodeId: 'puranpara_res_n1_2', toX: 157, toZ: 1122, width: 8 },
+        { fromRawNodeId: 'puranpara_res_n1_4', toX: 300, toZ: 1122, width: 8 },
+        { fromRawNodeId: 'puranpara_art_7', toX: 614, toZ: 1491, width: 10 },
+        { fromRawNodeId: 'puranpara_art_7', toX: 614, toZ: 1509, width: 10 },
+      ],
       pois: [
         {
           id: 'poi_puranpara_lalbagh_gate',
@@ -1093,7 +1672,7 @@ export function genPuranpara(seed: number | string = 106): DistrictData {
         {
           id: 'poi_puranpara_morod',
           kind: 'crossing',
-          nodeId: 'puranpara_art_n_2',
+          nodeId: 'puranpara_art_3',
           nameKey: 'poi.puranpara.morod',
         },
         {
@@ -1118,7 +1697,7 @@ export function genMotinagar(seed: number | string = 107): DistrictData {
       name: { bn: 'মতিনগর', en: 'Motinagar' },
       origin: { x: 600, z: 1200 },
       size: { width: 600, height: 600 },
-      blockM: [90, 160],
+      blockM: [95, 165],
       arterial: {
         divided: true,
         uturnEveryM: 150,
@@ -1130,6 +1709,18 @@ export function genMotinagar(seed: number | string = 107): DistrictData {
       organic: 0.15,
       demandZones: ['financial', 'stadium', 'press_club', 'commercial'],
       riskBase: 0.1,
+      signalColumns: [2],
+      signalExtraNodes: ['motinagar_res_n2_1'],
+      dividedBoulevardCol: 2,
+      arterialYGap: 18,
+      lotWidthRange: [14, 22],
+      lotDepthRange: [12, 16],
+      connectorExits: [
+        { fromRawNodeId: 'motinagar_res_n1_1', toX: 728, toZ: 1122, width: 10 },
+        { fromRawNodeId: 'motinagar_res_n1_2', toX: 957, toZ: 1122, width: 10 },
+        { fromRawNodeId: 'motinagar_art_n_0', toX: 586, toZ: 1500, width: 10 },
+        { fromRawNodeId: 'motinagar_art_s_0', toX: 586, toZ: 1500, width: 10 },
+      ],
       pois: [
         {
           id: 'poi_motinagar_bank_square',
@@ -1178,7 +1769,7 @@ export function genMotinagar(seed: number | string = 107): DistrictData {
  */
 export function genWorld(): WorldData {
   const connectors: RoadSegment[] = [
-    // 1. Mirpara East <-> Fulgate West
+    // 1. Mirpara East <-> Fulgate West (28m bridge)
     {
       segmentId: 'CONN_mirpara_fulgate_n',
       startNodeId: 'art_n_4',
@@ -1290,8 +1881,8 @@ export function genWorld(): WorldData {
     },
     {
       segmentId: 'CONN_fulgate_mohakhal_2',
-      startNodeId: 'fulgate_res_s2_2',
-      endNodeId: 'mohakhal_res_n1_2',
+      startNodeId: 'fulgate_res_s2_3',
+      endNodeId: 'mohakhal_res_n1_3',
       width: 9,
       surfaceCondition: 0.9,
       trafficDensity: 0.75,
@@ -1310,7 +1901,7 @@ export function genWorld(): WorldData {
       tags: ['connector'],
     },
 
-    // 4. Dhanbagh East <-> Mohakhal West
+    // 4. Dhanbagh East <-> Mohakhal West (28m bridge)
     {
       segmentId: 'CONN_dhanbagh_mohakhal_n',
       startNodeId: 'dhanbagh_art_n_4',
@@ -1354,10 +1945,10 @@ export function genWorld(): WorldData {
       tags: ['arterial', 'connector'],
     },
 
-    // 5. Mohakhal East <-> Gulbari West
+    // 5. Mohakhal East <-> Gulbari West (28m bridge)
     {
       segmentId: 'CONN_mohakhal_gulbari_n',
-      startNodeId: 'mohakhal_art_n_4',
+      startNodeId: 'mohakhal_art_n_5',
       endNodeId: 'gulbari_art_n_0',
       width: 14,
       surfaceCondition: 0.98,
@@ -1379,7 +1970,7 @@ export function genWorld(): WorldData {
     {
       segmentId: 'CONN_gulbari_mohakhal_s',
       startNodeId: 'gulbari_art_s_0',
-      endNodeId: 'mohakhal_art_s_4',
+      endNodeId: 'mohakhal_art_s_5',
       width: 14,
       surfaceCondition: 0.98,
       trafficDensity: 0.6,
@@ -1402,7 +1993,7 @@ export function genWorld(): WorldData {
     {
       segmentId: 'CONN_dhanbagh_puranpara_1',
       startNodeId: 'dhanbagh_res_s2_1',
-      endNodeId: 'puranpara_res_n1_1',
+      endNodeId: 'puranpara_res_n1_2',
       width: 7,
       surfaceCondition: 0.75,
       trafficDensity: 0.65,
@@ -1423,7 +2014,7 @@ export function genWorld(): WorldData {
     {
       segmentId: 'CONN_dhanbagh_puranpara_2',
       startNodeId: 'dhanbagh_res_s2_2',
-      endNodeId: 'puranpara_res_n1_2',
+      endNodeId: 'puranpara_res_n1_4',
       width: 7,
       surfaceCondition: 0.75,
       trafficDensity: 0.65,
@@ -1466,7 +2057,7 @@ export function genWorld(): WorldData {
     },
     {
       segmentId: 'CONN_mohakhal_motinagar_2',
-      startNodeId: 'mohakhal_res_s2_2',
+      startNodeId: 'mohakhal_res_s2_3',
       endNodeId: 'motinagar_res_n1_2',
       width: 9,
       surfaceCondition: 0.9,
@@ -1486,10 +2077,10 @@ export function genWorld(): WorldData {
       tags: ['connector'],
     },
 
-    // 8. Puranpara East <-> Motinagar West
+    // 8. Puranpara East <-> Motinagar West (29m bridge)
     {
       segmentId: 'CONN_puranpara_motinagar_n',
-      startNodeId: 'puranpara_art_n_4',
+      startNodeId: 'puranpara_art_7',
       endNodeId: 'motinagar_art_n_0',
       width: 10,
       surfaceCondition: 0.85,
@@ -1511,7 +2102,7 @@ export function genWorld(): WorldData {
     {
       segmentId: 'CONN_motinagar_puranpara_s',
       startNodeId: 'motinagar_art_s_0',
-      endNodeId: 'puranpara_art_s_4',
+      endNodeId: 'puranpara_art_7',
       width: 10,
       surfaceCondition: 0.85,
       trafficDensity: 0.7,

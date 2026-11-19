@@ -3,6 +3,7 @@ import { RideManager } from './ride/RideManager';
 import { RequestGenerator } from './ride/RequestGenerator';
 import { TrafficManager } from './traffic/TrafficManager';
 import type { RoadNetwork } from './road/RoadNetwork';
+import type { SegmentElevationHit } from './road/spatial';
 import { encounterPhaseFor, type RidePhaseInput } from './events/phase';
 import type { EncounterPhase } from './events/conditions';
 import type { PhysicsWorld, DynamicObb, StaticBoxHandle } from '../physics/PhysicsWorld';
@@ -99,6 +100,12 @@ export class GameSession {
   private readonly nearbyPoiIds = new Set<string>();
   private readonly speedBumps = new Map<string, { midX: number; midZ: number; ux: number; uz: number }>();
   private readonly recoveryAabbOut: StaticBoxHandle[] = [];
+  private readonly segElevScratch: SegmentElevationHit = {
+    segment: null,
+    y: 0,
+    t: 0,
+    distXZ: Infinity,
+  };
   private lastAccidentEncounterMin = -Infinity;
   private lastPunctureMin = -Infinity;
   private lastSpeedBumpSegId: string | null = null;
@@ -470,13 +477,13 @@ export class GameSession {
   spawnAtHome(): void {
     const anchor = this.road.getNode(this.gm.homeNodeId) ?? this.road.getAllNodes()[0];
     if (!anchor) return;
-    this.placeOnRoadNear(anchor.x, anchor.z);
+    this.placeOnRoadNear(anchor.x, anchor.z, anchor.y ?? 0);
   }
 
   /** Recovers a crashed or stuck bike: back onto the nearest road, stopped and
    * facing along it, so the rider keeps their place in the city (audit H-5, H-8). */
   recoverBike(): void {
-    this.placeOnRoadNear(this.bike.x, this.bike.z);
+    this.placeOnRoadNear(this.bike.x, this.bike.z, this.bike.y);
   }
 
   /** Manual recovery triggered by `{ type: 'recoverBike' }` command. */
@@ -489,13 +496,13 @@ export class GameSession {
     return true;
   }
 
-  private isClearOfStaticColliders(x: number, z: number): boolean {
+  private isClearOfStaticColliders(x: number, z: number, y: number = this.bike.y): boolean {
     if (!this.physics) return true;
     const pad = 0.6;
     this.physics.queryAabb(x - pad, z - pad, x + pad, z + pad, this.recoveryAabbOut);
     for (let i = 0; i < this.recoveryAabbOut.length; i++) {
       const box = this.recoveryAabbOut[i]!;
-      if (box.maxY <= 0 || box.minY >= 1.5) continue;
+      if (box.maxY <= y || box.minY >= y + 1.5) continue;
       // Local OBB containment check with bike capsule padding
       const rx = x - box.x;
       const rz = z - box.z;
@@ -510,14 +517,21 @@ export class GameSession {
 
   /** Puts the bike, stopped, on the road segment nearest (anchorX, anchorZ), aligned to it.
    * On divided roads, offsets into the nearest clear carriageway lane to avoid medians. */
-  private placeOnRoadNear(anchorX: number, anchorZ: number): void {
-    const segment =
-      this.road.segmentAt(anchorX, anchorZ, 30) ??
-      this.road.segmentAt(anchorX, anchorZ, Infinity);
+  private placeOnRoadNear(
+    anchorX: number,
+    anchorZ: number,
+    anchorY: number = this.bike.y
+  ): void {
+    let hit = this.road.segmentAtElevation(anchorX, anchorZ, anchorY, 30, this.segElevScratch);
+    if (!hit.segment) {
+      hit = this.road.segmentAtElevation(anchorX, anchorZ, anchorY, Infinity, this.segElevScratch);
+    }
+    const segment = hit.segment;
     const startNode = segment ? this.road.getNode(segment.startNodeId) : undefined;
     const endNode = segment ? this.road.getNode(segment.endNodeId) : undefined;
 
     let x = anchorX;
+    let y = anchorY;
     let z = anchorZ;
     let heading = this.bike.heading;
 
@@ -537,6 +551,7 @@ export class GameSession {
       const cx = startNode.x + t * dx;
       const cz = startNode.z + t * dz;
       x = cx;
+      y = (startNode.y ?? 0) + t * ((endNode.y ?? 0) - (startNode.y ?? 0));
       z = cz;
       heading = Math.atan2(dx, dz);
 
@@ -551,10 +566,10 @@ export class GameSession {
 
         const candX = cx + leftX * side * laneOffset;
         const candZ = cz + leftZ * side * laneOffset;
-        if (!this.isClearOfStaticColliders(candX, candZ)) {
+        if (!this.isClearOfStaticColliders(candX, candZ, y)) {
           const altX = cx - leftX * side * laneOffset;
           const altZ = cz - leftZ * side * laneOffset;
-          if (this.isClearOfStaticColliders(altX, altZ)) {
+          if (this.isClearOfStaticColliders(altX, altZ, y)) {
             side = -side;
           }
         }
@@ -568,6 +583,7 @@ export class GameSession {
     }
 
     this.bike.x = x;
+    this.bike.y = y;
     this.bike.z = z;
     this.bike.heading = heading;
     this.bike.speed = 0;
@@ -731,7 +747,14 @@ export class GameSession {
 
     const activeReq = this.ride.getActiveRequest();
 
-    const segment = this.road.segmentAt(this.bike.x, this.bike.z);
+    const segHit = this.road.segmentAtElevation(
+      this.bike.x,
+      this.bike.z,
+      this.bike.y,
+      10,
+      this.segElevScratch
+    );
+    const segment = segHit.segment;
     this.env.wet = this.gm.weatherSystem.isRoadWet();
     this.env.surface = segment ? this.gm.weatherSystem.getSurfaceModifier(segment) : 1.0;
     this.envFlooded = segment ? this.gm.weatherSystem.isFlooded(segment.segmentId) : false;
@@ -764,6 +787,17 @@ export class GameSession {
     this.bike = this.controller
       ? this.controller.update(input, this.env, dt)
       : stepBike(this.bike, input, this.bikeSpec, this.env, dt, this.bike);
+
+    const postSegHit = this.road.segmentAtElevation(
+      this.bike.x,
+      this.bike.z,
+      this.bike.y,
+      10,
+      this.segElevScratch
+    );
+    if (postSegHit.segment !== null) {
+      this.bike.y = postSegHit.y;
+    }
 
     const mx = this.bike.x - prevX;
     const mz = this.bike.z - prevZ;

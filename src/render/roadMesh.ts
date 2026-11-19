@@ -318,8 +318,8 @@ export class RoadMeshBuilder {
         }
       }
 
-      // Raised median on divided roads
-      if (seg.divided) {
+      // Raised median on two-way divided roads (never down the center of one-way carriageways)
+      if (seg.divided && !seg.oneWay) {
         const medianW = 0.9;
         const medianH = 0.22;
         const medianGeo = new THREE.BoxGeometry(medianW, medianH, len);

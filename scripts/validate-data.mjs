@@ -83,6 +83,53 @@ if (fs.existsSync(dialogueDir)) {
 }
 
 // Validate district files
+function renderRoadWidth(seg) {
+  if (seg.divided) return 14.0;
+  switch (seg.roadType) {
+    case 'flyover':
+      return 12.0;
+    case 'main':
+      return 10.0;
+    case 'residential':
+    case 'service':
+      return 8.0;
+    case 'market':
+      return 6.0;
+    case 'alley':
+      return 4.0;
+    default:
+      return 7.0;
+  }
+}
+
+function obbOverlaps(ax, az, ahx, ahz, ayaw, bx, bz, bhx, bhz, byaw) {
+  const aux = Math.cos(ayaw);
+  const auz = -Math.sin(ayaw);
+  const avx = Math.sin(ayaw);
+  const avz = Math.cos(ayaw);
+  const bux = Math.cos(byaw);
+  const buz = -Math.sin(byaw);
+  const bvx = Math.sin(byaw);
+  const bvz = Math.cos(byaw);
+  const dx = bx - ax;
+  const dz = bz - az;
+
+  const separated = (tx, tz) => {
+    const dist = Math.abs(dx * tx + dz * tz);
+    const rA = ahx * Math.abs(aux * tx + auz * tz) + ahz * Math.abs(avx * tx + avz * tz);
+    const rB = bhx * Math.abs(bux * tx + buz * tz) + bhz * Math.abs(bvx * tx + bvz * tz);
+    return dist >= rA + rB - 1e-4;
+  };
+
+  return !(
+    separated(aux, auz) ||
+    separated(avx, avz) ||
+    separated(bux, buz) ||
+    separated(bvx, bvz)
+  );
+}
+
+const loadedDistricts = new Map();
 const districtsDir = path.resolve('data/districts');
 if (fs.existsSync(districtsDir)) {
   const files = fs.readdirSync(districtsDir);
@@ -98,6 +145,7 @@ if (fs.existsSync(districtsDir)) {
         }
 
         const district = result.data;
+        loadedDistricts.set(district.districtId, district);
 
         // Check 1: Every string key exists in bn + en
         for (const poi of district.pois) {
@@ -122,6 +170,86 @@ if (fs.existsSync(districtsDir)) {
           }
         }
 
+        const nodeMap = new Map(district.nodes.map((n) => [n.nodeId, n]));
+
+        // Check 2b: Segment geometry validity (>0 length, no one-way divided medians)
+        for (const seg of district.segments) {
+          const sNode = nodeMap.get(seg.startNodeId);
+          const eNode = nodeMap.get(seg.endNodeId);
+          if (!sNode || !eNode) {
+            console.error(`District ${filePath}: segment ${seg.segmentId} references missing node`);
+            process.exit(1);
+          }
+          const len = Math.hypot(eNode.x - sNode.x, eNode.z - sNode.z);
+          if (len <= 0.1) {
+            console.error(`District ${filePath}: zero-length segment ${seg.segmentId}`);
+            process.exit(1);
+          }
+          if (seg.oneWay && seg.divided) {
+            console.error(`District ${filePath}: one-way segment ${seg.segmentId} must not have divided=true central median`);
+            process.exit(1);
+          }
+        }
+
+        // Check 2c: Building lot OBB vs road/sidewalk and lot-vs-lot overlap validation
+        const lots = district.lots ?? [];
+        for (let i = 0; i < lots.length; i++) {
+          const lot = lots[i];
+          for (const seg of district.segments) {
+            if (seg.roadType === 'flyover') continue;
+            const sNode = nodeMap.get(seg.startNodeId);
+            const eNode = nodeMap.get(seg.endNodeId);
+            if (!sNode || !eNode) continue;
+            const dx = eNode.x - sNode.x;
+            const dz = eNode.z - sNode.z;
+            const len = Math.hypot(dx, dz);
+            if (len < 0.1) continue;
+            const roadW = Math.max(seg.width, renderRoadWidth(seg));
+            const sidewalkW = seg.roadType === 'alley' ? 0.28 : 1.88;
+            if (
+              obbOverlaps(
+                lot.x,
+                lot.z,
+                lot.width / 2,
+                lot.depth / 2,
+                lot.facingHeading,
+                (sNode.x + eNode.x) / 2,
+                (sNode.z + eNode.z) / 2,
+                roadW / 2 + sidewalkW,
+                len / 2,
+                Math.atan2(dx, dz)
+              )
+            ) {
+              console.error(
+                `District ${filePath}: building lot ${lot.lotId} overlaps road/sidewalk of ${seg.segmentId}`
+              );
+              process.exit(1);
+            }
+          }
+          for (let j = i + 1; j < lots.length; j++) {
+            const other = lots[j];
+            if (
+              obbOverlaps(
+                lot.x,
+                lot.z,
+                lot.width / 2,
+                lot.depth / 2,
+                lot.facingHeading,
+                other.x,
+                other.z,
+                other.width / 2,
+                other.depth / 2,
+                other.facingHeading
+              )
+            ) {
+              console.error(
+                `District ${filePath}: building lot ${lot.lotId} overlaps lot ${other.lotId}`
+              );
+              process.exit(1);
+            }
+          }
+        }
+
         // Check 3: Every divided road has a U-turn node every <= 400 m
         const dividedSegs = district.segments.filter((s) => s.divided);
         if (dividedSegs.length > 0) {
@@ -130,7 +258,6 @@ if (fs.existsSync(districtsDir)) {
               .filter((n) => n.kind === 'uturn' || (n.tags && n.tags.includes('uturn')))
               .map((n) => n.nodeId)
           );
-          const nodeMap = new Map(district.nodes.map((n) => [n.nodeId, n]));
 
           for (const seg of dividedSegs) {
             const sNode = nodeMap.get(seg.startNodeId);
@@ -236,6 +363,96 @@ if (fs.existsSync(worldPath)) {
     if (!result.success) {
       console.error(`Schema validation failed for ${worldPath}:`, result.error.format());
       process.exit(1);
+    }
+
+    const world = result.data;
+    const worldNodes = new Map();
+    const worldLots = [];
+    let totalSignals = 0;
+
+    for (const dRef of world.districts) {
+      const dist = loadedDistricts.get(dRef.districtId);
+      if (!dist) {
+        console.error(`World ${worldPath}: referenced district '${dRef.districtId}' missing`);
+        process.exit(1);
+      }
+      for (const n of dist.nodes) {
+        worldNodes.set(n.nodeId, n);
+        if (n.signal === true) totalSignals++;
+      }
+      for (const lot of dist.lots ?? []) {
+        worldLots.push({ districtId: dist.districtId, lot });
+      }
+    }
+
+    if (totalSignals < 12) {
+      console.error(`World ${worldPath}: only ${totalSignals} signaled junctions across 7 districts (expected >= 12)`);
+      process.exit(1);
+    }
+
+    for (const dId of ['mirpara', 'fulgate', 'puranpara', 'motinagar']) {
+      const dist = loadedDistricts.get(dId);
+      if (!dist || !dist.segments.some((s) => s.roadType === 'market')) {
+        console.error(`World ${worldPath}: district '${dId}' must have roadType === 'market' segments`);
+        process.exit(1);
+      }
+    }
+
+    const mohakhal = loadedDistricts.get('mohakhal');
+    if (mohakhal) {
+      for (const fId of ['mohakhal_fly_w', 'mohakhal_fly_mid', 'mohakhal_fly_e']) {
+        const fn = mohakhal.nodes.find((n) => n.nodeId === fId);
+        if (!fn || (fn.y ?? 0) < 5.5) {
+          console.error(`Mohakhal flyover node '${fId}' must have y >= 5.5m (got ${fn?.y ?? 0})`);
+          process.exit(1);
+        }
+      }
+    }
+
+    for (const conn of world.connectors) {
+      const sNode = worldNodes.get(conn.startNodeId);
+      const eNode = worldNodes.get(conn.endNodeId);
+      if (!sNode || !eNode) {
+        console.error(`World ${worldPath}: connector ${conn.segmentId} references missing node`);
+        process.exit(1);
+      }
+      const dx = eNode.x - sNode.x;
+      const dz = eNode.z - sNode.z;
+      const len = Math.hypot(dx, dz);
+      if (len < 20) {
+        console.error(`World ${worldPath}: connector ${conn.segmentId} length ${len.toFixed(2)}m < 20m`);
+        process.exit(1);
+      }
+      if (conn.oneWay && conn.divided) {
+        console.error(`World ${worldPath}: one-way connector ${conn.segmentId} must not have divided=true`);
+        process.exit(1);
+      }
+      const roadW = Math.max(conn.width, renderRoadWidth(conn));
+      const sidewalkW = conn.roadType === 'alley' ? 0.28 : 1.88;
+      const cx = (sNode.x + eNode.x) / 2;
+      const cz = (sNode.z + eNode.z) / 2;
+      const yaw = Math.atan2(dx, dz);
+      for (const { districtId, lot } of worldLots) {
+        if (
+          obbOverlaps(
+            lot.x,
+            lot.z,
+            lot.width / 2,
+            lot.depth / 2,
+            lot.facingHeading,
+            cx,
+            cz,
+            roadW / 2 + sidewalkW,
+            len / 2,
+            yaw
+          )
+        ) {
+          console.error(
+            `World ${worldPath}: building lot ${lot.lotId} (${districtId}) overlaps connector ${conn.segmentId}`
+          );
+          process.exit(1);
+        }
+      }
     }
   } catch (err) {
     console.error(`Failed reading world ${worldPath}:`, err);

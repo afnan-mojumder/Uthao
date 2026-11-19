@@ -7,8 +7,8 @@
   "nodes": [
     {
       "nodeId": "gulbari_art_n_0",
-      "x": 1200,
-      "z": 895,
+      "x": 1214,
+      "z": 888,
       "kind": "uturn",
       "tags": [
         "uturn"
@@ -16,8 +16,8 @@
     },
     {
       "nodeId": "gulbari_art_s_0",
-      "x": 1200,
-      "z": 905,
+      "x": 1214,
+      "z": 912,
       "kind": "uturn",
       "tags": [
         "uturn"
@@ -25,44 +25,48 @@
     },
     {
       "nodeId": "gulbari_art_n_1",
-      "x": 1350,
-      "z": 895,
+      "x": 1404,
+      "z": 888,
       "kind": "uturn",
+      "signal": true,
       "tags": [
         "uturn"
       ]
     },
     {
       "nodeId": "gulbari_art_s_1",
-      "x": 1350,
-      "z": 905,
+      "x": 1404,
+      "z": 912,
       "kind": "uturn",
+      "signal": true,
       "tags": [
         "uturn"
       ]
     },
     {
       "nodeId": "gulbari_art_n_2",
-      "x": 1500,
-      "z": 895,
+      "x": 1595,
+      "z": 888,
       "kind": "junction",
+      "signal": true,
       "tags": [
         "crossing"
       ]
     },
     {
       "nodeId": "gulbari_art_s_2",
-      "x": 1500,
-      "z": 905,
+      "x": 1595,
+      "z": 912,
       "kind": "junction",
+      "signal": true,
       "tags": [
         "crossing"
       ]
     },
     {
       "nodeId": "gulbari_art_n_3",
-      "x": 1650,
-      "z": 895,
+      "x": 1786,
+      "z": 888,
       "kind": "uturn",
       "tags": [
         "uturn"
@@ -70,26 +74,8 @@
     },
     {
       "nodeId": "gulbari_art_s_3",
-      "x": 1650,
-      "z": 905,
-      "kind": "uturn",
-      "tags": [
-        "uturn"
-      ]
-    },
-    {
-      "nodeId": "gulbari_art_n_4",
-      "x": 1800,
-      "z": 895,
-      "kind": "uturn",
-      "tags": [
-        "uturn"
-      ]
-    },
-    {
-      "nodeId": "gulbari_art_s_4",
-      "x": 1800,
-      "z": 905,
+      "x": 1786,
+      "z": 912,
       "kind": "uturn",
       "tags": [
         "uturn"
@@ -97,17 +83,8 @@
     },
     {
       "nodeId": "gulbari_res_n1_0",
-      "x": 1200,
-      "z": 680,
-      "kind": "junction",
-      "tags": [
-        "speed_bump"
-      ]
-    },
-    {
-      "nodeId": "gulbari_res_n2_0",
-      "x": 1200,
-      "z": 780,
+      "x": 1214,
+      "z": 669,
       "kind": "junction",
       "tags": [
         "speed_bump"
@@ -115,17 +92,8 @@
     },
     {
       "nodeId": "gulbari_res_n1_1",
-      "x": 1350,
-      "z": 680,
-      "kind": "junction",
-      "tags": [
-        "speed_bump"
-      ]
-    },
-    {
-      "nodeId": "gulbari_res_n2_1",
-      "x": 1350,
-      "z": 780,
+      "x": 1404,
+      "z": 669,
       "kind": "junction",
       "tags": [
         "speed_bump"
@@ -133,17 +101,8 @@
     },
     {
       "nodeId": "gulbari_res_n1_2",
-      "x": 1500,
-      "z": 680,
-      "kind": "junction",
-      "tags": [
-        "speed_bump"
-      ]
-    },
-    {
-      "nodeId": "gulbari_res_n2_2",
-      "x": 1500,
-      "z": 780,
+      "x": 1595,
+      "z": 669,
       "kind": "junction",
       "tags": [
         "speed_bump"
@@ -151,8 +110,35 @@
     },
     {
       "nodeId": "gulbari_res_n1_3",
-      "x": 1650,
-      "z": 680,
+      "x": 1786,
+      "z": 669,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "gulbari_res_n2_0",
+      "x": 1214,
+      "z": 792,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "gulbari_res_n2_1",
+      "x": 1404,
+      "z": 792,
+      "kind": "junction",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "nodeId": "gulbari_res_n2_2",
+      "x": 1595,
+      "z": 792,
       "kind": "junction",
       "tags": [
         "speed_bump"
@@ -160,26 +146,8 @@
     },
     {
       "nodeId": "gulbari_res_n2_3",
-      "x": 1650,
-      "z": 780,
-      "kind": "junction",
-      "tags": [
-        "speed_bump"
-      ]
-    },
-    {
-      "nodeId": "gulbari_res_n1_4",
-      "x": 1800,
-      "z": 680,
-      "kind": "junction",
-      "tags": [
-        "speed_bump"
-      ]
-    },
-    {
-      "nodeId": "gulbari_res_n2_4",
-      "x": 1800,
-      "z": 780,
+      "x": 1786,
+      "z": 792,
       "kind": "junction",
       "tags": [
         "speed_bump"
@@ -187,87 +155,141 @@
     },
     {
       "nodeId": "gulbari_res_s1_0",
-      "x": 1200,
-      "z": 1020,
-      "kind": "junction"
-    },
-    {
-      "nodeId": "gulbari_res_s2_0",
-      "x": 1200,
-      "z": 1120,
+      "x": 1214,
+      "z": 1008,
       "kind": "junction"
     },
     {
       "nodeId": "gulbari_res_s1_1",
-      "x": 1350,
-      "z": 1020,
-      "kind": "junction"
-    },
-    {
-      "nodeId": "gulbari_res_s2_1",
-      "x": 1350,
-      "z": 1120,
+      "x": 1404,
+      "z": 1008,
       "kind": "junction"
     },
     {
       "nodeId": "gulbari_res_s1_2",
-      "x": 1500,
-      "z": 1020,
-      "kind": "junction"
-    },
-    {
-      "nodeId": "gulbari_res_s2_2",
-      "x": 1500,
-      "z": 1120,
+      "x": 1595,
+      "z": 1008,
       "kind": "junction"
     },
     {
       "nodeId": "gulbari_res_s1_3",
-      "x": 1650,
-      "z": 1020,
+      "x": 1786,
+      "z": 1008,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "gulbari_res_s2_0",
+      "x": 1214,
+      "z": 1131,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "gulbari_res_s2_1",
+      "x": 1404,
+      "z": 1131,
+      "kind": "junction"
+    },
+    {
+      "nodeId": "gulbari_res_s2_2",
+      "x": 1595,
+      "z": 1131,
       "kind": "junction"
     },
     {
       "nodeId": "gulbari_res_s2_3",
-      "x": 1650,
-      "z": 1120,
+      "x": 1786,
+      "z": 1131,
       "kind": "junction"
     },
     {
-      "nodeId": "gulbari_res_s1_4",
-      "x": 1800,
-      "z": 1020,
-      "kind": "junction"
-    },
-    {
-      "nodeId": "gulbari_res_s2_4",
-      "x": 1800,
-      "z": 1120,
-      "kind": "junction"
-    },
-    {
-      "nodeId": "gulbari_alley_nw_mid",
+      "nodeId": "gulbari_svc_1",
       "x": 1275,
-      "z": 730,
-      "kind": "junction"
+      "z": 731,
+      "kind": "junction",
+      "tags": [
+        "service"
+      ]
     },
     {
-      "nodeId": "gulbari_alley_ne_gate",
-      "x": 1575,
-      "z": 650,
-      "kind": "junction"
+      "nodeId": "gulbari_svc_2",
+      "x": 1343,
+      "z": 731,
+      "kind": "junction",
+      "tags": [
+        "service"
+      ]
     },
     {
-      "nodeId": "gulbari_alley_sc_mid",
-      "x": 1425,
-      "z": 1070,
-      "kind": "junction"
+      "nodeId": "gulbari_svc_3",
+      "x": 1465,
+      "z": 731,
+      "kind": "junction",
+      "tags": [
+        "service"
+      ]
     },
     {
-      "nodeId": "gulbari_alley_se_deadend",
+      "nodeId": "gulbari_svc_4",
+      "x": 1534,
+      "z": 731,
+      "kind": "junction",
+      "tags": [
+        "service"
+      ]
+    },
+    {
+      "nodeId": "gulbari_svc_5",
+      "x": 1656,
+      "z": 731,
+      "kind": "junction",
+      "tags": [
+        "service"
+      ]
+    },
+    {
+      "nodeId": "gulbari_svc_6",
       "x": 1725,
-      "z": 1090,
-      "kind": "deadEnd"
+      "z": 731,
+      "kind": "junction",
+      "tags": [
+        "service"
+      ]
+    },
+    {
+      "nodeId": "gulbari_svc_7",
+      "x": 1275,
+      "z": 1070,
+      "kind": "junction",
+      "tags": [
+        "service"
+      ]
+    },
+    {
+      "nodeId": "gulbari_svc_8",
+      "x": 1343,
+      "z": 1070,
+      "kind": "junction",
+      "tags": [
+        "service"
+      ]
+    },
+    {
+      "nodeId": "gulbari_alley_dead_1",
+      "x": 1501,
+      "z": 1070,
+      "kind": "deadEnd",
+      "tags": [
+        "alley"
+      ]
+    },
+    {
+      "nodeId": "gulbari_alley_mid_2",
+      "x": 1692,
+      "z": 1070,
+      "kind": "junction",
+      "tags": [
+        "alley"
+      ]
     }
   ],
   "segments": [
@@ -284,14 +306,15 @@
       "pedestrianDensity": 0.2,
       "riskLevel": 0.05,
       "oneWay": true,
-      "divided": true,
+      "divided": false,
       "lanes": 2,
       "roadType": "main",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "gulbari",
       "tags": [
-        "arterial"
+        "arterial",
+        "arterial_outer_north"
       ]
     },
     {
@@ -307,14 +330,15 @@
       "pedestrianDensity": 0.2,
       "riskLevel": 0.05,
       "oneWay": true,
-      "divided": true,
+      "divided": false,
       "lanes": 2,
       "roadType": "main",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "gulbari",
       "tags": [
-        "arterial"
+        "arterial",
+        "arterial_outer_south"
       ]
     },
     {
@@ -330,14 +354,15 @@
       "pedestrianDensity": 0.2,
       "riskLevel": 0.05,
       "oneWay": true,
-      "divided": true,
+      "divided": false,
       "lanes": 2,
       "roadType": "main",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "gulbari",
       "tags": [
-        "arterial"
+        "arterial",
+        "arterial_outer_north"
       ]
     },
     {
@@ -353,14 +378,15 @@
       "pedestrianDensity": 0.2,
       "riskLevel": 0.05,
       "oneWay": true,
-      "divided": true,
+      "divided": false,
       "lanes": 2,
       "roadType": "main",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "gulbari",
       "tags": [
-        "arterial"
+        "arterial",
+        "arterial_outer_south"
       ]
     },
     {
@@ -376,14 +402,15 @@
       "pedestrianDensity": 0.2,
       "riskLevel": 0.05,
       "oneWay": true,
-      "divided": true,
+      "divided": false,
       "lanes": 2,
       "roadType": "main",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "gulbari",
       "tags": [
-        "arterial"
+        "arterial",
+        "arterial_outer_north"
       ]
     },
     {
@@ -399,64 +426,19 @@
       "pedestrianDensity": 0.2,
       "riskLevel": 0.05,
       "oneWay": true,
-      "divided": true,
+      "divided": false,
       "lanes": 2,
       "roadType": "main",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "gulbari",
       "tags": [
-        "arterial"
+        "arterial",
+        "arterial_outer_south"
       ]
     },
     {
       "segmentId": "S_gulbari_7",
-      "startNodeId": "gulbari_art_n_3",
-      "endNodeId": "gulbari_art_n_4",
-      "width": 17.5,
-      "surfaceCondition": 0.95,
-      "trafficDensity": 0.45,
-      "speedLimit": 55,
-      "turnRestrictions": [],
-      "motorcycleAccessible": true,
-      "pedestrianDensity": 0.2,
-      "riskLevel": 0.05,
-      "oneWay": true,
-      "divided": true,
-      "lanes": 2,
-      "roadType": "main",
-      "floodSensitivity": 0.2,
-      "pickupPractical": true,
-      "district": "gulbari",
-      "tags": [
-        "arterial"
-      ]
-    },
-    {
-      "segmentId": "S_gulbari_8",
-      "startNodeId": "gulbari_art_s_4",
-      "endNodeId": "gulbari_art_s_3",
-      "width": 17.5,
-      "surfaceCondition": 0.95,
-      "trafficDensity": 0.45,
-      "speedLimit": 55,
-      "turnRestrictions": [],
-      "motorcycleAccessible": true,
-      "pedestrianDensity": 0.2,
-      "riskLevel": 0.05,
-      "oneWay": true,
-      "divided": true,
-      "lanes": 2,
-      "roadType": "main",
-      "floodSensitivity": 0.2,
-      "pickupPractical": true,
-      "district": "gulbari",
-      "tags": [
-        "arterial"
-      ]
-    },
-    {
-      "segmentId": "S_gulbari_9",
       "startNodeId": "gulbari_art_n_0",
       "endNodeId": "gulbari_art_s_0",
       "width": 10,
@@ -479,7 +461,7 @@
       ]
     },
     {
-      "segmentId": "S_gulbari_10",
+      "segmentId": "S_gulbari_8",
       "startNodeId": "gulbari_art_n_1",
       "endNodeId": "gulbari_art_s_1",
       "width": 10,
@@ -502,7 +484,7 @@
       ]
     },
     {
-      "segmentId": "S_gulbari_11",
+      "segmentId": "S_gulbari_9",
       "startNodeId": "gulbari_art_n_2",
       "endNodeId": "gulbari_art_s_2",
       "width": 10,
@@ -526,7 +508,7 @@
       ]
     },
     {
-      "segmentId": "S_gulbari_12",
+      "segmentId": "S_gulbari_10",
       "startNodeId": "gulbari_art_n_3",
       "endNodeId": "gulbari_art_s_3",
       "width": 10,
@@ -549,33 +531,10 @@
       ]
     },
     {
-      "segmentId": "S_gulbari_13",
-      "startNodeId": "gulbari_art_n_4",
-      "endNodeId": "gulbari_art_s_4",
-      "width": 10,
-      "surfaceCondition": 0.9,
-      "trafficDensity": 0.3,
-      "speedLimit": 25,
-      "turnRestrictions": [],
-      "motorcycleAccessible": true,
-      "pedestrianDensity": 0.2,
-      "riskLevel": 0.05,
-      "oneWay": false,
-      "divided": false,
-      "lanes": 2,
-      "roadType": "main",
-      "floodSensitivity": 0.2,
-      "pickupPractical": true,
-      "district": "gulbari",
-      "tags": [
-        "uturn"
-      ]
-    },
-    {
-      "segmentId": "S_gulbari_14",
+      "segmentId": "S_gulbari_11",
       "startNodeId": "gulbari_res_n1_0",
       "endNodeId": "gulbari_res_n1_1",
-      "width": 8.75,
+      "width": 10,
       "surfaceCondition": 0.6,
       "trafficDensity": 0.3,
       "speedLimit": 30,
@@ -595,11 +554,80 @@
       ]
     },
     {
-      "segmentId": "S_gulbari_15",
+      "segmentId": "S_gulbari_12",
+      "startNodeId": "gulbari_res_n1_1",
+      "endNodeId": "gulbari_res_n1_2",
+      "width": 10,
+      "surfaceCondition": 0.85,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.05,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "gulbari",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_gulbari_13",
+      "startNodeId": "gulbari_res_n1_2",
+      "endNodeId": "gulbari_res_n1_3",
+      "width": 10,
+      "surfaceCondition": 0.85,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.05,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "gulbari",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_gulbari_14",
       "startNodeId": "gulbari_res_n2_0",
       "endNodeId": "gulbari_res_n2_1",
-      "width": 8.75,
-      "surfaceCondition": 0.9,
+      "width": 10,
+      "surfaceCondition": 0.85,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.05,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "gulbari",
+      "tags": [
+        "speed_bump"
+      ]
+    },
+    {
+      "segmentId": "S_gulbari_15",
+      "startNodeId": "gulbari_res_n2_1",
+      "endNodeId": "gulbari_res_n2_2",
+      "width": 10,
+      "surfaceCondition": 0.85,
       "trafficDensity": 0.3,
       "speedLimit": 30,
       "turnRestrictions": [],
@@ -619,9 +647,9 @@
     },
     {
       "segmentId": "S_gulbari_16",
-      "startNodeId": "gulbari_res_n1_1",
-      "endNodeId": "gulbari_res_n1_2",
-      "width": 8.75,
+      "startNodeId": "gulbari_res_n2_2",
+      "endNodeId": "gulbari_res_n2_3",
+      "width": 10,
       "surfaceCondition": 0.85,
       "trafficDensity": 0.3,
       "speedLimit": 30,
@@ -642,9 +670,9 @@
     },
     {
       "segmentId": "S_gulbari_17",
-      "startNodeId": "gulbari_res_n2_1",
-      "endNodeId": "gulbari_res_n2_2",
-      "width": 8.75,
+      "startNodeId": "gulbari_res_n1_0",
+      "endNodeId": "gulbari_res_n2_0",
+      "width": 10,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
       "speedLimit": 30,
@@ -665,12 +693,12 @@
     },
     {
       "segmentId": "S_gulbari_18",
-      "startNodeId": "gulbari_res_n1_2",
-      "endNodeId": "gulbari_res_n1_3",
-      "width": 8.75,
-      "surfaceCondition": 0.85,
+      "startNodeId": "gulbari_res_n2_0",
+      "endNodeId": "gulbari_art_n_0",
+      "width": 11.3,
+      "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
-      "speedLimit": 30,
+      "speedLimit": 35,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
       "pedestrianDensity": 0.2,
@@ -678,19 +706,17 @@
       "oneWay": false,
       "divided": false,
       "lanes": 2,
-      "roadType": "residential",
+      "roadType": "main",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "gulbari",
-      "tags": [
-        "speed_bump"
-      ]
+      "tags": []
     },
     {
       "segmentId": "S_gulbari_19",
-      "startNodeId": "gulbari_res_n2_2",
-      "endNodeId": "gulbari_res_n2_3",
-      "width": 8.75,
+      "startNodeId": "gulbari_res_n1_1",
+      "endNodeId": "gulbari_res_n2_1",
+      "width": 10,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
       "speedLimit": 30,
@@ -711,32 +737,32 @@
     },
     {
       "segmentId": "S_gulbari_20",
-      "startNodeId": "gulbari_res_n1_3",
-      "endNodeId": "gulbari_res_n1_4",
-      "width": 8.75,
-      "surfaceCondition": 0.85,
-      "trafficDensity": 0.3,
-      "speedLimit": 30,
+      "startNodeId": "gulbari_res_n2_1",
+      "endNodeId": "gulbari_art_n_1",
+      "width": 14,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.405,
+      "speedLimit": 45,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
       "pedestrianDensity": 0.2,
       "riskLevel": 0.05,
       "oneWay": false,
-      "divided": false,
-      "lanes": 2,
-      "roadType": "residential",
+      "divided": true,
+      "lanes": 4,
+      "roadType": "main",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "gulbari",
       "tags": [
-        "speed_bump"
+        "arterial"
       ]
     },
     {
       "segmentId": "S_gulbari_21",
-      "startNodeId": "gulbari_res_n2_3",
-      "endNodeId": "gulbari_res_n2_4",
-      "width": 8.75,
+      "startNodeId": "gulbari_res_n1_2",
+      "endNodeId": "gulbari_res_n2_2",
+      "width": 10,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
       "speedLimit": 30,
@@ -757,32 +783,9 @@
     },
     {
       "segmentId": "S_gulbari_22",
-      "startNodeId": "gulbari_res_n1_0",
-      "endNodeId": "gulbari_res_n2_0",
-      "width": 8.75,
-      "surfaceCondition": 0.9,
-      "trafficDensity": 0.3,
-      "speedLimit": 30,
-      "turnRestrictions": [],
-      "motorcycleAccessible": true,
-      "pedestrianDensity": 0.2,
-      "riskLevel": 0.05,
-      "oneWay": false,
-      "divided": false,
-      "lanes": 2,
-      "roadType": "residential",
-      "floodSensitivity": 0.2,
-      "pickupPractical": true,
-      "district": "gulbari",
-      "tags": [
-        "speed_bump"
-      ]
-    },
-    {
-      "segmentId": "S_gulbari_23",
-      "startNodeId": "gulbari_res_n2_0",
-      "endNodeId": "gulbari_art_n_0",
-      "width": 10,
+      "startNodeId": "gulbari_res_n2_2",
+      "endNodeId": "gulbari_art_n_2",
+      "width": 11.3,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
       "speedLimit": 35,
@@ -800,10 +803,10 @@
       "tags": []
     },
     {
-      "segmentId": "S_gulbari_24",
-      "startNodeId": "gulbari_res_n1_1",
-      "endNodeId": "gulbari_res_n2_1",
-      "width": 8.75,
+      "segmentId": "S_gulbari_23",
+      "startNodeId": "gulbari_res_n1_3",
+      "endNodeId": "gulbari_res_n2_3",
+      "width": 10,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
       "speedLimit": 30,
@@ -823,10 +826,10 @@
       ]
     },
     {
-      "segmentId": "S_gulbari_25",
-      "startNodeId": "gulbari_res_n2_1",
-      "endNodeId": "gulbari_art_n_1",
-      "width": 10,
+      "segmentId": "S_gulbari_24",
+      "startNodeId": "gulbari_res_n2_3",
+      "endNodeId": "gulbari_art_n_3",
+      "width": 11.3,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
       "speedLimit": 35,
@@ -838,6 +841,27 @@
       "divided": false,
       "lanes": 2,
       "roadType": "main",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "gulbari",
+      "tags": []
+    },
+    {
+      "segmentId": "S_gulbari_25",
+      "startNodeId": "gulbari_res_s1_0",
+      "endNodeId": "gulbari_res_s1_1",
+      "width": 10,
+      "surfaceCondition": 0.85,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.05,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "gulbari",
@@ -845,10 +869,10 @@
     },
     {
       "segmentId": "S_gulbari_26",
-      "startNodeId": "gulbari_res_n1_2",
-      "endNodeId": "gulbari_res_n2_2",
-      "width": 8.75,
-      "surfaceCondition": 0.9,
+      "startNodeId": "gulbari_res_s1_1",
+      "endNodeId": "gulbari_res_s1_2",
+      "width": 10,
+      "surfaceCondition": 0.85,
       "trafficDensity": 0.3,
       "speedLimit": 30,
       "turnRestrictions": [],
@@ -862,18 +886,16 @@
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "gulbari",
-      "tags": [
-        "speed_bump"
-      ]
+      "tags": []
     },
     {
       "segmentId": "S_gulbari_27",
-      "startNodeId": "gulbari_res_n2_2",
-      "endNodeId": "gulbari_art_n_2",
+      "startNodeId": "gulbari_res_s1_2",
+      "endNodeId": "gulbari_res_s1_3",
       "width": 10,
-      "surfaceCondition": 0.9,
+      "surfaceCondition": 0.85,
       "trafficDensity": 0.3,
-      "speedLimit": 35,
+      "speedLimit": 30,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
       "pedestrianDensity": 0.2,
@@ -881,7 +903,7 @@
       "oneWay": false,
       "divided": false,
       "lanes": 2,
-      "roadType": "main",
+      "roadType": "residential",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "gulbari",
@@ -889,10 +911,10 @@
     },
     {
       "segmentId": "S_gulbari_28",
-      "startNodeId": "gulbari_res_n1_3",
-      "endNodeId": "gulbari_res_n2_3",
-      "width": 8.75,
-      "surfaceCondition": 0.9,
+      "startNodeId": "gulbari_res_s2_0",
+      "endNodeId": "gulbari_res_s2_1",
+      "width": 10,
+      "surfaceCondition": 0.85,
       "trafficDensity": 0.3,
       "speedLimit": 30,
       "turnRestrictions": [],
@@ -906,18 +928,16 @@
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "gulbari",
-      "tags": [
-        "speed_bump"
-      ]
+      "tags": []
     },
     {
       "segmentId": "S_gulbari_29",
-      "startNodeId": "gulbari_res_n2_3",
-      "endNodeId": "gulbari_art_n_3",
+      "startNodeId": "gulbari_res_s2_1",
+      "endNodeId": "gulbari_res_s2_2",
       "width": 10,
-      "surfaceCondition": 0.9,
+      "surfaceCondition": 0.85,
       "trafficDensity": 0.3,
-      "speedLimit": 35,
+      "speedLimit": 30,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
       "pedestrianDensity": 0.2,
@@ -925,7 +945,7 @@
       "oneWay": false,
       "divided": false,
       "lanes": 2,
-      "roadType": "main",
+      "roadType": "residential",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "gulbari",
@@ -933,9 +953,30 @@
     },
     {
       "segmentId": "S_gulbari_30",
-      "startNodeId": "gulbari_res_n1_4",
-      "endNodeId": "gulbari_res_n2_4",
-      "width": 8.75,
+      "startNodeId": "gulbari_res_s2_2",
+      "endNodeId": "gulbari_res_s2_3",
+      "width": 10,
+      "surfaceCondition": 0.85,
+      "trafficDensity": 0.3,
+      "speedLimit": 30,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.05,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "residential",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "gulbari",
+      "tags": []
+    },
+    {
+      "segmentId": "S_gulbari_31",
+      "startNodeId": "gulbari_res_s1_0",
+      "endNodeId": "gulbari_res_s2_0",
+      "width": 10,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
       "speedLimit": 30,
@@ -950,15 +991,13 @@
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "gulbari",
-      "tags": [
-        "speed_bump"
-      ]
+      "tags": []
     },
     {
-      "segmentId": "S_gulbari_31",
-      "startNodeId": "gulbari_res_n2_4",
-      "endNodeId": "gulbari_art_n_4",
-      "width": 10,
+      "segmentId": "S_gulbari_32",
+      "startNodeId": "gulbari_art_s_0",
+      "endNodeId": "gulbari_res_s1_0",
+      "width": 11.3,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
       "speedLimit": 35,
@@ -976,33 +1015,10 @@
       "tags": []
     },
     {
-      "segmentId": "S_gulbari_32",
-      "startNodeId": "gulbari_res_s1_0",
-      "endNodeId": "gulbari_res_s1_1",
-      "width": 11.25,
-      "surfaceCondition": 0.65,
-      "trafficDensity": 0.7,
-      "speedLimit": 25,
-      "turnRestrictions": [],
-      "motorcycleAccessible": true,
-      "pedestrianDensity": 0.85,
-      "riskLevel": 0.05,
-      "oneWay": false,
-      "divided": false,
-      "lanes": 2,
-      "roadType": "residential",
-      "floodSensitivity": 0.2,
-      "pickupPractical": true,
-      "district": "gulbari",
-      "tags": [
-        "market"
-      ]
-    },
-    {
       "segmentId": "S_gulbari_33",
-      "startNodeId": "gulbari_res_s2_0",
+      "startNodeId": "gulbari_res_s1_1",
       "endNodeId": "gulbari_res_s2_1",
-      "width": 8.75,
+      "width": 10,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
       "speedLimit": 30,
@@ -1021,32 +1037,30 @@
     },
     {
       "segmentId": "S_gulbari_34",
-      "startNodeId": "gulbari_res_s1_1",
-      "endNodeId": "gulbari_res_s1_2",
-      "width": 11.25,
-      "surfaceCondition": 0.65,
-      "trafficDensity": 0.7,
-      "speedLimit": 25,
+      "startNodeId": "gulbari_art_s_1",
+      "endNodeId": "gulbari_res_s1_1",
+      "width": 11.3,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 35,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
-      "pedestrianDensity": 0.85,
+      "pedestrianDensity": 0.2,
       "riskLevel": 0.05,
       "oneWay": false,
       "divided": false,
       "lanes": 2,
-      "roadType": "residential",
+      "roadType": "main",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "gulbari",
-      "tags": [
-        "market"
-      ]
+      "tags": []
     },
     {
       "segmentId": "S_gulbari_35",
-      "startNodeId": "gulbari_res_s2_1",
+      "startNodeId": "gulbari_res_s1_2",
       "endNodeId": "gulbari_res_s2_2",
-      "width": 8.75,
+      "width": 10,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
       "speedLimit": 30,
@@ -1065,32 +1079,30 @@
     },
     {
       "segmentId": "S_gulbari_36",
-      "startNodeId": "gulbari_res_s1_2",
-      "endNodeId": "gulbari_res_s1_3",
-      "width": 11.25,
-      "surfaceCondition": 0.65,
-      "trafficDensity": 0.7,
-      "speedLimit": 25,
+      "startNodeId": "gulbari_art_s_2",
+      "endNodeId": "gulbari_res_s1_2",
+      "width": 11.3,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 35,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
-      "pedestrianDensity": 0.85,
+      "pedestrianDensity": 0.2,
       "riskLevel": 0.05,
       "oneWay": false,
       "divided": false,
       "lanes": 2,
-      "roadType": "residential",
+      "roadType": "main",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "gulbari",
-      "tags": [
-        "market"
-      ]
+      "tags": []
     },
     {
       "segmentId": "S_gulbari_37",
-      "startNodeId": "gulbari_res_s2_2",
+      "startNodeId": "gulbari_res_s1_3",
       "endNodeId": "gulbari_res_s2_3",
-      "width": 8.75,
+      "width": 10,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
       "speedLimit": 30,
@@ -1109,266 +1121,33 @@
     },
     {
       "segmentId": "S_gulbari_38",
-      "startNodeId": "gulbari_res_s1_3",
-      "endNodeId": "gulbari_res_s1_4",
-      "width": 11.25,
-      "surfaceCondition": 0.65,
-      "trafficDensity": 0.7,
-      "speedLimit": 25,
+      "startNodeId": "gulbari_art_s_3",
+      "endNodeId": "gulbari_res_s1_3",
+      "width": 11.3,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 35,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
-      "pedestrianDensity": 0.85,
+      "pedestrianDensity": 0.2,
       "riskLevel": 0.05,
       "oneWay": false,
       "divided": false,
       "lanes": 2,
-      "roadType": "residential",
+      "roadType": "main",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "gulbari",
-      "tags": [
-        "market"
-      ]
+      "tags": []
     },
     {
       "segmentId": "S_gulbari_39",
-      "startNodeId": "gulbari_res_s2_3",
-      "endNodeId": "gulbari_res_s2_4",
-      "width": 8.75,
-      "surfaceCondition": 0.9,
-      "trafficDensity": 0.3,
-      "speedLimit": 30,
-      "turnRestrictions": [],
-      "motorcycleAccessible": true,
-      "pedestrianDensity": 0.2,
-      "riskLevel": 0.05,
-      "oneWay": false,
-      "divided": false,
-      "lanes": 2,
-      "roadType": "residential",
-      "floodSensitivity": 0.2,
-      "pickupPractical": true,
-      "district": "gulbari",
-      "tags": []
-    },
-    {
-      "segmentId": "S_gulbari_40",
-      "startNodeId": "gulbari_art_s_0",
-      "endNodeId": "gulbari_res_s1_0",
-      "width": 10,
-      "surfaceCondition": 0.9,
-      "trafficDensity": 0.3,
-      "speedLimit": 35,
-      "turnRestrictions": [],
-      "motorcycleAccessible": true,
-      "pedestrianDensity": 0.2,
-      "riskLevel": 0.05,
-      "oneWay": false,
-      "divided": false,
-      "lanes": 2,
-      "roadType": "main",
-      "floodSensitivity": 0.2,
-      "pickupPractical": true,
-      "district": "gulbari",
-      "tags": []
-    },
-    {
-      "segmentId": "S_gulbari_41",
-      "startNodeId": "gulbari_res_s1_0",
-      "endNodeId": "gulbari_res_s2_0",
-      "width": 8.75,
-      "surfaceCondition": 0.9,
-      "trafficDensity": 0.3,
-      "speedLimit": 30,
-      "turnRestrictions": [],
-      "motorcycleAccessible": true,
-      "pedestrianDensity": 0.2,
-      "riskLevel": 0.05,
-      "oneWay": false,
-      "divided": false,
-      "lanes": 2,
-      "roadType": "residential",
-      "floodSensitivity": 0.2,
-      "pickupPractical": true,
-      "district": "gulbari",
-      "tags": []
-    },
-    {
-      "segmentId": "S_gulbari_42",
-      "startNodeId": "gulbari_art_s_1",
-      "endNodeId": "gulbari_res_s1_1",
-      "width": 10,
-      "surfaceCondition": 0.9,
-      "trafficDensity": 0.3,
-      "speedLimit": 35,
-      "turnRestrictions": [],
-      "motorcycleAccessible": true,
-      "pedestrianDensity": 0.2,
-      "riskLevel": 0.05,
-      "oneWay": false,
-      "divided": false,
-      "lanes": 2,
-      "roadType": "main",
-      "floodSensitivity": 0.2,
-      "pickupPractical": true,
-      "district": "gulbari",
-      "tags": []
-    },
-    {
-      "segmentId": "S_gulbari_43",
-      "startNodeId": "gulbari_res_s1_1",
-      "endNodeId": "gulbari_res_s2_1",
-      "width": 8.75,
-      "surfaceCondition": 0.9,
-      "trafficDensity": 0.3,
-      "speedLimit": 30,
-      "turnRestrictions": [],
-      "motorcycleAccessible": true,
-      "pedestrianDensity": 0.2,
-      "riskLevel": 0.05,
-      "oneWay": false,
-      "divided": false,
-      "lanes": 2,
-      "roadType": "residential",
-      "floodSensitivity": 0.2,
-      "pickupPractical": true,
-      "district": "gulbari",
-      "tags": []
-    },
-    {
-      "segmentId": "S_gulbari_44",
-      "startNodeId": "gulbari_art_s_2",
-      "endNodeId": "gulbari_res_s1_2",
-      "width": 10,
-      "surfaceCondition": 0.9,
-      "trafficDensity": 0.3,
-      "speedLimit": 35,
-      "turnRestrictions": [],
-      "motorcycleAccessible": true,
-      "pedestrianDensity": 0.2,
-      "riskLevel": 0.05,
-      "oneWay": false,
-      "divided": false,
-      "lanes": 2,
-      "roadType": "main",
-      "floodSensitivity": 0.2,
-      "pickupPractical": true,
-      "district": "gulbari",
-      "tags": []
-    },
-    {
-      "segmentId": "S_gulbari_45",
-      "startNodeId": "gulbari_res_s1_2",
-      "endNodeId": "gulbari_res_s2_2",
-      "width": 8.75,
-      "surfaceCondition": 0.9,
-      "trafficDensity": 0.3,
-      "speedLimit": 30,
-      "turnRestrictions": [],
-      "motorcycleAccessible": true,
-      "pedestrianDensity": 0.2,
-      "riskLevel": 0.05,
-      "oneWay": false,
-      "divided": false,
-      "lanes": 2,
-      "roadType": "residential",
-      "floodSensitivity": 0.2,
-      "pickupPractical": true,
-      "district": "gulbari",
-      "tags": []
-    },
-    {
-      "segmentId": "S_gulbari_46",
-      "startNodeId": "gulbari_art_s_3",
-      "endNodeId": "gulbari_res_s1_3",
-      "width": 10,
-      "surfaceCondition": 0.9,
-      "trafficDensity": 0.3,
-      "speedLimit": 35,
-      "turnRestrictions": [],
-      "motorcycleAccessible": true,
-      "pedestrianDensity": 0.2,
-      "riskLevel": 0.05,
-      "oneWay": false,
-      "divided": false,
-      "lanes": 2,
-      "roadType": "main",
-      "floodSensitivity": 0.2,
-      "pickupPractical": true,
-      "district": "gulbari",
-      "tags": []
-    },
-    {
-      "segmentId": "S_gulbari_47",
-      "startNodeId": "gulbari_res_s1_3",
-      "endNodeId": "gulbari_res_s2_3",
-      "width": 8.75,
-      "surfaceCondition": 0.9,
-      "trafficDensity": 0.3,
-      "speedLimit": 30,
-      "turnRestrictions": [],
-      "motorcycleAccessible": true,
-      "pedestrianDensity": 0.2,
-      "riskLevel": 0.05,
-      "oneWay": false,
-      "divided": false,
-      "lanes": 2,
-      "roadType": "residential",
-      "floodSensitivity": 0.2,
-      "pickupPractical": true,
-      "district": "gulbari",
-      "tags": []
-    },
-    {
-      "segmentId": "S_gulbari_48",
-      "startNodeId": "gulbari_art_s_4",
-      "endNodeId": "gulbari_res_s1_4",
-      "width": 10,
-      "surfaceCondition": 0.9,
-      "trafficDensity": 0.3,
-      "speedLimit": 35,
-      "turnRestrictions": [],
-      "motorcycleAccessible": true,
-      "pedestrianDensity": 0.2,
-      "riskLevel": 0.05,
-      "oneWay": false,
-      "divided": false,
-      "lanes": 2,
-      "roadType": "main",
-      "floodSensitivity": 0.2,
-      "pickupPractical": true,
-      "district": "gulbari",
-      "tags": []
-    },
-    {
-      "segmentId": "S_gulbari_49",
-      "startNodeId": "gulbari_res_s1_4",
-      "endNodeId": "gulbari_res_s2_4",
-      "width": 8.75,
-      "surfaceCondition": 0.9,
-      "trafficDensity": 0.3,
-      "speedLimit": 30,
-      "turnRestrictions": [],
-      "motorcycleAccessible": true,
-      "pedestrianDensity": 0.2,
-      "riskLevel": 0.05,
-      "oneWay": false,
-      "divided": false,
-      "lanes": 2,
-      "roadType": "residential",
-      "floodSensitivity": 0.2,
-      "pickupPractical": true,
-      "district": "gulbari",
-      "tags": []
-    },
-    {
-      "segmentId": "S_gulbari_50",
       "startNodeId": "gulbari_res_n1_0",
-      "endNodeId": "gulbari_alley_nw_mid",
-      "width": 4.375,
+      "endNodeId": "gulbari_svc_1",
+      "width": 8.8,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
-      "speedLimit": 20,
+      "speedLimit": 25,
       "turnRestrictions": [],
       "motorcycleAccessible": true,
       "pedestrianDensity": 0.2,
@@ -1376,142 +1155,278 @@
       "oneWay": false,
       "divided": false,
       "lanes": 2,
-      "roadType": "alley",
+      "roadType": "service",
       "floodSensitivity": 0.2,
       "pickupPractical": true,
       "district": "gulbari",
       "tags": [
-        "alley"
+        "service"
+      ]
+    },
+    {
+      "segmentId": "S_gulbari_40",
+      "startNodeId": "gulbari_svc_1",
+      "endNodeId": "gulbari_svc_2",
+      "width": 8.8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 25,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.05,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "service",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "gulbari",
+      "tags": [
+        "service"
+      ]
+    },
+    {
+      "segmentId": "S_gulbari_41",
+      "startNodeId": "gulbari_svc_2",
+      "endNodeId": "gulbari_res_n1_1",
+      "width": 8.8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 25,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.05,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "service",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "gulbari",
+      "tags": [
+        "service"
+      ]
+    },
+    {
+      "segmentId": "S_gulbari_42",
+      "startNodeId": "gulbari_res_n1_1",
+      "endNodeId": "gulbari_svc_3",
+      "width": 8.8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 25,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.05,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "service",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "gulbari",
+      "tags": [
+        "service"
+      ]
+    },
+    {
+      "segmentId": "S_gulbari_43",
+      "startNodeId": "gulbari_svc_3",
+      "endNodeId": "gulbari_svc_4",
+      "width": 8.8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 25,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.05,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "service",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "gulbari",
+      "tags": [
+        "service"
+      ]
+    },
+    {
+      "segmentId": "S_gulbari_44",
+      "startNodeId": "gulbari_svc_4",
+      "endNodeId": "gulbari_res_n1_2",
+      "width": 8.8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 25,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.05,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "service",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "gulbari",
+      "tags": [
+        "service"
+      ]
+    },
+    {
+      "segmentId": "S_gulbari_45",
+      "startNodeId": "gulbari_res_n1_2",
+      "endNodeId": "gulbari_svc_5",
+      "width": 8.8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 25,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.05,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "service",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "gulbari",
+      "tags": [
+        "service"
+      ]
+    },
+    {
+      "segmentId": "S_gulbari_46",
+      "startNodeId": "gulbari_svc_5",
+      "endNodeId": "gulbari_svc_6",
+      "width": 8.8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 25,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.05,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "service",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "gulbari",
+      "tags": [
+        "service"
+      ]
+    },
+    {
+      "segmentId": "S_gulbari_47",
+      "startNodeId": "gulbari_svc_6",
+      "endNodeId": "gulbari_res_n1_3",
+      "width": 8.8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 25,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.05,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "service",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "gulbari",
+      "tags": [
+        "service"
+      ]
+    },
+    {
+      "segmentId": "S_gulbari_48",
+      "startNodeId": "gulbari_res_s1_0",
+      "endNodeId": "gulbari_svc_7",
+      "width": 8.8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 25,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.05,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "service",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "gulbari",
+      "tags": [
+        "service"
+      ]
+    },
+    {
+      "segmentId": "S_gulbari_49",
+      "startNodeId": "gulbari_svc_7",
+      "endNodeId": "gulbari_svc_8",
+      "width": 8.8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 25,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.05,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "service",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "gulbari",
+      "tags": [
+        "service"
+      ]
+    },
+    {
+      "segmentId": "S_gulbari_50",
+      "startNodeId": "gulbari_svc_8",
+      "endNodeId": "gulbari_res_s1_1",
+      "width": 8.8,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 25,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.2,
+      "riskLevel": 0.05,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "service",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "gulbari",
+      "tags": [
+        "service"
       ]
     },
     {
       "segmentId": "S_gulbari_51",
-      "startNodeId": "gulbari_alley_nw_mid",
-      "endNodeId": "gulbari_res_n2_1",
-      "width": 4.375,
-      "surfaceCondition": 0.9,
-      "trafficDensity": 0.3,
-      "speedLimit": 20,
-      "turnRestrictions": [],
-      "motorcycleAccessible": true,
-      "pedestrianDensity": 0.2,
-      "riskLevel": 0.05,
-      "oneWay": false,
-      "divided": false,
-      "lanes": 2,
-      "roadType": "alley",
-      "floodSensitivity": 0.2,
-      "pickupPractical": true,
-      "district": "gulbari",
-      "tags": [
-        "alley"
-      ]
-    },
-    {
-      "segmentId": "S_gulbari_52",
-      "startNodeId": "gulbari_res_n1_2",
-      "endNodeId": "gulbari_alley_ne_gate",
-      "width": 3.125,
+      "startNodeId": "gulbari_res_s2_2",
+      "endNodeId": "gulbari_alley_dead_1",
+      "width": 3.1,
       "surfaceCondition": 0.9,
       "trafficDensity": 0.3,
       "speedLimit": 15,
       "turnRestrictions": [],
       "motorcycleAccessible": false,
-      "pedestrianDensity": 0.2,
-      "riskLevel": 0.05,
-      "oneWay": false,
-      "divided": false,
-      "lanes": 2,
-      "roadType": "alley",
-      "floodSensitivity": 0.2,
-      "pickupPractical": false,
-      "district": "gulbari",
-      "tags": [
-        "alley",
-        "pedestrian_only"
-      ]
-    },
-    {
-      "segmentId": "S_gulbari_53",
-      "startNodeId": "gulbari_alley_ne_gate",
-      "endNodeId": "gulbari_res_n1_3",
-      "width": 3.125,
-      "surfaceCondition": 0.9,
-      "trafficDensity": 0.3,
-      "speedLimit": 15,
-      "turnRestrictions": [],
-      "motorcycleAccessible": false,
-      "pedestrianDensity": 0.2,
-      "riskLevel": 0.05,
-      "oneWay": false,
-      "divided": false,
-      "lanes": 2,
-      "roadType": "alley",
-      "floodSensitivity": 0.2,
-      "pickupPractical": false,
-      "district": "gulbari",
-      "tags": [
-        "alley",
-        "pedestrian_only"
-      ]
-    },
-    {
-      "segmentId": "S_gulbari_54",
-      "startNodeId": "gulbari_res_s1_1",
-      "endNodeId": "gulbari_alley_sc_mid",
-      "width": 4.375,
-      "surfaceCondition": 0.9,
-      "trafficDensity": 0.3,
-      "speedLimit": 20,
-      "turnRestrictions": [],
-      "motorcycleAccessible": true,
-      "pedestrianDensity": 0.2,
-      "riskLevel": 0.05,
-      "oneWay": false,
-      "divided": false,
-      "lanes": 2,
-      "roadType": "alley",
-      "floodSensitivity": 0.2,
-      "pickupPractical": true,
-      "district": "gulbari",
-      "tags": [
-        "alley"
-      ]
-    },
-    {
-      "segmentId": "S_gulbari_55",
-      "startNodeId": "gulbari_alley_sc_mid",
-      "endNodeId": "gulbari_res_s2_2",
-      "width": 4.375,
-      "surfaceCondition": 0.9,
-      "trafficDensity": 0.3,
-      "speedLimit": 20,
-      "turnRestrictions": [],
-      "motorcycleAccessible": true,
-      "pedestrianDensity": 0.2,
-      "riskLevel": 0.05,
-      "oneWay": false,
-      "divided": false,
-      "lanes": 2,
-      "roadType": "alley",
-      "floodSensitivity": 0.2,
-      "pickupPractical": true,
-      "district": "gulbari",
-      "tags": [
-        "alley"
-      ]
-    },
-    {
-      "segmentId": "S_gulbari_56",
-      "startNodeId": "gulbari_res_s2_3",
-      "endNodeId": "gulbari_alley_se_deadend",
-      "width": 3.125,
-      "surfaceCondition": 0.9,
-      "trafficDensity": 0.3,
-      "speedLimit": 15,
-      "turnRestrictions": [],
-      "motorcycleAccessible": false,
-      "pedestrianDensity": 0.2,
+      "pedestrianDensity": 0.65,
       "riskLevel": 0.05,
       "oneWay": false,
       "divided": false,
@@ -1523,6 +1438,52 @@
       "tags": [
         "alley",
         "deadend"
+      ]
+    },
+    {
+      "segmentId": "S_gulbari_52",
+      "startNodeId": "gulbari_res_s1_3",
+      "endNodeId": "gulbari_alley_mid_2",
+      "width": 4.4,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 20,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.45,
+      "riskLevel": 0.05,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "alley",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "gulbari",
+      "tags": [
+        "alley"
+      ]
+    },
+    {
+      "segmentId": "S_gulbari_53",
+      "startNodeId": "gulbari_alley_mid_2",
+      "endNodeId": "gulbari_res_s2_2",
+      "width": 4.4,
+      "surfaceCondition": 0.9,
+      "trafficDensity": 0.3,
+      "speedLimit": 20,
+      "turnRestrictions": [],
+      "motorcycleAccessible": true,
+      "pedestrianDensity": 0.45,
+      "riskLevel": 0.05,
+      "oneWay": false,
+      "divided": false,
+      "lanes": 2,
+      "roadType": "alley",
+      "floodSensitivity": 0.2,
+      "pickupPractical": true,
+      "district": "gulbari",
+      "tags": [
+        "alley"
       ]
     }
   ],
@@ -1567,479 +1528,2666 @@
   "lots": [
     {
       "lotId": "lot_gulbari_1",
-      "x": 1275,
-      "z": 883,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5707963267948966,
+      "x": 1238.1,
+      "z": 868.9,
+      "width": 22,
+      "depth": 14,
+      "facingHeading": 0,
       "zone": "commercial"
     },
     {
       "lotId": "lot_gulbari_2",
-      "x": 1275,
-      "z": 917,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": -1.5707963267948966,
+      "x": 1260.7,
+      "z": 869.4,
+      "width": 20,
+      "depth": 13,
+      "facingHeading": 0,
       "zone": "commercial"
     },
     {
       "lotId": "lot_gulbari_3",
-      "x": 1425,
-      "z": 883,
-      "width": 18,
+      "x": 1282.6,
+      "z": 867.9,
+      "width": 20,
       "depth": 16,
-      "facingHeading": 1.5707963267948966,
+      "facingHeading": 0,
       "zone": "commercial"
     },
     {
       "lotId": "lot_gulbari_4",
-      "x": 1425,
-      "z": 917,
+      "x": 1303.9,
+      "z": 869.4,
       "width": 18,
-      "depth": 16,
-      "facingHeading": -1.5707963267948966,
-      "zone": "commercial"
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "civic"
     },
     {
       "lotId": "lot_gulbari_5",
-      "x": 1575,
-      "z": 883,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5707963267948966,
-      "zone": "commercial"
+      "x": 1324.1,
+      "z": 868.4,
+      "width": 17,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "civic"
     },
     {
       "lotId": "lot_gulbari_6",
-      "x": 1575,
-      "z": 917,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": -1.5707963267948966,
+      "x": 1346.4,
+      "z": 868.9,
+      "width": 21,
+      "depth": 14,
+      "facingHeading": 0,
       "zone": "commercial"
     },
     {
       "lotId": "lot_gulbari_7",
-      "x": 1725,
-      "z": 883,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5707963267948966,
+      "x": 1369.4,
+      "z": 868.4,
+      "width": 21,
+      "depth": 15,
+      "facingHeading": 0,
       "zone": "commercial"
     },
     {
       "lotId": "lot_gulbari_8",
-      "x": 1725,
-      "z": 917,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": -1.5707963267948966,
+      "x": 1380.4,
+      "z": 931.1,
+      "width": 21,
+      "depth": 14,
+      "facingHeading": -3.1416,
       "zone": "commercial"
     },
     {
       "lotId": "lot_gulbari_9",
-      "x": 1212,
-      "z": 900,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0,
-      "zone": "commercial"
+      "x": 1357.8,
+      "z": 931.1,
+      "width": 19,
+      "depth": 14,
+      "facingHeading": -3.1416,
+      "zone": "civic"
     },
     {
       "lotId": "lot_gulbari_10",
-      "x": 1362,
-      "z": 900,
+      "x": 1336.1,
+      "z": 931.1,
       "width": 18,
-      "depth": 16,
-      "facingHeading": 0,
+      "depth": 14,
+      "facingHeading": -3.1416,
       "zone": "commercial"
     },
     {
       "lotId": "lot_gulbari_11",
-      "x": 1512,
-      "z": 900,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0,
+      "x": 1314.7,
+      "z": 931.1,
+      "width": 20,
+      "depth": 14,
+      "facingHeading": -3.1416,
       "zone": "commercial"
     },
     {
       "lotId": "lot_gulbari_12",
-      "x": 1662,
-      "z": 900,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0,
+      "x": 1291,
+      "z": 931.6,
+      "width": 21,
+      "depth": 15,
+      "facingHeading": -3.1416,
       "zone": "commercial"
     },
     {
       "lotId": "lot_gulbari_13",
-      "x": 1812,
-      "z": 900,
+      "x": 1269.6,
+      "z": 932.1,
       "width": 18,
       "depth": 16,
-      "facingHeading": 0,
+      "facingHeading": -3.1416,
       "zone": "commercial"
     },
     {
       "lotId": "lot_gulbari_14",
-      "x": 1275,
-      "z": 668,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5707963267948966,
-      "zone": "residential"
+      "x": 1249.4,
+      "z": 930.6,
+      "width": 17,
+      "depth": 13,
+      "facingHeading": -3.1416,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_gulbari_15",
-      "x": 1275,
-      "z": 768,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5707963267948966,
-      "zone": "residential"
+      "x": 1233.4,
+      "z": 931.1,
+      "width": 11,
+      "depth": 14,
+      "facingHeading": -3.1416,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_gulbari_16",
-      "x": 1425,
-      "z": 668,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5707963267948966,
-      "zone": "residential"
+      "x": 1425.1,
+      "z": 868.9,
+      "width": 16,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_gulbari_17",
-      "x": 1425,
-      "z": 768,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5707963267948966,
-      "zone": "residential"
+      "x": 1442.7,
+      "z": 869.4,
+      "width": 16,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_gulbari_18",
-      "x": 1575,
-      "z": 668,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5707963267948966,
-      "zone": "residential"
+      "x": 1463.5,
+      "z": 868.9,
+      "width": 19,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "civic"
     },
     {
       "lotId": "lot_gulbari_19",
-      "x": 1575,
-      "z": 768,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5707963267948966,
-      "zone": "residential"
+      "x": 1484.7,
+      "z": 869.4,
+      "width": 20,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "civic"
     },
     {
       "lotId": "lot_gulbari_20",
-      "x": 1725,
-      "z": 668,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5707963267948966,
-      "zone": "residential"
+      "x": 1506.8,
+      "z": 868.4,
+      "width": 21,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_gulbari_21",
-      "x": 1725,
-      "z": 768,
+      "x": 1528.9,
+      "z": 868.4,
       "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5707963267948966,
-      "zone": "residential"
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_gulbari_22",
-      "x": 1212,
-      "z": 730,
+      "x": 1549.2,
+      "z": 869.4,
       "width": 18,
-      "depth": 16,
+      "depth": 13,
       "facingHeading": 0,
-      "zone": "residential"
+      "zone": "commercial"
     },
     {
       "lotId": "lot_gulbari_23",
-      "x": 1212,
-      "z": 838,
-      "width": 18,
-      "depth": 16,
+      "x": 1569.6,
+      "z": 868.4,
+      "width": 19,
+      "depth": 15,
       "facingHeading": 0,
       "zone": "commercial"
     },
     {
       "lotId": "lot_gulbari_24",
-      "x": 1362,
-      "z": 730,
-      "width": 18,
+      "x": 1572.4,
+      "z": 932.1,
+      "width": 19,
       "depth": 16,
-      "facingHeading": 0,
-      "zone": "residential"
+      "facingHeading": -3.1416,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_gulbari_25",
-      "x": 1362,
-      "z": 838,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0,
+      "x": 1550.8,
+      "z": 930.6,
+      "width": 21,
+      "depth": 13,
+      "facingHeading": -3.1416,
       "zone": "commercial"
     },
     {
       "lotId": "lot_gulbari_26",
-      "x": 1512,
-      "z": 730,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0,
-      "zone": "residential"
-    },
-    {
-      "lotId": "lot_gulbari_27",
-      "x": 1512,
-      "z": 838,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0,
+      "x": 1526.5,
+      "z": 930.6,
+      "width": 22,
+      "depth": 13,
+      "facingHeading": -3.1416,
       "zone": "commercial"
     },
     {
-      "lotId": "lot_gulbari_28",
-      "x": 1662,
-      "z": 730,
+      "lotId": "lot_gulbari_27",
+      "x": 1504.4,
+      "z": 931.6,
       "width": 18,
-      "depth": 16,
-      "facingHeading": 0,
-      "zone": "residential"
+      "depth": 15,
+      "facingHeading": -3.1416,
+      "zone": "civic"
+    },
+    {
+      "lotId": "lot_gulbari_28",
+      "x": 1482.9,
+      "z": 931.1,
+      "width": 20,
+      "depth": 14,
+      "facingHeading": -3.1416,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_gulbari_29",
-      "x": 1662,
-      "z": 838,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0,
+      "x": 1462.7,
+      "z": 931.1,
+      "width": 17,
+      "depth": 14,
+      "facingHeading": -3.1416,
       "zone": "commercial"
     },
     {
       "lotId": "lot_gulbari_30",
-      "x": 1812,
-      "z": 730,
+      "x": 1441.8,
+      "z": 931.6,
       "width": 18,
-      "depth": 16,
-      "facingHeading": 0,
-      "zone": "residential"
+      "depth": 15,
+      "facingHeading": -3.1416,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_gulbari_31",
-      "x": 1812,
-      "z": 838,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0,
+      "x": 1423.8,
+      "z": 930.6,
+      "width": 13,
+      "depth": 13,
+      "facingHeading": -3.1416,
       "zone": "commercial"
     },
     {
       "lotId": "lot_gulbari_32",
-      "x": 1275,
-      "z": 1008,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5707963267948966,
-      "zone": "market"
+      "x": 1618.6,
+      "z": 868.4,
+      "width": 21,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "civic"
     },
     {
       "lotId": "lot_gulbari_33",
-      "x": 1275,
-      "z": 1108,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5707963267948966,
-      "zone": "residential"
-    },
-    {
-      "lotId": "lot_gulbari_34",
-      "x": 1425,
-      "z": 1008,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5707963267948966,
-      "zone": "market"
-    },
-    {
-      "lotId": "lot_gulbari_35",
-      "x": 1425,
-      "z": 1108,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5707963267948966,
-      "zone": "residential"
-    },
-    {
-      "lotId": "lot_gulbari_36",
-      "x": 1575,
-      "z": 1008,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5707963267948966,
-      "zone": "market"
-    },
-    {
-      "lotId": "lot_gulbari_37",
-      "x": 1575,
-      "z": 1108,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5707963267948966,
-      "zone": "residential"
-    },
-    {
-      "lotId": "lot_gulbari_38",
-      "x": 1725,
-      "z": 1008,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5707963267948966,
-      "zone": "market"
-    },
-    {
-      "lotId": "lot_gulbari_39",
-      "x": 1725,
-      "z": 1108,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 1.5707963267948966,
-      "zone": "residential"
-    },
-    {
-      "lotId": "lot_gulbari_40",
-      "x": 1212,
-      "z": 963,
-      "width": 18,
-      "depth": 16,
+      "x": 1640.7,
+      "z": 868.9,
+      "width": 20,
+      "depth": 14,
       "facingHeading": 0,
       "zone": "commercial"
     },
     {
-      "lotId": "lot_gulbari_41",
-      "x": 1212,
-      "z": 1070,
+      "lotId": "lot_gulbari_34",
+      "x": 1662,
+      "z": 869.4,
       "width": 18,
-      "depth": 16,
+      "depth": 13,
       "facingHeading": 0,
-      "zone": "residential"
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_gulbari_35",
+      "x": 1682.3,
+      "z": 868.9,
+      "width": 19,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_gulbari_36",
+      "x": 1705.7,
+      "z": 868.4,
+      "width": 21,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_gulbari_37",
+      "x": 1726.8,
+      "z": 868.9,
+      "width": 16,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_gulbari_38",
+      "x": 1746.8,
+      "z": 869.4,
+      "width": 18,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_gulbari_39",
+      "x": 1765.7,
+      "z": 868.9,
+      "width": 14,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "civic"
+    },
+    {
+      "lotId": "lot_gulbari_40",
+      "x": 1764.9,
+      "z": 931.6,
+      "width": 16,
+      "depth": 15,
+      "facingHeading": -3.1416,
+      "zone": "civic"
+    },
+    {
+      "lotId": "lot_gulbari_41",
+      "x": 1745.7,
+      "z": 931.6,
+      "width": 18,
+      "depth": 15,
+      "facingHeading": -3.1416,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_gulbari_42",
-      "x": 1362,
-      "z": 963,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0,
+      "x": 1724.5,
+      "z": 931.1,
+      "width": 21,
+      "depth": 14,
+      "facingHeading": -3.1416,
       "zone": "commercial"
     },
     {
       "lotId": "lot_gulbari_43",
-      "x": 1362,
-      "z": 1070,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0,
-      "zone": "residential"
+      "x": 1701.1,
+      "z": 931.6,
+      "width": 19,
+      "depth": 15,
+      "facingHeading": -3.1416,
+      "zone": "commercial"
     },
     {
       "lotId": "lot_gulbari_44",
-      "x": 1512,
-      "z": 963,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0,
+      "x": 1678.9,
+      "z": 931.1,
+      "width": 19,
+      "depth": 14,
+      "facingHeading": -3.1416,
       "zone": "commercial"
     },
     {
       "lotId": "lot_gulbari_45",
-      "x": 1512,
-      "z": 1070,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0,
-      "zone": "residential"
+      "x": 1655.5,
+      "z": 931.6,
+      "width": 21,
+      "depth": 15,
+      "facingHeading": -3.1416,
+      "zone": "civic"
     },
     {
       "lotId": "lot_gulbari_46",
-      "x": 1662,
-      "z": 963,
-      "width": 18,
+      "x": 1635,
+      "z": 932.1,
+      "width": 17,
       "depth": 16,
-      "facingHeading": 0,
-      "zone": "commercial"
+      "facingHeading": -3.1416,
+      "zone": "civic"
     },
     {
       "lotId": "lot_gulbari_47",
-      "x": 1662,
-      "z": 1070,
-      "width": 18,
+      "x": 1616.9,
+      "z": 932.1,
+      "width": 16,
       "depth": 16,
-      "facingHeading": 0,
-      "zone": "residential"
-    },
-    {
-      "lotId": "lot_gulbari_48",
-      "x": 1812,
-      "z": 963,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0,
+      "facingHeading": -3.1416,
       "zone": "commercial"
     },
     {
-      "lotId": "lot_gulbari_49",
-      "x": 1812,
-      "z": 1070,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0,
+      "lotId": "lot_gulbari_48",
+      "x": 1256.8,
+      "z": 683.9,
+      "width": 20,
+      "depth": 13,
+      "facingHeading": 3.1416,
       "zone": "residential"
     },
     {
+      "lotId": "lot_gulbari_49",
+      "x": 1279.8,
+      "z": 684.9,
+      "width": 21,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "commercial"
+    },
+    {
       "lotId": "lot_gulbari_50",
-      "x": 1244,
-      "z": 695,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0.982793723247329,
+      "x": 1302,
+      "z": 684.4,
+      "width": 20,
+      "depth": 14,
+      "facingHeading": 3.1416,
       "zone": "residential"
     },
     {
       "lotId": "lot_gulbari_51",
-      "x": 1319,
-      "z": 745,
-      "width": 18,
-      "depth": 16,
-      "facingHeading": 0.982793723247329,
+      "x": 1324.8,
+      "z": 684.4,
+      "width": 20,
+      "depth": 14,
+      "facingHeading": 3.1416,
       "zone": "residential"
     },
     {
       "lotId": "lot_gulbari_52",
-      "x": 1394,
-      "z": 1035,
-      "width": 18,
+      "x": 1348.9,
+      "z": 685.4,
+      "width": 22,
       "depth": 16,
-      "facingHeading": 0.982793723247329,
+      "facingHeading": 3.1416,
       "zone": "residential"
     },
     {
       "lotId": "lot_gulbari_53",
-      "x": 1469,
-      "z": 1085,
+      "x": 1234,
+      "z": 653.6,
+      "width": 16,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_54",
+      "x": 1252.9,
+      "z": 653.6,
+      "width": 18,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_55",
+      "x": 1273.4,
+      "z": 653.1,
+      "width": 20,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_56",
+      "x": 1295.3,
+      "z": 653.6,
+      "width": 19,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_57",
+      "x": 1315.6,
+      "z": 653.6,
+      "width": 17,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_58",
+      "x": 1335.4,
+      "z": 653.6,
+      "width": 17,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_59",
+      "x": 1354.7,
+      "z": 653.6,
+      "width": 18,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_60",
+      "x": 1375.2,
+      "z": 653.6,
+      "width": 17,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_61",
+      "x": 1445.2,
+      "z": 684.4,
+      "width": 18,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_62",
+      "x": 1465,
+      "z": 684.9,
+      "width": 18,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_gulbari_63",
+      "x": 1487,
+      "z": 684.9,
+      "width": 20,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_64",
+      "x": 1509.7,
+      "z": 684.4,
+      "width": 20,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_65",
+      "x": 1531.6,
+      "z": 685.4,
+      "width": 17,
+      "depth": 16,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_66",
+      "x": 1426,
+      "z": 653.1,
+      "width": 20,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_67",
+      "x": 1446.6,
+      "z": 653.6,
+      "width": 17,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_gulbari_68",
+      "x": 1467.3,
+      "z": 654.1,
+      "width": 19,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_69",
+      "x": 1489.5,
+      "z": 653.1,
+      "width": 20,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_70",
+      "x": 1512.3,
+      "z": 653.6,
+      "width": 21,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_71",
+      "x": 1535.8,
+      "z": 653.6,
+      "width": 19,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_72",
+      "x": 1556,
+      "z": 653.1,
+      "width": 16,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_73",
+      "x": 1574.1,
+      "z": 653.6,
+      "width": 16,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_74",
+      "x": 1638.9,
+      "z": 685.4,
+      "width": 16,
+      "depth": 16,
+      "facingHeading": 3.1416,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_gulbari_75",
+      "x": 1659.1,
+      "z": 684.4,
+      "width": 19,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_76",
+      "x": 1681.5,
+      "z": 684.9,
+      "width": 21,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_gulbari_77",
+      "x": 1703.4,
+      "z": 683.9,
+      "width": 19,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_gulbari_78",
+      "x": 1723.9,
+      "z": 683.9,
+      "width": 19,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_79",
+      "x": 1616.5,
+      "z": 653.1,
+      "width": 19,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_gulbari_80",
+      "x": 1640,
+      "z": 653.6,
+      "width": 21,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_81",
+      "x": 1663.2,
+      "z": 652.6,
+      "width": 19,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_82",
+      "x": 1684.8,
+      "z": 653.1,
+      "width": 18,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_83",
+      "x": 1704.3,
+      "z": 653.1,
+      "width": 17,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_84",
+      "x": 1724.1,
+      "z": 653.6,
+      "width": 18,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_85",
+      "x": 1743.7,
+      "z": 653.1,
+      "width": 17,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_86",
+      "x": 1763.8,
+      "z": 653.6,
+      "width": 18,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_87",
+      "x": 1236.5,
+      "z": 807.4,
+      "width": 21,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_88",
+      "x": 1259.3,
+      "z": 807.9,
+      "width": 18,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_89",
+      "x": 1281.9,
+      "z": 807.4,
+      "width": 21,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_90",
+      "x": 1304.3,
+      "z": 806.9,
+      "width": 18,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_91",
+      "x": 1324.6,
+      "z": 808.4,
       "width": 18,
       "depth": 16,
-      "facingHeading": 0.982793723247329,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_92",
+      "x": 1345.2,
+      "z": 806.9,
+      "width": 19,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_93",
+      "x": 1366.8,
+      "z": 807.9,
+      "width": 20,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_94",
+      "x": 1385.5,
+      "z": 806.9,
+      "width": 11,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_gulbari_95",
+      "x": 1235,
+      "z": 776.1,
+      "width": 18,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_96",
+      "x": 1256.8,
+      "z": 776.1,
+      "width": 20,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_97",
+      "x": 1280.4,
+      "z": 777.1,
+      "width": 21,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_98",
+      "x": 1302.4,
+      "z": 776.1,
+      "width": 19,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_99",
+      "x": 1326.1,
+      "z": 775.6,
+      "width": 22,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_100",
+      "x": 1348.7,
+      "z": 776.6,
+      "width": 19,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_101",
+      "x": 1371.9,
+      "z": 775.6,
+      "width": 22,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_102",
+      "x": 1424,
+      "z": 808.4,
+      "width": 16,
+      "depth": 16,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_103",
+      "x": 1443.8,
+      "z": 806.9,
+      "width": 18,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_104",
+      "x": 1463.9,
+      "z": 807.4,
+      "width": 17,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_105",
+      "x": 1485.1,
+      "z": 808.4,
+      "width": 21,
+      "depth": 16,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_106",
+      "x": 1505.6,
+      "z": 806.9,
+      "width": 17,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_107",
+      "x": 1526.5,
+      "z": 808.4,
+      "width": 19,
+      "depth": 16,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_108",
+      "x": 1548.2,
+      "z": 806.9,
+      "width": 21,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_109",
+      "x": 1572.1,
+      "z": 807.9,
+      "width": 20,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_110",
+      "x": 1424.5,
+      "z": 776.1,
+      "width": 17,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_111",
+      "x": 1445.6,
+      "z": 777.1,
+      "width": 20,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_112",
+      "x": 1467.8,
+      "z": 777.1,
+      "width": 21,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_113",
+      "x": 1491.2,
+      "z": 777.1,
+      "width": 20,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_114",
+      "x": 1514.2,
+      "z": 777.1,
+      "width": 20,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_115",
+      "x": 1536,
+      "z": 777.1,
+      "width": 20,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_116",
+      "x": 1557.6,
+      "z": 775.6,
+      "width": 20,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_117",
+      "x": 1576.3,
+      "z": 777.1,
+      "width": 12,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_118",
+      "x": 1616,
+      "z": 807.9,
+      "width": 18,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_119",
+      "x": 1638.5,
+      "z": 807.9,
+      "width": 20,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_120",
+      "x": 1661.6,
+      "z": 808.4,
+      "width": 21,
+      "depth": 16,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_121",
+      "x": 1684.8,
+      "z": 807.4,
+      "width": 21,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_122",
+      "x": 1705.8,
+      "z": 807.9,
+      "width": 16,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_123",
+      "x": 1727.6,
+      "z": 808.4,
+      "width": 21,
+      "depth": 16,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_124",
+      "x": 1750.9,
+      "z": 808.4,
+      "width": 21,
+      "depth": 16,
+      "facingHeading": 3.1416,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_gulbari_125",
+      "x": 1617.5,
+      "z": 777.1,
+      "width": 21,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_126",
+      "x": 1641.5,
+      "z": 776.6,
+      "width": 20,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_127",
+      "x": 1662.8,
+      "z": 776.1,
+      "width": 19,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_128",
+      "x": 1685.9,
+      "z": 777.1,
+      "width": 21,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_129",
+      "x": 1710.2,
+      "z": 777.1,
+      "width": 22,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_130",
+      "x": 1733.5,
+      "z": 776.6,
+      "width": 18,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_131",
+      "x": 1754.8,
+      "z": 776.6,
+      "width": 18,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_132",
+      "x": 1229.9,
+      "z": 729.5,
+      "width": 18,
+      "depth": 15,
+      "facingHeading": -1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_133",
+      "x": 1229.9,
+      "z": 752.4,
+      "width": 21,
+      "depth": 15,
+      "facingHeading": -1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_134",
+      "x": 1230,
+      "z": 836.7,
+      "width": 18,
+      "depth": 14,
+      "facingHeading": -1.5708,
+      "zone": "civic"
+    },
+    {
+      "lotId": "lot_gulbari_135",
+      "x": 1388.6,
+      "z": 727.1,
+      "width": 17,
+      "depth": 14,
+      "facingHeading": 1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_136",
+      "x": 1388.1,
+      "z": 745.2,
+      "width": 16,
+      "depth": 15,
+      "facingHeading": 1.5708,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_gulbari_137",
+      "x": 1419.9,
+      "z": 730.9,
+      "width": 18,
+      "depth": 15,
+      "facingHeading": -1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_138",
+      "x": 1419.4,
+      "z": 753.4,
+      "width": 20,
+      "depth": 14,
+      "facingHeading": -1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_139",
+      "x": 1387.1,
+      "z": 834.4,
+      "width": 17,
+      "depth": 13,
+      "facingHeading": 1.5708,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_gulbari_140",
+      "x": 1387.1,
+      "z": 854.6,
+      "width": 20,
+      "depth": 13,
+      "facingHeading": 1.5708,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_gulbari_141",
+      "x": 1420.9,
+      "z": 834.8,
+      "width": 19,
+      "depth": 13,
+      "facingHeading": -1.5708,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_gulbari_142",
+      "x": 1578.6,
+      "z": 731,
+      "width": 19,
+      "depth": 16,
+      "facingHeading": 1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_143",
+      "x": 1579.6,
+      "z": 753.4,
+      "width": 19,
+      "depth": 14,
+      "facingHeading": 1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_144",
+      "x": 1610.9,
+      "z": 731.6,
+      "width": 20,
+      "depth": 15,
+      "facingHeading": -1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_145",
+      "x": 1611.4,
+      "z": 756,
+      "width": 22,
+      "depth": 16,
+      "facingHeading": -1.5708,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_gulbari_146",
+      "x": 1578,
+      "z": 831.6,
+      "width": 16,
+      "depth": 16,
+      "facingHeading": 1.5708,
+      "zone": "civic"
+    },
+    {
+      "lotId": "lot_gulbari_147",
+      "x": 1610.5,
+      "z": 832.3,
+      "width": 19,
+      "depth": 13,
+      "facingHeading": -1.5708,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_gulbari_148",
+      "x": 1771.1,
+      "z": 734.3,
+      "width": 21,
+      "depth": 13,
+      "facingHeading": 1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_149",
+      "x": 1770.6,
+      "z": 757.3,
+      "width": 19,
+      "depth": 14,
+      "facingHeading": 1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_150",
+      "x": 1771.1,
+      "z": 774.3,
+      "width": 10,
+      "depth": 13,
+      "facingHeading": 1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_151",
+      "x": 1769,
+      "z": 836.8,
+      "width": 21,
+      "depth": 16,
+      "facingHeading": 1.5708,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_gulbari_152",
+      "x": 1257.8,
+      "z": 1024.4,
+      "width": 21,
+      "depth": 16,
+      "facingHeading": 3.1416,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_gulbari_153",
+      "x": 1281.2,
+      "z": 1023.9,
+      "width": 21,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_154",
+      "x": 1303.1,
+      "z": 1024.4,
+      "width": 19,
+      "depth": 16,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_155",
+      "x": 1323.2,
+      "z": 1023.9,
+      "width": 18,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_156",
+      "x": 1343.8,
+      "z": 1022.9,
+      "width": 19,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_gulbari_157",
+      "x": 1236,
+      "z": 992.6,
+      "width": 20,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_158",
+      "x": 1258.9,
+      "z": 993.1,
+      "width": 21,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_159",
+      "x": 1281.9,
+      "z": 992.6,
+      "width": 21,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_gulbari_160",
+      "x": 1302.9,
+      "z": 992.1,
+      "width": 17,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_161",
+      "x": 1323.1,
+      "z": 993.1,
+      "width": 18,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_162",
+      "x": 1345.8,
+      "z": 992.6,
+      "width": 22,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_gulbari_163",
+      "x": 1369,
+      "z": 991.6,
+      "width": 19,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_gulbari_164",
+      "x": 1385.6,
+      "z": 991.6,
+      "width": 11,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_165",
+      "x": 1424.5,
+      "z": 1023.9,
+      "width": 17,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_166",
+      "x": 1443.4,
+      "z": 1022.9,
+      "width": 16,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_167",
+      "x": 1462.8,
+      "z": 1023.4,
+      "width": 18,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_168",
+      "x": 1484.5,
+      "z": 1023.9,
+      "width": 21,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_169",
+      "x": 1507.7,
+      "z": 1024.4,
+      "width": 19,
+      "depth": 16,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_170",
+      "x": 1527.2,
+      "z": 1022.9,
+      "width": 17,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_gulbari_171",
+      "x": 1546.4,
+      "z": 1023.4,
+      "width": 16,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_172",
+      "x": 1566.2,
+      "z": 1023.9,
+      "width": 18,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_173",
+      "x": 1426.5,
+      "z": 992.6,
+      "width": 21,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_174",
+      "x": 1449.6,
+      "z": 992.6,
+      "width": 22,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_175",
+      "x": 1473.3,
+      "z": 991.6,
+      "width": 19,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_176",
+      "x": 1494.4,
+      "z": 992.1,
+      "width": 17,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_177",
+      "x": 1515.3,
+      "z": 992.6,
+      "width": 19,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_178",
+      "x": 1535.5,
+      "z": 992.1,
+      "width": 17,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_179",
+      "x": 1556,
+      "z": 993.1,
+      "width": 20,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_180",
+      "x": 1575.5,
+      "z": 992.6,
+      "width": 14,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_181",
+      "x": 1615,
+      "z": 1024.4,
+      "width": 16,
+      "depth": 16,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_182",
+      "x": 1635.4,
+      "z": 1024.4,
+      "width": 19,
+      "depth": 16,
+      "facingHeading": 3.1416,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_gulbari_183",
+      "x": 1658.1,
+      "z": 1023.9,
+      "width": 20,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_184",
+      "x": 1681.6,
+      "z": 1024.4,
+      "width": 21,
+      "depth": 16,
+      "facingHeading": 3.1416,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_gulbari_185",
+      "x": 1704.1,
+      "z": 1023.9,
+      "width": 19,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_186",
+      "x": 1725.9,
+      "z": 1023.4,
+      "width": 18,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_187",
+      "x": 1616.5,
+      "z": 992.6,
+      "width": 19,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_188",
+      "x": 1638.9,
+      "z": 992.6,
+      "width": 22,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_189",
+      "x": 1661.2,
+      "z": 991.6,
+      "width": 19,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_190",
+      "x": 1682.5,
+      "z": 992.1,
+      "width": 20,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_191",
+      "x": 1702.2,
+      "z": 992.1,
+      "width": 16,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_gulbari_192",
+      "x": 1721.6,
+      "z": 993.1,
+      "width": 18,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_193",
+      "x": 1742.9,
+      "z": 991.6,
+      "width": 19,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_194",
+      "x": 1763.7,
+      "z": 992.6,
+      "width": 19,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_195",
+      "x": 1235,
+      "z": 1145.9,
+      "width": 18,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_196",
+      "x": 1254.3,
+      "z": 1146.4,
+      "width": 17,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_197",
+      "x": 1276.4,
+      "z": 1145.9,
+      "width": 22,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_198",
+      "x": 1299.3,
+      "z": 1146.9,
+      "width": 19,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_199",
+      "x": 1319.9,
+      "z": 1146.9,
+      "width": 17,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_200",
+      "x": 1340.3,
+      "z": 1146.9,
+      "width": 18,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_201",
+      "x": 1360.6,
+      "z": 1146.9,
+      "width": 17,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_gulbari_202",
+      "x": 1382,
+      "z": 1146.9,
+      "width": 19,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_203",
+      "x": 1235.5,
+      "z": 1115.1,
+      "width": 19,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_204",
+      "x": 1256.5,
+      "z": 1115.1,
+      "width": 17,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_205",
+      "x": 1277.3,
+      "z": 1116.1,
+      "width": 18,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_206",
+      "x": 1299.7,
+      "z": 1115.1,
+      "width": 20,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_207",
+      "x": 1321.2,
+      "z": 1115.6,
+      "width": 19,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_208",
+      "x": 1343.4,
+      "z": 1115.6,
+      "width": 20,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_209",
+      "x": 1365.6,
+      "z": 1115.1,
+      "width": 21,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_210",
+      "x": 1385,
+      "z": 1115.6,
+      "width": 13,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_211",
+      "x": 1425.5,
+      "z": 1146.9,
+      "width": 19,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_212",
+      "x": 1448.7,
+      "z": 1145.9,
+      "width": 21,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_213",
+      "x": 1472.3,
+      "z": 1147.4,
+      "width": 20,
+      "depth": 16,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_214",
+      "x": 1494.5,
+      "z": 1147.4,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_215",
+      "x": 1516.3,
+      "z": 1146.9,
+      "width": 20,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_216",
+      "x": 1536.3,
+      "z": 1145.9,
+      "width": 16,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_217",
+      "x": 1555.7,
+      "z": 1146.4,
+      "width": 17,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_218",
+      "x": 1574.9,
+      "z": 1146.4,
+      "width": 15,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_219",
+      "x": 1425.5,
+      "z": 1114.6,
+      "width": 19,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_220",
+      "x": 1446,
+      "z": 1115.1,
+      "width": 18,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_221",
+      "x": 1468.9,
+      "z": 1115.1,
+      "width": 21,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_222",
+      "x": 1492.3,
+      "z": 1115.1,
+      "width": 19,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_223",
+      "x": 1512.5,
+      "z": 1116.1,
+      "width": 18,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_224",
+      "x": 1533.7,
+      "z": 1115.1,
+      "width": 19,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_225",
+      "x": 1615.5,
+      "z": 1146.9,
+      "width": 17,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_226",
+      "x": 1636.3,
+      "z": 1146.9,
+      "width": 18,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_227",
+      "x": 1657.5,
+      "z": 1147.4,
+      "width": 20,
+      "depth": 16,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_228",
+      "x": 1680.7,
+      "z": 1146.4,
+      "width": 20,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_gulbari_229",
+      "x": 1702,
+      "z": 1146.4,
+      "width": 16,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_230",
+      "x": 1723.2,
+      "z": 1147.4,
+      "width": 20,
+      "depth": 16,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_231",
+      "x": 1745.7,
+      "z": 1146.4,
+      "width": 22,
+      "depth": 14,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_232",
+      "x": 1766.4,
+      "z": 1147.4,
+      "width": 14,
+      "depth": 16,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_233",
+      "x": 1656.7,
+      "z": 1115.1,
+      "width": 16,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_234",
+      "x": 1676.1,
+      "z": 1115.6,
+      "width": 17,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_235",
+      "x": 1697.1,
+      "z": 1115.6,
+      "width": 18,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_236",
+      "x": 1718.1,
+      "z": 1114.6,
+      "width": 20,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_237",
+      "x": 1740.7,
+      "z": 1116.1,
+      "width": 21,
+      "depth": 13,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_238",
+      "x": 1763.3,
+      "z": 1115.1,
+      "width": 21,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_239",
+      "x": 1229.9,
+      "z": 1053.6,
+      "width": 17,
+      "depth": 15,
+      "facingHeading": -1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_240",
+      "x": 1228.9,
+      "z": 1073.2,
+      "width": 18,
+      "depth": 13,
+      "facingHeading": -1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_241",
+      "x": 1229.9,
+      "z": 1093.9,
+      "width": 19,
+      "depth": 15,
+      "facingHeading": -1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_242",
+      "x": 1231,
+      "z": 950.9,
+      "width": 16,
+      "depth": 16,
+      "facingHeading": -1.5708,
+      "zone": "civic"
+    },
+    {
+      "lotId": "lot_gulbari_243",
+      "x": 1231,
+      "z": 970.5,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": -1.5708,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_gulbari_244",
+      "x": 1388.6,
+      "z": 1068.2,
+      "width": 20,
+      "depth": 14,
+      "facingHeading": 1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_245",
+      "x": 1388.1,
+      "z": 1090.9,
+      "width": 19,
+      "depth": 15,
+      "facingHeading": 1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_246",
+      "x": 1419.9,
+      "z": 1052.7,
+      "width": 19,
+      "depth": 15,
+      "facingHeading": -1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_247",
+      "x": 1420.4,
+      "z": 1074.3,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": -1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_248",
+      "x": 1388.5,
+      "z": 956.3,
+      "width": 20,
+      "depth": 13,
+      "facingHeading": 1.5708,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_gulbari_249",
+      "x": 1420,
+      "z": 953.9,
+      "width": 17,
+      "depth": 14,
+      "facingHeading": -1.5708,
+      "zone": "civic"
+    },
+    {
+      "lotId": "lot_gulbari_250",
+      "x": 1420.5,
+      "z": 971.9,
+      "width": 16,
+      "depth": 15,
+      "facingHeading": -1.5708,
+      "zone": "civic"
+    },
+    {
+      "lotId": "lot_gulbari_251",
+      "x": 1578.6,
+      "z": 1052.1,
+      "width": 17,
+      "depth": 16,
+      "facingHeading": 1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_252",
+      "x": 1578.6,
+      "z": 1071.4,
+      "width": 17,
+      "depth": 16,
+      "facingHeading": 1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_253",
+      "x": 1579.6,
+      "z": 1093.9,
+      "width": 22,
+      "depth": 14,
+      "facingHeading": 1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_254",
+      "x": 1610.9,
+      "z": 1052.6,
+      "width": 22,
+      "depth": 15,
+      "facingHeading": -1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_255",
+      "x": 1609.9,
+      "z": 1075.1,
+      "width": 18,
+      "depth": 13,
+      "facingHeading": -1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_256",
+      "x": 1611.4,
+      "z": 1095.3,
+      "width": 19,
+      "depth": 16,
+      "facingHeading": -1.5708,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_gulbari_257",
+      "x": 1579.5,
+      "z": 954.9,
+      "width": 18,
+      "depth": 13,
+      "facingHeading": 1.5708,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_gulbari_258",
+      "x": 1578.5,
+      "z": 975.4,
+      "width": 17,
+      "depth": 15,
+      "facingHeading": 1.5708,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_gulbari_259",
+      "x": 1611.5,
+      "z": 952.9,
+      "width": 18,
+      "depth": 15,
+      "facingHeading": -1.5708,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_gulbari_260",
+      "x": 1612,
+      "z": 974.3,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": -1.5708,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_gulbari_261",
+      "x": 1770.6,
+      "z": 1048.6,
+      "width": 17,
+      "depth": 14,
+      "facingHeading": 1.5708,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_gulbari_262",
+      "x": 1771.1,
+      "z": 1068.2,
+      "width": 17,
+      "depth": 13,
+      "facingHeading": 1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_263",
+      "x": 1769.6,
+      "z": 1089.2,
+      "width": 19,
+      "depth": 16,
+      "facingHeading": 1.5708,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_264",
+      "x": 1769,
+      "z": 959.6,
+      "width": 22,
+      "depth": 16,
+      "facingHeading": 1.5708,
+      "zone": "civic"
+    },
+    {
+      "lotId": "lot_gulbari_265",
+      "x": 1297,
+      "z": 745.3,
+      "width": 20,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_266",
+      "x": 1319.8,
+      "z": 745.3,
+      "width": 20,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_267",
+      "x": 1296,
+      "z": 715.7,
+      "width": 18,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_268",
+      "x": 1315.4,
+      "z": 716.2,
+      "width": 17,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_269",
+      "x": 1487,
+      "z": 746.3,
+      "width": 20,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_270",
+      "x": 1509.2,
+      "z": 746.8,
+      "width": 20,
+      "depth": 16,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_271",
+      "x": 1486.5,
+      "z": 716.2,
+      "width": 19,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_272",
+      "x": 1507.8,
+      "z": 715.2,
+      "width": 20,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_273",
+      "x": 1537.8,
+      "z": 706.7,
+      "width": 16,
+      "depth": 13,
+      "facingHeading": 0.7935,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_gulbari_274",
+      "x": 1650.9,
+      "z": 704.8,
+      "width": 19,
+      "depth": 14,
+      "facingHeading": -0.7935,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_275",
+      "x": 1679,
+      "z": 746.3,
+      "width": 22,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_276",
+      "x": 1701.8,
+      "z": 746.3,
+      "width": 17,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_277",
+      "x": 1676,
+      "z": 715.2,
+      "width": 16,
+      "depth": 16,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_278",
+      "x": 1694.1,
+      "z": 715.7,
+      "width": 16,
+      "depth": 15,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_279",
+      "x": 1751.3,
+      "z": 725.3,
+      "width": 21,
+      "depth": 14,
+      "facingHeading": -2.3481,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_280",
+      "x": 1729.9,
+      "z": 705,
+      "width": 20,
+      "depth": 14,
+      "facingHeading": 0.7935,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_281",
+      "x": 1250.9,
+      "z": 1065.8,
+      "width": 15,
+      "depth": 13,
+      "facingHeading": 2.3481,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_282",
+      "x": 1297.5,
+      "z": 1084.3,
+      "width": 21,
+      "depth": 13,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_283",
+      "x": 1318.8,
+      "z": 1085.3,
+      "width": 17,
+      "depth": 15,
+      "facingHeading": 3.1416,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_284",
+      "x": 1295,
+      "z": 1055.2,
+      "width": 16,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_285",
+      "x": 1313.8,
+      "z": 1055.2,
+      "width": 17,
+      "depth": 14,
+      "facingHeading": 0,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_286",
+      "x": 1346.8,
+      "z": 1045,
+      "width": 17,
+      "depth": 14,
+      "facingHeading": 0.7935,
+      "zone": "commercial"
+    },
+    {
+      "lotId": "lot_gulbari_287",
+      "x": 1545.4,
+      "z": 1085.3,
+      "width": 18,
+      "depth": 15,
+      "facingHeading": -0.5756,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_288",
+      "x": 1526.9,
+      "z": 1074,
+      "width": 19,
+      "depth": 14,
+      "facingHeading": -0.5756,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_289",
+      "x": 1513.2,
+      "z": 1090.2,
+      "width": 17,
+      "depth": 13,
+      "facingHeading": 2.566,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_290",
+      "x": 1707.3,
+      "z": 1045.6,
+      "width": 18,
+      "depth": 16,
+      "facingHeading": 0.5831,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_291",
+      "x": 1733.7,
+      "z": 1055.7,
+      "width": 21,
+      "depth": 14,
+      "facingHeading": -2.5585,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_292",
+      "x": 1715,
+      "z": 1067.4,
+      "width": 17,
+      "depth": 13,
+      "facingHeading": -2.5585,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_293",
+      "x": 1668,
+      "z": 1072.2,
+      "width": 19,
+      "depth": 14,
+      "facingHeading": 0.5614,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_294",
+      "x": 1650.5,
+      "z": 1083.1,
+      "width": 16,
+      "depth": 14,
+      "facingHeading": 0.5614,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_295",
+      "x": 1633.8,
+      "z": 1093.7,
+      "width": 19,
+      "depth": 14,
+      "facingHeading": 0.5614,
+      "zone": "residential"
+    },
+    {
+      "lotId": "lot_gulbari_296",
+      "x": 1680.2,
+      "z": 1091.6,
+      "width": 19,
+      "depth": 16,
+      "facingHeading": -2.5802,
       "zone": "residential"
     }
   ]
