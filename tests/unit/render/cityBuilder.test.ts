@@ -425,4 +425,150 @@ describe('P2.3 CityBuilder Facades, POIs, Traffic Signals, Connectors & Shared M
     expect(disposedCount).toBe(0);
     expect(city.isDistrictLoaded('mirpara')).toBe(true);
   });
+
+  it('tags AssetManager prototypes as shared and does not dispose them when unloading a district', async () => {
+    await assetManager.init();
+    const g1 = new THREE.BoxGeometry(8, 12, 8);
+    const g2 = new THREE.BoxGeometry(4, 6, 4);
+    const m1 = new THREE.MeshStandardMaterial({ color: 0x998877 });
+    const m2 = new THREE.MeshStandardMaterial({ color: 0x334455 });
+    const mockScene = new THREE.Group();
+    mockScene.add(new THREE.Mesh(g1, m1));
+    mockScene.add(new THREE.Mesh(g2, m2));
+
+    const loader = assetManager.getLoader()!;
+    const loadSpy = vi.spyOn(loader, 'loadAsync').mockResolvedValue({
+      scene: mockScene,
+      scenes: [mockScene],
+      animations: [],
+      cameras: [],
+      asset: { version: '2.0' },
+      parser: {} as never,
+      userData: {},
+    });
+    await assetManager.loadModel('building_commercial_a', 'high');
+    loadSpy.mockRestore();
+
+    const extracted = assetManager.getInstancedPrototype('building_commercial_a')!;
+    expect(extracted).not.toBeNull();
+    expect(extracted.geometry.userData.shared).toBe(true);
+    const extractedMats = Array.isArray(extracted.material) ? extracted.material : [extracted.material];
+    for (const m of extractedMats) {
+      expect(m.userData.shared).toBe(true);
+    }
+
+    // Also test unloadDistrict() directly with mocked getInstancedPrototype + dispose spies
+    const sharedGeo = new THREE.BoxGeometry(6, 10, 6);
+    const sharedMatA = new THREE.MeshStandardMaterial({ color: 0xaa8866 });
+    const sharedMatB = new THREE.MeshStandardMaterial({ color: 0x556677 });
+    const geoDisposeSpy = vi.spyOn(sharedGeo, 'dispose');
+    const matADisposeSpy = vi.spyOn(sharedMatA, 'dispose');
+    const matBDisposeSpy = vi.spyOn(sharedMatB, 'dispose');
+
+    const protoSpy = vi.spyOn(assetManager, 'getInstancedPrototype').mockImplementation((id) => {
+      if (id.startsWith('building_') || id === 'prop_streetlight') {
+        return { geometry: sharedGeo, material: [sharedMatA, sharedMatB] };
+      }
+      return null;
+    });
+
+    const city = new CityBuilder();
+    const physics = await PhysicsWorld.create();
+    city.buildDistrict(mirparaData as unknown as DistrictData, physics);
+    city.buildDistrict(fulgateData as unknown as DistrictData, physics);
+
+    city.unloadDistrict('fulgate');
+
+    expect(geoDisposeSpy).not.toHaveBeenCalled();
+    expect(matADisposeSpy).not.toHaveBeenCalled();
+    expect(matBDisposeSpy).not.toHaveBeenCalled();
+
+    protoSpy.mockRestore();
+    sharedGeo.dispose();
+    sharedMatA.dispose();
+    sharedMatB.dispose();
+    g1.dispose();
+    g2.dispose();
+    m1.dispose();
+    m2.dispose();
+  });
+
+  it('orients traffic signal cantilever arms inward over the roadway toward the intersection center', async () => {
+    const mirpara = mirparaData as unknown as DistrictData;
+    const city = new CityBuilder();
+    const physics = await PhysicsWorld.create();
+    city.buildDistrict(mirpara, physics);
+
+    const sigNode = mirpara.nodes.find((n) => n.signal)!;
+    const signalObjects: THREE.Object3D[] = [];
+    for (const chunk of city.lodManager.chunks.values()) {
+      chunk.root.updateMatrixWorld(true);
+      chunk.root.traverse((obj) => {
+        if (obj.name.startsWith(`traffic_signal_${sigNode.nodeId}`)) {
+          signalObjects.push(obj);
+        }
+      });
+    }
+
+    const ewPole = signalObjects.find((o) => o.userData.approachIndex === 0)!;
+    const nsPole = signalObjects.find((o) => o.userData.approachIndex === 1)!;
+    expect(ewPole).toBeDefined();
+    expect(nsPole).toBeDefined();
+
+    for (const pole of [ewPole, nsPole]) {
+      const basePos = new THREE.Vector3();
+      const headPos = new THREE.Vector3();
+      pole.getWorldPosition(basePos);
+      pole.getObjectByName('lens_red')!.getWorldPosition(headPos);
+
+      const baseDist = Math.hypot(basePos.x - sigNode.x, basePos.z - sigNode.z);
+      const headDist = Math.hypot(headPos.x - sigNode.x, headPos.z - sigNode.z);
+      expect(headDist).toBeLessThan(baseDist);
+    }
+  });
+
+  it('batchStaticGroups preserves exact world transforms for multi-material meshes without double-applying local transforms', () => {
+    const city = new CityBuilder();
+    const parent = new THREE.Group();
+    parent.position.set(100, 0, 200);
+    parent.rotation.y = Math.PI / 3;
+
+    const geo = new THREE.BoxGeometry(2, 4, 2);
+    const matA = new THREE.MeshStandardMaterial({ color: 0xff0000 });
+    const matB = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
+    const child = new THREE.Mesh(geo, [matA, matB]);
+    child.name = 'multi_mat_child';
+    child.position.set(3, 1, -2);
+    child.rotation.y = Math.PI / 4;
+    child.scale.set(1.5, 2.0, 0.75);
+    child.castShadow = true;
+    child.receiveShadow = true;
+    parent.add(child);
+    parent.updateMatrixWorld(true);
+
+    const expectedPos = new THREE.Vector3();
+    const expectedQuat = new THREE.Quaternion();
+    const expectedScale = new THREE.Vector3();
+    child.matrixWorld.decompose(expectedPos, expectedQuat, expectedScale);
+
+    type BatchFn = (entries: Array<{ obj: THREE.Object3D; x: number; z: number }>) => Array<{ obj: THREE.Object3D; x: number; z: number }>;
+    const batched = (city as unknown as { batchStaticGroups: BatchFn }).batchStaticGroups([
+      { obj: parent, x: 100, z: 200 },
+    ]);
+
+    expect(batched.length).toBe(1);
+    const outMesh = batched[0]!.obj as THREE.Mesh;
+    expect(outMesh.name).toBe('multi_mat_child');
+    expect(outMesh.position.x).toBeCloseTo(expectedPos.x, 5);
+    expect(outMesh.position.y).toBeCloseTo(expectedPos.y, 5);
+    expect(outMesh.position.z).toBeCloseTo(expectedPos.z, 5);
+    expect(Math.abs(outMesh.quaternion.dot(expectedQuat))).toBeCloseTo(1, 5);
+    expect(outMesh.scale.x).toBeCloseTo(expectedScale.x, 5);
+    expect(outMesh.scale.y).toBeCloseTo(expectedScale.y, 5);
+    expect(outMesh.scale.z).toBeCloseTo(expectedScale.z, 5);
+
+    geo.dispose();
+    matA.dispose();
+    matB.dispose();
+  });
 });

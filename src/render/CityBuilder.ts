@@ -500,21 +500,21 @@ export class CityBuilder {
       }
       const corner = maxW / 2 + 1.1;
 
-      // Approach 0: East-West traffic (pole on NW corner, facing ±X)
+      // Approach 0: East-West traffic (pole on NW corner, cantilever overhanging +Z toward intersection)
       const ewSignal = createTrafficSignalPole(node.nodeId, 0);
       const ewX = node.x - corner;
       const ewZ = node.z - corner;
       ewSignal.group.position.set(ewX, nodeY, ewZ);
-      ewSignal.group.rotation.y = Math.PI / 2;
+      ewSignal.group.rotation.y = -Math.PI / 2;
       task.chunkObjects.push({ obj: ewSignal.group, x: ewX, z: ewZ });
       task.signalVisuals.push(ewSignal);
 
-      // Approach 1: North-South traffic (pole on SE corner, facing ±Z)
+      // Approach 1: North-South traffic (pole on SE corner, cantilever overhanging -X toward intersection)
       const nsSignal = createTrafficSignalPole(node.nodeId, 1);
       const nsX = node.x + corner;
       const nsZ = node.z + corner;
       nsSignal.group.position.set(nsX, nodeY, nsZ);
-      nsSignal.group.rotation.y = 0;
+      nsSignal.group.rotation.y = Math.PI;
       task.chunkObjects.push({ obj: nsSignal.group, x: nsX, z: nsZ });
       task.signalVisuals.push(nsSignal);
     }
@@ -1023,8 +1023,17 @@ export class CityBuilder {
         if (!(child instanceof THREE.Mesh)) return;
         const mat = child.material;
         if (Array.isArray(mat)) {
-          const worldClone = child.clone();
-          worldClone.applyMatrix4(child.matrixWorld);
+          const worldClone = new THREE.Mesh(child.geometry, child.material);
+          worldClone.name = child.name;
+          worldClone.castShadow = child.castShadow;
+          worldClone.receiveShadow = child.receiveShadow;
+          worldClone.userData = { ...child.userData };
+          child.matrixWorld.decompose(
+            worldClone.position,
+            worldClone.quaternion,
+            worldClone.scale
+          );
+          worldClone.updateMatrix();
           result.push({ obj: worldClone, x: entry.x, z: entry.z });
           return;
         }

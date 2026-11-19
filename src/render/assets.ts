@@ -179,6 +179,18 @@ function normalizeGeometriesForMerge(geos: THREE.BufferGeometry[]): THREE.Buffer
   return prepared;
 }
 
+function tagSharedPrototype(proto: InstancedPrototype): InstancedPrototype {
+  proto.geometry.userData.shared = true;
+  if (Array.isArray(proto.material)) {
+    for (const m of proto.material) {
+      if (m) m.userData.shared = true;
+    }
+  } else if (proto.material) {
+    proto.material.userData.shared = true;
+  }
+  return proto;
+}
+
 export class AssetManager {
   private cache = new Map<string, THREE.Object3D>();
   private prototypes = new Map<string, InstancedPrototype>();
@@ -443,10 +455,10 @@ export class AssetManager {
       const rel = new THREE.Matrix4().multiplyMatrices(rootInv, mesh.matrixWorld);
       geo.applyMatrix4(rel);
       geo.computeBoundingBox();
-      return {
+      return tagSharedPrototype({
         geometry: geo,
         material: mesh.material,
-      };
+      });
     }
 
     const clonedGeos: THREE.BufferGeometry[] = [];
@@ -483,17 +495,17 @@ export class AssetManager {
       rel.multiplyMatrices(rootInv, fallbackMesh.matrixWorld);
       fallbackGeo.applyMatrix4(rel);
       fallbackGeo.computeBoundingBox();
-      return {
+      return tagSharedPrototype({
         geometry: fallbackGeo,
         material: fallbackMesh.material,
-      };
+      });
     }
 
     merged.computeBoundingBox();
-    return {
+    return tagSharedPrototype({
       geometry: merged,
       material: singleMaterial ? uniqueMaterials[0]! : materials,
-    };
+    });
   }
 
   createProceduralFallback(id: string, lod: 'high' | 'low' = 'high'): THREE.Object3D {
