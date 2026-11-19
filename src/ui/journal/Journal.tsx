@@ -341,7 +341,7 @@ export function Journal({
                 { name: 'পেশাদার (Professional)', score: proScore, desc: 'নিরাপদ রাইডিং, উচ্চ রেটিং এবং সময়ানুবর্তিতা', color: '#38bdf8' },
                 { name: 'দরকষাকষিবিদ (Negotiator)', score: negScore, desc: 'ভাড়া আদায় এবং নায্য লাভের ক্ষেত্রে কৌশলী', color: '#fbbf24' },
                 { name: 'হাঁটুরে / ঝুঁকিপ্রিয় (Hustler)', score: hustlerScore, desc: 'দ্রুত আয়, আইন এড়িয়ে শর্টকাট ও ঝুঁকিপূর্ণ ট্রিপ', color: '#f97316' },
-                { name: 'পাড়ার নিয়মিত (Regular)', score: regularScore, desc: 'স্থানীয় সম্পর্ক, প্রতিশ্রুতি রক্ষা ও社区বিশ্বাস', color: '#10b981' },
+                { name: 'পাড়ার নিয়মিত (Regular)', score: regularScore, desc: 'স্থানীয় সম্পর্ক, প্রতিশ্রুতি রক্ষা ও সামাজিক বিশ্বাস', color: '#10b981' },
               ].map((item) => (
                 <div
                   key={item.name}

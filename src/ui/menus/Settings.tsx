@@ -370,9 +370,6 @@ export function Settings({
           {/* Audio Tab */}
           {activeTab === 'audio' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <p data-testid="settings-audio-prototype" style={{ margin: 0, fontSize: '0.85rem', color: '#fbbf24' }}>
-                {t('settings.prototype_note')}
-              </p>
               {/* Master Volume */}
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>

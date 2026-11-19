@@ -8,7 +8,7 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       manifest: {
-        name: 'Dhaka Bike Rider',
+        name: 'Uthao',
         short_name: 'Uthao',
         description: 'A narrative motorcycle ride-hailing simulation set in Dhaka',
         theme_color: '#111827',

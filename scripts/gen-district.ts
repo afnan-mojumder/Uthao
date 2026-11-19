@@ -578,7 +578,7 @@ export function genFulgate(seed: number | string = 102): DistrictData {
   return genDistrict(
     {
       districtId: 'fulgate',
-      name: { bn: 'ফার্মগেট', en: 'Fulgate' },
+      name: { bn: 'ফুলগেট', en: 'Fulgate' },
       origin: { x: 600, z: 0 },
       size: { width: 600, height: 600 },
       blockM: [80, 150],
@@ -1541,7 +1541,7 @@ export function genWorld(): WorldData {
       },
       {
         districtId: 'fulgate',
-        name: { bn: 'ফার্মগেট', en: 'Fulgate' },
+        name: { bn: 'ফুলগেট', en: 'Fulgate' },
         file: 'data/districts/fulgate.json',
         bounds: { minX: 600, minZ: 0, maxX: 1200, maxZ: 600 },
       },

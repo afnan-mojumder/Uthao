@@ -178,14 +178,36 @@ export function MainMenu({
                   setConfirmNewCareer(false);
                   onNewCareer?.();
                 }}
-                style={{ flex: 1, padding: '10px', borderRadius: '10px', fontWeight: 700, cursor: 'pointer' }}
+                style={{
+                  flex: 1,
+                  padding: '10px 14px',
+                  borderRadius: '10px',
+                  border: '1px solid rgba(248, 113, 113, 0.6)',
+                  background: 'rgba(220, 38, 38, 0.3)',
+                  color: '#fecaca',
+                  fontSize: '0.9rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                }}
               >
                 {t('menu.new_career_confirm_yes')}
               </button>
               <button
                 data-testid="menu-new-career-confirm-no"
                 onClick={() => setConfirmNewCareer(false)}
-                style={{ flex: 1, padding: '10px', borderRadius: '10px', fontWeight: 700, cursor: 'pointer' }}
+                style={{
+                  flex: 1,
+                  padding: '10px 14px',
+                  borderRadius: '10px',
+                  border: '1px solid rgba(148, 163, 184, 0.35)',
+                  background: 'rgba(30, 41, 59, 0.85)',
+                  color: '#f8fafc',
+                  fontSize: '0.9rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                }}
               >
                 {t('menu.new_career_confirm_no')}
               </button>
@@ -342,33 +364,27 @@ export function MainMenu({
             <div style={{ fontSize: '0.9rem', color: '#cbd5e1', lineHeight: 1.6, display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div>
                 <strong style={{ color: '#f8fafc' }}>Development Team:</strong>
-                <p style={{ margin: '4px 0 0 0' }}>Afnan Mojumder (Sim, Physics, Traffic, Districts) & Tafsirul Shuvo (Input, UI, Audio, Content, Releases)</p>
+                <p style={{ margin: '4px 0 0 0' }}>Afnan Mojumder &amp; Tafsirul Shuvo</p>
               </div>
 
               <div>
-                <strong style={{ color: '#f8fafc' }}>Creative & Technical Partner:</strong>
-                <p style={{ margin: '4px 0 0 0' }}>Google DeepMind Advanced Agentic Coding Team (Antigravity Project)</p>
-              </div>
-
-              <div>
-                <strong style={{ color: '#f8fafc' }}>Public Domain Assets (CC0-1.0):</strong>
+                <strong style={{ color: '#f8fafc' }}>Provisional Art &amp; Audio:</strong>
                 <ul style={{ margin: '4px 0 0 18px', padding: 0 }}>
-                  <li>Kenney (City Kit Roads, Commercial, Suburban, Car Kit, UI Audio, Impact Sounds)</li>
-                  <li>OpenGameArt CC0 (Dhaka City Ambience, Monsoon Rain Audio, Horns)</li>
-                  <li>Authentic Dhaka Procedural Models (CNGs, Rickshaws, Buses, Tea Stalls, Kamal Bhai Garage)</li>
+                  <li>Procedural Dhaka 3D Geometry (Motorcycles, CNGs, Rickshaws, Buses, Tea Stalls, Garage Props)</li>
+                  <li>Procedural Web Audio Synthesis (Engine, Horns, Rain, UI Feedback)</li>
                 </ul>
               </div>
 
               <div>
                 <strong style={{ color: '#f8fafc' }}>Open Font License (OFL-1.1):</strong>
                 <ul style={{ margin: '4px 0 0 18px', padding: 0 }}>
-                  <li>Hind Siliguri (SIL Open Font License 1.1, Google Fonts / Lipi Design & Ekushey)</li>
+                  <li>Hind Siliguri (SIL Open Font License 1.1, Google Fonts)</li>
                 </ul>
               </div>
 
               <div>
-                <strong style={{ color: '#f8fafc' }}>Open Source Engine & Physics:</strong>
-                <p style={{ margin: '4px 0 0 0' }}>Three.js (MIT), Rapier Physics / @dimforge/rapier3d-compat (Apache-2.0), Preact (MIT), Vite</p>
+                <strong style={{ color: '#f8fafc' }}>Open Source Engine &amp; Physics:</strong>
+                <p style={{ margin: '4px 0 0 0' }}>Three.js (MIT), Rapier Physics / @dimforge/rapier3d-compat (Apache-2.0), Preact (MIT), Vite (MIT)</p>
               </div>
 
               <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.1)', paddingTop: '12px', fontSize: '0.8rem', color: '#64748b' }}>

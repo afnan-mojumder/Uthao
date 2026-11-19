@@ -629,7 +629,7 @@ export function FirstRideTutorial(props: FirstRideTutorialProps): JSX.Element | 
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-                <span style={{ color: '#ef4444' }}>Uthao Commission (15% উথাও কমিশন):</span>
+                <span style={{ color: '#ef4444' }}>Uthao Commission (15% উঠাও কমিশন):</span>
                 <span style={{ fontWeight: 700, color: '#ef4444' }}>-৳{commission}</span>
               </div>
 

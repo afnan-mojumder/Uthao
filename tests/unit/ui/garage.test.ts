@@ -65,8 +65,8 @@ describe('T4.4 & T5.6 Garage Screen & UI Store', () => {
 
   it('provides bilingual Garage strings in English and Bengali', () => {
     setLanguage('bn');
-    expect(t('garage.title')).toBe('কমল ভাইয়ের ওয়ার্কশপ');
-    expect(t('garage.kamal_discount_badge')).toBe('কমল ভাইয়ের আস্থা: ২০% ডিসকাউন্ট চালু!');
+    expect(t('garage.title')).toBe('কামাল ভাইয়ের ওয়ার্কশপ');
+    expect(t('garage.kamal_discount_badge')).toBe('কামাল ভাইয়ের আস্থা: ২০% ডিসকাউন্ট চালু!');
     expect(t('garage.tab_repairs')).toBe('মেরামত ও রক্ষণাবেক্ষণ');
     expect(t('garage.tab_upgrades')).toBe('পারফরম্যান্স আপগ্রেড');
     expect(t('garage.tab_bikes')).toBe('বাইক ও শোরুম');

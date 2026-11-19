@@ -94,7 +94,7 @@ describe('T2.4 Phone Store & Logic', () => {
 
   it('provides bilingual phone UI translation keys', () => {
     setLanguage('bn');
-    expect(t('phone.title')).toBe('উধাও রাইডার');
+    expect(t('phone.title')).toBe('উঠাও রাইডার');
     expect(t('phone.accept')).toBe('রাইড গ্রহণ করুন');
     expect(t('phone.decline')).toBe('প্রত্যাখ্যান');
 

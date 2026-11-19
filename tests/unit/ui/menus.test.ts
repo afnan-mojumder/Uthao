@@ -99,13 +99,13 @@ describe('T3.10 Menus & Settings Store', () => {
 
   it('provides bilingual strings for MainMenu, Settings, and Pause', () => {
     setLanguage('bn');
-    expect(t('menu.title')).toBe('উধাও');
+    expect(t('menu.title')).toBe('উঠাও');
     expect(t('menu.new_career')).toBe('নতুন ক্যারিয়ার');
     expect(t('settings.title')).toBe('গেম সেটিংস');
     expect(t('pause.title')).toBe('খেলা সাময়িক বিরতি');
 
     setLanguage('en');
-    expect(t('menu.title')).toBe('UTHÃO');
+    expect(t('menu.title')).toBe('UTHAO');
     expect(t('menu.new_career')).toBe('New Career');
     expect(t('settings.title')).toBe('Game Settings');
     expect(t('pause.title')).toBe('Game Paused');
@@ -151,7 +151,7 @@ describe('T3.10 Menus & Settings Store', () => {
     expect(vnode).not.toBeNull();
     expect(vnode?.props['data-testid']).toBe('pause-menu');
   });
-  it('renders Credits modal with CC0 assets, OFL typography, and engine attributions (T6.4)', () => {
+  it('renders Credits modal with truthful provisional assets, OFL typography, and engine attributions (T6.4)', () => {
     const vnode = MainMenu({
       hasSave: false,
       showCredits: true,
@@ -160,12 +160,16 @@ describe('T3.10 Menus & Settings Store', () => {
     expect(vnode).not.toBeNull();
     const json = JSON.stringify(vnode);
     expect(json).toContain('credits-modal');
-    expect(json).toContain('Public Domain Assets (CC0-1.0)');
-    expect(json).toContain('Kenney');
-    expect(json).toContain('OpenGameArt');
+    expect(json).toContain('Provisional Art & Audio');
+    expect(json).toContain('Procedural Dhaka 3D Geometry');
+    expect(json).toContain('Procedural Web Audio Synthesis');
     expect(json).toContain('Open Font License (OFL-1.1)');
     expect(json).toContain('Hind Siliguri');
     expect(json).toContain('Three.js');
     expect(json).toContain('Rapier');
+    expect(json).not.toContain('DeepMind');
+    expect(json).not.toContain('Antigravity');
+    expect(json).not.toContain('Kenney');
+    expect(json).not.toContain('OpenGameArt');
   });
 });
