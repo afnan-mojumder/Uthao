@@ -25,6 +25,13 @@ export function arrowRotationFor(heading: number): number {
   return Math.PI - heading;
 }
 
+/**
+ * Canvas angle (radians clockwise from top/up) where world North `(0, -1)` sits on the minimap.
+ */
+export function northCompassAngleFor(heading: number, rotateWithPlayer: boolean): number {
+  return rotateWithPlayer ? mapRotationFor(heading) : 0;
+}
+
 export class Minimap {
   readonly canvas: HTMLCanvasElement;
   private readonly ctx: CanvasRenderingContext2D | null;
@@ -232,7 +239,7 @@ export class Minimap {
 
     // 9. North Compass Needle / "N" Indicator
     ctx.save();
-    const northAngle = this.rotateWithPlayer ? -playerPose.heading + Math.PI / 2 : 0;
+    const northAngle = northCompassAngleFor(playerPose.heading, this.rotateWithPlayer);
     const nDist = radius - 10;
     const nx = center + Math.cos(northAngle - Math.PI / 2) * nDist;
     const ny = center + Math.sin(northAngle - Math.PI / 2) * nDist;

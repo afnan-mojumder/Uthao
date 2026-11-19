@@ -19,6 +19,7 @@ describe('Detours, Crossings, and Off-App (T2.5)', () => {
       { nodeId: 'N4', x: 50, z: 20, kind: 'junction' },
       { nodeId: 'N5', x: 60, z: 0, kind: 'junction', tags: ['crossing'] },
       { nodeId: 'N6', x: 70, z: 0, kind: 'junction' }, // no crossing tag
+      { nodeId: 'N7', x: 60, z: -20, kind: 'junction' },
     ];
 
     const segments: RoadSegment[] = [
@@ -129,6 +130,50 @@ describe('Detours, Crossings, and Off-App (T2.5)', () => {
         pickupPractical: true,
         district: 'testloop',
         tags: [],
+      },
+      // Side street kerb at N5 so N5 is a pickup-eligible node
+      {
+        segmentId: 'S5_7',
+        startNodeId: 'N5',
+        endNodeId: 'N7',
+        width: 7,
+        surfaceCondition: 1,
+        trafficDensity: 0.1,
+        speedLimit: 30,
+        turnRestrictions: [],
+        motorcycleAccessible: true,
+        pedestrianDensity: 0.2,
+        riskLevel: 0,
+        oneWay: false,
+        divided: false,
+        lanes: 2,
+        roadType: 'residential',
+        floodSensitivity: 0,
+        pickupPractical: true,
+        district: 'testloop',
+        tags: [],
+      },
+      // Pedestrian footbridge connecting N4 and N5
+      {
+        segmentId: 'S4_5_FB',
+        startNodeId: 'N4',
+        endNodeId: 'N5',
+        width: 4,
+        surfaceCondition: 1,
+        trafficDensity: 0,
+        speedLimit: 10,
+        turnRestrictions: [],
+        motorcycleAccessible: false,
+        pedestrianDensity: 0.6,
+        riskLevel: 0,
+        oneWay: false,
+        divided: false,
+        lanes: 1,
+        roadType: 'main',
+        floodSensitivity: 0,
+        pickupPractical: false,
+        district: 'testloop',
+        tags: ['crossing', 'footbridge'],
       },
     ];
 
@@ -380,5 +425,70 @@ describe('Detours, Crossings, and Off-App (T2.5)', () => {
     expect(newRoute?.segmentIds).toContain('S_alt1');
     expect(newRoute?.segmentIds).toContain('S_alt2');
     expect(rm.currentRoute?.segmentIds).toEqual(newRoute?.segmentIds);
+  });
+
+  it('pickupOptions validates isPickupNode and network walk connectivity', () => {
+    const mkSeg = (
+      segmentId: string,
+      startNodeId: string,
+      endNodeId: string,
+      extra: Partial<RoadSegment> = {}
+    ): RoadSegment => ({
+      segmentId,
+      startNodeId,
+      endNodeId,
+      width: 7,
+      surfaceCondition: 1,
+      trafficDensity: 0.2,
+      speedLimit: 50,
+      turnRestrictions: [],
+      motorcycleAccessible: true,
+      pedestrianDensity: 0.1,
+      riskLevel: 0,
+      oneWay: true,
+      divided: true,
+      lanes: 2,
+      roadType: 'main',
+      floodSensitivity: 0,
+      pickupPractical: true,
+      district: 'testloop',
+      tags: [],
+      ...extra,
+    });
+
+    // Case 1: X_bad is a crossing node within 25m of P and walk-connected,
+    // but ONLY touches divided/inaccessible segments (isPickupNode === false).
+    const nodes: RoadNode[] = [
+      { nodeId: 'R', x: 0, z: 0, kind: 'junction' },
+      { nodeId: 'X_disconnected', x: 40, z: 0, kind: 'junction', tags: ['crossing'] },
+      { nodeId: 'X_bad', x: 60, z: 0, kind: 'junction', tags: ['crossing'] },
+      { nodeId: 'U', x: 500, z: 0, kind: 'uturn' },
+      { nodeId: 'W', x: 200, z: 20, kind: 'junction' },
+      { nodeId: 'P', x: 50, z: 20, kind: 'junction' },
+      { nodeId: 'K', x: 40, z: -20, kind: 'junction' },
+    ];
+    const segments: RoadSegment[] = [
+      mkSeg('R_Xd', 'R', 'X_disconnected'),
+      mkSeg('Xd_Xb', 'X_disconnected', 'X_bad'),
+      mkSeg('Xb_U', 'X_bad', 'U'),
+      mkSeg('U_W', 'U', 'W'),
+      mkSeg('W_P', 'W', 'P'),
+      // Kerb at X_disconnected (so it IS a pickup node), but NO walk connection from P to X_disconnected within maxWalkM
+      mkSeg('Xd_K', 'X_disconnected', 'K', { oneWay: false, divided: false }),
+      // Footbridge from P to X_bad, while X_bad only touches divided/footbridge (NOT a pickup node)
+      mkSeg('P_Xb_fb', 'P', 'X_bad', {
+        oneWay: false,
+        divided: false,
+        motorcycleAccessible: false,
+        pickupPractical: false,
+        tags: ['crossing', 'footbridge'],
+      }),
+    ];
+
+    const graph = new RoutingGraph(nodes, segments);
+    const opts = pickupOptions({ pickupNodeId: 'P' }, 'R', graph, { maxWalkM: 300 });
+    expect(opts).not.toBeNull();
+    // Neither X_bad (not a pickup node) nor X_disconnected (no walk path from P) should be offered!
+    expect(opts?.crossPoint).toBeUndefined();
   });
 });

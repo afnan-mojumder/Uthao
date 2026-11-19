@@ -150,6 +150,8 @@ export class GameSession {
       economy: this.gm.economyManager,
       reputation: this.gm.reputationSystem,
       clock: this.gm.clock,
+      roadEvents: this.gm.roadEvents,
+      weatherSystem: this.gm.weatherSystem,
       tripFuelLiters: () => this.tripFuelLiters,
       appStatus: () =>
         this.ride.isAppSuspended(this.gm.clock.day)
@@ -707,9 +709,15 @@ export class GameSession {
     const route = this.ride.currentRoute;
     if (!route || !this.ride.getActiveRequest()) return;
     const ids = route.segmentIds;
+    const isHeavyRain = this.gm.weatherSystem.weather === 'heavyRain';
     for (let i = 0; i < ids.length; i++) {
-      if (this.gm.roadEvents.isSegmentClosed(ids[i]!)) {
-        this.ride.rerouteIfBlocked(ids[i]!);
+      const segId = ids[i]!;
+      const seg = this.road.getSegment(segId);
+      const floodedImpassable =
+        this.gm.weatherSystem.getFloodLevel(segId) > 0.9 ||
+        (isHeavyRain && seg !== undefined && seg.floodSensitivity > 0.9);
+      if (this.gm.roadEvents.isSegmentClosed(segId) || floodedImpassable) {
+        this.ride.rerouteIfBlocked(segId);
         return;
       }
     }

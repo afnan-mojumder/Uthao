@@ -183,4 +183,44 @@ describe('T8.3 fuel recovery affordances', () => {
     expect(empty.has('hud-btn-fuel-rescue')).toBe(true);
     expect(empty.has('hud-fuel-empty')).toBe(true);
   });
+
+  it('renders uturn icon ↶ in both third-person and first-person HUD views', () => {
+    const collectText = (n: unknown, out: string[] = []): string[] => {
+      if (typeof n === 'string' || typeof n === 'number') {
+        out.push(String(n));
+      } else if (Array.isArray(n)) {
+        for (const c of n) collectText(c, out);
+      } else if (n && typeof n === 'object') {
+        const v = n as VNode<Record<string, unknown>>;
+        if (typeof v.type === 'function') {
+          collectText((v.type as (p: unknown) => unknown)(v.props ?? {}), out);
+        } else {
+          collectText(v.props?.children, out);
+        }
+      }
+      return out;
+    };
+
+    const third = collectText(
+      HudView({
+        state: {
+          ...base,
+          isFirstPerson: false,
+          nextTurn: { direction: 'uturn', text: 'Make a U-turn' },
+        },
+      })
+    );
+    expect(third).toContain('↶');
+
+    const first = collectText(
+      HudView({
+        state: {
+          ...base,
+          isFirstPerson: true,
+          nextTurn: { direction: 'uturn', text: 'Make a U-turn' },
+        },
+      })
+    );
+    expect(first).toContain('↶');
+  });
 });

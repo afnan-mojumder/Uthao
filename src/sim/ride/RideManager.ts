@@ -9,14 +9,21 @@ import type { EventBus, GameEvents } from '../../core/events';
 import type {
   RideRequest,
   BikeId,
+  RoadSegment,
   TripOutcome,
   TripState,
+  WeatherKind,
 } from '../../core/types';
 import { distance2d, clamp } from '../../core/math';
-import { distanceToRoute } from '../road/navigation';
+import { distanceToRoute, isWrongWayOnRoute } from '../road/navigation';
 import { fairFare } from '../negotiation/fare';
 import type { Fsm } from '../../core/fsm';
-import type { Route, PickupOptionsResult } from '../road/routing';
+import type {
+  Route,
+  RouteOptions,
+  PickupOptionsQuery,
+  PickupOptionsResult,
+} from '../road/routing';
 import type { Rng } from '../../core/rng';
 import { BALANCE } from '../../config/balance';
 import { computeTipChance } from '../reputation/ReputationSystem';
@@ -66,6 +73,22 @@ export interface RideManagerOptions {
   /** T8.4: whether the app can offer rides right now; drives the idle objective.
    * Without it the app is always available. */
   appStatus?: () => 'ok' | 'phoneDead' | 'suspended';
+  /** Live road closures/caps/congestion provider for routing. */
+  roadEvents?: {
+    getClosedSegmentIds: () => string[];
+    getSpeedCap?: (segmentId: string) => number | undefined;
+    getCongestionMultiplier?: (segmentId: string) => number;
+  };
+  /** Live weather/flood provider for routing. */
+  weatherSystem?: {
+    readonly weather: WeatherKind;
+    isFlooded?: (segmentId: string) => boolean;
+    getFloodLevel?: (segmentId: string) => number;
+  };
+  /** Optional direct weather/flood callbacks when `weatherSystem` is omitted. */
+  weather?: () => WeatherKind;
+  isFlooded?: (segment: RoadSegment) => boolean;
+  getFloodLevel?: (segmentId: string) => number;
 }
 
 export class RideManager {
@@ -85,9 +108,15 @@ export class RideManager {
   private readonly clock?: { day: number; minutes: number };
   private readonly tripFuelLiters?: () => number;
   private readonly appStatusProvider?: () => 'ok' | 'phoneDead' | 'suspended';
+  private readonly roadEvents?: RideManagerOptions['roadEvents'];
+  private readonly weatherSystem?: RideManagerOptions['weatherSystem'];
+  private readonly weatherProvider?: () => WeatherKind;
+  private readonly isFloodedFn?: (segment: RoadSegment) => boolean;
+  private readonly getFloodLevelFn?: (segmentId: string) => number;
   // T8.4 live-navigation state. Scratch values only: nothing here allocates per step.
   private readonly pose = { x: 0, z: 0, heading: 0 };
   private hasPose = false;
+  private lastSpeed = 0;
   private simTimeSec = 0;
   private offRouteSince = -1;
   private passengerMood = 1;
@@ -114,9 +143,34 @@ export class RideManager {
     this.clock = opts.clock;
     this.tripFuelLiters = opts.tripFuelLiters;
     this.appStatusProvider = opts.appStatus;
+    this.roadEvents = opts.roadEvents;
+    this.weatherSystem = opts.weatherSystem;
+    this.weatherProvider = opts.weather;
+    this.isFloodedFn =
+      opts.isFlooded ??
+      (opts.weatherSystem?.isFlooded
+        ? (seg: RoadSegment) => opts.weatherSystem!.isFlooded!(seg.segmentId)
+        : undefined);
+    this.getFloodLevelFn =
+      opts.getFloodLevel ??
+      (opts.weatherSystem?.getFloodLevel
+        ? (segId: string) => opts.weatherSystem!.getFloodLevel!(segId)
+        : undefined);
     this.bus.on('bike/swapped', ({ bikeId }) => {
       this.activeBikeId = bikeId;
     });
+  }
+
+  private routeOpts(mode: 'motorcycle' | 'walk', avoid?: string[]): RouteOptions {
+    const opts: RouteOptions = { mode };
+    if (avoid) opts.avoid = avoid;
+    if (this.roadEvents) opts.roadEvents = this.roadEvents;
+    const weather = this.weatherSystem?.weather ?? this.weatherProvider?.();
+    if (weather !== undefined) opts.weather = weather;
+    if (this.clock) opts.minute = this.clock.minutes;
+    if (this.isFloodedFn) opts.isFlooded = this.isFloodedFn;
+    if (this.getFloodLevelFn) opts.getFloodLevel = this.getFloodLevelFn;
+    return opts;
   }
 
   getActiveRequest(): RideRequest | null {
@@ -252,9 +306,10 @@ export class RideManager {
     // Ride to the pickup first from where the bike is; the trip route follows at pickup.
     // Without a known position (bare tests) fall back to the trip route itself.
     const from = startNodeId ?? this.nearestNodeId();
+    const motoOpts = this.routeOpts('motorcycle');
     this.currentRoute = from
-      ? this.roadNetwork.route(from, req.pickupNodeId, { mode: 'motorcycle' })
-      : this.roadNetwork.route(req.pickupNodeId, req.destinationNodeId, { mode: 'motorcycle' });
+      ? this.roadNetwork.route(from, req.pickupNodeId, motoOpts)
+      : this.roadNetwork.route(req.pickupNodeId, req.destinationNodeId, motoOpts);
     this.bus.emit('ride/accepted', { requestId });
     if (this.enableNegotiation) {
       this.bus.emit('negotiation/started', { requestId, initialFare: req.initialFare });
@@ -296,9 +351,13 @@ export class RideManager {
   pickupOptions(
     req: { pickupNodeId: string },
     riderPos: { x: number; z: number } | string,
-    options?: { maxWalkM?: number }
+    options?: PickupOptionsQuery
   ): PickupOptionsResult | null {
-    return this.roadNetwork.pickupOptions(req, riderPos, options);
+    const merged: PickupOptionsQuery = {
+      ...this.routeOpts('motorcycle'),
+      ...options,
+    };
+    return this.roadNetwork.pickupOptions(req, riderPos, merged);
   }
 
   /** A segment on the current route is blocked: route around it from where the bike
@@ -309,10 +368,11 @@ export class RideManager {
     if (!this.currentRoute.segmentIds.includes(blockedSegmentId)) return null;
 
     const fromNode = currentNodeId ?? this.nearestNodeId() ?? this.activeRequest.pickupNodeId;
-    const newRoute = this.roadNetwork.route(fromNode, target, {
-      mode: 'motorcycle',
-      avoid: [blockedSegmentId],
-    });
+    const newRoute = this.roadNetwork.route(
+      fromNode,
+      target,
+      this.routeOpts('motorcycle', [blockedSegmentId])
+    );
     if (newRoute) {
       this.currentRoute = newRoute;
       this.offRouteSince = -1;
@@ -322,15 +382,29 @@ export class RideManager {
     return null;
   }
 
-  /** True once the bike has been more than `NAV.offRouteM` from the current route for
-   * `NAV.offRouteSec` of sim time (advanced by `update`). Allocation-free. */
-  isOffRoute(pose: { x: number; z: number }): boolean {
+  /** True once the bike has been more than `NAV.offRouteM` from the current route, or
+   * traveling the wrong way along its centerline, for `NAV.offRouteSec` of sim time.
+   * Allocation-free. */
+  isOffRoute(pose: { x: number; z: number; heading?: number; speed?: number }): boolean {
     const route = this.currentRoute;
     if (!route || !this.activeRequest || route.segmentIds.length === 0) {
       this.offRouteSince = -1;
       return false;
     }
-    if (distanceToRoute(route, this.roadNetwork.getNodesMap(), pose.x, pose.z) <= BALANCE.NAV.offRouteM) {
+    const nodes = this.roadNetwork.getNodesMap();
+    const tooFar = distanceToRoute(route, nodes, pose.x, pose.z) > BALANCE.NAV.offRouteM;
+    const heading = pose.heading ?? (this.hasPose ? this.pose.heading : undefined);
+    const checkSpeed =
+      pose.heading !== undefined
+        ? pose.speed === undefined || Math.abs(pose.speed) > 0.5
+        : Math.abs(pose.speed ?? this.lastSpeed) > 0.5;
+    const wrongWay =
+      !tooFar &&
+      heading !== undefined &&
+      checkSpeed &&
+      isWrongWayOnRoute(route, nodes, pose.x, pose.z, heading);
+
+    if (!tooFar && !wrongWay) {
       this.offRouteSince = -1;
       return false;
     }
@@ -344,7 +418,7 @@ export class RideManager {
     const target = this.routeTargetId();
     if (!this.activeRequest || !target) return null;
     const from = this.roadNetwork.nearestNode(pose.x, pose.z)?.nodeId;
-    const fresh = from ? this.roadNetwork.route(from, target, { mode: 'motorcycle' }) : null;
+    const fresh = from ? this.roadNetwork.route(from, target, this.routeOpts('motorcycle')) : null;
     this.offRouteSince = -1;
     if (fresh) {
       this.currentRoute = fresh;
@@ -365,13 +439,16 @@ export class RideManager {
     const newNode = this.roadNetwork.getNode(nodeId);
     if (!oldNode || !newNode || !this.roadNetwork.isPickupNode(nodeId)) return false;
     // The walk is measured from the map, not trusted: a caller's walkM must match it (within 5 m).
-    const trueWalkM = distance2d(oldNode.x, oldNode.z, newNode.x, newNode.z);
+    const walkRoute = this.roadNetwork.route(req.pickupNodeId, nodeId, this.routeOpts('walk'));
+    if (!walkRoute) return false;
+    const trueWalkM = walkRoute.lengthM;
     if (!(walkM >= 0) || Math.abs(walkM - trueWalkM) > 5 || trueWalkM > BALANCE.TRIP.maxRelocateWalkM) {
       return false;
     }
     const from = this.nearestNodeId() ?? req.pickupNodeId;
-    const toPickup = this.roadNetwork.route(from, nodeId, { mode: 'motorcycle' });
-    const trip = this.roadNetwork.route(nodeId, req.destinationNodeId, { mode: 'motorcycle' });
+    const motoOpts = this.routeOpts('motorcycle');
+    const toPickup = this.roadNetwork.route(from, nodeId, motoOpts);
+    const trip = this.roadNetwork.route(nodeId, req.destinationNodeId, motoOpts);
     if (!toPickup || !trip) return false;
 
     req.pickupNodeId = nodeId;
@@ -469,6 +546,7 @@ export class RideManager {
     this.pose.x = bikePose.x;
     this.pose.z = bikePose.z;
     this.pose.heading = bikePose.heading ?? this.pose.heading;
+    this.lastSpeed = bikePose.speed;
     this.hasPose = true;
     this.settleToIdle();
     if (!this.activeRequest) {
@@ -511,7 +589,7 @@ export class RideManager {
           this.currentRoute = this.roadNetwork.route(
             this.activeRequest.pickupNodeId,
             this.activeRequest.destinationNodeId,
-            { mode: 'motorcycle' }
+            this.routeOpts('motorcycle')
           );
           this.offRouteSince = -1;
           this.reputation?.startTrip({

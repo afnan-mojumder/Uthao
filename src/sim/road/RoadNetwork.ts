@@ -2,18 +2,16 @@ import type { RoadNode, RoadSegment } from '../../core/types';
 import type { DistrictData, Poi, WorldData } from '../schemas';
 import {
   RoutingGraph,
+  isPickupSegment,
   type Route,
   type RouteOptions,
   pickupOptions,
+  type PickupOptionsQuery,
   type PickupOptionsResult,
 } from './routing';
 import { nearestNode, segmentAt, segmentAtElevation, type SegmentElevationHit } from './spatial';
 
-/** A segment a passenger can be picked up from: accessible, practical, and not a divided
- * carriageway. The single eligibility rule for generated and relocated pickups. */
-export function isPickupSegment(seg: RoadSegment): boolean {
-  return seg.pickupPractical && seg.motorcycleAccessible && !seg.divided;
-}
+export { isPickupSegment };
 
 export class RoadNetwork {
   private nodes: RoadNode[] = [];
@@ -106,10 +104,7 @@ export class RoadNetwork {
 
   /** True when `nodeId` touches at least one pickup-eligible segment. */
   isPickupNode(nodeId: string): boolean {
-    for (const seg of this.segments) {
-      if ((seg.startNodeId === nodeId || seg.endNodeId === nodeId) && isPickupSegment(seg)) return true;
-    }
-    return false;
+    return this.graph.isPickupNode(nodeId);
   }
 
   getNode(nodeId: string): RoadNode | undefined {
@@ -143,7 +138,7 @@ export class RoadNetwork {
   pickupOptions(
     req: { pickupNodeId: string },
     riderPos: { x: number; z: number } | string,
-    options?: { maxWalkM?: number }
+    options?: PickupOptionsQuery
   ): PickupOptionsResult | null {
     return pickupOptions(req, riderPos, this.graph, options);
   }

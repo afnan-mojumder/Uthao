@@ -111,6 +111,7 @@ describe('pickup validity (T8.4)', () => {
         seg('WP', 'W', 'P', { oneWay: true, divided: true }),
         seg('PZ', 'P', 'Z'),
         seg('XQ', 'X', 'Q'), // the crossing has a kerb on an ordinary side street
+        seg('PX', 'P', 'X', { motorcycleAccessible: false, pickupPractical: false, tags: ['crossing', 'footbridge'] }),
       ]
     );
 
@@ -301,6 +302,111 @@ describe('navigation and reroute (T8.4)', () => {
   it('isOffRoute is quiet with no route and uses sim time only', () => {
     const rm = rideAt(grid(), 0, 0);
     expect(rm.isOffRoute({ x: 999, z: 999 })).toBe(false);
+  });
+
+  it('nextInstruction returns uturn on wrong-way heading for leg >= 1 and isOffRoute flags wrong-way centerline travel', () => {
+    const network = grid();
+    const nodes = network.getNodesMap();
+    const route = { nodeIds: ['A', 'B', 'C', 'F'], segmentIds: ['AB', 'BC', 'CF'], lengthM: 300, virtualKm: 0.3, etaMin: 1, uTurns: 0 };
+
+    // On leg 1 (B->C, heading +PI/2), facing -PI/2 (west) triggers U-turn immediately
+    const leg1Wrong = nextInstruction(route, { x: 150, z: 0, heading: -Math.PI / 2 }, nodes)!;
+    expect(leg1Wrong.kind).toBe('uturn');
+    expect(leg1Wrong.textKey).toBe('nav.uturn');
+    expect(leg1Wrong.distanceM).toBe(0);
+
+    // On leg 2 (C->F, heading 0), facing PI (north) triggers U-turn immediately
+    const leg2Wrong = nextInstruction(route, { x: 200, z: 50, heading: Math.PI }, nodes)!;
+    expect(leg2Wrong.kind).toBe('uturn');
+
+    // Wrong-way travel directly on route centerline (dist = 0) triggers isOffRoute after offRouteSec
+    const rm = rideAt(network, 0, 0);
+    rm.offer(req('r_ww', 'C', 'F'));
+    rm.accept('r_ww');
+    expect(rm.currentRoute?.nodeIds).toEqual(['A', 'B', 'C']);
+
+    // Stationary wrong-way should not immediately trigger off-route reroute spam
+    rm.update({ x: 150, z: 0, speed: 0, heading: -Math.PI / 2 }, 3.0);
+    expect(rm.isOffRoute({ x: 150, z: 0, speed: 0, heading: -Math.PI / 2 })).toBe(false);
+
+    // Moving wrong-way along centerline triggers off-route after 2s
+    let off = false;
+    for (let k = 0; k < 6; k++) {
+      rm.update({ x: 150, z: 0, speed: 6, heading: -Math.PI / 2 }, 0.5);
+      off = rm.isOffRoute({ x: 150, z: 0, speed: 6, heading: -Math.PI / 2 });
+    }
+    expect(off).toBe(true);
+  });
+
+  it('RideManager routes avoid closed and flooded segments via live GameManager roadEvents/weather', () => {
+    // Two parallel paths A->B->C (fast main) and A->D->E->F->C (longer residential)
+    const network = net(
+      [n('A', 0, 0), n('B', 100, 0), n('C', 200, 0), n('D', 0, 100), n('E', 100, 100), n('F', 200, 100)],
+      [
+        seg('AB', 'A', 'B', { speedLimit: 50, floodSensitivity: 0.95 }),
+        seg('BC', 'B', 'C', { speedLimit: 50 }),
+        seg('AD', 'A', 'D', { speedLimit: 35, floodSensitivity: 0.1 }),
+        seg('DE', 'D', 'E', { speedLimit: 35, floodSensitivity: 0.1 }),
+        seg('EF', 'E', 'F', { speedLimit: 35, floodSensitivity: 0.1 }),
+        seg('FC', 'F', 'C', { speedLimit: 35, floodSensitivity: 0.1 }),
+      ]
+    );
+
+    const gm = new GameManager({ seed: 21, mode: 'career', data: {} });
+    const session = new GameSession({ gm, road: network, autoRequests: false, negotiation: false });
+    session.ride.update({ x: 0, z: 0, speed: 0, heading: 0 }, 0.1);
+
+    // 1. Closure on AB via roadEvents causes initial accept() route to avoid AB
+    gm.roadEvents.closeSegment('AB', 60);
+    session.ride.offer(req('r_closed', 'C', 'A'));
+    session.ride.accept('r_closed');
+    expect(session.ride.currentRoute).not.toBeNull();
+    expect(session.ride.currentRoute!.segmentIds).not.toContain('AB');
+    expect(session.ride.currentRoute!.segmentIds).toContain('DE');
+    session.ride.cancel('r_closed', 'rider', 'test');
+
+    // 2. Reopen AB, then flood AB in heavyRain -> route avoids flooded AB automatically
+    gm.roadEvents.reopenSegment('AB');
+    gm.weatherSystem.setWeather('heavyRain');
+    gm.weather = 'heavyRain';
+    gm.weatherSystem.setFloodLevel('AB', 0.95);
+    session.ride.offer(req('r_flood', 'C', 'A'));
+    session.ride.accept('r_flood');
+    expect(session.ride.currentRoute).not.toBeNull();
+    expect(session.ride.currentRoute!.segmentIds).not.toContain('AB');
+
+    // 3. rerouteIfBlocked also respects active roadEvents closures
+    gm.weatherSystem.setFloodLevel('AB', 0);
+    gm.weatherSystem.setWeather('clear');
+    gm.weather = 'clear';
+    session.ride.cancel('r_flood', 'rider', 'test');
+
+    // Add a third path A->G->C and close DE, then block AB
+    const network2 = net(
+      [n('A', 0, 0), n('B', 100, 0), n('C', 200, 0), n('D', 0, 100), n('E', 100, 100), n('F', 200, 100), n('G', 100, -120)],
+      [
+        seg('AB', 'A', 'B', { speedLimit: 50 }),
+        seg('BC', 'B', 'C', { speedLimit: 50 }),
+        seg('AD', 'A', 'D', { speedLimit: 40 }),
+        seg('DE', 'D', 'E', { speedLimit: 40 }),
+        seg('EF', 'E', 'F', { speedLimit: 40 }),
+        seg('FC', 'F', 'C', { speedLimit: 40 }),
+        seg('AG', 'A', 'G', { speedLimit: 30 }),
+        seg('GC', 'G', 'C', { speedLimit: 30 }),
+      ]
+    );
+    const gm2 = new GameManager({ seed: 22, mode: 'career', data: {} });
+    const session2 = new GameSession({ gm: gm2, road: network2, autoRequests: false, negotiation: false });
+    session2.ride.update({ x: 0, z: 0, speed: 0, heading: 0 }, 0.1);
+    session2.ride.offer(req('r_multi', 'C', 'A'));
+    session2.ride.accept('r_multi');
+    expect(session2.ride.currentRoute!.segmentIds).toEqual(['AB', 'BC']);
+    gm2.roadEvents.closeSegment('DE', 60);
+    const rerouted = session2.ride.rerouteIfBlocked('AB', 'A');
+    expect(rerouted).not.toBeNull();
+    expect(rerouted!.segmentIds).not.toContain('AB');
+    expect(rerouted!.segmentIds).not.toContain('DE');
+    expect(rerouted!.segmentIds).toEqual(['AG', 'GC']);
   });
 });
 

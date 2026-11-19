@@ -5,11 +5,25 @@ import { DISTANCE_SCALE } from '../../config/constants';
 export interface RouteOptions {
   mode: 'motorcycle' | 'walk';
   avoid?: string[]; // segmentIds to avoid
-  roadEvents?: { getClosedSegmentIds: () => string[] };
+  roadEvents?: {
+    getClosedSegmentIds: () => string[];
+    getSpeedCap?: (segmentId: string) => number | undefined;
+    getCongestionMultiplier?: (segmentId: string) => number;
+  };
   weather?: WeatherKind;
   minute?: number;
   isFlooded?: (segment: RoadSegment) => boolean;
   getFloodLevel?: (segmentId: string) => number;
+}
+
+export type PickupOptionsQuery = Omit<RouteOptions, 'mode'> & {
+  maxWalkM?: number;
+};
+
+/** A segment a passenger can be picked up from: accessible, practical, and not a divided
+ * carriageway. The single eligibility rule for generated and relocated pickups. */
+export function isPickupSegment(seg: RoadSegment): boolean {
+  return seg.pickupPractical && seg.motorcycleAccessible && !seg.divided;
 }
 
 export interface Route {
@@ -32,6 +46,7 @@ export class RoutingGraph {
   private adjacency: Map<string, GraphEdge[]> = new Map();
   private nodesMap: Map<string, RoadNode> = new Map();
   private segmentsMap: Map<string, RoadSegment> = new Map();
+  private pickupNodes: Set<string> = new Set();
 
   constructor(nodes: RoadNode[], segments: RoadSegment[]) {
     for (const node of nodes) {
@@ -41,6 +56,10 @@ export class RoutingGraph {
 
     for (const seg of segments) {
       this.segmentsMap.set(seg.segmentId, seg);
+      if (isPickupSegment(seg)) {
+        this.pickupNodes.add(seg.startNodeId);
+        this.pickupNodes.add(seg.endNodeId);
+      }
       const start = this.nodesMap.get(seg.startNodeId);
       const end = this.nodesMap.get(seg.endNodeId);
       if (!start || !end) {
@@ -66,6 +85,11 @@ export class RoutingGraph {
         });
       }
     }
+  }
+
+  /** True when `nodeId` touches at least one pickup-eligible segment. */
+  isPickupNode(nodeId: string): boolean {
+    return this.pickupNodes.has(nodeId);
   }
 
   getNodesMap(): Map<string, RoadNode> {
@@ -118,6 +142,44 @@ export class RoutingGraph {
 
     const openSet: QueueItem[] = [];
     const bestG = new Map<string, number>();
+    const heuristicSpeedMs = isWalk ? 1.39 : 30;
+
+    const heapPush = (item: QueueItem): void => {
+      openSet.push(item);
+      let idx = openSet.length - 1;
+      while (idx > 0) {
+        const parentIdx = (idx - 1) >> 1;
+        const parent = openSet[parentIdx]!;
+        if (item.f >= parent.f) break;
+        openSet[idx] = parent;
+        openSet[parentIdx] = item;
+        idx = parentIdx;
+      }
+    };
+
+    const heapPop = (): QueueItem | undefined => {
+      const len = openSet.length;
+      if (len === 0) return undefined;
+      const top = openSet[0]!;
+      const last = openSet.pop()!;
+      if (len > 1) {
+        openSet[0] = last;
+        let idx = 0;
+        const half = (len - 1) >> 1;
+        while (idx < half) {
+          let left = (idx << 1) + 1;
+          const right = left + 1;
+          if (right < len - 1 && openSet[right]!.f < openSet[left]!.f) {
+            left = right;
+          }
+          if (last.f <= openSet[left]!.f) break;
+          openSet[idx] = openSet[left]!;
+          openSet[left] = last;
+          idx = left;
+        }
+      }
+      return top;
+    };
 
     const startH =
       distance2d(
@@ -125,7 +187,7 @@ export class RoutingGraph {
         this.nodesMap.get(fromNodeId)!.z,
         targetNode.x,
         targetNode.z
-      ) / 15; // optimistic heuristic
+      ) / heuristicSpeedMs;
 
     const startItem: QueueItem = {
       nodeId: fromNodeId,
@@ -138,20 +200,13 @@ export class RoutingGraph {
       viaEdge: null,
     };
 
-    openSet.push(startItem);
+    heapPush(startItem);
     bestG.set(serializeState(fromNodeId, null), 0);
 
     let goalItem: QueueItem | null = null;
 
     while (openSet.length > 0) {
-      // Find min f
-      let bestIdx = 0;
-      for (let i = 1; i < openSet.length; i++) {
-        if (openSet[i]!.f < openSet[bestIdx]!.f) {
-          bestIdx = i;
-        }
-      }
-      const current = openSet.splice(bestIdx, 1)[0]!;
+      const current = heapPop()!;
 
       if (current.nodeId === toNodeId) {
         goalItem = current;
@@ -218,11 +273,7 @@ export class RoutingGraph {
 
           const isDivided = current.viaEdge.segment.divided || seg.divided;
 
-          if (
-            diff > 2.35 ||
-            currNode.kind === 'uturn' ||
-            seg.tags.includes('uturn')
-          ) {
+          if (diff > 2.35 || seg.tags.includes('uturn')) {
             isUTurn = true;
             // On divided roads, U-turns are ONLY allowed at kind === 'uturn' nodes
             if (isDivided && currNode.kind !== 'uturn') {
@@ -245,6 +296,10 @@ export class RoutingGraph {
           if (isFloodedSlow) {
             speedKmh = Math.min(speedKmh, 10); // speed cap in water
           }
+          const eventSpeedCap = opts.roadEvents?.getSpeedCap?.(seg.segmentId);
+          if (eventSpeedCap !== undefined) {
+            speedKmh = Math.min(speedKmh, eventSpeedCap);
+          }
           const weatherMult =
             opts.weather === 'heavyRain'
               ? 0.7
@@ -256,9 +311,9 @@ export class RoutingGraph {
           const isRush =
             (minOfDay >= 450 && minOfDay <= 600) ||
             (minOfDay >= 1020 && minOfDay <= 1200);
-          const congestion = isRush
-            ? 1 + seg.trafficDensity * 0.5
-            : 1 + seg.trafficDensity * 0.2;
+          const eventCong = opts.roadEvents?.getCongestionMultiplier?.(seg.segmentId) ?? 1;
+          const congestion =
+            (isRush ? 1 + seg.trafficDensity * 0.5 : 1 + seg.trafficDensity * 0.2) * eventCong;
 
           speedMs = clamp(
             ((speedKmh * 1000) / 3600) * (weatherMult / congestion),
@@ -279,9 +334,9 @@ export class RoutingGraph {
         bestG.set(nextStateKey, nextG);
 
         const h =
-          distance2d(nextNode.x, nextNode.z, targetNode.x, targetNode.z) / 15;
+          distance2d(nextNode.x, nextNode.z, targetNode.x, targetNode.z) / heuristicSpeedMs;
 
-        openSet.push({
+        heapPush({
           nodeId: edge.toNodeId,
           prevSegId: seg.segmentId,
           g: nextG,
@@ -348,7 +403,7 @@ export function pickupOptions(
   req: { pickupNodeId: string },
   riderPos: { x: number; z: number } | string,
   graph: RoutingGraph,
-  options?: { maxWalkM?: number }
+  options?: PickupOptionsQuery
 ): PickupOptionsResult | null {
   const nodesMap = graph.getNodesMap();
   let startNodeId: string | null = null;
@@ -370,7 +425,19 @@ export function pickupOptions(
     return null;
   }
 
-  const direct = graph.route(startNodeId, req.pickupNodeId, { mode: 'motorcycle' });
+  const routeOptsBase: Omit<RouteOptions, 'mode'> = {
+    avoid: options?.avoid,
+    roadEvents: options?.roadEvents,
+    weather: options?.weather,
+    minute: options?.minute,
+    isFlooded: options?.isFlooded,
+    getFloodLevel: options?.getFloodLevel,
+  };
+
+  const direct = graph.route(startNodeId, req.pickupNodeId, {
+    ...routeOptsBase,
+    mode: 'motorcycle',
+  });
   if (!direct) {
     return null;
   }
@@ -392,13 +459,27 @@ export function pickupOptions(
     if (node.nodeId === req.pickupNodeId) {
       continue;
     }
-
-    const walkM = distance2d(pickupNode.x, pickupNode.z, node.x, node.z);
-    if (walkM > maxWalkM) {
+    if (!graph.isPickupNode(node.nodeId)) {
       continue;
     }
 
-    const crossRoute = graph.route(startNodeId, node.nodeId, { mode: 'motorcycle' });
+    const euclidM = distance2d(pickupNode.x, pickupNode.z, node.x, node.z);
+    if (euclidM > maxWalkM) {
+      continue;
+    }
+
+    const walkRoute = graph.route(req.pickupNodeId, node.nodeId, {
+      ...routeOptsBase,
+      mode: 'walk',
+    });
+    if (!walkRoute || walkRoute.lengthM > maxWalkM) {
+      continue;
+    }
+
+    const crossRoute = graph.route(startNodeId, node.nodeId, {
+      ...routeOptsBase,
+      mode: 'motorcycle',
+    });
     if (!crossRoute) {
       continue;
     }
@@ -408,7 +489,7 @@ export function pickupOptions(
       maxNetSavings = savesMin;
       bestCrossPoint = {
         nodeId: node.nodeId,
-        walkM: Math.round(walkM),
+        walkM: Math.round(walkRoute.lengthM),
         savesMin: Math.max(1, Math.round(savesMin)),
       };
     }

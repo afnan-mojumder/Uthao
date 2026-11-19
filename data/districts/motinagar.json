@@ -533,7 +533,7 @@
       "trafficDensity": 0.3,
       "speedLimit": 25,
       "turnRestrictions": [],
-      "motorcycleAccessible": true,
+      "motorcycleAccessible": false,
       "pedestrianDensity": 0.6,
       "riskLevel": 0.1,
       "oneWay": false,
@@ -541,7 +541,7 @@
       "lanes": 2,
       "roadType": "main",
       "floodSensitivity": 0.2,
-      "pickupPractical": true,
+      "pickupPractical": false,
       "district": "motinagar",
       "tags": [
         "crossing",

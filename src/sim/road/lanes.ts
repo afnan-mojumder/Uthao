@@ -46,6 +46,16 @@ export function buildLanes(network: RoadNetwork): LaneGraph {
     const endNode = nodesMap.get(seg.endNodeId);
     if (!startNode || !endNode) continue;
 
+    // Traffic lanes exclude pedestrian-only/footbridge segments and dead-end alleys.
+    if (
+      seg.motorcycleAccessible === false ||
+      startNode.kind === 'deadEnd' ||
+      endNode.kind === 'deadEnd' ||
+      seg.tags.includes('deadend')
+    ) {
+      continue;
+    }
+
     const dx = endNode.x - startNode.x;
     const dz = endNode.z - startNode.z;
     const len = distance2d(startNode.x, startNode.z, endNode.x, endNode.z);

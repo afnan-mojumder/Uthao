@@ -19,6 +19,19 @@ export interface HudNavigationTurn {
   text: string;
 }
 
+function turnDirectionIcon(direction: string): string {
+  switch (direction) {
+    case 'left':
+      return '↰';
+    case 'right':
+      return '↱';
+    case 'uturn':
+      return '↶';
+    default:
+      return '↑';
+  }
+}
+
 export interface HudState {
   // Speed & Physics
   speedKmh: number;
@@ -241,7 +254,7 @@ export function HudView({ state }: { state: HudState }): JSX.Element {
               <div style={{ width: '1px', height: '36px', background: 'rgba(255, 255, 255, 0.15)' }} />
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: 700, color: '#38bdf8' }}>
                 <span style={{ fontSize: '18px' }}>
-                  {state.nextTurn.direction === 'left' ? '↰' : state.nextTurn.direction === 'right' ? '↱' : '↑'}
+                  {turnDirectionIcon(state.nextTurn.direction)}
                 </span>
                 <span>{state.nextTurn.text}</span>
               </div>
@@ -316,7 +329,7 @@ export function HudView({ state }: { state: HudState }): JSX.Element {
               }}
             >
               <span style={{ fontSize: '18px' }}>
-                {state.nextTurn.direction === 'left' ? '↰' : state.nextTurn.direction === 'right' ? '↱' : '↑'}
+                {turnDirectionIcon(state.nextTurn.direction)}
               </span>
               <span>{state.nextTurn.text}</span>
             </div>

@@ -386,6 +386,8 @@ export function genDistrict(
         roadType: 'main',
         oneWay: false,
         divided: false,
+        motorcycleAccessible: !isCrossing,
+        pickupPractical: !isCrossing,
         pedestrianDensity: isCrossing ? 0.6 : 0.2,
         tags,
       });

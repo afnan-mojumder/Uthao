@@ -1,7 +1,10 @@
 import { describe, it, expect } from 'vitest';
+import fs from 'node:fs';
+import path from 'node:path';
 import { RoadNetwork } from '../../../src/sim/road/RoadNetwork';
 import { nearestNode, segmentAt } from '../../../src/sim/road/spatial';
-import type { DistrictData } from '../../../src/sim/schemas';
+import { buildLanes } from '../../../src/sim/road/lanes';
+import type { DistrictData, WorldData } from '../../../src/sim/schemas';
 
 describe('RoadNetwork and routing', () => {
   // A test graph:
@@ -311,5 +314,52 @@ describe('RoadNetwork and routing', () => {
   it('spatial segmentAt finds segment containing point', () => {
     const seg = segmentAt(net.getAllSegments(), net.getNodesMap(), 50, 0);
     expect(seg?.segmentId).toBe('S1');
+  });
+
+  it('straight arterial travel through kind=uturn nodes adds 0 uTurns and 0 turn penalty', () => {
+    const world = JSON.parse(fs.readFileSync(path.resolve('data/world.json'), 'utf-8')) as WorldData;
+    const mirpara = JSON.parse(fs.readFileSync(path.resolve('data/districts/mirpara.json'), 'utf-8')) as DistrictData;
+    const fulgate = JSON.parse(fs.readFileSync(path.resolve('data/districts/fulgate.json'), 'utf-8')) as DistrictData;
+    const road = RoadNetwork.fromWorld(world, [mirpara, fulgate]);
+
+    const res = road.route('art_n_0', 'fulgate_art_n_2', { mode: 'motorcycle' });
+    expect(res).not.toBeNull();
+    expect(res?.uTurns).toBe(0);
+    expect(res?.nodeIds).toEqual([
+      'art_n_0',
+      'art_n_1',
+      'art_n_2',
+      'art_n_3',
+      'art_n_4',
+      'fulgate_art_n_0',
+      'fulgate_art_n_1',
+      'fulgate_art_n_2',
+    ]);
+  });
+
+  it('footbridges are motorcycleAccessible=false and buildLanes skips motorcycleAccessible=false and deadEnd alleys', () => {
+    const mirpara = JSON.parse(fs.readFileSync(path.resolve('data/districts/mirpara.json'), 'utf-8')) as DistrictData;
+    const footbridges = mirpara.segments.filter((s) => s.tags.includes('footbridge'));
+    expect(footbridges.length).toBeGreaterThan(0);
+    for (const fb of footbridges) {
+      expect(fb.motorcycleAccessible).toBe(false);
+    }
+
+    const mirparaNet = RoadNetwork.fromDistricts([mirpara]);
+    const laneGraph = buildLanes(mirparaNet);
+    for (const fb of footbridges) {
+      expect(laneGraph.lanesBySegment.get(fb.segmentId) ?? []).toHaveLength(0);
+    }
+
+    const deadEndSegs = mirpara.segments.filter(
+      (s) =>
+        s.tags.includes('deadend') ||
+        mirparaNet.getNode(s.startNodeId)?.kind === 'deadEnd' ||
+        mirparaNet.getNode(s.endNodeId)?.kind === 'deadEnd'
+    );
+    expect(deadEndSegs.length).toBeGreaterThan(0);
+    for (const ds of deadEndSegs) {
+      expect(laneGraph.lanesBySegment.get(ds.segmentId) ?? []).toHaveLength(0);
+    }
   });
 });

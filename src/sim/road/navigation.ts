@@ -57,6 +57,26 @@ export function distanceToRoute(
 }
 
 /**
+ * True when a bike at `(x, z)` with `heading` is facing against (`> 120°`) the
+ * nearest leg of `route`. Allocation-free.
+ */
+export function isWrongWayOnRoute(
+  route: Route,
+  nodes: NodeLookup,
+  x: number,
+  z: number,
+  heading: number
+): boolean {
+  if (!locate(route, nodes, x, z)) return false;
+  const ids = route.nodeIds;
+  const a = nodes.get(ids[loc.leg]!);
+  const b = nodes.get(ids[loc.leg + 1]!);
+  if (!a || !b) return false;
+  const legHeading = Math.atan2(b.x - a.x, b.z - a.z);
+  return Math.abs(angleDiff(heading, legHeading)) > WRONG_WAY_RAD;
+}
+
+/**
  * The next maneuver along `route` for a bike at `pose`, or null when there is nothing
  * to follow. Heading convention is the bike's: `atan2(dx, dz)`, so a positive heading
  * change is a LEFT turn. The returned object is reused on every call: read it
@@ -85,7 +105,7 @@ export function nextInstruction(
   const toNext = Math.hypot(b.x - pose.x, b.z - pose.z);
 
   // Facing against the leg (wrong way): turn around before anything else.
-  if (leg === 0 && Math.abs(angleDiff(pose.heading, legHeading)) > WRONG_WAY_RAD) {
+  if (leg >= 0 && Math.abs(angleDiff(pose.heading, legHeading)) > WRONG_WAY_RAD) {
     instr.kind = 'uturn';
     instr.textKey = 'nav.uturn';
     instr.distanceM = 0;
