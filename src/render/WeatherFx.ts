@@ -318,7 +318,7 @@ export class WeatherFx {
   /** 30% of the midday ambient luminance, computed once. */
   private nightAmbientFloor(): number {
     if (this.ambientFloorLum === undefined) {
-      const noon = TimeOfDay.getSunSkyState(12 * 60, this._sunSkyScratch);
+      const noon = TimeOfDay.getSunSkyState(12 * 60);
       this.ambientFloorLum = 0.3 * ambientLuminance(noon.ambientColor, noon.ambientIntensity);
     }
     return this.ambientFloorLum;

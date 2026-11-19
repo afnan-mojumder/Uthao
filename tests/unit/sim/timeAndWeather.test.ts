@@ -457,4 +457,24 @@ describe('P2.5 TimeOfDay smooth cosine ramps, sky dome & WeatherFx rain/streetli
     fx.update(1 / 60, 22 * 60, 'clear', { x: 60, y: 0, z: 0 }, 0);
     expect(lights.some((l) => l.visible && l.intensity > 0)).toBe(false);
   });
+
+  it('first frame at night on fresh WeatherFx with hemiLight does not clobber sky/fog with noon state', () => {
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x000000);
+    scene.fog = new THREE.Fog(0x000000, 50, 250);
+    const fx = new WeatherFx(scene, {
+      dirLight: new THREE.DirectionalLight(),
+      hemiLight: new THREE.HemisphereLight(),
+    });
+
+    const nightExpected = TimeOfDay.getSunSkyState(22 * 60);
+    fx.update(1 / 60, 22 * 60, 'clear', { x: 0, y: 0, z: 0 }, 0);
+
+    expect((scene.background as THREE.Color).getHex()).toBe(nightExpected.skyColor);
+    expect((scene.fog as THREE.Fog).color.getHex()).toBe(nightExpected.fogColor);
+    expect(fx.getSkyTopColor().getHex()).toBe(nightExpected.skyTopColor);
+    expect(fx.getSkyHorizonColor().getHex()).toBe(nightExpected.skyHorizonColor);
+
+    fx.dispose();
+  });
 });
