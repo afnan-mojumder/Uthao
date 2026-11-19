@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import crypto from 'node:crypto';
 import zlib from 'node:zlib';
 import { NodeIO } from '@gltf-transform/core';
 import { ALL_EXTENSIONS, EXTMeshoptCompression } from '@gltf-transform/extensions';
@@ -102,6 +103,7 @@ async function main() {
 
     const glbBytes = await io.writeBinary(doc);
     fs.writeFileSync(outPath, glbBytes);
+    entry.sha256 = crypto.createHash('sha256').update(glbBytes).digest('hex');
 
     const rawSize = glbBytes.byteLength;
     const gzSize = zlib.gzipSync(glbBytes).byteLength;
@@ -143,6 +145,7 @@ async function main() {
       process.exit(1);
     }
     fs.writeFileSync(outPath, buf);
+    entry.sha256 = crypto.createHash('sha256').update(buf).digest('hex');
   }
 
   for (const file of fs.readdirSync(audioDir)) {
@@ -169,6 +172,8 @@ async function main() {
     process.exit(1);
   }
 
+  fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
+  console.log('[optimize-assets] Updated assets.manifest.json with output SHA-256 checksums.');
   console.log('[optimize-assets] Optimization complete. Size budgets satisfied.');
 }
 

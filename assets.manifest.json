@@ -71,8 +71,9 @@
       "pack": "Kenney City Kit Commercial",
       "license": "CC0-1.0",
       "category": "building",
-      "scale": 10.0,
-      "source": "city-kit-commercial/Models/GLB format/building-a.glb"
+      "scale": 10,
+      "source": "city-kit-commercial/Models/GLB format/building-a.glb",
+      "sha256": "44d3fc6919288cd821af0b0f64c655ba8edc88014e2dc43de0bb75fc03dd7941"
     },
     {
       "id": "building_commercial_b",
@@ -80,8 +81,9 @@
       "pack": "Kenney City Kit Commercial",
       "license": "CC0-1.0",
       "category": "building",
-      "scale": 10.0,
-      "source": "city-kit-commercial/Models/GLB format/building-c.glb"
+      "scale": 10,
+      "source": "city-kit-commercial/Models/GLB format/building-c.glb",
+      "sha256": "0daa8c565622efbe275506e811a9d64fe05fcf46e26520afe93f93795af67321"
     },
     {
       "id": "building_commercial_c",
@@ -89,8 +91,9 @@
       "pack": "Kenney City Kit Commercial",
       "license": "CC0-1.0",
       "category": "building",
-      "scale": 8.0,
-      "source": "city-kit-commercial/Models/GLB format/building-e.glb"
+      "scale": 8,
+      "source": "city-kit-commercial/Models/GLB format/building-e.glb",
+      "sha256": "6ee79c44ba6a8bd254de664c59ac42f526d53b784efebc58d8d4ee18fe22539c"
     },
     {
       "id": "building_commercial_d",
@@ -98,8 +101,9 @@
       "pack": "Kenney City Kit Commercial",
       "license": "CC0-1.0",
       "category": "building",
-      "scale": 10.0,
-      "source": "city-kit-commercial/Models/GLB format/building-h.glb"
+      "scale": 10,
+      "source": "city-kit-commercial/Models/GLB format/building-h.glb",
+      "sha256": "a0d1e566b3394a7d3f41be3695dafac9f89ab8b9c0847cb7fd7324dd9c398176"
     },
     {
       "id": "building_commercial_tower",
@@ -107,8 +111,9 @@
       "pack": "Kenney City Kit Commercial",
       "license": "CC0-1.0",
       "category": "building",
-      "scale": 8.0,
-      "source": "city-kit-commercial/Models/GLB format/building-skyscraper-a.glb"
+      "scale": 8,
+      "source": "city-kit-commercial/Models/GLB format/building-skyscraper-a.glb",
+      "sha256": "eb48db3201efcd2710c9af06346447c143ec756de3da358f141339c02f96c362"
     },
     {
       "id": "building_commercial_highrise",
@@ -116,8 +121,9 @@
       "pack": "Kenney City Kit Commercial",
       "license": "CC0-1.0",
       "category": "building",
-      "scale": 7.0,
-      "source": "city-kit-commercial/Models/GLB format/building-skyscraper-c.glb"
+      "scale": 7,
+      "source": "city-kit-commercial/Models/GLB format/building-skyscraper-c.glb",
+      "sha256": "56a21005b6dd042c9244a3106918179be37bfc3630f8e4c8f240a78489549df5"
     },
     {
       "id": "building_residential_a",
@@ -126,7 +132,8 @@
       "license": "CC0-1.0",
       "category": "building",
       "scale": 8.5,
-      "source": "city-kit-suburban/Models/GLB format/building-type-a.glb"
+      "source": "city-kit-suburban/Models/GLB format/building-type-a.glb",
+      "sha256": "fb08edc5249424f7c8171d956293ac61c711a2d239c15d1f96709e2f76a2458a"
     },
     {
       "id": "building_residential_b",
@@ -135,7 +142,8 @@
       "license": "CC0-1.0",
       "category": "building",
       "scale": 7.5,
-      "source": "city-kit-suburban/Models/GLB format/building-type-d.glb"
+      "source": "city-kit-suburban/Models/GLB format/building-type-d.glb",
+      "sha256": "7079b00d10112627a912c440589d37bc3213ac1450b13bb187a9f583eb18acd3"
     },
     {
       "id": "building_residential_c",
@@ -144,7 +152,8 @@
       "license": "CC0-1.0",
       "category": "building",
       "scale": 8.5,
-      "source": "city-kit-suburban/Models/GLB format/building-type-h.glb"
+      "source": "city-kit-suburban/Models/GLB format/building-type-h.glb",
+      "sha256": "c36d221ac07b2d98e53cf6f12ff07917846baf360407cfbb8c3fb89369173b3d"
     },
     {
       "id": "building_residential_d",
@@ -153,7 +162,8 @@
       "license": "CC0-1.0",
       "category": "building",
       "scale": 8.5,
-      "source": "city-kit-suburban/Models/GLB format/building-type-l.glb"
+      "source": "city-kit-suburban/Models/GLB format/building-type-l.glb",
+      "sha256": "0f9e1563d8e680927f337d9892a91878740cf1c39407fd71f3c6d682645ab393"
     },
     {
       "id": "vehicle_sedan",
@@ -162,7 +172,8 @@
       "license": "CC0-1.0",
       "category": "vehicle",
       "scale": 1.5,
-      "source": "car-kit/Models/GLB format/sedan.glb"
+      "source": "car-kit/Models/GLB format/sedan.glb",
+      "sha256": "ac10e22786895ed7438e26c0e635c7cb1ff50b0a7ec3145988acc100a82b1dc7"
     },
     {
       "id": "vehicle_hatchback",
@@ -171,7 +182,8 @@
       "license": "CC0-1.0",
       "category": "vehicle",
       "scale": 1.45,
-      "source": "car-kit/Models/GLB format/hatchback-sports.glb"
+      "source": "car-kit/Models/GLB format/hatchback-sports.glb",
+      "sha256": "46fb0252746441355f9bf061a1feafb3c225ae3a04a35d775d88c9ca7c8091ff"
     },
     {
       "id": "vehicle_taxi",
@@ -180,7 +192,8 @@
       "license": "CC0-1.0",
       "category": "vehicle",
       "scale": 1.5,
-      "source": "car-kit/Models/GLB format/taxi.glb"
+      "source": "car-kit/Models/GLB format/taxi.glb",
+      "sha256": "c6fd18f7f5332fcc22be065b61cc6b0f1d0246f54380980a021f7f74a34debed"
     },
     {
       "id": "vehicle_suv",
@@ -189,7 +202,8 @@
       "license": "CC0-1.0",
       "category": "vehicle",
       "scale": 1.5,
-      "source": "car-kit/Models/GLB format/suv.glb"
+      "source": "car-kit/Models/GLB format/suv.glb",
+      "sha256": "1e4b369d58745f102bb5268b63492f02b2a213700ce7a0b5a3bb3e1c09e9f666"
     },
     {
       "id": "vehicle_van",
@@ -198,7 +212,8 @@
       "license": "CC0-1.0",
       "category": "vehicle",
       "scale": 1.6,
-      "source": "car-kit/Models/GLB format/van.glb"
+      "source": "car-kit/Models/GLB format/van.glb",
+      "sha256": "76911cd285333dbb16428f08b55b9e0e1ce93a7b357fe9da024b7b82bdc0c432"
     },
     {
       "id": "vehicle_delivery",
@@ -207,7 +222,8 @@
       "license": "CC0-1.0",
       "category": "vehicle",
       "scale": 1.65,
-      "source": "car-kit/Models/GLB format/delivery.glb"
+      "source": "car-kit/Models/GLB format/delivery.glb",
+      "sha256": "02164d61bd22a280d45c8cc8407624d5dd6b2119054b0c47774828a77c9bad1a"
     },
     {
       "id": "vehicle_truck",
@@ -216,7 +232,8 @@
       "license": "CC0-1.0",
       "category": "vehicle",
       "scale": 1.7,
-      "source": "car-kit/Models/GLB format/truck.glb"
+      "source": "car-kit/Models/GLB format/truck.glb",
+      "sha256": "d4faea2ce29c7757fa13086bb353e7e9834e5161508893517adf7f6836d221aa"
     },
     {
       "id": "prop_streetlight",
@@ -225,7 +242,8 @@
       "license": "CC0-1.0",
       "category": "prop",
       "scale": 8.5,
-      "source": "city-kit-roads/Models/GLB format/light-curved.glb"
+      "source": "city-kit-roads/Models/GLB format/light-curved.glb",
+      "sha256": "2fceb0959e0940b3a6656756df6e05b9a3629aecd65af093ec65d006de037601"
     },
     {
       "id": "prop_streetlight_double",
@@ -234,7 +252,8 @@
       "license": "CC0-1.0",
       "category": "prop",
       "scale": 8.5,
-      "source": "city-kit-roads/Models/GLB format/light-curved-double.glb"
+      "source": "city-kit-roads/Models/GLB format/light-curved-double.glb",
+      "sha256": "2d73f969e052a01871742588b749599f2f46abbf346ec86c15993e984b85a0d5"
     },
     {
       "id": "prop_traffic_light",
@@ -243,7 +262,8 @@
       "license": "CC0-1.0",
       "category": "prop",
       "scale": 8.5,
-      "source": "city-kit-roads/Models/GLB format/traffic-light.glb"
+      "source": "city-kit-roads/Models/GLB format/traffic-light.glb",
+      "sha256": "ba71dd137f2fd1c12e94599adb34c20411f1ef1ba499179b998bd264aa616b7d"
     },
     {
       "id": "prop_utility_pole",
@@ -251,8 +271,9 @@
       "pack": "Kenney City Kit Roads",
       "license": "CC0-1.0",
       "category": "prop",
-      "scale": 9.0,
-      "source": "city-kit-roads/Models/GLB format/electricity-pole.glb"
+      "scale": 9,
+      "source": "city-kit-roads/Models/GLB format/electricity-pole.glb",
+      "sha256": "83fdbb32792f6bdc3ef228e06e7c62e9ca9f4ba9cbc8dffeedb9a98c1acf3164"
     },
     {
       "id": "prop_barrier",
@@ -260,8 +281,9 @@
       "pack": "Kenney City Kit Roads",
       "license": "CC0-1.0",
       "category": "prop",
-      "scale": 8.0,
-      "source": "city-kit-roads/Models/GLB format/construction-barrier.glb"
+      "scale": 8,
+      "source": "city-kit-roads/Models/GLB format/construction-barrier.glb",
+      "sha256": "563e3a15d762227e10c637cbce1f0cec2b4726756e359b399e4df96c6b76456a"
     },
     {
       "id": "prop_cone",
@@ -269,8 +291,9 @@
       "pack": "Kenney City Kit Roads",
       "license": "CC0-1.0",
       "category": "prop",
-      "scale": 8.0,
-      "source": "city-kit-roads/Models/GLB format/construction-cone.glb"
+      "scale": 8,
+      "source": "city-kit-roads/Models/GLB format/construction-cone.glb",
+      "sha256": "041a118b6485bcecd1cc9ca79e47aaea68358965b429e5b1bf74f45c932d1329"
     },
     {
       "id": "prop_sign_highway",
@@ -278,8 +301,9 @@
       "pack": "Kenney City Kit Roads",
       "license": "CC0-1.0",
       "category": "prop",
-      "scale": 8.0,
-      "source": "city-kit-roads/Models/GLB format/sign-highway.glb"
+      "scale": 8,
+      "source": "city-kit-roads/Models/GLB format/sign-highway.glb",
+      "sha256": "10ecc91279e103ce813fe4518976e811e85984583d3ccc83e0d0f4f9e60817f0"
     },
     {
       "id": "prop_dumpster",
@@ -287,8 +311,9 @@
       "pack": "Kenney City Kit Roads",
       "license": "CC0-1.0",
       "category": "prop",
-      "scale": 7.0,
-      "source": "city-kit-roads/Models/GLB format/dumpster.glb"
+      "scale": 7,
+      "source": "city-kit-roads/Models/GLB format/dumpster.glb",
+      "sha256": "ca9f8241571f4acf375be34d571e476ba794e3e9cbbc827c81caa47788e3d66a"
     },
     {
       "id": "prop_tree_large",
@@ -296,8 +321,9 @@
       "pack": "Kenney City Kit Suburban",
       "license": "CC0-1.0",
       "category": "prop",
-      "scale": 8.0,
-      "source": "city-kit-suburban/Models/GLB format/tree-large.glb"
+      "scale": 8,
+      "source": "city-kit-suburban/Models/GLB format/tree-large.glb",
+      "sha256": "e3a7cd4f13a8abd45b592fba15a7f971412d52185e2aec562879254cfde233d4"
     },
     {
       "id": "prop_tree_small",
@@ -306,7 +332,8 @@
       "license": "CC0-1.0",
       "category": "prop",
       "scale": 7.5,
-      "source": "city-kit-suburban/Models/GLB format/tree-small.glb"
+      "source": "city-kit-suburban/Models/GLB format/tree-small.glb",
+      "sha256": "7149c5f9afe4ebf25a607e81d26e7fa05e2177ca5e7909da136382fb2aaf99f8"
     }
   ],
   "audio": [
@@ -316,7 +343,8 @@
       "pack": "Kenney UI Audio",
       "license": "CC0-1.0",
       "category": "audio",
-      "source": "ui-audio/Audio/click1.ogg"
+      "source": "ui-audio/Audio/click1.ogg",
+      "sha256": "59175ac17cd49a68dd736285738441287636112a84a6f7ce0d89921bda5a5360"
     },
     {
       "id": "audio_ui_switch",
@@ -324,7 +352,8 @@
       "pack": "Kenney UI Audio",
       "license": "CC0-1.0",
       "category": "audio",
-      "source": "ui-audio/Audio/switch1.ogg"
+      "source": "ui-audio/Audio/switch1.ogg",
+      "sha256": "efdd1d1e2904fb2d81259cd96bb80101caceae94be02baa4b5310714a6708b19"
     },
     {
       "id": "audio_impact_light",
@@ -332,7 +361,8 @@
       "pack": "Kenney Impact Sounds",
       "license": "CC0-1.0",
       "category": "audio",
-      "source": "impact-sounds/Audio/impactGeneric_light_000.ogg"
+      "source": "impact-sounds/Audio/impactGeneric_light_000.ogg",
+      "sha256": "f0e982611e97512fee5f777986b67e8b435434b601f94992ec044f7e89fb5acb"
     },
     {
       "id": "audio_impact_metal",
@@ -340,7 +370,8 @@
       "pack": "Kenney Impact Sounds",
       "license": "CC0-1.0",
       "category": "audio",
-      "source": "impact-sounds/Audio/impactMetal_medium_000.ogg"
+      "source": "impact-sounds/Audio/impactMetal_medium_000.ogg",
+      "sha256": "a96f879fec0864a8938e0c745b6996a6c5679c16a234ce31a01cc995e8401003"
     }
   ],
   "proceduralModels": [

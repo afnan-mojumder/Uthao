@@ -68,7 +68,28 @@ export const ASSET_CATALOG: readonly AssetCatalogEntry[] = [...rawModels, ...raw
   .map(toCatalogEntry)
   .filter((e): e is AssetCatalogEntry => e !== null);
 
-function disposeObject3D(obj: THREE.Object3D, disposedGeos: Set<THREE.BufferGeometry>, disposedMats: Set<THREE.Material>): void {
+function disposeMaterial(
+  mat: THREE.Material,
+  disposedMats: Set<THREE.Material>,
+  disposedTextures: Set<THREE.Texture>
+): void {
+  if (disposedMats.has(mat)) return;
+  disposedMats.add(mat);
+  for (const val of Object.values(mat)) {
+    if (val instanceof THREE.Texture && !disposedTextures.has(val)) {
+      disposedTextures.add(val);
+      val.dispose();
+    }
+  }
+  mat.dispose();
+}
+
+function disposeObject3D(
+  obj: THREE.Object3D,
+  disposedGeos: Set<THREE.BufferGeometry>,
+  disposedMats: Set<THREE.Material>,
+  disposedTextures: Set<THREE.Texture>
+): void {
   obj.traverse((child) => {
     if (child instanceof THREE.Mesh) {
       if (child.geometry && !disposedGeos.has(child.geometry)) {
@@ -78,9 +99,8 @@ function disposeObject3D(obj: THREE.Object3D, disposedGeos: Set<THREE.BufferGeom
       if (child.material) {
         const mats = Array.isArray(child.material) ? child.material : [child.material];
         for (const mat of mats) {
-          if (mat && !disposedMats.has(mat)) {
-            disposedMats.add(mat);
-            mat.dispose();
+          if (mat) {
+            disposeMaterial(mat, disposedMats, disposedTextures);
           }
         }
       }
@@ -135,23 +155,23 @@ function normalizeGeometriesForMerge(geos: THREE.BufferGeometry[]): THREE.Buffer
       })
     : geos;
 
-  const first = prepared[0];
-  if (!first) return prepared;
-
-  const commonAttrs = new Set(Object.keys(first.attributes));
-  for (let i = 1; i < prepared.length; i++) {
-    const attrKeys = new Set(Object.keys(prepared[i]!.attributes));
-    for (const key of Array.from(commonAttrs)) {
-      if (!attrKeys.has(key)) {
-        commonAttrs.delete(key);
+  const allAttrs = new Map<string, number>();
+  for (const geo of prepared) {
+    for (const [name, attr] of Object.entries(geo.attributes)) {
+      if (attr && !allAttrs.has(name)) {
+        allAttrs.set(name, attr.itemSize);
       }
     }
   }
 
   for (const geo of prepared) {
-    for (const attr of Object.keys(geo.attributes)) {
-      if (!commonAttrs.has(attr)) {
-        geo.deleteAttribute(attr);
+    const vertexCount = geo.getAttribute('position')?.count ?? 0;
+    for (const [name, itemSize] of allAttrs.entries()) {
+      if (!geo.getAttribute(name)) {
+        geo.setAttribute(
+          name,
+          new THREE.BufferAttribute(new Float32Array(vertexCount * itemSize), itemSize, false)
+        );
       }
     }
   }
@@ -167,6 +187,7 @@ export class AssetManager {
   private loader: GLTFLoader | null = null;
   private initPromise: Promise<void> | null = null;
   private initialized = false;
+  private generation = 0;
   private renderer?: THREE.WebGLRenderer;
 
   constructor(catalog: readonly AssetCatalogEntry[] = ASSET_CATALOG) {
@@ -190,6 +211,7 @@ export class AssetManager {
       return this.initPromise;
     }
 
+    const startGen = this.generation;
     this.initPromise = (async () => {
       const loader = new GLTFLoader();
       try {
@@ -201,6 +223,9 @@ export class AssetManager {
         }
       } catch {
         // Ignore WASM decoder initialization failures in restricted environments.
+      }
+      if (this.generation !== startGen) {
+        return;
       }
       this.loader = loader;
       this.initialized = true;
@@ -284,15 +309,28 @@ export class AssetManager {
       return resolved.clone();
     }
 
+    const startGen = this.generation;
     const loadTask = (async (): Promise<THREE.Object3D> => {
       const entry = this.catalogMap.get(id);
       if (lod === 'high' && entry && entry.category !== 'audio') {
         if (!this.initialized || !this.loader) {
           await this.init(this.renderer);
         }
+        if (this.generation !== startGen) {
+          return this.createProceduralFallback(id, lod);
+        }
         if (this.loader) {
           try {
             const gltf = await this.loader.loadAsync(entry.url);
+            if (this.generation !== startGen) {
+              disposeObject3D(
+                gltf.scene,
+                new Set<THREE.BufferGeometry>(),
+                new Set<THREE.Material>(),
+                new Set<THREE.Texture>()
+              );
+              return this.createProceduralFallback(id, lod);
+            }
             const normalized = this.normalizeModel(gltf.scene, entry.scale ?? 1, entry.id);
             this.cache.set(key, normalized);
             const proto = this.extractInstancedPrototype(normalized);
@@ -301,6 +339,9 @@ export class AssetManager {
             }
             return normalized;
           } catch (err) {
+            if (this.generation !== startGen) {
+              return this.createProceduralFallback(id, lod);
+            }
             if (typeof window !== 'undefined') {
               console.warn(
                 `[AssetManager] Failed to load '${id}' (${entry.url}); using procedural fallback:`,
@@ -313,6 +354,9 @@ export class AssetManager {
 
       const rawFallback = this.createProceduralFallback(id, lod);
       const model = entry ? this.normalizeModel(rawFallback, 1, id) : rawFallback;
+      if (this.generation !== startGen) {
+        return model;
+      }
       this.cache.set(key, model);
       if (lod === 'high' && entry) {
         const proto = this.extractInstancedPrototype(model);
@@ -328,7 +372,9 @@ export class AssetManager {
       const result = await loadTask;
       return result.clone();
     } finally {
-      this.inflight.delete(key);
+      if (this.inflight.get(key) === loadTask) {
+        this.inflight.delete(key);
+      }
     }
   }
 
@@ -542,14 +588,11 @@ export class AssetManager {
     return this.cache.has(id);
   }
 
-  clearCache(): void {
-    this.cache.clear();
-    this.prototypes.clear();
-  }
-
-  dispose(): void {
+  private disposeCachedAssets(): void {
+    this.generation++;
     const disposedGeos = new Set<THREE.BufferGeometry>();
     const disposedMats = new Set<THREE.Material>();
+    const disposedTextures = new Set<THREE.Texture>();
 
     for (const proto of this.prototypes.values()) {
       if (!disposedGeos.has(proto.geometry)) {
@@ -558,19 +601,27 @@ export class AssetManager {
       }
       const mats = Array.isArray(proto.material) ? proto.material : [proto.material];
       for (const mat of mats) {
-        if (mat && !disposedMats.has(mat)) {
-          disposedMats.add(mat);
-          mat.dispose();
+        if (mat) {
+          disposeMaterial(mat, disposedMats, disposedTextures);
         }
       }
     }
 
     for (const obj of this.cache.values()) {
-      disposeObject3D(obj, disposedGeos, disposedMats);
+      disposeObject3D(obj, disposedGeos, disposedMats, disposedTextures);
     }
 
     this.prototypes.clear();
     this.cache.clear();
+  }
+
+  clearCache(): void {
+    this.disposeCachedAssets();
+    this.inflight.clear();
+  }
+
+  dispose(): void {
+    this.disposeCachedAssets();
     this.inflight.clear();
     this.initialized = false;
     this.initPromise = null;
