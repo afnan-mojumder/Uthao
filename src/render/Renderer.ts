@@ -16,8 +16,10 @@ import type { PhysicsWorld } from '../physics/PhysicsWorld';
 import { CityBuilder } from './CityBuilder';
 import { PeopleRenderer } from './people';
 import { TimeOfDay } from '../sim/world/TimeOfDay';
+import { assetManager } from './assets';
 import type { PedestrianAgent } from '../sim/traffic/pedestrians';
 import type { TrafficAgent } from '../sim/traffic/TrafficManager';
+import type { SignalController } from '../sim/traffic/signals';
 
 export class Renderer {
   readonly webglRenderer: THREE.WebGLRenderer;
@@ -71,6 +73,7 @@ export class Renderer {
     this.webglRenderer.outputColorSpace = THREE.SRGBColorSpace;
 
     this.applyQuality();
+    void assetManager.init(this.webglRenderer);
 
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0x87ceeb); // Dhaka sky
@@ -179,6 +182,17 @@ export class Renderer {
     return new Renderer(canvas, qualityLevel);
   }
 
+  /** Initializes GLTF/Meshopt asset loading and preloads core Kenney GLB prototypes. */
+  async preloadAssets(onProgress?: (pct: number) => void): Promise<void> {
+    await assetManager.init(this.webglRenderer);
+    await assetManager.preloadCore(onProgress);
+  }
+
+  /** Syncs 3D traffic signal pole lenses to the live SignalController (zero allocations). */
+  updateTrafficSignals(signals: SignalController): void {
+    this.cityBuilder?.updateTrafficSignals(signals);
+  }
+
   private applyQuality(): void {
     const cfg = this.qualityManager.config;
     this.webglRenderer.setPixelRatio(cfg.pixelRatio * cfg.resolutionScale);
@@ -194,6 +208,7 @@ export class Renderer {
     this.qualityManager.config = getQualityConfig(level, dpr);
     const cfg = this.qualityManager.config;
     this.applyQuality();
+    void assetManager.init(this.webglRenderer);
     this.dirLight.castShadow = cfg.shadows;
     const fog = this.scene.fog;
     if (fog instanceof THREE.Fog) fog.far = cfg.drawDistance;
@@ -353,8 +368,7 @@ export class Renderer {
     this.bikeSpeed = state.speed;
   }
 
-  render(snapshot: SimSnapshot, alpha = 1.0): void {
-    void snapshot;
+  render(snapshot: SimSnapshot, alpha = 1.0, signals?: SignalController): void {
     const now = performance.now();
     this.qualityManager.recordFrame(now);
 
@@ -412,6 +426,9 @@ export class Renderer {
       this._camPos.x = x;
       this._camPos.z = z;
       this.cityBuilder.update(this._camPos, this.qualityManager.config.drawDistance, 4);
+      if (signals) {
+        this.cityBuilder.updateTrafficSignals(signals);
+      }
     }
 
     this.webglRenderer.render(this.scene, this.cameraRig.camera);

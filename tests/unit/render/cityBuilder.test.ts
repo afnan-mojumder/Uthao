@@ -1,14 +1,22 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterEach, vi } from 'vitest';
+import fs from 'node:fs';
+import path from 'node:path';
 import * as THREE from 'three';
 import { SignageAtlas } from '../../../src/render/signage';
 import { RoadMeshBuilder, getRoadWidth } from '../../../src/render/roadMesh';
 import { BuildingBuilder } from '../../../src/render/buildings';
 import { LodManager } from '../../../src/render/lod';
 import { CityBuilder, kerbEndTrim } from '../../../src/render/CityBuilder';
-import { PhysicsWorld } from '../../../src/physics/PhysicsWorld';
+import { PhysicsWorld, type StaticBoxHandle } from '../../../src/physics/PhysicsWorld';
+import { SignalController } from '../../../src/sim/traffic/signals';
+import { assetManager } from '../../../src/render/assets';
 import mirparaData from '../../../data/districts/mirpara.json';
+import fulgateData from '../../../data/districts/fulgate.json';
+import mohakhalData from '../../../data/districts/mohakhal.json';
 import testloopData from '../../../data/districts/testloop.json';
-import type { DistrictData, BuildingLot } from '../../../src/sim/schemas';
+import worldDataJson from '../../../data/world.json';
+import type { DistrictData, BuildingLot, WorldData } from '../../../src/sim/schemas';
+import type { DistrictId } from '../../../src/core/types';
 
 describe('CityBuilder, Roads, Buildings and LOD (T3.3)', () => {
   describe('SignageAtlas', () => {
@@ -35,14 +43,14 @@ describe('CityBuilder, Roads, Buildings and LOD (T3.3)', () => {
   });
 
   describe('RoadMeshBuilder', () => {
-    it('computes expected road widths by type', () => {
+    it('computes expected road widths by honoring segment.width', () => {
       const dividedSeg = (mirparaData as DistrictData).segments.find((s) => s.divided)!;
       const residentialSeg = (mirparaData as DistrictData).segments.find((s) => s.roadType === 'residential')!;
       const alleySeg = (mirparaData as DistrictData).segments.find((s) => s.roadType === 'alley')!;
 
-      expect(getRoadWidth(dividedSeg)).toBe(14); // divided
-      expect(getRoadWidth(residentialSeg)).toBe(8);
-      expect(getRoadWidth(alleySeg)).toBe(4);
+      expect(getRoadWidth(dividedSeg)).toBe(dividedSeg.width);
+      expect(getRoadWidth(residentialSeg)).toBe(residentialSeg.width);
+      expect(getRoadWidth(alleySeg)).toBe(alleySeg.width);
     });
 
     it('builds road ribbons, kerbs, and zebra crossings for Mirpara', () => {
@@ -176,5 +184,245 @@ describe('kerbEndTrim (T9.1)', () => {
     // must clear half of N1-N4 so the bike can turn into it, and vice versa.
     expect(kerbEndTrim(s1, true, segs, nodes)).toBeGreaterThanOrEqual(4);
     expect(kerbEndTrim(s4, s4.startNodeId === 'N1', segs, nodes)).toBeGreaterThanOrEqual(5);
+  });
+});
+
+describe('P2.3 CityBuilder Facades, POIs, Traffic Signals, Connectors & Shared Materials', () => {
+  afterEach(() => {
+    assetManager.clearCache();
+  });
+
+  it('orients building facades toward the street (+Z local facing normal points toward nearest road)', () => {
+    const mirpara = mirparaData as unknown as DistrictData;
+    const nodeMap = new Map(mirpara.nodes.map((n) => [n.nodeId, n]));
+    const atlas = new SignageAtlas();
+    const builder = new BuildingBuilder(atlas);
+    const lots = (mirpara.lots ?? []).slice(0, 40);
+    const result = builder.build(lots);
+    result.group.updateMatrixWorld(true);
+
+    let alignedCount = 0;
+    for (let i = 0; i < lots.length; i++) {
+      const lot = lots[i]!;
+      const bGroup = result.group.children[i]!;
+      let bestDist = Infinity;
+      let nearestX = lot.x;
+      let nearestZ = lot.z;
+      for (const seg of mirpara.segments) {
+        const a = nodeMap.get(seg.startNodeId);
+        const b = nodeMap.get(seg.endNodeId);
+        if (!a || !b) continue;
+        const dx = b.x - a.x;
+        const dz = b.z - a.z;
+        const len2 = dx * dx + dz * dz;
+        const t = len2 > 0 ? Math.max(0, Math.min(1, ((lot.x - a.x) * dx + (lot.z - a.z) * dz) / len2)) : 0;
+        const px = a.x + t * dx;
+        const pz = a.z + t * dz;
+        const d = Math.hypot(px - lot.x, pz - lot.z);
+        if (d < bestDist) {
+          bestDist = d;
+          nearestX = px;
+          nearestZ = pz;
+        }
+      }
+      const toRoad = new THREE.Vector2(nearestX - lot.x, nearestZ - lot.z).normalize();
+      const localPlusZ = new THREE.Vector3(0, 0, 1).transformDirection(bGroup.matrixWorld);
+      const facingXZ = new THREE.Vector2(localPlusZ.x, localPlusZ.z).normalize();
+      if (facingXZ.dot(toRoad) > 0.7) {
+        alignedCount++;
+      }
+    }
+    expect(alignedCount).toBeGreaterThanOrEqual(lots.length - 1);
+  });
+
+  it('scales building facade UVs in world meters and blends loaded Kenney GLB prototypes', async () => {
+    const atlas = new SignageAtlas();
+    const builder = new BuildingBuilder(atlas);
+    const shortLot: BuildingLot = {
+      lotId: 'short_lot',
+      x: 0,
+      z: 0,
+      width: 14,
+      depth: 12,
+      facingHeading: 0,
+      zone: 'residential',
+    };
+    const tallLot: BuildingLot = {
+      lotId: 'tall_lot',
+      x: 1,
+      z: 0,
+      width: 14,
+      depth: 12,
+      facingHeading: 0,
+      zone: 'residential',
+    };
+    const res = builder.build([shortLot, tallLot]);
+    const shortMain = res.group.children[0]!.children[0] as THREE.Mesh;
+    const tallMain = res.group.children[1]!.children[0] as THREE.Mesh;
+    const maxV = (m: THREE.Mesh) => {
+      const uv = m.geometry.getAttribute('uv')!;
+      let v = 0;
+      for (let i = 0; i < uv.count; i++) v = Math.max(v, uv.getY(i));
+      return v;
+    };
+    // shortLot has 4 storeys (12.8m), tallLot has 8 storeys (25.6m) -> tall UV V must be > short UV V
+    expect(maxV(tallMain)).toBeGreaterThan(maxV(shortMain) * 1.5);
+
+    // When a Kenney GLB prototype is cached in AssetManager, BuildingBuilder blends it in
+    await assetManager.init();
+    const protoGeo = new THREE.BoxGeometry(8, 12, 8);
+    const protoMat = new THREE.MeshStandardMaterial({ color: 0x998877, name: 'colormap' });
+    const mockScene = new THREE.Group();
+    mockScene.add(new THREE.Mesh(protoGeo, protoMat));
+    const loader = assetManager.getLoader()!;
+    const spy = vi.spyOn(loader, 'loadAsync').mockResolvedValue({
+      scene: mockScene,
+      scenes: [mockScene],
+      animations: [],
+      cameras: [],
+      asset: { version: '2.0' },
+      parser: {} as never,
+      userData: {},
+    });
+    await assetManager.loadModel('building_commercial_a', 'high');
+    await assetManager.loadModel('building_commercial_b', 'high');
+    await assetManager.loadModel('building_commercial_c', 'high');
+    await assetManager.loadModel('building_commercial_d', 'high');
+    await assetManager.loadModel('building_commercial_tower', 'high');
+    await assetManager.loadModel('building_commercial_highrise', 'high');
+    spy.mockRestore();
+
+    const mixedLots: BuildingLot[] = Array.from({ length: 6 }, (_, idx) => ({
+      lotId: `mix_${idx}`,
+      x: 20 * idx,
+      z: 0,
+      width: 14,
+      depth: 12,
+      facingHeading: 0,
+      zone: 'commercial',
+    }));
+    const mixedRes = builder.build(mixedLots);
+    let glbMeshCount = 0;
+    mixedRes.group.traverse((o) => {
+      if (o.name.startsWith('kenney_building_')) glbMeshCount++;
+    });
+    expect(glbMeshCount).toBeGreaterThan(0);
+  });
+
+  it('places 3D POI props (teaStall, fuel, garage, footbridge, traffic signals) in district chunks and syncs signal lights', async () => {
+    const mirpara = mirparaData as unknown as DistrictData;
+    const city = new CityBuilder();
+    const physics = await PhysicsWorld.create();
+    city.buildDistrict(mirpara, physics);
+
+    const names: string[] = [];
+    for (const chunk of city.lodManager.chunks.values()) {
+      chunk.root.traverse((obj) => {
+        if (obj.name) names.push(obj.name);
+      });
+    }
+
+    expect(names.some((n) => n.startsWith('poi_teaStall_'))).toBe(true);
+    expect(names.some((n) => n.startsWith('poi_fuel_'))).toBe(true);
+    expect(names.some((n) => n.startsWith('poi_garage_'))).toBe(true);
+    expect(names.some((n) => n.startsWith('poi_footbridge_'))).toBe(true);
+    expect(names.some((n) => n.startsWith('traffic_signal_'))).toBe(true);
+
+    // Verify SignalController live sync drives red/yellow/green lens emissive intensity
+    const signals = new SignalController(mirpara.nodes, 10);
+    const sigNode = mirpara.nodes.find((n) => n.signal)!;
+    city.updateTrafficSignals(signals);
+
+    const signalObjects: THREE.Object3D[] = [];
+    for (const chunk of city.lodManager.chunks.values()) {
+      chunk.root.traverse((obj) => {
+        if (obj.name.startsWith(`traffic_signal_${sigNode.nodeId}`)) {
+          signalObjects.push(obj);
+        }
+      });
+    }
+    expect(signalObjects.length).toBeGreaterThanOrEqual(2);
+
+    const ewPole = signalObjects.find((o) => o.userData.approachIndex === 0)!;
+    expect(ewPole).toBeDefined();
+    const getLensEmissive = (pole: THREE.Object3D, lensName: string) => {
+      const m = pole.getObjectByName(lensName) as THREE.Mesh;
+      return (m.material as THREE.MeshStandardMaterial).emissiveIntensity;
+    };
+
+    // Phase 0: approach 0 is green
+    expect(getLensEmissive(ewPole, 'lens_green')).toBeGreaterThan(0);
+    expect(getLensEmissive(ewPole, 'lens_yellow')).toBe(0);
+    expect(getLensEmissive(ewPole, 'lens_red')).toBe(0);
+
+    // Advance into yellow (< 3s remaining)
+    signals.update(8.0);
+    city.updateTrafficSignals(signals);
+    expect(getLensEmissive(ewPole, 'lens_yellow')).toBeGreaterThan(0);
+    expect(getLensEmissive(ewPole, 'lens_green')).toBe(0);
+
+    // Advance into Phase 1: approach 0 is red
+    signals.update(3.0);
+    city.updateTrafficSignals(signals);
+    expect(getLensEmissive(ewPole, 'lens_red')).toBeGreaterThan(0);
+    expect(getLensEmissive(ewPole, 'lens_yellow')).toBe(0);
+  });
+
+  it('builds road meshes and colliders for world.connectors and elevated flyover decks with pillars', async () => {
+    const worldData = worldDataJson as unknown as WorldData;
+    const districts = new Map<DistrictId, DistrictData>();
+    for (const dRef of worldData.districts) {
+      const raw = JSON.parse(fs.readFileSync(path.resolve(dRef.file), 'utf-8')) as DistrictData;
+      districts.set(dRef.districtId as DistrictId, raw);
+    }
+
+    const physics = await PhysicsWorld.create();
+    const city = new CityBuilder();
+    city.initWorldStreaming(worldData, (id) => districts.get(id), physics, { x: 300, z: 300 });
+
+    // Border between Mirpara and Fulgate around (600, 291)
+    const borderChunk = city.lodManager.getChunk(595, 291);
+    const hasConnectorMesh = borderChunk.root.children.some((c) => {
+      const box = new THREE.Box3().setFromObject(c);
+      return box.max.x > 590;
+    });
+    expect(hasConnectorMesh).toBe(true);
+
+    // Physics kerb colliders exist along the connector corridor (x ~ 580..620, z ~ 280..320)
+    const connHits: StaticBoxHandle[] = [];
+    physics.queryAabb(585, 280, 615, 320, connHits);
+    expect(connHits.some((h) => h.kind === 'kerb')).toBe(true);
+
+    // Also build Mohakhali and confirm flyover pillars + elevated colliders exist
+    city.buildDistrict(mohakhalData as unknown as DistrictData, physics);
+    const mohakhalNames: string[] = [];
+    for (const chunk of city.lodManager.chunks.values()) {
+      chunk.root.traverse((obj) => {
+        if (obj.name) mohakhalNames.push(obj.name);
+      });
+    }
+    expect(mohakhalNames).toContain('flyover_pillar');
+
+    const mohakhalHandles = city.districtPhysicsColliders.get('mohakhal') ?? [];
+    expect(mohakhalHandles.some((h) => h.minY >= 5.5)).toBe(true);
+  });
+
+  it('keeps shared materials intact when unloading a district', async () => {
+    const city = new CityBuilder();
+    const physics = await PhysicsWorld.create();
+    city.buildDistrict(mirparaData as unknown as DistrictData, physics);
+    city.buildDistrict(fulgateData as unknown as DistrictData, physics);
+
+    expect(city.signageAtlas.material.userData.shared).toBe(true);
+    let disposedCount = 0;
+    const origDispose = city.signageAtlas.material.dispose.bind(city.signageAtlas.material);
+    city.signageAtlas.material.dispose = () => {
+      disposedCount++;
+      origDispose();
+    };
+
+    city.unloadDistrict('fulgate');
+    expect(disposedCount).toBe(0);
+    expect(city.isDistrictLoaded('mirpara')).toBe(true);
   });
 });

@@ -1,5 +1,87 @@
 import * as THREE from 'three';
 
+export const ASPHALT_TILE_M = 4.0;
+export const SIDEWALK_TILE_M = 1.6;
+export const FACADE_TILE_U_M = 6.4;
+export const FACADE_TILE_V_M = 12.8;
+
+/**
+ * Scales PlaneGeometry UVs in world meters so road/paving textures never stretch
+ * with segment length or width.
+ */
+export function scalePlaneUvs(
+  geo: THREE.BufferGeometry,
+  widthM: number,
+  lengthM: number,
+  tileUM: number,
+  tileVM: number
+): void {
+  const uv = geo.getAttribute('uv');
+  if (!uv) return;
+  const su = widthM / Math.max(tileUM, 0.01);
+  const sv = lengthM / Math.max(tileVM, 0.01);
+  for (let i = 0; i < uv.count; i++) {
+    uv.setXY(i, uv.getX(i) * su, uv.getY(i) * sv);
+  }
+  uv.needsUpdate = true;
+}
+
+/**
+ * Scales CircleGeometry / disk UVs in world meters around the center.
+ */
+export function scaleDiskUvs(
+  geo: THREE.BufferGeometry,
+  radiusM: number,
+  tileUM: number,
+  tileVM: number
+): void {
+  const uv = geo.getAttribute('uv');
+  if (!uv) return;
+  const dia = radiusM * 2;
+  const su = dia / Math.max(tileUM, 0.01);
+  const sv = dia / Math.max(tileVM, 0.01);
+  for (let i = 0; i < uv.count; i++) {
+    uv.setXY(i, uv.getX(i) * su, uv.getY(i) * sv);
+  }
+  uv.needsUpdate = true;
+}
+
+/**
+ * Scales BoxGeometry UVs per face in world meters:
+ * faces 0,1 (+X/-X): depth x height; faces 2,3 (+Y/-Y): width x depth;
+ * faces 4,5 (+Z/-Z): width x height.
+ */
+export function scaleBoxUvs(
+  geo: THREE.BufferGeometry,
+  widthM: number,
+  heightM: number,
+  depthM: number,
+  tileUM: number,
+  tileVM: number
+): void {
+  const uv = geo.getAttribute('uv');
+  if (!uv || uv.count < 24) return;
+  const uTile = Math.max(tileUM, 0.01);
+  const vTile = Math.max(tileVM, 0.01);
+  const faceScales: readonly [number, number][] = [
+    [depthM / uTile, heightM / vTile], // +X
+    [depthM / uTile, heightM / vTile], // -X
+    [widthM / uTile, depthM / vTile],  // +Y
+    [widthM / uTile, depthM / vTile],  // -Y
+    [widthM / uTile, heightM / vTile], // +Z
+    [widthM / uTile, heightM / vTile], // -Z
+  ];
+  for (let f = 0; f < 6; f++) {
+    const [su, sv] = faceScales[f]!;
+    const base = f * 4;
+    for (let k = 0; k < 4; k++) {
+      const idx = base + k;
+      uv.setXY(idx, uv.getX(idx) * su, uv.getY(idx) * sv);
+    }
+  }
+  uv.needsUpdate = true;
+}
+
 function makeCanvasTexture(
   width: number,
   height: number,
@@ -24,6 +106,7 @@ function makeCanvasTexture(
   if (opts.srgb) {
     tex.colorSpace = THREE.SRGBColorSpace;
   }
+  tex.userData.shared = true;
   tex.needsUpdate = true;
   return tex;
 }
@@ -62,7 +145,7 @@ export function getAsphaltTexture(): THREE.CanvasTexture | null {
       ctx.fillRect(w * 0.2, 0, w * 0.16, h);
       ctx.fillRect(w * 0.64, 0, w * 0.16, h);
     },
-    { repeatX: 1, repeatY: 6, srgb: true }
+    { repeatX: 1, repeatY: 1, srgb: true }
   );
   return cachedAsphalt;
 }
@@ -84,7 +167,7 @@ export function getSidewalkTexture(): THREE.CanvasTexture | null {
       ctx.lineTo(w, h / 2);
       ctx.stroke();
     },
-    { repeatX: 1, repeatY: 12, srgb: true }
+    { repeatX: 1, repeatY: 1, srgb: true }
   );
   return cachedSidewalk;
 }
@@ -113,13 +196,13 @@ export function getFacadeTexture(): THREE.CanvasTexture | null {
         ctx.fillRect(x, y, 3, 2);
       }
 
-      // Faint storey horizontal bands
+      // Faint storey horizontal bands (4 bands per tile = 3.2m per storey over 12.8m tile)
       ctx.fillStyle = 'rgba(0, 0, 0, 0.08)';
       for (let y = 0; y < h; y += 32) {
         ctx.fillRect(0, y, w, 2);
       }
     },
-    { repeatX: 2, repeatY: 4, srgb: true }
+    { repeatX: 1, repeatY: 1, srgb: true }
   );
   return cachedFacade;
 }

@@ -71,19 +71,24 @@ export function districtsToUnload(
 }
 
 /**
- * Recursively disposes all geometries and materials attached to an Object3D hierarchy.
+ * Recursively disposes geometries and non-shared materials attached to an Object3D hierarchy.
  */
 export function disposeHierarchy(obj: THREE.Object3D): void {
   obj.traverse((child) => {
-    if (child instanceof THREE.Mesh) {
-      if (child.geometry) {
-        child.geometry.dispose();
-      }
-      if (child.material) {
-        if (Array.isArray(child.material)) {
-          child.material.forEach((m) => m.dispose());
-        } else {
-          child.material.dispose();
+    const maybeRenderable = child as {
+      geometry?: THREE.BufferGeometry;
+      material?: THREE.Material | THREE.Material[];
+    };
+    if (maybeRenderable.geometry && !maybeRenderable.geometry.userData?.shared) {
+      maybeRenderable.geometry.dispose();
+    }
+    if (maybeRenderable.material) {
+      const mats = Array.isArray(maybeRenderable.material)
+        ? maybeRenderable.material
+        : [maybeRenderable.material];
+      for (const m of mats) {
+        if (m && !m.userData?.shared) {
+          m.dispose();
         }
       }
     }

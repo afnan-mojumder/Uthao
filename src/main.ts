@@ -229,6 +229,9 @@ async function bootGame(): Promise<void> {
   if (canvas) {
     setLoadingStage('loading.world', 55);
     renderer = Renderer.init(canvas, qualityChoice);
+    await renderer.preloadAssets((pct) => {
+      setLoadingStage('loading.world', 55 + Math.round(pct * 0.25));
+    });
     loadRendererScene(renderer);
     gm.bus.on('bike/collision', ({ severity }) => {
       if (severity === 'crash') renderer?.cameraRig.triggerShake(0.45);
@@ -460,7 +463,7 @@ function frame(now: number) {
 
     renderer.setBikeState(session.bike);
     const alpha = gm.accumulator / SIM_DT;
-    renderer.render(gm.snapshot(), alpha);
+    renderer.render(gm.snapshot(), alpha, trafficManager.signals);
   }
 
   // T7.4: Journal reads a live snapshot; only built while it's actually open.

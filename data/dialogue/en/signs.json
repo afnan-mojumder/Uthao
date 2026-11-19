@@ -1,14 +1,20 @@
 {
   "sign.pharmacy": "Mayer Doa Pharmacy",
-  "sign.tea_stall": "Rahman Tea Stall",
-  "sign.general_store": "Bismillah General Store",
-  "sign.bakery": "Bonophool Sweets & Bakery",
+  "sign.tea_stall": "Rahman Tea Stall & Snacks",
+  "sign.general_store": "Mirpara General Store",
+  "sign.bakery": "Fulgate Bakery & Sweets",
   "sign.tailors": "New Dhaka Tailors",
   "sign.electronics": "Bhai Bhai Electronics",
   "sign.barber": "Al-Madina Hair Saloon",
-  "sign.restaurant": "Haji Biryani & Hotel",
+  "sign.restaurant": "Puran Para Shahi Biryani",
   "sign.workshop": "Kamal Auto Workshop",
-  "sign.stationery": "Chhatrobandhu Library & Stationery",
+  "sign.stationery": "Dhanbagh Library & Stationery",
   "sign.telecom": "Rony Telecom & Flexiload",
-  "sign.grocery": "Sotota Grocery & Bazar"
+  "sign.grocery": "Gulbari Grocery & Bazar",
+  "sign.hardware": "Motinagar Hardware & Paints",
+  "sign.motors": "Mohakhal Motor Parts",
+  "sign.studio": "Shokal Shondhya Digital Studio",
+  "sign.laundry": "Swadesh Dry Cleaners & Laundry",
+  "sign.optics": "Padma Optical House",
+  "sign.diagnostics": "Nagar Diagnostic & Dental"
 }

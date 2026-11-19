@@ -20,6 +20,8 @@ vi.mock('three', async (importOriginal) => {
 });
 
 const { Renderer } = await import('../../../src/render/Renderer');
+const { assetManager } = await import('../../../src/render/assets');
+const { SignalController } = await import('../../../src/sim/traffic/signals');
 
 const snapshot = { clock: { minutes: 12 * 60 }, weather: 'clear' } as unknown as SimSnapshot;
 const canvas = { clientWidth: 800, clientHeight: 600 } as unknown as HTMLCanvasElement;
@@ -83,5 +85,34 @@ describe('Renderer ground plane (H-6)', () => {
       expect(hit, `ground under (${x}, ${z})`).toBeDefined();
       expect(hit!.point.y).toBeLessThan(0.02);
     }
+  });
+});
+
+describe('Renderer P2.3 wiring (assetManager preload & traffic signal sync)', () => {
+  it('preloadAssets initializes assetManager with WebGLRenderer and calls preloadCore', async () => {
+    const r = Renderer.init(canvas);
+    const initSpy = vi.spyOn(assetManager, 'init').mockResolvedValue();
+    const preloadSpy = vi.spyOn(assetManager, 'preloadCore').mockResolvedValue();
+
+    await r.preloadAssets();
+
+    expect(initSpy).toHaveBeenCalledWith(r.webglRenderer);
+    expect(preloadSpy).toHaveBeenCalledTimes(1);
+    initSpy.mockRestore();
+    preloadSpy.mockRestore();
+  });
+
+  it('forwards live SignalController to CityBuilder.updateTrafficSignals during render', () => {
+    const r = Renderer.init(canvas);
+    const { districts } = loadWorld();
+    const mirpara = districts.get('mirpara')!;
+    r.loadDistrict(mirpara);
+
+    const signals = new SignalController(mirpara.nodes, 10);
+    const spy = vi.spyOn(r.cityBuilder!, 'updateTrafficSignals');
+
+    r.render(snapshot, 1.0, signals);
+    expect(spy).toHaveBeenCalledWith(signals);
+    spy.mockRestore();
   });
 });
