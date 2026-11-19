@@ -242,7 +242,10 @@ export class GameSession {
 
     this.gm.bus.on('bike/swapped', () => this.syncBikeSpec());
     this.gm.bus.on('upgrade/purchased', () => this.syncBikeSpec());
-    this.gm.bus.on('state/restored', () => this.syncBikeSpec());
+    this.gm.bus.on('state/restored', () => {
+      this.lastPunctureMin = -Infinity;
+      this.syncBikeSpec();
+    });
     this.syncBikeSpec();
   }
 
@@ -443,10 +446,15 @@ export class GameSession {
     }
   }
 
+  private monotonicMinutes(): number {
+    return (this.gm.clock.day - 1) * 1440 + this.gm.clock.minutes;
+  }
+
   private rollPuncture(km: number): void {
-    if (this.gm.clock.minutes - this.lastPunctureMin < 180) return;
+    const nowMin = this.monotonicMinutes();
+    if (nowMin - this.lastPunctureMin < 180) return;
     if (checkPuncture(km, this.env.surface, this.envFlooded, this.hasGoodTires, this.punctureRng)) {
-      this.lastPunctureMin = this.gm.clock.minutes;
+      this.lastPunctureMin = nowMin;
       this.gm.bus.emit('bike/puncture', {});
       if (this.gm.eventDirector.enabled && this.gm.eventDirector.activeEncounter === null) {
         this.gm.eventDirector.forceStart('enc_puncture', this.gm.bus);
@@ -838,6 +846,7 @@ export class GameSession {
   /** Resets story/economy state and starts the opening tutorial. Replaces the
    * inline reset previously in main.ts's onNewCareer dispatcher. */
   newCareer(): void {
+    this.lastPunctureMin = -Infinity;
     this.gm.clock.day = 1;
     this.gm.clock.minutes = 7 * 60;
     this.gm.economy.cash = 600;

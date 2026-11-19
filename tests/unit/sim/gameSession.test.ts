@@ -6,6 +6,7 @@ import { PhysicsWorld } from '../../../src/physics/PhysicsWorld';
 import { fuelUsed } from '../../../src/sim/economy/fuel';
 import { SIM_DT } from '../../../src/config/constants';
 import { TIME_SCALE } from '../../../src/core/clock';
+import { Rng } from '../../../src/core/rng';
 import { angleDiff, clamp } from '../../../src/core/math';
 import type { DistrictData } from '../../../src/sim/schemas';
 import type { BikeInput, BikeState } from '../../../src/physics/bikeModel';
@@ -394,5 +395,59 @@ describe('T8.3 fix: rescue wait runs through the real clock path', () => {
     s.gm.dispatch({ type: 'callFuelRescue' });
     expect(ended).toBe(1);
     expect(s.gm.clock.minutes).toBeLessThan(1440);
+  });
+});
+
+describe('P1.3 puncture cooldown across day boundaries and resets', () => {
+  it('puncture late on Day 1 does not suppress a puncture on Day 2 after endShift + sleep', () => {
+    const s = makeSession({ seed: 11, autoRequests: false });
+    s.spawnAtHome();
+    s.gm.economyManager.fuelLevel = s.gm.economyManager.maxFuelL();
+
+    const punctureRng = (s as unknown as { punctureRng: Rng }).punctureRng;
+    const chanceSpy = vi.spyOn(punctureRng, 'chance').mockReturnValue(true);
+
+    let punctures = 0;
+    s.gm.bus.on('bike/puncture', () => {
+      punctures += 1;
+    });
+
+    // Day 1 evening at 20:00 (minutes = 1200)
+    s.gm.clock.day = 1;
+    s.gm.clock.minutes = 20 * 60;
+    s.bike.speed = 15;
+    s.step({ throttle: 1, brake: 0, steer: 0 }, SIM_DT);
+    expect(punctures).toBe(1);
+
+    // Same evening (< 180 min later): cooldown suppresses another puncture
+    s.bike.speed = 15;
+    s.step({ throttle: 1, brake: 0, steer: 0 }, SIM_DT);
+    expect(punctures).toBe(1);
+
+    // End Day 1 shift and sleep -> Day 2 at 07:00 (420 min); 660 elapsed minutes (> 180)
+    expect(s.gm.dispatch({ type: 'endShift' }).success).toBe(true);
+    expect(s.gm.dispatch({ type: 'sleep' }).success).toBe(true);
+    expect(s.gm.clock.day).toBe(2);
+    expect(s.gm.clock.minutes).toBe(7 * 60);
+
+    s.bike.speed = 15;
+    s.step({ throttle: 1, brake: 0, steer: 0 }, SIM_DT);
+    expect(punctures).toBe(2);
+
+    // Restoring an earlier Day 1 snapshot or starting a new career clears puncture cooldown
+    const day1Snap = makeSession({ seed: 11, autoRequests: false }).gm.snapshot();
+    day1Snap.clock.day = 1;
+    day1Snap.clock.minutes = 8 * 60;
+    s.gm.applySnapshot(day1Snap);
+    s.bike.speed = 15;
+    s.step({ throttle: 1, brake: 0, steer: 0 }, SIM_DT);
+    expect(punctures).toBe(3);
+
+    s.newCareer();
+    s.bike.speed = 15;
+    s.step({ throttle: 1, brake: 0, steer: 0 }, SIM_DT);
+    expect(punctures).toBe(4);
+
+    chanceSpy.mockRestore();
   });
 });
