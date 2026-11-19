@@ -127,9 +127,8 @@ if (isMapTool) {
   const districtChoice = urlParams?.get('district') === 'testloop' ? testloopData : mirparaData;
   initMapViewer({ district: districtChoice as DistrictData });
 } else {
-  // T7.3: Rapier's WASM init is async, so the rest of boot (which constructs
-  // GameSession and loads the renderer's colliders) waits for it to finish
-  // before the first frame runs.
+  // PhysicsWorld initializes before boot constructs GameSession and loads
+  // the renderer's colliders so the first frame has full collision coverage.
   void bootGame().catch((err) => {
     console.error('Uthao boot failed:', err);
     mountUiApp();
@@ -193,9 +192,8 @@ async function bootGame(): Promise<void> {
   gm.bus.on('bike/wobble', () => audio.playWobble());
   gm.bus.on('bike/nearMiss', () => audio.playNearMiss());
 
-  // T7.3: real Rapier physics world, used by GameSession's MotorcycleController
-  // (collisions/near-misses against colliders) and by CityBuilder (colliders
-  // for streamed districts).
+  // Deterministic 2.5D spatial-hash physics world, used by GameSession's
+  // MotorcycleController (collisions/near-misses) and CityBuilder colliders.
   setLoadingStage('loading.physics', 25);
   const physics = await PhysicsWorld.create();
 
@@ -255,6 +253,7 @@ async function bootGame(): Promise<void> {
     canvas.addEventListener('webglcontextrestored', () => {
       contextLostSignal.value = false;
       if (canvas) {
+        physics.clearAllColliders();
         renderer = Renderer.init(canvas, qualityChoice);
         loadRendererScene(renderer);
       }

@@ -153,6 +153,11 @@ describe('CityBuilder, Roads, Buildings and LOD (T3.3)', () => {
       expect(city.staticBoxDescs.length).toBe(mirparaData.lots.length);
       expect(city.lodManager.getChunkCount()).toBeGreaterThan(0);
 
+      const handles = city.districtPhysicsColliders.get('mirpara') ?? [];
+      expect(handles.some((h) => h.kind === 'building')).toBe(true);
+      expect(handles.some((h) => h.kind === 'kerb')).toBe(true);
+      expect(handles.some((h) => h.kind === 'median')).toBe(true);
+
       // Update LOD without error
       city.update({ x: 300, z: 300 }, 250);
       expect(city.lodManager.getVisibleChunkCount()).toBeGreaterThan(0);

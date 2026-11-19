@@ -1,5 +1,4 @@
-import RAPIER from '@dimforge/rapier3d-compat';
-import type { PhysicsWorld } from './PhysicsWorld';
+import type { PhysicsWorld, SweepHit } from './PhysicsWorld';
 import {
   stepBike,
   type BikeSpec,
@@ -19,6 +18,12 @@ export interface MotorcycleControllerOptions {
   spec?: BikeSpec;
 }
 
+/** Bike swept collision radius in meters (matches previous capsule radius 0.35m). */
+const BIKE_RADIUS_M = 0.35;
+/** Ground elevation of the bike for 2.5D physics band overlap. */
+const BIKE_GROUND_Y_M = 0;
+/** Raycast elevation for near-miss detection against walls/buildings. */
+const NEAR_MISS_RAY_Y_M = 0.5;
 /** Minimum seconds between two bike/nearMiss reports. */
 const NEAR_MISS_COOLDOWN_S = 1.0;
 /** A static contact that drops out and restarts within this window counts as one contact. */
@@ -30,23 +35,21 @@ export class MotorcycleController {
   readonly spec: BikeSpec;
   state: BikeState;
 
-  readonly body: RAPIER.RigidBody;
-  readonly collider: RAPIER.Collider;
-  readonly characterController: RAPIER.KinematicCharacterController;
-
   private nearMissCooldownS = 0;
-  /** Seconds since the last frame of static contact ended; a contact that
+  /** Seconds since the last frame of contact ended; a contact that
    * restarts within CONTACT_RELEASE_S is the same contact. */
   private contactHoldS = 0;
-  private readonly _desiredTranslation = { x: 0, y: 0, z: 0 };
-  private readonly _bodyTranslation = { x: 0, y: 0.5, z: 0 };
-  private readonly _bodyRotation = { x: 0, y: 0, z: 0, w: 1 };
-  private readonly _leftDir = { x: 0, y: 0, z: 0 };
-  private readonly _rightDir = { x: 0, y: 0, z: 0 };
-  private readonly _rayOrigin = { x: 0, y: 0.5, z: 0 };
-  private readonly _leftRay: RAPIER.Ray;
-  private readonly _rightRay: RAPIER.Ray;
   private readonly _nextState: BikeState = createDefaultBikeState();
+  private readonly _hit: SweepHit = {
+    hit: false,
+    toi: 1,
+    normalX: 0,
+    normalZ: 0,
+    otherKind: 'building',
+    otherVx: 0,
+    otherVz: 0,
+  };
+  private readonly _slide = { x: 0, z: 0 };
 
   constructor(opts: MotorcycleControllerOptions) {
     this.world = opts.world;
@@ -60,94 +63,49 @@ export class MotorcycleController {
       z: initial.z,
       heading: initial.heading,
     };
-
-    // Capsule collider: height 0.6, radius 0.35 (motorcycle profile)
-    const bodyDesc =
-      RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(
-        this.state.x,
-        0.5,
-        this.state.z
-      );
-    this.body = this.world.raw.createRigidBody(bodyDesc);
-    const colliderDesc = RAPIER.ColliderDesc.capsule(0.3, 0.35);
-    this.collider = this.world.raw.createCollider(colliderDesc, this.body);
-
-    this.characterController = this.world.raw.createCharacterController(0.01);
-    this.characterController.enableAutostep(0.3, 0.2, true);
-    this.characterController.enableSnapToGround(0.5);
-    this.world.step();
-
-    this._leftRay = new RAPIER.Ray(this._rayOrigin, this._leftDir);
-    this._rightRay = new RAPIER.Ray(this._rayOrigin, this._rightDir);
   }
 
   update(input: BikeInput, env: BikeEnvironment, dt: number): BikeState {
     this.nearMissCooldownS = Math.max(0, this.nearMissCooldownS - dt);
     this.contactHoldS = Math.max(0, this.contactHoldS - dt);
+
     const desiredState = stepBike(this.state, input, this.spec, env, dt, this._nextState);
+    const dx = desiredState.x - this.state.x;
+    const dz = desiredState.z - this.state.z;
 
-    this._desiredTranslation.x = desiredState.x - this.state.x;
-    this._desiredTranslation.y = 0;
-    this._desiredTranslation.z = desiredState.z - this.state.z;
-
-    // Sync kinematic body to current state immediately
-    const halfYaw = this.state.heading / 2;
-    this._bodyTranslation.x = this.state.x;
-    this._bodyTranslation.y = 0.5;
-    this._bodyTranslation.z = this.state.z;
-    this.body.setTranslation(this._bodyTranslation, true);
-
-    this._bodyRotation.x = 0;
-    this._bodyRotation.y = Math.sin(halfYaw);
-    this._bodyRotation.z = 0;
-    this._bodyRotation.w = Math.cos(halfYaw);
-    this.body.setRotation(this._bodyRotation, true);
-    this.world.step();
-
-    // Compute movement against obstacles
-    this.characterController.computeColliderMovement(
-      this.collider,
-      this._desiredTranslation
+    this.world.sweepCapsule(
+      this.state.x,
+      this.state.z,
+      BIKE_GROUND_Y_M,
+      BIKE_RADIUS_M,
+      dx,
+      dz,
+      this._hit,
+      this._slide
     );
 
-    const movement = this.characterController.computedMovement();
-    const numCollisions = this.characterController.numComputedCollisions();
-
+    const safeDt = dt > 1e-6 ? dt : 1e-6;
     let collisionSeverity: BikeCollisionSeverity | null = null;
     const totalSpeedKmh = Math.abs(this.state.speed) * 3.6;
 
-    if (numCollisions > 0) {
-      // Find maximum impact velocity along collision normal
-      let maxImpactKmh = 0;
-      const vx = this._desiredTranslation.x / dt;
-      const vz = this._desiredTranslation.z / dt;
-
-      for (let i = 0; i < numCollisions; i++) {
-        const col = this.characterController.computedCollision(i);
-        if (col && col.normal1) {
-          // normal1 points from obstacle to collider
-          const normalImpact = -(vx * col.normal1.x + vz * col.normal1.z);
-          const impactKmh = normalImpact * 3.6;
-          if (impactKmh > maxImpactKmh) {
-            maxImpactKmh = impactKmh;
-          }
-        }
+    if (this._hit.hit) {
+      const relVx = dx / safeDt - this._hit.otherVx;
+      const relVz = dz / safeDt - this._hit.otherVz;
+      const normalImpact = -(relVx * this._hit.normalX + relVz * this._hit.normalZ);
+      let impactKmh = normalImpact * 3.6;
+      if (impactKmh <= 0) {
+        impactKmh = totalSpeedKmh;
       }
 
-      if (maxImpactKmh === 0) {
-        maxImpactKmh = totalSpeedKmh;
-      }
-
-      if (maxImpactKmh > 25) {
+      if (impactKmh > 25) {
         collisionSeverity = 'crash';
         desiredState.speed = 0;
-      } else if (maxImpactKmh >= 8) {
+      } else if (impactKmh >= 8) {
         collisionSeverity = 'bump';
         desiredState.speed *= 0.4;
       } else {
         collisionSeverity = 'scuff';
-        // Preserve tangential velocity along obstacle surface
-        const tangentialSpeed = Math.hypot(movement.x, movement.z) / dt;
+        const tangentialSpeed = Math.hypot(this._slide.x, this._slide.z) / safeDt;
         desiredState.speed = tangentialSpeed * 0.95;
       }
 
@@ -156,38 +114,37 @@ export class MotorcycleController {
       if (this.contactHoldS <= 0) {
         this.bus?.emit('bike/collision', {
           severity: collisionSeverity,
-          relSpeedKmh: maxImpactKmh,
-          otherKind: 'static',
+          relSpeedKmh: impactKmh,
+          otherKind: this._hit.otherKind === 'traffic' ? 'traffic' : 'static',
         });
       }
     } else if (totalSpeedKmh > 20) {
       // Near miss check: raycast left and right
       const rayDist = 1.0;
-      this._leftDir.x = -Math.cos(this.state.heading);
-      this._leftDir.y = 0;
-      this._leftDir.z = Math.sin(this.state.heading);
+      const cosH = Math.cos(this.state.heading);
+      const sinH = Math.sin(this.state.heading);
 
-      this._rightDir.x = Math.cos(this.state.heading);
-      this._rightDir.y = 0;
-      this._rightDir.z = -Math.sin(this.state.heading);
-
-      this._rayOrigin.x = this.state.x;
-      this._rayOrigin.y = 0.5;
-      this._rayOrigin.z = this.state.z;
-
-      // Exclude the bike's own body: its collider sits on the ray origin and
-      // would otherwise read as an obstacle at distance 0 on every frame.
-      const ownBody = this.body;
-      const hitLeft = this.world.raw.castRay(this._leftRay, rayDist, true, undefined, undefined, undefined, ownBody);
-      const hitRight = this.world.raw.castRay(this._rightRay, rayDist, true, undefined, undefined, undefined, ownBody);
+      const hitLeft = this.world.castRay2D(
+        this.state.x,
+        this.state.z,
+        NEAR_MISS_RAY_Y_M,
+        -cosH,
+        sinH,
+        rayDist
+      );
+      const hitRight = this.world.castRay2D(
+        this.state.x,
+        this.state.z,
+        NEAR_MISS_RAY_Y_M,
+        cosH,
+        -sinH,
+        rayDist
+      );
 
       let minClearance: number | null = null;
-      if (hitLeft !== null) minClearance = hitLeft.timeOfImpact;
+      if (hitLeft !== null) minClearance = hitLeft;
       if (hitRight !== null) {
-        minClearance =
-          minClearance === null
-            ? hitRight.timeOfImpact
-            : Math.min(minClearance, hitRight.timeOfImpact);
+        minClearance = minClearance === null ? hitRight : Math.min(minClearance, hitRight);
       }
 
       if (minClearance !== null && minClearance < 1.0 && this.nearMissCooldownS <= 0) {
@@ -200,11 +157,11 @@ export class MotorcycleController {
       }
     }
 
-    if (numCollisions > 0) this.contactHoldS = CONTACT_RELEASE_S;
+    if (this._hit.hit) this.contactHoldS = CONTACT_RELEASE_S;
 
-    // Apply movement
-    this.state.x += movement.x;
-    this.state.z += movement.z;
+    // Apply swept movement
+    this.state.x += this._slide.x;
+    this.state.z += this._slide.z;
     this.state.heading = desiredState.heading;
     this.state.speed = desiredState.speed;
     this.state.lean = desiredState.lean;
@@ -212,14 +169,9 @@ export class MotorcycleController {
     this.state.wobble = desiredState.wobble;
     this.state.crashed = desiredState.crashed || collisionSeverity === 'crash';
 
-    // Update body position to new state
-    this._bodyTranslation.x = this.state.x;
-    this._bodyTranslation.y = 0.5;
-    this._bodyTranslation.z = this.state.z;
-    this.body.setTranslation(this._bodyTranslation, true);
-
     return this.state;
   }
+
   public setSpec(newSpec: BikeSpec): void {
     Object.assign(this.spec, newSpec);
   }

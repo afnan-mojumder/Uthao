@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { PhysicsWorld } from '../../../src/physics/PhysicsWorld';
+import {
+  PhysicsWorld,
+  type StaticBoxHandle,
+  type SweepHit,
+} from '../../../src/physics/PhysicsWorld';
 import { MotorcycleController } from '../../../src/physics/MotorcycleController';
 import {
   stepBike,
@@ -47,6 +51,59 @@ describe('Hot Path Allocation Optimization (T5.9)', () => {
     // 1000 frames of physics stepping in-place should show minimal memory growth (< 15 MB)
     expect(diffMb).toBeLessThan(15);
     expect(controller.state.speed).toBeGreaterThan(0);
+  });
+
+  it('PhysicsWorld sweepCapsule, castRay2D, queryAabb, and upsertDynamicVehicle stay allocation-free at steady state', async () => {
+    const world = await PhysicsWorld.create();
+    for (let i = 0; i < 60; i++) {
+      world.addStaticBox(i * 12, 1, 8, 2, 1, 2, 0.25, 'building');
+      world.addStaticBox(i * 12, 0.09, -4, 4, 0.09, 0.14, 0, 'kerb');
+    }
+
+    const hit: SweepHit = {
+      hit: false,
+      toi: 1,
+      normalX: 0,
+      normalZ: 0,
+      otherKind: 'building',
+      otherVx: 0,
+      otherVz: 0,
+    };
+    const slide = { x: 0, z: 0 };
+    const aabbOut: StaticBoxHandle[] = [];
+    const filterKinds: readonly ['building'] = ['building'];
+    const vehicle = {
+      id: 'traffic_0',
+      kind: 'car',
+      x: 15,
+      z: 0,
+      halfX: 0.9,
+      halfZ: 2.1,
+      minY: 0,
+      maxY: 1.5,
+      yaw: 0,
+      vx: 0,
+      vz: 4,
+    };
+
+    for (let i = 0; i < 200; i++) {
+      world.clearDynamicVehicles();
+      world.upsertDynamicVehicle(vehicle);
+      world.sweepCapsule(10, 0, 0, 0.35, 1.5, 0.2, hit, slide);
+      world.castRay2D(10, 0, 0.5, 0, 1, 10, filterKinds);
+      world.queryAabb(0, -10, 30, 15, aabbOut);
+    }
+
+    const initialHeap = process.memoryUsage().heapUsed;
+    for (let i = 0; i < 2000; i++) {
+      world.clearDynamicVehicles();
+      world.upsertDynamicVehicle(vehicle);
+      world.sweepCapsule(10, 0, 0, 0.35, 1.5, 0.2, hit, slide);
+      world.castRay2D(10, 0, 0.5, 0, 1, 10, filterKinds);
+      world.queryAabb(0, -10, 30, 15, aabbOut);
+    }
+    const diffMb = (process.memoryUsage().heapUsed - initialHeap) / (1024 * 1024);
+    expect(diffMb).toBeLessThan(2);
   });
 
   it('TrafficManager pools lane lists without allocating new Map per frame', () => {

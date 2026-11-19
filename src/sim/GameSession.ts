@@ -68,7 +68,7 @@ export class GameSession {
   /** T8.3: litres burned since the current trip began; fed to `settleTrip`. */
   tripFuelLiters = 0;
 
-  /** Set when `physics` is provided: real Rapier-backed stepping and static
+  /** Set when `physics` is provided: spatial-hash swept physics and static
    * collider collisions replace the direct `stepBike` call. */
   private readonly controller?: MotorcycleController;
 
@@ -417,18 +417,9 @@ export class GameSession {
     this.bike.z = z;
     this.bike.heading = heading;
     this.bike.speed = 0;
-
-    if (this.controller) {
-      this.controller.body.setTranslation({ x, y: 0.5, z }, true);
-      const halfYaw = heading / 2;
-      this.controller.body.setRotation(
-        { x: 0, y: Math.sin(halfYaw), z: 0, w: Math.cos(halfYaw) },
-        true
-      );
-    }
   }
 
-  /** T7.3: traffic agents aren't Rapier colliders, so (with or without
+  /** Traffic agents aren't static colliders in this step, so (with or without
    * physics) a bike/traffic hit is detected here by proximity rather than
    * by the physics world. Runs every tick, so it must stay allocation-free:
    * iterates the traffic Map directly instead of `getAgents()`'s array copy. */

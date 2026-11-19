@@ -30,7 +30,6 @@
     "vitest": "5.0.5"
   },
   "dependencies": {
-    "@dimforge/rapier3d-compat": "0.21.0",
     "@preact/signals": "2.11.3",
     "preact": "11.0.2",
     "three": "0.186.1",

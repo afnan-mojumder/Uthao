@@ -30,6 +30,7 @@ export default tsPlugin.config(
       'no-restricted-imports': [
         'error',
         {
+          // Rapier WASM was replaced by deterministic spatial-hash PhysicsWorld (P1.1).
           paths: [
             {
               name: 'three',
@@ -39,18 +40,10 @@ export default tsPlugin.config(
               name: 'preact',
               message: 'Sim purity: core and sim modules must not import preact.',
             },
-            {
-              name: '@dimforge/rapier3d-compat',
-              message: 'Sim purity: core and sim modules must not import rapier directly.',
-            },
-            {
-              name: '@dimforge/rapier3d',
-              message: 'Sim purity: core and sim modules must not import rapier directly.',
-            },
           ],
           patterns: [
             {
-              group: ['three/*', 'preact/*', '@dimforge/*'],
+              group: ['three/*', 'preact/*'],
               message: 'Sim purity: core and sim modules must not import UI or rendering packages.',
             },
           ],

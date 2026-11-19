@@ -1,8 +1,7 @@
 import * as THREE from 'three';
-import type RAPIER from '@dimforge/rapier3d-compat';
 import type { DistrictId } from '../core/types';
 import type { DistrictData, WorldData } from '../sim/schemas';
-import type { PhysicsWorld } from '../physics/PhysicsWorld';
+import type { PhysicsWorld, StaticBoxHandle } from '../physics/PhysicsWorld';
 import { SignageAtlas } from './signage';
 import { RoadMeshBuilder, getRoadWidth, kerbEndTrim } from './roadMesh';
 export { kerbEndTrim };
@@ -42,7 +41,7 @@ interface BuildDistrictTask {
   buildingColliders: THREE.Object3D[];
   buildingGroups: { obj: THREE.Object3D; x: number; z: number }[];
   chunkObjects: { obj: THREE.Object3D; x: number; z: number }[];
-  physicsColliders: RAPIER.Collider[];
+  physicsColliders: StaticBoxHandle[];
   staticBoxDescs: StaticBoxDesc[];
 }
 
@@ -62,7 +61,7 @@ export class CityBuilder {
     { obj: THREE.Object3D; x: number; z: number }[]
   > = new Map();
   readonly districtColliders: Map<DistrictId, THREE.Object3D[]> = new Map();
-  readonly districtPhysicsColliders: Map<DistrictId, RAPIER.Collider[]> = new Map();
+  readonly districtPhysicsColliders: Map<DistrictId, StaticBoxHandle[]> = new Map();
   readonly districtStaticBoxDescs: Map<DistrictId, StaticBoxDesc[]> = new Map();
   readonly silhouettes: Map<DistrictId, THREE.Object3D> = new Map();
   readonly buildQueue: BuildDistrictTask[] = [];
@@ -214,7 +213,8 @@ export class CityBuilder {
             desc.halfX,
             desc.halfY,
             desc.halfZ,
-            desc.yaw
+            desc.yaw,
+            'building'
           );
           task.physicsColliders.push(col);
         }
@@ -269,7 +269,8 @@ export class CityBuilder {
             kerbW / 2,
             kerbH / 2,
             kerbLen / 2,
-            rotY
+            rotY,
+            'kerb'
           );
           task.physicsColliders.push(leftCol);
 
@@ -281,7 +282,8 @@ export class CityBuilder {
             kerbW / 2,
             kerbH / 2,
             kerbLen / 2,
-            rotY
+            rotY,
+            'kerb'
           );
           task.physicsColliders.push(rightCol);
 
@@ -294,7 +296,8 @@ export class CityBuilder {
               0.45,
               0.11,
               len / 2,
-              rotY
+              rotY,
+              'median'
             );
             task.physicsColliders.push(medCol);
           }
