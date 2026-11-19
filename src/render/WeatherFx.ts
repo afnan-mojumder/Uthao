@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import type { WeatherKind, RoadSegment, RoadNode } from '../core/types';
-import { TimeOfDay } from '../sim/world/TimeOfDay';
+import { TimeOfDay, type SunSkyState, type HeadlightSpec } from '../sim/world/TimeOfDay';
 import { getRoadWidth, kerbEndTrim } from './roadMesh';
 
 const SHADOW_FRUSTUM_HALF = 55;
@@ -25,10 +25,12 @@ function wrapOffset(delta: number, boxSize: number): number {
   return d - half;
 }
 
+const _lumColor = new THREE.Color();
+
 /** Luminance of an ambient light: intensity times the colour's perceived brightness. */
 function ambientLuminance(colorHex: number, intensity: number): number {
-  const c = new THREE.Color(colorHex);
-  return intensity * (0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b);
+  _lumColor.setHex(colorHex);
+  return intensity * (0.2126 * _lumColor.r + 0.7152 * _lumColor.g + 0.0722 * _lumColor.b);
 }
 
 export class WeatherFx {
@@ -87,6 +89,25 @@ export class WeatherFx {
   private readonly _stormNightColor = new THREE.Color(0x0f172a);
   private readonly _overcastTopColor = new THREE.Color(0x64748b);
   private readonly _overcastNightColor = new THREE.Color(0x162033);
+  private readonly _sunSkyScratch: SunSkyState = {
+    sunColor: 0,
+    sunIntensity: 0,
+    sunPosition: [0, 0, 0],
+    skyColor: 0,
+    skyTopColor: 0,
+    skyHorizonColor: 0,
+    fogColor: 0,
+    ambientColor: 0,
+    groundColor: 0,
+    ambientIntensity: 0,
+  };
+  private readonly _headlightScratch: HeadlightSpec = {
+    angle: 0,
+    distance: 0,
+    intensity: 0,
+    penumbra: 0,
+    color: 0,
+  };
 
   constructor(scene: THREE.Scene, opts: WeatherFxOptions = {}) {
     this.scene = scene;
@@ -214,10 +235,13 @@ export class WeatherFx {
   /**
    * Populates instanced glowing streetlamp heads along ground road segments.
    * Uses a single InstancedMesh (1 draw call) matching CityBuilder's lamp placement.
+   * `trimSegments` provides the full intersection trim context (e.g. including world connectors)
+   * without spawning floating lamp heads on connector segments that lack poles.
    */
   populateStreetlights(
     segments: readonly RoadSegment[],
-    nodeMap: ReadonlyMap<string, RoadNode>
+    nodeMap: ReadonlyMap<string, RoadNode>,
+    trimSegments: readonly RoadSegment[] = segments
   ): void {
     if (this.lampInstancedMesh) {
       this.streetlightsGroup.remove(this.lampInstancedMesh);
@@ -248,8 +272,8 @@ export class WeatherFx {
       const nz = dirX;
       const roadW = getRoadWidth(seg);
 
-      const rightStart = kerbEndTrim(seg, true, segments, nodeMap, 1);
-      const rightEnd = kerbEndTrim(seg, false, segments, nodeMap, 1);
+      const rightStart = kerbEndTrim(seg, true, trimSegments, nodeMap, 1);
+      const rightEnd = kerbEndTrim(seg, false, trimSegments, nodeMap, 1);
       const rightKerbLen = len - rightStart - rightEnd;
 
       if (rightKerbLen > 16) {
@@ -294,7 +318,7 @@ export class WeatherFx {
   /** 30% of the midday ambient luminance, computed once. */
   private nightAmbientFloor(): number {
     if (this.ambientFloorLum === undefined) {
-      const noon = TimeOfDay.getSunSkyState(12 * 60);
+      const noon = TimeOfDay.getSunSkyState(12 * 60, this._sunSkyScratch);
       this.ambientFloorLum = 0.3 * ambientLuminance(noon.ambientColor, noon.ambientIntensity);
     }
     return this.ambientFloorLum;
@@ -314,7 +338,7 @@ export class WeatherFx {
     bikeSpeed: number = 0
   ): void {
     // 1. Time of Day Lighting & Sky
-    const sunSky = TimeOfDay.getSunSkyState(minute);
+    const sunSky = TimeOfDay.getSunSkyState(minute, this._sunSkyScratch);
 
     if (this.dirLight) {
       const mapSize = this.dirLight.shadow.mapSize.width || 1024;
@@ -381,6 +405,10 @@ export class WeatherFx {
         this.scene.fog.color.copy(this._skyHorizonColor);
         this.scene.fog.near = 30;
         this.scene.fog.far = Math.min(130, this.drawDistance);
+      } else if (weather === 'cloudy') {
+        this.scene.fog.color.copy(this._skyHorizonColor);
+        this.scene.fog.near = 45;
+        this.scene.fog.far = this.drawDistance;
       } else {
         this.scene.fog.color.setHex(sunSky.fogColor);
         this.scene.fog.near = 50;
@@ -507,7 +535,7 @@ export class WeatherFx {
     }
 
     // 3. Headlight cone
-    const spec = TimeOfDay.getHeadlightSpec(hasLedUpgrade);
+    const spec = TimeOfDay.getHeadlightSpec(hasLedUpgrade, this._headlightScratch);
     const isDark = TimeOfDay.isStreetlightsActive(minute) || weather === 'heavyRain';
 
     if (isDark) {
@@ -539,8 +567,10 @@ export class WeatherFx {
 
   private setStreetlightsIntensity(glow01: number): void {
     const t = Math.max(0, Math.min(1, glow01));
-    for (const mat of this.streetlightMaterials) {
-      mat.color.copy(this._unlitLampColor).lerp(this._litLampColor, t);
+    for (let i = 0; i < this.streetlightMaterials.length; i++) {
+      this.streetlightMaterials[i]!.color
+        .copy(this._unlitLampColor)
+        .lerp(this._litLampColor, t);
     }
   }
 

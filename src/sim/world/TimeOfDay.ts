@@ -249,8 +249,9 @@ export class TimeOfDay {
   /**
    * Returns sun position, sun color, sky color, fog, and ambient light by game minute.
    * Uses smooth cosine interpolation across keyframes to avoid color/intensity pops.
+   * When `out` is provided, writes in-place with zero heap allocations.
    */
-  static getSunSkyState(minute: number): SunSkyState {
+  static getSunSkyState(minute: number, out?: SunSkyState): SunSkyState {
     const minOfDay = ((minute % 1440) + 1440) % 1440;
 
     // Angle of the sun across the sky: 05:30 (330) is East horizon, 12:00 (720) Zenith, 18:30 (1110) West horizon
@@ -289,41 +290,73 @@ export class TimeOfDay {
     const span = k1.minute - k0.minute;
     const t = span > 0 ? cosineEase((minOfDay - k0.minute) / span) : 0;
 
+    const sunColor = lerpColor(k0.sunColor, k1.sunColor, t);
+    const sunIntensity = Math.max(0, lerp(k0.sunIntensity, k1.sunIntensity, t));
+    const skyColor = lerpColor(k0.skyColor, k1.skyColor, t);
+    const skyTopColor = lerpColor(k0.skyTopColor, k1.skyTopColor, t);
+    const skyHorizonColor = lerpColor(k0.skyHorizonColor, k1.skyHorizonColor, t);
+    const fogColor = lerpColor(k0.fogColor, k1.fogColor, t);
+    const ambientColor = lerpColor(k0.ambientColor, k1.ambientColor, t);
+    const groundColor = lerpColor(k0.groundColor, k1.groundColor, t);
+    const ambientIntensity = lerp(k0.ambientIntensity, k1.ambientIntensity, t);
+
+    if (out) {
+      out.sunColor = sunColor;
+      out.sunIntensity = sunIntensity;
+      out.sunPosition[0] = sunX;
+      out.sunPosition[1] = sunY;
+      out.sunPosition[2] = sunZ;
+      out.skyColor = skyColor;
+      out.skyTopColor = skyTopColor;
+      out.skyHorizonColor = skyHorizonColor;
+      out.fogColor = fogColor;
+      out.ambientColor = ambientColor;
+      out.groundColor = groundColor;
+      out.ambientIntensity = ambientIntensity;
+      return out;
+    }
+
     return {
-      sunColor: lerpColor(k0.sunColor, k1.sunColor, t),
-      sunIntensity: Math.max(0, lerp(k0.sunIntensity, k1.sunIntensity, t)),
+      sunColor,
+      sunIntensity,
       sunPosition: [sunX, sunY, sunZ],
-      skyColor: lerpColor(k0.skyColor, k1.skyColor, t),
-      skyTopColor: lerpColor(k0.skyTopColor, k1.skyTopColor, t),
-      skyHorizonColor: lerpColor(k0.skyHorizonColor, k1.skyHorizonColor, t),
-      fogColor: lerpColor(k0.fogColor, k1.fogColor, t),
-      ambientColor: lerpColor(k0.ambientColor, k1.ambientColor, t),
-      groundColor: lerpColor(k0.groundColor, k1.groundColor, t),
-      ambientIntensity: lerp(k0.ambientIntensity, k1.ambientIntensity, t),
+      skyColor,
+      skyTopColor,
+      skyHorizonColor,
+      fogColor,
+      ambientColor,
+      groundColor,
+      ambientIntensity,
     };
   }
 
   /**
    * Headlight beam properties.
    * LED upgrade widens the cone angle and provides greater reach and intensity.
+   * When `out` is provided, writes in-place with zero heap allocations.
    */
-  static getHeadlightSpec(hasLedUpgrade: boolean = false): HeadlightSpec {
-    if (hasLedUpgrade) {
-      return {
-        angle: 0.7, // ~40° wide beam
-        distance: 60,
-        intensity: 6.0,
-        penumbra: 0.4,
-        color: 0xf8fafc, // Crisp cool-white LED
-      };
+  static getHeadlightSpec(hasLedUpgrade: boolean = false, out?: HeadlightSpec): HeadlightSpec {
+    const angle = hasLedUpgrade ? 0.7 : 0.45;
+    const distance = hasLedUpgrade ? 60 : 38;
+    const intensity = hasLedUpgrade ? 6.0 : 3.0;
+    const penumbra = hasLedUpgrade ? 0.4 : 0.5;
+    const color = hasLedUpgrade ? 0xf8fafc : 0xfff3d6;
+
+    if (out) {
+      out.angle = angle;
+      out.distance = distance;
+      out.intensity = intensity;
+      out.penumbra = penumbra;
+      out.color = color;
+      return out;
     }
 
     return {
-      angle: 0.45, // ~26° standard halogen cone
-      distance: 38,
-      intensity: 3.0,
-      penumbra: 0.5,
-      color: 0xfff3d6, // Warm stock halogen
+      angle,
+      distance,
+      intensity,
+      penumbra,
+      color,
     };
   }
 }

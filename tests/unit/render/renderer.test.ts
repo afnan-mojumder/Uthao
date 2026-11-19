@@ -281,4 +281,46 @@ describe('Renderer P2.5 lighting, shadows, streetlights, LED headlight & flood F
     r.syncFloodedSegments(ws, roadNet);
     expect(r.weatherFx.waterGroup.children[0]).toBe(firstWaterMesh);
   });
+
+  it('excludes world.connectors from populateStreetlights lamp heads while keeping them in trimSegments', () => {
+    const r = Renderer.init(canvas, 'medium');
+    const { world, districts } = loadWorld();
+    const populateSpy = vi.spyOn(r.weatherFx, 'populateStreetlights');
+
+    r.loadWorld(world, (id) => districts.get(id), undefined, { x: 300, z: 300 });
+
+    expect(populateSpy).toHaveBeenCalledTimes(1);
+    const [lampSegments, , trimSegments] = populateSpy.mock.calls[0]!;
+    const connectorIds = new Set((world.connectors ?? []).map((c) => c.segmentId));
+    expect(connectorIds.size).toBeGreaterThan(0);
+
+    // Connector segments must NOT spawn floating lamp heads without poles
+    for (const seg of lampSegments) {
+      expect(connectorIds.has(seg.segmentId)).toBe(false);
+    }
+    // Connector segments MUST still be included in trimSegments so junction trims match CityBuilder
+    expect(trimSegments).toBeDefined();
+    const trimIds = new Set(trimSegments!.map((s) => s.segmentId));
+    for (const cid of connectorIds) {
+      expect(trimIds.has(cid)).toBe(true);
+    }
+
+    populateSpy.mockRestore();
+  });
+
+  it('matches scene.fog.color to overcast horizon gray in cloudy weather', () => {
+    const r = Renderer.init(canvas, 'medium');
+    const cloudySnap = {
+      clock: { minutes: 12 * 60 },
+      weather: 'cloudy',
+      economy: { currentBikeId: 'old100', installedCosmetics: {}, ownedUpgrades: [] },
+    } as unknown as SimSnapshot;
+
+    r.render(cloudySnap);
+
+    const bg = r.scene.background as THREE.Color;
+    const fog = r.scene.fog as THREE.Fog;
+    expect(fog.color.getHex()).toBe(bg.getHex());
+    expect(fog.color.getHex()).toBe(0x64748b);
+  });
 });

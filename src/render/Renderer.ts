@@ -407,17 +407,17 @@ export class Renderer {
     this.colliders = this.cityBuilder.colliders;
 
     const nodeMap = new Map<string, RoadNode>();
-    const allSegments: RoadSegment[] = [];
+    const districtSegments: RoadSegment[] = [];
     for (const dRef of world.districts) {
       const dist = districtProvider(dRef.districtId as DistrictId);
       if (!dist) continue;
       for (const node of dist.nodes) nodeMap.set(node.nodeId, node);
-      allSegments.push(...dist.segments);
+      districtSegments.push(...dist.segments);
     }
-    if (world.connectors) {
-      allSegments.push(...world.connectors);
-    }
-    this.weatherFx.populateStreetlights(allSegments, nodeMap);
+    const allSegments = world.connectors
+      ? [...districtSegments, ...world.connectors]
+      : districtSegments;
+    this.weatherFx.populateStreetlights(districtSegments, nodeMap, allSegments);
   }
 
   /** Syncs flooded road segment water overlays when WeatherSystem flood state changes. */

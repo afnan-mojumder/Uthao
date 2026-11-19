@@ -1,4 +1,7 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+import * as THREE from 'three';
+import { WeatherFx } from '../../../src/render/WeatherFx';
+import { TimeOfDay, type SunSkyState, type HeadlightSpec } from '../../../src/sim/world/TimeOfDay';
 import {
   PhysicsWorld,
   type StaticBoxHandle,
@@ -159,5 +162,98 @@ describe('Hot Path Allocation Optimization (T5.9)', () => {
     // zero-new-request tick; this regresses loudly if a fresh array/object
     // is allocated per tick again.
     expect(diffMb).toBeLessThan(15);
+  });
+
+  it('WeatherFx.update reuses TimeOfDay scratch objects and avoids THREE.Color allocations (P2.5)', () => {
+    const sunOut: SunSkyState = {
+      sunColor: 0,
+      sunIntensity: 0,
+      sunPosition: [0, 0, 0],
+      skyColor: 0,
+      skyTopColor: 0,
+      skyHorizonColor: 0,
+      fogColor: 0,
+      ambientColor: 0,
+      groundColor: 0,
+      ambientIntensity: 0,
+    };
+    const headOut: HeadlightSpec = {
+      angle: 0,
+      distance: 0,
+      intensity: 0,
+      penumbra: 0,
+      color: 0,
+    };
+    expect(TimeOfDay.getSunSkyState(720, sunOut)).toBe(sunOut);
+    expect(TimeOfDay.getHeadlightSpec(true, headOut)).toBe(headOut);
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x000000);
+    scene.fog = new THREE.Fog(0x000000, 50, 250);
+    const fx = new WeatherFx(scene, {
+      dirLight: new THREE.DirectionalLight(),
+      hemiLight: new THREE.HemisphereLight(),
+      rainCount: 80,
+    });
+
+    const sunSpy = vi.spyOn(TimeOfDay, 'getSunSkyState');
+    const headSpy = vi.spyOn(TimeOfDay, 'getHeadlightSpec');
+    const seenInWarmup = new Set<object>();
+    const seenInLoop = new Set<object>();
+    let recordingLoop = false;
+    const setSpy = vi.spyOn(THREE.Color.prototype, 'set').mockImplementation(function (
+      this: THREE.Color,
+      ...args: unknown[]
+    ) {
+      if (recordingLoop) seenInLoop.add(this);
+      else seenInWarmup.add(this);
+      return THREE.Color.prototype.setHex.apply(
+        this,
+        args as [hex: number, colorSpace?: THREE.ColorSpace]
+      );
+    });
+    const setHexSpy = vi.spyOn(THREE.Color.prototype, 'setHex').mockImplementation(function (
+      this: THREE.Color,
+      hex: number
+    ) {
+      if (recordingLoop) seenInLoop.add(this);
+      else seenInWarmup.add(this);
+      this.r = ((hex >> 16) & 255) / 255;
+      this.g = ((hex >> 8) & 255) / 255;
+      this.b = (hex & 255) / 255;
+      return this;
+    });
+
+    // Warm up (computes nightAmbientFloor once and initializes rain positions)
+    fx.update(1 / 60, 22 * 60, 'heavyRain', { x: 10, y: 0, z: 20 }, 0.5, true, 12);
+    sunSpy.mockClear();
+    headSpy.mockClear();
+    recordingLoop = true;
+
+    for (let i = 0; i < 100; i++) {
+      fx.update(1 / 60, 22 * 60, 'heavyRain', { x: 10 + i * 0.2, y: 0, z: 20 }, 0.5, true, 12);
+    }
+
+    // No newly constructed THREE.Color instances in steady-state loop
+    for (const c of seenInLoop) {
+      expect(seenInWarmup.has(c)).toBe(true);
+    }
+    expect(setSpy).not.toHaveBeenCalled();
+    expect(setHexSpy).toHaveBeenCalled();
+    expect(sunSpy).toHaveBeenCalledTimes(100);
+    expect(headSpy).toHaveBeenCalledTimes(100);
+
+    const firstSunScratch = sunSpy.mock.calls[0]?.[1];
+    const lastSunScratch = sunSpy.mock.calls[99]?.[1];
+    expect(firstSunScratch).toBeDefined();
+    expect(lastSunScratch).toBe(firstSunScratch);
+
+    const firstHeadScratch = headSpy.mock.calls[0]?.[1];
+    const lastHeadScratch = headSpy.mock.calls[99]?.[1];
+    expect(firstHeadScratch).toBeDefined();
+    expect(lastHeadScratch).toBe(firstHeadScratch);
+
+    vi.restoreAllMocks();
+    fx.dispose();
   });
 });
