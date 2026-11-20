@@ -13,20 +13,13 @@ export function TripSummary({ receipt, onContinue }: TripSummaryProps): JSX.Elem
   const ratingVal = Math.max(0, Math.min(5, Math.round(receipt.rating ?? 5)));
 
   return (
-    <div
+    <ModalPanel
       id="trip-summary-overlay"
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 9500,
-        pointerEvents: 'auto',
-      }}
+      ariaLabel={t('trip.summary.title')}
+      maxWidth="460px"
+      zIndex={9500}
+      contentStyle={{ gap: '16px' }}
     >
-      <ModalPanel
-        ariaLabel={t('trip.summary.title')}
-        maxWidth="460px"
-        zIndex={9500}
-      >
         <div style={{ textAlign: 'center' }}>
           <h2 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#38bdf8' }}>
             {t('trip.summary.title')}
@@ -124,7 +117,6 @@ export function TripSummary({ receipt, onContinue }: TripSummaryProps): JSX.Elem
         >
           {t('trip.summary.continue')}
         </PrimaryButton>
-      </ModalPanel>
-    </div>
+    </ModalPanel>
   );
 }

@@ -361,6 +361,7 @@ export function saveSettings(settings: GameSettings): void {
 export const settingsSignal = signal<GameSettings>(loadSettings());
 export const audioPreviewSignal = signal<AudioSettings | null>(null);
 export const audioPreviewSeqSignal = signal<number>(0);
+export const isGamepadRebindingSignal = signal<boolean>(false);
 
 export const DEFAULT_HUD_STATE: HudState = {
   speedKmh: 0,
@@ -407,7 +408,7 @@ function sameHudTurn(a: HudNavigationTurn | null | undefined, b: HudNavigationTu
   return a.direction === b.direction && a.text === b.text;
 }
 
-function sameHudMission(a: HudMissionInfo | null | undefined, b: HudMissionInfo | null | undefined): boolean {
+export function sameHudMission(a: HudMissionInfo | null | undefined, b: HudMissionInfo | null | undefined): boolean {
   if (a === b) return true;
   if (!a || !b) return false;
   return (
@@ -422,7 +423,7 @@ function sameHudMission(a: HudMissionInfo | null | undefined, b: HudMissionInfo 
   );
 }
 
-function sameHudMissionsList(
+export function sameHudMissionsList(
   a: readonly HudMissionInfo[] | undefined,
   b: readonly HudMissionInfo[] | undefined
 ): boolean {
@@ -613,6 +614,7 @@ if (typeof window !== 'undefined') {
     tripSummarySignal,
     journalSignal,
     encounterCueSignal,
+    isGamepadRebindingSignal,
   };
 }
 
@@ -733,6 +735,10 @@ export function exitToTitle(): void {
     outcomeLineKey: undefined,
   };
   encounterCueSignal.value = { cueKey: null, encounterId: undefined, seq: encounterCueSignal.value.seq };
+  audioPreviewSignal.value = null;
+  phoneTabSignal.value = 'requests';
+  contactsSelectedSignal.value = null;
+  isGamepadRebindingSignal.value = false;
   saveStatusSignal.value = null;
   saveSlotsSignal.value = { ...saveSlotsSignal.value, isOpen: false };
   screenSignal.value = 'title';

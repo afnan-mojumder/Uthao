@@ -26,6 +26,7 @@ import {
 import { MainMenu } from '../../../src/ui/menus/MainMenu';
 import { Settings } from '../../../src/ui/menus/Settings';
 import { Pause } from '../../../src/ui/menus/Pause';
+import { ModalPanel } from '../../../src/ui/components';
 import { t, setLanguage } from '../../../src/ui/i18n';
 
 describe('T3.10 Menus & Settings Store', () => {
@@ -138,6 +139,7 @@ describe('T3.10 Menus & Settings Store', () => {
     });
 
     expect(vnode).not.toBeNull();
+    expect(vnode?.type).toBe(ModalPanel);
     expect(vnode?.props['data-testid']).toBe('settings-screen');
   });
 
@@ -149,6 +151,7 @@ describe('T3.10 Menus & Settings Store', () => {
     });
 
     expect(vnode).not.toBeNull();
+    expect(vnode?.type).toBe(ModalPanel);
     expect(vnode?.props['data-testid']).toBe('pause-menu');
   });
   it('renders Credits modal with truthful provisional assets, OFL typography, and engine attributions (T6.4)', () => {

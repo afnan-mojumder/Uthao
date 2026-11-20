@@ -15,6 +15,7 @@ import {
   getBikeDef,
 } from '../../sim/economy/bikes';
 import { onBuyBikeCallback, onSwitchBikeCallback, garageTabSignal } from '../store';
+import { ModalPanel } from '../components';
 import {
   IconCheck,
   IconMotorcycle,
@@ -90,40 +91,26 @@ export function Garage({
   };
 
   return (
-    <div
+    <ModalPanel
       data-testid="garage-screen"
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 9996,
+      ariaLabelledBy="garage-dialog-title"
+      maxWidth="680px"
+      zIndex={9996}
+      backdropStyle={{
         background: 'rgba(15, 23, 42, 0.92)',
         backdropFilter: 'blur(16px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
         padding: '12px',
-        fontFamily: 'var(--font-sans)',
-        color: '#f8fafc',
-        pointerEvents: 'auto',
       }}
+      panelStyle={{
+        padding: 0,
+        gap: 0,
+        overflow: 'hidden',
+        borderRadius: '20px',
+        background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.98))',
+        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 35px rgba(56, 189, 248, 0.12)',
+      }}
+      contentStyle={{ flex: 1, minHeight: 0, gap: 0, overflow: 'hidden' }}
     >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="garage-dialog-title"
-        style={{
-          width: '100%',
-          maxWidth: '680px',
-          maxHeight: '90dvh',
-          display: 'flex',
-          flexDirection: 'column',
-          background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.98))',
-          border: '1px solid rgba(255, 255, 255, 0.12)',
-          borderRadius: '20px',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 35px rgba(56, 189, 248, 0.12)',
-          overflow: 'hidden',
-        }}
-      >
         {/* Header */}
         <div
           style={{
@@ -856,7 +843,6 @@ export function Garage({
             ← {t('garage.exit')}
           </button>
         </div>
-      </div>
-    </div>
+    </ModalPanel>
   );
 }

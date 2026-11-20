@@ -10,6 +10,7 @@ import {
   type RebindableKeyboardAction,
 } from '../../input/bindings';
 import type { InputBindings } from '../../input/types';
+import { ModalPanel } from '../components';
 import {
   IconClose,
   IconGamepad,
@@ -23,6 +24,7 @@ import { applyDocumentSettings, type UiScale } from '../settingsEffects';
 import {
   audioPreviewSeqSignal,
   audioPreviewSignal,
+  isGamepadRebindingSignal,
   saveSettings,
   settingsSignal,
   Z_LAYER,
@@ -98,6 +100,7 @@ export function Settings({
 
   const updateListeningTarget = (target: ListeningTarget) => {
     listeningTargetRef.current = target;
+    isGamepadRebindingSignal.value = Boolean(isOpen && target?.kind === 'gamepad');
     setListeningTarget(target);
   };
 
@@ -112,6 +115,7 @@ export function Settings({
     applyDocumentSettings(settingsSignal.value);
     audioPreviewSignal.value = null;
     updateListeningTarget(null);
+    isGamepadRebindingSignal.value = false;
     setRebindError(null);
     onCancel?.();
     onClose?.();
@@ -126,6 +130,7 @@ export function Settings({
     if (!isOpen) {
       needsResetOnOpenRef.current = true;
       audioPreviewSignal.value = null;
+      isGamepadRebindingSignal.value = false;
       return undefined;
     }
     if (needsResetOnOpenRef.current) {
@@ -194,7 +199,11 @@ export function Settings({
 
   // Poll gamepad buttons when listening for a controller rebind
   useEffect(() => {
-    if (!isOpen || listeningTarget?.kind !== 'gamepad') return undefined;
+    if (!isOpen || listeningTarget?.kind !== 'gamepad') {
+      isGamepadRebindingSignal.value = false;
+      return undefined;
+    }
+    isGamepadRebindingSignal.value = true;
     let rafId = 0;
     const targetAction = listeningTarget.action;
     const prevPressed = new Set<number>();
@@ -243,6 +252,7 @@ export function Settings({
 
     return () => {
       cancelAnimationFrame(rafId);
+      isGamepadRebindingSignal.value = false;
     };
   }, [isOpen, listeningTarget]);
 
@@ -283,6 +293,8 @@ export function Settings({
       tiltEnabled: localSettings.tiltControls,
     });
     audioPreviewSignal.value = null;
+    updateListeningTarget(null);
+    isGamepadRebindingSignal.value = false;
     saveSettings(localSettings);
     applyDocumentSettings(localSettings);
     onSave?.(localSettings);
@@ -290,40 +302,25 @@ export function Settings({
   };
 
   return (
-    <div
+    <ModalPanel
       data-testid="settings-screen"
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: Z_LAYER.CRITICAL_MODAL,
+      ariaLabelledBy="settings-dialog-title"
+      maxWidth="640px"
+      zIndex={Z_LAYER.CRITICAL_MODAL}
+      backdropStyle={{
         background: 'rgba(15, 23, 42, 0.92)',
         backdropFilter: 'blur(16px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
         padding: '12px',
-        fontFamily: 'var(--font-sans)',
-        color: '#f8fafc',
-        pointerEvents: 'auto',
       }}
+      panelStyle={{
+        padding: 0,
+        gap: 0,
+        overflow: 'hidden',
+        borderRadius: '20px',
+        background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.98))',
+      }}
+      contentStyle={{ flex: 1, minHeight: 0, gap: 0, overflow: 'hidden' }}
     >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="settings-dialog-title"
-        style={{
-          width: '100%',
-          maxWidth: '640px',
-          maxHeight: '90dvh',
-          display: 'flex',
-          flexDirection: 'column',
-          background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.98))',
-          border: '1px solid rgba(255, 255, 255, 0.12)',
-          borderRadius: '20px',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7)',
-          overflow: 'hidden',
-        }}
-      >
         {/* Header */}
         <div
           style={{
@@ -955,7 +952,6 @@ export function Settings({
             {t('settings.save_btn')}
           </button>
         </div>
-      </div>
-    </div>
+    </ModalPanel>
   );
 }

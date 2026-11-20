@@ -5,6 +5,10 @@ import {
   pausedSignal,
   tutorialSignal,
   phoneSignal,
+  phoneTabSignal,
+  contactsSelectedSignal,
+  audioPreviewSignal,
+  isGamepadRebindingSignal,
   negotiationSignal,
   garageSignal,
   journalSignal,
@@ -60,6 +64,10 @@ describe('exitToTitle (audit H-2: tutorial must not cover the title)', () => {
     choiceSignal.value = { active: true, prompt: 'test', options: [{ id: '1', text: 'opt' }], instanceId: 'inst' };
     saveSlotsSignal.value = { isOpen: true, mode: 'save' };
     impactSignal.value = { kind: 'bump', seq: 1 };
+    audioPreviewSignal.value = { masterVolume: 0.4, sfxVolume: 0.5, ambientVolume: 0.6, muted: true };
+    phoneTabSignal.value = 'contacts';
+    contactsSelectedSignal.value = 'char_nabila';
+    isGamepadRebindingSignal.value = true;
     phoneSignal.value = {
       ...phoneSignal.value,
       availableDeliveries: [
@@ -98,5 +106,9 @@ describe('exitToTitle (audit H-2: tutorial must not cover the title)', () => {
     expect(impactSignal.value.kind).toBeNull();
     expect(phoneSignal.value.availableDeliveries).toEqual([]);
     expect(phoneSignal.value.activeDeliveries).toEqual([]);
+    expect(audioPreviewSignal.value).toBeNull();
+    expect(phoneTabSignal.value).toBe('requests');
+    expect(contactsSelectedSignal.value).toBeNull();
+    expect(isGamepadRebindingSignal.value).toBe(false);
   });
 });

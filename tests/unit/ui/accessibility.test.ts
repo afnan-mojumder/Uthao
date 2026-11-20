@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import fs from 'node:fs';
 import { render, h } from 'preact';
+import { act } from 'preact/test-utils';
 import {
   DEFAULT_SETTINGS,
   loadSettings,
@@ -12,11 +13,17 @@ import {
   rotateOverlaySignal,
   contextLostSignal,
   pausedSignal,
+  isGamepadRebindingSignal,
   exitToTitle,
   type GameSettings,
 } from '../../../src/ui/store';
 import { setLanguage } from '../../../src/ui/i18n';
 import { Settings } from '../../../src/ui/menus/Settings';
+import { Pause } from '../../../src/ui/menus/Pause';
+import { DayEnd } from '../../../src/ui/menus/DayEnd';
+import { Ending } from '../../../src/ui/menus/Ending';
+import { Garage } from '../../../src/ui/garage/Garage';
+import { TripSummary } from '../../../src/ui/trip/TripSummary';
 import { Loading } from '../../../src/ui/overlays/Loading';
 import { App } from '../../../src/ui/App';
 import {
@@ -76,6 +83,7 @@ class FakeElement {
   parentNode: FakeElement | null = null;
   childNodes: FakeNode[] = [];
   attributes = new Map<string, string>();
+  dataset: Record<string, string> = {};
   style: Record<string, string> = {};
   listeners = new Map<string, Set<EventListener>>();
 
@@ -188,6 +196,13 @@ class FakeElement {
 
   removeEventListener(type: string, fn: EventListener): void {
     this.listeners.get(type)?.delete(fn);
+  }
+
+  click(): void {
+    const ev = { type: 'click', target: this, currentTarget: this } as unknown as Event;
+    for (const fn of this.listeners.get('click') ?? []) {
+      (fn as (this: FakeElement, e: Event) => void).call(this, ev);
+    }
   }
 
   focus(): void {
@@ -303,7 +318,9 @@ describe('Accessibility & Localisation (T6.3 + P6.1)', () => {
 
   afterEach(async () => {
     exitToTitle();
-    render(null, dom.root as unknown as Element);
+    act(() => {
+      render(null, dom.root as unknown as Element);
+    });
     await new Promise((resolve) => setTimeout(resolve, 0));
     dom.cleanup();
   });
@@ -476,5 +493,113 @@ describe('Accessibility & Localisation (T6.3 + P6.1)', () => {
     const ariaLabel = progressEl?.getAttribute('aria-label');
     expect(typeof ariaLabel).toBe('string');
     expect((ariaLabel ?? '').trim().length).toBeGreaterThan(0);
+  });
+
+  it('P6.2 Minor 1: TripSummary, Garage, Pause, Settings, DayEnd, and Ending all wrap cleanly with ModalPanel (single fixed backdrop)', () => {
+    const receipt = {
+      requestId: 'r1',
+      fare: 120,
+      tip: 0,
+      bonus: 0,
+      commission: 18,
+      fuelCost: 12,
+      fuelLiters: 0.1,
+      otherCosts: 0,
+      penalties: 0,
+      compensation: 0,
+      net: 90,
+      distanceKm: 2,
+      durationMin: 6,
+      rating: 5,
+      consequences: [],
+    };
+    const tripVnode = TripSummary({ receipt, onContinue: () => {} });
+    expect(tripVnode.type).toBe(ModalPanel);
+    expect(tripVnode.props.id).toBe('trip-summary-overlay');
+
+    const garageVnode = Garage({ isOpen: true });
+    expect(garageVnode?.type).toBe(ModalPanel);
+    expect(garageVnode?.props['data-testid']).toBe('garage-screen');
+
+    const pauseVnode = Pause({ isOpen: true });
+    expect(pauseVnode?.type).toBe(ModalPanel);
+    expect(pauseVnode?.props['data-testid']).toBe('pause-menu');
+
+    act(() => {
+      render(h(Settings, { isOpen: true, onClose: () => {} }), dom.root as unknown as Element);
+    });
+    const settingsDialogs = dom.root.querySelectorAll('[role="dialog"]');
+    expect(settingsDialogs).toHaveLength(1);
+    expect(settingsDialogs[0]?.getAttribute('data-testid')).toBe('settings-screen');
+    expect(settingsDialogs[0]?.style.maxHeight).toBe('90dvh');
+
+    const dayEndVnode = DayEnd({
+      summary: {
+        day: 1,
+        revenue: 500,
+        expenses: 180,
+        net: 320,
+        ratingDelta: 0.1,
+        completedRides: 3,
+        relationshipsDelta: {},
+      },
+    });
+    expect(dayEndVnode?.type).toBe(ModalPanel);
+    expect(dayEndVnode?.props['data-testid']).toBe('day-end-screen');
+
+    const endingVnode = Ending({
+      result: {
+        endingId: 'independent_rider',
+        titleKey: 'ending_independent_rider_title',
+        descKey: 'ending_independent_rider_desc',
+        dominantIdentity: 'professional',
+        tendencies: { professional: 45, negotiator: 20, hustler: 15, regular: 20 },
+        summary: { cash: 8500, savings: 22000, debt: 0, rating: 4.85, localTrust: 75, completedMissions: 4 },
+      },
+    });
+    expect(endingVnode.type).toBe(ModalPanel);
+    expect(endingVnode.props['data-testid']).toBe('ending-screen');
+  });
+
+  it('P6.2 Important 2: Settings sets isGamepadRebindingSignal while listening for a gamepad button and clears on Cancel, Save, and unmount', () => {
+    expect(isGamepadRebindingSignal.value).toBe(false);
+    act(() => {
+      render(h(Settings, { isOpen: true, initialTab: 'controls', onClose: () => {} }), dom.root as unknown as Element);
+    });
+
+    const rebindBtn = dom.root.querySelector('[data-testid="settings-rebind-gp-hornButton"]');
+    expect(rebindBtn).not.toBeNull();
+    act(() => {
+      rebindBtn!.click();
+    });
+    expect(isGamepadRebindingSignal.value).toBe(true);
+
+    // Cancel clears it
+    const cancelBtn = dom.root.querySelector('[data-testid="settings-cancel-btn"]');
+    act(() => {
+      cancelBtn!.click();
+    });
+    expect(isGamepadRebindingSignal.value).toBe(false);
+
+    // Re-enter gamepad listening and verify Save clears it
+    act(() => {
+      rebindBtn!.click();
+    });
+    expect(isGamepadRebindingSignal.value).toBe(true);
+    const saveBtn = dom.root.querySelector('[data-testid="settings-save-btn"]');
+    act(() => {
+      saveBtn!.click();
+    });
+    expect(isGamepadRebindingSignal.value).toBe(false);
+
+    // Re-enter gamepad listening and verify unmount clears it
+    act(() => {
+      rebindBtn!.click();
+    });
+    expect(isGamepadRebindingSignal.value).toBe(true);
+    act(() => {
+      render(null, dom.root as unknown as Element);
+    });
+    expect(isGamepadRebindingSignal.value).toBe(false);
   });
 });

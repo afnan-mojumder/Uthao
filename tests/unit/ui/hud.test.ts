@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import { render, h, type VNode } from 'preact';
 import { act } from 'preact/test-utils';
 import { Hud, HudView, type HudState } from '../../../src/ui/hud/Hud';
-import { createHudCache, syncHudWithCache } from '../../../src/ui/hud/hudSync';
+import { createHudCache, resolveHudEtaMinutes, syncHudWithCache } from '../../../src/ui/hud/hudSync';
 import { ChoiceCardView } from '../../../src/ui/choice/ChoiceCard';
 import {
   choiceSignal,
@@ -662,5 +662,111 @@ describe('T8.3 fuel recovery affordances', () => {
     updateHudState({ fuelL: 3.98 });
     expect(hudSignal.value).not.toBe(refBefore);
     expect(hudSignal.value.fuelL).toBe(3.98);
+  });
+
+  it('P6.2 fix: keeps etaMinutes === 0 within 15m of target instead of reverting to estimatedDuration and renders 0 min cleanly', () => {
+    expect(resolveHudEtaMinutes(true, 0, 14)).toBe(0);
+    expect(resolveHudEtaMinutes(true, undefined, 14)).toBe(14);
+    expect(resolveHudEtaMinutes(false, 0, 14)).toBeUndefined();
+
+    const collectText = (n: unknown, out: string[] = []): string[] => {
+      if (typeof n === 'string' || typeof n === 'number') out.push(String(n));
+      else if (Array.isArray(n)) n.forEach((c) => collectText(c, out));
+      else if (n && typeof n === 'object') {
+        const v = n as VNode<Record<string, unknown>>;
+        if (typeof v.type === 'function') collectText((v.type as (p: unknown) => unknown)(v.props ?? {}), out);
+        else collectText(v.props?.children, out);
+      }
+      return out;
+    };
+
+    setLanguage('en');
+    const enText = collectText(
+      HudView({
+        state: {
+          ...base,
+          etaMinutes: 0,
+          passengerStatus: { status: 'OnTrip', name: 'Nabila' },
+        },
+      })
+    ).join('');
+    expect(enText).toContain('0 min');
+
+    setLanguage('bn');
+    const bnText = collectText(
+      HudView({
+        state: {
+          ...base,
+          etaMinutes: 0,
+          passengerStatus: { status: 'OnTrip', name: 'নাবিলা' },
+        },
+      })
+    ).join('');
+    expect(bnText).toContain('০ মি.');
+  });
+
+  it('P6.2 fix: avoids wasted priorityChanged on unchanged mission poll and localizes navDistM', () => {
+    setLanguage('bn');
+    const cache = createHudCache();
+    let missionProgress = 0;
+    const makeInput = (now: number, speedKmh = 20) => ({
+      now,
+      simStepped: true,
+      isFirstPerson: false,
+      objectiveKey: 'hud.waiting_for_requests',
+      placeKey: '',
+      navKind: 'left',
+      navTextKey: 'nav.left',
+      navDistM: 120,
+      reqId: '',
+      passengerStatus: 'None' as const,
+      roadEventId: '',
+      roadEventKind: '',
+      activeMissionCount: 1,
+      pollMissions: () => ({
+        main: {
+          id: 'm1',
+          titleKey: 'mission_01_title',
+          objectiveDescKey: 'mission_01_obj',
+          progress: missionProgress,
+          target: 2,
+          targetDistM: 45,
+        },
+        side: [],
+      }),
+      fare: undefined,
+      etaMinutes: undefined,
+      nearStation: false,
+      chargeSpot: null,
+      todayNetEarnings: 0,
+      shiftClock: '08:00',
+      shiftDay: 1,
+      rating: 5.0,
+      dialogueSubtitle: null,
+      speedKmh,
+      fuelL: 6.0,
+      fuelMaxL: 8.0,
+      conditionPct: 100,
+    });
+
+    expect(syncHudWithCache(cache, makeInput(1000))).toBe(true);
+    expect(hudSignal.value.nextTurn?.text).toContain('১২০');
+    expect(hudSignal.value.nextTurn?.text).not.toContain('120');
+
+    const refAt1000 = hudSignal.value;
+    // Push telemetry at 1070 so 1100 is inside the 50ms telemetry throttle window.
+    expect(syncHudWithCache(cache, makeInput(1070, 25))).toBe(true);
+    const refAt1070 = hudSignal.value;
+    expect(refAt1070).not.toBe(refAt1000);
+
+    // At 1100, mission poll fires (>= 100ms since 1000) with IDENTICAL mission and telemetry inside 50ms window -> throttled!
+    expect(syncHudWithCache(cache, makeInput(1100, 30))).toBe(false);
+    expect(hudSignal.value).toBe(refAt1070);
+
+    // At 1200, mission poll fires with CHANGED mission progress while inside 50ms of a telemetry push at 1170 -> immediate priority push!
+    expect(syncHudWithCache(cache, makeInput(1170, 35))).toBe(true);
+    missionProgress = 1;
+    expect(syncHudWithCache(cache, makeInput(1200, 35))).toBe(true);
+    expect(hudSignal.value.activeMission?.progress).toBe(1);
   });
 });

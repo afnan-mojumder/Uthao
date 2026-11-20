@@ -1,5 +1,6 @@
 import type { JSX } from 'preact';
 import type { DaySummary } from '../../core/types';
+import { ModalPanel } from '../components';
 import { t } from '../i18n';
 import { ShareCard } from '../share/ShareCard';
 
@@ -37,42 +38,23 @@ export function DayEnd({
   const repayAmount = Math.min(500, cashVal, debtVal);
 
   return (
-    <div
+    <ModalPanel
       data-testid="day-end-screen"
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 9998,
+      ariaLabelledBy="day-end-dialog-title"
+      maxWidth="560px"
+      zIndex={9998}
+      backdropStyle={{
         background: 'rgba(10, 15, 29, 0.88)',
         backdropFilter: 'blur(16px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '16px',
-        fontFamily: "'Hind Siliguri', 'Segoe UI', system-ui, sans-serif",
-        color: '#f8fafc',
-        pointerEvents: 'auto',
       }}
+      panelStyle={{
+        background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.95))',
+        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.6), 0 0 30px rgba(16, 185, 129, 0.1)',
+        padding: '24px 28px',
+        gap: '18px',
+      }}
+      contentStyle={{ gap: '18px' }}
     >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="day-end-dialog-title"
-        style={{
-          width: '100%',
-          maxWidth: '560px',
-          maxHeight: '90dvh',
-          overflowY: 'auto',
-          background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.95))',
-          border: '1px solid rgba(255, 255, 255, 0.12)',
-          borderRadius: '20px',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.6), 0 0 30px rgba(16, 185, 129, 0.1)',
-          padding: '24px 28px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '18px',
-        }}
-      >
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
@@ -88,6 +70,7 @@ export function DayEnd({
               {t('dayend.shift_ended')}
             </span>
             <h2
+              id="day-end-dialog-title"
               data-testid="day-end-title"
               style={{
                 margin: '2px 0 0 0',
@@ -488,7 +471,6 @@ export function DayEnd({
             </div>
           )}
         </div>
-      </div>
-    </div>
+    </ModalPanel>
   );
 }

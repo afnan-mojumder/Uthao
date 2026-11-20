@@ -34,7 +34,7 @@ test('negotiation flow: debug-spawn a bargainer, counter twice, accept, assert t
   await customInput.fill('');
   await customInput.pressSequentially('120');
   await expect(customInput).toHaveValue('120');
-  await expect(page.locator('[data-testid="counter-btn"]')).toContainText(/120/);
+  await expect(page.locator('[data-testid="counter-btn"]')).toContainText(/(120|১২০)/);
 
   // Clamps cleanly on blur if below minimum 50
   await customInput.fill('30');
@@ -53,7 +53,7 @@ test('negotiation flow: debug-spawn a bargainer, counter twice, accept, assert t
   await expect(page.locator('[data-testid="top-factor-chip"]')).toBeVisible({ timeout: 5000 });
   await expect(page.locator('[data-testid="negotiation-destination"]')).toBeVisible();
   await expect(page.locator('[data-testid="negotiation-destination"]')).not.toHaveText('');
-  await expect(negPanel).not.toContainText('{destination}');
+  await expect(negPanel).not.toContainText(/\{(destination|place)\}/);
 
   // Counter 2: step up high (+৳30) and counter again (passenger rejects)
   for (let i = 0; i < 3; i++) {

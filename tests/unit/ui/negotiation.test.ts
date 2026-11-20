@@ -293,6 +293,8 @@ describe('T2.4 Negotiation Store & Logic', () => {
     const html = JSON.stringify(vnode);
     expect(html).toContain('negotiation-destination');
     expect(html).not.toContain('{destination}');
+    expect(html).not.toContain('{place}');
+    expect(html).toContain('মিরপাড়া কাঁচাবাজার');
 
     unbind();
   });

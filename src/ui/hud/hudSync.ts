@@ -1,15 +1,26 @@
 import type { PassengerStatus } from '../../core/types';
 import { BALANCE } from '../../config/balance';
-import { getLanguage, t } from '../i18n';
+import { getLanguage, localDigits, t } from '../i18n';
 import {
   getHudResetCount,
   HUD_THROTTLE_MS,
   hudSignal,
+  sameHudMission,
+  sameHudMissionsList,
   updateHudState,
   type DialogueSubtitleState,
   type HudMissionInfo,
   type HudState,
 } from '../store';
+
+/** Resolves displayed HUD ETA minutes while keeping 0 min intact near arrival instead of falling back to estimatedDuration. */
+export function resolveHudEtaMinutes(
+  hasActiveReq: boolean,
+  routeEta: number | undefined,
+  estimatedDuration: number | undefined
+): number | undefined {
+  return hasActiveReq ? (routeEta ?? estimatedDuration) : undefined;
+}
 
 export interface HudSyncCache {
   readonly patch: Partial<HudState>;
@@ -176,6 +187,21 @@ export function syncHudWithCache(cache: HudSyncCache, input: HudSyncInput): bool
     input.activeMissionCount !== cache.lastMissionCount ||
     (input.simStepped && input.now - cache.lastMissionPollMs >= 100);
 
+  let activeMission = cur.activeMission ?? null;
+  let activeSideMissions = cur.activeSideMissions;
+  let missionsChanged = false;
+  if (shouldPollMissions) {
+    cache.lastMissionPollMs = input.now;
+    cache.lastMissionCount = input.activeMissionCount;
+    const hudMissions = input.pollMissions();
+    activeMission = hudMissions.main;
+    activeSideMissions = hudMissions.side;
+    missionsChanged =
+      langChanged ||
+      !sameHudMission(activeMission, cur.activeMission) ||
+      !sameHudMissionsList(activeSideMissions, cur.activeSideMissions);
+  }
+
   const nextGear = input.gear ?? 1;
   const nextCanRecover = input.canRecoverBike ?? true;
 
@@ -190,7 +216,7 @@ export function syncHudWithCache(cache: HudSyncCache, input: HudSyncInput): bool
     navChanged ||
     paxChanged ||
     roadEvChanged ||
-    shouldPollMissions ||
+    missionsChanged ||
     input.fare !== cur.fare ||
     input.etaMinutes !== cur.etaMinutes ||
     input.nearStation !== cur.nearStation ||
@@ -218,7 +244,7 @@ export function syncHudWithCache(cache: HudSyncCache, input: HudSyncInput): bool
     cache.lastNavTextKey = input.navTextKey;
     cache.lastNavDistM = input.navDistM;
     nextTurn = input.navKind
-      ? { direction: input.navKind, text: t(input.navTextKey, { dist: input.navDistM }) }
+      ? { direction: input.navKind, text: t(input.navTextKey, { dist: localDigits(input.navDistM) }) }
       : null;
   }
 
@@ -245,16 +271,6 @@ export function syncHudWithCache(cache: HudSyncCache, input: HudSyncInput): bool
     roadEventAlert = input.roadEventId
       ? { title: input.roadEventTitles?.[lang] ?? input.roadEventKind, kind: input.roadEventKind }
       : null;
-  }
-
-  let activeMission = cur.activeMission ?? null;
-  let activeSideMissions = cur.activeSideMissions;
-  if (shouldPollMissions) {
-    cache.lastMissionPollMs = input.now;
-    cache.lastMissionCount = input.activeMissionCount;
-    const hudMissions = input.pollMissions();
-    activeMission = hudMissions.main;
-    activeSideMissions = hudMissions.side;
   }
 
   const p = cache.patch;

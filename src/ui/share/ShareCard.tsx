@@ -77,7 +77,7 @@ function drawScorecardCanvas(
   // Brand header
   ctx.fillStyle = '#34D399';
   ctx.font = 'bold 20px "Noto Sans Bengali", "Inter", sans-serif';
-  ctx.fillText(t('share.title'), 28, 46);
+  ctx.fillText(t('share.title'), 28, 46, w - 56);
 
   const subtitle = ending
     ? t('share.ending_heading')
@@ -86,7 +86,7 @@ function drawScorecardCanvas(
       : '';
   ctx.fillStyle = '#94A3B8';
   ctx.font = '600 15px "Noto Sans Bengali", "Inter", sans-serif';
-  ctx.fillText(subtitle, 28, 72);
+  ctx.fillText(subtitle, 28, 72, w - 56);
 
   // Card body box
   ctx.fillStyle = 'rgba(15, 23, 42, 0.72)';
@@ -98,7 +98,7 @@ function drawScorecardCanvas(
   if (ending) {
     ctx.fillStyle = '#F8FAFC';
     ctx.font = 'bold 24px "Noto Sans Bengali", "Inter", sans-serif';
-    ctx.fillText(t(ending.titleKey), 42, 134);
+    ctx.fillText(t(ending.titleKey), 42, 134, 516);
 
     const cols = [
       { label: t('share.savings'), value: `৳${localDigits(Math.round(ending.summary.savings))}` },
@@ -109,10 +109,10 @@ function drawScorecardCanvas(
       const x = 42 + i * 176;
       ctx.fillStyle = '#94A3B8';
       ctx.font = '600 13px "Noto Sans Bengali", "Inter", sans-serif';
-      ctx.fillText(col.label, x, 186);
+      ctx.fillText(col.label, x, 186, 160);
       ctx.fillStyle = '#34D399';
       ctx.font = 'bold 22px "Noto Sans Bengali", "Inter", sans-serif';
-      ctx.fillText(col.value, x, 218);
+      ctx.fillText(col.value, x, 218, 160);
     });
   } else if (summary) {
     const netSign = summary.net >= 0 ? '+' : '-';
@@ -122,34 +122,36 @@ function drawScorecardCanvas(
         label: t('share.net'),
         value: `${netSign}৳${localDigits(Math.abs(Math.round(summary.net)))}`,
       },
-      {
-        label: t('share.savings'),
-        value:
-          summary.savings !== undefined
-            ? `৳${localDigits(Math.round(summary.savings))}`
-            : `৳${localDigits(Math.round(summary.revenue))}`,
-      },
+      summary.savings !== undefined
+        ? {
+            label: t('share.savings'),
+            value: `৳${localDigits(Math.round(summary.savings))}`,
+          }
+        : {
+            label: t('dayend.revenue'),
+            value: `৳${localDigits(Math.round(summary.revenue))}`,
+          },
     ];
     cols.forEach((col, i) => {
       const x = 42 + i * 176;
       ctx.fillStyle = '#94A3B8';
       ctx.font = '600 14px "Noto Sans Bengali", "Inter", sans-serif';
-      ctx.fillText(col.label, x, 148);
+      ctx.fillText(col.label, x, 148, 160);
       ctx.fillStyle = i === 1 && summary.net < 0 ? '#F87171' : '#34D399';
       ctx.font = 'bold 26px "Noto Sans Bengali", "Inter", sans-serif';
-      ctx.fillText(col.value, x, 188);
+      ctx.fillText(col.value, x, 188, 160);
     });
 
     const ratingStr = `${summary.ratingDelta >= 0 ? '+' : ''}${localDigits(summary.ratingDelta.toFixed(2))}`;
     ctx.fillStyle = '#FBBF24';
     ctx.font = '600 15px "Noto Sans Bengali", "Inter", sans-serif';
-    ctx.fillText(`${t('share.rating')}: ${ratingStr}`, 42, 240);
+    ctx.fillText(`${t('share.rating')}: ${ratingStr}`, 42, 240, 516);
   }
 
   // Footer
   ctx.fillStyle = '#64748B';
   ctx.font = '500 12px "Noto Sans Bengali", "Inter", sans-serif';
-  ctx.fillText('uthao.dhaka', 28, h - 18);
+  ctx.fillText('uthao.dhaka', 28, h - 18, w - 56);
 }
 
 async function canvasToPngBlob(canvas: HTMLCanvasElement): Promise<Blob | null> {
@@ -165,14 +167,26 @@ async function canvasToPngBlob(canvas: HTMLCanvasElement): Promise<Blob | null> 
 
 export function ShareCard({ summary, ending, style }: ShareCardProps): JSX.Element {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const mountedRef = useRef(true);
   const [status, setStatus] = useState<string | null>(null);
   const lang = getLanguage();
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     drawScorecardCanvas(canvas, summary, ending);
   }, [summary, ending, lang]);
+
+  const setStatusIfMounted = (msg: string) => {
+    if (mountedRef.current) setStatus(msg);
+  };
 
   const handleShare = async () => {
     const canvas = canvasRef.current;
@@ -190,20 +204,22 @@ export function ShareCard({ summary, ending, style }: ShareCardProps): JSX.Eleme
     ) {
       try {
         const blob = await canvasToPngBlob(canvas);
+        if (!mountedRef.current) return;
         if (blob && typeof File === 'function') {
           const file = new File([blob], filename, { type: 'image/png' });
           const canShareFiles =
             typeof navigator.canShare === 'function' && navigator.canShare({ files: [file] });
           if (canShareFiles) {
             await navigator.share({ title, text, files: [file] });
-            setStatus(t('share.ready_shared'));
+            setStatusIfMounted(t('share.ready_shared'));
             return;
           }
         }
         await navigator.share({ title, text });
-        setStatus(t('share.ready_shared'));
+        setStatusIfMounted(t('share.ready_shared'));
         return;
       } catch {
+        if (!mountedRef.current) return;
         // Fall through to PNG download / clipboard fallback cleanly
       }
     }
@@ -220,7 +236,7 @@ export function ShareCard({ summary, ending, style }: ShareCardProps): JSX.Eleme
           document.body.appendChild(anchor);
           anchor.click();
           anchor.remove();
-          setStatus(t('share.ready_downloaded'));
+          setStatusIfMounted(t('share.ready_downloaded'));
           return;
         }
       } catch {
@@ -236,7 +252,7 @@ export function ShareCard({ summary, ending, style }: ShareCardProps): JSX.Eleme
         // Headless clipboard permission may deny silently; still report status cleanly
       }
     }
-    setStatus(t('share.ready_copied'));
+    setStatusIfMounted(t('share.ready_copied'));
   };
 
   return (

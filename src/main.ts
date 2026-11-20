@@ -43,7 +43,12 @@ import {
   setActiveSaveSystem,
   type GameSettings,
 } from './ui/store';
-import { createHudCache, syncHudWithCache, type HudSyncInput } from './ui/hud/hudSync';
+import {
+  createHudCache,
+  resolveHudEtaMinutes,
+  syncHudWithCache,
+  type HudSyncInput,
+} from './ui/hud/hudSync';
 import { getCharacter } from './sim/passenger/PassengerAI';
 import { setLanguage } from './ui/i18n';
 import { setDefaultSignLanguage } from './render/signage';
@@ -547,7 +552,7 @@ function syncHud(
         { x: session.bike.x, z: session.bike.z },
         roadNetwork.getNodesMap()
       )
-    : 0;
+    : undefined;
 
   hudInputScratch.now = now;
   hudInputScratch.simStepped = simStepped;
@@ -569,11 +574,11 @@ function syncHud(
   hudInputScratch.roadEventTitles = activeRoadEv?.title;
   hudInputScratch.activeMissionCount = gm.story.activeMissions.length;
   hudInputScratch.fare = activeReq?.initialFare;
-  hudInputScratch.etaMinutes = activeReq
-    ? (routeEta ?? 0) > 0
-      ? routeEta
-      : activeReq.estimatedDuration
-    : undefined;
+  hudInputScratch.etaMinutes = resolveHudEtaMinutes(
+    Boolean(activeReq),
+    routeEta,
+    activeReq?.estimatedDuration
+  );
   hudInputScratch.nearStation = session.nearFuelStation();
   hudInputScratch.chargeSpot =
     gm.economyManager.phoneBattery < BALANCE.PHONE.lowBatteryPct

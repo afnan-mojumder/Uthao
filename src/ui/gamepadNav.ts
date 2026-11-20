@@ -21,6 +21,7 @@ import {
   dayEndSignal,
   endingSignal,
   garageSignal,
+  isGamepadRebindingSignal,
   journalSignal,
   loadingSignal,
   negotiationSignal,
@@ -138,7 +139,7 @@ export function startGamepadNav(isSettingsOpen: () => boolean): () => void {
     const choiceButtons = gp.choiceButtons;
     const snap = edges.poll(firstGamepad());
 
-    if (!hasSystemOverlay()) {
+    if (!hasSystemOverlay() && !isGamepadRebindingSignal.value) {
       const choiceBlockedByModal =
         screenSignal.value !== 'game' ||
         dayEndSignal.value.active ||

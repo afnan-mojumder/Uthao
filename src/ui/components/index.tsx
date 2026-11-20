@@ -571,8 +571,12 @@ export interface ModalPanelProps {
   zIndex?: number;
   maxWidth?: string;
   children?: ComponentChildren;
+  id?: string;
   testId?: string;
+  'data-testid'?: string;
   style?: CSSProperties;
+  panelStyle?: CSSProperties;
+  backdropStyle?: CSSProperties;
   contentStyle?: CSSProperties;
 }
 
@@ -586,11 +590,16 @@ export function ModalPanel({
   zIndex = Z_LAYER.MODAL,
   maxWidth = '560px',
   children,
+  id,
   testId,
+  'data-testid': dataTestId,
   style,
+  panelStyle,
+  backdropStyle,
   contentStyle,
 }: ModalPanelProps): JSX.Element {
-  const headingId = title ? `${testId ?? 'modal-panel'}-title` : undefined;
+  const resolvedTestId = dataTestId ?? testId;
+  const headingId = title ? `${resolvedTestId ?? id ?? 'modal-panel'}-title` : undefined;
   return (
     <div
       style={{
@@ -604,6 +613,7 @@ export function ModalPanel({
         alignItems: 'center',
         justifyContent: 'center',
         padding: '16px',
+        ...backdropStyle,
       }}
       onKeyDown={(e) => {
         if (e.key === 'Escape' && onClose) {
@@ -613,11 +623,12 @@ export function ModalPanel({
       }}
     >
       <div
+        id={id}
         role="dialog"
         aria-modal="true"
         aria-label={ariaLabel}
         aria-labelledby={ariaLabelledBy ?? headingId}
-        data-testid={testId}
+        data-testid={resolvedTestId}
         tabIndex={-1}
         style={{
           width: '100%',
@@ -636,6 +647,7 @@ export function ModalPanel({
           flexDirection: 'column',
           gap: '16px',
           ...style,
+          ...panelStyle,
         }}
       >
         {(title || onClose) && (

@@ -30,6 +30,7 @@ import {
   dayEndSignal,
   endingSignal,
   garageSignal,
+  isGamepadRebindingSignal,
   journalSignal,
   loadingSignal,
   negotiationSignal,
@@ -64,6 +65,7 @@ function resetAllSignals(): void {
   tutorialSignal.value = { active: false, step: 'idle' };
   saveSlotsSignal.value = { isOpen: false, mode: 'save' };
   phoneSignal.value = { ...phoneSignal.value, open: false };
+  isGamepadRebindingSignal.value = false;
   saveSettings({ ...DEFAULT_SETTINGS, muted: false });
 }
 
@@ -191,6 +193,77 @@ describe('uiModalOpen & system overlay guards', () => {
     expect(ticks.length).toBeGreaterThan(0);
     expect(onChoice).not.toHaveBeenCalled();
     expect(dispatched).toEqual([]);
+  });
+
+  it('pauses gamepad navigation and shortcut dispatches while isGamepadRebindingSignal is true and resumes once cleared', () => {
+    const { fakeWindow, dispatched } = makeFakeWindow();
+    const clickSpy = vi.fn();
+    const fakeBtn = {
+      disabled: false,
+      closest: () => null,
+      getClientRects: () => [{ left: 0, top: 0, width: 100, height: 40 }],
+      getBoundingClientRect: () => ({ left: 0, top: 0, right: 100, bottom: 40, width: 100, height: 40 }),
+      focus: vi.fn(),
+      click: clickSpy,
+    } as unknown as HTMLElement;
+
+    vi.stubGlobal('window', fakeWindow);
+    vi.stubGlobal('document', {
+      activeElement: fakeBtn,
+      querySelectorAll: () => [fakeBtn],
+    });
+
+    let pressedButtons = new Set<number>([0, 1, 4, 5, 9]);
+    const makePad = () =>
+      ({
+        id: 'rebind-pad',
+        index: 0,
+        connected: true,
+        mapping: 'standard',
+        timestamp: 0,
+        axes: [0, 0, 0, 0],
+        buttons: Array.from({ length: 17 }, (_, i) => ({
+          pressed: pressedButtons.has(i),
+          touched: false,
+          value: pressedButtons.has(i) ? 1 : 0,
+        })),
+      }) as unknown as Gamepad;
+
+    const ticks: Array<() => void> = [];
+    vi.stubGlobal('navigator', { getGamepads: () => [makePad()] });
+    vi.stubGlobal('requestAnimationFrame', (cb: () => void) => {
+      ticks.push(cb);
+      return ticks.length;
+    });
+    vi.stubGlobal('cancelAnimationFrame', vi.fn());
+    vi.stubGlobal('KeyboardEvent', class {
+      type: string;
+      key: string;
+      code: string;
+      constructor(type: string, init: { key: string; code: string }) {
+        this.type = type;
+        this.key = init.key;
+        this.code = init.code;
+      }
+    });
+
+    isGamepadRebindingSignal.value = true;
+    const stop = startGamepadNav(() => true);
+    ticks.shift()?.();
+    expect(clickSpy).not.toHaveBeenCalled();
+    expect(dispatched).toEqual([]);
+
+    // Release buttons, clear rebinding signal, then press B1/pause -> gamepadNav resumes cleanly
+    pressedButtons = new Set();
+    isGamepadRebindingSignal.value = false;
+    ticks.shift()?.();
+    expect(dispatched).toEqual([]);
+
+    pressedButtons = new Set([1]);
+    ticks.shift()?.();
+    stop();
+
+    expect(dispatched).toEqual([{ type: 'keydown', key: 'Escape', code: 'Escape' }]);
   });
 
   describe('App keyboard hotkeys and Escape guards', () => {

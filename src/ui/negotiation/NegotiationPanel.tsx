@@ -226,8 +226,8 @@ export function NegotiationPanelView({
             <span style={{ fontSize: '12px', color: '#94a3b8' }}>
               {session.profile.archetype} •{' '}
               {t('negotiation.round', {
-                current: Math.min(session.round, session.maxRounds),
-                max: session.maxRounds,
+                current: localDigits(Math.min(session.round, session.maxRounds)),
+                max: localDigits(session.maxRounds),
               })}
             </span>
           </div>
@@ -280,7 +280,7 @@ export function NegotiationPanelView({
         >
           <IconFlag size={13} />
           <span>
-            {t('negotiation.destination_label')}: {destinationLabel}
+            {t('negotiation.destination_label', { place: destinationLabel })}
           </span>
         </span>
         <span data-testid="route-text">
@@ -501,7 +501,7 @@ export function NegotiationPanelView({
             boxShadow: '0 4px 12px rgba(34, 197, 94, 0.3)',
           }}
         >
-          {t('negotiation.accept', { fare: session.currentPassengerOffer })}
+          {t('negotiation.accept', { fare: localDigits(session.currentPassengerOffer) })}
         </button>
 
         <button
@@ -520,7 +520,7 @@ export function NegotiationPanelView({
             boxShadow: '0 4px 12px rgba(245, 158, 11, 0.3)',
           }}
         >
-          {t('negotiation.counter', { fare: counterAmount })}
+          {t('negotiation.counter', { fare: localDigits(counterAmount) })}
         </button>
 
         {(() => {
@@ -544,7 +544,7 @@ export function NegotiationPanelView({
                 opacity: canDiscount ? 1 : 0.65,
               }}
             >
-              {t('negotiation.discount', { fare: discountAmount })}
+              {t('negotiation.discount', { fare: localDigits(discountAmount) })}
             </button>
           );
         })()}
@@ -568,8 +568,8 @@ export function NegotiationPanelView({
             }}
           >
             {t('negotiation.relocate', {
-              walk: Math.round(pickup.walkM),
-              min: Math.round(pickup.savesMin),
+              walk: localDigits(Math.round(pickup.walkM)),
+              min: localDigits(Math.round(pickup.savesMin)),
             })}
           </button>
         )}
@@ -618,7 +618,7 @@ export function NegotiationPanelView({
                 opacity: canExplainDetour ? 1 : 0.65,
               }}
             >
-              {t('negotiation.explain_detour', { min: 8 })}
+              {t('negotiation.explain_detour', { min: localDigits(8) })}
             </button>
           );
         })()}
@@ -638,7 +638,7 @@ export function NegotiationPanelView({
             cursor: 'pointer',
           }}
         >
-          {t('negotiation.off_app', { fare: counterAmount })}
+          {t('negotiation.off_app', { fare: localDigits(counterAmount) })}
         </button>
 
         <button

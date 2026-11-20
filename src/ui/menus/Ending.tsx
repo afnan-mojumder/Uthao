@@ -1,4 +1,5 @@
 import type { JSX } from 'preact';
+import { ModalPanel } from '../components';
 import { t } from '../i18n';
 import { Z_LAYER } from '../store';
 import { ShareCard } from '../share/ShareCard';
@@ -63,42 +64,24 @@ export function Ending({
   const { summary, tendencies } = result;
 
   return (
-    <div
+    <ModalPanel
       data-testid="ending-screen"
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: Z_LAYER.CRITICAL_MODAL,
-        pointerEvents: 'auto',
+      ariaLabel={t(result.titleKey)}
+      maxWidth="680px"
+      zIndex={Z_LAYER.CRITICAL_MODAL}
+      backdropStyle={{
         background: 'rgba(10, 15, 29, 0.92)',
         backdropFilter: 'blur(16px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '16px',
-        fontFamily: "'Noto Sans Bengali', 'Segoe UI', system-ui, sans-serif",
-        color: '#f8fafc',
       }}
+      panelStyle={{
+        background: theme.bgGrad,
+        border: `1px solid ${theme.color}44`,
+        padding: '28px',
+        boxShadow: `0 25px 60px -15px ${theme.color}33`,
+        gap: '24px',
+      }}
+      contentStyle={{ gap: '24px' }}
     >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={t(result.titleKey)}
-        style={{
-          width: '100%',
-          maxWidth: '680px',
-          maxHeight: '90dvh',
-          overflowY: 'auto',
-          background: theme.bgGrad,
-          borderRadius: '20px',
-          border: `1px solid ${theme.color}44`,
-          padding: '28px',
-          boxShadow: `0 25px 60px -15px ${theme.color}33`,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '24px',
-        }}
-      >
         {/* Header */}
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: '3rem', marginBottom: '8px' }}>{theme.icon}</div>
@@ -394,7 +377,6 @@ export function Ending({
             </button>
           )}
         </div>
-      </div>
-    </div>
+    </ModalPanel>
   );
 }

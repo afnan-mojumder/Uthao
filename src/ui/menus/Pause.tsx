@@ -1,4 +1,5 @@
 import type { JSX } from 'preact';
+import { ModalPanel } from '../components';
 import {
   IconClock,
   IconClose,
@@ -45,43 +46,26 @@ export function Pause({
   if (!isOpen) return null;
 
   return (
-    <div
+    <ModalPanel
       data-testid="pause-menu"
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 9997,
+      ariaLabelledBy="pause-dialog-title"
+      maxWidth="420px"
+      zIndex={9997}
+      backdropStyle={{
         background: 'rgba(15, 23, 42, 0.88)',
         backdropFilter: 'blur(16px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
         padding: '14px',
-        fontFamily: 'var(--font-sans)',
-        color: '#f8fafc',
-        pointerEvents: 'auto',
       }}
+      panelStyle={{
+        alignItems: 'center',
+        background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.98))',
+        borderRadius: '24px',
+        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 35px rgba(56, 189, 248, 0.1)',
+        padding: '24px 20px',
+        gap: '18px',
+      }}
+      contentStyle={{ width: '100%', alignItems: 'center', gap: '18px' }}
     >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="pause-dialog-title"
-        style={{
-          width: '100%',
-          maxWidth: '420px',
-          maxHeight: '90dvh',
-          overflowY: 'auto',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.98))',
-          border: '1px solid rgba(255, 255, 255, 0.12)',
-          borderRadius: '24px',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 35px rgba(56, 189, 248, 0.1)',
-          padding: '24px 20px',
-          gap: '18px',
-        }}
-      >
         {/* Title */}
         <div style={{ textAlign: 'center' }}>
           <div
@@ -381,7 +365,6 @@ export function Pause({
             <span>{t('pause.main_menu')}</span>
           </button>
         </div>
-      </div>
-    </div>
+    </ModalPanel>
   );
 }
