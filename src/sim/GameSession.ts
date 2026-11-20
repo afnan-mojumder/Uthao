@@ -299,9 +299,10 @@ export class GameSession {
       this.gm.story.branchFlags['accidentOtherParty'] = report.otherParty;
       this.gm.story.branchFlags['accidentResponsibility'] = report.responsibility;
 
-      const interrupted = this.ride.interrupt();
       const started = this.maybeStartAccidentEncounter();
-      if (isSerious && !started) {
+      if (started) {
+        this.ride.interrupt();
+      } else if (isSerious) {
         this.gm.economyManager.post({
           id: `tx_med_${report.id}`,
           day: this.gm.clock.day,
@@ -310,10 +311,10 @@ export class GameSession {
           amount: -250,
         });
         const req = this.ride.getActiveRequest();
-        if (req && this.ride.getTripState() === 'EmergencyInterrupted') {
+        if (req) {
           this.ride.cancel(req.requestId, 'system', 'accident');
         }
-      } else if (!started && interrupted && this.gm.eventDirector.enabled) {
+      } else if (this.ride.getTripState() === 'EmergencyInterrupted') {
         this.ride.resumeTrip();
       }
     });
@@ -396,12 +397,30 @@ export class GameSession {
     });
     this.gm.bus.on('day/started', () => {
       this.lastAccidentEncounterMin = -Infinity;
+      this.violationMonitor.reset();
+      if (this.ride.getTripState() === 'EmergencyInterrupted') {
+        this.ride.resumeTrip();
+      }
       this.spawnAtHome();
+    });
+    this.gm.bus.on('day/ended', () => {
+      this.gm.story.branchFlags['accident'] = false;
+      if (this.ride.getTripState() === 'EmergencyInterrupted') {
+        if (this.gm.story.branchFlags['accidentSerious']) {
+          const req = this.ride.getActiveRequest();
+          if (req) this.ride.cancel(req.requestId, 'system', 'accident');
+        } else {
+          this.ride.resumeTrip();
+        }
+      }
     });
     this.gm.bus.on('state/restored', () => {
       this.lastPunctureMin = -Infinity;
       this.lastAccidentEncounterMin = -Infinity;
       this.violationMonitor.reset();
+      if (this.ride.getTripState() === 'EmergencyInterrupted') {
+        this.ride.resumeTrip();
+      }
       this.syncBikeSpec();
       this.syncLocation();
     });

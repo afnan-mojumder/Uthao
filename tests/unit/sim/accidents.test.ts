@@ -229,4 +229,77 @@ describe('Accidents & Passenger Safety (P4.5 / T10.4)', () => {
     expect(['Cancelled', 'Failed', 'Idle']).toContain(session.ride.getTripState());
     expect(session.ride.getActiveRequest()).toBeNull();
   });
+
+  it('never leaves RideManager stuck in EmergencyInterrupted when accident encounter fails to start or on day/ended / state/restored', () => {
+    // 1. Moderate crash when another encounter is already active (forceStart returns null)
+    const { gm, session } = makeActiveRideSession();
+    gm.eventDirector.forceStart('enc_friend_package', gm.bus);
+    expect(gm.eventDirector.activeEncounter).not.toBeNull();
+
+    gm.bus.emit('bike/collision', {
+      severity: 'crash',
+      relSpeedKmh: 32,
+      otherKind: 'static',
+      otherParty: false,
+      bikeSpeedKmh: 32,
+      otherSpeedKmh: 0,
+    });
+    expect(session.ride.getTripState()).toBe('EnRouteToDestination');
+
+    // 2. Moderate crash when eventDirector is disabled
+    gm.eventDirector.activeEncounter = null;
+    gm.eventDirector.activeEncounterDef = null;
+    gm.eventDirector.enabled = false;
+    gm.bus.emit('bike/collision', {
+      severity: 'crash',
+      relSpeedKmh: 32,
+      otherKind: 'traffic',
+      otherParty: true,
+      bikeSpeedKmh: 32,
+      otherSpeedKmh: 0,
+    });
+    expect(session.ride.getTripState()).toBe('EnRouteToDestination');
+
+    // 3. Serious crash when forceStart fails (disabled / cooldown) -> charges medical & cancels cleanly
+    const txs: Array<{ kind: string; amount: number }> = [];
+    gm.bus.on('economy/transaction', ({ tx }) => txs.push({ kind: tx.kind, amount: tx.amount }));
+    gm.bus.emit('bike/collision', {
+      severity: 'crash',
+      relSpeedKmh: 55,
+      otherKind: 'static',
+      otherParty: false,
+      bikeSpeedKmh: 55,
+      otherSpeedKmh: 0,
+    });
+    expect(txs.some((t) => t.kind === 'medical' && t.amount < 0)).toBe(true);
+    expect(session.ride.getTripState()).not.toBe('EmergencyInterrupted');
+    expect(['Cancelled', 'Failed', 'Idle']).toContain(session.ride.getTripState());
+
+    // 4. state/restored & day/ended never leave RideManager stranded in EmergencyInterrupted
+    const { gm: gm2, session: s2 } = makeActiveRideSession({ seed: 29 });
+    gm2.bus.emit('bike/collision', {
+      severity: 'crash',
+      relSpeedKmh: 32,
+      otherKind: 'static',
+      otherParty: false,
+      bikeSpeedKmh: 32,
+      otherSpeedKmh: 0,
+    });
+    expect(s2.ride.getTripState()).toBe('EmergencyInterrupted');
+    gm2.bus.emit('state/restored', {});
+    expect(s2.ride.getTripState()).not.toBe('EmergencyInterrupted');
+
+    const { gm: gm3, session: s3 } = makeActiveRideSession({ seed: 31 });
+    gm3.bus.emit('bike/collision', {
+      severity: 'crash',
+      relSpeedKmh: 32,
+      otherKind: 'static',
+      otherParty: false,
+      bikeSpeedKmh: 32,
+      otherSpeedKmh: 0,
+    });
+    expect(s3.ride.getTripState()).toBe('EmergencyInterrupted');
+    gm3.bus.emit('day/ended', { day: 1, summary: {} as never });
+    expect(s3.ride.getTripState()).not.toBe('EmergencyInterrupted');
+  });
 });

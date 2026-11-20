@@ -82,7 +82,12 @@ export function detectViolations(
       const dx = st.x - bike.x;
       const dz = st.z - bike.z;
       if (dx * dx + dz * dz > RED_LIGHT_RADIUS_SQ) continue;
-      const approach = Math.abs(Math.sin(bike.heading)) >= Math.abs(Math.cos(bike.heading)) ? 0 : 1;
+      // Only penalize entering/approaching the intersection, not exiting past its center.
+      const sinH = Math.sin(bike.heading);
+      const cosH = Math.cos(bike.heading);
+      const ahead = dx * sinH + dz * cosH;
+      if (ahead < -0.5) continue;
+      const approach = Math.abs(sinH) >= Math.abs(cosH) ? 0 : 1;
       if (signals.getSignalStatus(st.nodeId, approach) === 'red') {
         out.push('redLight');
         break;

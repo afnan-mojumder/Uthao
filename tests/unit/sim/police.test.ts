@@ -295,4 +295,82 @@ describe('Police, Violations & Bribery (P4.5 / T10.3)', () => {
     });
     expect(gmFlee.reputationSystem.getMeters().criminalExposure).toBeGreaterThan(crim0);
   });
+
+  it('resets ViolationMonitor cooldowns and latches on day/started, state/restored, and newCareer(), and ignores exiting intersections on red', () => {
+    const road = RoadNetwork.fromDistricts([
+      {
+        districtId: 'mirpara',
+        name: { bn: 'মিরপাড়া', en: 'Mirpara' },
+        nodes: [
+          { nodeId: 'n1', x: 0, y: 0, z: 0, kind: 'junction' },
+          { nodeId: 'n2', x: 0, y: 0, z: 200, kind: 'junction', signal: true },
+        ],
+        segments: [
+          makeSegment({
+            segmentId: 'seg_main_reset',
+            startNodeId: 'n1',
+            endNodeId: 'n2',
+            speedLimit: 35,
+          }),
+        ],
+        pois: [],
+        lots: [],
+      },
+    ]);
+
+    const gm = new GameManager({ seed: 77, mode: 'career', data: {} });
+    const session = new GameSession({ gm, road, autoRequests: false });
+    const infractions: BikeInfractionKind[] = [];
+    gm.bus.on('bike/infraction', ({ kind }) => infractions.push(kind));
+
+    // Late night Day 1 (22:45 = 1365 min): speeding triggers once and latches cooldown
+    gm.clock.day = 1;
+    gm.clock.minutes = 22 * 60 + 45;
+    session.bike.x = 0;
+    session.bike.z = 40;
+    session.bike.heading = 0;
+    session.bike.speed = 60 / 3.6;
+    session.step({ throttle: 0, brake: 0, steer: 0 }, SIM_DT);
+    expect(infractions).toEqual(['speeding']);
+
+    // Day 2 morning (07:00) via day/started must clear Day 1 cooldown & latch immediately
+    gm.clock.day = 2;
+    gm.clock.minutes = 7 * 60;
+    gm.bus.emit('day/started', { day: 2 });
+    session.bike.x = 0;
+    session.bike.z = 40;
+    session.bike.heading = 0;
+    session.bike.speed = 60 / 3.6;
+    session.step({ throttle: 0, brake: 0, steer: 0 }, SIM_DT);
+    expect(infractions).toEqual(['speeding', 'speeding']);
+
+    // state/restored clears cooldown & latch immediately
+    gm.bus.emit('state/restored', {});
+    session.bike.speed = 60 / 3.6;
+    session.step({ throttle: 0, brake: 0, steer: 0 }, SIM_DT);
+    expect(infractions).toEqual(['speeding', 'speeding', 'speeding']);
+
+    // newCareer() clears cooldown & latch immediately
+    session.newCareer();
+    session.bike.x = 0;
+    session.bike.z = 40;
+    session.bike.heading = 0;
+    session.bike.speed = 60 / 3.6;
+    session.step({ throttle: 0, brake: 0, steer: 0 }, SIM_DT);
+    expect(infractions).toEqual(['speeding', 'speeding', 'speeding', 'speeding']);
+
+    // Exiting an already-entered intersection past junction center does NOT trigger redLight
+    const nodes = road.getNodesMap();
+    const signals = new SignalController([nodes.get('n2')!], 30);
+    const seg = road.getSegment('seg_main_reset')!;
+    const out: BikeInfractionKind[] = [];
+    const bike = createDefaultBikeState();
+    bike.x = 0;
+    bike.z = 202; // 2m past n2(0, 200) while heading +Z (exiting)
+    bike.heading = 0;
+    bike.speed = 20 / 3.6;
+    expect(signals.getSignalStatus('n2', 1)).toBe('red');
+    detectViolations(bike, seg, signals, out, nodes);
+    expect(out).toEqual([]);
+  });
 });
