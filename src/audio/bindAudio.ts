@@ -27,7 +27,7 @@ export function bindAudio(
   settings: { subscribe(fn: (s: AudioSettings) => void): unknown },
   doc?: Document,
   preview?: AudioPreviewSource
-): void {
+): () => void {
   let savedSettings: AudioSettings = {
     masterVolume: 1,
     sfxVolume: 1,
@@ -37,17 +37,21 @@ export function bindAudio(
   let previewSettings: AudioSettings | null = null;
   let lastPreviewSeq = 0;
 
-  settings.subscribe((s) => {
+  const cleanups: Array<() => void> = [];
+
+  const unsubSaved = settings.subscribe((s) => {
     savedSettings = s;
     applyAudioVolumes(audio, previewSettings ?? savedSettings);
   });
+  if (typeof unsubSaved === 'function') cleanups.push(unsubSaved as () => void);
 
-  preview?.subscribe((s) => {
+  const unsubPreview = preview?.subscribe((s) => {
     previewSettings = s;
     applyAudioVolumes(audio, previewSettings ?? savedSettings);
   });
+  if (typeof unsubPreview === 'function') cleanups.push(unsubPreview as () => void);
 
-  preview?.seq?.subscribe((seq) => {
+  const unsubSeq = preview?.seq?.subscribe((seq) => {
     if (seq > lastPreviewSeq) {
       lastPreviewSeq = seq;
       audio.playClick();
@@ -55,16 +59,33 @@ export function bindAudio(
       lastPreviewSeq = seq;
     }
   });
+  if (typeof unsubSeq === 'function') cleanups.push(unsubSeq as () => void);
 
-  bus.on('ride/requested', () => audio.playNotify());
-  bus.on('delivery/offered', () => audio.playNotify());
-  bus.on('ride/completed', () => audio.playCashRegister());
-  bus.on('delivery/completed', () => audio.playCashRegister());
-  bus.on('mission/completed', () => audio.playMissionComplete());
-  bus.on('bike/collision', (ev) => audio.playImpact(ev.severity));
+  cleanups.push(bus.on('ride/requested', () => audio.playNotify()));
+  cleanups.push(bus.on('delivery/offered', () => audio.playNotify()));
+  cleanups.push(bus.on('ride/completed', () => audio.playCashRegister()));
+  cleanups.push(bus.on('delivery/completed', () => audio.playCashRegister()));
+  cleanups.push(bus.on('mission/completed', () => audio.playMissionComplete()));
+  cleanups.push(bus.on('bike/collision', (ev) => audio.playImpact(ev.severity)));
+  cleanups.push(bus.on('day/started', () => audio.playIgnition?.()));
+  cleanups.push(bus.on('bike/swapped', () => audio.playIgnition?.()));
+  cleanups.push(
+    bus.on('world/weatherChanged', (ev) => {
+      if (ev.to === 'heavyRain') audio.playThunder?.();
+    })
+  );
 
-  doc?.addEventListener('click', (e) => {
-    const el = e.target as Element | null;
-    if (el?.closest?.('button')) audio.playClick();
-  });
+  if (doc) {
+    const onDocClick = (e: Event) => {
+      const el = e.target as Element | null;
+      if (el?.closest?.('button')) audio.playClick();
+    };
+    doc.addEventListener('click', onDocClick);
+    cleanups.push(() => doc.removeEventListener('click', onDocClick));
+  }
+
+  return () => {
+    for (const fn of cleanups) fn();
+    cleanups.length = 0;
+  };
 }

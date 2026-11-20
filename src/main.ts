@@ -210,10 +210,13 @@ async function bootGame(): Promise<void> {
   watchOverlayFocus();
   // Sound: the audio context starts on the first gesture; settings and sim events drive it.
   audio = new AudioManager();
-  bindAudio(audio, gm.bus, settingsSignal, document, {
-    subscribe: (fn) => audioPreviewSignal.subscribe(fn),
-    seq: { subscribe: (fn) => audioPreviewSeqSignal.subscribe(fn) },
-  });
+  bootCleanups.push(() => audio.dispose());
+  bootCleanups.push(
+    bindAudio(audio, gm.bus, settingsSignal, document, {
+      subscribe: (fn) => audioPreviewSignal.subscribe(fn),
+      seq: { subscribe: (fn) => audioPreviewSeqSignal.subscribe(fn) },
+    })
+  );
   // The bike slid at the grip limit: a tyre sound (H-4 for the ear).
   bootCleanups.push(gm.bus.on('bike/wobble', () => audio.playWobble()));
   bootCleanups.push(gm.bus.on('bike/nearMiss', () => audio.playNearMiss()));
@@ -701,6 +704,9 @@ function frame(now: number) {
       renderer?.setBikeState(session.bike);
     }
     engineThrottle = input.throttle;
+    if (input.brake > 0.35 && lastBikeBrake <= 0.35 && Math.abs(session.bike.speed) > 3.0) {
+      audio.playBrake(input.brake);
+    }
     lastBikeBrake = input.brake;
     if (rawInput.horn) audio.startHorn();
     else audio.stopHorn();
@@ -716,10 +722,15 @@ function frame(now: number) {
 
   // Engine and ambience follow the bike; menus and pause are silent.
   const playing = inGame && !pausedSignal.value;
-  const raining = gm.weather === 'lightRain' || gm.weather === 'heavyRain';
   audio.setEnginePitch(getBikeDef(gm.economyManager.currentBikeId).audioPitch);
-  audio.updateEngine(session.bike.speed, engineThrottle, playing);
-  audio.setAmbience(0.5, raining);
+  audio.updateEngine(
+    session.bike.speed,
+    engineThrottle,
+    playing,
+    session.bike.gear,
+    session.bike.rpmNorm
+  );
+  audio.setAmbience(0.5, gm.weather, playing);
   if (!playing) audio.stopHorn();
 
   const activeReq = rideManager.getActiveRequest();
