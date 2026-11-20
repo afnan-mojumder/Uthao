@@ -37,6 +37,7 @@ import {
   mapPlayerPosSignal,
   journalDataSignal,
   settingsSignal,
+  settingsOpenSignal,
   touchFeedbackSignal,
   audioPreviewSignal,
   audioPreviewSeqSignal,
@@ -400,12 +401,9 @@ if (minimap) {
 const autopilot = new AutopilotController(roadNetwork);
 const trafficManager = session.traffic;
 const inputManager = new InputManager({
-  isModalOpen: () =>
-    gm.paused ||
-    screenSignal.value !== 'game' ||
-    uiModalOpen(false) ||
-    (typeof document !== 'undefined' && Boolean(document.querySelector('[role="dialog"]'))),
+  isModalOpen: () => gm.paused || screenSignal.value !== 'game' || uiModalOpen(settingsOpenSignal.value),
 });
+bootCleanups.push(() => inputManager.detach());
 
 initDebugApi(gm, {
   renderer,
@@ -428,7 +426,8 @@ const applySettings = (s: GameSettings) => {
   setDefaultSignLanguage(s.language); // storefront signs, for districts loaded from now on
   minimap?.setRouteColor(routeColorFor(s));
   gm.eventDirector.pauseOnDecisions = s.pauseOnDecisions;
-  inputManager.setBindings({ ...loadBindings(), tiltEnabled: s.tiltControls });
+  const baseBindings = s.controls ?? loadBindings();
+  inputManager.setBindings({ ...baseBindings, tiltEnabled: s.tiltControls });
 };
 bootCleanups.push(settingsSignal.subscribe(applySettings));
 
@@ -642,14 +641,21 @@ function frame(now: number) {
 
   for (let s = 0; s < steps; s++) {
     inputManager.update(SIM_DT);
-    const touchVis = inputManager.getTouchVisualState();
+    const touchThrottle = inputManager.isTouchThrottleActive();
+    const touchBrake = inputManager.isTouchBrakeActive();
+    const touchSteer = inputManager.getTouchSteer();
     const prevTouchVis = touchFeedbackSignal.value;
     if (
-      touchVis.throttle !== prevTouchVis.throttle ||
-      touchVis.brake !== prevTouchVis.brake ||
-      Math.abs(touchVis.steer - prevTouchVis.steer) > 0.02
+      touchThrottle !== prevTouchVis.throttle ||
+      touchBrake !== prevTouchVis.brake ||
+      Math.abs(touchSteer - prevTouchVis.steer) > 0.02
     ) {
-      touchFeedbackSignal.value = touchVis;
+      touchFeedbackSignal.value = {
+        ...prevTouchVis,
+        throttle: touchThrottle,
+        brake: touchBrake,
+        steer: touchSteer,
+      };
     }
     const activeReq = rideManager.getActiveRequest();
     const driveView = deriveRideView(rideManager);

@@ -85,6 +85,18 @@ textarea {
   outline-offset: 2px;
 }
 
+.uthao-touch-icon-btn {
+  transition: transform 0.08s ease, background-color 0.08s ease, border-color 0.08s ease, box-shadow 0.08s ease;
+}
+
+.uthao-touch-icon-btn:active,
+.uthao-touch-icon-btn[data-active="true"] {
+  transform: scale(0.92);
+  background: rgba(56, 189, 248, 0.34) !important;
+  border-color: rgba(56, 189, 248, 0.9) !important;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.45);
+}
+
 @keyframes choiceSlideDown {
   from {
     opacity: 0;

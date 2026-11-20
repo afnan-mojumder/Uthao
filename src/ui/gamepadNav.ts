@@ -33,6 +33,7 @@ import {
   rotateOverlaySignal,
   saveSlotsSignal,
   screenSignal,
+  settingsOpenSignal,
   settingsSignal,
   tripSummarySignal,
   tutorialSignal,
@@ -57,10 +58,14 @@ export function hasSystemOverlay(): boolean {
 }
 
 /** True when a menu, panel or overlay owns the screen, so the pad navigates it. */
-export function uiModalOpen(settingsOpen: boolean, opts: { ignoreTutorial?: boolean } = {}): boolean {
+export function uiModalOpen(
+  settingsOpen: boolean = settingsOpenSignal.value,
+  opts: { ignoreTutorial?: boolean } = {}
+): boolean {
   return (
     hasSystemOverlay() ||
     settingsOpen ||
+    settingsOpenSignal.value ||
     screenSignal.value !== 'game' ||
     choiceSignal.value.active ||
     negotiationSignal.value.active ||

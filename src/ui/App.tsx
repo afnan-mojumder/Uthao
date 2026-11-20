@@ -60,6 +60,7 @@ import {
   mapWorldSignal,
   mapLiveSignal,
   settingsSignal,
+  settingsOpenSignal,
   choiceSignal,
   encounterCueSignal,
   Z_LAYER,
@@ -96,12 +97,19 @@ import { toggleMute } from './store';
 import { getActiveControlsBindings, hasSystemOverlay, startGamepadNav, uiModalOpen } from './gamepadNav';
 
 export function App(): JSX.Element {
-  const [showSettings, setShowSettings] = useState(false);
+  const [showSettings, setShowSettingsState] = useState(false);
+  const setShowSettings = (open: boolean) => {
+    settingsOpenSignal.value = open;
+    setShowSettingsState(open);
+  };
   // Keyboard and gamepad listeners are attached once, so they read the live
   // value through this ref rather than a stale closure.
   const showSettingsRef = useRef(showSettings);
   showSettingsRef.current = showSettings;
   const settingsCancelRef = useRef<(() => void) | null>(null);
+  useEffect(() => {
+    settingsOpenSignal.value = showSettings;
+  }, [showSettings]);
   useEffect(() => {
     const checkOrientation = () => {
       if (typeof window === 'undefined') return;
@@ -244,6 +252,7 @@ export function App(): JSX.Element {
         window.removeEventListener('keydown', handleKeyDown);
       }
       stopGamepad();
+      settingsOpenSignal.value = false;
     };
   }, []);
 

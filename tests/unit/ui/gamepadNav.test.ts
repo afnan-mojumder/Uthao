@@ -40,6 +40,7 @@ import {
   rotateOverlaySignal,
   saveSlotsSignal,
   screenSignal,
+  settingsOpenSignal,
   settingsSignal,
   DEFAULT_SETTINGS,
   saveSettings,
@@ -67,6 +68,7 @@ function resetAllSignals(): void {
   saveSlotsSignal.value = { isOpen: false, mode: 'save' };
   phoneSignal.value = { ...phoneSignal.value, open: false };
   isGamepadRebindingSignal.value = false;
+  settingsOpenSignal.value = false;
   saveSettings({ ...DEFAULT_SETTINGS, muted: false });
 }
 
@@ -128,6 +130,14 @@ describe('uiModalOpen & system overlay guards', () => {
   it('returns false during active game when no overlay or modal is open', () => {
     expect(uiModalOpen(false)).toBe(false);
     expect(uiModalOpen(false, { ignoreTutorial: true })).toBe(false);
+  });
+
+  it('treats settingsOpenSignal as blocking in uiModalOpen() without DOM querySelector', () => {
+    settingsOpenSignal.value = true;
+    expect(uiModalOpen()).toBe(true);
+    expect(uiModalOpen(false)).toBe(true);
+    settingsOpenSignal.value = false;
+    expect(uiModalOpen()).toBe(false);
   });
 
   it.each([

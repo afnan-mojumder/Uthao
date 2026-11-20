@@ -16,6 +16,7 @@ import {
   rotateOverlaySignal,
   saveSlotsSignal,
   screenSignal,
+  settingsOpenSignal,
   tripSummarySignal,
   tutorialSignal,
   uiSheetSignal,
@@ -81,6 +82,7 @@ function isUiTarget(target: EventTarget | null): boolean {
 function defaultIsModalOpen(): boolean {
   if (
     pausedSignal.value ||
+    settingsOpenSignal.value ||
     loadingSignal.value.active ||
     contextLostSignal.value ||
     rotateOverlaySignal.value ||
@@ -215,11 +217,23 @@ export class InputManager {
     this.rawKeyboard = { ...this.rawKeyboard, ...raw };
   }
 
+  public isTouchThrottleActive(): boolean {
+    return this.throttleTouchIds.size > 0 || this.throttlePointerIds.size > 0;
+  }
+
+  public isTouchBrakeActive(): boolean {
+    return this.brakeTouchIds.size > 0 || this.brakePointerIds.size > 0;
+  }
+
+  public getTouchSteer(): number {
+    return this.touchSteer;
+  }
+
   public getTouchVisualState(): { throttle: boolean; brake: boolean; steer: number } {
     return {
-      throttle: this.throttleTouchIds.size > 0 || this.throttlePointerIds.size > 0,
-      brake: this.brakeTouchIds.size > 0 || this.brakePointerIds.size > 0,
-      steer: this.touchSteer,
+      throttle: this.isTouchThrottleActive(),
+      brake: this.isTouchBrakeActive(),
+      steer: this.getTouchSteer(),
     };
   }
 

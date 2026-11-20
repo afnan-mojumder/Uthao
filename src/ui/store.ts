@@ -412,13 +412,22 @@ export function saveSettings(settings: GameSettings): void {
 }
 
 export const settingsSignal = signal<GameSettings>(loadSettings());
+export const settingsOpenSignal = signal<boolean>(false);
 export const audioPreviewSignal = signal<AudioSettings | null>(null);
 export const audioPreviewSeqSignal = signal<number>(0);
 export const isGamepadRebindingSignal = signal<boolean>(false);
-export const touchFeedbackSignal = signal<{ throttle: boolean; brake: boolean; steer: number }>({
+export const touchFeedbackSignal = signal<{
+  throttle: boolean;
+  brake: boolean;
+  steer: number;
+  horn?: boolean;
+  camera?: boolean;
+}>({
   throttle: false,
   brake: false,
   steer: 0,
+  horn: false,
+  camera: false,
 });
 
 export const DEFAULT_HUD_STATE: HudState = {
@@ -677,6 +686,7 @@ if (typeof window !== 'undefined') {
     mapLiveSignal,
     encounterCueSignal,
     isGamepadRebindingSignal,
+    settingsOpenSignal,
   };
 }
 
@@ -811,6 +821,7 @@ export function exitToTitle(): void {
   phoneTabSignal.value = 'requests';
   contactsSelectedSignal.value = null;
   isGamepadRebindingSignal.value = false;
+  settingsOpenSignal.value = false;
   saveStatusSignal.value = null;
   saveSlotsSignal.value = { ...saveSlotsSignal.value, isOpen: false };
   screenSignal.value = 'title';

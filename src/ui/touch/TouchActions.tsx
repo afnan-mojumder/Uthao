@@ -31,9 +31,16 @@ function tapCode(code: string): void {
   window.dispatchEvent(new KeyboardEvent('keyup', { key, code }));
 }
 
+function setHoldFeedback(field: 'horn' | 'camera', down: boolean): void {
+  const prev = touchFeedbackSignal.value;
+  if (Boolean(prev[field]) === down) return;
+  touchFeedbackSignal.value = { ...prev, [field]: down };
+}
+
 /** Press a key the input manager reads while held (horn, camera). */
-function holdCode(code: string, down: boolean): void {
+function holdCode(code: string, down: boolean, field?: 'horn' | 'camera'): void {
   const key = code.startsWith('Key') ? code.slice(3).toLowerCase() : code;
+  if (field) setHoldFeedback(field, down);
   window.dispatchEvent(new KeyboardEvent(down ? 'keydown' : 'keyup', { key, code }));
 }
 
@@ -253,6 +260,7 @@ export function TouchActions(): JSX.Element {
       >
         <button
           type="button"
+          className="uthao-touch-icon-btn"
           data-testid="touch-btn-phone"
           aria-label={t('touch.phone')}
           title={t('touch.phone')}
@@ -263,6 +271,7 @@ export function TouchActions(): JSX.Element {
         </button>
         <button
           type="button"
+          className="uthao-touch-icon-btn"
           data-testid="touch-btn-map"
           aria-label={t('touch.map')}
           title={t('touch.map')}
@@ -273,6 +282,7 @@ export function TouchActions(): JSX.Element {
         </button>
         <button
           type="button"
+          className="uthao-touch-icon-btn"
           data-testid="touch-btn-garage"
           aria-label={t('touch.garage')}
           title={t('touch.garage')}
@@ -283,6 +293,7 @@ export function TouchActions(): JSX.Element {
         </button>
         <button
           type="button"
+          className="uthao-touch-icon-btn"
           data-testid="touch-btn-journal"
           aria-label={t('touch.journal')}
           title={t('touch.journal')}
@@ -293,6 +304,7 @@ export function TouchActions(): JSX.Element {
         </button>
         <button
           type="button"
+          className="uthao-touch-icon-btn"
           data-testid="touch-btn-karma"
           aria-label={t('touch.karma')}
           title={t('touch.karma')}
@@ -303,6 +315,7 @@ export function TouchActions(): JSX.Element {
         </button>
         <button
           type="button"
+          className="uthao-touch-icon-btn"
           data-testid="touch-btn-pause"
           aria-label={t('touch.pause')}
           title={t('touch.pause')}
@@ -313,27 +326,31 @@ export function TouchActions(): JSX.Element {
         </button>
         <button
           type="button"
+          className="uthao-touch-icon-btn"
           data-testid="touch-btn-horn"
+          data-active={feedback.horn ? 'true' : undefined}
           aria-label={t('touch.horn')}
           title={t('touch.horn')}
           style={iconStyle}
-          onPointerDown={() => holdCode(bindings.keyboard.horn[0] ?? 'KeyH', true)}
-          onPointerUp={() => holdCode(bindings.keyboard.horn[0] ?? 'KeyH', false)}
-          onPointerLeave={() => holdCode(bindings.keyboard.horn[0] ?? 'KeyH', false)}
-          onPointerCancel={() => holdCode(bindings.keyboard.horn[0] ?? 'KeyH', false)}
+          onPointerDown={() => holdCode(bindings.keyboard.horn[0] ?? 'KeyH', true, 'horn')}
+          onPointerUp={() => holdCode(bindings.keyboard.horn[0] ?? 'KeyH', false, 'horn')}
+          onPointerLeave={() => holdCode(bindings.keyboard.horn[0] ?? 'KeyH', false, 'horn')}
+          onPointerCancel={() => holdCode(bindings.keyboard.horn[0] ?? 'KeyH', false, 'horn')}
         >
           <IconBell size={18} />
         </button>
         <button
           type="button"
+          className="uthao-touch-icon-btn"
           data-testid="touch-btn-camera"
+          data-active={feedback.camera ? 'true' : undefined}
           aria-label={t('touch.camera')}
           title={t('touch.camera')}
           style={iconStyle}
-          onPointerDown={() => holdCode(bindings.keyboard.camera[0] ?? 'KeyC', true)}
-          onPointerUp={() => holdCode(bindings.keyboard.camera[0] ?? 'KeyC', false)}
-          onPointerLeave={() => holdCode(bindings.keyboard.camera[0] ?? 'KeyC', false)}
-          onPointerCancel={() => holdCode(bindings.keyboard.camera[0] ?? 'KeyC', false)}
+          onPointerDown={() => holdCode(bindings.keyboard.camera[0] ?? 'KeyC', true, 'camera')}
+          onPointerUp={() => holdCode(bindings.keyboard.camera[0] ?? 'KeyC', false, 'camera')}
+          onPointerLeave={() => holdCode(bindings.keyboard.camera[0] ?? 'KeyC', false, 'camera')}
+          onPointerCancel={() => holdCode(bindings.keyboard.camera[0] ?? 'KeyC', false, 'camera')}
         >
           <IconFullscreen size={18} />
         </button>

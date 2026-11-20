@@ -462,7 +462,15 @@ function DialogueSubtitleBubble({ subtitle }: { subtitle: NonNullable<HudState['
   );
 }
 
-function PassengerChip({ state, compact = false }: { state: HudState; compact?: boolean }): JSX.Element {
+function PassengerChip({
+  state,
+  compact = false,
+  maxWidth,
+}: {
+  state: HudState;
+  compact?: boolean;
+  maxWidth?: string;
+}): JSX.Element {
   const moodInfo = moodMeta(state.passengerStatus?.mood);
   const hasActivePassenger = Boolean(state.passengerStatus?.name || state.passengerStatus?.status === 'OnTrip');
   const displayName =
@@ -477,12 +485,12 @@ function PassengerChip({ state, compact = false }: { state: HudState; compact?: 
         border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.12))',
         backdropFilter: 'blur(8px)',
         borderRadius: '14px',
-        padding: compact ? '8px 12px' : '10px 16px',
+        padding: compact ? '6px 10px' : '10px 16px',
         display: 'flex',
         alignItems: 'center',
-        gap: '10px',
+        gap: compact ? '8px' : '10px',
         boxShadow: '0 6px 20px rgba(0, 0, 0, 0.45)',
-        maxWidth: compact ? '210px' : '260px',
+        maxWidth: maxWidth ?? (compact ? '210px' : '260px'),
       }}
     >
       <div
@@ -579,32 +587,56 @@ export function HudView({
           userSelect: 'none',
         }}
       >
-        {/* Top Helmet Visor Strip: District, Objective Pill, Rating & Clock */}
+        {/* Top Helmet Visor Strip: District, Objective Pill, Rating & Clock (+ Earnings on touch) */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px', width: '100%' }}>
           <DistrictBadge districtName={state.districtName} districtId={state.districtId} />
           <ObjectivePill state={state} compact={true} topOffsetPx={isTouch ? 56 : 0} />
-          <div
-            style={{
-              background: 'var(--surface-panel, rgba(15, 23, 42, 0.92))',
-              border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.12))',
-              borderRadius: '12px',
-              padding: '5px 10px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              fontSize: '12px',
-              fontWeight: 700,
-              backdropFilter: 'blur(8px)',
-            }}
-          >
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--dhaka-amber, #F59E0B)' }}>
-              <IconStar size={13} color="var(--dhaka-amber, #F59E0B)" />
-              {state.rating ? state.rating.toFixed(1) : '5.0'}
-            </span>
-            <span style={{ color: '#475569' }}>|</span>
-            <span style={{ color: 'var(--text-secondary, #CBD5E1)' }}>
-              {state.shiftClock} • {t('hud.day', { day: state.shiftDay || 1 })}
-            </span>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+            {isTouch && (
+              <div
+                data-testid="hud-earnings"
+                style={{
+                  background: 'var(--surface-panel, rgba(15, 23, 42, 0.92))',
+                  border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.12))',
+                  backdropFilter: 'blur(8px)',
+                  borderRadius: '12px',
+                  padding: '4px 10px',
+                  textAlign: 'right',
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)',
+                }}
+              >
+                <div style={{ fontSize: '10px', textTransform: 'uppercase', color: 'var(--text-muted, #94A3B8)', fontWeight: 700 }}>
+                  {t('hud.earnings', { amount: '' }).replace(/: ৳/, '')}
+                </div>
+                <div style={{ fontSize: '15px', fontWeight: 900, color: 'var(--uthao-green, #22C55E)', lineHeight: 1.2 }}>
+                  ৳{Math.round(state.todayNetEarnings)}
+                </div>
+              </div>
+            )}
+            <div
+              style={{
+                background: 'var(--surface-panel, rgba(15, 23, 42, 0.92))',
+                border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.12))',
+                borderRadius: '12px',
+                padding: isTouch ? '4px 8px' : '5px 10px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: isTouch ? '6px' : '8px',
+                fontSize: isTouch ? '11px' : '12px',
+                fontWeight: 700,
+                backdropFilter: 'blur(8px)',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--dhaka-amber, #F59E0B)' }}>
+                <IconStar size={isTouch ? 12 : 13} color="var(--dhaka-amber, #F59E0B)" />
+                {state.rating ? state.rating.toFixed(1) : '5.0'}
+              </span>
+              <span style={{ color: '#475569' }}>|</span>
+              <span style={{ color: 'var(--text-secondary, #CBD5E1)' }}>
+                {state.shiftClock} • {t('hud.day', { day: state.shiftDay || 1 })}
+              </span>
+            </div>
           </div>
         </div>
 
@@ -618,13 +650,20 @@ export function HudView({
               justifyContent: 'space-between',
               alignItems: 'flex-end',
               width: '100%',
-              gap: '10px',
+              gap: isTouch ? '6px' : '10px',
               paddingLeft: isTouch ? '27%' : undefined,
               paddingRight: isTouch ? '27%' : undefined,
               boxSizing: 'border-box',
             }}
           >
-            <PassengerChip state={state} compact={true} />
+            {isTouch ? (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '6px', minWidth: 0, maxWidth: '142px' }}>
+                <QuickActions state={state} compact={true} />
+                <PassengerChip state={state} compact={true} maxWidth="142px" />
+              </div>
+            ) : (
+              <PassengerChip state={state} compact={true} />
+            )}
 
             {/* Compact Instrument Pod on Handlebars */}
             <div
@@ -632,25 +671,27 @@ export function HudView({
               style={{
                 background: 'var(--surface-panel, rgba(15, 23, 42, 0.92))',
                 border: '2px solid var(--info-sky-border, rgba(56, 189, 248, 0.42))',
-                borderRadius: '18px',
-                padding: '10px 18px',
+                borderRadius: isTouch ? '14px' : '18px',
+                padding: isTouch ? '6px 8px' : '10px 18px',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '16px',
+                flexWrap: isTouch ? 'wrap' : 'nowrap',
+                gap: isTouch ? '6px' : '16px',
+                maxWidth: isTouch ? '156px' : undefined,
                 boxShadow: '0 8px 32px rgba(0, 0, 0, 0.7)',
                 backdropFilter: 'blur(8px)',
               }}
             >
               {/* Gear + Speed */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: isTouch ? '6px' : '10px' }}>
                 <span
                   data-testid="hud-gear"
                   style={{
-                    fontSize: '14px',
+                    fontSize: isTouch ? '12px' : '14px',
                     fontWeight: 800,
                     color: 'var(--info-sky, #38BDF8)',
                     background: 'var(--info-sky-dim, rgba(56, 189, 248, 0.2))',
-                    padding: '3px 8px',
+                    padding: isTouch ? '2px 6px' : '3px 8px',
                     borderRadius: '6px',
                   }}
                 >
@@ -660,7 +701,7 @@ export function HudView({
                   <div
                     id="hud-speed"
                     style={{
-                      fontSize: '28px',
+                      fontSize: isTouch ? '22px' : '28px',
                       fontWeight: 900,
                       lineHeight: 1,
                       color: '#ffffff',
@@ -669,18 +710,18 @@ export function HudView({
                   >
                     {Math.round(state.speedKmh)}
                   </div>
-                  <div style={{ fontSize: '11px', color: 'var(--text-muted, #94A3B8)', letterSpacing: '1px', fontWeight: 700 }}>
+                  <div style={{ fontSize: isTouch ? '10px' : '11px', color: 'var(--text-muted, #94A3B8)', letterSpacing: '1px', fontWeight: 700 }}>
                     {t('hud.speed_unit')}
                   </div>
                 </div>
               </div>
 
-              <div style={{ width: '1px', height: '36px', background: 'rgba(255, 255, 255, 0.15)' }} />
+              <div style={{ width: '1px', height: isTouch ? '28px' : '36px', background: 'rgba(255, 255, 255, 0.15)' }} />
 
               {/* Fuel & Bike Condition */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', minWidth: '100px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: isTouch ? '4px' : '6px', minWidth: isTouch ? '68px' : '100px' }}>
                 <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: 700, color: isLowFuel ? 'var(--danger-red, #EF4444)' : 'var(--text-muted, #94A3B8)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 700, color: isLowFuel ? 'var(--danger-red, #EF4444)' : 'var(--text-muted, #94A3B8)' }}>
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                       <IconFuel size={12} /> {t('hud.fuel')}
                     </span>
@@ -704,26 +745,40 @@ export function HudView({
               {/* Turn Guidance */}
               {state.nextTurn && (
                 <>
-                  <div style={{ width: '1px', height: '36px', background: 'rgba(255, 255, 255, 0.15)' }} />
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 700, color: 'var(--info-sky, #38BDF8)' }}>
-                    <TurnDirectionIcon direction={state.nextTurn.direction} size={18} />
-                    <span>{state.nextTurn.text}</span>
+                  {!isTouch && <div style={{ width: '1px', height: '36px', background: 'rgba(255, 255, 255, 0.15)' }} />}
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      fontSize: isTouch ? '11px' : '13px',
+                      fontWeight: 700,
+                      color: 'var(--info-sky, #38BDF8)',
+                      width: isTouch ? '100%' : undefined,
+                      borderTop: isTouch ? '1px solid rgba(255, 255, 255, 0.12)' : undefined,
+                      paddingTop: isTouch ? '4px' : undefined,
+                    }}
+                  >
+                    <TurnDirectionIcon direction={state.nextTurn.direction} size={isTouch ? 15 : 18} />
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{state.nextTurn.text}</span>
                   </div>
                 </>
               )}
 
-              {/* Earnings */}
-              <div data-testid="hud-earnings" style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: '15px', fontWeight: 800, color: 'var(--uthao-green, #22C55E)' }}>
-                  ৳{Math.round(state.todayNetEarnings)}
+              {/* Earnings (desktop handlebar pod only; touch renders in top-right) */}
+              {!isTouch && (
+                <div data-testid="hud-earnings" style={{ textAlign: 'right' }}>
+                  <div style={{ fontSize: '15px', fontWeight: 800, color: 'var(--uthao-green, #22C55E)' }}>
+                    ৳{Math.round(state.todayNetEarnings)}
+                  </div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted, #94A3B8)' }}>
+                    {state.shiftClock}
+                  </div>
                 </div>
-                <div style={{ fontSize: '11px', color: 'var(--text-muted, #94A3B8)' }}>
-                  {state.shiftClock}
-                </div>
-              </div>
+              )}
             </div>
 
-            <QuickActions state={state} compact={true} />
+            {!isTouch && <QuickActions state={state} compact={true} />}
           </div>
         </div>
       </div>

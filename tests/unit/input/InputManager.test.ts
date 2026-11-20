@@ -663,4 +663,49 @@ describe('P6.4 Input ergonomics, latch safety, deadzones, and modal isolation', 
     expect(input.read().brake).toBe(0);
     expect(input.read().steer).toBe(0);
   });
+
+  it('exposes allocation-free scalar touch state getters matching active touch pads and steer', () => {
+    const winListeners: Record<string, (e: unknown) => void> = {};
+    const W = 915;
+    const H = 412;
+    vi.stubGlobal('window', {
+      innerWidth: W,
+      innerHeight: H,
+      addEventListener: (type: string, fn: (e: unknown) => void) => {
+        winListeners[type] = fn;
+      },
+      removeEventListener: () => {},
+    });
+
+    const input = new InputManager({ bindings: DEFAULT_BINDINGS });
+    const layout = touchLayout(W, H);
+
+    expect(input.isTouchThrottleActive()).toBe(false);
+    expect(input.isTouchBrakeActive()).toBe(false);
+    expect(input.getTouchSteer()).toBe(0);
+
+    winListeners.touchstart!({
+      target: null,
+      changedTouches: [
+        { identifier: 1, clientX: layout.throttlePad.x + 5, clientY: layout.throttlePad.y + 5 },
+        { identifier: 2, clientX: layout.brakePad.x + 5, clientY: layout.brakePad.y + 5 },
+        { identifier: 3, clientX: layout.steerZone.x + 30, clientY: layout.steerZone.y + 10 },
+      ],
+      touches: { length: 3 },
+    });
+    winListeners.touchmove!({
+      target: null,
+      changedTouches: [{ identifier: 3, clientX: layout.steerZone.x + 90, clientY: layout.steerZone.y + 10 }],
+      touches: { length: 3 },
+    });
+
+    expect(input.isTouchThrottleActive()).toBe(true);
+    expect(input.isTouchBrakeActive()).toBe(true);
+    expect(input.getTouchSteer()).toBeGreaterThan(0);
+
+    winListeners.touchend!({ changedTouches: [], touches: { length: 0 } });
+    expect(input.isTouchThrottleActive()).toBe(false);
+    expect(input.isTouchBrakeActive()).toBe(false);
+    expect(input.getTouchSteer()).toBe(0);
+  });
 });

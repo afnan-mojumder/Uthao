@@ -419,4 +419,156 @@ test.describe('mobile landscape touch ergonomics (P6.4)', () => {
       expect(report.overlaps, `overlaps at ${vp.width}x${vp.height}`).toEqual([]);
     }
   });
+
+  test('first-person HUD with active ride & quick actions has zero overlap and fits viewport at 915x412 and 667x375', async ({
+    page,
+  }, testInfo) => {
+    test.skip(testInfo.project.name !== 'pixel7', 'TouchActions only renders on touch devices');
+    test.setTimeout(60000);
+
+    for (const vp of [
+      { width: 915, height: 412 },
+      { width: 667, height: 375 },
+    ]) {
+      await page.setViewportSize(vp);
+      await page.goto('/?debug=1&district=testloop&encounters=0');
+      await page.waitForSelector('#game-canvas', { timeout: 30000 });
+      await expect(page.locator('#hud')).toBeVisible({ timeout: 15000 });
+      await expect(page.getByTestId('touch-actions')).toBeVisible({ timeout: 15000 });
+
+      await page.evaluate(() => {
+        window.__uthao?.toggleCamera();
+        const ui = (window as unknown as { __uthaoUi?: { hudSignal: { value: Record<string, unknown> } } }).__uthaoUi;
+        if (ui) {
+          ui.hudSignal.value = {
+            ...ui.hudSignal.value,
+            isFirstPerson: true,
+            nearStation: true,
+            canRecoverBike: true,
+            nextTurn: { direction: 'right', text: 'Turn right in 50m' },
+            passengerStatus: { status: 'OnTrip', name: 'Nabila', mood: 0.85 },
+            etaMinutes: 4,
+          };
+        }
+      });
+
+      await expect(page.getByTestId('hud-first-person')).toBeVisible({ timeout: 5000 });
+
+      const report = await page.evaluate(
+        ({ vw, vh }) => {
+          const touchIds = ['touch-zone-steer', 'touch-zone-throttle', 'touch-zone-brake', 'touch-icons'];
+          const hudIds = [
+            'hud-district',
+            'hud-objective-pill',
+            'hud-earnings',
+            'hud-passenger-status',
+            'hud-quick-actions',
+            'hud-speed-pod',
+          ];
+
+          const boxOf = (id: string) => {
+            const el = document.querySelector(`[data-testid="${id}"]`);
+            if (!el) return null;
+            const r = el.getBoundingClientRect();
+            return { id, left: r.left, top: r.top, right: r.right, bottom: r.bottom, width: r.width, height: r.height };
+          };
+
+          const touchBoxes = touchIds.map(boxOf);
+          const hudBoxes = hudIds.map(boxOf);
+
+          const missingHud = hudIds.filter((_id, i) => !hudBoxes[i] || hudBoxes[i]!.width <= 0 || hudBoxes[i]!.height <= 0);
+          const overlaps: string[] = [];
+          for (const tb of touchBoxes) {
+            if (!tb) continue;
+            for (const hb of hudBoxes) {
+              if (!hb) continue;
+              const inter = !(tb.right <= hb.left + 1 || hb.right <= tb.left + 1 || tb.bottom <= hb.top + 1 || hb.bottom <= tb.top + 1);
+              if (inter) overlaps.push(`${tb.id}<->${hb.id}`);
+            }
+          }
+
+          const outOfBounds: string[] = [];
+          for (const b of [...touchBoxes, ...hudBoxes]) {
+            if (!b) continue;
+            if (b.left < -1 || b.top < -1 || b.right > vw + 1 || b.bottom > vh + 1) {
+              outOfBounds.push(`${b.id}(${Math.round(b.left)},${Math.round(b.top)},${Math.round(b.right)},${Math.round(b.bottom)})`);
+            }
+          }
+
+          return { missingHud, overlaps, outOfBounds };
+        },
+        { vw: vp.width, vh: vp.height }
+      );
+
+      expect(report.missingHud, `missing first-person hud at ${vp.width}x${vp.height}`).toEqual([]);
+      expect(report.overlaps, `first-person overlaps at ${vp.width}x${vp.height}`).toEqual([]);
+      expect(report.outOfBounds, `first-person outOfBounds at ${vp.width}x${vp.height}`).toEqual([]);
+    }
+  });
+
+  test('dual L/R buttons steer mode renders >=44px buttons with zero overlap at 915x412 and 667x375', async ({
+    page,
+  }, testInfo) => {
+    test.skip(testInfo.project.name !== 'pixel7', 'TouchActions only renders on touch devices');
+    test.setTimeout(60000);
+
+    for (const vp of [
+      { width: 915, height: 412 },
+      { width: 667, height: 375 },
+    ]) {
+      await page.setViewportSize(vp);
+      await page.goto('/?debug=1&district=testloop&encounters=0');
+      await page.waitForSelector('#game-canvas', { timeout: 30000 });
+      await expect(page.locator('#hud')).toBeVisible({ timeout: 15000 });
+
+      await page.evaluate(() => {
+        const ui = (
+          window as unknown as {
+            __uthaoUi?: { settingsSignal: { value: { controls?: Record<string, unknown> } & Record<string, unknown> } };
+          }
+        ).__uthaoUi;
+        if (ui) {
+          const prev = ui.settingsSignal.value;
+          ui.settingsSignal.value = {
+            ...prev,
+            controls: { ...(prev.controls ?? {}), touchSteerMode: 'buttons' },
+          };
+        }
+      });
+
+      await expect(page.getByTestId('touch-steer-left')).toBeVisible({ timeout: 5000 });
+      await expect(page.getByTestId('touch-steer-right')).toBeVisible({ timeout: 5000 });
+
+      const report = await page.evaluate(() => {
+        const left = document.querySelector('[data-testid="touch-steer-left"]')?.getBoundingClientRect();
+        const right = document.querySelector('[data-testid="touch-steer-right"]')?.getBoundingClientRect();
+        const steer = document.querySelector('[data-testid="touch-zone-steer"]')?.getBoundingClientRect();
+        const hudIds = ['hud-minimap-host', 'hud-passenger-status', 'hud-speed-pod'];
+        const overlaps: string[] = [];
+        if (steer) {
+          for (const id of hudIds) {
+            const r = document.querySelector(`[data-testid="${id}"]`)?.getBoundingClientRect();
+            if (!r) continue;
+            const inter = !(steer.right <= r.left + 1 || r.right <= steer.left + 1 || steer.bottom <= r.top + 1 || r.bottom <= steer.top + 1);
+            if (inter) overlaps.push(`touch-zone-steer<->${id}`);
+          }
+        }
+        return {
+          leftSize: left ? { w: left.width, h: left.height } : null,
+          rightSize: right ? { w: right.width, h: right.height } : null,
+          lrDisjoint: Boolean(left && right && left.right <= right.left + 1),
+          overlaps,
+        };
+      });
+
+      expect(report.leftSize).not.toBeNull();
+      expect(report.leftSize!.w).toBeGreaterThanOrEqual(44);
+      expect(report.leftSize!.h).toBeGreaterThanOrEqual(44);
+      expect(report.rightSize).not.toBeNull();
+      expect(report.rightSize!.w).toBeGreaterThanOrEqual(44);
+      expect(report.rightSize!.h).toBeGreaterThanOrEqual(44);
+      expect(report.lrDisjoint).toBe(true);
+      expect(report.overlaps).toEqual([]);
+    }
+  });
 });
