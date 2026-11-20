@@ -70,7 +70,7 @@ export const BASE_REPAIR_COSTS: Record<RepairItem, number> = {
   engine: 400,
   tires: 250,
   brakes: 200,
-  oil: BALANCE.WEAR.oilCost, // 350
+  oil: BALANCE.WEAR.oilCost,
   full: 1200,
 };
 

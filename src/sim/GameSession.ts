@@ -1428,9 +1428,20 @@ export class GameSession {
     onEncounter?: (instance: EncounterInstance) => string | undefined
   ): number {
     let resolved = 0;
-    while (this.gm.eventDirector.activeEncounter && onEncounter) {
+    const defaultFallbacks = ['decline', 'refuse', 'cancel', 'stay_app', 'continue', 'wait', 'standard'];
+    while (this.gm.eventDirector.activeEncounter) {
       const inst = this.gm.eventDirector.activeEncounter;
-      const picked = onEncounter(inst) ?? inst.choices[0]?.id;
+      let picked = onEncounter ? onEncounter(inst) : undefined;
+      if (!picked) {
+        for (const id of defaultFallbacks) {
+          if (inst.choices.some((c) => c.id === id)) {
+            picked = id;
+            break;
+          }
+        }
+      }
+      picked ??=
+        inst.choices.find((c) => c.kind === 'neutral')?.id ?? inst.choices[0]?.id;
       if (!picked) break;
       const ok = this.gm.dispatch({
         type: 'chooseEncounterOption',
@@ -1552,6 +1563,15 @@ export class GameSession {
         this.pose.speed = cruiseMs;
 
         this.syncLocation();
+        if (!this.gm.shiftEnded) {
+          this.gm.deliveryManager.updateProximity(
+            this.bike.x,
+            this.bike.z,
+            this.road,
+            this.gm.clock.minutes,
+            this.gm.clock.day
+          );
+        }
         this.checkMissionPois();
         const phase: EncounterPhase = hasPassenger ? 'onTrip' : 'atPickup';
         this.gm.tick(chunkDt, cruiseMs * 3.6, phase, false);
@@ -1807,6 +1827,18 @@ export class GameSession {
           encountersResolved += this.resolveEncounterIfAny(opts.onEncounter);
         }
 
+        if (this.ride.getTripState() === 'EmergencyInterrupted') {
+          encountersResolved += this.resolveEncounterIfAny(opts.onEncounter);
+          if (this.ride.getTripState() === 'EmergencyInterrupted') {
+            const req = this.ride.getActiveRequest();
+            if (this.gm.story.branchFlags['accidentSerious'] && req) {
+              this.ride.cancel(req.requestId, 'system', 'accident');
+            } else {
+              this.ride.resumeTrip();
+            }
+          }
+        }
+
         const destNode = this.road.getNode(activeReq.destinationNodeId);
         if (destNode && this.ride.getActiveRequest() && this.ride.getTripState() === 'EnRouteToDestination') {
           this.bike.x = destNode.x;
@@ -1828,6 +1860,15 @@ export class GameSession {
         }
       }
 
+      // Ensure no encounter or EmergencyInterrupted state remains dangling at exit
+      encountersResolved += this.resolveEncounterIfAny(opts.onEncounter);
+      if (this.ride.getTripState() === 'EmergencyInterrupted') {
+        const req = this.ride.getActiveRequest();
+        if (req) {
+          this.ride.cancel(req.requestId, 'system', 'accident');
+        }
+      }
+
       // Allow roaming encounters triggered by flags (e.g. policeViolation) to fire at drop-off stop
       if (!this.ride.getActiveRequest() && opts.onEncounter && !this.gm.shiftEnded) {
         this.bike.speed = 0;
@@ -1839,14 +1880,14 @@ export class GameSession {
         (this.gm.clock.day - startDay) * 1440 + this.gm.clock.minutes - startMin;
       const fuelLiters = Math.max(0, startFuel - this.gm.economyManager.fuelLevel);
 
-      let status: FastForwardTripResult['status'] = 'completed';
+      let status: FastForwardTripResult['status'];
       if (completedReceipt) {
         status = 'completed';
       } else if (this.ride.getPendingDispute()) {
         status = 'disputed';
       } else if (cancelledReason === 'noShow') {
         status = 'noShow';
-      } else if (cancelledReason !== null) {
+      } else {
         status = 'cancelled';
       }
 

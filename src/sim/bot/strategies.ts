@@ -903,6 +903,17 @@ function moveBikeToNode(session: GameSession, nodeId: string): void {
   session.gm.syncPlayerLocation(nodeId, 0, nodeId === 'N7');
 }
 
+function chargePhoneAtHomeIfLow(session: GameSession): void {
+  const { gm } = session;
+  if (gm.economyManager.phoneBattery >= 25) return;
+  const prevX = session.bike.x;
+  const prevZ = session.bike.z;
+  moveBikeToNode(session, gm.homeNodeId);
+  gm.dispatch({ type: 'chargePhone', location: 'home' });
+  session.bike.x = prevX;
+  session.bike.z = prevZ;
+}
+
 function serviceBikeOnSession(session: GameSession, strategy: BotStrategy): number {
   const { gm } = session;
   const em = gm.economyManager;
@@ -978,7 +989,7 @@ function runDayOnSession(
   let fuelCostFromLedger = 0;
 
   // Ensure phone is charged and tank is topped up cleanly at start of shift when affordable
-  em.phoneBattery = 100;
+  chargePhoneAtHomeIfLow(session);
   serviceBikeOnSession(session, strategy);
 
   const eligible = session.requests.getEligibleNodeIds();
@@ -1027,10 +1038,8 @@ function runDayOnSession(
     );
     if (!sampled) continue;
 
-    // Keep phone topped up at teaStall/home if low during long shifts
-    if (em.phoneBattery < 25) {
-      em.phoneBattery = 100;
-    }
+    // Keep phone topped up at home if low during long shifts
+    chargePhoneAtHomeIfLow(session);
 
     const ride = executeRideOnSession(
       session,
@@ -1361,7 +1370,7 @@ export function simulateRides(
       session.gm.economyManager.cash = Math.max(session.gm.economyManager.cash, 1000);
     }
     session.gm.clock.minutes = currentMinute;
-    session.gm.economyManager.phoneBattery = 100;
+    chargePhoneAtHomeIfLow(session);
 
     const weatherRoll = rng.next();
     const weather: WeatherKind =

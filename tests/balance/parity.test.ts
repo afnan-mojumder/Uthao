@@ -167,4 +167,62 @@ describe('Real-Code Bot & FastForward Parity (P5.3 / T11.3)', () => {
     expect(campRes.meters!.riderIntegrity).toBeGreaterThanOrEqual(0);
     expect(campRes.meters!.publicReputation).toBeGreaterThanOrEqual(0);
   });
+
+  it('fastForwardTrip({ crashed: true }) without onEncounter never returns completed+null receipt or strands EmergencyInterrupted', () => {
+    let sawAccident = false;
+    for (const seed of [1, 2, 7, 15, 42]) {
+      const road = createBalanceNetwork();
+      const gm = new GameManager({ seed, mode: 'career', data: {} });
+      gm.clock.minutes = 600;
+      const session = new GameSession({ gm, road, autoRequests: false, negotiation: false });
+      gm.eventDirector.enabled = true;
+      gm.eventDirector.pauseOnDecisions = false;
+      gm.bus.on('encounter/started', (ev) => {
+        if (ev.instance.encounterId === 'enc_accident_aftermath') sawAccident = true;
+      });
+      session.spawnAtHome();
+      gm.economyManager.fuelLevel = 5.0;
+
+      const startNode = road.nearestNode(session.bike.x, session.bike.z)?.nodeId ?? 'N1';
+      const sampled = session.requests.sampleRequest(600, gm.weather, 'app', startNode);
+      expect(sampled).not.toBeNull();
+      const req = sampled!.request;
+
+      session.ride.offer(req);
+      expect(session.ride.accept(req.requestId, startNode)).toBe(true);
+
+      const res = session.fastForwardTrip({ crashed: true });
+      if (res.status === 'completed') {
+        expect(res.receipt).not.toBeNull();
+      } else {
+        expect(res.receipt).toBeNull();
+      }
+      expect(session.ride.getTripState()).not.toBe('EmergencyInterrupted');
+      expect(gm.eventDirector.activeEncounter).toBeNull();
+    }
+    expect(sawAccident).toBe(true);
+  });
+
+  it('fastForwardTrip interrupted by shift end never misreports completed with null receipt', () => {
+    const road = createBalanceNetwork();
+    const gm = new GameManager({ seed: 9, mode: 'career', data: {} });
+    gm.clock.minutes = 22 * 60 + 58;
+    const session = new GameSession({ gm, road, autoRequests: false, negotiation: false });
+    gm.eventDirector.enabled = true;
+    gm.eventDirector.pauseOnDecisions = false;
+    session.spawnAtHome();
+
+    const startNode = road.nearestNode(session.bike.x, session.bike.z)?.nodeId ?? 'N1';
+    const sampled = session.requests.sampleRequest(gm.clock.minutes, gm.weather, 'app', startNode);
+    expect(sampled).not.toBeNull();
+    session.ride.offer(sampled!.request);
+    expect(session.ride.accept(sampled!.request.requestId, startNode)).toBe(true);
+
+    const res = session.fastForwardTrip({ idleMin: 5 });
+    if (res.receipt === null) {
+      expect(res.status).not.toBe('completed');
+    }
+    expect(session.ride.getTripState()).not.toBe('EmergencyInterrupted');
+    expect(gm.eventDirector.activeEncounter).toBeNull();
+  });
 });
