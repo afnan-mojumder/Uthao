@@ -544,5 +544,8 @@
   "map.selected_junction": "মোড় {id}",
   "map.district_tag": "এলাকা: {name}",
   "map.active_hazard": "চলমান সড়ক সমস্যা",
-  "map.active_story": "গল্পের গন্তব্য"
+  "map.active_story": "গল্পের গন্তব্য",
+  "map.zoom_in": "মানচিত্র বড় করুন",
+  "map.zoom_out": "মানচিত্র ছোট করুন",
+  "save.delete_slot": "সেভ স্লট মুছুন"
 }

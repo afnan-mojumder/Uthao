@@ -155,7 +155,7 @@ export function Contacts({
                     {t('phone.contacts.locked')}
                   </span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
-                    <span style={{ fontSize: '11px', color: '#64748b' }}>
+                    <span style={{ fontSize: '11px', color: '#94a3b8' }}>
                       {t('phone.contacts.relationship')}: {rel} / 15
                     </span>
                     <div
@@ -185,8 +185,6 @@ export function Contacts({
           return (
             <div
               key={char.id}
-              data-testid={`contact-item-${char.id}`}
-              onClick={() => handleSelectChar(isSelected ? null : char.id)}
               style={{
                 background: isSelected ? 'rgba(30, 41, 59, 0.85)' : 'rgba(15, 23, 42, 0.7)',
                 border: isSelected
@@ -194,16 +192,34 @@ export function Contacts({
                   : '1px solid rgba(255, 255, 255, 0.08)',
                 borderRadius: '12px',
                 padding: '12px',
-                cursor: 'pointer',
                 transition: 'all 0.15s ease',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '8px',
               }}
             >
-              {/* Row: Avatar + Name/Role + Phone */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              {/* Expandable Contact Header Button */}
+              <button
+                type="button"
+                data-testid={`contact-item-${char.id}`}
+                aria-expanded={isSelected}
+                onClick={() => handleSelectChar(isSelected ? null : char.id)}
+                style={{
+                  width: '100%',
+                  background: 'transparent',
+                  border: 'none',
+                  padding: 0,
+                  margin: 0,
+                  color: 'inherit',
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                }}
+              >
                 <div
+                  aria-hidden="true"
                   style={{
                     width: '40px',
                     height: '40px',
@@ -214,13 +230,14 @@ export function Contacts({
                     alignItems: 'center',
                     justifyContent: 'center',
                     fontSize: '20px',
+                    flexShrink: 0,
                   }}
                 >
                   {getCharacterIcon(char.id)}
                 </div>
 
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
                     <span style={{ fontSize: '14px', fontWeight: 700, color: '#f8fafc' }}>
                       {t(char.nameKey)}
                     </span>
@@ -247,16 +264,17 @@ export function Contacts({
                     flexDirection: 'column',
                     alignItems: 'flex-end',
                     gap: '2px',
+                    flexShrink: 0,
                   }}
                 >
                   <span style={{ fontSize: '12px', fontWeight: 800, color: '#22c55e' }}>
                     {rel}
                   </span>
-                  <span style={{ fontSize: '9px', color: '#64748b', textTransform: 'uppercase' }}>
+                  <span style={{ fontSize: '9px', color: '#94a3b8', textTransform: 'uppercase' }}>
                     {t('phone.contacts.relationship')}
                   </span>
                 </div>
-              </div>
+              </button>
 
               {/* Expanded details when selected */}
               {isSelected && (
@@ -278,7 +296,7 @@ export function Contacts({
                   )}
 
                   <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                    <span style={{ color: '#64748b' }}>{t('phone.contacts.hours')}:</span>
+                    <span style={{ color: '#94a3b8' }}>{t('phone.contacts.hours')}:</span>
                     <span style={{ fontWeight: 600 }}>
                       {char.preferredTimes
                         .map((pt) => `${formatTime(pt.startMinute)} - ${formatTime(pt.endMinute)}`)
@@ -297,6 +315,7 @@ export function Contacts({
                       style={{
                         marginTop: '6px',
                         padding: '8px',
+                        minHeight: '44px',
                         borderRadius: '8px',
                         background: '#22c55e',
                         border: 'none',
@@ -310,7 +329,7 @@ export function Contacts({
                         gap: '6px',
                       }}
                     >
-                      <span>📞</span>
+                      <span aria-hidden="true">📞</span>
                       <span>{t('phone.contacts.call')}</span>
                     </button>
                   )}

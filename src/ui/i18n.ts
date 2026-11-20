@@ -34,6 +34,9 @@ const languageSignal = signal<Language>('bn');
 
 export function setLanguage(lang: Language): void {
   languageSignal.value = lang;
+  if (typeof document !== 'undefined' && document.documentElement) {
+    document.documentElement.lang = lang;
+  }
 }
 
 export function getLanguage(): Language {

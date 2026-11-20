@@ -160,8 +160,9 @@ if (isMapTool) {
 }
 
 async function bootGame(): Promise<void> {
-  // The saved language applies before the first render.
+  // The saved language and document settings (including prefers-reduced-motion default) apply before the first render.
   setLanguage(settingsSignal.value.language);
+  applyDocumentSettings(settingsSignal.value);
 
   setLoadingStage('loading.boot', 0);
 

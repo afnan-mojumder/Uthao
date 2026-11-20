@@ -1,4 +1,6 @@
 import type { ComponentChildren, CSSProperties, JSX } from 'preact';
+import { ModalFocusGuard } from '../focusTrap';
+import { t } from '../i18n';
 import { Z_LAYER } from '../store';
 import { IconCheck, IconClose, IconMapPin, IconStar, IconUser } from './icons';
 
@@ -465,7 +467,7 @@ export function NotificationToast({
         <button
           type="button"
           onClick={onDismiss}
-          aria-label="Dismiss"
+          aria-label={t('btn_close')}
           style={{
             background: 'transparent',
             border: 'none',
@@ -584,7 +586,7 @@ export function ModalPanel({
   title,
   subtitle,
   onClose,
-  closeLabel = 'Close',
+  closeLabel,
   ariaLabel,
   ariaLabelledBy,
   zIndex = Z_LAYER.MODAL,
@@ -667,7 +669,7 @@ export function ModalPanel({
             {onClose && (
               <button
                 type="button"
-                aria-label={closeLabel}
+                aria-label={closeLabel ?? t('btn_close')}
                 onClick={onClose}
                 style={{
                   minWidth: 'var(--touch-target-min, 44px)',
@@ -688,7 +690,10 @@ export function ModalPanel({
             )}
           </div>
         )}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', ...contentStyle }}>{children}</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', ...contentStyle }}>
+          <ModalFocusGuard />
+          {children}
+        </div>
       </div>
     </div>
   );

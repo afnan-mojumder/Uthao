@@ -1,11 +1,12 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import fs from 'node:fs';
-import { render, h } from 'preact';
+import { render, h, type ComponentChildren } from 'preact';
 import { act } from 'preact/test-utils';
 import {
   DEFAULT_SETTINGS,
   loadSettings,
   saveSettings,
+  resetSettingsMemoryForTest,
   settingsSignal,
   screenSignal,
   loadingSignal,
@@ -18,6 +19,18 @@ import {
   type GameSettings,
 } from '../../../src/ui/store';
 import { setLanguage } from '../../../src/ui/i18n';
+import { makeRestInert } from '../../../src/ui/focusTrap';
+import { moveFocus, confirmFocus } from '../../../src/ui/gamepadNav';
+import { Contacts } from '../../../src/ui/phone/Contacts';
+import { Phone } from '../../../src/ui/phone/Phone';
+import { MapScreen } from '../../../src/ui/map/MapScreen';
+import { SaveSlots } from '../../../src/ui/menus/SaveSlots';
+import { Journal } from '../../../src/ui/journal/Journal';
+import { KarmaPanel } from '../../../src/ui/karma/KarmaPanel';
+import { UiSheet } from '../../../src/ui/sheet/UiSheet';
+import { ChoiceCardView } from '../../../src/ui/choice/ChoiceCard';
+import { SaveSystem, MemoryStorageAdapter } from '../../../src/sim/save/SaveSystem';
+import { GameManager } from '../../../src/sim/GameManager';
 import { Settings } from '../../../src/ui/menus/Settings';
 import { Pause } from '../../../src/ui/menus/Pause';
 import { DayEnd } from '../../../src/ui/menus/DayEnd';
@@ -127,6 +140,47 @@ class FakeElement {
 
   set className(val: string) {
     this.setAttribute('class', val);
+  }
+
+  get disabled(): boolean {
+    return this.hasAttribute('disabled');
+  }
+
+  set disabled(val: boolean) {
+    if (val) this.setAttribute('disabled', '');
+    else this.removeAttribute('disabled');
+  }
+
+  getContext(): null {
+    return null;
+  }
+
+  getClientRects(): DOMRect[] {
+    return [{ left: 0, top: 0, right: 100, bottom: 40, width: 100, height: 40 } as DOMRect];
+  }
+
+  getBoundingClientRect(): DOMRect {
+    return {
+      left: Number(this.dataset.left ?? 0),
+      top: Number(this.dataset.top ?? 0),
+      right: Number(this.dataset.left ?? 0) + 100,
+      bottom: Number(this.dataset.top ?? 0) + 40,
+      width: 100,
+      height: 40,
+      x: Number(this.dataset.left ?? 0),
+      y: Number(this.dataset.top ?? 0),
+      toJSON: () => ({}),
+    } as DOMRect;
+  }
+
+  closest(selector: string): FakeElement | null {
+    if (matchesSelector(this, selector)) return this;
+    let cur: FakeElement | null = this.parentNode;
+    while (cur) {
+      if (matchesSelector(cur, selector)) return cur;
+      cur = cur.parentNode;
+    }
+    return null;
   }
 
   get textContent(): string {
@@ -273,14 +327,17 @@ function installDomEnv(): { root: FakeElement; cleanup: () => void } {
     querySelector: (sel: string) => body.querySelector(sel),
     querySelectorAll: (sel: string) => body.querySelectorAll(sel),
     getElementById: (id: string) => body.querySelector(`#${id}`),
+    addEventListener: (type: string, fn: EventListener) => body.addEventListener(type, fn),
+    removeEventListener: (type: string, fn: EventListener) => body.removeEventListener(type, fn),
   };
 
   const fakeWin = {
     innerWidth: 1280,
     innerHeight: 720,
+    devicePixelRatio: 1,
     location: { search: '' },
-    addEventListener: () => {},
-    removeEventListener: () => {},
+    addEventListener: (type: string, fn: EventListener) => body.addEventListener(type, fn),
+    removeEventListener: (type: string, fn: EventListener) => body.removeEventListener(type, fn),
   };
 
   globalThis.HTMLElement = FakeElement as unknown as typeof HTMLElement;
@@ -601,5 +658,385 @@ describe('Accessibility & Localisation (T6.3 + P6.1)', () => {
       render(null, dom.root as unknown as Element);
     });
     expect(isGamepadRebindingSignal.value).toBe(false);
+  });
+});
+
+describe('P6.5 WCAG AA Accessibility Sweep', () => {
+  let dom: { root: FakeElement; cleanup: () => void };
+
+  beforeEach(() => {
+    dom = installDomEnv();
+    setLanguage('en');
+    exitToTitle();
+    loadingSignal.value = { active: false, stageKey: 'loading.boot', progress: 0 };
+    unsupportedSignal.value = null;
+    rotateOverlaySignal.value = false;
+    contextLostSignal.value = false;
+    pausedSignal.value = false;
+  });
+
+  afterEach(async () => {
+    exitToTitle();
+    act(() => {
+      render(null, dom.root as unknown as Element);
+    });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    dom.cleanup();
+  });
+
+  it('makeRestInert handles stacked modals safely without self-inerting or leaking inert, and gamepadNav skips [inert]', () => {
+    const bgBtn = document.createElement('button') as unknown as FakeElement;
+    bgBtn.id = 'bg-btn';
+    bgBtn.dataset.top = '0';
+
+    const modalA = document.createElement('div') as unknown as FakeElement;
+    modalA.id = 'modal-a';
+    const modalABtn = document.createElement('button') as unknown as FakeElement;
+    modalABtn.id = 'modal-a-btn';
+    modalABtn.dataset.top = '50';
+    modalA.appendChild(modalABtn);
+
+    const modalB = document.createElement('div') as unknown as FakeElement;
+    modalB.id = 'modal-b';
+    const modalBBtn = document.createElement('button') as unknown as FakeElement;
+    modalBBtn.id = 'modal-b-btn';
+    modalBBtn.dataset.top = '100';
+    modalB.appendChild(modalBBtn);
+
+    dom.root.appendChild(bgBtn as unknown as FakeNode);
+    dom.root.appendChild(modalA as unknown as FakeNode);
+    dom.root.appendChild(modalB as unknown as FakeNode);
+
+    const releaseA = makeRestInert(modalA as unknown as HTMLElement);
+    expect(bgBtn.hasAttribute('inert')).toBe(true);
+    expect(modalA.hasAttribute('inert')).toBe(false);
+
+    // Gamepad focus moves only to non-inert elements (modalA + modalB right now)
+    (document as unknown as { activeElement: FakeElement | null }).activeElement = null;
+    moveFocus('down');
+    expect((document.activeElement as unknown as FakeElement)?.id).not.toBe('bg-btn');
+
+    // Open Modal B on top of Modal A -> Modal A and bgBtn are inert; Modal B is NOT inert
+    const releaseB = makeRestInert(modalB as unknown as HTMLElement);
+    expect(bgBtn.hasAttribute('inert')).toBe(true);
+    expect(modalA.hasAttribute('inert')).toBe(true);
+    expect(modalB.hasAttribute('inert')).toBe(false);
+
+    // Confirm gamepad focus lands only inside Modal B
+    (document as unknown as { activeElement: FakeElement | null }).activeElement = null;
+    let clicked = false;
+    modalBBtn.addEventListener('click', () => {
+      clicked = true;
+    });
+    confirmFocus(); // focuses modalBBtn (the only non-inert focusable)
+    expect((document.activeElement as unknown as FakeElement)?.id).toBe('modal-b-btn');
+    confirmFocus(); // clicks modalBBtn
+    expect(clicked).toBe(true);
+
+    // Close Modal A while Modal B is STILL open -> bgBtn must remain inert!
+    releaseA();
+    expect(bgBtn.hasAttribute('inert')).toBe(true);
+    expect(modalB.hasAttribute('inert')).toBe(false);
+
+    // Close Modal B -> zero inert attributes remain anywhere
+    releaseB();
+    expect(dom.root.querySelectorAll('[inert]')).toHaveLength(0);
+  });
+
+  it('all 13 modals expose role="dialog", aria-modal="true", and trap background with makeRestInert', () => {
+    const saveSys = new SaveSystem(new MemoryStorageAdapter());
+    const gm = new GameManager({ seed: 1, mode: 'career', data: {} });
+    const snapshot = gm.snapshot();
+
+    const modalCases: Array<{ name: string; vnode: ComponentChildren }> = [
+      {
+        name: 'SaveSlots',
+        vnode: h(SaveSlots, { isOpen: true, mode: 'save', onClose: () => {}, onSelectSlot: () => {}, saveSystem: saveSys }),
+      },
+      {
+        name: 'MapScreen',
+        vnode: h(MapScreen, { isOpen: true, onClose: () => {} }),
+      },
+      {
+        name: 'Phone',
+        vnode: h(Phone, { isOpen: true, onClose: () => {} }),
+      },
+      {
+        name: 'Journal',
+        vnode: h(Journal, { snapshot, activeMissions: [], getObjectiveStates: () => [], onClose: () => {} }),
+      },
+      {
+        name: 'KarmaPanel',
+        vnode: h(KarmaPanel, {
+          isOpen: true,
+          data: {
+            day: 1,
+            meters: {
+              riderIntegrity: 60,
+              publicReputation: 60,
+              platformStanding: 70,
+              safetyRecord: 80,
+              criminalExposure: 0,
+              evidenceExposure: 0,
+            },
+            passengerTrust: {},
+            promises: { kept: 0, broken: 0 },
+            appWarned: false,
+            appSuspended: false,
+            appSuspendedUntilDay: 0,
+            karmaLog: [],
+          },
+          onClose: () => {},
+        }),
+      },
+      {
+        name: 'UiSheet',
+        vnode: h(UiSheet, {
+          isOpen: true,
+          onOpenMap: () => {},
+          onOpenPhone: () => {},
+          onOpenGarage: () => {},
+          onOpenJournal: () => {},
+          onOpenKarma: () => {},
+          onOpenPause: () => {},
+          onOpenSettings: () => {},
+          onClose: () => {},
+        }),
+      },
+      { name: 'Garage', vnode: h(Garage, { isOpen: true, onClose: () => {} }) },
+      { name: 'Pause', vnode: h(Pause, { isOpen: true }) },
+      { name: 'Settings', vnode: h(Settings, { isOpen: true, onClose: () => {} }) },
+      {
+        name: 'DayEnd',
+        vnode: h(DayEnd, {
+          summary: {
+            day: 1,
+            revenue: 500,
+            expenses: 180,
+            net: 320,
+            ratingDelta: 0.1,
+            completedRides: 3,
+            relationshipsDelta: {},
+          },
+        }),
+      },
+      {
+        name: 'Ending',
+        vnode: h(Ending, {
+          result: {
+            endingId: 'independent_rider',
+            titleKey: 'ending_independent_rider_title',
+            descKey: 'ending_independent_rider_desc',
+            dominantIdentity: 'professional',
+            tendencies: { professional: 45, negotiator: 20, hustler: 15, regular: 20 },
+            summary: { cash: 8500, savings: 22000, debt: 0, rating: 4.85, localTrust: 75, completedMissions: 4 },
+          },
+        }),
+      },
+      {
+        name: 'TripSummary',
+        vnode: h(TripSummary, {
+          receipt: {
+            requestId: 'r1',
+            fare: 120,
+            tip: 0,
+            bonus: 0,
+            commission: 18,
+            fuelCost: 12,
+            fuelLiters: 0.1,
+            otherCosts: 0,
+            penalties: 0,
+            compensation: 0,
+            net: 90,
+            distanceKm: 2,
+            durationMin: 6,
+            rating: 5,
+            consequences: [],
+          },
+          onContinue: () => {},
+        }),
+      },
+      {
+        name: 'ChoiceCard',
+        vnode: h(ChoiceCardView, {
+          choice: {
+            active: true,
+            prompt: 'encounter.friend_package.title',
+            options: [{ id: 'a', text: 'encounter.friend_package.choice.accept' }],
+            instanceId: 'inst_a11y_1',
+          },
+        }),
+      },
+    ];
+
+    for (const mc of modalCases) {
+      act(() => {
+        render(
+          h('div', null, [
+            h('button', { id: 'bg-sentinel', type: 'button' }, 'Background'),
+            mc.vnode,
+          ]),
+          dom.root as unknown as Element
+        );
+      });
+
+      const dialog = dom.root.querySelector('[role="dialog"]');
+      expect(dialog, `${mc.name} should render role="dialog"`).not.toBeNull();
+      expect(dialog?.getAttribute('aria-modal'), `${mc.name} should have aria-modal="true"`).toBe('true');
+      const bg = dom.root.querySelector('#bg-sentinel');
+      expect(bg?.closest('[inert]') !== null, `${mc.name} should mark background inert`).toBe(true);
+
+      act(() => {
+        render(null, dom.root as unknown as Element);
+      });
+      expect(dom.root.querySelectorAll('[inert]'), `${mc.name} should clean up inert on unmount`).toHaveLength(0);
+    }
+  });
+
+  it('Contacts entries are keyboard-activatable <button> elements with zero clickable <div> cards', () => {
+    act(() => {
+      render(
+        h(Contacts, {
+          relationships: { char_nabila: 25, char_mintu: 35 },
+          onCallContact: () => {},
+        }),
+        dom.root as unknown as Element
+      );
+    });
+
+    const nabilaItem = dom.root.querySelector('[data-testid="contact-item-char_nabila"]');
+    expect(nabilaItem).not.toBeNull();
+    expect(nabilaItem?.tagName.toUpperCase()).toBe('BUTTON');
+    expect(nabilaItem?.getAttribute('type')).toBe('button');
+    expect(nabilaItem?.getAttribute('aria-expanded')).toBe('false');
+
+    act(() => {
+      nabilaItem!.click();
+    });
+
+    const expandedItem = dom.root.querySelector('[data-testid="contact-item-char_nabila"]');
+    const callBtn = dom.root.querySelector('[data-testid="call-contact-char_nabila"]');
+    expect(expandedItem?.getAttribute('aria-expanded')).toBe('true');
+    expect(callBtn).not.toBeNull();
+    expect(callBtn?.tagName.toUpperCase()).toBe('BUTTON');
+    expect(expandedItem?.contains(callBtn as unknown as FakeNode)).toBe(false);
+  });
+
+  it('tabbed panels (Phone, Garage, Settings, Journal) expose role="tablist", role="tab", and aria-selected', () => {
+    const gm = new GameManager({ seed: 1, mode: 'career', data: {} });
+    const snapshot = gm.snapshot();
+    const checkTabs = (vnode: ComponentChildren, expectedCount: number, name: string) => {
+      act(() => {
+        render(vnode, dom.root as unknown as Element);
+      });
+      const tablist = dom.root.querySelector('[role="tablist"]');
+      expect(tablist, `${name} should have role="tablist"`).not.toBeNull();
+      const tabs = dom.root.querySelectorAll('[role="tab"]');
+      expect(tabs.length, `${name} should have ${expectedCount} tabs`).toBe(expectedCount);
+      const selectedTabs = tabs.filter((el) => el.getAttribute('aria-selected') === 'true');
+      expect(selectedTabs.length, `${name} should have exactly 1 aria-selected="true" tab`).toBe(1);
+    };
+
+    checkTabs(h(Phone, { isOpen: true, onClose: () => {} }), 5, 'Phone');
+    checkTabs(h(Garage, { isOpen: true, onClose: () => {} }), 4, 'Garage');
+    checkTabs(h(Settings, { isOpen: true, onClose: () => {} }), 3, 'Settings');
+    checkTabs(h(Journal, { snapshot, activeMissions: [], getObjectiveStates: () => [], onClose: () => {} }), 3, 'Journal');
+  });
+
+  it('all close, zoom, slider, and delete controls have localized aria-label in EN and BN', () => {
+    const saveSys = new SaveSystem(new MemoryStorageAdapter());
+    const gm = new GameManager({ seed: 1, mode: 'career', data: {} });
+    saveSys.save(gm, 'slot1');
+
+    for (const lang of ['en', 'bn'] as const) {
+      setLanguage(lang);
+
+      // MapScreen zoom & close
+      act(() => {
+        render(h(MapScreen, { isOpen: true, onClose: () => {} }), dom.root as unknown as Element);
+      });
+      const zoomInLabel = dom.root.querySelector('[data-testid="map-zoom-in-btn"]')?.getAttribute('aria-label') ?? '';
+      const zoomOutLabel = dom.root.querySelector('[data-testid="map-zoom-out-btn"]')?.getAttribute('aria-label') ?? '';
+      const mapCloseLabel = dom.root.querySelector('[data-testid="map-close-btn"]')?.getAttribute('aria-label') ?? '';
+      expect(zoomInLabel.length).toBeGreaterThan(2);
+      expect(zoomInLabel).not.toBe('+');
+      expect(zoomOutLabel.length).toBeGreaterThan(2);
+      expect(zoomOutLabel).not.toBe('-');
+      expect(mapCloseLabel.length).toBeGreaterThan(2);
+
+      // Settings audio sliders & controls
+      act(() => {
+        render(h(Settings, { isOpen: true, initialTab: 'audio', onClose: () => {} }), dom.root as unknown as Element);
+      });
+      for (const tid of ['settings-master-vol', 'settings-sfx-vol', 'settings-ambient-vol', 'settings-mute', 'settings-close-btn']) {
+        const lbl = dom.root.querySelector(`[data-testid="${tid}"]`)?.getAttribute('aria-label') ?? '';
+        expect(lbl.trim().length, `${tid} missing aria-label in ${lang}`).toBeGreaterThan(1);
+      }
+
+      // SaveSlots close & delete buttons
+      act(() => {
+        render(
+          h(SaveSlots, {
+            isOpen: true,
+            mode: 'save',
+            onClose: () => {},
+            onSelectSlot: () => {},
+            saveSystem: saveSys,
+          }),
+          dom.root as unknown as Element
+        );
+      });
+      const closeSaveLabel = dom.root.querySelector('[data-testid="btn-close-save-slots"]')?.getAttribute('aria-label') ?? '';
+      const deleteSaveLabel = dom.root.querySelector('[data-testid="btn-delete-slot1"]')?.getAttribute('aria-label') ?? '';
+      expect(closeSaveLabel.trim().length).toBeGreaterThan(1);
+      expect(deleteSaveLabel.trim().length).toBeGreaterThan(1);
+    }
+  });
+
+  it('setLanguage() dynamically flips document.documentElement.lang between bn and en', () => {
+    setLanguage('bn');
+    expect(document.documentElement.lang).toBe('bn');
+    setLanguage('en');
+    expect(document.documentElement.lang).toBe('en');
+  });
+
+  it('index.html viewport allows pinch-zoom (no user-scalable=no or maximum-scale=1.0)', () => {
+    const html = fs.readFileSync('index.html', 'utf-8');
+    expect(html).toContain('name="viewport"');
+    expect(html).not.toMatch(/user-scalable\s*=\s*no/i);
+    expect(html).not.toMatch(/maximum-scale\s*=\s*1(\.0)?/i);
+  });
+
+  it('loadSettings() respects prefers-reduced-motion when no saved setting exists, without overwriting explicit saved choice', () => {
+    const prevStorage = globalThis.localStorage;
+    const store = new Map<string, string>();
+    Object.defineProperty(globalThis, 'localStorage', {
+      configurable: true,
+      value: {
+        getItem: (k: string) => store.get(k) ?? null,
+        setItem: (k: string, v: string) => store.set(k, v),
+        removeItem: (k: string) => store.delete(k),
+      },
+    });
+    (globalThis.window as unknown as { matchMedia?: (q: string) => { matches: boolean } }).matchMedia = (q: string) => ({
+      matches: q.includes('prefers-reduced-motion'),
+    });
+
+    try {
+      // 1. Fresh state with OS prefers-reduced-motion: reduce -> defaults to true
+      resetSettingsMemoryForTest();
+      const initial = loadSettings();
+      expect(initial.reduceMotion).toBe(true);
+
+      // 2. Explicit user choice reduceMotion: false saved in localStorage -> never overwritten by matchMedia
+      saveSettings({ ...DEFAULT_SETTINGS, reduceMotion: false });
+      const loadedExplicit = loadSettings();
+      expect(loadedExplicit.reduceMotion).toBe(false);
+    } finally {
+      Object.defineProperty(globalThis, 'localStorage', {
+        configurable: true,
+        value: prevStorage,
+      });
+    }
   });
 });

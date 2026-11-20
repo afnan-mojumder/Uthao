@@ -544,5 +544,8 @@
   "map.selected_junction": "Junction {id}",
   "map.district_tag": "District: {name}",
   "map.active_hazard": "Road Event Active",
-  "map.active_story": "Story Objective"
+  "map.active_story": "Story Objective",
+  "map.zoom_in": "Zoom in",
+  "map.zoom_out": "Zoom out",
+  "save.delete_slot": "Delete save slot"
 }

@@ -1,5 +1,6 @@
 import type { JSX } from 'preact';
 import { useEffect } from 'preact/hooks';
+import { ModalFocusGuard } from '../focusTrap';
 import {
   choiceSignal,
   dayEndSignal,
@@ -42,6 +43,10 @@ export function ChoiceCardView({
   return (
     <div
       data-testid="choice-card"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="choice-card-prompt"
+      tabIndex={-1}
       style={{
         position: 'fixed',
         top: 'calc(140px + env(safe-area-inset-top, 0px))',
@@ -67,8 +72,10 @@ export function ChoiceCardView({
         animation: 'choiceSlideDown 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
       }}
     >
+      <ModalFocusGuard />
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
         <span
+          aria-hidden="true"
           style={{
             display: 'inline-block',
             width: '10px',
@@ -79,6 +86,7 @@ export function ChoiceCardView({
           }}
         />
         <h3
+          id="choice-card-prompt"
           style={{
             margin: 0,
             fontSize: '1.1rem',

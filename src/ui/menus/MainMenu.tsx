@@ -1,5 +1,6 @@
 import type { JSX } from 'preact';
 import { useState } from 'preact/hooks';
+import { ModalFocusGuard } from '../focusTrap';
 import { t } from '../i18n';
 import { Z_LAYER } from '../store';
 import {
@@ -348,8 +349,6 @@ export function MainMenu({
       {showCredits && (
         <div
           data-testid="credits-modal"
-          tabIndex={-1}
-          ref={(el) => el?.focus()}
           onKeyDown={(e) => {
             // Escape closes the credits, like the Close button.
             if (e.key === 'Escape') setShowCredits(false);
@@ -370,6 +369,7 @@ export function MainMenu({
             role="dialog"
             aria-modal="true"
             aria-label={t('menu.credits_title')}
+            tabIndex={-1}
             style={{
               width: '100%',
               maxWidth: '540px',
@@ -382,9 +382,11 @@ export function MainMenu({
               boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7)',
             }}
           >
+            <ModalFocusGuard />
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
               <h2 style={{ margin: 0, fontSize: '1.4rem', color: '#38bdf8' }}>{t('menu.credits_title')}</h2>
               <button
+                type="button"
                 data-testid="credits-close-btn"
                 aria-label={t('menu.close')}
                 onClick={() => setShowCredits(false)}
@@ -429,12 +431,13 @@ export function MainMenu({
                 <p style={{ margin: '4px 0 0 0' }}>Three.js (MIT), Rapier Physics / @dimforge/rapier3d-compat (Apache-2.0), Preact (MIT), Vite (MIT)</p>
               </div>
 
-              <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.1)', paddingTop: '12px', fontSize: '0.8rem', color: '#64748b' }}>
+              <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.1)', paddingTop: '12px', fontSize: '0.8rem', color: '#94a3b8' }}>
                 Dedicated to the resilient riders and bustling streets of Dhaka, Bangladesh.
               </div>
             </div>
 
             <button
+              type="button"
               onClick={() => setShowCredits(false)}
               style={{
                 width: '100%',

@@ -1,5 +1,6 @@
 import type { JSX } from 'preact';
 import { signal } from '@preact/signals';
+import { ModalFocusGuard } from '../focusTrap';
 import { t } from '../i18n';
 import { saveStatusSignal, Z_LAYER } from '../store';
 import { SaveSystem } from '../../sim/save/SaveSystem';
@@ -57,6 +58,10 @@ export function SaveSlots({
   return (
     <div
       data-testid="save-slots-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="save-slots-dialog-title"
+      tabIndex={-1}
       style={{
         position: 'fixed',
         inset: 0,
@@ -98,7 +103,8 @@ export function SaveSlots({
           }}
         >
           <div>
-            <h2 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 700, color: '#f59e0b' }}>
+            <ModalFocusGuard />
+            <h2 id="save-slots-dialog-title" style={{ margin: 0, fontSize: '1.3rem', fontWeight: 700, color: '#f59e0b' }}>
               {mode === 'save'
                 ? t('save.title_save')
                 : t('save.title_load')}
@@ -115,7 +121,9 @@ export function SaveSlots({
             </div>
           </div>
           <button
+            type="button"
             data-testid="btn-close-save-slots"
+            aria-label={t('btn_close')}
             onClick={onClose}
             style={{
               background: '#334155',
@@ -240,13 +248,13 @@ export function SaveSlots({
                       <span style={{ color: '#fbbf24', fontWeight: 600 }}>★ {data.reputation.rating.toFixed(2)}</span>
                     </div>
                   ) : (
-                    <div style={{ fontSize: '0.85rem', color: '#64748b', fontStyle: 'italic' }}>
+                    <div style={{ fontSize: '0.85rem', color: '#94a3b8', fontStyle: 'italic' }}>
                       [খালি স্লট — কোনো ডাটা সংরক্ষিত নেই]
                     </div>
                   )}
 
                   {hasData && data && (
-                    <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                    <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
                       {new Date(data.timestamp).toLocaleString('bn-BD', {
                         year: 'numeric',
                         month: 'short',
@@ -261,6 +269,7 @@ export function SaveSlots({
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   {mode === 'save' && (
                     <button
+                      type="button"
                       data-testid={`btn-action-save-${id}`}
                       onClick={(e) => {
                         e.stopPropagation();
@@ -283,6 +292,7 @@ export function SaveSlots({
 
                   {mode === 'load' && hasData && (
                     <button
+                      type="button"
                       data-testid={`btn-action-load-${id}`}
                       onClick={(e) => {
                         e.stopPropagation();
@@ -305,7 +315,9 @@ export function SaveSlots({
 
                   {hasData && !isAuto && (
                     <button
+                      type="button"
                       data-testid={`btn-delete-${id}`}
+                      aria-label={t('save.delete_slot')}
                       onClick={(e) => handleDelete(e as unknown as MouseEvent, id)}
                       style={{
                         padding: '10px',

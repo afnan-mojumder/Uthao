@@ -371,8 +371,21 @@ export const DEFAULT_SETTINGS: GameSettings = {
 export const SETTINGS_STORAGE_KEY = 'uthao_user_settings';
 let memorySettings: GameSettings | null = null;
 
+export function prefersReducedMotion(): boolean {
+  return (
+    typeof window !== 'undefined' &&
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  );
+}
+
+export function resetSettingsMemoryForTest(): void {
+  memorySettings = null;
+}
+
 export function loadSettings(): GameSettings {
   const liveControls = loadBindings();
+  const osReducedMotion = prefersReducedMotion();
   if (typeof localStorage !== 'undefined') {
     try {
       const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
@@ -381,6 +394,8 @@ export function loadSettings(): GameSettings {
         return {
           ...DEFAULT_SETTINGS,
           ...parsed,
+          reduceMotion:
+            typeof parsed.reduceMotion === 'boolean' ? parsed.reduceMotion : osReducedMotion,
           uiScale: normalizeUiScale(parsed.uiScale),
           controls: liveControls,
         };
@@ -391,7 +406,7 @@ export function loadSettings(): GameSettings {
   }
   return memorySettings
     ? { ...memorySettings, controls: memorySettings.controls ?? liveControls }
-    : { ...DEFAULT_SETTINGS, controls: liveControls };
+    : { ...DEFAULT_SETTINGS, reduceMotion: osReducedMotion, controls: liveControls };
 }
 
 /** Mutes or unmutes all game sound and keeps the choice. */

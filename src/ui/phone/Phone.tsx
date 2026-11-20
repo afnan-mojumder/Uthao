@@ -1,6 +1,7 @@
 import type { JSX } from 'preact';
 import type { DeliveryJob, RideRequest } from '../../core/types';
 import { TransactionRow } from '../components';
+import { ModalFocusGuard } from '../focusTrap';
 import {
   IconBattery,
   IconChat,
@@ -111,6 +112,7 @@ export function Phone({
       role="dialog"
       aria-modal="true"
       aria-label={t('phone.title')}
+      tabIndex={-1}
       style={{
         position: 'fixed',
         inset: 0,
@@ -141,6 +143,7 @@ export function Phone({
           position: 'relative',
         }}
       >
+        <ModalFocusGuard />
         {/* Top Speaker Bezel & Status Bar */}
         <div
           style={{
@@ -234,6 +237,8 @@ export function Phone({
 
         {/* Tab Navigation */}
         <div
+          role="tablist"
+          aria-label={t('phone.title')}
           style={{
             display: 'flex',
             borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
@@ -244,6 +249,8 @@ export function Phone({
         >
           <button
             type="button"
+            role="tab"
+            aria-selected={activeTab === 'requests'}
             data-testid="phone-tab-requests"
             onClick={() => handleSelectTab('requests')}
             style={{
@@ -282,6 +289,8 @@ export function Phone({
 
           <button
             type="button"
+            role="tab"
+            aria-selected={activeTab === 'history'}
             data-testid="phone-tab-history"
             onClick={() => handleSelectTab('history')}
             style={{
@@ -302,6 +311,8 @@ export function Phone({
 
           <button
             type="button"
+            role="tab"
+            aria-selected={activeTab === 'earnings'}
             data-testid="phone-tab-earnings"
             onClick={() => handleSelectTab('earnings')}
             style={{
@@ -322,6 +333,8 @@ export function Phone({
 
           <button
             type="button"
+            role="tab"
+            aria-selected={activeTab === 'contacts'}
             data-testid="phone-tab-contacts"
             onClick={() => handleSelectTab('contacts')}
             style={{
@@ -342,6 +355,8 @@ export function Phone({
 
           <button
             type="button"
+            role="tab"
+            aria-selected={activeTab === 'deliveries'}
             data-testid="phone-tab-deliveries"
             onClick={() => handleSelectTab('deliveries')}
             style={{
@@ -491,7 +506,7 @@ export function Phone({
                 </div>
               ))}
               {availableDeliveries.length === 0 && activeDeliveries.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '40px 16px', color: '#64748b', fontSize: '13px' }}>
+                <div style={{ textAlign: 'center', padding: '40px 16px', color: '#94a3b8', fontSize: '13px' }}>
                   {t('delivery.no_jobs')}
                 </div>
               ) : (
@@ -683,7 +698,7 @@ export function Phone({
               </span>
 
               {tripHistory.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '40px 16px', color: '#64748b', fontSize: '13px' }}>
+                <div style={{ textAlign: 'center', padding: '40px 16px', color: '#94a3b8', fontSize: '13px' }}>
                   {t('phone.no_history')}
                 </div>
               ) : (
@@ -725,7 +740,7 @@ export function Phone({
                         <span style={{ display: 'block', fontSize: '14px', fontWeight: 800, color: '#22c55e' }}>
                           +৳{localDigits(trip.net)}
                         </span>
-                        <span style={{ fontSize: '10px', color: '#64748b' }}>
+                        <span style={{ fontSize: '10px', color: '#94a3b8' }}>
                           {t('phone.history.gross', { fare: localDigits(trip.fare) })}
                         </span>
                       </div>

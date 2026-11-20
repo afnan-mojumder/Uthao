@@ -82,10 +82,10 @@ export function uiModalOpen(
   );
 }
 
-function focusables(): HTMLElement[] {
+export function focusables(): HTMLElement[] {
   return Array.from(document.querySelectorAll<HTMLElement>(FOCUSABLE)).filter((el) => {
     if ((el as HTMLButtonElement).disabled) return false;
-    if (el.closest('[aria-hidden="true"]')) return false;
+    if (el.closest('[inert], [aria-hidden="true"]')) return false;
     return el.getClientRects().length > 0;
   });
 }

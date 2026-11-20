@@ -19,7 +19,6 @@ import {
   IconSliders,
   IconVolume,
 } from '../components/icons';
-import { makeRestInert } from '../focusTrap';
 import { localDigits, setLanguage, t } from '../i18n';
 import { applyDocumentSettings, type UiScale } from '../settingsEffects';
 import {
@@ -147,19 +146,8 @@ export function Settings({
     if (onCancelRef) {
       onCancelRef.current = () => handleCancelRef.current();
     }
-    const overlay = document.querySelector<HTMLElement>('[data-testid="settings-screen"]');
-    if (!overlay) {
-      return () => {
-        if (onCancelRef) onCancelRef.current = null;
-      };
-    }
-    const opener = document.activeElement as HTMLElement | null;
-    const release = makeRestInert(overlay);
-    overlay.querySelector<HTMLElement>('button, input, select')?.focus();
     return () => {
       if (onCancelRef) onCancelRef.current = null;
-      release();
-      opener?.focus?.();
     };
   }, [isOpen, initialTab, onCancelRef]);
 
@@ -386,6 +374,8 @@ export function Settings({
 
         {/* Navigation Tabs */}
         <div
+          role="tablist"
+          aria-label={t('settings.title')}
           style={{
             display: 'flex',
             borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
@@ -395,6 +385,8 @@ export function Settings({
         >
           <button
             type="button"
+            role="tab"
+            aria-selected={activeTab === 'general'}
             data-testid="settings-tab-general"
             onClick={() => setActiveTab('general')}
             style={{
@@ -418,6 +410,8 @@ export function Settings({
           </button>
           <button
             type="button"
+            role="tab"
+            aria-selected={activeTab === 'audio'}
             data-testid="settings-tab-audio"
             onClick={() => setActiveTab('audio')}
             style={{
@@ -441,6 +435,8 @@ export function Settings({
           </button>
           <button
             type="button"
+            role="tab"
+            aria-selected={activeTab === 'controls'}
             data-testid="settings-tab-controls"
             onClick={() => setActiveTab('controls')}
             style={{
@@ -672,6 +668,7 @@ export function Settings({
                 </div>
                 <input
                   data-testid="settings-master-vol"
+                  aria-label={t('settings.master_vol')}
                   type="range"
                   min="0"
                   max="1"
@@ -702,6 +699,7 @@ export function Settings({
                 </div>
                 <input
                   data-testid="settings-sfx-vol"
+                  aria-label={t('settings.sfx_vol')}
                   type="range"
                   min="0"
                   max="1"
@@ -732,6 +730,7 @@ export function Settings({
                 </div>
                 <input
                   data-testid="settings-ambient-vol"
+                  aria-label={t('settings.ambient_vol')}
                   type="range"
                   min="0"
                   max="1"
@@ -757,6 +756,7 @@ export function Settings({
                 <span style={{ fontSize: '0.9rem', color: '#cbd5e1' }}>{t('settings.mute')}</span>
                 <input
                   data-testid="settings-mute"
+                  aria-label={t('settings.mute')}
                   type="checkbox"
                   checked={localSettings.muted}
                   onChange={(e) => {
@@ -777,6 +777,7 @@ export function Settings({
                 <span style={{ fontSize: '0.9rem', color: '#cbd5e1' }}>{t('settings.tilt_controls')}</span>
                 <input
                   data-testid="settings-tilt-toggle"
+                  aria-label={t('settings.tilt_controls')}
                   type="checkbox"
                   checked={localSettings.tiltControls}
                   onChange={(e) => {

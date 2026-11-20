@@ -185,6 +185,8 @@ export function Garage({
 
         {/* Navigation Tabs */}
         <div
+          role="tablist"
+          aria-label={t('garage.title')}
           style={{
             display: 'flex',
             borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
@@ -195,6 +197,8 @@ export function Garage({
         >
           <button
             type="button"
+            role="tab"
+            aria-selected={activeTab === 'repairs'}
             data-testid="garage-tab-repairs"
             onClick={() => setActiveTab('repairs')}
             style={{
@@ -219,6 +223,8 @@ export function Garage({
           </button>
           <button
             type="button"
+            role="tab"
+            aria-selected={activeTab === 'upgrades'}
             data-testid="garage-tab-upgrades"
             onClick={() => setActiveTab('upgrades')}
             style={{
@@ -243,6 +249,8 @@ export function Garage({
           </button>
           <button
             type="button"
+            role="tab"
+            aria-selected={activeTab === 'cosmetics'}
             data-testid="garage-tab-cosmetics"
             onClick={() => setActiveTab('cosmetics')}
             style={{
@@ -267,6 +275,8 @@ export function Garage({
           </button>
           <button
             type="button"
+            role="tab"
+            aria-selected={activeTab === 'bikes'}
             data-testid="garage-tab-bikes"
             onClick={() => setActiveTab('bikes')}
             style={{

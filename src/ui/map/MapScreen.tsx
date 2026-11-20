@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'preact/hooks';
+import { useModalFocusTrap } from '../focusTrap';
 import { t, localDigits } from '../i18n';
 import { mapLayout } from './mapLayout';
 import {
@@ -459,6 +460,8 @@ export function MapScreen({
   colorblindRoute = false,
 }: MapScreenProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const overlayRef = useRef<HTMLDivElement | null>(null);
+  useModalFocusTrap(overlayRef, isOpen);
   const [selectedPoi, setSelectedPoi] = useState<MapPoiPoint | null>(null);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(waypointNodeId);
   const [filter, setFilter] = useState<'all' | 'fuel' | 'garage' | 'tea'>('all');
@@ -885,10 +888,12 @@ export function MapScreen({
 
   return (
     <div
+      ref={overlayRef}
       data-testid="map-screen"
       role="dialog"
       aria-modal="true"
       aria-label={t('map.title')}
+      tabIndex={-1}
       style={{
         position: 'fixed',
         inset: 0,
@@ -1032,7 +1037,7 @@ export function MapScreen({
           <button
             type="button"
             data-testid="map-zoom-in-btn"
-            aria-label="+"
+            aria-label={t('map.zoom_in')}
             onClick={() => setZoom((z) => Math.min(2.5, z + 0.25))}
             style={{
               width: '30px',
@@ -1050,7 +1055,7 @@ export function MapScreen({
           <button
             type="button"
             data-testid="map-zoom-out-btn"
-            aria-label="-"
+            aria-label={t('map.zoom_out')}
             onClick={() => setZoom((z) => Math.max(0.75, z - 0.25))}
             style={{
               width: '30px',
