@@ -62,6 +62,12 @@ export function SaveSlots({
       aria-modal="true"
       aria-labelledby="save-slots-dialog-title"
       tabIndex={-1}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') {
+          e.stopPropagation();
+          onClose();
+        }
+      }}
       style={{
         position: 'fixed',
         inset: 0,

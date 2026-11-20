@@ -65,8 +65,14 @@ test.describe('Settings keeps keyboard focus (audit: focus leaked behind Setting
         .poll(() =>
           page.evaluate((s) => {
             const dlg = document.querySelector(s);
+            if (!dlg || dlg.closest('[inert]')) return false;
             const hud = document.querySelector('#hud');
-            return Boolean(dlg && !dlg.closest('[inert]') && (!hud || hud.closest('[inert]')));
+            if (hud && !hud.closest('[inert]')) return false;
+            const otherDialogsInert = Array.from(document.querySelectorAll('[role="dialog"]')).every(
+              (d) => d === dlg || d.contains(dlg) || dlg.contains(d) || Boolean(d.closest('[inert]'))
+            );
+            if (!otherDialogsInert) return false;
+            return dlg.contains(document.activeElement);
           }, sel)
         )
         .toBe(true);

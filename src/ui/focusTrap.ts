@@ -178,6 +178,19 @@ function activateOverlayTrap(overlay: HTMLElement): () => void {
     if (opener && opener.parentElement !== null && !opener.closest?.('[inert]')) {
       opener.focus?.();
     }
+    const top = getTopmostTrap();
+    if (top) {
+      const activeAfter =
+        typeof document !== 'undefined' ? (document.activeElement as HTMLElement | null) : null;
+      if (!activeAfter || !top.overlay.contains(activeAfter)) {
+        const firstFocusable = getFocusableInside(top.overlay)[0];
+        if (firstFocusable) {
+          firstFocusable.focus?.();
+        } else {
+          top.overlay.focus?.();
+        }
+      }
+    }
   };
 }
 
