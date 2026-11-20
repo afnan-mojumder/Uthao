@@ -402,7 +402,7 @@ describe('NegotiationSystem (T2.3)', () => {
 
   describe('P4.1 negotiation exploits, RNG salting, off-app hesitation & discount trust', () => {
     it('explainDetour only works once when actual congestion/detour exists and advances round & patience', () => {
-      const profile = mockProfile({ archetype: 'commuter', patience: 0.7 });
+      const profile = mockProfile({ archetype: 'commuter', patience: 0.8 });
       const req = mockRequest();
 
       // 1. Without congestion (traffic < 0.5) and without hasDetour, explainDetour gives zero boost and advances round
@@ -548,6 +548,76 @@ describe('NegotiationSystem (T2.3)', () => {
       s.ride.agreeFare(Math.max(50, neg.fairFare - 10), { discount: true });
       expect(s.gm.reputationSystem.getLocalTrust()).toBeGreaterThan(trust0);
       expect(s.gm.reputationSystem.getRelationship('char_nabila')).toBeGreaterThan(rel0);
+    });
+
+    it('P4.1 regressions: offApp hesitation at currentPassengerOffer is not auto-accepted, discount above fairFare gives no discount line, NaN extraMin is safe, and round never exceeds maxRounds', () => {
+      // 1. Important #1 + Minor #3: offApp at amount === currentPassengerOffer on a careful passenger
+      const careful = mockProfile({
+        archetype: 'careful',
+        safetySensitivity: 0.95,
+        trustInRider: 0.1,
+        patience: 0.8,
+        relationshipLevel: 0,
+      });
+      let rejectedCount = 0;
+      let badTopFactorOnReject = false;
+      for (let i = 0; i < 150; i++) {
+        const s = startNegotiation(mockRequest({ requestId: `req_off_ui_${i}` }), careful, {
+          traffic: 0.4,
+          day: 1,
+          walkM: 0,
+          rng: new Rng(i + 500),
+        });
+        const res = respond(s, { kind: 'offApp', amount: s.currentPassengerOffer });
+        if (res.outcome?.kind === 'rejected') {
+          rejectedCount++;
+          if (res.topFactor === 'TRUSTS_YOU') badTopFactorOnReject = true;
+          expect(res.passengerLine).toBe('dialogue.negotiation.off_app_rejected');
+        }
+      }
+      expect(rejectedCount).toBeGreaterThan(0);
+      expect(badTopFactorOnReject).toBe(false);
+
+      // 2. Important #2 (sim layer): discount above fairFare via counter-match does not return discount_accepted
+      const highBudget = mockProfile({
+        archetype: 'urgent',
+        budget: 1.8,
+        urgency: 0.9,
+        bargainingTendency: 0.1,
+        patience: 0.8,
+      });
+      let sawOverFairDiscountLine = false;
+      for (let i = 0; i < 60; i++) {
+        const s = startNegotiation(
+          mockRequest({ requestId: `req_disc_hi_${i}`, estimatedDistance: 2.0, estimatedDuration: 6 }),
+          highBudget,
+          { traffic: 0.2, day: 1, walkM: 0, rng: new Rng(i + 900) }
+        );
+        const overFair = s.fairFare + 15;
+        const r = respond(s, { kind: 'discount', amount: overFair });
+        if (r.outcome?.kind === 'accepted' && r.passengerLine === 'dialogue.negotiation.discount_accepted') {
+          sawOverFairDiscountLine = true;
+        }
+      }
+      expect(sawOverFairDiscountLine).toBe(false);
+
+      // 3. Minor #2: NaN extraMin on explainDetour does not corrupt detourExtraMin, and walkAway caps round <= maxRounds
+      const congested = startNegotiation(mockRequest({ requestId: 'req_nan_detour' }), careful, {
+        traffic: 0.7,
+        day: 1,
+        walkM: 0,
+        rng: new Rng(12),
+      });
+      const nanRes = respond(congested, { kind: 'explainDetour', extraMin: Number.NaN });
+      expect(Number.isFinite(nanRes.session.detourExtraMin)).toBe(true);
+      expect(nanRes.session.detourExtraMin).toBe(0);
+
+      let walkSess = congested;
+      for (let r = 0; r < 6 && walkSess.status === 'active'; r++) {
+        walkSess = respond(walkSess, { kind: 'counter', amount: walkSess.fairFare * 4 }).session;
+      }
+      expect(walkSess.status).toBe('walkedAway');
+      expect(walkSess.round).toBeLessThanOrEqual(walkSess.maxRounds);
     });
   });
 });

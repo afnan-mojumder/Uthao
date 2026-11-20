@@ -6,10 +6,17 @@ import {
   setNegotiationActionDispatcher,
   onNegotiationActionCallback,
 } from '../../../src/ui/store';
+import { bindUi } from '../../../src/ui/bindings';
 import { EventBus, type GameEvents } from '../../../src/core/events';
 import { t, setLanguage } from '../../../src/ui/i18n';
 import type { NegotiationSession, NegotiationAction } from '../../../src/sim/negotiation/NegotiationSystem';
 import { Rng } from '../../../src/core/rng';
+import { GameManager } from '../../../src/sim/GameManager';
+import { GameSession } from '../../../src/sim/GameSession';
+import { RoadNetwork } from '../../../src/sim/road/RoadNetwork';
+import type { DistrictData } from '../../../src/sim/schemas';
+import { generateProfile } from '../../../src/sim/passenger/profiles';
+import testloopData from '../../../data/districts/testloop.json';
 
 describe('T2.4 Negotiation Store & Logic', () => {
   const rng = new Rng(42);
@@ -142,6 +149,92 @@ describe('T2.4 Negotiation Store & Logic', () => {
     });
 
     expect(choiceSignal.value.active).toBe(false);
+    unbind();
+  });
+
+  it('P4.1 closes dispute ChoiceCard cleanly if ride is cancelled mid-dispute', () => {
+    const bus = new EventBus<GameEvents>();
+    const unbind = bindEventBusToStore(bus);
+
+    bus.emit('ride/disputed', {
+      requestId: 'req_disp_abort',
+      fare: 120,
+      partialFare: 60,
+      bookingType: 'app',
+    });
+    expect(choiceSignal.value.active).toBe(true);
+    expect(choiceSignal.value.instanceId).toBe('dispute:req_disp_abort');
+
+    bus.emit('ride/cancelled', {
+      requestId: 'req_disp_abort',
+      by: 'system',
+      reason: 'aborted',
+    });
+    expect(choiceSignal.value.active).toBe(false);
+    expect(choiceSignal.value.instanceId).toBeUndefined();
+
+    // Also closes if trip state transitions out of Completing cleanly
+    bus.emit('ride/disputed', {
+      requestId: 'req_disp_abort2',
+      fare: 120,
+      partialFare: 60,
+      bookingType: 'app',
+    });
+    expect(choiceSignal.value.active).toBe(true);
+    bus.emit('trip/state', {
+      requestId: 'req_disp_abort2',
+      from: 'Completing',
+      to: 'Cancelled',
+    });
+    expect(choiceSignal.value.active).toBe(false);
+
+    unbind();
+  });
+
+  it('P4.1 bindUi does not grant discount trust/relationship bonus when fare > fairFare', () => {
+    const road = RoadNetwork.fromDistricts([testloopData as DistrictData]);
+    const gm = new GameManager({ seed: 7, mode: 'career', data: {} });
+    const session = new GameSession({ gm, road, autoRequests: false, negotiation: true });
+    const unbind = bindEventBusToStore(gm.bus);
+    bindUi(session);
+
+    const highBudget = {
+      ...generateProfile('urgent', new Rng(1), 'pass_char_nabila'),
+      budget: 2.0,
+      urgency: 0.95,
+      patience: 0.9,
+      trustInRider: 0.9,
+    };
+    session.requests.setProfile(highBudget);
+    const [a, b] = road.getAllNodes();
+    session.ride.offer({
+      requestId: 'req_over_disc',
+      passengerId: highBudget.passengerId,
+      characterId: 'char_nabila',
+      pickupNodeId: a!.nodeId,
+      destinationNodeId: b!.nodeId,
+      initialFare: 120,
+      estimatedDistance: 0.5,
+      estimatedDuration: 2,
+      requestedArrivalTime: null,
+      bookingType: 'app',
+      status: 'WaitingForPickup',
+      surge: 1,
+    });
+    session.ride.accept('req_over_disc');
+    const neg = session.beginNegotiation('req_over_disc')!;
+    negotiationSignal.value = { active: true, session: neg, lastResult: null };
+
+    const trust0 = gm.reputationSystem.getLocalTrust();
+    const rel0 = gm.reputationSystem.getRelationship('char_nabila');
+
+    // Dispatch a discount action at an overcharged fare (> fairFare)
+    const overFair = neg.fairFare + 20;
+    onNegotiationActionCallback?.({ kind: 'discount', amount: overFair });
+
+    expect(gm.reputationSystem.getLocalTrust()).toBe(trust0);
+    expect(gm.reputationSystem.getRelationship('char_nabila')).toBe(rel0);
+
     unbind();
   });
 });

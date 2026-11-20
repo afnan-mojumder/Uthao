@@ -312,8 +312,11 @@ export class GameManager {
       this.isNavigating = false;
     });
 
-    this.bus.on('ride/cancelled', () => {
-      this.isNavigating = false;
+    this.bus.on('ride/cancelled', ({ requestId }) => {
+      const active = this.rideManager?.getActiveRequest?.() ?? null;
+      if (!active || active.requestId === requestId) {
+        this.isNavigating = false;
+      }
     });
 
     this.bus.on('economy/transaction', () => {

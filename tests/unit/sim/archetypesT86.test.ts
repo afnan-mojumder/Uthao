@@ -145,4 +145,51 @@ describe('T8.6 unreliable passengers dispute', () => {
     expect(session.ride.getTripState()).toBe('Idle');
     expect(session.ride.getPendingDispute()).toBeNull();
   });
+
+  it('P4.1 does not mark a ride as disputed when offAppPay already zeroed paidFare', () => {
+    const road = RoadNetwork.fromDistricts([testloopData as DistrictData]);
+    const [pickup, dest] = [road.getAllNodes()[0]!, road.getAllNodes()[1]!];
+    let targetId = '';
+    for (let i = 1; i < 1500; i++) {
+      const id = `req_unpaid_disp_${i}`;
+      const off = offAppPayout(120, 0.25, new Rng(hashSeed(id, 'offAppPay')).next());
+      const disp = isDisputed('unreliable', 0.25, new Rng(hashSeed(id, 'dispute')).next());
+      if (off.unpaid && disp) {
+        targetId = id;
+        break;
+      }
+    }
+    expect(targetId).not.toBe('');
+
+    const gm = new GameManager({ seed: 55, mode: 'career', data: {} });
+    const session = new GameSession({ gm, road, autoRequests: false, negotiation: false });
+    const profile = { ...generateProfile('unreliable', new Rng(3), 'p_unrel_unpaid'), paymentReliability: 0.25 };
+    session.requests.setProfile(profile);
+
+    let disputedFired = false;
+    gm.bus.on('ride/disputed', () => {
+      disputedFired = true;
+    });
+
+    session.ride.offer({
+      requestId: targetId,
+      passengerId: profile.passengerId,
+      pickupNodeId: pickup.nodeId,
+      destinationNodeId: dest.nodeId,
+      initialFare: 120,
+      estimatedDistance: 0.5,
+      estimatedDuration: 3,
+      requestedArrivalTime: null,
+      bookingType: 'offApp',
+      status: 'WaitingForPickup',
+      surge: 1,
+    });
+    session.ride.accept(targetId);
+    session.ride.update({ x: pickup.x, z: pickup.z, speed: 0 }, SIM_DT);
+    session.ride.update({ x: dest.x, z: dest.z, speed: 0 }, SIM_DT);
+
+    expect(disputedFired).toBe(false);
+    expect(session.ride.getPendingDispute()).toBeNull();
+    expect(session.ride.getTripState()).toBe('Idle');
+  });
 });

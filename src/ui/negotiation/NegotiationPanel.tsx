@@ -145,7 +145,7 @@ export function NegotiationPanel({
                 {(session.profile.nameKey ? t(session.profile.nameKey) : null) || session.profile.passengerId}
               </span>
               <span style={{ fontSize: '12px', color: '#94a3b8' }}>
-                {session.profile.archetype} • {t('negotiation.round', { current: session.round, max: session.maxRounds })}
+                {session.profile.archetype} • {t('negotiation.round', { current: Math.min(session.round, session.maxRounds), max: session.maxRounds })}
               </span>
             </div>
           </div>
@@ -408,23 +408,31 @@ export function NegotiationPanel({
           </button>
 
           {/* 3. Discount */}
-          <button
-            type="button"
-            data-testid="discount-btn"
-            onClick={() => onAction({ kind: 'discount', amount: Math.max(50, counterAmount - 10) })}
-            style={{
-              padding: '10px',
-              borderRadius: '10px',
-              background: 'rgba(56, 189, 248, 0.2)',
-              border: '1px solid rgba(56, 189, 248, 0.4)',
-              color: '#38bdf8',
-              fontSize: '12px',
-              fontWeight: 700,
-              cursor: 'pointer',
-            }}
-          >
-            {t('negotiation.discount', { fare: Math.max(50, counterAmount - 10) })}
-          </button>
+          {(() => {
+            const discountAmount = Math.max(50, counterAmount - 10);
+            const canDiscount = discountAmount <= session.fairFare;
+            return (
+              <button
+                type="button"
+                data-testid="discount-btn"
+                disabled={!canDiscount}
+                onClick={() => onAction({ kind: 'discount', amount: discountAmount })}
+                style={{
+                  padding: '10px',
+                  borderRadius: '10px',
+                  background: canDiscount ? 'rgba(56, 189, 248, 0.2)' : 'rgba(30, 41, 59, 0.35)',
+                  border: '1px solid rgba(56, 189, 248, 0.4)',
+                  color: canDiscount ? '#38bdf8' : '#64748b',
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  cursor: canDiscount ? 'pointer' : 'not-allowed',
+                  opacity: canDiscount ? 1 : 0.65,
+                }}
+              >
+                {t('negotiation.discount', { fare: discountAmount })}
+              </button>
+            );
+          })()}
 
           {/* 4. Relocate the pickup: only when the sim has a real, measured option */}
           {pickup && (

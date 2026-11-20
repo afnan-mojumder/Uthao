@@ -303,9 +303,10 @@ export function respond(
 
   // 3. Explain detour: usable at most once when actual congestion or detour exists, advancing round & patience.
   if (action.kind === 'explainDetour') {
+    const safeExtraMin = Number.isFinite(action.extraMin) ? Math.max(0, action.extraMin) : 0;
     const hasCongestionOrDetour = session.ctx.hasDetour === true || session.ctx.traffic >= 0.5;
     const canExplain = !session.detourExplained && hasCongestionOrDetour;
-    const nextRound = session.round + 1;
+    const nextRound = Math.min(session.maxRounds, session.round + 1);
     const nextSeq = (session.actionSeq ?? 0) + 1;
     const nextSalt = hashSeed(session.salt, 'explainDetour', session.round);
 
@@ -319,7 +320,7 @@ export function respond(
           session: {
             ...session,
             detourExplained: true,
-            detourExtraMin: Math.min(MAX_DETOUR_EXTRA_MIN, session.detourExtraMin + Math.max(0, action.extraMin)),
+            detourExtraMin: Math.min(MAX_DETOUR_EXTRA_MIN, session.detourExtraMin + safeExtraMin),
             currentPatience: nextPatience,
             round: nextRound,
             actionSeq: nextSeq,
@@ -334,7 +335,7 @@ export function respond(
       const updatedSession: NegotiationSession = {
         ...session,
         detourExplained: true,
-        detourExtraMin: Math.min(MAX_DETOUR_EXTRA_MIN, session.detourExtraMin + Math.max(0, action.extraMin)),
+        detourExtraMin: Math.min(MAX_DETOUR_EXTRA_MIN, session.detourExtraMin + safeExtraMin),
         currentPatience: nextPatience,
         round: nextRound,
         actionSeq: nextSeq,
@@ -404,7 +405,7 @@ export function respond(
       0,
       session.currentPatience - BALANCE.NEGOTIATION.patienceDecayPerRound * 0.5
     );
-    const nextRound = session.round + 1;
+    const nextRound = Math.min(session.maxRounds, session.round + 1);
     const nextSeq = (session.actionSeq ?? 0) + 1;
     const nextSalt = hashSeed(session.salt, 'pickupAdjust', session.round);
 
@@ -475,7 +476,7 @@ export function respond(
       0,
       session.currentPatience - BALANCE.NEGOTIATION.patienceDecayPerRound * 0.5
     );
-    const nextRound = session.round + 1;
+    const nextRound = Math.min(session.maxRounds, session.round + 1);
     const nextSeq = (session.actionSeq ?? 0) + 1;
     const nextSalt = hashSeed(session.salt, 'refuseAlley', session.round);
 
@@ -585,7 +586,7 @@ export function respond(
   const factors = evaluateFactors(session, F);
 
   let effectivePAccept = factors.pAccept;
-  let effectiveTopFactor = factors.topFactor;
+  const baseTopFactor = factors.topFactor;
   let nextProfile = session.profile;
   let discountApplied = session.discountApplied ?? false;
 
@@ -607,9 +608,6 @@ export function respond(
       1.8
     );
     effectivePAccept = 1 / (1 + Math.exp(-(factors.z - hesitation)));
-    if (F <= session.expectedBudget) {
-      effectiveTopFactor = 'TRUSTS_YOU';
-    }
   } else if (action.kind === 'discount' && F <= session.fairFare) {
     const discountRatio = clamp((session.fairFare - F) / Math.max(session.fairFare, 1), 0.02, 0.4);
     const discountBoost = 0.5 + discountRatio * 4.0;
@@ -627,6 +625,8 @@ export function respond(
   const decisionSeed = hashSeed(session.req.requestId, session.round, session.salt);
   const decisionRng = new Rng(decisionSeed);
   const accepted = decisionRng.next() < effectivePAccept;
+  const acceptedTopFactor: ReasonCode =
+    action.kind === 'offApp' && F <= session.expectedBudget ? 'TRUSTS_YOU' : baseTopFactor;
 
   if (accepted) {
     const updatedSession: NegotiationSession = {
@@ -644,7 +644,7 @@ export function respond(
         rng: new Rng(hashSeed(session.req.requestId, session.round, 'dialogue')),
         vars: { fare: F },
       })?.key ?? 'dialogue.negotiation.counter_accepted';
-    if (action.kind === 'discount') {
+    if (action.kind === 'discount' && F <= session.fairFare) {
       line = 'dialogue.negotiation.discount_accepted';
     } else if (action.kind === 'offApp') {
       line = 'dialogue.negotiation.off_app_accepted';
@@ -653,7 +653,7 @@ export function respond(
       session: updatedSession,
       passengerLine: line,
       outcome: { kind: 'accepted', fare: F },
-      topFactor: effectiveTopFactor,
+      topFactor: acceptedTopFactor,
     };
   }
 
@@ -662,12 +662,12 @@ export function respond(
     0,
     session.currentPatience - BALANCE.NEGOTIATION.patienceDecayPerRound
   );
-  const nextRound = session.round + 1;
+  const nextRound = Math.min(session.maxRounds, session.round + 1);
 
   // Check if rounds exhausted
   if (session.round >= session.maxRounds || nextPatience <= 0) {
     const walkAwayReason: ReasonCode =
-      effectiveTopFactor === 'FAIR_PRICE' ? 'OUT_OF_PATIENCE' : effectiveTopFactor;
+      baseTopFactor === 'FAIR_PRICE' ? 'OUT_OF_PATIENCE' : baseTopFactor;
     const updatedSession: NegotiationSession = {
       ...session,
       profile: nextProfile,
@@ -703,7 +703,8 @@ export function respond(
   nextPassengerOffer = Math.min(F, nextPassengerOffer);
 
   // If passenger's counter matches or exceeds rider's ask, deal is accepted
-  if (nextPassengerOffer >= F) {
+  // (skip price-match auto-accept when a rejected off-app proposal hesitated on safety/trust)
+  if (action.kind !== 'offApp' && nextPassengerOffer >= F) {
     const updatedSession: NegotiationSession = {
       ...session,
       profile: nextProfile,
@@ -715,13 +716,11 @@ export function respond(
     return {
       session: updatedSession,
       passengerLine:
-        action.kind === 'offApp'
-          ? 'dialogue.negotiation.off_app_accepted'
-          : action.kind === 'discount'
-            ? 'dialogue.negotiation.discount_accepted'
-            : 'dialogue.negotiation.counter_accepted',
+        action.kind === 'discount' && F <= session.fairFare
+          ? 'dialogue.negotiation.discount_accepted'
+          : 'dialogue.negotiation.counter_accepted',
       outcome: { kind: 'accepted', fare: F },
-      topFactor: effectiveTopFactor,
+      topFactor: acceptedTopFactor,
     };
   }
 
@@ -751,7 +750,7 @@ export function respond(
   return {
     session: updatedSession,
     passengerLine: rejectLine,
-    outcome: { kind: 'rejected', reason: effectiveTopFactor },
-    topFactor: effectiveTopFactor,
+    outcome: { kind: 'rejected', reason: baseTopFactor },
+    topFactor: baseTopFactor,
   };
 }

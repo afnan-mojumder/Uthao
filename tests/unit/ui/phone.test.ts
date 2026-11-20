@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   phoneSignal,
+  choiceSignal,
   bindEventBusToStore,
   tickPhoneOffers,
   setRequestDispatchers,
@@ -148,6 +149,48 @@ describe('T2.4 Phone Store & Logic', () => {
     tickPhoneOffers(10.5);
     expect(phoneSignal.value.incomingRequest).toBeNull();
     expect(phoneSignal.value.requestQueue).toEqual([]);
+
+    unbind();
+  });
+
+  it('P4.1 hides queued offers during active trips and discards cancelled heldRequests', () => {
+    choiceSignal.value = { active: false, prompt: '', options: [] };
+    const bus = new EventBus<GameEvents>();
+    const unbind = bindEventBusToStore(bus);
+
+    // 1. Two offers queued: accept req_act_1 -> Negotiating -> EnRouteToPickup
+    bus.emit('ride/requested', { request: { ...mockReq, requestId: 'req_act_1' } });
+    bus.emit('ride/requested', { request: { ...mockReq, requestId: 'req_act_2' } });
+    expect(phoneSignal.value.incomingRequest?.requestId).toBe('req_act_1');
+
+    bus.emit('trip/state', { requestId: 'req_act_1', from: 'RequestAvailable', to: 'Negotiating' });
+    expect(phoneSignal.value.incomingRequest).toBeNull();
+    expect(phoneSignal.value.requestQueue?.some((r) => r.requestId === 'req_act_1')).toBe(false);
+
+    // Ticking offers while negotiating / en route must NOT re-expose req_act_2 on screen
+    tickPhoneOffers(3);
+    expect(phoneSignal.value.incomingRequest).toBeNull();
+    expect(phoneSignal.value.unreadCount).toBe(0);
+
+    bus.emit('trip/state', { requestId: 'req_act_1', from: 'Accepted', to: 'EnRouteToPickup' });
+    tickPhoneOffers(3);
+    expect(phoneSignal.value.incomingRequest).toBeNull();
+    expect(phoneSignal.value.unreadCount).toBe(0);
+
+    // Returning to RequestAvailable re-surfaces unexpired req_act_2
+    bus.emit('trip/state', { requestId: null, from: 'Completed', to: 'RequestAvailable' });
+    expect(phoneSignal.value.incomingRequest?.requestId).toBe('req_act_2');
+
+    // Clear queue cleanly before checking heldRequest cancellation
+    tickPhoneOffers(10);
+    expect(phoneSignal.value.incomingRequest).toBeNull();
+
+    // 2. Request held under open ChoiceCard is discarded if ride/cancelled fires before card closes
+    choiceSignal.value = { active: true, prompt: 'enc.test', options: [{ id: 'a', text: 'opt' }], instanceId: 'enc_1' };
+    bus.emit('ride/requested', { request: { ...mockReq, requestId: 'req_held_expired' } });
+    bus.emit('ride/cancelled', { requestId: 'req_held_expired', by: 'system', reason: 'expired' });
+    choiceSignal.value = { active: false, prompt: '', options: [] };
+    expect(phoneSignal.value.incomingRequest).toBeNull();
 
     unbind();
   });

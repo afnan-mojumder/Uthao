@@ -457,4 +457,39 @@ describe('P4.1 RideManager lifecycle, reputation, offer queue & dialogue wiring'
     expect(smallTalk!.speaker).toBe(bargainerProfile.nameKey);
     expect(dropOff!.speaker).toBe(bargainerProfile.nameKey);
   });
+
+  it('keeps GameManager.isNavigating true when an unrelated queued offer is evicted or expires', () => {
+    const { gm, session, pickup, dest } = makeLive(false);
+    const makeReq = (id: string): RideRequest => ({
+      requestId: id,
+      passengerId: `p_${id}`,
+      pickupNodeId: pickup.nodeId,
+      destinationNodeId: dest.nodeId,
+      initialFare: 100,
+      estimatedDistance: 0.5,
+      estimatedDuration: 3,
+      requestedArrivalTime: null,
+      bookingType: 'app',
+      status: 'WaitingForPickup',
+      surge: 1,
+    });
+
+    session.ride.offer(makeReq('req_nav_main'));
+    session.ride.accept('req_nav_main');
+    expect(gm.isNavigating).toBe(true);
+
+    // Queue 4 background offers while req_nav_main is active -> queueFull evicts req_bg_1
+    session.ride.offer(makeReq('req_bg_1'));
+    session.ride.offer(makeReq('req_bg_2'));
+    session.ride.offer(makeReq('req_bg_3'));
+    session.ride.offer(makeReq('req_bg_4'));
+    expect(gm.isNavigating).toBe(true);
+
+    // Advance 16s without reaching pickup -> queued offers expire cleanly, active ride still navigating
+    for (let i = 0; i < 16 * 60; i++) {
+      session.ride.update({ x: pickup.x + 150, z: pickup.z + 150, speed: 0 }, SIM_DT);
+    }
+    expect(session.ride.getActiveRequest()?.requestId).toBe('req_nav_main');
+    expect(gm.isNavigating).toBe(true);
+  });
 });

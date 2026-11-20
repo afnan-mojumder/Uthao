@@ -1,6 +1,7 @@
 import type { GameSession } from '../sim/GameSession';
 import type { SaveSystem } from '../sim/save/SaveSystem';
 import { respond } from '../sim/negotiation/NegotiationSystem';
+import { nearestPlaceKey } from '../sim/ride/rideView';
 import type { BikeId } from '../core/types';
 import { requestFreshCareer } from './freshCareer';
 import {
@@ -19,6 +20,7 @@ import {
   setTutorialDispatchers,
   setEndingDispatchers,
   negotiationSignal,
+  choiceSignal,
   tutorialSignal,
   pausedSignal,
   saveStatusSignal,
@@ -44,7 +46,16 @@ export function bindUi(session: GameSession, saveSystem?: SaveSystem): void {
         choiceId === 'insistFull' ||
         choiceId === 'reportSupport'
       ) {
-        rideManager.resolveDispute(choiceId);
+        const resolved = rideManager.resolveDispute(choiceId);
+        if (!resolved && choiceSignal.value.instanceId === instanceId) {
+          choiceSignal.value = {
+            active: false,
+            prompt: '',
+            promptVars: undefined,
+            options: [],
+            instanceId: undefined,
+          };
+        }
       }
       return;
     }
@@ -101,6 +112,7 @@ export function bindUi(session: GameSession, saveSystem?: SaveSystem): void {
         next = { ...current, currentPatience: result.session.currentPatience };
       }
     }
+    let nextDestinationKey = negotiationSignal.value.destinationKey;
     const alleyMoved =
       action.kind === 'refuseAlley' &&
       result.outcome === undefined &&
@@ -108,6 +120,9 @@ export function bindUi(session: GameSession, saveSystem?: SaveSystem): void {
     if (alley && alleyMoved) {
       if (rideManager.relocateAlley?.(alley.nodeId, alley.walkM, alley.target)) {
         next = session.repriceNegotiation(result.session);
+        if (alley.target === 'destination' && next.req.destinationNodeId) {
+          nextDestinationKey = nearestPlaceKey(rideManager, next.req.destinationNodeId);
+        }
       } else {
         next = { ...current, currentPatience: result.session.currentPatience, alleyRefused: false };
       }
@@ -119,13 +134,14 @@ export function bindUi(session: GameSession, saveSystem?: SaveSystem): void {
       mood: rideManager.getPassengerMood(),
       pickup: next.status === 'active' ? session.pickupChoice() : null,
       alley: next.status === 'active' && !next.alleyRefused ? (session.alleyChoice?.() ?? null) : null,
-      destinationKey: negotiationSignal.value.destinationKey,
+      destinationKey: nextDestinationKey,
     };
     if (accepted && result.outcome?.kind === 'accepted') {
       if (action.kind === 'offApp') session.markOffApp();
+      const earnedDiscount = action.kind === 'discount' && result.outcome.fare <= current.fairFare;
       rideManager.agreeFare(
         result.outcome.fare,
-        action.kind === 'discount' ? { discount: true } : undefined
+        earnedDiscount ? { discount: true } : undefined
       );
     } else if (result.outcome?.kind === 'walkedAway') {
       // The rider declining ends in Declined; the passenger losing patience ends in Cancelled.

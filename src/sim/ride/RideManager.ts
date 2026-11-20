@@ -979,14 +979,17 @@ export class RideManager {
                 new SeededRng(hashSeed(req.requestId, 'offAppPay')).next()
               )
             : null;
-          // T8.6: an unreliable passenger may contest the ride; pauses interactively in Completing.
-          const archetype = this.archetypeOf?.(req);
-          const disputed = archetype !== undefined && isDisputed(
-            archetype,
-            this.paymentReliabilityOf?.(req) ?? 1,
-            new SeededRng(hashSeed(req.requestId, 'dispute')).next()
-          );
+          // T8.6: an unreliable passenger may contest the ride (unless off-app non-payment already zeroed paidFare).
           const paidFare = offApp ? offApp.paid : req.initialFare;
+          const archetype = this.archetypeOf?.(req);
+          const disputed =
+            paidFare > 0 &&
+            archetype !== undefined &&
+            isDisputed(
+              archetype,
+              this.paymentReliabilityOf?.(req) ?? 1,
+              new SeededRng(hashSeed(req.requestId, 'dispute')).next()
+            );
           const baseConsequences = [
             ...(offApp?.unpaid ? ['trip.consequence.offAppUnpaid'] : []),
             ...(disputed ? ['trip.consequence.disputed'] : []),

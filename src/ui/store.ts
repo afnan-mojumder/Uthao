@@ -389,6 +389,7 @@ export function setHasSaveCallback(fn: () => boolean): void {
 export function exitToTitle(): void {
   tutorialSignal.value = { active: false, step: 'idle' };
   pausedSignal.value = false;
+  inActiveTrip = false;
   activeOfferQueue = [];
   phoneSignal.value = {
     ...phoneSignal.value,
@@ -534,6 +535,17 @@ function showImpact(kind: NonNullable<ImpactState['kind']>): void {
 const MAX_PHONE_OFFER_QUEUE = 3;
 const PHONE_OFFER_TIMEOUT_SEC = 15;
 let activeOfferQueue: Array<{ request: RideRequest; timeoutRemaining: number }> = [];
+let inActiveTrip = false;
+
+const ACTIVE_TRIP_STATES = new Set([
+  'Negotiating',
+  'Accepted',
+  'EnRouteToPickup',
+  'PassengerOnboard',
+  'EnRouteToDestination',
+  'Completing',
+  'EmergencyInterrupted',
+]);
 
 function syncPhoneOfferState(showHead: boolean): void {
   const head = activeOfferQueue[0];
@@ -553,7 +565,7 @@ export function tickPhoneOffers(dtSec: number): void {
     entry.timeoutRemaining -= dtSec;
   }
   activeOfferQueue = activeOfferQueue.filter((e) => e.timeoutRemaining > 0);
-  syncPhoneOfferState(true);
+  syncPhoneOfferState(!inActiveTrip && !choiceSignal.value.active);
 }
 
 const DIALOGUE_SUBTITLE_MS = 5000;
@@ -563,9 +575,23 @@ export function bindEventBusToStore(bus: EventBus<GameEvents>): () => void {
   const unsubscribers: Array<() => void> = [];
 
   activeOfferQueue = [];
+  inActiveTrip = false;
   // A request that arrives under an open story card is held and shown once the
   // card closes, so it never covers the card or starts its timer unseen.
   let heldRequest: RideRequest | null = null;
+
+  const closeDisputeChoiceCard = (requestId?: string): void => {
+    const cur = choiceSignal.value.instanceId;
+    if (!cur?.startsWith('dispute:')) return;
+    if (requestId && cur !== `dispute:${requestId}`) return;
+    choiceSignal.value = {
+      active: false,
+      prompt: '',
+      promptVars: undefined,
+      options: [],
+      instanceId: undefined,
+    };
+  };
 
   // Audit H-4: wobble and crash feedback reaches the rider, not just the event bus.
   unsubscribers.push(bus.on('bike/collision', (ev) => showImpact(ev.severity)));
@@ -582,7 +608,7 @@ export function bindEventBusToStore(bus: EventBus<GameEvents>): () => void {
         activeOfferQueue.shift();
       }
     }
-    syncPhoneOfferState(true);
+    syncPhoneOfferState(!inActiveTrip);
   };
 
   const unsubRideRequested = bus.on('ride/requested', (ev) => {
@@ -608,31 +634,33 @@ export function bindEventBusToStore(bus: EventBus<GameEvents>): () => void {
 
   const unsubRideAccepted = bus.on('ride/accepted', (ev) => {
     activeOfferQueue = activeOfferQueue.filter((e) => e.request.requestId !== ev.requestId);
-    phoneSignal.value = {
-      ...phoneSignal.value,
-      incomingRequest: null,
-      requestQueue: activeOfferQueue.map((e) => e.request),
-      unreadCount: 0,
-    };
+    syncPhoneOfferState(false);
   });
   unsubscribers.push(unsubRideAccepted);
 
   const unsubRideCancelled = bus.on('ride/cancelled', (ev) => {
+    if (heldRequest?.requestId === ev.requestId) {
+      heldRequest = null;
+    }
+    closeDisputeChoiceCard(ev.requestId);
     const prevLen = activeOfferQueue.length;
     activeOfferQueue = activeOfferQueue.filter((e) => e.request.requestId !== ev.requestId);
     if (prevLen !== activeOfferQueue.length || phoneSignal.value.incomingRequest?.requestId === ev.requestId) {
-      syncPhoneOfferState(true);
+      syncPhoneOfferState(!inActiveTrip && !choiceSignal.value.active);
     }
   });
   unsubscribers.push(unsubRideCancelled);
 
   const unsubTripState = bus.on('trip/state', (ev) => {
+    inActiveTrip = ACTIVE_TRIP_STATES.has(ev.to);
+    if (ev.to !== 'Completing') {
+      closeDisputeChoiceCard();
+    }
     if (ev.to === 'Negotiating') {
-      phoneSignal.value = {
-        ...phoneSignal.value,
-        incomingRequest: null,
-        unreadCount: 0,
-      };
+      if (ev.requestId) {
+        activeOfferQueue = activeOfferQueue.filter((e) => e.request.requestId !== ev.requestId);
+      }
+      syncPhoneOfferState(false);
     } else if (ev.to === 'RequestAvailable' && activeOfferQueue.length > 0 && !choiceSignal.value.active) {
       syncPhoneOfferState(true);
     }
@@ -686,16 +714,8 @@ export function bindEventBusToStore(bus: EventBus<GameEvents>): () => void {
   });
   unsubscribers.push(unsubRideDisputed);
 
-  const unsubRideDisputeResolved = bus.on('ride/disputeResolved', () => {
-    if (choiceSignal.value.instanceId?.startsWith('dispute:')) {
-      choiceSignal.value = {
-        active: false,
-        prompt: '',
-        promptVars: undefined,
-        options: [],
-        instanceId: undefined,
-      };
-    }
+  const unsubRideDisputeResolved = bus.on('ride/disputeResolved', (ev) => {
+    closeDisputeChoiceCard(ev.requestId);
   });
   unsubscribers.push(unsubRideDisputeResolved);
 
@@ -803,6 +823,7 @@ export function bindEventBusToStore(bus: EventBus<GameEvents>): () => void {
       clearTimeout(dialogueClearTimer);
       dialogueClearTimer = undefined;
     }
+    inActiveTrip = false;
     activeOfferQueue = [];
     for (const unsub of unsubscribers) {
       unsub();
