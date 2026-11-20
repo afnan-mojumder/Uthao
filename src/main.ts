@@ -1,4 +1,5 @@
 import { render, h } from 'preact';
+import './ui/tokens.css';
 import { watchOverlayFocus } from './ui/gamepadNav';
 import { AudioManager } from './audio/AudioManager';
 import { getBikeDef } from './sim/economy/bikes';
@@ -16,7 +17,6 @@ import { SIM_DT, MAX_FRAME_DT, MAX_SIM_STEPS_PER_FRAME } from './config/constant
 import type { BikeInput } from './physics/bikeModel';
 import { RoadNetwork } from './sim/road/RoadNetwork';
 import { AutopilotController } from './debug/autopilot';
-import { Hud } from './ui/hud/Hud';
 import { InputManager } from './input';
 import { App } from './ui/App';
 import {
@@ -27,7 +27,7 @@ import {
   loadingSignal,
   initPwaInstall,
   negotiationSignal,
-  hudSignal,
+  updateHudState,
   dialogueSubtitleSignal,
   tickPhoneOffers,
   tutorialSignal,
@@ -375,7 +375,6 @@ if (typeof document !== 'undefined') {
   bootCleanups.push(() => document.removeEventListener('visibilitychange', onVisibilityChange));
 }
 
-const hud = typeof document !== 'undefined' ? new Hud() : undefined;
 const minimap = typeof document !== 'undefined' ? new Minimap(roadNetwork) : undefined;
 const autopilot = new AutopilotController(roadNetwork);
 const trafficManager = session.traffic;
@@ -461,6 +460,10 @@ let lastTime = typeof performance !== 'undefined' ? performance.now() : 0;
 let roamNodeIndex = 0;
 let cameraHeld = false;
 let lastBikeBrake = 0;
+let lastHudSyncMs = 0;
+let lastHudFirstPerson = false;
+let lastHudScreen = screenSignal.value;
+const HUD_SYNC_INTERVAL_MS = 50;
 
 function frame(now: number) {
   const dt = (now - lastTime) / 1000;
@@ -590,103 +593,113 @@ function frame(now: number) {
     };
   }
 
-  // Update Minimap
-  if (minimap) {
-    if (!minimap.canvas.parentElement && typeof document !== 'undefined') {
-      const container = document.getElementById('minimap-container');
-      if (container) {
-        container.appendChild(minimap.canvas);
+  const curScreen = screenSignal.value;
+  if (curScreen !== 'title') {
+    // Update Minimap
+    if (minimap) {
+      if (!minimap.canvas.isConnected && typeof document !== 'undefined') {
+        const container = document.getElementById('minimap-container');
+        if (container) {
+          container.appendChild(minimap.canvas);
+        }
+      }
+      const pNodePos = view.pickupVisible ? pNode : null;
+      const dNodePos = view.dropoffVisible ? dNode : null;
+      minimap.update(
+        { x: session.bike.x, z: session.bike.z, heading: session.bike.heading },
+        rideManager.currentRoute,
+        { pickup: pNodePos ?? null, dropoff: dNodePos ?? null }
+      );
+    }
+
+    // Throttled + diffed HUD sync (avoids 60fps allocations when unchanged or on title)
+    const isFirstPerson = renderer ? renderer.cameraRig.mode === 'firstPerson' : false;
+    const forceHudSync =
+      lastHudSyncMs === 0 ||
+      isFirstPerson !== lastHudFirstPerson ||
+      curScreen !== lastHudScreen;
+
+    if (forceHudSync || now - lastHudSyncMs >= HUD_SYNC_INTERVAL_MS) {
+      lastHudSyncMs = now;
+      lastHudFirstPerson = isFirstPerson;
+      lastHudScreen = curScreen;
+
+      const placeKey = String(view.objectiveVars.place ?? '');
+      const objective = t(view.objectiveKey, { place: placeKey ? t(placeKey) : '' });
+      const fare = activeReq?.initialFare;
+
+      // Speed is signed (negative when reversing); the dial shows the magnitude.
+      const currentSpeedKmh = Math.abs(session.bike.speed) * 3.6;
+      const fuelL = gm.economyManager.fuelLevel;
+      const fuelMaxL = gm.economyManager.maxFuelL();
+      const todayNetEarnings = gm.economy.dailyRevenue - gm.economy.dailyExpenses;
+      const shiftClock = gm.clock.hhmm();
+      const shiftDay = gm.clock.day;
+      const rating = gm.reputationSystem.getAppRating();
+
+      const hudMissions = gm.missionManager.getHudMissions((poiId) =>
+        session.getNearestMissionTarget(poiId)
+      );
+
+      const activeRoadEv = gm.roadEvents.getActiveEvents().find((e) => e.active);
+      const roadEventAlert = activeRoadEv
+        ? {
+            title: activeRoadEv.title?.[settingsSignal.value.language] ?? activeRoadEv.kind,
+            kind: activeRoadEv.kind,
+          }
+        : null;
+
+      const activeProfile = activeReq ? session.requests.getProfile(activeReq.passengerId) : undefined;
+      const activeChar = activeReq?.characterId ? getCharacter(activeReq.characterId) : undefined;
+      const passengerNameKey = activeProfile?.nameKey ?? activeChar?.nameKey;
+      const passengerName = passengerNameKey ? t(passengerNameKey) : 'Passenger';
+
+      updateHudState({
+        speedKmh: currentSpeedKmh,
+        objectiveText: objective,
+        activeMission: hudMissions.main,
+        activeSideMissions: hudMissions.side,
+        roadEventAlert,
+        dialogueSubtitle: dialogueSubtitleSignal.value,
+        fare,
+        fuelL,
+        fuelMaxL,
+        nearStation: session.nearFuelStation(),
+        conditionPct: gm.economyManager.motorcycleCondition,
+        todayNetEarnings,
+        shiftClock,
+        shiftDay,
+        rating,
+        isFirstPerson,
+        nextTurn: view.instruction
+          ? { direction: view.instruction.kind, text: t(view.instruction.textKey, { dist: Math.round(view.instruction.distanceM) }) }
+          : null,
+        chargeSpot:
+          gm.economyManager.phoneBattery < BALANCE.PHONE.lowBatteryPct
+            ? session.nearChargeSpot('home')
+              ? 'home'
+              : session.nearChargeSpot('teaStall')
+                ? 'teaStall'
+                : null
+            : null,
+        passengerStatus: activeReq
+          ? {
+              status: view.passenger,
+              name: passengerName,
+            }
+          : undefined,
+        etaMinutes: activeReq ? activeReq.estimatedDuration : undefined,
+      });
+    }
+
+    if (curScreen === 'map') {
+      const prevMapPos = mapPlayerPosSignal.value;
+      if (Math.abs(prevMapPos.x - session.bike.x) > 0.25 || Math.abs(prevMapPos.z - session.bike.z) > 0.25) {
+        mapPlayerPosSignal.value = { x: session.bike.x, z: session.bike.z };
       }
     }
-    const pNodePos = view.pickupVisible ? pNode : null;
-    const dNodePos = view.dropoffVisible ? dNode : null;
-    minimap.update(
-      { x: session.bike.x, z: session.bike.z, heading: session.bike.heading },
-      rideManager.currentRoute,
-      { pickup: pNodePos ?? null, dropoff: dNodePos ?? null }
-    );
-  }
-
-  // Update HUD
-  if (hud) {
-    // The view carries the place's name key; translate it here, not in the sim.
-    const placeKey = String(view.objectiveVars.place ?? '');
-    const objective = t(view.objectiveKey, { place: placeKey ? t(placeKey) : '' });
-    const fare = activeReq?.initialFare;
-
-    // Speed is signed (negative when reversing); the dial shows the magnitude.
-    const currentSpeedKmh = Math.abs(session.bike.speed) * 3.6;
-    const fuelL = gm.economyManager.fuelLevel;
-    const fuelMaxL = gm.economyManager.maxFuelL();
-    const todayNetEarnings = gm.economy.dailyRevenue - gm.economy.dailyExpenses;
-    const shiftClock = gm.clock.hhmm();
-    const shiftDay = gm.clock.day;
-    const rating = gm.reputationSystem.getAppRating();
-    const isFirstPerson = renderer ? renderer.cameraRig.mode === 'firstPerson' : false;
-
-    const hudMissions = gm.missionManager.getHudMissions((poiId) =>
-      session.getNearestMissionTarget(poiId)
-    );
-
-    const activeRoadEv = gm.roadEvents.getActiveEvents().find((e) => e.active);
-    const roadEventAlert = activeRoadEv
-      ? {
-          title: activeRoadEv.title?.[settingsSignal.value.language] ?? activeRoadEv.kind,
-          kind: activeRoadEv.kind,
-        }
-      : null;
-
-    const activeProfile = activeReq ? session.requests.getProfile(activeReq.passengerId) : undefined;
-    const activeChar = activeReq?.characterId ? getCharacter(activeReq.characterId) : undefined;
-    const passengerNameKey = activeProfile?.nameKey ?? activeChar?.nameKey;
-    const passengerName = passengerNameKey ? t(passengerNameKey) : 'Passenger';
-
-    hud.update({
-      speedKmh: currentSpeedKmh,
-      objectiveText: objective,
-      activeMission: hudMissions.main,
-      activeSideMissions: hudMissions.side,
-      roadEventAlert,
-      dialogueSubtitle: dialogueSubtitleSignal.value,
-      fare,
-      fuelL,
-      fuelMaxL,
-      nearStation: session.nearFuelStation(),
-      conditionPct: gm.economyManager.motorcycleCondition,
-      todayNetEarnings,
-      shiftClock,
-      shiftDay,
-      rating,
-      isFirstPerson,
-      nextTurn: view.instruction
-        ? { direction: view.instruction.kind, text: t(view.instruction.textKey, { dist: Math.round(view.instruction.distanceM) }) }
-        : null,
-      chargeSpot:
-        gm.economyManager.phoneBattery < BALANCE.PHONE.lowBatteryPct
-          ? session.nearChargeSpot('home')
-            ? 'home'
-            : session.nearChargeSpot('teaStall')
-              ? 'teaStall'
-              : null
-          : null,
-      passengerStatus: activeReq
-        ? {
-            status: view.passenger,
-            name: passengerName,
-          }
-        : undefined,
-      etaMinutes: activeReq ? activeReq.estimatedDuration : undefined,
-    });
-
-    hudSignal.value = {
-      ...hudSignal.value,
-      speedKmh: currentSpeedKmh,
-      fuel: (fuelL / fuelMaxL) * 100,
-      objectiveText: objective,
-    };
-    if (screenSignal.value === 'map') {
-      mapPlayerPosSignal.value = { x: session.bike.x, z: session.bike.z };
-    }
+  } else {
+    lastHudScreen = curScreen;
   }
 
   if (typeof requestAnimationFrame !== 'undefined') {

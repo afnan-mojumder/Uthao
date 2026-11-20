@@ -36,8 +36,8 @@ export function Loading({ message }: LoadingProps): JSX.Element {
         justifyContent: 'center',
         padding: '24px',
         textAlign: 'center',
-        color: '#f8fafc',
-        fontFamily: 'system-ui, -apple-system, sans-serif',
+        color: 'var(--text-primary, #F8FAFC)',
+        fontFamily: "var(--font-sans, 'Hind Siliguri', system-ui, -apple-system, sans-serif)",
       }}
     >
       {!isError && (
@@ -46,7 +46,7 @@ export function Loading({ message }: LoadingProps): JSX.Element {
             width: '54px',
             height: '54px',
             border: '4px solid rgba(56, 189, 248, 0.2)',
-            borderTopColor: '#38bdf8',
+            borderTopColor: 'var(--info-sky, #38BDF8)',
             borderRadius: '50%',
             animation: 'uthao-spin 0.9s linear infinite',
             boxShadow: '0 0 25px rgba(56, 189, 248, 0.3)',
@@ -60,7 +60,7 @@ export function Loading({ message }: LoadingProps): JSX.Element {
         style={{
           fontSize: '1.05rem',
           fontWeight: 600,
-          color: isError ? '#fca5a5' : '#e2e8f0',
+          color: isError ? 'var(--danger-red, #EF4444)' : '#e2e8f0',
           letterSpacing: '0.02em',
           margin: 0,
         }}
@@ -111,6 +111,7 @@ export function Loading({ message }: LoadingProps): JSX.Element {
         <div
           data-testid="loading-progress"
           role="progressbar"
+          aria-label={t('loading.progress_aria')}
           aria-valuemin={0}
           aria-valuemax={100}
           aria-valuenow={clampedProgress}
@@ -127,7 +128,7 @@ export function Loading({ message }: LoadingProps): JSX.Element {
             style={{
               width: `${clampedProgress}%`,
               height: '100%',
-              background: 'linear-gradient(90deg, #38bdf8 0%, #10b981 100%)',
+              background: 'linear-gradient(90deg, var(--info-sky, #38BDF8) 0%, var(--uthao-green, #22C55E) 100%)',
               transition: 'width 0.2s ease',
             }}
           />

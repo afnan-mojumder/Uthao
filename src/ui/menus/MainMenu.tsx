@@ -2,6 +2,15 @@ import type { JSX } from 'preact';
 import { useState } from 'preact/hooks';
 import { t } from '../i18n';
 import { Z_LAYER } from '../store';
+import {
+  IconClose,
+  IconFlag,
+  IconMotorcycle,
+  IconPlay,
+  IconRoad,
+  IconScroll,
+  IconSettings,
+} from '../components/icons';
 
 export interface MainMenuProps {
   hasSave?: boolean;
@@ -38,8 +47,8 @@ export function MainMenu({
         overflowY: 'auto',
         background: 'radial-gradient(ellipse at 50% 30%, rgba(30, 41, 59, 0.94) 0%, rgba(15, 23, 42, 0.98) 75%, #020617 100%)',
         backdropFilter: 'blur(20px)',
-        fontFamily: "'Hind Siliguri', 'Segoe UI', system-ui, sans-serif",
-        color: '#f8fafc',
+        fontFamily: "var(--font-sans, 'Hind Siliguri', 'Segoe UI', system-ui, sans-serif)",
+        color: 'var(--text-primary, #F8FAFC)',
         padding: '24px',
         userSelect: 'none',
         pointerEvents: 'auto',
@@ -53,7 +62,7 @@ export function MainMenu({
           left: '20%',
           width: '60%',
           height: '40%',
-          background: 'radial-gradient(circle, rgba(16, 185, 129, 0.15) 0%, rgba(56, 189, 248, 0.08) 50%, transparent 80%)',
+          background: 'radial-gradient(circle, rgba(34, 197, 94, 0.16) 0%, rgba(56, 189, 248, 0.08) 50%, transparent 80%)',
           filter: 'blur(60px)',
           pointerEvents: 'none',
         }}
@@ -72,19 +81,19 @@ export function MainMenu({
             display: 'inline-flex',
             alignItems: 'center',
             gap: '10px',
-            background: 'rgba(16, 185, 129, 0.12)',
-            border: '1px solid rgba(16, 185, 129, 0.3)',
+            background: 'var(--uthao-green-dim, rgba(34, 197, 94, 0.14))',
+            border: '1px solid var(--uthao-green-border, rgba(34, 197, 94, 0.35))',
             padding: '6px 16px',
             borderRadius: '9999px',
             fontSize: '0.85rem',
-            color: '#34d399',
+            color: 'var(--uthao-green, #22C55E)',
             fontWeight: 700,
             marginBottom: '12px',
             letterSpacing: '1px',
             textTransform: 'uppercase',
           }}
         >
-          <span>🏍️</span> {t('menu.subtitle')}
+          <IconMotorcycle size={18} color="var(--uthao-green, #22C55E)" /> {t('menu.subtitle')}
         </div>
 
         <h1
@@ -94,7 +103,7 @@ export function MainMenu({
             fontSize: 'clamp(3rem, 7vw, 5rem)',
             fontWeight: 900,
             letterSpacing: '3px',
-            background: 'linear-gradient(135deg, #f8fafc 0%, #38bdf8 50%, #10b981 100%)',
+            background: 'linear-gradient(135deg, #f8fafc 0%, var(--info-sky, #38BDF8) 50%, var(--uthao-green, #22C55E) 100%)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             textShadow: '0 10px 30px rgba(56, 189, 248, 0.3)',
@@ -148,7 +157,7 @@ export function MainMenu({
               boxShadow: '0 4px 15px rgba(56, 189, 248, 0.15)',
             }}
           >
-            <span>▶️</span> {t('menu.continue')}
+            <IconPlay size={18} color="var(--info-sky, #38BDF8)" /> {t('menu.continue')}
           </button>
         )}
 
@@ -160,7 +169,7 @@ export function MainMenu({
             style={{
               padding: '14px',
               borderRadius: '14px',
-              border: '1px solid rgba(248, 113, 113, 0.5)',
+              border: '1px solid var(--danger-red-border, rgba(239, 68, 68, 0.5))',
               background: 'rgba(69, 10, 10, 0.85)',
               color: '#fecaca',
               display: 'flex',
@@ -182,8 +191,8 @@ export function MainMenu({
                   flex: 1,
                   padding: '10px 14px',
                   borderRadius: '10px',
-                  border: '1px solid rgba(248, 113, 113, 0.6)',
-                  background: 'rgba(220, 38, 38, 0.3)',
+                  border: '1px solid var(--danger-red, #EF4444)',
+                  background: 'rgba(239, 68, 68, 0.25)',
                   color: '#fecaca',
                   fontSize: '0.9rem',
                   fontWeight: 700,
@@ -225,9 +234,9 @@ export function MainMenu({
           style={{
             padding: '16px',
             borderRadius: '14px',
-            border: '1px solid rgba(16, 185, 129, 0.4)',
-            background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.3), rgba(5, 150, 105, 0.2))',
-            color: '#34d399',
+            border: '1px solid var(--uthao-green-border, rgba(34, 197, 94, 0.45))',
+            background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.28), rgba(22, 163, 74, 0.18))',
+            color: 'var(--uthao-green, #22C55E)',
             fontSize: '1.05rem',
             fontWeight: 700,
             cursor: 'pointer',
@@ -236,10 +245,10 @@ export function MainMenu({
             justifyContent: 'center',
             gap: '10px',
             transition: 'all 0.2s ease',
-            boxShadow: '0 4px 15px rgba(16, 185, 129, 0.2)',
+            boxShadow: '0 4px 15px rgba(34, 197, 94, 0.2)',
           }}
         >
-          <span>🏁</span> {t('menu.new_career')}
+          <IconFlag size={18} color="var(--uthao-green, #22C55E)" /> {t('menu.new_career')}
         </button>
 
         <button
@@ -261,7 +270,7 @@ export function MainMenu({
             transition: 'all 0.2s ease',
           }}
         >
-          <span>🛣️</span> {t('menu.endless')}
+          <IconRoad size={18} /> {t('menu.endless')}
         </button>
 
         <button
@@ -283,7 +292,7 @@ export function MainMenu({
             transition: 'all 0.2s ease',
           }}
         >
-          <span>⚙️</span> {t('menu.settings')}
+          <IconSettings size={18} /> {t('menu.settings')}
         </button>
 
         <button
@@ -305,7 +314,7 @@ export function MainMenu({
             transition: 'all 0.2s ease',
           }}
         >
-          <span>📜</span> {t('menu.credits')}
+          <IconScroll size={16} /> {t('menu.credits')}
         </button>
       </div>
 
@@ -332,10 +341,13 @@ export function MainMenu({
           }}
         >
           <div
+            role="dialog"
+            aria-modal="true"
+            aria-label={t('menu.credits_title')}
             style={{
               width: '100%',
               maxWidth: '540px',
-              maxHeight: '80vh',
+              maxHeight: '90dvh',
               overflowY: 'auto',
               background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.98))',
               border: '1px solid rgba(255, 255, 255, 0.12)',
@@ -348,16 +360,20 @@ export function MainMenu({
               <h2 style={{ margin: 0, fontSize: '1.4rem', color: '#38bdf8' }}>{t('menu.credits_title')}</h2>
               <button
                 data-testid="credits-close-btn"
+                aria-label={t('menu.close')}
                 onClick={() => setShowCredits(false)}
                 style={{
                   background: 'none',
                   border: 'none',
                   color: '#94a3b8',
-                  fontSize: '1.4rem',
                   cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '6px',
                 }}
               >
-                ✕
+                <IconClose size={20} />
               </button>
             </div>
 

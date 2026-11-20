@@ -1,7 +1,7 @@
 import { signal } from '@preact/signals';
 import { DEFAULT_VOLUMES } from '../audio/AudioManager';
 import type { EventBus, GameEvents } from '../core/events';
-import type { DaySummary, DeliveryJob, RideRequest, TripReceipt } from '../core/types';
+import type { DaySummary, DeliveryJob, PassengerStatus, RideRequest, TripReceipt } from '../core/types';
 import type { GameManager } from '../sim/GameManager';
 import type { TripHistoryItem } from './phone/Phone';
 import type {
@@ -31,12 +31,57 @@ export interface DialogueSubtitleState {
   phase?: string;
 }
 
+export interface HudPassengerInfo {
+  status: PassengerStatus | 'None';
+  name?: string;
+  archetype?: string;
+  rating?: number;
+}
+
+export interface HudNavigationTurn {
+  direction: 'left' | 'right' | 'straight' | 'uturn' | string;
+  text: string;
+}
+
+export interface HudMissionInfo {
+  id?: string;
+  titleKey: string;
+  objectiveDescKey: string;
+  progress: number;
+  target: number;
+  targetNameKey?: string;
+  targetDistM?: number;
+  isSide?: boolean;
+}
+
 export interface HudState {
   speedKmh: number;
+  gear?: number;
+  fuel?: number;
+  fuelL: number;
+  fuelMaxL: number;
+  isFirstPerson?: boolean;
+  nearStation?: boolean;
+  chargeSpot?: 'home' | 'teaStall' | null;
+  conditionPct?: number;
   objectiveText: string;
-  gear: number;
-  fuel: number;
+  destinationName?: string;
+  etaMinutes?: number;
+  nextTurn?: HudNavigationTurn | null;
+  activeMission?: HudMissionInfo | null;
+  activeSideMissions?: HudMissionInfo[];
+  roadEventAlert?: {
+    title: string;
+    kind: string;
+  } | null;
+  passengerStatus?: HudPassengerInfo;
+  todayNetEarnings: number;
+  shiftClock: string;
+  shiftDay: number;
+  rating: number;
   dialogueSubtitle?: DialogueSubtitleState | null;
+  statusText?: string;
+  fare?: number;
 }
 
 export interface ChoiceOption {
@@ -267,13 +312,128 @@ export function saveSettings(settings: GameSettings): void {
 
 export const settingsSignal = signal<GameSettings>(loadSettings());
 
-export const hudSignal = signal<HudState>({
+export const DEFAULT_HUD_STATE: HudState = {
   speedKmh: 0,
-  objectiveText: '',
   gear: 1,
-  fuel: 100,
+  fuel: 75,
+  fuelL: 6.0,
+  fuelMaxL: 8.0,
+  isFirstPerson: false,
+  nearStation: false,
+  chargeSpot: null,
+  conditionPct: 100,
+  objectiveText: 'Waiting for ride requests...',
+  todayNetEarnings: 0,
+  shiftClock: '07:30',
+  shiftDay: 1,
+  rating: 5.0,
   dialogueSubtitle: null,
-});
+  nextTurn: null,
+  activeMission: null,
+  activeSideMissions: [],
+  roadEventAlert: null,
+  passengerStatus: undefined,
+  etaMinutes: undefined,
+  fare: undefined,
+};
+
+export const hudSignal = signal<HudState>({ ...DEFAULT_HUD_STATE });
+
+function sameHudTurn(a: HudNavigationTurn | null | undefined, b: HudNavigationTurn | null | undefined): boolean {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  return a.direction === b.direction && a.text === b.text;
+}
+
+function sameHudMission(a: HudMissionInfo | null | undefined, b: HudMissionInfo | null | undefined): boolean {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  return (
+    a.id === b.id &&
+    a.titleKey === b.titleKey &&
+    a.objectiveDescKey === b.objectiveDescKey &&
+    a.progress === b.progress &&
+    a.target === b.target &&
+    a.targetNameKey === b.targetNameKey &&
+    Math.round(a.targetDistM ?? -1) === Math.round(b.targetDistM ?? -1) &&
+    a.isSide === b.isSide
+  );
+}
+
+function sameHudMissionsList(
+  a: readonly HudMissionInfo[] | undefined,
+  b: readonly HudMissionInfo[] | undefined
+): boolean {
+  if (a === b) return true;
+  if (!a || !b || a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (!sameHudMission(a[i], b[i])) return false;
+  }
+  return true;
+}
+
+function sameHudPassenger(a: HudPassengerInfo | undefined, b: HudPassengerInfo | undefined): boolean {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  return a.status === b.status && a.name === b.name && a.archetype === b.archetype && a.rating === b.rating;
+}
+
+function sameRoadAlert(
+  a: HudState['roadEventAlert'],
+  b: HudState['roadEventAlert']
+): boolean {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  return a.title === b.title && a.kind === b.kind;
+}
+
+/** Updates `hudSignal` only when at least one visible field differs from current state. */
+export function updateHudState(patch: Partial<HudState>): boolean {
+  const cur = hudSignal.value;
+  const nextFuelL = patch.fuelL !== undefined ? patch.fuelL : cur.fuelL;
+  const nextFuelMax = patch.fuelMaxL !== undefined ? patch.fuelMaxL : cur.fuelMaxL;
+  const nextFuelPct = patch.fuel !== undefined ? patch.fuel : (nextFuelL / (nextFuelMax || 8)) * 100;
+
+  const changed =
+    (patch.speedKmh !== undefined && Math.round(patch.speedKmh) !== Math.round(cur.speedKmh)) ||
+    (patch.gear !== undefined && patch.gear !== cur.gear) ||
+    (patch.fuelL !== undefined &&
+      (Math.round(patch.fuelL * 10) !== Math.round(cur.fuelL * 10) ||
+        (patch.fuelL === 0) !== (cur.fuelL === 0))) ||
+    (patch.fuelMaxL !== undefined && patch.fuelMaxL !== cur.fuelMaxL) ||
+    (patch.isFirstPerson !== undefined && patch.isFirstPerson !== cur.isFirstPerson) ||
+    (patch.nearStation !== undefined && patch.nearStation !== cur.nearStation) ||
+    (patch.chargeSpot !== undefined && patch.chargeSpot !== cur.chargeSpot) ||
+    (patch.conditionPct !== undefined && Math.round(patch.conditionPct) !== Math.round(cur.conditionPct ?? 100)) ||
+    (patch.objectiveText !== undefined && patch.objectiveText !== cur.objectiveText) ||
+    (patch.destinationName !== undefined && patch.destinationName !== cur.destinationName) ||
+    ('etaMinutes' in patch && patch.etaMinutes !== cur.etaMinutes) ||
+    ('fare' in patch && patch.fare !== cur.fare) ||
+    (patch.todayNetEarnings !== undefined && Math.round(patch.todayNetEarnings) !== Math.round(cur.todayNetEarnings)) ||
+    (patch.shiftClock !== undefined && patch.shiftClock !== cur.shiftClock) ||
+    (patch.shiftDay !== undefined && patch.shiftDay !== cur.shiftDay) ||
+    (patch.rating !== undefined && Math.round(patch.rating * 100) !== Math.round(cur.rating * 100)) ||
+    (patch.statusText !== undefined && patch.statusText !== cur.statusText) ||
+    ('dialogueSubtitle' in patch && patch.dialogueSubtitle !== cur.dialogueSubtitle) ||
+    ('nextTurn' in patch && !sameHudTurn(patch.nextTurn, cur.nextTurn)) ||
+    ('activeMission' in patch && !sameHudMission(patch.activeMission, cur.activeMission)) ||
+    ('activeSideMissions' in patch && !sameHudMissionsList(patch.activeSideMissions, cur.activeSideMissions)) ||
+    ('roadEventAlert' in patch && !sameRoadAlert(patch.roadEventAlert, cur.roadEventAlert)) ||
+    ('passengerStatus' in patch && !sameHudPassenger(patch.passengerStatus, cur.passengerStatus));
+
+  if (!changed) return false;
+
+  hudSignal.value = {
+    ...cur,
+    ...patch,
+    fuel: nextFuelPct,
+  };
+  return true;
+}
+
+export function resetHudState(): void {
+  hudSignal.value = { ...DEFAULT_HUD_STATE };
+}
 
 export const dialogueSubtitleSignal = signal<DialogueSubtitleState | null>(null);
 
@@ -446,7 +606,7 @@ export function exitToTitle(): void {
     activeDeliveries: [],
   };
   dialogueSubtitleSignal.value = null;
-  hudSignal.value = { ...hudSignal.value, dialogueSubtitle: null };
+  resetHudState();
   negotiationSignal.value = { active: false, session: null, lastResult: null };
   garageSignal.value = { ...garageSignal.value, open: false };
   journalSignal.value = false;

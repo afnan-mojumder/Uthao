@@ -1,0 +1,131 @@
+:root {
+  /* MASTER §16 Brand & Semantic Palette */
+  --uthao-green: #22C55E;
+  --uthao-green-dim: rgba(34, 197, 94, 0.22);
+  --uthao-green-border: rgba(34, 197, 94, 0.45);
+  --dhaka-amber: #F59E0B;
+  --dhaka-amber-dim: rgba(245, 158, 11, 0.22);
+  --dhaka-amber-border: rgba(245, 158, 11, 0.48);
+  --danger-red: #EF4444;
+  --danger-red-dim: rgba(239, 68, 68, 0.22);
+  --danger-red-border: rgba(239, 68, 68, 0.5);
+  --info-sky: #38BDF8;
+  --info-sky-dim: rgba(56, 189, 248, 0.2);
+  --info-sky-border: rgba(56, 189, 248, 0.42);
+
+  /* Dark Slate Translucent Surfaces */
+  --surface-backdrop: rgba(2, 6, 23, 0.8);
+  --surface-panel: rgba(15, 23, 42, 0.92);
+  --surface-card: rgba(30, 41, 59, 0.84);
+  --surface-elevated: rgba(30, 41, 59, 0.95);
+  --border-subtle: rgba(255, 255, 255, 0.12);
+  --border-strong: rgba(148, 163, 184, 0.35);
+
+  /* Typography & Text */
+  --font-sans: 'Hind Siliguri', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --text-primary: #F8FAFC;
+  --text-secondary: #CBD5E1;
+  --text-muted: #94A3B8;
+
+  /* Z-Layers (mirrors Z_LAYER in src/ui/store.ts) */
+  --z-hud: 100;
+  --z-touch: 200;
+  --z-toast: 300;
+  --z-panel: 500;
+  --z-modal: 700;
+  --z-critical-modal: 800;
+  --z-system-overlay: 900;
+
+  /* Spacing & Radii */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 24px;
+  --panel-padding: 20px 24px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-pill: 9999px;
+  --touch-target-min: 44px;
+
+  /* Safe-area Insets */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+}
+
+@media (max-width: 640px), (max-height: 480px) {
+  :root {
+    --panel-padding: 14px 16px;
+    --space-lg: 12px;
+    --space-xl: 16px;
+  }
+}
+
+html,
+body,
+#ui-root {
+  font-family: var(--font-sans);
+  color: var(--text-primary);
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
+:focus-visible {
+  outline: 3px solid var(--info-sky, #38BDF8);
+  outline-offset: 2px;
+}
+
+@keyframes choiceSlideDown {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -10px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+@keyframes uthao-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes uthao-toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -6px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+html[data-reduce-motion="true"] *,
+html[data-reduce-motion="true"] *::before,
+html[data-reduce-motion="true"] *::after {
+  animation: none !important;
+  transition: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

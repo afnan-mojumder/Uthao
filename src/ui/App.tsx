@@ -1,6 +1,9 @@
 import type { JSX } from 'preact';
+import './tokens.css';
 import { TouchActions, isTouchDevice } from './touch/TouchActions';
 import { useState, useEffect, useRef } from 'preact/hooks';
+import { Hud } from './hud/Hud';
+import { IconPhone } from './components/icons';
 import {
   rotateOverlaySignal,
   unsupportedSignal,
@@ -205,9 +208,11 @@ export function App(): JSX.Element {
     const stopGamepad = startGamepadNav(() => showSettingsRef.current);
 
     return () => {
-      window.removeEventListener('resize', checkOrientation);
-      window.removeEventListener('orientationchange', checkOrientation);
-      window.removeEventListener('keydown', handleKeyDown);
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('resize', checkOrientation);
+        window.removeEventListener('orientationchange', checkOrientation);
+        window.removeEventListener('keydown', handleKeyDown);
+      }
       stopGamepad();
     };
   }, []);
@@ -230,7 +235,13 @@ export function App(): JSX.Element {
         userSelect: 'none',
       }}
     >
-      {/* 1. HUD layer: Paused Indicator */}
+      {/* 1. HUD layer: Riding HUD + Paused Indicator */}
+      {screenSignal.value !== 'title' && !loadingSignal.value.active && !unsupportedSignal.value && (
+        <div style={layerStyle(Z_LAYER.HUD)}>
+          <Hud />
+        </div>
+      )}
+
       {pausedSignal.value && (
         <div
           data-testid="pause-indicator"
@@ -339,7 +350,7 @@ export function App(): JSX.Element {
             position: 'absolute',
             bottom: '24px',
             right: '24px',
-            background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+            background: 'linear-gradient(135deg, var(--uthao-green, #22C55E) 0%, #059669 100%)',
             border: 'none',
             color: '#fff',
             padding: '10px 18px',
@@ -347,7 +358,7 @@ export function App(): JSX.Element {
             fontWeight: 700,
             fontSize: '0.85rem',
             cursor: 'pointer',
-            boxShadow: '0 4px 14px rgba(16, 185, 129, 0.4)',
+            boxShadow: '0 4px 14px rgba(34, 197, 94, 0.4)',
             pointerEvents: 'auto',
             zIndex: Z_LAYER.TOAST,
             display: 'flex',
@@ -355,7 +366,7 @@ export function App(): JSX.Element {
             gap: '8px',
           }}
         >
-          <span style={{ fontSize: '1.1rem' }}>📲</span> Install App
+          <IconPhone size={18} /> Install App
         </button>
       )}
 

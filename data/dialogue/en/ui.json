@@ -19,6 +19,7 @@
   "loading.session": "Starting ride dispatch...",
   "loading.ready": "Ready!",
   "loading.error": "Failed to load the game",
+  "loading.progress_aria": "Loading progress",
   "ui.paused": "Paused",
   "ui.resume": "Resume",
   "ui.context_lost": "Graphics context lost. Restoring rendering...",

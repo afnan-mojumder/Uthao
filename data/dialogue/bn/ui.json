@@ -19,6 +19,7 @@
   "loading.session": "রাইড সিস্টেম চালু হচ্ছে...",
   "loading.ready": "প্রস্তুত!",
   "loading.error": "গেম লোড করতে ব্যর্থ হয়েছে",
+  "loading.progress_aria": "লোডিং অগ্রগতি",
   "ui.paused": "বিরতি",
   "ui.resume": "চালিয়ে যান",
   "ui.context_lost": "গ্রাফিক্স বিচ্ছিন্ন হয়েছে। পুনরায় চালু হচ্ছে...",

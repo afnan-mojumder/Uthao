@@ -1,23 +1,28 @@
-import { render } from 'preact';
-import { signal, type Signal } from '@preact/signals';
-import { passengerHintKey } from './passengerHint';
 import type { JSX } from 'preact';
+import { passengerHintKey } from './passengerHint';
 import { t } from '../i18n';
-import { settingsSignal, onRefuelCallback, onFuelRescueCallback, onChargePhoneCallback } from '../store';
+import {
+  hudSignal,
+  settingsSignal,
+  onRefuelCallback,
+  onFuelRescueCallback,
+  onChargePhoneCallback,
+  type HudState,
+  type HudPassengerInfo,
+  type HudNavigationTurn,
+  type HudMissionInfo,
+} from '../store';
+import {
+  IconChat,
+  IconFuel,
+  IconFullscreen,
+  IconMotorcycle,
+  IconUser,
+  IconWarning,
+} from '../components/icons';
 import { BALANCE } from '../../config/balance';
-import type { PassengerStatus } from '../../core/types';
 
-export interface HudPassengerInfo {
-  status: PassengerStatus | 'None';
-  name?: string;
-  archetype?: string;
-  rating?: number;
-}
-
-export interface HudNavigationTurn {
-  direction: 'left' | 'right' | 'straight' | 'uturn' | string;
-  text: string;
-}
+export type { HudState, HudPassengerInfo, HudNavigationTurn, HudMissionInfo };
 
 function turnDirectionIcon(direction: string): string {
   switch (direction) {
@@ -30,66 +35,6 @@ function turnDirectionIcon(direction: string): string {
     default:
       return '↑';
   }
-}
-
-export interface HudMissionInfo {
-  id?: string;
-  titleKey: string;
-  objectiveDescKey: string;
-  progress: number;
-  target: number;
-  targetNameKey?: string;
-  targetDistM?: number;
-  isSide?: boolean;
-}
-
-export interface HudState {
-  // Speed & Physics
-  speedKmh: number;
-  gear?: number;
-  isFirstPerson?: boolean;
-
-  // Fuel (Liters)
-  fuelL: number;
-  fuelMaxL: number;
-  /** Bike at a fuel station: a Refuel action exists. */
-  nearStation?: boolean;
-  /** T8.4: the phone is low and the bike is at a place where it can really be charged. */
-  chargeSpot?: 'home' | 'teaStall' | null;
-  /** 0-100 bike condition, for the wear warning. */
-  conditionPct?: number;
-
-  // Objective & Route Navigation
-  objectiveText: string;
-  destinationName?: string;
-  etaMinutes?: number;
-  nextTurn?: HudNavigationTurn | null;
-  activeMission?: HudMissionInfo | null;
-  activeSideMissions?: HudMissionInfo[];
-  roadEventAlert?: {
-    title: string;
-    kind: string;
-  } | null;
-
-  // Passenger Status
-  passengerStatus?: HudPassengerInfo;
-
-  // Economy & Career
-  todayNetEarnings: number;
-  shiftClock: string;
-  shiftDay: number;
-  rating: number;
-
-  // Dialogue Subtitles / Chatter
-  dialogueSubtitle?: {
-    speaker?: string;
-    text: string;
-    phase?: string;
-  } | null;
-
-  // Status & Fare
-  statusText?: string;
-  fare?: number;
 }
 
 async function handleToggleFullscreenAndLock(): Promise<void> {
@@ -141,12 +86,12 @@ function FuelActions({ state }: { state: HudState }): JSX.Element | null {
   return (
     <div data-testid="hud-fuel-actions" style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}>
       {canRescue && (
-        <div data-testid="hud-fuel-empty" style={{ color: '#ef4444', fontSize: '13px', fontWeight: 700 }}>
+        <div data-testid="hud-fuel-empty" style={{ color: 'var(--danger-red, #EF4444)', fontSize: '13px', fontWeight: 700 }}>
           {t('hud.fuel_empty')}
         </div>
       )}
       {worn && (
-        <div data-testid="hud-bike-warn" style={{ color: '#f59e0b', fontSize: '13px', fontWeight: 700 }}>
+        <div data-testid="hud-bike-warn" style={{ color: 'var(--dhaka-amber, #F59E0B)', fontSize: '13px', fontWeight: 700 }}>
           {t('hud.bike_warn')}
         </div>
       )}
@@ -189,7 +134,7 @@ export function HudView({ state }: { state: HudState }): JSX.Element {
           alignItems: 'center',
           padding: 'calc(16px + env(safe-area-inset-top, 0px)) calc(16px + env(safe-area-inset-right, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) calc(16px + env(safe-area-inset-left, 0px))',
           boxSizing: 'border-box',
-          fontFamily: "'Segoe UI', Roboto, system-ui, sans-serif",
+          fontFamily: "var(--font-sans, 'Hind Siliguri', 'Segoe UI', system-ui, sans-serif)",
           color: '#f8fafc',
           userSelect: 'none',
         }}
@@ -206,7 +151,7 @@ export function HudView({ state }: { state: HudState }): JSX.Element {
             style={{
               alignSelf: 'center',
               marginBottom: '12px',
-              background: 'rgba(15, 23, 42, 0.92)',
+              background: 'var(--surface-panel, rgba(15, 23, 42, 0.92))',
               border: '1px solid rgba(56, 189, 248, 0.4)',
               borderRadius: '16px',
               padding: '10px 20px',
@@ -219,7 +164,7 @@ export function HudView({ state }: { state: HudState }): JSX.Element {
               backdropFilter: 'blur(10px)',
             }}
           >
-            <span style={{ fontSize: '20px' }}>💬</span>
+            <IconChat size={20} color="#38bdf8" />
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               {state.dialogueSubtitle.speaker && (
                 <span style={{ fontSize: '12px', color: '#38bdf8', fontWeight: 800 }}>
@@ -276,8 +221,10 @@ export function HudView({ state }: { state: HudState }): JSX.Element {
 
           {/* Compact Fuel Pod */}
           <div style={{ minWidth: '90px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', fontWeight: 700, color: isLowFuel ? '#ef4444' : '#94a3b8' }}>
-              <span>⛽ {t('hud.fuel')}</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '6px', fontSize: '14px', fontWeight: 700, color: isLowFuel ? 'var(--danger-red, #EF4444)' : '#94a3b8' }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                <IconFuel size={14} /> {t('hud.fuel')}
+              </span>
               <span>{fuelPct}%</span>
             </div>
             <div style={{ height: '8px', width: '100%', background: 'rgba(255, 255, 255, 0.15)', borderRadius: '4px', marginTop: '4px', overflow: 'hidden' }}>
@@ -285,7 +232,7 @@ export function HudView({ state }: { state: HudState }): JSX.Element {
                 style={{
                   height: '100%',
                   width: `${fuelPct}%`,
-                  background: isLowFuel ? '#ef4444' : 'linear-gradient(90deg, #10b981, #06b6d4)',
+                  background: isLowFuel ? 'var(--danger-red, #EF4444)' : 'linear-gradient(90deg, var(--uthao-green, #22C55E), #06b6d4)',
                   transition: 'width 0.3s ease',
                 }}
               />
@@ -308,7 +255,7 @@ export function HudView({ state }: { state: HudState }): JSX.Element {
 
           {/* Earnings */}
           <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: '15px', fontWeight: 800, color: '#10b981' }}>
+            <div style={{ fontSize: '15px', fontWeight: 800, color: 'var(--uthao-green, #22C55E)' }}>
               ৳{Math.round(state.todayNetEarnings)}
             </div>
             <div style={{ fontSize: '14px', color: '#94a3b8' }}>
@@ -334,7 +281,7 @@ export function HudView({ state }: { state: HudState }): JSX.Element {
         justifyContent: 'space-between',
         padding: 'calc(16px + env(safe-area-inset-top, 0px)) calc(16px + env(safe-area-inset-right, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) calc(16px + env(safe-area-inset-left, 0px))',
         boxSizing: 'border-box',
-        fontFamily: "'Hind Siliguri', 'Segoe UI', Roboto, system-ui, sans-serif",
+        fontFamily: "var(--font-sans, 'Hind Siliguri', 'Segoe UI', system-ui, sans-serif)",
         color: '#f8fafc',
         userSelect: 'none',
       }}
@@ -401,7 +348,7 @@ export function HudView({ state }: { state: HudState }): JSX.Element {
               fontSize: '14px',
               textTransform: 'uppercase',
               letterSpacing: '1px',
-              color: '#10b981',
+              color: 'var(--uthao-green, #22C55E)',
               fontWeight: 800,
               marginBottom: '2px',
             }}
@@ -521,7 +468,7 @@ export function HudView({ state }: { state: HudState }): JSX.Element {
             }}
             title="Fullscreen & Landscape Lock"
           >
-            <span>⛶</span> {t('hud.fullscreen') || 'পূর্ণপর্দা'}
+            <IconFullscreen size={15} /> {t('hud.fullscreen') || 'পূর্ণপর্দা'}
           </button>
 
           {/* Earnings Badge */}
@@ -540,7 +487,7 @@ export function HudView({ state }: { state: HudState }): JSX.Element {
             <div style={{ fontSize: '14px', textTransform: 'uppercase', color: '#94a3b8', fontWeight: 700 }}>
               {t('hud.earnings', { amount: '' }).replace(/: ৳/, '')}
             </div>
-            <div style={{ fontSize: '20px', fontWeight: 900, color: '#10b981', lineHeight: 1.2 }}>
+            <div style={{ fontSize: '20px', fontWeight: 900, color: 'var(--uthao-green, #22C55E)', lineHeight: 1.2 }}>
               ৳{Math.round(state.todayNetEarnings)}
             </div>
           </div>
@@ -560,7 +507,7 @@ export function HudView({ state }: { state: HudState }): JSX.Element {
               fontWeight: 700,
             }}
           >
-            <span style={{ color: '#fbbf24' }}>
+            <span style={{ color: 'var(--dhaka-amber, #F59E0B)' }}>
               ★ {state.rating ? state.rating.toFixed(1) : '5.0'}
             </span>
             <span style={{ color: '#475569' }}>|</span>
@@ -578,7 +525,7 @@ export function HudView({ state }: { state: HudState }): JSX.Element {
           style={{
             alignSelf: 'center',
             marginBottom: '16px',
-            background: 'rgba(15, 23, 42, 0.92)',
+            background: 'var(--surface-panel, rgba(15, 23, 42, 0.92))',
             border: '1px solid rgba(56, 189, 248, 0.4)',
             borderRadius: '16px',
             padding: '10px 20px',
@@ -591,7 +538,7 @@ export function HudView({ state }: { state: HudState }): JSX.Element {
             backdropFilter: 'blur(10px)',
           }}
         >
-          <span style={{ fontSize: '20px' }}>💬</span>
+          <IconChat size={20} color="#38bdf8" />
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             {state.dialogueSubtitle.speaker && (
               <span style={{ fontSize: '12px', color: '#38bdf8', fontWeight: 800 }}>
@@ -637,11 +584,14 @@ export function HudView({ state }: { state: HudState }): JSX.Element {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '20px',
               border: '2px solid #38bdf8',
             }}
           >
-            {state.passengerStatus?.status === 'OnTrip' ? '🧑' : '🛵'}
+            {state.passengerStatus?.status === 'OnTrip' ? (
+              <IconUser size={20} color="#f8fafc" />
+            ) : (
+              <IconMotorcycle size={20} color="#38bdf8" />
+            )}
           </div>
           <div>
             <div style={{ fontSize: '15px', fontWeight: 800, color: '#f8fafc' }}>
@@ -715,8 +665,11 @@ export function HudView({ state }: { state: HudState }): JSX.Element {
           <FuelActions state={state} />
           {/* Fuel Level Bar */}
           <div style={{ width: '100%', marginTop: '4px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: isLowFuel ? '#ef4444' : '#94a3b8', fontWeight: 700 }}>
-              <span>{isLowFuel ? `⚠️ ${t('hud.fuel_low')}` : `⛽ ${t('hud.fuel')}`}</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', fontSize: '14px', color: isLowFuel ? 'var(--danger-red, #EF4444)' : '#94a3b8', fontWeight: 700 }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                {isLowFuel ? <IconWarning size={14} color="var(--danger-red, #EF4444)" /> : <IconFuel size={14} />}
+                {isLowFuel ? t('hud.fuel_low') : t('hud.fuel')}
+              </span>
               <span>{fuelPct}% ({state.fuelL.toFixed(1)}L)</span>
             </div>
             <div
@@ -735,8 +688,8 @@ export function HudView({ state }: { state: HudState }): JSX.Element {
                   height: '100%',
                   width: `${fuelPct}%`,
                   background: isLowFuel
-                    ? '#ef4444'
-                    : 'linear-gradient(90deg, #10b981 0%, #06b6d4 100%)',
+                    ? 'var(--danger-red, #EF4444)'
+                    : 'linear-gradient(90deg, var(--uthao-green, #22C55E) 0%, #06b6d4 100%)',
                   transition: 'width 0.25s ease',
                 }}
               />
@@ -748,52 +701,7 @@ export function HudView({ state }: { state: HudState }): JSX.Element {
   );
 }
 
-function HudSignalRoot({ stateSignal }: { stateSignal: Signal<HudState> }): JSX.Element {
-  return <HudView state={stateSignal.value} />;
-}
-
-export class Hud {
-  private container: HTMLDivElement;
-  private state: HudState = {
-    speedKmh: 0,
-    fuelL: 6.0,
-    fuelMaxL: 8.0,
-    gear: 1,
-    isFirstPerson: false,
-    objectiveText: 'Waiting for ride requests...',
-    todayNetEarnings: 0,
-    shiftClock: '07:30',
-    shiftDay: 1,
-    rating: 5.0,
-  };
-  private readonly stateSignal: Signal<HudState>;
-
-  constructor(parent?: HTMLElement) {
-    this.stateSignal = signal(this.state);
-    if (typeof document !== 'undefined') {
-      const targetParent = parent ?? document.body;
-      this.container = document.createElement('div');
-      this.container.id = 'hud-root';
-      targetParent.appendChild(this.container);
-      render(<HudSignalRoot stateSignal={this.stateSignal} />, this.container);
-    } else {
-      this.container = { id: 'hud-root' } as unknown as HTMLDivElement;
-    }
-  }
-
-  update(state: Partial<HudState>): void {
-    this.state = { ...this.state, ...state };
-    this.stateSignal.value = this.state;
-  }
-
-  getState(): HudState {
-    return { ...this.state };
-  }
-
-  destroy(): void {
-    if (typeof document !== 'undefined' && this.container && 'remove' in this.container) {
-      render(null, this.container);
-      this.container.remove();
-    }
-  }
+/** Reactive HUD panel mounted inside the single `<App />` Preact root. */
+export function Hud(): JSX.Element {
+  return <HudView state={hudSignal.value} />;
 }

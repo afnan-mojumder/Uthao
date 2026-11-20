@@ -6,6 +6,8 @@ import {
   choiceSignal,
   dialogueSubtitleSignal,
   hudSignal,
+  updateHudState,
+  resetHudState,
   bindEventBusToStore,
 } from '../../../src/ui/store';
 import { EventBus, type GameEvents } from '../../../src/core/events';
@@ -14,6 +16,7 @@ import { t, setLanguage } from '../../../src/ui/i18n';
 describe('T2.8 & T4.10 Rider HUD and Mobile Polish', () => {
   beforeEach(() => {
     setLanguage('bn');
+    resetHudState();
     choiceSignal.value = {
       active: false,
       prompt: '',
@@ -21,9 +24,8 @@ describe('T2.8 & T4.10 Rider HUD and Mobile Polish', () => {
     };
   });
 
-  it('initializes Hud with default state', () => {
-    const hud = new Hud({ appendChild: () => {}, removeChild: () => {} } as unknown as HTMLElement);
-    const state = hud.getState();
+  it('initializes hudSignal with default state and renders Hud from signal', () => {
+    const state = hudSignal.value;
 
     expect(state.speedKmh).toBe(0);
     expect(state.fuelL).toBe(6.0);
@@ -33,11 +35,12 @@ describe('T2.8 & T4.10 Rider HUD and Mobile Polish', () => {
     expect(state.shiftClock).toBe('07:30');
     expect(state.rating).toBe(5.0);
     expect(state.isFirstPerson).toBe(false);
+
+    const vnode = Hud();
+    expect(vnode).not.toBeNull();
   });
 
-  it('updates state with speed, fuel, earnings, and navigation instructions', () => {
-    const hud = new Hud({ appendChild: () => {}, removeChild: () => {} } as unknown as HTMLElement);
-
+  it('updates hudSignal with speed, fuel, earnings, and navigation instructions and skips identical updates', () => {
     const updatePayload: Partial<HudState> = {
       speedKmh: 42.5,
       fuelL: 4.8,
@@ -53,28 +56,30 @@ describe('T2.8 & T4.10 Rider HUD and Mobile Polish', () => {
       },
     };
 
-    hud.update(updatePayload);
-    const state = hud.getState();
+    expect(updateHudState(updatePayload)).toBe(true);
+    const firstRef = hudSignal.value;
+    expect(firstRef.speedKmh).toBe(42.5);
+    expect(firstRef.fuelL).toBe(4.8);
+    expect(firstRef.todayNetEarnings).toBe(350);
+    expect(firstRef.shiftClock).toBe('09:15');
+    expect(firstRef.shiftDay).toBe(2);
+    expect(firstRef.rating).toBe(4.85);
+    expect(firstRef.nextTurn?.direction).toBe('right');
+    expect(firstRef.passengerStatus?.name).toBe('Salam Bhai');
 
-    expect(state.speedKmh).toBe(42.5);
-    expect(state.fuelL).toBe(4.8);
-    expect(state.todayNetEarnings).toBe(350);
-    expect(state.shiftClock).toBe('09:15');
-    expect(state.shiftDay).toBe(2);
-    expect(state.rating).toBe(4.85);
-    expect(state.nextTurn?.direction).toBe('right');
-    expect(state.passengerStatus?.name).toBe('Salam Bhai');
+    // Identical values do not reallocate hudSignal.value
+    expect(updateHudState({ ...updatePayload })).toBe(false);
+    expect(hudSignal.value).toBe(firstRef);
   });
 
   it('toggles isFirstPerson collapsed mode state', () => {
-    const hud = new Hud({ appendChild: () => {}, removeChild: () => {} } as unknown as HTMLElement);
-    expect(hud.getState().isFirstPerson).toBe(false);
+    expect(hudSignal.value.isFirstPerson).toBe(false);
 
-    hud.update({ isFirstPerson: true });
-    expect(hud.getState().isFirstPerson).toBe(true);
+    updateHudState({ isFirstPerson: true });
+    expect(hudSignal.value.isFirstPerson).toBe(true);
 
-    hud.update({ isFirstPerson: false });
-    expect(hud.getState().isFirstPerson).toBe(false);
+    updateHudState({ isFirstPerson: false });
+    expect(hudSignal.value.isFirstPerson).toBe(false);
   });
 
   it('provides bilingual HUD translations for keys', () => {
