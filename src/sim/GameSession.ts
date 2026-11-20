@@ -121,14 +121,8 @@ export class GameSession {
   private accidentSeq = 0;
   private lastStepSegment: RoadSegment | null = null;
   private readonly violationMonitor = new ViolationMonitor();
-  private readonly infractionScratch: { kind: BikeInfractionKind; segmentId: string } = {
-    kind: 'speeding',
-    segmentId: '',
-  };
   private readonly onInfraction = (kind: BikeInfractionKind, segmentId: string): void => {
-    this.infractionScratch.kind = kind;
-    this.infractionScratch.segmentId = segmentId;
-    this.gm.bus.emit('bike/infraction', this.infractionScratch);
+    this.gm.bus.emit('bike/infraction', { kind, segmentId });
   };
   private readonly encounterPassengerScratch = {
     id: '',
@@ -314,7 +308,10 @@ export class GameSession {
         if (req) {
           this.ride.cancel(req.requestId, 'system', 'accident');
         }
-      } else if (this.ride.getTripState() === 'EmergencyInterrupted') {
+      } else if (
+        this.ride.getTripState() === 'EmergencyInterrupted' &&
+        this.gm.eventDirector.activeEncounter?.encounterId !== 'enc_accident_aftermath'
+      ) {
         this.ride.resumeTrip();
       }
     });

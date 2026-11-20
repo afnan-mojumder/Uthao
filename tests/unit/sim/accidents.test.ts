@@ -302,4 +302,45 @@ describe('Accidents & Passenger Safety (P4.5 / T10.4)', () => {
     gm3.bus.emit('day/ended', { day: 1, summary: {} as never });
     expect(s3.ride.getTripState()).not.toBe('EmergencyInterrupted');
   });
+
+  it('keeps trip in EmergencyInterrupted when a second non-serious collision happens while enc_accident_aftermath is active', () => {
+    const { gm, session } = makeActiveRideSession({ seed: 37 });
+    gm.economyManager.cash = 1000;
+    gm.economy.cash = 1000;
+
+    // First moderate crash opens enc_accident_aftermath -> EmergencyInterrupted
+    gm.bus.emit('bike/collision', {
+      severity: 'crash',
+      relSpeedKmh: 32,
+      otherKind: 'static',
+      otherParty: false,
+      bikeSpeedKmh: 32,
+      otherSpeedKmh: 0,
+    });
+    expect(session.ride.getTripState()).toBe('EmergencyInterrupted');
+    const enc = gm.eventDirector.activeEncounter;
+    expect(enc?.encounterId).toBe('enc_accident_aftermath');
+
+    // Second moderate/traffic crash while enc_accident_aftermath is still open
+    gm.bus.emit('bike/collision', {
+      severity: 'crash',
+      relSpeedKmh: 28,
+      otherKind: 'traffic',
+      otherParty: true,
+      bikeSpeedKmh: 0,
+      otherSpeedKmh: 28,
+    });
+
+    // Must remain EmergencyInterrupted until enc_accident_aftermath is resolved
+    expect(session.ride.getTripState()).toBe('EmergencyInterrupted');
+    expect(gm.eventDirector.activeEncounter?.id).toBe(enc!.id);
+
+    const res = gm.dispatch({
+      type: 'chooseEncounterOption',
+      instanceId: enc!.id,
+      choiceId: 'check_and_settle',
+    });
+    expect(res.success).toBe(true);
+    expect(session.ride.getTripState()).toBe('EnRouteToDestination');
+  });
 });

@@ -373,4 +373,50 @@ describe('Police, Violations & Bribery (P4.5 / T10.3)', () => {
     detectViolations(bike, seg, signals, out, nodes);
     expect(out).toEqual([]);
   });
+
+  it('isolates bike/infraction event payloads across consecutive infractions', () => {
+    const road = RoadNetwork.fromDistricts([
+      {
+        districtId: 'mirpara',
+        name: { bn: 'মিরপাড়া', en: 'Mirpara' },
+        nodes: [
+          { nodeId: 'n1', x: 0, y: 0, z: 0, kind: 'junction' },
+          { nodeId: 'n2', x: 0, y: 0, z: 200, kind: 'junction' },
+        ],
+        segments: [
+          makeSegment({
+            segmentId: 'seg_oneway_iso',
+            startNodeId: 'n1',
+            endNodeId: 'n2',
+            oneWay: true,
+            speedLimit: 35,
+          }),
+        ],
+        pois: [],
+        lots: [],
+      },
+    ]);
+
+    const gm = new GameManager({ seed: 81, mode: 'career', data: {} });
+    const session = new GameSession({ gm, road, autoRequests: false });
+    const infractions: Array<{ kind: BikeInfractionKind; segmentId: string }> = [];
+    gm.bus.on('bike/infraction', (ev) => infractions.push(ev));
+
+    // 1. Speeding along segment direction
+    session.bike.x = 0;
+    session.bike.z = 40;
+    session.bike.heading = 0;
+    session.bike.speed = 60 / 3.6;
+    session.step({ throttle: 0, brake: 0, steer: 0 }, SIM_DT);
+
+    // 2. Reverse direction at moderate speed -> wrongWay infraction
+    session.bike.heading = Math.PI;
+    session.bike.speed = 20 / 3.6;
+    session.step({ throttle: 0, brake: 0, steer: 0 }, SIM_DT);
+
+    expect(infractions).toHaveLength(2);
+    expect(infractions[0]).toEqual({ kind: 'speeding', segmentId: 'seg_oneway_iso' });
+    expect(infractions[1]).toEqual({ kind: 'wrongWay', segmentId: 'seg_oneway_iso' });
+    expect(infractions[0]).not.toBe(infractions[1]);
+  });
 });
