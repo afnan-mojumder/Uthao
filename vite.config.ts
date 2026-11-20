@@ -49,6 +49,7 @@ export default defineConfig({
         globIgnores: [
           '**/district-*.js',
           '**/locale-en-*.js',
+          'og-cover.webp',
           'assets/audio/**',
           'assets/portraits/**',
           'icons/icon-192x192.png',

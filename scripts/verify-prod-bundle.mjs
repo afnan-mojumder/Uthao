@@ -4,7 +4,8 @@ import zlib from 'node:zlib';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DEFAULT_DIST_DIR = path.resolve(__dirname, '..', 'dist');
+const ROOT_DIR = path.resolve(__dirname, '..');
+const DEFAULT_DIST_DIR = path.resolve(ROOT_DIR, 'dist');
 
 export const FORBIDDEN_PROD_PATTERNS = [
   '__uthao',
@@ -19,12 +20,46 @@ export const MAX_ENTRY_SHELL_GZ_BYTES = 400 * 1024; // 400 KB gzipped
 export const MAX_DISTRICT_CHUNK_GZ_BYTES = 2.5 * 1024 * 1024; // 2.5 MB gzipped
 
 /**
+ * Inspects a WebP buffer header (VP8 / VP8L / VP8X) and returns { valid, width, height }.
+ */
+export function parseWebpDimensions(buf) {
+  if (!buf || buf.byteLength < 30) {
+    return { valid: false, width: 0, height: 0 };
+  }
+  const riff = buf.subarray(0, 4).toString('ascii');
+  const webp = buf.subarray(8, 12).toString('ascii');
+  if (riff !== 'RIFF' || webp !== 'WEBP') {
+    return { valid: false, width: 0, height: 0 };
+  }
+  const chunkType = buf.subarray(12, 16).toString('ascii');
+  if (chunkType === 'VP8X' && buf.byteLength >= 30) {
+    const width = 1 + buf.readUIntLE(24, 3);
+    const height = 1 + buf.readUIntLE(27, 3);
+    return { valid: true, width, height };
+  }
+  if (chunkType === 'VP8 ' && buf.byteLength >= 30) {
+    const width = buf.readUInt16LE(26) & 0x3fff;
+    const height = buf.readUInt16LE(28) & 0x3fff;
+    return { valid: true, width, height };
+  }
+  if (chunkType === 'VP8L' && buf.byteLength >= 25) {
+    const bits = buf.readUInt32LE(21);
+    const width = (bits & 0x3fff) + 1;
+    const height = ((bits >>> 14) & 0x3fff) + 1;
+    return { valid: true, width, height };
+  }
+  return { valid: true, width: 0, height: 0 };
+}
+
+/**
  * Audits a built `dist/` folder for:
  * 1. Zero debug surfaces / testloop leaks in `dist/assets/*.js`.
  * 2. Initial entry JS shell (entry `<script type="module">` + any `<link rel="modulepreload">` in `dist/index.html`) <= 400 KB gzipped.
  * 3. Every district chunk <= 2.5 MB gzipped.
+ * 4. P8.3 SEO, OpenGraph (`og-cover.webp` 1200x630), Twitter Card meta tags, `_headers` (CSP + immutable cache), `robots.txt`, and root legal files (`LICENSE`, `PRIVACY.md`, `THIRD_PARTY_LICENSES.md`).
  */
-export function verifyProdBundle(distDir = DEFAULT_DIST_DIR) {
+export function verifyProdBundle(distDir = DEFAULT_DIST_DIR, opts = {}) {
+  const rootDir = opts.rootDir ?? ROOT_DIR;
   const errors = [];
   const assetsDir = path.join(distDir, 'assets');
   const indexHtmlPath = path.join(distDir, 'index.html');
@@ -151,6 +186,78 @@ export function verifyProdBundle(distDir = DEFAULT_DIST_DIR) {
           `District chunk ${jsFile} is ${(gz.byteLength / (1024 * 1024)).toFixed(2)} MB gzipped (exceeds 2.50 MB budget)`
         );
       }
+    }
+  }
+
+  // 4. P8.3 SEO, OpenGraph, Twitter Cards, static CDN headers, robots.txt & legal notices
+  const requiredMetaChecks = [
+    { label: '<meta name="description">', regex: /<meta\b[^>]*\bname=["']description["'][^>]*\bcontent=["'][^"']+["'][^>]*>/i },
+    { label: 'og:title', regex: /<meta\b[^>]*\bproperty=["']og:title["'][^>]*\bcontent=["'][^"']+["'][^>]*>/i },
+    { label: 'og:description', regex: /<meta\b[^>]*\bproperty=["']og:description["'][^>]*\bcontent=["'][^"']+["'][^>]*>/i },
+    { label: 'og:image (/og-cover.webp)', regex: /<meta\b[^>]*\bproperty=["']og:image["'][^>]*\bcontent=["'][^"']*\/og-cover\.webp["'][^>]*>/i },
+    { label: 'og:type', regex: /<meta\b[^>]*\bproperty=["']og:type["'][^>]*\bcontent=["'][^"']+["'][^>]*>/i },
+    { label: 'twitter:card', regex: /<meta\b[^>]*\bname=["']twitter:card["'][^>]*\bcontent=["']summary_large_image["'][^>]*>/i },
+    { label: 'twitter:title', regex: /<meta\b[^>]*\bname=["']twitter:title["'][^>]*\bcontent=["'][^"']+["'][^>]*>/i },
+    { label: 'twitter:description', regex: /<meta\b[^>]*\bname=["']twitter:description["'][^>]*\bcontent=["'][^"']+["'][^>]*>/i },
+    { label: 'twitter:image (/og-cover.webp)', regex: /<meta\b[^>]*\bname=["']twitter:image["'][^>]*\bcontent=["'][^"']*\/og-cover\.webp["'][^>]*>/i },
+  ];
+
+  for (const check of requiredMetaChecks) {
+    if (!check.regex.test(indexHtml)) {
+      errors.push(`Missing required SEO/OpenGraph/Twitter tag in dist/index.html: ${check.label}`);
+    }
+  }
+
+  const ogCoverPath = path.join(distDir, 'og-cover.webp');
+  if (!fs.existsSync(ogCoverPath)) {
+    errors.push('Missing dist/og-cover.webp OpenGraph cover image');
+  } else {
+    const ogBuf = fs.readFileSync(ogCoverPath);
+    const dim = parseWebpDimensions(ogBuf);
+    if (!dim.valid || dim.width !== 1200 || dim.height !== 630) {
+      errors.push(
+        `Invalid dist/og-cover.webp dimensions or header: expected 1200x630 WebP, got valid=${dim.valid} ${dim.width}x${dim.height}`
+      );
+    }
+  }
+
+  const headersPath = path.join(distDir, '_headers');
+  if (!fs.existsSync(headersPath)) {
+    errors.push('Missing dist/_headers static CDN headers config');
+  } else {
+    const headersText = fs.readFileSync(headersPath, 'utf8');
+    const requiredHeaderSnippets = [
+      'Content-Security-Policy',
+      'X-Content-Type-Options: nosniff',
+      'Referrer-Policy: strict-origin-when-cross-origin',
+      '/assets/*',
+      '/fonts/*',
+      'max-age=31536000, immutable',
+    ];
+    for (const snippet of requiredHeaderSnippets) {
+      if (!headersText.includes(snippet)) {
+        errors.push(`dist/_headers missing required directive: "${snippet}"`);
+      }
+    }
+  }
+
+  const robotsPath = path.join(distDir, 'robots.txt');
+  if (!fs.existsSync(robotsPath)) {
+    errors.push('Missing dist/robots.txt');
+  } else {
+    const robotsText = fs.readFileSync(robotsPath, 'utf8');
+    if (!/User-agent:\s*\*/i.test(robotsText)) {
+      errors.push('dist/robots.txt missing "User-agent: *" directive');
+    }
+  }
+
+  const requiredLegalFiles = ['LICENSE', 'PRIVACY.md', 'THIRD_PARTY_LICENSES.md'];
+  for (const legalFile of requiredLegalFiles) {
+    const p = path.join(rootDir, legalFile);
+    if (!fs.existsSync(p)) {
+      errors.push(`Missing root legal/compliance document: ${legalFile}`);
+    } else if (fs.statSync(p).size < 100) {
+      errors.push(`Root legal/compliance document is empty or too short: ${legalFile}`);
     }
   }
 

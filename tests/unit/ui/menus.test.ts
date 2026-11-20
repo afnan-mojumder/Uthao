@@ -154,7 +154,8 @@ describe('T3.10 Menus & Settings Store', () => {
     expect(vnode?.type).toBe(ModalPanel);
     expect(vnode?.props['data-testid']).toBe('pause-menu');
   });
-  it('renders Credits modal with truthful provisional assets, OFL typography, and engine attributions (T6.4)', () => {
+  it('renders Credits modal with truthful CC0/procedural assets, OFL typography, custom 2.5D physics, and zero-tracking privacy notice (P8.3)', () => {
+    setLanguage('en');
     const vnode = MainMenu({
       hasSave: false,
       showCredits: true,
@@ -163,16 +164,18 @@ describe('T3.10 Menus & Settings Store', () => {
     expect(vnode).not.toBeNull();
     const json = JSON.stringify(vnode);
     expect(json).toContain('credits-modal');
-    expect(json).toContain('Provisional Art & Audio');
+    expect(json).toContain('Kenney');
+    expect(json).toContain('CC0');
     expect(json).toContain('Procedural Dhaka 3D Geometry');
-    expect(json).toContain('Procedural Web Audio Synthesis');
     expect(json).toContain('Open Font License (OFL-1.1)');
     expect(json).toContain('Hind Siliguri');
     expect(json).toContain('Three.js');
-    expect(json).toContain('Rapier');
+    expect(json).toContain('Custom 2.5D Physics Engine');
+    expect(json).toContain('localStorage');
+    expect(json).not.toContain('Rapier');
+    expect(json).not.toContain('rapier');
     expect(json).not.toContain('DeepMind');
     expect(json).not.toContain('Antigravity');
-    expect(json).not.toContain('Kenney');
     expect(json).not.toContain('OpenGameArt');
   });
 

@@ -479,6 +479,13 @@ export function MainMenu({
                 <p style={{ margin: '4px 0 0 0' }}>{t('menu.credits_engine_items')}</p>
               </div>
 
+              <div data-testid="credits-privacy-section">
+                <strong style={{ color: '#f8fafc' }}>{t('menu.credits_privacy_heading')}</strong>
+                <p style={{ margin: '4px 0 0 0', fontSize: '0.84rem', color: '#cbd5e1' }}>
+                  {t('menu.credits_privacy_body')}
+                </p>
+              </div>
+
               <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.1)', paddingTop: '12px', fontSize: '0.8rem', color: '#94a3b8' }}>
                 {t('menu.credits_dedication')}
               </div>

@@ -699,6 +699,23 @@ export function Settings({
                     {t('ui.ios_install_tip')}
                   </div>
                 )}
+
+                <div
+                  data-testid="settings-privacy-note"
+                  style={{
+                    marginTop: '6px',
+                    padding: '10px 12px',
+                    borderRadius: '10px',
+                    border: '1px solid rgba(148, 163, 184, 0.2)',
+                    background: 'rgba(15, 23, 42, 0.45)',
+                    color: '#94a3b8',
+                    fontSize: '0.76rem',
+                    lineHeight: 1.45,
+                  }}
+                >
+                  <strong style={{ color: '#cbd5e1' }}>{t('menu.credits_privacy_heading')}</strong>{' '}
+                  {t('menu.credits_privacy_body')}
+                </div>
               </div>
             </div>
           )}
