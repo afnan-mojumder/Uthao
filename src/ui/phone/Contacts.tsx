@@ -1,7 +1,7 @@
 import type { JSX } from 'preact';
 import { CHARACTERS, isContactUnlocked } from '../../sim/passenger/PassengerAI';
 import type { CharacterDef } from '../../core/types';
-import { t } from '../i18n';
+import { localDigits, t } from '../i18n';
 import { contactsSelectedSignal } from '../store';
 
 export interface ContactsProps {
@@ -95,7 +95,7 @@ export function Contacts({
             {t('phone.contacts.title')}
           </h3>
           <span style={{ fontSize: '11px', color: '#94a3b8' }}>
-            {unlockedCount} / {CHARACTERS.length} {t('phone.contacts.regular_badge')}
+            {localDigits(unlockedCount)} / {localDigits(CHARACTERS.length)} {t('phone.contacts.regular_badge')}
           </span>
         </div>
         <span
@@ -156,7 +156,7 @@ export function Contacts({
                   </span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
                     <span style={{ fontSize: '11px', color: '#94a3b8' }}>
-                      {t('phone.contacts.relationship')}: {rel} / 15
+                      {t('phone.contacts.relationship')}: {localDigits(rel)} / {localDigits(15)}
                     </span>
                     <div
                       style={{
@@ -254,7 +254,7 @@ export function Contacts({
                       {t(char.roleKey)}
                     </span>
                   </div>
-                  <span style={{ fontSize: '11px', color: '#94a3b8' }}>{char.phone}</span>
+                  <span style={{ fontSize: '11px', color: '#94a3b8' }}>{localDigits(char.phone)}</span>
                 </div>
 
                 {/* Relationship Tag */}
@@ -268,7 +268,7 @@ export function Contacts({
                   }}
                 >
                   <span style={{ fontSize: '12px', fontWeight: 800, color: '#22c55e' }}>
-                    {rel}
+                    {localDigits(rel)}
                   </span>
                   <span style={{ fontSize: '9px', color: '#94a3b8', textTransform: 'uppercase' }}>
                     {t('phone.contacts.relationship')}
@@ -299,7 +299,7 @@ export function Contacts({
                     <span style={{ color: '#94a3b8' }}>{t('phone.contacts.hours')}:</span>
                     <span style={{ fontWeight: 600 }}>
                       {char.preferredTimes
-                        .map((pt) => `${formatTime(pt.startMinute)} - ${formatTime(pt.endMinute)}`)
+                        .map((pt) => `${localDigits(formatTime(pt.startMinute))} - ${localDigits(formatTime(pt.endMinute))}`)
                         .join(', ')}
                     </span>
                   </div>

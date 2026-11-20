@@ -1,6 +1,6 @@
 import type { JSX } from 'preact';
 import { ModalPanel } from '../components';
-import { t } from '../i18n';
+import { localDigits, t } from '../i18n';
 import { Z_LAYER } from '../store';
 import { ShareCard } from '../share/ShareCard';
 import type { EndingResult, CareerChoiceOption, CareerChoice } from '../../sim/mission/endings';
@@ -95,7 +95,7 @@ export function Ending({
               marginBottom: '4px',
             }}
           >
-            ক্যাম্পেইন সমাপ্তি · Campaign Ending
+            {t('ending.header_badge')}
           </div>
           <h1
             style={{
@@ -138,14 +138,14 @@ export function Ending({
               letterSpacing: '0.05em',
             }}
           >
-            রাইডার প্রবণতা ও পরিচয় (Identity Breakdown)
+            {t('ending.identity_heading')}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {[
-              { label: 'পেশাদার (Professional)', score: tendencies.professional, color: '#38bdf8' },
-              { label: 'দরকষাকষিবিদ (Negotiator)', score: tendencies.negotiator, color: '#fbbf24' },
-              { label: 'হাঁটুরে / ঝুঁকিপ্রিয় (Hustler)', score: tendencies.hustler, color: '#f97316' },
-              { label: 'পাড়ার নিয়মিত (Regular)', score: tendencies.regular, color: '#10b981' },
+              { label: t('ending.tendency.professional'), score: tendencies.professional, color: '#38bdf8' },
+              { label: t('ending.tendency.negotiator'), score: tendencies.negotiator, color: '#fbbf24' },
+              { label: t('ending.tendency.hustler'), score: tendencies.hustler, color: '#f97316' },
+              { label: t('ending.tendency.regular'), score: tendencies.regular, color: '#10b981' },
             ].map((tend) => (
               <div key={tend.label}>
                 <div
@@ -157,7 +157,7 @@ export function Ending({
                   }}
                 >
                   <span style={{ color: '#e2e8f0', fontWeight: 600 }}>{tend.label}</span>
-                  <span style={{ color: tend.color, fontWeight: 700 }}>{tend.score}%</span>
+                  <span style={{ color: tend.color, fontWeight: 700 }}>{localDigits(tend.score)}%</span>
                 </div>
                 <div
                   style={{
@@ -199,9 +199,9 @@ export function Ending({
               textAlign: 'center',
             }}
           >
-            <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>মোট সঞ্চয় (Savings)</div>
+            <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{t('ending.stat_savings')}</div>
             <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#10b981', marginTop: '2px' }}>
-              ৳{summary.savings.toLocaleString()}
+              ৳{localDigits(summary.savings)}
             </div>
           </div>
           <div
@@ -213,9 +213,9 @@ export function Ending({
               textAlign: 'center',
             }}
           >
-            <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>চূড়ান্ত রেটিং (Rating)</div>
+            <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{t('ending.stat_rating')}</div>
             <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#f59e0b', marginTop: '2px' }}>
-              ★ {summary.rating.toFixed(2)}
+              ★ {localDigits(summary.rating.toFixed(2))}
             </div>
           </div>
           <div
@@ -227,9 +227,9 @@ export function Ending({
               textAlign: 'center',
             }}
           >
-            <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>লোকাল আস্থা (Trust)</div>
+            <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{t('ending.stat_trust')}</div>
             <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#38bdf8', marginTop: '2px' }}>
-              {summary.localTrust}/100
+              {localDigits(summary.localTrust)}/{localDigits(100)}
             </div>
           </div>
         </div>
@@ -238,7 +238,7 @@ export function Ending({
         {choices && choices.length > 0 && onSelectChoice && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#e2e8f0' }}>
-              আপনার ভবিষ্যতের পথ বেছে নিন (Choose Your Career Path):
+              {t('ending.choose_path')}
             </div>
             {choices.some((c) => c.cost > 0) && (
               <div
@@ -293,7 +293,7 @@ export function Ending({
                       marginLeft: '12px',
                     }}
                   >
-                    ৳{c.cost.toLocaleString()}
+                    ৳{localDigits(c.cost)}
                   </div>
                 )}
               </button>
@@ -321,7 +321,7 @@ export function Ending({
                 cursor: 'pointer',
               }}
             >
-              🔄 নতুন ক্যারিয়ার (New Career)
+              🔄 {t('menu.new_career')}
             </button>
           )}
           {onEnterEndless && (
@@ -339,7 +339,7 @@ export function Ending({
                 cursor: 'pointer',
               }}
             >
-              ♾️ এন্ডলেস রাইড (Endless Mode)
+              ♾️ {t('menu.endless')}
             </button>
           )}
           {onMainMenu && (
@@ -356,7 +356,7 @@ export function Ending({
                 cursor: 'pointer',
               }}
             >
-              মূল মেনু (Main Menu)
+              {t('pause.main_menu')}
             </button>
           )}
           {onClose && (
@@ -373,7 +373,7 @@ export function Ending({
                 cursor: 'pointer',
               }}
             >
-              বন্ধ (Close)
+              {t('btn_close')}
             </button>
           )}
         </div>

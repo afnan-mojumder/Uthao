@@ -193,7 +193,7 @@ export function Phone({
               alignItems: 'center',
               justifyContent: 'center',
             }}
-            title="Close Phone [Tab/Esc]"
+            title={t('menu.close')}
           >
             <IconClose size={16} />
           </button>

@@ -75,11 +75,17 @@ if (fs.existsSync(dialogueDir)) {
     }
   }
 
-  // Verify missing bn keys compared to en
+  // Verify two-way key parity between bn and en dialogue dictionaries
   const enKeys = Object.keys(dicts.en);
   const missingBnKeys = enKeys.filter((k) => typeof dicts.bn[k] === 'undefined');
   if (missingBnKeys.length > 0) {
     console.error(`Missing bn dialogue keys (${missingBnKeys.length}):`, missingBnKeys);
+    process.exit(1);
+  }
+  const bnKeys = Object.keys(dicts.bn);
+  const missingEnKeys = bnKeys.filter((k) => typeof dicts.en[k] === 'undefined');
+  if (missingEnKeys.length > 0) {
+    console.error(`Missing en dialogue keys (${missingEnKeys.length}):`, missingEnKeys);
     process.exit(1);
   }
 }

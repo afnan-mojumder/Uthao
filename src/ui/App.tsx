@@ -405,7 +405,7 @@ export function App(): JSX.Element {
             gap: '8px',
           }}
         >
-          <IconPhone size={18} /> Install App
+          <IconPhone size={18} /> {t('ui.install_app')}
         </button>
       )}
 

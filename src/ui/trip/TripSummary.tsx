@@ -25,7 +25,7 @@ export function TripSummary({ receipt, onContinue }: TripSummaryProps): JSX.Elem
             {t('trip.summary.title')}
           </h2>
           <div style={{ fontSize: '13px', color: '#94a3b8', marginTop: '4px' }}>
-            {localDigits(receipt.distanceKm.toFixed(1))} km • {localDigits(Math.round(receipt.durationMin))} min
+            {t('phone.distance', { distance: localDigits(receipt.distanceKm.toFixed(1)) })} • {t('phone.eta', { eta: localDigits(Math.round(receipt.durationMin)) })}
           </div>
         </div>
 

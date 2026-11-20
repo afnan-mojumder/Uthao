@@ -1,7 +1,7 @@
 import type { JSX } from 'preact';
 import { signal } from '@preact/signals';
 import { ModalFocusGuard } from '../focusTrap';
-import { t } from '../i18n';
+import { getLanguage, localDigits, t } from '../i18n';
 import { saveStatusSignal, Z_LAYER } from '../store';
 import { SaveSystem } from '../../sim/save/SaveSystem';
 import type { SaveSlot, SaveV1, SaveV2 } from '../../sim/save/migrations';
@@ -42,10 +42,10 @@ export function SaveSlots({
   );
 
   const slotKeys: Array<{ id: SaveSlot; label: string; isAuto: boolean }> = [
-    { id: 'auto', label: 'অটো-সেভ (Auto-Save)', isAuto: true },
-    { id: 'slot1', label: 'স্লট ১ (Slot 1)', isAuto: false },
-    { id: 'slot2', label: 'স্লট ২ (Slot 2)', isAuto: false },
-    { id: 'slot3', label: 'স্লট ৩ (Slot 3)', isAuto: false },
+    { id: 'auto', label: t('save.slot_auto'), isAuto: true },
+    { id: 'slot1', label: t('save.slot_num', { num: localDigits(1) }), isAuto: false },
+    { id: 'slot2', label: t('save.slot_num', { num: localDigits(2) }), isAuto: false },
+    { id: 'slot3', label: t('save.slot_num', { num: localDigits(3) }), isAuto: false },
   ];
 
   const handleDelete = (e: MouseEvent, slot: SaveSlot) => {
@@ -122,8 +122,8 @@ export function SaveSlots({
             )}
             <div style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
               {mode === 'save'
-                ? 'একটি খালি বা পুরাতন স্লট নির্বাচন করুন'
-                : 'পূর্বে সংরক্ষিত ড্রাইভের অগ্রগতি চালিয়ে যান'}
+                ? t('save.subtitle_save')
+                : t('save.subtitle_load')}
             </div>
           </div>
           <button
@@ -238,36 +238,41 @@ export function SaveSlots({
                           fontWeight: 600,
                         }}
                       >
-                        স্বয়ংক্রিয়
+                        {t('save.auto_badge')}
                       </span>
                     )}
                   </div>
 
                   {hasData && data ? (
                     <div style={{ fontSize: '0.85rem', color: '#94a3b8', display: 'flex', gap: '12px' }}>
-                      <span>দিন {data.clock.day}</span>
+                      <span>{t('save.day_label', { day: localDigits(data.clock.day) })}</span>
                       <span>·</span>
-                      <span>অধ্যায় {data.story.currentChapter}</span>
+                      <span>{t('save.chapter_label', { chapter: localDigits(data.story.currentChapter) })}</span>
                       <span>·</span>
-                      <span style={{ color: '#10b981', fontWeight: 600 }}>৳{data.economy.cash}</span>
+                      <span style={{ color: '#10b981', fontWeight: 600 }}>৳{localDigits(data.economy.cash)}</span>
                       <span>·</span>
-                      <span style={{ color: '#fbbf24', fontWeight: 600 }}>★ {data.reputation.rating.toFixed(2)}</span>
+                      <span style={{ color: '#fbbf24', fontWeight: 600 }}>★ {localDigits(data.reputation.rating.toFixed(2))}</span>
                     </div>
                   ) : (
                     <div style={{ fontSize: '0.85rem', color: '#94a3b8', fontStyle: 'italic' }}>
-                      [খালি স্লট — কোনো ডাটা সংরক্ষিত নেই]
+                      {t('save.empty_slot')}
                     </div>
                   )}
 
                   {hasData && data && (
                     <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
-                      {new Date(data.timestamp).toLocaleString('bn-BD', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
+                      {localDigits(
+                        new Date(data.timestamp).toLocaleString(
+                          getLanguage() === 'bn' ? 'bn-BD' : 'en-US',
+                          {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          }
+                        )
+                      )}
                     </div>
                   )}
                 </div>
@@ -292,7 +297,7 @@ export function SaveSlots({
                         cursor: 'pointer',
                       }}
                     >
-                      {hasData ? 'ওভাররাইট' : 'সেভ'}
+                      {hasData ? t('save.btn_overwrite') : t('save.btn_save')}
                     </button>
                   )}
 
@@ -315,7 +320,7 @@ export function SaveSlots({
                         cursor: 'pointer',
                       }}
                     >
-                      লোড
+                      {t('save.btn_load')}
                     </button>
                   )}
 
@@ -334,7 +339,7 @@ export function SaveSlots({
                         cursor: 'pointer',
                         fontSize: '0.9rem',
                       }}
-                      title="স্লট মুছুন"
+                      title={t('save.delete_slot')}
                     >
                       🗑️
                     </button>

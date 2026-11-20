@@ -407,32 +407,32 @@ export function MainMenu({
 
             <div style={{ fontSize: '0.9rem', color: '#cbd5e1', lineHeight: 1.6, display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div>
-                <strong style={{ color: '#f8fafc' }}>Development Team:</strong>
-                <p style={{ margin: '4px 0 0 0' }}>Afnan Mojumder &amp; Tafsirul Shuvo</p>
+                <strong style={{ color: '#f8fafc' }}>{t('menu.credits_dev_heading')}</strong>
+                <p style={{ margin: '4px 0 0 0' }}>{t('menu.credits_dev_names')}</p>
               </div>
 
               <div>
-                <strong style={{ color: '#f8fafc' }}>Provisional Art &amp; Audio:</strong>
+                <strong style={{ color: '#f8fafc' }}>{t('menu.credits_art_heading')}</strong>
                 <ul style={{ margin: '4px 0 0 18px', padding: 0 }}>
-                  <li>Procedural Dhaka 3D Geometry (Motorcycles, CNGs, Rickshaws, Buses, Tea Stalls, Garage Props)</li>
-                  <li>Procedural Web Audio Synthesis (Engine, Horns, Rain, UI Feedback)</li>
+                  <li>{t('menu.credits_art_geometry')}</li>
+                  <li>{t('menu.credits_art_audio')}</li>
                 </ul>
               </div>
 
               <div>
-                <strong style={{ color: '#f8fafc' }}>Open Font License (OFL-1.1):</strong>
+                <strong style={{ color: '#f8fafc' }}>{t('menu.credits_font_heading')}</strong>
                 <ul style={{ margin: '4px 0 0 18px', padding: 0 }}>
-                  <li>Hind Siliguri (SIL Open Font License 1.1, Google Fonts)</li>
+                  <li>{t('menu.credits_font_item')}</li>
                 </ul>
               </div>
 
               <div>
-                <strong style={{ color: '#f8fafc' }}>Open Source Engine &amp; Physics:</strong>
-                <p style={{ margin: '4px 0 0 0' }}>Three.js (MIT), Rapier Physics / @dimforge/rapier3d-compat (Apache-2.0), Preact (MIT), Vite (MIT)</p>
+                <strong style={{ color: '#f8fafc' }}>{t('menu.credits_engine_heading')}</strong>
+                <p style={{ margin: '4px 0 0 0' }}>{t('menu.credits_engine_items')}</p>
               </div>
 
               <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.1)', paddingTop: '12px', fontSize: '0.8rem', color: '#94a3b8' }}>
-                Dedicated to the resilient riders and bustling streets of Dhaka, Bangladesh.
+                {t('menu.credits_dedication')}
               </div>
             </div>
 

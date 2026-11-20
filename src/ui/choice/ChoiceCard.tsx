@@ -286,7 +286,7 @@ export function ChoiceCardView({
                       color: '#94a3b8',
                     }}
                   >
-                    [{idx + 1}]
+                    [{localDigits(idx + 1)}]
                   </span>
                 </span>
               </div>

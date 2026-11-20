@@ -1,7 +1,7 @@
 import type { JSX } from 'preact';
 import type { DaySummary } from '../../core/types';
 import { ModalPanel } from '../components';
-import { t } from '../i18n';
+import { localDigits, t } from '../i18n';
 import { ShareCard } from '../share/ShareCard';
 
 export interface DayEndProps {
@@ -80,7 +80,7 @@ export function DayEnd({
                 letterSpacing: '-0.02em',
               }}
             >
-              {t('dayend.day_num').replace('{day}', String(summary.day))}
+              {t('dayend.day_num', { day: localDigits(summary.day) })}
             </h2>
           </div>
           <div
@@ -94,7 +94,7 @@ export function DayEnd({
               fontSize: '0.9rem',
             }}
           >
-            {summary.completedRides} {t('dayend.rides_completed')}
+            {localDigits(summary.completedRides)} {t('dayend.rides_completed')}
           </div>
         </div>
 
@@ -162,7 +162,7 @@ export function DayEnd({
               data-testid="day-end-revenue"
               style={{ fontSize: '1.25rem', fontWeight: 800, color: '#34d399', marginTop: '2px' }}
             >
-              +৳{Math.round(summary.revenue)}
+              +৳{localDigits(Math.round(summary.revenue))}
             </div>
           </div>
           <div>
@@ -173,7 +173,7 @@ export function DayEnd({
               data-testid="day-end-expenses"
               style={{ fontSize: '1.25rem', fontWeight: 800, color: '#f87171', marginTop: '2px' }}
             >
-              -৳{Math.round(summary.expenses)}
+              -৳{localDigits(Math.round(summary.expenses))}
             </div>
           </div>
           <div>
@@ -189,7 +189,7 @@ export function DayEnd({
                 marginTop: '2px',
               }}
             >
-              {isNetPositive ? '+' : ''}৳{Math.round(summary.net)}
+              {isNetPositive ? '+' : ''}৳{localDigits(Math.round(summary.net))}
             </div>
           </div>
         </div>
@@ -222,14 +222,14 @@ export function DayEnd({
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
             <span style={{ color: '#94a3b8' }}>🍲 {t('dayend.food')}</span>
             <span data-testid="day-end-food" style={{ fontWeight: 600, color: '#f87171' }}>
-              -৳{summary.breakdown?.food ?? living?.food ?? 150}
+              -৳{localDigits(summary.breakdown?.food ?? living?.food ?? 150)}
             </span>
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
             <span style={{ color: '#94a3b8' }}>📱 {t('dayend.phone_data')}</span>
             <span data-testid="day-end-data" style={{ fontWeight: 600, color: '#f87171' }}>
-              -৳{summary.breakdown?.phoneData ?? living?.phoneData ?? 30}
+              -৳{localDigits(summary.breakdown?.phoneData ?? living?.phoneData ?? 30)}
             </span>
           </div>
 
@@ -237,7 +237,7 @@ export function DayEnd({
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
               <span style={{ color: '#94a3b8' }}>🏠 {t('dayend.rent')}</span>
               <span data-testid="day-end-rent" style={{ fontWeight: 700, color: '#f87171' }}>
-                -৳{summary.breakdown?.rent ?? living?.rent ?? 4000}
+                -৳{localDigits(summary.breakdown?.rent ?? living?.rent ?? 4000)}
               </span>
             </div>
           )}
@@ -246,7 +246,7 @@ export function DayEnd({
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
               <span style={{ color: '#94a3b8' }}>👨‍👩‍👧 {t('dayend.family')}</span>
               <span style={{ fontWeight: 600, color: '#f87171' }}>
-                -৳{summary.breakdown?.family ?? living?.family ?? 1200}
+                -৳{localDigits(summary.breakdown?.family ?? living?.family ?? 1200)}
               </span>
             </div>
           )}
@@ -271,7 +271,7 @@ export function DayEnd({
               data-testid="day-end-cash"
               style={{ fontWeight: 700, color: '#f8fafc', fontSize: '1rem' }}
             >
-              ৳{cashVal}
+              ৳{localDigits(cashVal)}
             </div>
           </div>
           <div>
@@ -280,7 +280,7 @@ export function DayEnd({
               data-testid="day-end-savings"
               style={{ fontWeight: 700, color: '#38bdf8', fontSize: '1rem' }}
             >
-              ৳{savingsVal}
+              ৳{localDigits(savingsVal)}
             </div>
           </div>
           <div>
@@ -293,7 +293,7 @@ export function DayEnd({
                 fontSize: '1rem',
               }}
             >
-              ৳{debtVal}
+              ৳{localDigits(debtVal)}
             </div>
           </div>
           <div>
@@ -305,7 +305,7 @@ export function DayEnd({
                 fontSize: '1rem',
               }}
             >
-              {summary.ratingDelta >= 0 ? '+' : ''}{summary.ratingDelta}★
+              {summary.ratingDelta >= 0 ? '+' : ''}{localDigits(summary.ratingDelta)}★
             </div>
           </div>
         </div>
@@ -382,7 +382,7 @@ export function DayEnd({
                       cursor: depositAmount > 0 ? 'pointer' : 'not-allowed',
                     }}
                   >
-                    🏦 {t('dayend.btn_deposit_savings', { amount: depositAmount || 500 })}
+                    🏦 {t('dayend.btn_deposit_savings', { amount: localDigits(depositAmount || 500) })}
                   </button>
                 )}
                 {onWithdrawSavings && (
@@ -404,7 +404,7 @@ export function DayEnd({
                       cursor: withdrawAmount > 0 ? 'pointer' : 'not-allowed',
                     }}
                   >
-                    💸 {t('dayend.btn_withdraw_savings', { amount: withdrawAmount || 500 })}
+                    💸 {t('dayend.btn_withdraw_savings', { amount: localDigits(withdrawAmount || 500) })}
                   </button>
                 )}
               </div>
@@ -427,7 +427,7 @@ export function DayEnd({
                     cursor: repayAmount > 0 ? 'pointer' : 'not-allowed',
                   }}
                 >
-                  💳 {t('dayend.btn_repay_debt', { amount: repayAmount || debtVal })}
+                  💳 {t('dayend.btn_repay_debt', { amount: localDigits(repayAmount || debtVal) })}
                 </button>
               )}
             </div>

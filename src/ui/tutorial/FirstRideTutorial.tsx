@@ -128,13 +128,13 @@ export function FirstRideTutorialView(props: FirstRideTutorialViewProps): JSX.El
         <TutorialHeader
           icon={<IconClock size={18} />}
           title={t('tutorial.alarm.title')}
-          meta={`Day ${localDigits(1)} • 07:00`}
+          meta={`${t('hud.day', { day: localDigits(1) })} • ${localDigits('07:00')}`}
           accentColor="#22c55e"
           onSkip={skip}
         />
         <div style={{ padding: '12px 0', textAlign: 'center' }}>
           <div style={{ fontSize: '3.2rem', fontWeight: 900, color: '#f8fafc', letterSpacing: '2px', marginBottom: '8px' }}>
-            07:00 <span style={{ fontSize: '1.3rem', color: '#f59e0b' }}>AM</span>
+            {localDigits('07:00')} <span style={{ fontSize: '1.3rem', color: '#f59e0b' }}>{t('tutorial.alarm.am')}</span>
           </div>
           <p style={{ margin: '0 0 22px 0', color: '#cbd5e1', fontSize: '1rem', lineHeight: '1.5' }}>
             {t('tutorial.alarm.desc')}
@@ -160,7 +160,7 @@ export function FirstRideTutorialView(props: FirstRideTutorialViewProps): JSX.El
         <TutorialHeader
           icon={<IconUser size={18} />}
           title={t('tutorial.ma.title')}
-          meta="Ma"
+          meta={t('character.ma.name')}
           accentColor="#f59e0b"
           onSkip={skip}
         />
@@ -173,14 +173,14 @@ export function FirstRideTutorialView(props: FirstRideTutorialViewProps): JSX.El
           }}
         >
           <div style={{ fontSize: '0.85rem', color: '#f59e0b', fontWeight: 700, marginBottom: '6px' }}>
-            Ma (মা):
+            {t('character.ma.name')}:
           </div>
           <p style={{ margin: 0, color: '#f1f5f9', fontSize: '1rem', lineHeight: '1.6' }}>
             "{t('tutorial.ma.msg')}"
           </p>
         </div>
         <div style={{ fontSize: '0.9rem', color: '#94a3b8' }}>
-          ৳{localDigits(liveRentTarget)} — Day {localDigits(3)}
+          ৳{localDigits(liveRentTarget)} — {t('hud.day', { day: localDigits(3) })}
         </div>
         <PrimaryButton
           type="button"
@@ -202,7 +202,7 @@ export function FirstRideTutorialView(props: FirstRideTutorialViewProps): JSX.El
         <TutorialHeader
           icon={<IconShield size={18} />}
           title={t('tutorial.wallet.title')}
-          meta="Wallet"
+          meta={t('dayend.wallet')}
           accentColor="#38bdf8"
           onSkip={skip}
         />
@@ -234,7 +234,7 @@ export function FirstRideTutorialView(props: FirstRideTutorialViewProps): JSX.El
             }}
           >
             <div style={{ fontSize: '0.8rem', color: '#fca5a5', fontWeight: 600, marginBottom: '4px' }}>
-              Rent (Day {localDigits(3)})
+              {t('tutorial.wallet.rent_due', { day: localDigits(3) })}
             </div>
             <div data-testid="tutorial-wallet-rent" style={{ fontSize: '1.7rem', fontWeight: 800, color: '#ef4444' }}>
               ৳{localDigits(liveRentTarget)}
@@ -264,7 +264,7 @@ export function FirstRideTutorialView(props: FirstRideTutorialViewProps): JSX.El
         <TutorialHeader
           icon={<IconMotorcycle size={18} />}
           title={t('tutorial.bike.title')}
-          meta="100cc"
+          meta={`${localDigits(100)}cc`}
           accentColor="#f59e0b"
           onSkip={skip}
         />
@@ -367,7 +367,7 @@ export function FirstRideTutorialView(props: FirstRideTutorialViewProps): JSX.El
         <TutorialHeader
           icon={<IconBell size={18} />}
           title={t('tutorial.nabila.title')}
-          meta="Uthao"
+          meta={t('menu.title')}
           accentColor="#22c55e"
           onSkip={skip}
         />
@@ -459,7 +459,7 @@ export function FirstRideTutorialView(props: FirstRideTutorialViewProps): JSX.El
             }}
           >
             <div style={{ fontSize: '0.85rem', color: '#4ade80', fontWeight: 700, marginBottom: '4px' }}>
-              {t('tutorial.nego.agreed_label', { fare: String(props.selectedOffer ?? 0) })}
+              {t('tutorial.nego.agreed_label', { fare: localDigits(props.selectedOffer ?? 0) })}
             </div>
             <div style={{ fontSize: '0.95rem', color: '#f8fafc', fontWeight: 600 }}>
               "{props.agreedPrompt}"

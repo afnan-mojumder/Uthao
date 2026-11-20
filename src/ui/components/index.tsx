@@ -1,6 +1,6 @@
 import type { ComponentChildren, CSSProperties, JSX } from 'preact';
 import { ModalFocusGuard } from '../focusTrap';
-import { t } from '../i18n';
+import { localDigits, t } from '../i18n';
 import { Z_LAYER } from '../store';
 import { IconCheck, IconClose, IconMapPin, IconStar, IconUser } from './icons';
 
@@ -129,7 +129,7 @@ export function ChoiceCard({
   options,
   onSelect,
   outcomeText,
-  continueLabel = 'Continue',
+  continueLabel,
   onContinue,
   testId,
   style,
@@ -183,7 +183,7 @@ export function ChoiceCard({
             {outcomeText}
           </p>
           <PrimaryButton onClick={onContinue} style={{ alignSelf: 'flex-end' }}>
-            {continueLabel}
+            {continueLabel ?? t('ui.continue')}
           </PrimaryButton>
         </div>
       ) : (
@@ -314,7 +314,7 @@ export function StatusBar({
           }}
         >
           <span>{label}</span>
-          <span style={{ fontVariantNumeric: 'tabular-nums' }}>{valueText ?? (showPercentage ? `${pct}%` : '')}</span>
+          <span style={{ fontVariantNumeric: 'tabular-nums' }}>{valueText ?? (showPercentage ? `${localDigits(pct)}%` : '')}</span>
         </div>
       )}
       <div
@@ -322,7 +322,7 @@ export function StatusBar({
         aria-valuemin={0}
         aria-valuemax={safeMax}
         aria-valuenow={Math.round(clamped)}
-        aria-label={ariaLabel ?? label ?? 'Status'}
+        aria-label={ariaLabel ?? label ?? t('hud.condition')}
         style={{
           width: '100%',
           height: '8px',
@@ -728,7 +728,7 @@ export function TransactionRow({
             : 'var(--danger-red, #EF4444)'
           : 'var(--text-primary, #F8FAFC)';
   const prefix = kind === 'income' ? '+' : kind === 'expense' ? '-' : '';
-  const formatted = `${prefix}${currencySymbol}${Math.abs(Math.round(amount))}`;
+  const formatted = `${prefix}${currencySymbol}${localDigits(Math.abs(Math.round(amount)))}`;
 
   return (
     <div
@@ -835,8 +835,8 @@ export function MissionObjectivePanel({
               </span>
             </span>
             <span style={{ color: 'var(--text-muted, #94A3B8)', fontVariantNumeric: 'tabular-nums', fontSize: '0.8rem' }}>
-              {obj.target !== undefined && obj.target > 1 ? `${obj.progress ?? 0}/${obj.target}` : ''}
-              {obj.distanceM !== undefined ? ` • ${Math.round(obj.distanceM)}m` : ''}
+              {obj.target !== undefined && obj.target > 1 ? `${localDigits(obj.progress ?? 0)}/${localDigits(obj.target)}` : ''}
+              {obj.distanceM !== undefined ? ` • ${localDigits(Math.round(obj.distanceM))}m` : ''}
             </span>
           </div>
         ))}
@@ -895,7 +895,7 @@ export function TripSummaryPanel({
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: 'var(--dhaka-amber, #F59E0B)', fontWeight: 700 }}>
             <IconStar size={20} color="var(--dhaka-amber, #F59E0B)" />
-            <span style={{ fontSize: '1.15rem' }}>{rating.toFixed(1)}</span>
+            <span style={{ fontSize: '1.15rem' }}>{localDigits(rating.toFixed(1))}</span>
           </div>
           {ratingLabel && <div style={{ fontSize: '0.8rem', color: 'var(--text-muted, #94A3B8)' }}>{ratingLabel}</div>}
         </div>

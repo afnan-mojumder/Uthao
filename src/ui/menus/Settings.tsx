@@ -943,7 +943,7 @@ export function Settings({
                       >
                         <span style={{ color: '#cbd5e1' }}>{t(labelKey)}</span>
                         <strong style={{ color: isListening ? '#fbbf24' : '#38bdf8' }}>
-                          {isListening ? t('settings.controls.listening') : `B${btnNum}`}
+                          {isListening ? t('settings.controls.listening') : `B${localDigits(btnNum)}`}
                         </strong>
                       </button>
                     );

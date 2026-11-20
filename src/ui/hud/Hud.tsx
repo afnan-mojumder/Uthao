@@ -179,7 +179,7 @@ function QuickActions({ state, compact = false }: { state: HudState; compact?: b
         {canRescue && (
           <button type="button" data-testid="hud-btn-fuel-rescue" style={quickBtnStyle} onClick={() => onFuelRescueCallback?.()}>
             <IconWarning size={14} color="var(--danger-red, #EF4444)" />
-            <span>{t('hud.fuel_rescue', { cost: BALANCE.FUEL.rescue.cost, min: BALANCE.FUEL.rescue.waitMin })}</span>
+            <span>{t('hud.fuel_rescue', { cost: localDigits(BALANCE.FUEL.rescue.cost), min: localDigits(BALANCE.FUEL.rescue.waitMin) })}</span>
           </button>
         )}
         {showRecover && (
@@ -355,10 +355,10 @@ function ObjectivePill({
             {t(state.activeMission.titleKey)}
           </div>
           <div>
-            {t(state.activeMission.objectiveDescKey)} ({state.activeMission.progress}/{state.activeMission.target})
+            {t(state.activeMission.objectiveDescKey)} ({localDigits(state.activeMission.progress)}/{localDigits(state.activeMission.target)})
             {state.activeMission.targetDistM !== undefined && (
               <span style={{ color: 'var(--dhaka-amber, #F59E0B)', marginLeft: '6px', fontWeight: 700 }}>
-                • {Math.round(state.activeMission.targetDistM)}m
+                • {localDigits(Math.round(state.activeMission.targetDistM))}m
               </span>
             )}
           </div>
@@ -388,10 +388,10 @@ function ObjectivePill({
                 {t(sm.titleKey)}
               </div>
               <div>
-                {t(sm.objectiveDescKey)} ({sm.progress}/{sm.target})
+                {t(sm.objectiveDescKey)} ({localDigits(sm.progress)}/{localDigits(sm.target)})
                 {sm.targetDistM !== undefined && (
                   <span style={{ color: 'var(--info-sky, #38BDF8)', marginLeft: '6px', fontWeight: 700 }}>
-                    • {Math.round(sm.targetDistM)}m
+                    • {localDigits(Math.round(sm.targetDistM))}m
                   </span>
                 )}
               </div>
@@ -563,7 +563,7 @@ export function HudView({
   const fuelPct = Math.max(0, Math.min(100, Math.round((state.fuelL / (state.fuelMaxL || 8)) * 100)));
   const isLowFuel = fuelPct <= 20;
   const conditionPct = state.conditionPct ?? 100;
-  const gearLabel = `G${state.gear ?? 1}`;
+  const gearLabel = `G${localDigits(state.gear ?? 1)}`;
   const isTouch = isTouchDevice();
 
   // 1. Complete First-Person Helmet/Handlebar View
@@ -609,7 +609,7 @@ export function HudView({
                   {t('hud.earnings', { amount: '' }).replace(/: ৳/, '')}
                 </div>
                 <div style={{ fontSize: '15px', fontWeight: 900, color: 'var(--uthao-green, #22C55E)', lineHeight: 1.2 }}>
-                  ৳{Math.round(state.todayNetEarnings)}
+                  ৳{localDigits(Math.round(state.todayNetEarnings))}
                 </div>
               </div>
             )}
@@ -630,11 +630,11 @@ export function HudView({
             >
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--dhaka-amber, #F59E0B)' }}>
                 <IconStar size={isTouch ? 12 : 13} color="var(--dhaka-amber, #F59E0B)" />
-                {state.rating ? state.rating.toFixed(1) : '5.0'}
+                {localDigits(state.rating ? state.rating.toFixed(1) : '5.0')}
               </span>
               <span style={{ color: '#475569' }}>|</span>
               <span style={{ color: 'var(--text-secondary, #CBD5E1)' }}>
-                {state.shiftClock} • {t('hud.day', { day: state.shiftDay || 1 })}
+                {localDigits(state.shiftClock)} • {t('hud.day', { day: localDigits(state.shiftDay || 1) })}
               </span>
             </div>
           </div>
@@ -708,7 +708,7 @@ export function HudView({
                       fontVariantNumeric: 'tabular-nums',
                     }}
                   >
-                    {Math.round(state.speedKmh)}
+                    {localDigits(Math.round(state.speedKmh))}
                   </div>
                   <div style={{ fontSize: isTouch ? '10px' : '11px', color: 'var(--text-muted, #94A3B8)', letterSpacing: '1px', fontWeight: 700 }}>
                     {t('hud.speed_unit')}
@@ -725,7 +725,7 @@ export function HudView({
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                       <IconFuel size={12} /> {t('hud.fuel')}
                     </span>
-                    <span>{fuelPct}%</span>
+                    <span>{localDigits(fuelPct)}%</span>
                   </div>
                   <div style={{ height: '5px', width: '100%', background: 'rgba(255, 255, 255, 0.15)', borderRadius: '4px', marginTop: '3px', overflow: 'hidden' }}>
                     <div
@@ -769,10 +769,10 @@ export function HudView({
               {!isTouch && (
                 <div data-testid="hud-earnings" style={{ textAlign: 'right' }}>
                   <div style={{ fontSize: '15px', fontWeight: 800, color: 'var(--uthao-green, #22C55E)' }}>
-                    ৳{Math.round(state.todayNetEarnings)}
+                    ৳{localDigits(Math.round(state.todayNetEarnings))}
                   </div>
                   <div style={{ fontSize: '11px', color: 'var(--text-muted, #94A3B8)' }}>
-                    {state.shiftClock}
+                    {localDigits(state.shiftClock)}
                   </div>
                 </div>
               )}
@@ -874,9 +874,9 @@ export function HudView({
               boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)',
               minHeight: isTouch ? '30px' : '36px',
             }}
-            title="Fullscreen & Landscape Lock"
+            title={t('hud.fullscreen')}
           >
-            <IconFullscreen size={isTouch ? 12 : 14} /> {t('hud.fullscreen') || 'পূর্ণপর্দা'}
+            <IconFullscreen size={isTouch ? 12 : 14} /> {t('hud.fullscreen')}
           </button>
 
           {/* Earnings Badge */}
@@ -896,7 +896,7 @@ export function HudView({
               {t('hud.earnings', { amount: '' }).replace(/: ৳/, '')}
             </div>
             <div style={{ fontSize: isTouch ? '15px' : '18px', fontWeight: 900, color: 'var(--uthao-green, #22C55E)', lineHeight: 1.2 }}>
-              ৳{Math.round(state.todayNetEarnings)}
+              ৳{localDigits(Math.round(state.todayNetEarnings))}
             </div>
           </div>
 
@@ -918,11 +918,11 @@ export function HudView({
           >
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--dhaka-amber, #F59E0B)' }}>
               <IconStar size={isTouch ? 12 : 14} color="var(--dhaka-amber, #F59E0B)" />
-              {state.rating ? state.rating.toFixed(1) : '5.0'}
+              {localDigits(state.rating ? state.rating.toFixed(1) : '5.0')}
             </span>
             <span style={{ color: '#475569' }}>|</span>
             <span style={{ color: 'var(--text-secondary, #CBD5E1)' }}>
-              {state.shiftClock || '07:30'} • {t('hud.day', { day: state.shiftDay || 1 })}
+              {localDigits(state.shiftClock || '07:30')} • {t('hud.day', { day: localDigits(state.shiftDay || 1) })}
             </span>
           </div>
         </div>
@@ -1000,7 +1000,7 @@ export function HudView({
                   fontVariantNumeric: 'tabular-nums',
                 }}
               >
-                {Math.round(state.speedKmh)}
+                {localDigits(Math.round(state.speedKmh))}
               </div>
               <div
                 style={{
@@ -1026,7 +1026,7 @@ export function HudView({
                 {isLowFuel ? <IconWarning size={13} color="var(--danger-red, #EF4444)" /> : <IconFuel size={13} />}
                 {isLowFuel ? t('hud.fuel_low') : t('hud.fuel')}
               </span>
-              <span>{fuelPct}% ({state.fuelL.toFixed(1)}L)</span>
+              <span>{localDigits(fuelPct)}% ({localDigits(state.fuelL.toFixed(1))}L)</span>
             </div>
             <div
               style={{

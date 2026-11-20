@@ -178,7 +178,7 @@ export function Garage({
               }}
             >
               <span style={{ color: '#94a3b8', fontSize: '0.75rem' }}>{t('garage.cash_label')}: </span>
-              <span data-testid="garage-cash" style={{ color: '#34d399' }}>৳{cash}</span>
+              <span data-testid="garage-cash" style={{ color: '#34d399' }}>৳{localDigits(cash)}</span>
             </div>
           </div>
         </div>
@@ -334,7 +334,7 @@ export function Garage({
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 600 }}>
                     <span>⚙️ {t('garage.condition_engine')}</span>
                     <span data-testid="garage-condition-engine" style={{ color: getConditionColor(engineCondition) }}>
-                      {engineCondition}%
+                      {localDigits(engineCondition)}%
                     </span>
                   </div>
                   <div style={{ height: '6px', background: 'rgba(255, 255, 255, 0.1)', borderRadius: '3px', marginTop: '6px', overflow: 'hidden' }}>
@@ -357,7 +357,7 @@ export function Garage({
                       cursor: 'pointer',
                     }}
                   >
-                    {t('garage.repair_btn')} (৳{calculateRepairCost('engine', atKamalBhai, kamalRelationship)})
+                    {t('garage.repair_btn')} (৳{localDigits(calculateRepairCost('engine', atKamalBhai, kamalRelationship))})
                   </button>
                 </div>
 
@@ -366,7 +366,7 @@ export function Garage({
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 600 }}>
                     <span>🛞 {t('garage.condition_tires')}</span>
                     <span data-testid="garage-condition-tires" style={{ color: getConditionColor(tiresCondition) }}>
-                      {tiresCondition}%
+                      {localDigits(tiresCondition)}%
                     </span>
                   </div>
                   <div style={{ height: '6px', background: 'rgba(255, 255, 255, 0.1)', borderRadius: '3px', marginTop: '6px', overflow: 'hidden' }}>
@@ -389,7 +389,7 @@ export function Garage({
                       cursor: 'pointer',
                     }}
                   >
-                    {t('garage.repair_btn')} (৳{calculateRepairCost('tires', atKamalBhai, kamalRelationship)})
+                    {t('garage.repair_btn')} (৳{localDigits(calculateRepairCost('tires', atKamalBhai, kamalRelationship))})
                   </button>
                 </div>
 
@@ -398,7 +398,7 @@ export function Garage({
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 600 }}>
                     <span>🛑 {t('garage.condition_brakes')}</span>
                     <span data-testid="garage-condition-brakes" style={{ color: getConditionColor(brakesCondition) }}>
-                      {brakesCondition}%
+                      {localDigits(brakesCondition)}%
                     </span>
                   </div>
                   <div style={{ height: '6px', background: 'rgba(255, 255, 255, 0.1)', borderRadius: '3px', marginTop: '6px', overflow: 'hidden' }}>
@@ -421,7 +421,7 @@ export function Garage({
                       cursor: 'pointer',
                     }}
                   >
-                    {t('garage.repair_btn')} (৳{calculateRepairCost('brakes', atKamalBhai, kamalRelationship)})
+                    {t('garage.repair_btn')} (৳{localDigits(calculateRepairCost('brakes', atKamalBhai, kamalRelationship))})
                   </button>
                 </div>
 
@@ -430,7 +430,7 @@ export function Garage({
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 600 }}>
                     <span>🛢️ {t('garage.condition_oil')}</span>
                     <span data-testid="garage-condition-oil" style={{ color: getConditionColor(oilFreshness) }}>
-                      {oilFreshness}%
+                      {localDigits(oilFreshness)}%
                     </span>
                   </div>
                   <div style={{ height: '6px', background: 'rgba(255, 255, 255, 0.1)', borderRadius: '3px', marginTop: '6px', overflow: 'hidden' }}>
@@ -453,7 +453,7 @@ export function Garage({
                       cursor: 'pointer',
                     }}
                   >
-                    {t('garage.repair_btn')} (৳{calculateRepairCost('oil', atKamalBhai, kamalRelationship)})
+                    {t('garage.repair_btn')} (৳{localDigits(calculateRepairCost('oil', atKamalBhai, kamalRelationship))})
                   </button>
                 </div>
               </div>
@@ -475,7 +475,7 @@ export function Garage({
                   boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
                 }}
               >
-                ✨ {t('garage.repair_all')} (৳{calculateRepairCost('full', atKamalBhai, kamalRelationship)})
+                ✨ {t('garage.repair_all')} (৳{localDigits(calculateRepairCost('full', atKamalBhai, kamalRelationship))})
               </button>
             </div>
           )}
@@ -545,7 +545,7 @@ export function Garage({
                             boxShadow: canAfford ? '0 2px 8px rgba(2, 132, 199, 0.3)' : 'none',
                           }}
                         >
-                          {t('garage.btn_buy')} ৳{cost}
+                          {t('garage.btn_buy')} ৳{localDigits(cost)}
                         </button>
                       )}
                     </div>
@@ -633,7 +633,7 @@ export function Garage({
                             cursor: canAfford ? 'pointer' : 'not-allowed',
                           }}
                         >
-                          {t('garage.btn_buy')} ৳{cost}
+                          {t('garage.btn_buy')} ৳{localDigits(cost)}
                         </button>
                       )}
                     </div>
@@ -752,10 +752,10 @@ export function Garage({
                         ) : (
                           <div style={{ fontSize: '0.8rem' }}>
                             <span style={{ color: '#94a3b8' }}>
-                              {t('garage.trade_in_value', { amount: tradeInVal })} •{' '}
+                              {t('garage.trade_in_value', { amount: localDigits(tradeInVal) })} •{' '}
                             </span>
                             <span style={{ color: '#34d399', fontWeight: 800 }}>
-                              {t('garage.net_cost', { amount: netCost })}
+                              {t('garage.net_cost', { amount: localDigits(netCost) })}
                             </span>
                           </div>
                         )}
