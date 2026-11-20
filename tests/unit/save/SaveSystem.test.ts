@@ -789,4 +789,134 @@ describe('SaveSystem (T4.9)', () => {
     expect(rand2).toBe(20202);
     expect(resolveCareerSeed('')).not.toBe(42);
   });
+
+  it('migrates a v1 save with partial reputation.meters without quarantining to .corrupt', () => {
+    const partialMetersV1 = {
+      version: 1,
+      timestamp: 1700000000000,
+      slot: 'slot1',
+      seed: 123,
+      mode: 'career',
+      ticks: 100,
+      rngState: 456,
+      clock: { day: 2, minutes: 500 },
+      economy: {
+        cash: 800,
+        dailyRevenue: 200,
+        dailyExpenses: 50,
+        fuelLevel: 2.0,
+        motorcycleCondition: 80,
+        appBalance: 0,
+        debt: 0,
+        reputation: 4.9,
+        savings: 0,
+        phoneBattery: 90,
+      },
+      story: {
+        currentChapter: 1,
+        completedMissions: [],
+        activeMissions: ['m1_first_ride'],
+        characterRelationships: { char_ma: 80 },
+        promises: [],
+        branchFlags: {},
+        endingEligibility: {
+          independent_rider: false,
+          workshop_owner: false,
+          trusted_local: false,
+          fast_money: false,
+          fresh_start: false,
+        },
+      },
+      reputation: {
+        rating: 4.9,
+        localTrust: 40,
+        safetyRecord: { nearMisses: 0, bumps: 0, crashes: 0, infractions: 0 },
+        riskScore: 0,
+        promises: { kept: 0, broken: 0 },
+        meters: { riderIntegrity: 60 },
+      },
+      bike: { condition: 80, fuelLevel: 2.0 },
+      weather: 'clear',
+      waypointNodeId: null,
+    };
+
+    memoryStorage.setItem(saveSystem.getSlotKey('slot1'), JSON.stringify(partialMetersV1));
+    const loaded = saveSystem.load('slot1');
+
+    expect(loaded.success).toBe(true);
+    expect(saveSystem.hasCorruptBackup('slot1')).toBe(false);
+    if (loaded.success) {
+      expect(loaded.save.version).toBe(2);
+      expect(loaded.save.karmaMeters).toEqual({
+        riderIntegrity: 60,
+        publicReputation: 40,
+        platformStanding: 80,
+        criminalExposure: 0,
+        evidenceExposure: 0,
+        safetyRecord: 70,
+      });
+    }
+  });
+
+  it('state/restored clears stale phone offers, heldRequest, navigationTurn, and exitToTitle resets saveStatusSignal', async () => {
+    const {
+      bindEventBusToStore,
+      choiceSignal,
+      phoneSignal,
+      saveStatusSignal,
+      exitToTitle,
+    } = await import('../../../src/ui/store');
+
+    const unbind = bindEventBusToStore(gm.bus);
+    try {
+      // Simulate an active encounter holding a request + a queued offer + navigationTurn
+      choiceSignal.value = {
+        active: true,
+        prompt: 'enc.test',
+        options: [{ id: 'ok', text: 'ok' }],
+        instanceId: 'inst_1',
+      };
+      const heldReq = {
+        requestId: 'req_held',
+        passengerId: 'p_held',
+        pickupNodeId: 'n1',
+        destinationNodeId: 'n2',
+        initialFare: 100,
+        estimatedDistance: 1,
+        estimatedDuration: 4,
+        requestedArrivalTime: null,
+        bookingType: 'app' as const,
+        status: 'WaitingForPickup' as const,
+        surge: 1,
+      };
+      gm.bus.emit('ride/requested', { request: heldReq });
+      choiceSignal.value = { ...choiceSignal.value, active: false };
+      // Re-open choice and queue another held request, plus set navigationTurn
+      choiceSignal.value = {
+        active: true,
+        prompt: 'enc.test2',
+        options: [{ id: 'ok', text: 'ok' }],
+        instanceId: 'inst_2',
+      };
+      gm.bus.emit('ride/requested', { request: { ...heldReq, requestId: 'req_held_2' } });
+      phoneSignal.value = {
+        ...phoneSignal.value,
+        navigationTurn: { direction: 'left', text: 'Turn left in 50m' },
+      };
+
+      const save = serialize(gm, 'auto');
+      gm.applySnapshot(deserialize(save).snapshot(), save.rngState);
+
+      expect(phoneSignal.value.incomingRequest).toBeNull();
+      expect(phoneSignal.value.requestQueue).toEqual([]);
+      expect(phoneSignal.value.unreadCount).toBe(0);
+      expect(phoneSignal.value.navigationTurn).toBeNull();
+
+      saveStatusSignal.value = 'failed';
+      exitToTitle();
+      expect(saveStatusSignal.value).toBeNull();
+    } finally {
+      unbind();
+    }
+  });
 });

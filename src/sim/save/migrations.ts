@@ -406,7 +406,13 @@ export const migrations: Record<number, (legacy: Record<string, unknown>) => Any
           characterId: canonicalCharacterId(p.characterId),
         })),
         branchFlags: { ...v1.story.branchFlags },
-        endingEligibility: { ...v1.story.endingEligibility },
+        endingEligibility: {
+          independent_rider: v1.story.endingEligibility?.independent_rider ?? false,
+          workshop_owner: v1.story.endingEligibility?.workshop_owner ?? false,
+          trusted_local: v1.story.endingEligibility?.trusted_local ?? false,
+          fast_money: v1.story.endingEligibility?.fast_money ?? false,
+          fresh_start: v1.story.endingEligibility?.fresh_start ?? false,
+        },
       },
       reputation: {
         rating: v1.reputation.rating,

@@ -461,6 +461,7 @@ export function exitToTitle(): void {
     outcomeLineKey: undefined,
   };
   encounterCueSignal.value = { cueKey: null, encounterId: undefined, seq: encounterCueSignal.value.seq };
+  saveStatusSignal.value = null;
   saveSlotsSignal.value = { ...saveSlotsSignal.value, isOpen: false };
   screenSignal.value = 'title';
 }
@@ -1154,6 +1155,14 @@ export function bindEventBusToStore(bus: EventBus<GameEvents>): () => void {
   unsubscribers.push(unsubDayStarted);
 
   const unsubStateRestored = bus.on('state/restored', () => {
+    activeOfferQueue = [];
+    heldRequest = null;
+    inActiveTrip = false;
+    syncPhoneOfferState(false);
+    phoneSignal.value = {
+      ...phoneSignal.value,
+      navigationTurn: null,
+    };
     clearEncounterUi();
     negotiationSignal.value = { active: false, session: null, lastResult: null };
     tripSummarySignal.value = null;
