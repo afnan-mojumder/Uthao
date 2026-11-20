@@ -136,3 +136,43 @@ export function nextInstruction(
   }
   return instr;
 }
+
+/**
+ * Estimates remaining minutes along `route` from `pose` to the final node.
+ * Allocation-free: safe to call every frame for HUD ETA display.
+ */
+export function remainingRouteEtaMin(
+  route: Route | null,
+  pose: { x: number; z: number },
+  nodes: NodeLookup
+): number | undefined {
+  if (!route || route.nodeIds.length === 0) return undefined;
+  const ids = route.nodeIds;
+  if (ids.length < 2 || route.lengthM <= 0 || !locate(route, nodes, pose.x, pose.z)) {
+    return Math.max(0, Math.round(route.etaMin));
+  }
+
+  const leg = loc.leg;
+  const a = nodes.get(ids[leg]!);
+  const b = nodes.get(ids[leg + 1]!);
+  let remainingM = 0;
+  if (a && b) {
+    const dx = b.x - a.x;
+    const dz = b.z - a.z;
+    const lenSq = dx * dx + dz * dz;
+    const legLen = Math.sqrt(lenSq);
+    let t = lenSq > 0 ? ((pose.x - a.x) * dx + (pose.z - a.z) * dz) / lenSq : 0;
+    t = t < 0 ? 0 : t > 1 ? 1 : t;
+    remainingM += legLen * (1 - t);
+  }
+  for (let i = leg + 1; i + 1 < ids.length; i++) {
+    const na = nodes.get(ids[i]!);
+    const nb = nodes.get(ids[i + 1]!);
+    if (na && nb) {
+      remainingM += Math.hypot(nb.x - na.x, nb.z - na.z);
+    }
+  }
+  const ratio = Math.min(1, Math.max(0, remainingM / route.lengthM));
+  if (remainingM <= 15) return 0;
+  return Math.max(1, Math.round(route.etaMin * ratio));
+}

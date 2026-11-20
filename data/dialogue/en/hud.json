@@ -38,5 +38,19 @@
   "nav.straight": "Continue straight for {dist} m",
   "nav.uturn": "Make a U-turn",
   "nav.arrive": "Arrive in {dist} m",
-  "hud.charge_phone": "Charge phone"
+  "hud.charge_phone": "Charge phone",
+  "hud.condition": "Condition",
+  "hud.recover_bike": "Recover Bike",
+  "hud.mood.happy": "Happy",
+  "hud.mood.neutral": "Calm",
+  "hud.mood.tense": "Impatient",
+  "hud.mood.angry": "Upset",
+  "district.mirpara": "Mirpara",
+  "district.fulgate": "Fulgate",
+  "district.dhanbagh": "Dhanbagh",
+  "district.mohakhal": "Mohakhal",
+  "district.gulbari": "Gulbari",
+  "district.puranpara": "Puran Para",
+  "district.motinagar": "Motinagar",
+  "district.testloop": "Test Loop"
 }

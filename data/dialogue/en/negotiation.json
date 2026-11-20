@@ -51,5 +51,6 @@
   "negotiation.route": "Route: {distance} km, {eta} min",
   "negotiation.relocate": "Move pickup ({walk} m walk, saves {min} min)",
   "negotiation.your_quote": "Your Quote",
-  "negotiation.custom_counter": "Custom counteroffer"
+  "negotiation.custom_counter": "Custom counteroffer",
+  "negotiation.destination_label": "To: {place}"
 }

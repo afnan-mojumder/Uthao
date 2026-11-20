@@ -37,9 +37,6 @@ import {
 
 const BTN_CONFIRM = 0;
 const BTN_BACK = 1;
-const BTN_PHONE = 4;
-const BTN_MAP = 5;
-const BTN_PAUSE = 9;
 
 const FOCUSABLE =
   'button, [role="button"], a[href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
@@ -131,13 +128,14 @@ export function startGamepadNav(isSettingsOpen: () => boolean): () => void {
   if (typeof window === 'undefined' || typeof requestAnimationFrame !== 'function') {
     return () => {};
   }
-  const choiceButtons = loadBindings().gamepad.choiceButtons;
   const edges = new GamepadEdges();
   let frame = 0;
   let running = true;
 
   const tick = () => {
     if (!running) return;
+    const gp = loadBindings().gamepad;
+    const choiceButtons = gp.choiceButtons;
     const snap = edges.poll(firstGamepad());
 
     if (!hasSystemOverlay()) {
@@ -163,9 +161,9 @@ export function startGamepadNav(isSettingsOpen: () => boolean): () => void {
         if (snap.pressed.includes(BTN_BACK)) dispatchKey('Escape', 'Escape');
       }
 
-      if (snap.pressed.includes(BTN_PAUSE)) dispatchKey('Escape', 'Escape');
-      if (snap.pressed.includes(BTN_PHONE)) dispatchKey('Tab', 'Tab');
-      if (snap.pressed.includes(BTN_MAP)) dispatchKey('m', 'KeyM');
+      if (snap.pressed.includes(gp.pauseButton)) dispatchKey('Escape', 'Escape');
+      if (snap.pressed.includes(gp.phoneButton)) dispatchKey('Tab', 'Tab');
+      if (snap.pressed.includes(gp.mapButton)) dispatchKey('m', 'KeyM');
     }
 
     frame = requestAnimationFrame(tick);

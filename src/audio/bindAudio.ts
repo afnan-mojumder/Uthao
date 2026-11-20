@@ -8,18 +8,52 @@ export interface AudioSettings {
   muted: boolean;
 }
 
-/** Wires saved volumes, sim events and UI clicks to the audio manager. */
+export interface AudioPreviewSource {
+  subscribe(fn: (s: AudioSettings | null) => void): unknown;
+  seq?: { subscribe(fn: (n: number) => void): unknown };
+}
+
+function applyAudioVolumes(audio: AudioManager, s: AudioSettings): void {
+  audio.setMasterVolume(s.masterVolume);
+  audio.setSfxVolume(s.sfxVolume);
+  audio.setAmbientVolume(s.ambientVolume);
+  audio.setMuted(s.muted);
+}
+
+/** Wires saved volumes, live volume previews, sim events and UI clicks to the audio manager. */
 export function bindAudio(
   audio: AudioManager,
   bus: EventBus<GameEvents>,
   settings: { subscribe(fn: (s: AudioSettings) => void): unknown },
-  doc?: Document
+  doc?: Document,
+  preview?: AudioPreviewSource
 ): void {
+  let savedSettings: AudioSettings = {
+    masterVolume: 1,
+    sfxVolume: 1,
+    ambientVolume: 1,
+    muted: false,
+  };
+  let previewSettings: AudioSettings | null = null;
+  let lastPreviewSeq = 0;
+
   settings.subscribe((s) => {
-    audio.setMasterVolume(s.masterVolume);
-    audio.setSfxVolume(s.sfxVolume);
-    audio.setAmbientVolume(s.ambientVolume);
-    audio.setMuted(s.muted);
+    savedSettings = s;
+    applyAudioVolumes(audio, previewSettings ?? savedSettings);
+  });
+
+  preview?.subscribe((s) => {
+    previewSettings = s;
+    applyAudioVolumes(audio, previewSettings ?? savedSettings);
+  });
+
+  preview?.seq?.subscribe((seq) => {
+    if (seq > lastPreviewSeq) {
+      lastPreviewSeq = seq;
+      audio.playClick();
+    } else {
+      lastPreviewSeq = seq;
+    }
   });
 
   bus.on('ride/requested', () => audio.playNotify());

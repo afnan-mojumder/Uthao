@@ -54,6 +54,13 @@ test('ride completes via autopilot', async ({ page }) => {
   expect(receipt?.fare).toBe(120);
   expect(receipt?.net).toBeGreaterThan(0);
 
+  // Verify TripSummary overlay shows fuel cost and continues cleanly
+  const tripSummary = page.locator('#trip-summary-overlay');
+  await expect(tripSummary).toBeVisible({ timeout: 5000 });
+  await expect(page.locator('[data-testid="trip-summary-fuel"]')).toBeVisible();
+  await page.locator('#btn-trip-continue').click();
+  await expect(tripSummary).not.toBeVisible({ timeout: 5000 });
+
   // Verify HUD shows trip completion
   await expect(page.locator('#hud-objective')).toHaveText(
     'যাত্রী খোঁজা হচ্ছে...'

@@ -1,193 +1,186 @@
+import fs from 'node:fs';
 import { describe, it, expect, vi } from 'vitest';
-import { FirstRideTutorial } from '../../../src/ui/tutorial/FirstRideTutorial';
+import { FirstRideTutorialView } from '../../../src/ui/tutorial/FirstRideTutorial';
 import { tutorialSignal } from '../../../src/ui/store';
+import { setLanguage } from '../../../src/ui/i18n';
 
 interface VNodeLike {
-  props: {
-    children?: VNodeLike | VNodeLike[];
+  type?: unknown;
+  props?: {
+    children?: unknown;
     onClick?: () => void;
     [key: string]: unknown;
   };
 }
 
-function asVNode(elem: unknown): VNodeLike {
-  return elem as VNodeLike;
+function findByTestId(node: unknown, testId: string): VNodeLike | null {
+  if (!node || typeof node !== 'object') return null;
+  if (Array.isArray(node)) {
+    for (const child of node) {
+      const hit = findByTestId(child, testId);
+      if (hit) return hit;
+    }
+    return null;
+  }
+  const vn = node as VNodeLike;
+  if (vn.props?.['data-testid'] === testId || vn.props?.testId === testId) {
+    return vn;
+  }
+  if (typeof vn.type === 'function') {
+    const rendered = (vn.type as (p: unknown) => unknown)(vn.props ?? {});
+    const hit = findByTestId(rendered, testId);
+    if (hit) return hit;
+  }
+  if (vn.props?.children !== undefined) {
+    return findByTestId(vn.props.children, testId);
+  }
+  return null;
 }
 
-function asVNodeArray(children: unknown): VNodeLike[] {
-  return children as VNodeLike[];
+function flattenText(node: unknown): string {
+  if (node == null || typeof node === 'boolean') return '';
+  if (typeof node === 'string' || typeof node === 'number') return String(node);
+  if (Array.isArray(node)) return node.map(flattenText).join('');
+  if (typeof node === 'object') {
+    const vn = node as VNodeLike;
+    if (typeof vn.type === 'function') {
+      return flattenText((vn.type as (p: unknown) => unknown)(vn.props ?? {}));
+    }
+    return flattenText(vn.props?.children);
+  }
+  return '';
+}
+
+function renderView(
+  step: NonNullable<Parameters<typeof FirstRideTutorialView>[0]['step']>,
+  overrides: Partial<Parameters<typeof FirstRideTutorialView>[0]> = {}
+) {
+  return FirstRideTutorialView({
+    step,
+    selectedOffer: 100,
+    agreedPrompt: '',
+    onSelectOffer: vi.fn(),
+    onSetAgreedPrompt: vi.fn(),
+    ...overrides,
+  });
 }
 
 describe('T3.8 FirstRideTutorial Component', () => {
+  it('calls useState unconditionally without wrapping hooks in try/catch (P0.2 hook safety)', () => {
+    const src = fs.readFileSync('src/ui/tutorial/FirstRideTutorial.tsx', 'utf-8');
+    expect(src).not.toMatch(/try\s*\{[\s\S]*useState/);
+  });
+
   it('renders nothing when tutorial is idle or completed', () => {
-    const idleElem = FirstRideTutorial({ step: 'idle' });
-    expect(idleElem).toBeNull();
-
-    const completedElem = FirstRideTutorial({ step: 'completed' });
-    expect(completedElem).toBeNull();
+    expect(renderView('idle')).toBeNull();
+    expect(renderView('completed')).toBeNull();
   });
 
-  it('renders 07:00 alarm and calls onAdvance on dismiss', () => {
+  it('renders 07:00 alarm, handles dismiss and Skip Tutorial', () => {
+    setLanguage('en');
     const advanceSpy = vi.fn();
-    const elem = FirstRideTutorial({
-      step: 'alarm',
-      onAdvance: advanceSpy,
-    });
+    const skipSpy = vi.fn();
+    const elem = renderView('alarm', { onAdvance: advanceSpy, onSkip: skipSpy });
 
     expect(elem).not.toBeNull();
-    const card = asVNode(asVNode(elem).props.children);
-    const cardContent = asVNodeArray(card.props.children)[1];
-    const btn = asVNodeArray(cardContent?.props.children)[2];
-    expect(btn?.props['data-testid']).toBe('tutorial-btn-alarm');
-    btn?.props.onClick?.();
+    const btn = findByTestId(elem, 'tutorial-btn-alarm');
+    expect(btn).not.toBeNull();
+    btn?.props?.onClick?.();
     expect(advanceSpy).toHaveBeenCalledWith('ma_reminder');
+
+    const skipBtn = findByTestId(elem, 'tutorial-btn-skip');
+    expect(skipBtn).not.toBeNull();
+    skipBtn?.props?.onClick?.();
+    expect(skipSpy).toHaveBeenCalledTimes(1);
   });
 
-  it('renders Ma reminder for Day 3 household rent (৳1,200)', () => {
+  it('renders Ma reminder, wallet check (live cash & rent), bike inspection (live fuel & condition), and tea stall', () => {
+    setLanguage('en');
     const advanceSpy = vi.fn();
-    const elem = FirstRideTutorial({
-      step: 'ma_reminder',
-      onAdvance: advanceSpy,
-    });
 
-    expect(elem).not.toBeNull();
-    const card = asVNode(asVNode(elem).props.children);
-    const cardContent = asVNodeArray(card.props.children)[1];
-    const btn = asVNodeArray(cardContent?.props.children)[2];
-    expect(btn?.props['data-testid']).toBe('tutorial-btn-ma');
-    btn?.props.onClick?.();
+    const ma = renderView('ma_reminder', { onAdvance: advanceSpy });
+    findByTestId(ma, 'tutorial-btn-ma')?.props?.onClick?.();
     expect(advanceSpy).toHaveBeenCalledWith('wallet_check');
-  });
 
-  it('renders wallet check showing ৳600 starting cash', () => {
-    const advanceSpy = vi.fn();
-    const elem = FirstRideTutorial({
-      step: 'wallet_check',
-      onAdvance: advanceSpy,
-    });
-
-    expect(elem).not.toBeNull();
-    const card = asVNode(asVNode(elem).props.children);
-    const cardContent = asVNodeArray(card.props.children)[1];
-    const btn = asVNodeArray(cardContent?.props.children)[2];
-    expect(btn?.props['data-testid']).toBe('tutorial-btn-wallet');
-    btn?.props.onClick?.();
+    const wallet = renderView('wallet_check', { cash: 725, rentTarget: 1200, onAdvance: advanceSpy });
+    expect(flattenText(findByTestId(wallet, 'tutorial-wallet-cash'))).toContain('725');
+    expect(flattenText(findByTestId(wallet, 'tutorial-wallet-rent'))).toContain('1200');
+    findByTestId(wallet, 'tutorial-btn-wallet')?.props?.onClick?.();
     expect(advanceSpy).toHaveBeenCalledWith('bike_inspection');
-  });
 
-  it('renders bike inspection showing 1.2 L fuel remaining', () => {
-    const advanceSpy = vi.fn();
-    const elem = FirstRideTutorial({
-      step: 'bike_inspection',
-      onAdvance: advanceSpy,
-    });
-
-    expect(elem).not.toBeNull();
-    const card = asVNode(asVNode(elem).props.children);
-    const cardContent = asVNodeArray(card.props.children)[1];
-    const btn = asVNodeArray(cardContent?.props.children)[2];
-    expect(btn?.props['data-testid']).toBe('tutorial-btn-bike');
-    btn?.props.onClick?.();
+    const bike = renderView('bike_inspection', { fuelL: 2.4, conditionPct: 92, onAdvance: advanceSpy });
+    expect(flattenText(findByTestId(bike, 'tutorial-bike-fuel'))).toContain('2.4');
+    expect(flattenText(findByTestId(bike, 'tutorial-bike-condition'))).toContain('92%');
+    findByTestId(bike, 'tutorial-btn-bike')?.props?.onClick?.();
     expect(advanceSpy).toHaveBeenCalledWith('tea_stall');
-  });
 
-  it('renders tea stall advice from Mintu', () => {
-    const advanceSpy = vi.fn();
-    const elem = FirstRideTutorial({
-      step: 'tea_stall',
-      onAdvance: advanceSpy,
-    });
-
-    expect(elem).not.toBeNull();
-    const card = asVNode(asVNode(elem).props.children);
-    const cardContent = asVNodeArray(card.props.children)[1];
-    const btn = asVNodeArray(cardContent?.props.children)[2];
-    expect(btn?.props['data-testid']).toBe('tutorial-btn-tea-stall');
-    btn?.props.onClick?.();
+    const tea = renderView('tea_stall', { onAdvance: advanceSpy });
+    findByTestId(tea, 'tutorial-btn-tea-stall')?.props?.onClick?.();
     expect(advanceSpy).toHaveBeenCalledWith('open_app');
   });
 
-  it('renders incoming request from Nabila and advances to negotiation', () => {
-    const advanceSpy = vi.fn();
-    const elem = FirstRideTutorial({
-      step: 'open_app',
-      onAdvance: advanceSpy,
-    });
-
-    expect(elem).not.toBeNull();
-    const card = asVNode(asVNode(elem).props.children);
-    const cardContent = asVNodeArray(card.props.children)[1];
-    const btn = asVNodeArray(cardContent?.props.children)[2];
-    expect(btn?.props['data-testid']).toBe('tutorial-btn-open-request');
-    btn?.props.onClick?.();
-    expect(advanceSpy).toHaveBeenCalledWith('negotiation');
-  });
-
-  it('renders verbatim GDD §6 negotiation cards and handles counteroffer', () => {
+  it('renders incoming request from Nabila and handles negotiation & riding', () => {
+    setLanguage('en');
     const advanceSpy = vi.fn();
     const negotiateSpy = vi.fn();
+    const selectOfferSpy = vi.fn();
+
+    const openApp = renderView('open_app', { onAdvance: advanceSpy });
+    findByTestId(openApp, 'tutorial-btn-open-request')?.props?.onClick?.();
+    expect(advanceSpy).toHaveBeenCalledWith('negotiation');
 
     tutorialSignal.value = { active: true, step: 'negotiation', agreedFare: 100 };
-    const elem = FirstRideTutorial({
-      step: 'negotiation',
+    const neg = renderView('negotiation', {
       onAdvance: advanceSpy,
       onNegotiate: negotiateSpy,
+      onSelectOffer: selectOfferSpy,
     });
+    expect(findByTestId(neg, 'tutorial-nego-counter-100')).not.toBeNull();
+    expect(findByTestId(neg, 'tutorial-nego-counter-90')).not.toBeNull();
+    expect(findByTestId(neg, 'tutorial-nego-accept-80')).not.toBeNull();
 
-    expect(elem).not.toBeNull();
-    const card = asVNode(asVNode(elem).props.children);
-    const cardContent = asVNodeArray(card.props.children)[1];
-    const optionsContainer = asVNodeArray(cardContent?.props.children)[1];
-    const options = asVNodeArray(optionsContainer?.props.children);
-
-    const option100 = options[0];
-    const option90 = options[1];
-    const option80 = options[2];
-
-    expect(option100?.props['data-testid']).toBe('tutorial-nego-counter-100');
-    expect(option90?.props['data-testid']).toBe('tutorial-nego-counter-90');
-    expect(option80?.props['data-testid']).toBe('tutorial-nego-accept-80');
-
-    // Choose ৳100 counteroffer
-    option100?.props.onClick?.();
+    findByTestId(neg, 'tutorial-nego-counter-100')?.props?.onClick?.();
+    expect(selectOfferSpy).toHaveBeenCalledWith(100);
     expect(negotiateSpy).toHaveBeenCalledWith(100);
 
-    // Click start ride
-    const startRideBtn = asVNodeArray(cardContent?.props.children)[2];
-    expect(startRideBtn?.props['data-testid']).toBe('tutorial-btn-start-ride');
-    startRideBtn?.props.onClick?.();
-    expect(advanceSpy).toHaveBeenCalledWith('riding');
-  });
-
-  it('renders riding phase floating banner with destination arrival button', () => {
-    const advanceSpy = vi.fn();
-    const elem = FirstRideTutorial({
-      step: 'riding',
+    const agreedNeg = renderView('negotiation', {
+      agreedPrompt: 'Agreed',
       onAdvance: advanceSpy,
     });
+    findByTestId(agreedNeg, 'tutorial-btn-start-ride')?.props?.onClick?.();
+    expect(advanceSpy).toHaveBeenCalledWith('riding');
 
-    expect(elem).not.toBeNull();
-    const arriveBtn = asVNodeArray(asVNode(elem).props.children)[1];
-    expect(arriveBtn?.props['data-testid']).toBe('tutorial-btn-arrive-destination');
-    arriveBtn?.props.onClick?.();
+    const riding = renderView('riding', { onAdvance: advanceSpy });
+    findByTestId(riding, 'tutorial-btn-arrive-destination')?.props?.onClick?.();
     expect(advanceSpy).toHaveBeenCalledWith('receipt');
   });
 
-  it('renders receipt breakdown with 15% commission and finishes tutorial', () => {
+  it('renders receipt breakdown with live fuel cost and finishes tutorial', () => {
+    setLanguage('en');
     const completeSpy = vi.fn();
-    tutorialSignal.value = { active: true, step: 'receipt', agreedFare: 100 };
+    const receipt = {
+      requestId: 'req_tutorial_01',
+      fare: 100,
+      tip: 0,
+      commission: 15,
+      fuelCost: 19,
+      otherCosts: 0,
+      bonus: 0,
+      penalties: 0,
+      compensation: 0,
+      fuelLiters: 0.12,
+      net: 66,
+      durationMin: 3,
+      distanceKm: 0.1,
+      rating: 5,
+      consequences: [],
+    };
+    const elem = renderView('receipt', { receipt, onComplete: completeSpy });
+    const fuelRow = findByTestId(elem, 'tutorial-receipt-fuel');
+    expect(fuelRow).not.toBeNull();
+    expect(flattenText(fuelRow)).toContain('19');
 
-    const elem = FirstRideTutorial({
-      step: 'receipt',
-      onComplete: completeSpy,
-    });
-
-    expect(elem).not.toBeNull();
-    const card = asVNode(asVNode(elem).props.children);
-    const cardContent = asVNodeArray(card.props.children)[1];
-    const finishBtn = asVNodeArray(cardContent?.props.children)[2];
-    expect(finishBtn?.props['data-testid']).toBe('tutorial-btn-finish-receipt');
-    finishBtn?.props.onClick?.();
+    findByTestId(elem, 'tutorial-btn-finish-receipt')?.props?.onClick?.();
     expect(completeSpy).toHaveBeenCalledTimes(1);
   });
 });

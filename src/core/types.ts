@@ -147,6 +147,9 @@ export interface RideRequest {
   characterId?: string;
   pickupNodeId: string;
   destinationNodeId: string;
+  pickupPlaceKey?: string;
+  destinationPlaceKey?: string;
+  passengerNameKey?: string;
   initialFare: number;
   estimatedDistance: number; // virtual km
   estimatedDuration: number; // game min

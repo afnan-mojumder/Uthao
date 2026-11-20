@@ -1,6 +1,7 @@
 import type { JSX } from 'preact';
-import { DEFAULT_BINDINGS } from '../../input/bindings';
+import { loadBindings } from '../../input/bindings';
 import { touchLayout } from '../../input/layout';
+import { IconBell, IconFullscreen, IconMap, IconPause, IconPhone } from '../components/icons';
 import { t } from '../i18n';
 
 /** True on devices with a touch screen. */
@@ -9,19 +10,18 @@ export function isTouchDevice(): boolean {
   return 'ontouchstart' in window || (typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0);
 }
 
-/** Tap a key the App handles itself (Escape, M, Tab): both events, so it works as a press. */
-function tapKey(key: string, code: string): void {
+/** Tap a key the App handles itself (pause, map, phone): both events, so it works as a press. */
+function tapCode(code: string): void {
+  const key = code.startsWith('Key') ? code.slice(3).toLowerCase() : code;
   window.dispatchEvent(new KeyboardEvent('keydown', { key, code }));
   window.dispatchEvent(new KeyboardEvent('keyup', { key, code }));
 }
 
 /** Press a key the input manager reads while held (horn, camera). */
-function holdKey(code: string, down: boolean): void {
-  const key = code.replace('Key', '').toLowerCase();
+function holdCode(code: string, down: boolean): void {
+  const key = code.startsWith('Key') ? code.slice(3).toLowerCase() : code;
   window.dispatchEvent(new KeyboardEvent(down ? 'keydown' : 'keyup', { key, code }));
 }
-
-const HELD_CODES = { horn: DEFAULT_BINDINGS.keyboard.horn[0] ?? 'KeyH', camera: DEFAULT_BINDINGS.keyboard.camera[0] ?? 'KeyC' };
 
 const iconStyle = {
   flex: 1,
@@ -31,7 +31,9 @@ const iconStyle = {
   border: '1px solid rgba(255, 255, 255, 0.2)',
   background: 'rgba(15, 23, 42, 0.7)',
   color: '#f8fafc',
-  fontSize: '1.2rem',
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
   touchAction: 'none',
 } as const;
 
@@ -41,7 +43,6 @@ const iconStyle = {
  * from the same layout the input manager uses, so what is drawn is what works.
  */
 export function TouchActions(): JSX.Element {
-  // touchLayout is linear, so laying it out in a 100x100 box gives percentages.
   const L = touchLayout(100, 100);
   const pct = (r: { x: number; y: number; width: number; height: number }) => ({
     left: `${r.x}%`,
@@ -49,7 +50,12 @@ export function TouchActions(): JSX.Element {
     width: `${r.width}%`,
     height: `${r.height}%`,
   });
-  const zone = { position: 'absolute' as const, pointerEvents: 'none' as const, border: '1px dashed rgba(148, 163, 184, 0.35)', borderRadius: '12px' };
+  const zone = {
+    position: 'absolute' as const,
+    pointerEvents: 'none' as const,
+    border: '1px dashed rgba(148, 163, 184, 0.35)',
+    borderRadius: '12px',
+  };
 
   return (
     <div data-testid="touch-actions" style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
@@ -61,50 +67,55 @@ export function TouchActions(): JSX.Element {
         style={{ position: 'absolute', display: 'flex', gap: '6px', pointerEvents: 'auto', ...pct(L.iconsZone) }}
       >
         <button
+          type="button"
           data-testid="touch-btn-pause"
           aria-label={t('touch.pause')}
           style={iconStyle}
-          onClick={() => tapKey('Escape', 'Escape')}
+          onClick={() => tapCode(loadBindings().keyboard.pause[0] ?? 'Escape')}
         >
-          ⏸
+          <IconPause size={18} />
         </button>
         <button
+          type="button"
           data-testid="touch-btn-map"
           aria-label={t('touch.map')}
           style={iconStyle}
-          onClick={() => tapKey('m', 'KeyM')}
+          onClick={() => tapCode(loadBindings().keyboard.map[0] ?? 'KeyM')}
         >
-          🗺️
+          <IconMap size={18} />
         </button>
         <button
+          type="button"
           data-testid="touch-btn-phone"
           aria-label={t('touch.phone')}
           style={iconStyle}
-          onClick={() => tapKey('Tab', 'Tab')}
+          onClick={() => tapCode(loadBindings().keyboard.phone[0] ?? 'Tab')}
         >
-          📱
+          <IconPhone size={18} />
         </button>
         <button
+          type="button"
           data-testid="touch-btn-horn"
           aria-label={t('touch.horn')}
           style={iconStyle}
-          onPointerDown={() => holdKey(HELD_CODES.horn, true)}
-          onPointerUp={() => holdKey(HELD_CODES.horn, false)}
-          onPointerLeave={() => holdKey(HELD_CODES.horn, false)}
-          onPointerCancel={() => holdKey(HELD_CODES.horn, false)}
+          onPointerDown={() => holdCode(loadBindings().keyboard.horn[0] ?? 'KeyH', true)}
+          onPointerUp={() => holdCode(loadBindings().keyboard.horn[0] ?? 'KeyH', false)}
+          onPointerLeave={() => holdCode(loadBindings().keyboard.horn[0] ?? 'KeyH', false)}
+          onPointerCancel={() => holdCode(loadBindings().keyboard.horn[0] ?? 'KeyH', false)}
         >
-          📯
+          <IconBell size={18} />
         </button>
         <button
+          type="button"
           data-testid="touch-btn-camera"
           aria-label={t('touch.camera')}
           style={iconStyle}
-          onPointerDown={() => holdKey(HELD_CODES.camera, true)}
-          onPointerUp={() => holdKey(HELD_CODES.camera, false)}
-          onPointerLeave={() => holdKey(HELD_CODES.camera, false)}
-          onPointerCancel={() => holdKey(HELD_CODES.camera, false)}
+          onPointerDown={() => holdCode(loadBindings().keyboard.camera[0] ?? 'KeyC', true)}
+          onPointerUp={() => holdCode(loadBindings().keyboard.camera[0] ?? 'KeyC', false)}
+          onPointerLeave={() => holdCode(loadBindings().keyboard.camera[0] ?? 'KeyC', false)}
+          onPointerCancel={() => holdCode(loadBindings().keyboard.camera[0] ?? 'KeyC', false)}
         >
-          🎥
+          <IconFullscreen size={18} />
         </button>
       </div>
     </div>

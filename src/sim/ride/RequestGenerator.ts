@@ -1,4 +1,5 @@
 import { isPickupSegment, type RoadNetwork } from '../road/RoadNetwork';
+import { nearestPlaceKey } from './rideView';
 import type { Rng } from '../../core/rng';
 import type {
   ArchetypeId,
@@ -319,11 +320,17 @@ export class RequestGenerator {
               )
             : null;
 
+        const pickupPlaceKey = nearestPlaceKey({ roadNetwork: this.network }, pickupNodeId) || undefined;
+        const destinationPlaceKey = nearestPlaceKey({ roadNetwork: this.network }, destNodeId) || undefined;
+
         const request: RideRequest = {
           requestId: reqId,
           passengerId: profile.passengerId,
           pickupNodeId,
           destinationNodeId: destNodeId,
+          ...(pickupPlaceKey ? { pickupPlaceKey } : {}),
+          ...(destinationPlaceKey ? { destinationPlaceKey } : {}),
+          ...(profile.nameKey ? { passengerNameKey: profile.nameKey } : {}),
           initialFare: fare,
           estimatedDistance: r.virtualKm,
           estimatedDuration: r.etaMin,
@@ -436,12 +443,18 @@ export class RequestGenerator {
               )
             : null;
 
+        const pickupPlaceKey = nearestPlaceKey({ roadNetwork: this.network }, pickupNodeId) || undefined;
+        const destinationPlaceKey = nearestPlaceKey({ roadNetwork: this.network }, destNodeId) || undefined;
+
         const request: RideRequest = {
           requestId: reqId,
           passengerId: profile.passengerId,
           characterId: charDef.id,
           pickupNodeId,
           destinationNodeId: destNodeId,
+          ...(pickupPlaceKey ? { pickupPlaceKey } : {}),
+          ...(destinationPlaceKey ? { destinationPlaceKey } : {}),
+          ...(profile.nameKey ? { passengerNameKey: profile.nameKey } : {}),
           initialFare: fare,
           estimatedDistance: r.virtualKm,
           estimatedDuration: r.etaMin,

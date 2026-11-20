@@ -10,6 +10,7 @@ export interface ButtonProps {
   icon?: ComponentChildren;
   ariaLabel?: string;
   testId?: string;
+  'data-testid'?: string;
   id?: string;
   style?: CSSProperties;
 }
@@ -44,6 +45,7 @@ function ActionButton({
   icon,
   ariaLabel,
   testId,
+  'data-testid': dataTestId,
   id,
   style,
 }: ButtonProps & { variant: ButtonVariant }): JSX.Element {
@@ -51,7 +53,7 @@ function ActionButton({
     <button
       id={id}
       type={type}
-      data-testid={testId}
+      data-testid={dataTestId ?? testId}
       aria-label={ariaLabel}
       disabled={disabled}
       onClick={onClick}

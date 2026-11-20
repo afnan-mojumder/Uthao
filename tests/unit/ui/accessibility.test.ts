@@ -312,7 +312,8 @@ describe('Accessibility & Localisation (T6.3 + P6.1)', () => {
     expect(DEFAULT_SETTINGS.subtitlesSize).toBe('normal');
     expect(DEFAULT_SETTINGS.colorblindRoute).toBe(false);
     expect(DEFAULT_SETTINGS.reduceMotion).toBe(false);
-    expect(DEFAULT_SETTINGS.autoCruise).toBe(false);
+    expect(DEFAULT_SETTINGS.uiScale).toBe(1);
+    expect('autoCruise' in DEFAULT_SETTINGS).toBe(false);
     expect(DEFAULT_SETTINGS.pauseOnDecisions).toBe(false);
   });
 
@@ -321,20 +322,20 @@ describe('Accessibility & Localisation (T6.3 + P6.1)', () => {
       ...DEFAULT_SETTINGS,
       subtitlesSize: 'large',
       reduceMotion: true,
-      autoCruise: true,
+      uiScale: 1.15,
       colorblindRoute: true,
     };
 
     saveSettings(updated);
     expect(settingsSignal.value.subtitlesSize).toBe('large');
     expect(settingsSignal.value.reduceMotion).toBe(true);
-    expect(settingsSignal.value.autoCruise).toBe(true);
+    expect(settingsSignal.value.uiScale).toBe(1.15);
     expect(settingsSignal.value.colorblindRoute).toBe(true);
 
     const loaded = loadSettings();
     expect(loaded.subtitlesSize).toBe('large');
     expect(loaded.reduceMotion).toBe(true);
-    expect(loaded.autoCruise).toBe(true);
+    expect(loaded.uiScale).toBe(1.15);
   });
 
   it('renders Settings via real Preact render when open', () => {

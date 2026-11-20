@@ -1,8 +1,13 @@
 import { signal } from '@preact/signals';
 import { DEFAULT_VOLUMES } from '../audio/AudioManager';
+import type { AudioSettings } from '../audio/bindAudio';
+import { BALANCE } from '../config/balance';
 import type { EventBus, GameEvents } from '../core/events';
 import type { DaySummary, DeliveryJob, PassengerStatus, RideRequest, TripReceipt } from '../core/types';
 import type { GameManager } from '../sim/GameManager';
+import { getCharacter } from '../sim/passenger/PassengerAI';
+import { t } from './i18n';
+import { normalizeUiScale } from './settingsEffects';
 import type { TripHistoryItem } from './phone/Phone';
 import type {
   NegotiationSession,
@@ -36,6 +41,7 @@ export interface HudPassengerInfo {
   name?: string;
   archetype?: string;
   rating?: number;
+  mood?: number;
 }
 
 export interface HudNavigationTurn {
@@ -63,6 +69,9 @@ export interface HudState {
   isFirstPerson?: boolean;
   nearStation?: boolean;
   chargeSpot?: 'home' | 'teaStall' | null;
+  canRecoverBike?: boolean;
+  districtId?: string;
+  districtName?: string;
   conditionPct?: number;
   objectiveText: string;
   destinationName?: string;
@@ -109,9 +118,35 @@ export interface EncounterCueState {
   seq: number;
 }
 
+export interface PhoneEarningsSummary {
+  cash: number;
+  savings: number;
+  debt: number;
+  todayRevenue: number;
+  todayExpenses: number;
+  todayNet: number;
+  completedRides: number;
+  rating: number;
+}
+
+export interface PhoneQuickChatMsg {
+  id: string;
+  sender: 'rider' | 'passenger';
+  textKey: string;
+  timestamp: string;
+}
+
+export interface PhoneActiveRideSummary {
+  requestId: string;
+  passengerNameKey?: string;
+  pickupPlaceKey?: string;
+  destinationPlaceKey?: string;
+}
+
 export interface PhoneState {
   open: boolean;
   unreadCount: number;
+  phoneBattery?: number;
   incomingRequest: RideRequest | null;
   requestQueue?: RideRequest[];
   timeoutRemaining: number;
@@ -120,6 +155,9 @@ export interface PhoneState {
   relationships?: Record<string, number>;
   availableDeliveries?: DeliveryJob[];
   activeDeliveries?: DeliveryJob[];
+  earningsSummary?: PhoneEarningsSummary;
+  activeRide?: PhoneActiveRideSummary | null;
+  quickChatLog?: PhoneQuickChatMsg[];
 }
 
 export interface NegotiationUiState {
@@ -207,6 +245,11 @@ export interface TutorialState {
   active: boolean;
   step: TutorialStep;
   agreedFare?: number;
+  cash?: number;
+  fuelL?: number;
+  conditionPct?: number;
+  rentTarget?: number;
+  receipt?: TripReceipt | null;
 }
 
 export const tutorialSignal = signal<TutorialState>({
@@ -248,9 +291,9 @@ export interface GameSettings {
   language: 'bn' | 'en';
   quality: 'low' | 'medium' | 'high';
   subtitlesSize: 'normal' | 'large';
+  uiScale: 1 | 1.15 | 1.3;
   colorblindRoute: boolean;
   reduceMotion: boolean;
-  autoCruise: boolean;
   pauseOnDecisions: boolean;
   tiltControls: boolean;
   masterVolume: number;
@@ -264,9 +307,9 @@ export const DEFAULT_SETTINGS: GameSettings = {
   language: 'bn',
   quality: 'medium',
   subtitlesSize: 'normal',
+  uiScale: 1,
   colorblindRoute: false,
   reduceMotion: false,
-  autoCruise: false,
   pauseOnDecisions: false,
   tiltControls: false,
   // One place for the volume defaults: the audio module owns them.
@@ -284,7 +327,12 @@ export function loadSettings(): GameSettings {
     try {
       const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
       if (raw) {
-        return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
+        const parsed = JSON.parse(raw) as Partial<GameSettings>;
+        return {
+          ...DEFAULT_SETTINGS,
+          ...parsed,
+          uiScale: normalizeUiScale(parsed.uiScale),
+        };
       }
     } catch {
       // fallback
@@ -311,6 +359,8 @@ export function saveSettings(settings: GameSettings): void {
 }
 
 export const settingsSignal = signal<GameSettings>(loadSettings());
+export const audioPreviewSignal = signal<AudioSettings | null>(null);
+export const audioPreviewSeqSignal = signal<number>(0);
 
 export const DEFAULT_HUD_STATE: HudState = {
   speedKmh: 0,
@@ -321,6 +371,9 @@ export const DEFAULT_HUD_STATE: HudState = {
   isFirstPerson: false,
   nearStation: false,
   chargeSpot: null,
+  canRecoverBike: true,
+  districtId: 'mirpara',
+  districtName: 'Mirpara',
   conditionPct: 100,
   objectiveText: 'Waiting for ride requests...',
   todayNetEarnings: 0,
@@ -384,7 +437,13 @@ function sameHudMissionsList(
 function sameHudPassenger(a: HudPassengerInfo | undefined, b: HudPassengerInfo | undefined): boolean {
   if (a === b) return true;
   if (!a || !b) return false;
-  return a.status === b.status && a.name === b.name && a.archetype === b.archetype && a.rating === b.rating;
+  return (
+    a.status === b.status &&
+    a.name === b.name &&
+    a.archetype === b.archetype &&
+    a.rating === b.rating &&
+    a.mood === b.mood
+  );
 }
 
 function sameRoadAlert(
@@ -409,6 +468,9 @@ export function updateHudState(patch: Partial<HudState>, nowMs?: number): boolea
     (patch.isFirstPerson !== undefined && patch.isFirstPerson !== cur.isFirstPerson) ||
     (patch.nearStation !== undefined && patch.nearStation !== cur.nearStation) ||
     (patch.chargeSpot !== undefined && patch.chargeSpot !== cur.chargeSpot) ||
+    (patch.canRecoverBike !== undefined && patch.canRecoverBike !== cur.canRecoverBike) ||
+    (patch.districtId !== undefined && patch.districtId !== cur.districtId) ||
+    (patch.districtName !== undefined && patch.districtName !== cur.districtName) ||
     (patch.objectiveText !== undefined && patch.objectiveText !== cur.objectiveText) ||
     (patch.destinationName !== undefined && patch.destinationName !== cur.destinationName) ||
     ('etaMinutes' in patch && patch.etaMinutes !== cur.etaMinutes) ||
@@ -428,8 +490,9 @@ export function updateHudState(patch: Partial<HudState>, nowMs?: number): boolea
   const telemetryChanged =
     (patch.speedKmh !== undefined && Math.round(patch.speedKmh) !== Math.round(cur.speedKmh)) ||
     (patch.fuelL !== undefined &&
-      (Math.round(patch.fuelL * 10) !== Math.round(cur.fuelL * 10) ||
-        (patch.fuelL === 0) !== (cur.fuelL === 0))) ||
+      (Math.round(patch.fuelL * 100) !== Math.round(cur.fuelL * 100) ||
+        (patch.fuelL === 0) !== (cur.fuelL === 0) ||
+        (patch.fuelL < BALANCE.FUEL.rescueBelowL) !== (cur.fuelL < BALANCE.FUEL.rescueBelowL))) ||
     (patch.conditionPct !== undefined && Math.round(patch.conditionPct) !== Math.round(cur.conditionPct ?? 100));
 
   if (!priorityChanged && !telemetryChanged) return false;
@@ -461,6 +524,7 @@ export const dialogueSubtitleSignal = signal<DialogueSubtitleState | null>(null)
 export const phoneSignal = signal<PhoneState>({
   open: false,
   unreadCount: 0,
+  phoneBattery: 100,
   incomingRequest: null,
   requestQueue: [],
   timeoutRemaining: 15,
@@ -469,9 +533,11 @@ export const phoneSignal = signal<PhoneState>({
   relationships: {},
   availableDeliveries: [],
   activeDeliveries: [],
+  activeRide: null,
+  quickChatLog: [],
 });
 
-export const phoneTabSignal = signal<'requests' | 'history' | 'contacts' | 'deliveries'>('requests');
+export const phoneTabSignal = signal<'requests' | 'history' | 'earnings' | 'contacts' | 'deliveries'>('requests');
 export const contactsSelectedSignal = signal<string | null>(null);
 
 export const negotiationSignal = signal<NegotiationUiState>({
@@ -550,6 +616,29 @@ if (typeof window !== 'undefined') {
   };
 }
 
+export type QuickChatPreset = 'on_way' | 'arriving' | 'main_road' | 'traffic';
+
+export function sendPhoneQuickChat(preset: QuickChatPreset): void {
+  const prev = phoneSignal.value.quickChatLog ?? [];
+  const stamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const riderMsg: PhoneQuickChatMsg = {
+    id: `qc_r_${Date.now()}_${prev.length}`,
+    sender: 'rider',
+    textKey: `phone.quick_chat.${preset}`,
+    timestamp: stamp,
+  };
+  const replyMsg: PhoneQuickChatMsg = {
+    id: `qc_p_${Date.now()}_${prev.length + 1}`,
+    sender: 'passenger',
+    textKey: `phone.quick_chat.reply_${preset}`,
+    timestamp: stamp,
+  };
+  phoneSignal.value = {
+    ...phoneSignal.value,
+    quickChatLog: [...prev.slice(-8), riderMsg, replyMsg],
+  };
+}
+
 export let onChooseCallback: ((choiceId: string, instanceId: string) => void) | null = null;
 export let onAcceptRequestCallback: ((requestId: string) => void) | null = null;
 export let onDeclineRequestCallback: ((requestId: string) => void) | null = null;
@@ -625,6 +714,8 @@ export function exitToTitle(): void {
     navigationTurn: null,
     availableDeliveries: [],
     activeDeliveries: [],
+    activeRide: null,
+    quickChatLog: [],
   };
   dialogueSubtitleSignal.value = null;
   resetHudState();
@@ -690,15 +781,23 @@ export function setPhoneContactDispatcher(
 export let onTutorialAdvanceCallback: ((nextStep: TutorialStep) => void) | null = null;
 export let onTutorialNegotiateCallback: ((fare: number) => void) | null = null;
 export let onTutorialCompleteCallback: (() => void) | null = null;
+export let onTutorialSkipCallback: (() => void) | null = null;
+export let onRecoverBikeCallback: (() => void) | null = null;
 
 export function setTutorialDispatchers(dispatchers: {
   advance?: (nextStep: TutorialStep) => void;
   negotiate?: (fare: number) => void;
   complete?: () => void;
+  skip?: () => void;
 }): void {
   if (dispatchers.advance) onTutorialAdvanceCallback = dispatchers.advance;
   if (dispatchers.negotiate) onTutorialNegotiateCallback = dispatchers.negotiate;
   if (dispatchers.complete) onTutorialCompleteCallback = dispatchers.complete;
+  if (dispatchers.skip) onTutorialSkipCallback = dispatchers.skip;
+}
+
+export function setRecoverBikeDispatcher(fn: () => void): void {
+  onRecoverBikeCallback = fn;
 }
 
 export function setNegotiationActionDispatcher(fn: (action: NegotiationAction) => void): void {
@@ -976,7 +1075,10 @@ export function bindEventBusToStore(bus: EventBus<GameEvents>): () => void {
   unsubscribers.push(bus.on('bike/collision', (ev) => showImpact(ev.severity)));
   unsubscribers.push(bus.on('bike/wobble', () => showImpact('wobble')));
 
+  const requestMeta = new Map<string, RideRequest>();
+
   const enqueuePhoneOffer = (request: RideRequest): void => {
+    requestMeta.set(request.requestId, request);
     const existing = activeOfferQueue.find((e) => e.request.requestId === request.requestId);
     if (existing) {
       existing.request = request;
@@ -991,6 +1093,7 @@ export function bindEventBusToStore(bus: EventBus<GameEvents>): () => void {
   };
 
   const unsubRideRequested = bus.on('ride/requested', (ev) => {
+    requestMeta.set(ev.request.requestId, ev.request);
     if (choiceSignal.value.active) {
       heldRequest = ev.request;
       phoneSignal.value = {
@@ -1013,18 +1116,38 @@ export function bindEventBusToStore(bus: EventBus<GameEvents>): () => void {
 
   const unsubRideAccepted = bus.on('ride/accepted', (ev) => {
     activeOfferQueue = activeOfferQueue.filter((e) => e.request.requestId !== ev.requestId);
+    const meta = requestMeta.get(ev.requestId);
+    const charNameKey = meta?.characterId ? getCharacter(meta.characterId)?.nameKey : undefined;
+    phoneSignal.value = {
+      ...phoneSignal.value,
+      activeRide: {
+        requestId: ev.requestId,
+        passengerNameKey: meta?.passengerNameKey ?? charNameKey,
+        pickupPlaceKey: meta?.pickupPlaceKey,
+        destinationPlaceKey: meta?.destinationPlaceKey,
+      },
+      quickChatLog: [],
+    };
     syncPhoneOfferState(false);
   });
   unsubscribers.push(unsubRideAccepted);
 
   const unsubRideCancelled = bus.on('ride/cancelled', (ev) => {
-    if (heldRequest?.requestId === ev.requestId) {
+    const cancelledHeld = heldRequest?.requestId === ev.requestId;
+    if (cancelledHeld) {
       heldRequest = null;
     }
     closeDisputeChoiceCard(ev.requestId);
     const prevLen = activeOfferQueue.length;
     activeOfferQueue = activeOfferQueue.filter((e) => e.request.requestId !== ev.requestId);
-    if (prevLen !== activeOfferQueue.length || phoneSignal.value.incomingRequest?.requestId === ev.requestId) {
+    if (phoneSignal.value.activeRide?.requestId === ev.requestId) {
+      phoneSignal.value = { ...phoneSignal.value, activeRide: null, quickChatLog: [] };
+    }
+    if (
+      cancelledHeld ||
+      prevLen !== activeOfferQueue.length ||
+      phoneSignal.value.incomingRequest?.requestId === ev.requestId
+    ) {
       syncPhoneOfferState(!inActiveTrip && !choiceSignal.value.active);
     }
   });
@@ -1099,9 +1222,20 @@ export function bindEventBusToStore(bus: EventBus<GameEvents>): () => void {
   unsubscribers.push(unsubRideDisputeResolved);
 
   const unsubComplete = bus.on('ride/completed', (ev) => {
+    const reqMeta = requestMeta.get(ev.requestId);
+    requestMeta.delete(ev.requestId);
+    const charNameKey = ev.passengerCharacterId
+      ? getCharacter(ev.passengerCharacterId)?.nameKey
+      : reqMeta?.characterId
+        ? getCharacter(reqMeta.characterId)?.nameKey
+        : undefined;
+    const passengerNameKey = ev.passengerNameKey ?? reqMeta?.passengerNameKey ?? charNameKey;
+    const resolvedPassengerName = passengerNameKey ? t(passengerNameKey) : t('hud.passenger.on_bike');
+
     const newHistoryItem: TripHistoryItem = {
       requestId: ev.requestId,
-      passengerName: 'Passenger',
+      passengerName: resolvedPassengerName,
+      passengerNameKey,
       fare: ev.receipt.fare,
       net: ev.receipt.net,
       rating: ev.receipt.rating ?? 5,
@@ -1112,12 +1246,16 @@ export function bindEventBusToStore(bus: EventBus<GameEvents>): () => void {
       ...phoneSignal.value,
       tripHistory: [newHistoryItem, ...phoneSignal.value.tripHistory],
       navigationTurn: null,
+      activeRide: phoneSignal.value.activeRide?.requestId === ev.requestId ? null : phoneSignal.value.activeRide,
+      quickChatLog: phoneSignal.value.activeRide?.requestId === ev.requestId ? [] : phoneSignal.value.quickChatLog,
     };
 
     // T7.4: the opening tutorial has its own dedicated receipt step for this
     // same event, so skip the general TripSummary overlay while it's active.
     if (!tutorialSignal.value.active) {
       tripSummarySignal.value = ev.receipt;
+    } else if (ev.requestId === 'req_tutorial_01') {
+      tutorialSignal.value = { ...tutorialSignal.value, receipt: ev.receipt };
     }
   });
   unsubscribers.push(unsubComplete);
@@ -1343,6 +1481,8 @@ export function bindEventBusToStore(bus: EventBus<GameEvents>): () => void {
     phoneSignal.value = {
       ...phoneSignal.value,
       navigationTurn: null,
+      activeRide: null,
+      quickChatLog: [],
     };
     clearEncounterUi();
     negotiationSignal.value = { active: false, session: null, lastResult: null };

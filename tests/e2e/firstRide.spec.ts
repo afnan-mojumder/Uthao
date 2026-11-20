@@ -68,13 +68,36 @@ test.describe('T3.8 Opening Sequence First Ride E2E', () => {
     await expect(arriveBtn).toBeVisible({ timeout: 5000 });
     await arriveBtn.click();
 
-    // 10. Trip Receipt Phase
+    // 10. Trip Receipt Phase: verify live fuel cost appears on receipt
+    await expect(page.locator('[data-testid="tutorial-receipt-fuel"]')).toBeVisible({ timeout: 5000 });
     const finishReceiptBtn = page.locator('[data-testid="tutorial-btn-finish-receipt"]');
     await expect(finishReceiptBtn).toBeVisible({ timeout: 5000 });
     await finishReceiptBtn.click();
 
     // 11. Tutorial completed!
     await expect(page.locator('[data-testid="tutorial-overlay"]')).not.toBeVisible({ timeout: 5000 });
+    await expect(page.locator('#hud')).toBeVisible();
+  });
+
+  test('Skip Tutorial button dismisses tutorial cleanly and unlocks gameplay', async ({ page }) => {
+    test.setTimeout(60000);
+    await page.goto('/?debug=1&district=testloop&encounters=0');
+    await page.waitForSelector('#game-canvas');
+    await expect(page.locator('#hud')).toBeVisible();
+
+    await page.evaluate(() => {
+      const ui = (window as unknown as { __uthaoUi?: { screenSignal: { value: string } } }).__uthaoUi;
+      if (ui) ui.screenSignal.value = 'title';
+    });
+
+    await page.getByTestId('menu-btn-new-career').click();
+    await expect(page.getByTestId('tutorial-overlay')).toBeVisible({ timeout: 5000 });
+
+    const skipBtn = page.getByTestId('tutorial-btn-skip');
+    await expect(skipBtn).toBeVisible();
+    await skipBtn.click();
+
+    await expect(page.getByTestId('tutorial-overlay')).not.toBeVisible({ timeout: 5000 });
     await expect(page.locator('#hud')).toBeVisible();
   });
 });

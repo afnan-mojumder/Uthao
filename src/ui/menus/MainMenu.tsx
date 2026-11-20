@@ -232,7 +232,7 @@ export function MainMenu({
             else onNewCareer?.();
           }}
           style={{
-            padding: '16px',
+            padding: '14px 16px',
             borderRadius: '14px',
             border: '1px solid var(--uthao-green-border, rgba(34, 197, 94, 0.45))',
             background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.28), rgba(22, 163, 74, 0.18))',
@@ -241,36 +241,62 @@ export function MainMenu({
             fontWeight: 700,
             cursor: 'pointer',
             display: 'flex',
+            flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: '10px',
+            gap: '4px',
             transition: 'all 0.2s ease',
             boxShadow: '0 4px 15px rgba(34, 197, 94, 0.2)',
           }}
         >
-          <IconFlag size={18} color="var(--uthao-green, #22C55E)" /> {t('menu.new_career')}
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '10px' }}>
+            <IconFlag size={18} color="var(--uthao-green, #22C55E)" />
+            <span>{t('menu.new_career')}</span>
+            <span
+              style={{
+                fontSize: '0.68rem',
+                fontWeight: 800,
+                padding: '2px 7px',
+                borderRadius: '9999px',
+                background: 'rgba(34, 197, 94, 0.22)',
+                border: '1px solid rgba(34, 197, 94, 0.45)',
+              }}
+            >
+              {t('menu.career_badge')}
+            </span>
+          </span>
+          <span style={{ fontSize: '0.75rem', fontWeight: 500, color: '#cbd5e1' }}>
+            {t('menu.career_desc')}
+          </span>
         </button>
 
         <button
           data-testid="menu-btn-endless"
           onClick={onEndless}
           style={{
-            padding: '14px',
+            padding: '13px 16px',
             borderRadius: '14px',
-            border: '1px solid rgba(255, 255, 255, 0.12)',
-            background: 'rgba(30, 41, 59, 0.7)',
+            border: '1px solid rgba(56, 189, 248, 0.3)',
+            background: 'rgba(30, 41, 59, 0.78)',
             color: '#f8fafc',
             fontSize: '1rem',
-            fontWeight: 600,
+            fontWeight: 700,
             cursor: 'pointer',
             display: 'flex',
+            flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: '10px',
+            gap: '4px',
             transition: 'all 0.2s ease',
           }}
         >
-          <IconRoad size={18} /> {t('menu.endless')}
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', color: '#38bdf8' }}>
+            <IconRoad size={18} color="#38bdf8" />
+            <span>{t('menu.quick_ride')}</span>
+          </span>
+          <span style={{ fontSize: '0.75rem', fontWeight: 500, color: '#94a3b8' }}>
+            {t('menu.quick_ride_desc')}
+          </span>
         </button>
 
         <button

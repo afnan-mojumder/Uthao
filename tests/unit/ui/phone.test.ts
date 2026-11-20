@@ -11,6 +11,7 @@ import {
   exitToTitle,
 } from '../../../src/ui/store';
 import { Phone } from '../../../src/ui/phone/Phone';
+import { RequestCard } from '../../../src/ui/phone/RequestCard';
 import { EventBus, type GameEvents } from '../../../src/core/events';
 import { t, setLanguage } from '../../../src/ui/i18n';
 import type { RideRequest } from '../../../src/core/types';
@@ -240,6 +241,70 @@ describe('T2.4 Phone Store & Logic', () => {
 
     exitToTitle();
     expect(deliveryNoticeSignal.value.messageKey).toBeNull();
+    unbind();
+  });
+
+  it('P6.2: heldRequest cancellation clears unreadCount when queue is empty and RequestCard shows localized places & risk badges', () => {
+    setLanguage('en');
+    const bus = new EventBus<GameEvents>();
+    const unbind = bindEventBusToStore(bus);
+
+    choiceSignal.value = { active: true, prompt: 'enc.test', options: [{ id: 'a', text: 'opt' }], instanceId: 'enc_2' };
+    bus.emit('ride/requested', {
+      request: {
+        ...mockReq,
+        requestId: 'req_held_unread',
+        pickupPlaceKey: 'poi.mirpara.tea_stall',
+        destinationPlaceKey: 'poi.mirpara.bazaar',
+      },
+    });
+    expect(phoneSignal.value.unreadCount).toBe(1);
+    bus.emit('ride/cancelled', { requestId: 'req_held_unread', by: 'system', reason: 'expired' });
+    expect(phoneSignal.value.unreadCount).toBe(0);
+    choiceSignal.value = { active: false, prompt: '', options: [] };
+    expect(phoneSignal.value.unreadCount).toBe(0);
+
+    const cardVnode = RequestCard({
+      request: {
+        ...mockReq,
+        pickupPlaceKey: 'poi.mirpara.tea_stall',
+        destinationPlaceKey: 'poi.mirpara.bazaar',
+        surge: 1.35,
+        specialCircumstance: 'rain',
+      },
+      timeoutRemaining: 10,
+      onAccept: vi.fn(),
+      onDecline: vi.fn(),
+    });
+    const html = JSON.stringify(cardVnode);
+    expect(html).toContain("Mintu's Tea Stall");
+    expect(html).toContain('Mirpara Kacha Bazaar');
+    expect(html).not.toContain('node_farmgate');
+    expect(html).not.toContain('node_dhanmondi');
+    expect(html).toContain('request-timeout-bar');
+    expect(html).toContain('request-risk-badges');
+
+    const phoneEarningsVnode = Phone({
+      isOpen: true,
+      onClose: vi.fn(),
+      activeTab: 'earnings',
+      phoneBattery: 76,
+      earningsSummary: {
+        cash: 650,
+        savings: 400,
+        debt: 0,
+        todayRevenue: 300,
+        todayExpenses: 50,
+        todayNet: 250,
+        completedRides: 3,
+        rating: 4.9,
+      },
+    });
+    const phoneHtml = JSON.stringify(phoneEarningsVnode);
+    expect(phoneHtml).toContain('phone-battery');
+    expect(phoneHtml).toContain('phone-earnings-panel');
+    expect(phoneHtml).toContain('650');
+
     unbind();
   });
 });

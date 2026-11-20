@@ -6,7 +6,7 @@ import {
   calculateRepairCost,
   calculateUpgradeCost,
 } from '../../sim/economy/maintenance';
-import { t } from '../i18n';
+import { t, localDigits } from '../i18n';
 import type { BikeId } from '../../core/types';
 import {
   BIKES,
@@ -14,8 +14,14 @@ import {
   calculateNetBikePurchaseCost,
   getBikeDef,
 } from '../../sim/economy/bikes';
-import { onBuyBikeCallback, onSwitchBikeCallback } from '../store';
-import { garageTabSignal } from '../store';
+import { onBuyBikeCallback, onSwitchBikeCallback, garageTabSignal } from '../store';
+import {
+  IconCheck,
+  IconMotorcycle,
+  IconSliders,
+  IconStar,
+  IconWrench,
+} from '../components/icons';
 
 export interface GarageProps {
   isOpen: boolean;
@@ -95,17 +101,20 @@ export function Garage({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '16px',
-        fontFamily: "'Hind Siliguri', 'Segoe UI', system-ui, sans-serif",
+        padding: '12px',
+        fontFamily: 'var(--font-sans)',
         color: '#f8fafc',
         pointerEvents: 'auto',
       }}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="garage-dialog-title"
         style={{
           width: '100%',
           maxWidth: '680px',
-          maxHeight: '90vh',
+          maxHeight: '90dvh',
           display: 'flex',
           flexDirection: 'column',
           background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.98))',
@@ -118,26 +127,39 @@ export function Garage({
         {/* Header */}
         <div
           style={{
-            padding: '20px 24px',
+            padding: '14px 20px',
             borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
             background: 'rgba(15, 23, 42, 0.5)',
+            flexShrink: 0,
+            gap: '10px',
+            flexWrap: 'wrap',
           }}
         >
           <div>
             <h2
+              id="garage-dialog-title"
               data-testid="garage-title"
-              style={{ margin: 0, fontSize: '1.4rem', fontWeight: 800, color: '#38bdf8' }}
+              style={{
+                margin: 0,
+                fontSize: '1.25rem',
+                fontWeight: 800,
+                color: '#38bdf8',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}
             >
-              🛠️ {t('garage.title')}
+              <IconWrench size={20} />
+              <span>{t('garage.title')}</span>
             </h2>
             <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '2px' }}>
               {t('garage.subtitle')}
             </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             {hasKamalDiscount && (
               <span
                 data-testid="garage-discount-badge"
@@ -149,9 +171,13 @@ export function Garage({
                   borderRadius: '9999px',
                   fontSize: '0.75rem',
                   fontWeight: 700,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
                 }}
               >
-                ★ {t('garage.kamal_discount_badge')}
+                <IconStar size={12} />
+                <span>{t('garage.kamal_discount_badge')}</span>
               </span>
             )}
             <div
@@ -164,7 +190,7 @@ export function Garage({
                 fontWeight: 700,
               }}
             >
-              <span style={{ color: '#94a3b8', fontSize: '0.75rem' }}>Cash: </span>
+              <span style={{ color: '#94a3b8', fontSize: '0.75rem' }}>{t('garage.cash_label')}: </span>
               <span data-testid="garage-cash" style={{ color: '#34d399' }}>৳{cash}</span>
             </div>
           </div>
@@ -176,80 +202,121 @@ export function Garage({
             display: 'flex',
             borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
             background: 'rgba(15, 23, 42, 0.3)',
+            overflowX: 'auto',
+            flexShrink: 0,
           }}
         >
           <button
+            type="button"
             data-testid="garage-tab-repairs"
             onClick={() => setActiveTab('repairs')}
             style={{
-              flex: 1,
-              padding: '12px',
+              flex: '1 0 auto',
+              padding: '10px 12px',
               border: 'none',
               background: activeTab === 'repairs' ? 'rgba(56, 189, 248, 0.15)' : 'transparent',
               borderBottom: activeTab === 'repairs' ? '2px solid #38bdf8' : '2px solid transparent',
               color: activeTab === 'repairs' ? '#38bdf8' : '#94a3b8',
               fontWeight: 700,
-              fontSize: '0.85rem',
+              fontSize: '0.82rem',
               cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+              whiteSpace: 'nowrap',
             }}
           >
-            🔧 {t('garage.tab_repairs')}
+            <IconWrench size={14} />
+            <span>{t('garage.tab_repairs')}</span>
           </button>
           <button
+            type="button"
             data-testid="garage-tab-upgrades"
             onClick={() => setActiveTab('upgrades')}
             style={{
-              flex: 1,
-              padding: '12px',
+              flex: '1 0 auto',
+              padding: '10px 12px',
               border: 'none',
               background: activeTab === 'upgrades' ? 'rgba(56, 189, 248, 0.15)' : 'transparent',
               borderBottom: activeTab === 'upgrades' ? '2px solid #38bdf8' : '2px solid transparent',
               color: activeTab === 'upgrades' ? '#38bdf8' : '#94a3b8',
               fontWeight: 700,
-              fontSize: '0.85rem',
+              fontSize: '0.82rem',
               cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+              whiteSpace: 'nowrap',
             }}
           >
-            ⚡ {t('garage.tab_upgrades')}
+            <IconSliders size={14} />
+            <span>{t('garage.tab_upgrades')}</span>
           </button>
           <button
+            type="button"
             data-testid="garage-tab-cosmetics"
             onClick={() => setActiveTab('cosmetics')}
             style={{
-              flex: 1,
-              padding: '12px',
+              flex: '1 0 auto',
+              padding: '10px 12px',
               border: 'none',
               background: activeTab === 'cosmetics' ? 'rgba(56, 189, 248, 0.15)' : 'transparent',
               borderBottom: activeTab === 'cosmetics' ? '2px solid #38bdf8' : '2px solid transparent',
               color: activeTab === 'cosmetics' ? '#38bdf8' : '#94a3b8',
               fontWeight: 700,
-              fontSize: '0.85rem',
+              fontSize: '0.82rem',
               cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+              whiteSpace: 'nowrap',
             }}
           >
-            🎨 {t('garage.tab_cosmetics')}
+            <IconStar size={14} />
+            <span>{t('garage.tab_cosmetics')}</span>
           </button>
           <button
+            type="button"
             data-testid="garage-tab-bikes"
             onClick={() => setActiveTab('bikes')}
             style={{
-              flex: 1,
-              padding: '12px',
+              flex: '1 0 auto',
+              padding: '10px 12px',
               border: 'none',
               background: activeTab === 'bikes' ? 'rgba(56, 189, 248, 0.15)' : 'transparent',
               borderBottom: activeTab === 'bikes' ? '2px solid #38bdf8' : '2px solid transparent',
               color: activeTab === 'bikes' ? '#38bdf8' : '#94a3b8',
               fontWeight: 700,
-              fontSize: '0.85rem',
+              fontSize: '0.82rem',
               cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+              whiteSpace: 'nowrap',
             }}
           >
-            🛵 {t('garage.tab_bikes')}
+            <IconMotorcycle size={14} />
+            <span>{t('garage.tab_bikes')}</span>
           </button>
         </div>
 
         {/* Tab Content Area */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div
+          data-testid="garage-tab-content"
+          style={{
+            flex: 1,
+            minHeight: 0,
+            overflowY: 'auto',
+            padding: '16px 20px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '14px',
+          }}
+        >
           {/* Tab 1: Repairs */}
           {activeTab === 'repairs' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -526,7 +593,9 @@ export function Garage({
                           }}
                         />
                       ) : (
-                        <span style={{ fontSize: '1.4rem' }}>{cosm.icon ?? '🎨'}</span>
+                        <span style={{ display: 'inline-flex', color: '#38bdf8' }} aria-hidden="true">
+                          <IconStar size={18} />
+                        </span>
                       )}
                       <div>
                         <div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#f8fafc' }}>
@@ -576,8 +645,6 @@ export function Garage({
               })}
             </div>
           )}
-        </div>
-
 
           {/* Tab 4: Bikes Dealership */}
           {activeTab === 'bikes' && (
@@ -614,8 +681,8 @@ export function Garage({
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <span style={{ fontSize: '1.4rem' }}>
-                          {bike.id === 'new150' ? '🏍️' : '🛵'}
+                        <span style={{ display: 'inline-flex', color: '#38bdf8' }} aria-hidden="true">
+                          <IconMotorcycle size={22} />
                         </span>
                         <div>
                           <div style={{ fontWeight: 800, fontSize: '0.95rem', color: '#f8fafc' }}>
@@ -636,7 +703,7 @@ export function Garage({
                           fontSize: '0.8rem',
                         }}
                       >
-                        {bike.displacementCc}cc
+                        {localDigits(bike.displacementCc)}cc
                       </div>
                     </div>
 
@@ -653,21 +720,21 @@ export function Garage({
                       }}
                     >
                       <div>
-                        <span style={{ color: '#94a3b8' }}>Top Speed: </span>
+                        <span style={{ color: '#94a3b8' }}>{t('garage.top_speed')}: </span>
                         <span style={{ color: '#f8fafc', fontWeight: 700 }}>
-                          {Math.round(bike.vmax * 3.6)} km/h
+                          {localDigits(Math.round(bike.vmax * 3.6))} km/h
                         </span>
                       </div>
                       <div>
-                        <span style={{ color: '#94a3b8' }}>Mileage: </span>
+                        <span style={{ color: '#94a3b8' }}>{t('garage.mileage')}: </span>
                         <span style={{ color: '#34d399', fontWeight: 700 }}>
-                          {bike.efficiencyKmPerL} km/L
+                          {localDigits(bike.efficiencyKmPerL)} km/L
                         </span>
                       </div>
                       <div>
-                        <span style={{ color: '#94a3b8' }}>Insurance: </span>
+                        <span style={{ color: '#94a3b8' }}>{t('garage.insurance_label')}: </span>
                         <span style={{ color: bike.dailyInsuranceCost > 0 ? '#f59e0b' : '#34d399', fontWeight: 700 }}>
-                          {bike.dailyInsuranceCost > 0 ? `৳${bike.dailyInsuranceCost}/day` : 'None'}
+                          {bike.dailyInsuranceCost > 0 ? `৳${localDigits(bike.dailyInsuranceCost)}` : t('garage.insurance_none')}
                         </span>
                       </div>
                     </div>
@@ -676,12 +743,14 @@ export function Garage({
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '2px' }}>
                       <div>
                         {isCurrent ? (
-                          <span style={{ color: '#38bdf8', fontWeight: 700, fontSize: '0.85rem' }}>
-                            ★ {t('garage.current_bike')}
+                          <span style={{ color: '#38bdf8', fontWeight: 700, fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                            <IconStar size={13} />
+                            <span>{t('garage.current_bike')}</span>
                           </span>
                         ) : isOwned ? (
-                          <span style={{ color: '#34d399', fontWeight: 700, fontSize: '0.85rem' }}>
-                            ✓ In Your Garage
+                          <span style={{ color: '#34d399', fontWeight: 700, fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                            <IconCheck size={13} />
+                            <span>{t('garage.in_garage')}</span>
                           </span>
                         ) : (
                           <div style={{ fontSize: '0.8rem' }}>
@@ -707,10 +776,11 @@ export function Garage({
                               fontWeight: 700,
                             }}
                           >
-                            Active
+                            {t('garage.active_badge')}
                           </span>
                         ) : isOwned ? (
                           <button
+                            type="button"
                             data-testid={`bike-switch-${bike.id}`}
                             onClick={() => onSwitchBike?.(bike.id)}
                             style={{
@@ -728,6 +798,7 @@ export function Garage({
                           </button>
                         ) : (
                           <button
+                            type="button"
                             data-testid={`bike-buy-${bike.id}`}
                             disabled={!canAfford}
                             onClick={() => onBuyBike?.(bike.id, true)}
@@ -744,7 +815,7 @@ export function Garage({
                               cursor: canAfford ? 'pointer' : 'not-allowed',
                             }}
                           >
-                            {t('garage.btn_trade_in')} (৳{netCost})
+                            {t('garage.btn_trade_in')} (৳{localDigits(netCost)})
                           </button>
                         )}
                       </div>
@@ -754,18 +825,21 @@ export function Garage({
               })}
             </div>
           )}
+        </div>
 
         {/* Footer with Exit button */}
         <div
           style={{
-            padding: '16px 24px',
+            padding: '12px 20px',
             borderTop: '1px solid rgba(255, 255, 255, 0.08)',
             display: 'flex',
             justifyContent: 'flex-end',
             background: 'rgba(15, 23, 42, 0.5)',
+            flexShrink: 0,
           }}
         >
           <button
+            type="button"
             data-testid="garage-exit-btn"
             onClick={onClose}
             style={{

@@ -1,546 +1,543 @@
 import type { JSX } from 'preact';
 import { useState } from 'preact/hooks';
-import { t } from '../i18n';
+import type { TripReceipt } from '../../core/types';
+import { ModalPanel, PrimaryButton, TransactionRow } from '../components';
 import {
+  IconBell,
+  IconCheck,
+  IconClock,
+  IconFlag,
+  IconFuel,
+  IconMapPin,
+  IconMotorcycle,
+  IconPhone,
+  IconShield,
+  IconSkip,
+  IconTrophy,
+  IconUser,
+  IconWrench,
+} from '../components/icons';
+import { localDigits, t } from '../i18n';
+import {
+  onTutorialAdvanceCallback,
+  onTutorialCompleteCallback,
+  onTutorialNegotiateCallback,
+  onTutorialSkipCallback,
   tutorialSignal,
   type TutorialStep,
-  onTutorialAdvanceCallback,
-  onTutorialNegotiateCallback,
-  onTutorialCompleteCallback,
 } from '../store';
 
 export interface FirstRideTutorialProps {
   step?: TutorialStep;
+  cash?: number;
+  fuelL?: number;
+  conditionPct?: number;
+  rentTarget?: number;
+  receipt?: TripReceipt | null;
   onAdvance?: (nextStep: TutorialStep) => void;
   onNegotiate?: (fare: number) => void;
   onComplete?: () => void;
+  onSkip?: () => void;
 }
 
-export function FirstRideTutorial(props: FirstRideTutorialProps): JSX.Element | null {
+export interface FirstRideTutorialViewProps extends FirstRideTutorialProps {
+  selectedOffer: number;
+  agreedPrompt: string;
+  onSelectOffer: (fare: number) => void;
+  onSetAgreedPrompt: (prompt: string) => void;
+}
+
+function TutorialHeader({
+  icon,
+  title,
+  meta,
+  accentColor,
+  onSkip,
+}: {
+  icon: JSX.Element;
+  title: string;
+  meta: string;
+  accentColor: string;
+  onSkip?: () => void;
+}): JSX.Element {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: '10px',
+        paddingBottom: '10px',
+        borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+        flexWrap: 'wrap',
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: accentColor, fontWeight: 700 }}>
+        {icon}
+        <span>{title}</span>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>{meta}</span>
+        <button
+          type="button"
+          data-testid="tutorial-btn-skip"
+          onClick={onSkip}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '4px',
+            padding: '5px 10px',
+            borderRadius: '8px',
+            border: '1px solid rgba(148, 163, 184, 0.35)',
+            background: 'rgba(15, 23, 42, 0.65)',
+            color: '#cbd5e1',
+            fontSize: '0.75rem',
+            fontWeight: 700,
+            cursor: 'pointer',
+          }}
+        >
+          <IconSkip size={12} />
+          <span>{t('tutorial.skip')}</span>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export function FirstRideTutorialView(props: FirstRideTutorialViewProps): JSX.Element | null {
   const currentStep = props.step ?? tutorialSignal.value.step;
-  const advance = props.onAdvance ?? onTutorialAdvanceCallback;
-  const negotiate = props.onNegotiate ?? onTutorialNegotiateCallback;
-  const complete = props.onComplete ?? onTutorialCompleteCallback;
-
-  let selectedOffer = tutorialSignal.value.agreedFare ?? 100;
-  let setSelectedOffer = (f: number) => {
-    selectedOffer = f;
-  };
-  let agreedPrompt = '';
-  let setAgreedPrompt = (s: string) => {
-    agreedPrompt = s;
-  };
-
-  try {
-    const [offer, setOffer] = useState(tutorialSignal.value.agreedFare ?? 100);
-    const [prompt, setPrompt] = useState('');
-    selectedOffer = offer;
-    setSelectedOffer = setOffer;
-    agreedPrompt = prompt;
-    setAgreedPrompt = setPrompt;
-  } catch {
-    // Vitest node environment fallback
-  }
+  const advance = props.onAdvance ?? onTutorialAdvanceCallback ?? undefined;
+  const negotiate = props.onNegotiate ?? onTutorialNegotiateCallback ?? undefined;
+  const complete = props.onComplete ?? onTutorialCompleteCallback ?? undefined;
+  const skip = props.onSkip ?? onTutorialSkipCallback ?? complete;
 
   if (currentStep === 'idle' || currentStep === 'completed') {
     return null;
   }
 
-  const containerStyle = {
-    position: 'fixed' as const,
-    inset: 0,
-    zIndex: 9520,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    background: 'rgba(2, 6, 23, 0.78)',
-    backdropFilter: 'blur(12px)',
-    fontFamily: "'Hind Siliguri', 'Segoe UI', system-ui, sans-serif",
-    color: '#f8fafc',
-    padding: '20px',
-    userSelect: 'none' as const,
-    pointerEvents: 'auto' as const,
-  };
-
-  const cardStyle = {
-    maxWidth: '540px',
-    width: '100%',
-    background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.98))',
-    border: '1px solid rgba(255, 255, 255, 0.12)',
-    borderRadius: '20px',
-    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.65), 0 0 30px rgba(34, 197, 94, 0.12)',
-    overflow: 'hidden',
-    display: 'flex',
-    flexDirection: 'column' as const,
-  };
-
-  const headerStyle = {
-    padding: '16px 24px',
-    borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    background: 'rgba(255, 255, 255, 0.02)',
-  };
-
-  const primaryBtnStyle = {
-    padding: '14px 24px',
-    borderRadius: '12px',
-    border: 'none',
-    background: 'linear-gradient(135deg, #22c55e, #16a34a)',
-    color: '#ffffff',
-    fontSize: '1rem',
-    fontWeight: 700,
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '8px',
-    transition: 'all 0.15s ease',
-    boxShadow: '0 4px 14px rgba(34, 197, 94, 0.35)',
-  };
+  const liveCash = Math.round(props.cash ?? tutorialSignal.value.cash ?? 600);
+  const liveFuelL = props.fuelL ?? tutorialSignal.value.fuelL ?? 1.2;
+  const liveConditionPct = Math.round(props.conditionPct ?? tutorialSignal.value.conditionPct ?? 80);
+  const liveRentTarget = Math.round(props.rentTarget ?? tutorialSignal.value.rentTarget ?? 1200);
+  const liveReceipt = props.receipt ?? tutorialSignal.value.receipt ?? null;
 
   // 1. Alarm Screen
   if (currentStep === 'alarm') {
     return (
-      <div data-testid="tutorial-overlay" style={containerStyle}>
-        <div style={cardStyle}>
-          <div style={headerStyle}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#22c55e', fontWeight: 700 }}>
-              <span>⏰</span> {t('tutorial.alarm.title')}
-            </div>
-            <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>Day 1 • 07:00</span>
+      <ModalPanel testId="tutorial-overlay" ariaLabel={t('tutorial.alarm.title')} maxWidth="540px" zIndex={9520}>
+        <TutorialHeader
+          icon={<IconClock size={18} />}
+          title={t('tutorial.alarm.title')}
+          meta={`Day ${localDigits(1)} • 07:00`}
+          accentColor="#22c55e"
+          onSkip={skip}
+        />
+        <div style={{ padding: '12px 0', textAlign: 'center' }}>
+          <div style={{ fontSize: '3.2rem', fontWeight: 900, color: '#f8fafc', letterSpacing: '2px', marginBottom: '8px' }}>
+            07:00 <span style={{ fontSize: '1.3rem', color: '#f59e0b' }}>AM</span>
           </div>
-
-          <div style={{ padding: '36px 24px', textAlign: 'center' }}>
-            <div style={{ fontSize: '3.6rem', fontWeight: 900, color: '#f8fafc', letterSpacing: '2px', marginBottom: '8px' }}>
-              07:00 <span style={{ fontSize: '1.4rem', color: '#f59e0b' }}>AM</span>
-            </div>
-            <p style={{ margin: '0 0 28px 0', color: '#cbd5e1', fontSize: '1.05rem', lineHeight: '1.5' }}>
-              {t('tutorial.alarm.desc')}
-            </p>
-
-            <button
-              data-testid="tutorial-btn-alarm"
-              onClick={() => advance?.('ma_reminder')}
-              style={{ ...primaryBtnStyle, width: '100%' }}
-            >
-              <span>🔔</span> {t('tutorial.alarm.btn')}
-            </button>
-          </div>
+          <p style={{ margin: '0 0 22px 0', color: '#cbd5e1', fontSize: '1rem', lineHeight: '1.5' }}>
+            {t('tutorial.alarm.desc')}
+          </p>
+          <PrimaryButton
+            type="button"
+            data-testid="tutorial-btn-alarm"
+            onClick={() => advance?.('ma_reminder')}
+            style={{ width: '100%' }}
+          >
+            <IconBell size={18} />
+            <span>{t('tutorial.alarm.btn')}</span>
+          </PrimaryButton>
         </div>
-      </div>
+      </ModalPanel>
     );
   }
 
   // 2. Ma's Reminder
   if (currentStep === 'ma_reminder') {
     return (
-      <div data-testid="tutorial-overlay" style={containerStyle}>
-        <div style={cardStyle}>
-          <div style={headerStyle}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#f59e0b', fontWeight: 700 }}>
-              <span>👵</span> {t('tutorial.ma.title')}
-            </div>
-            <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>Incoming Message</span>
+      <ModalPanel testId="tutorial-overlay" ariaLabel={t('tutorial.ma.title')} maxWidth="540px" zIndex={9520}>
+        <TutorialHeader
+          icon={<IconUser size={18} />}
+          title={t('tutorial.ma.title')}
+          meta="Ma"
+          accentColor="#f59e0b"
+          onSkip={skip}
+        />
+        <div
+          style={{
+            background: 'rgba(245, 158, 11, 0.08)',
+            border: '1px solid rgba(245, 158, 11, 0.25)',
+            borderRadius: '14px',
+            padding: '16px',
+          }}
+        >
+          <div style={{ fontSize: '0.85rem', color: '#f59e0b', fontWeight: 700, marginBottom: '6px' }}>
+            Ma (মা):
           </div>
-
-          <div style={{ padding: '28px 24px' }}>
-            <div
-              style={{
-                background: 'rgba(245, 158, 11, 0.08)',
-                border: '1px solid rgba(245, 158, 11, 0.25)',
-                borderRadius: '16px',
-                padding: '20px',
-                marginBottom: '24px',
-              }}
-            >
-              <div style={{ fontSize: '0.85rem', color: '#f59e0b', fontWeight: 700, marginBottom: '6px' }}>
-                Ma (মা):
-              </div>
-              <p style={{ margin: 0, color: '#f1f5f9', fontSize: '1.05rem', lineHeight: '1.6' }}>
-                "{t('tutorial.ma.msg')}"
-              </p>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px', fontSize: '0.9rem', color: '#94a3b8' }}>
-              <span>💡</span>
-              <span>Household rent target: <strong>৳1,200</strong> on Day 3. Keep savings steady.</span>
-            </div>
-
-            <button
-              data-testid="tutorial-btn-ma"
-              onClick={() => advance?.('wallet_check')}
-              style={{ ...primaryBtnStyle, width: '100%' }}
-            >
-              <span>👍</span> {t('tutorial.ma.btn')}
-            </button>
-          </div>
+          <p style={{ margin: 0, color: '#f1f5f9', fontSize: '1rem', lineHeight: '1.6' }}>
+            "{t('tutorial.ma.msg')}"
+          </p>
         </div>
-      </div>
+        <div style={{ fontSize: '0.9rem', color: '#94a3b8' }}>
+          ৳{localDigits(liveRentTarget)} — Day {localDigits(3)}
+        </div>
+        <PrimaryButton
+          type="button"
+          data-testid="tutorial-btn-ma"
+          onClick={() => advance?.('wallet_check')}
+          style={{ width: '100%' }}
+        >
+          <IconCheck size={18} />
+          <span>{t('tutorial.ma.btn')}</span>
+        </PrimaryButton>
+      </ModalPanel>
     );
   }
 
-  // 3. Wallet Check
+  // 3. Wallet Check (live cash & rent target)
   if (currentStep === 'wallet_check') {
     return (
-      <div data-testid="tutorial-overlay" style={containerStyle}>
-        <div style={cardStyle}>
-          <div style={headerStyle}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#38bdf8', fontWeight: 700 }}>
-              <span>👛</span> {t('tutorial.wallet.title')}
+      <ModalPanel testId="tutorial-overlay" ariaLabel={t('tutorial.wallet.title')} maxWidth="540px" zIndex={9520}>
+        <TutorialHeader
+          icon={<IconShield size={18} />}
+          title={t('tutorial.wallet.title')}
+          meta="Wallet"
+          accentColor="#38bdf8"
+          onSkip={skip}
+        />
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+          <div
+            style={{
+              background: 'rgba(56, 189, 248, 0.1)',
+              border: '1px solid rgba(56, 189, 248, 0.3)',
+              borderRadius: '14px',
+              padding: '14px',
+              textAlign: 'center',
+            }}
+          >
+            <div style={{ fontSize: '0.8rem', color: '#7dd3fc', fontWeight: 600, marginBottom: '4px' }}>
+              {t('phone.earnings.cash')}
             </div>
-            <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>Personal Finances</span>
+            <div data-testid="tutorial-wallet-cash" style={{ fontSize: '1.7rem', fontWeight: 800, color: '#38bdf8' }}>
+              ৳{localDigits(liveCash)}
+            </div>
           </div>
 
-          <div style={{ padding: '28px 24px' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
-              <div
-                style={{
-                  background: 'rgba(56, 189, 248, 0.1)',
-                  border: '1px solid rgba(56, 189, 248, 0.3)',
-                  borderRadius: '14px',
-                  padding: '16px',
-                  textAlign: 'center',
-                }}
-              >
-                <div style={{ fontSize: '0.85rem', color: '#7dd3fc', fontWeight: 600, marginBottom: '4px' }}>
-                  Current Cash
-                </div>
-                <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#38bdf8' }}>৳600</div>
-              </div>
-
-              <div
-                style={{
-                  background: 'rgba(239, 68, 68, 0.1)',
-                  border: '1px solid rgba(239, 68, 68, 0.3)',
-                  borderRadius: '14px',
-                  padding: '16px',
-                  textAlign: 'center',
-                }}
-              >
-                <div style={{ fontSize: '0.85rem', color: '#fca5a5', fontWeight: 600, marginBottom: '4px' }}>
-                  Due Day 3 (Rent)
-                </div>
-                <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#ef4444' }}>৳1,200</div>
-              </div>
+          <div
+            style={{
+              background: 'rgba(239, 68, 68, 0.1)',
+              border: '1px solid rgba(239, 68, 68, 0.3)',
+              borderRadius: '14px',
+              padding: '14px',
+              textAlign: 'center',
+            }}
+          >
+            <div style={{ fontSize: '0.8rem', color: '#fca5a5', fontWeight: 600, marginBottom: '4px' }}>
+              Rent (Day {localDigits(3)})
             </div>
-
-            <p style={{ margin: '0 0 24px 0', color: '#cbd5e1', fontSize: '0.95rem', lineHeight: '1.5' }}>
-              {t('tutorial.wallet.msg')}
-            </p>
-
-            <button
-              data-testid="tutorial-btn-wallet"
-              onClick={() => advance?.('bike_inspection')}
-              style={{ ...primaryBtnStyle, width: '100%' }}
-            >
-              <span>🏍️</span> {t('tutorial.wallet.btn')}
-            </button>
+            <div data-testid="tutorial-wallet-rent" style={{ fontSize: '1.7rem', fontWeight: 800, color: '#ef4444' }}>
+              ৳{localDigits(liveRentTarget)}
+            </div>
           </div>
         </div>
-      </div>
+        <p style={{ margin: 0, color: '#cbd5e1', fontSize: '0.95rem', lineHeight: '1.5' }}>
+          {t('tutorial.wallet.msg')}
+        </p>
+        <PrimaryButton
+          type="button"
+          data-testid="tutorial-btn-wallet"
+          onClick={() => advance?.('bike_inspection')}
+          style={{ width: '100%' }}
+        >
+          <IconMotorcycle size={18} />
+          <span>{t('tutorial.wallet.btn')}</span>
+        </PrimaryButton>
+      </ModalPanel>
     );
   }
 
-  // 4. Motorcycle Inspection
+  // 4. Motorcycle Inspection (live fuelL & conditionPct)
   if (currentStep === 'bike_inspection') {
     return (
-      <div data-testid="tutorial-overlay" style={containerStyle}>
-        <div style={cardStyle}>
-          <div style={headerStyle}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#f59e0b', fontWeight: 700 }}>
-              <span>🏍️</span> {t('tutorial.bike.title')}
+      <ModalPanel testId="tutorial-overlay" ariaLabel={t('tutorial.bike.title')} maxWidth="540px" zIndex={9520}>
+        <TutorialHeader
+          icon={<IconMotorcycle size={18} />}
+          title={t('tutorial.bike.title')}
+          meta="100cc"
+          accentColor="#f59e0b"
+          onSkip={skip}
+        />
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+          <div
+            style={{
+              background: 'rgba(245, 158, 11, 0.1)',
+              border: '1px solid rgba(245, 158, 11, 0.3)',
+              borderRadius: '14px',
+              padding: '14px',
+              textAlign: 'center',
+            }}
+          >
+            <div style={{ fontSize: '0.8rem', color: '#fcd34d', fontWeight: 600, marginBottom: '4px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+              <IconFuel size={14} />
+              <span>{t('hud.fuel')}</span>
             </div>
-            <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>100cc Commuter Bike</span>
+            <div data-testid="tutorial-bike-fuel" style={{ fontSize: '1.6rem', fontWeight: 800, color: '#f59e0b' }}>
+              {localDigits(liveFuelL.toFixed(1))} L
+            </div>
           </div>
 
-          <div style={{ padding: '28px 24px' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
-              <div
-                style={{
-                  background: 'rgba(245, 158, 11, 0.1)',
-                  border: '1px solid rgba(245, 158, 11, 0.3)',
-                  borderRadius: '14px',
-                  padding: '16px',
-                  textAlign: 'center',
-                }}
-              >
-                <div style={{ fontSize: '0.85rem', color: '#fcd34d', fontWeight: 600, marginBottom: '4px' }}>
-                  Fuel Remaining
-                </div>
-                <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#f59e0b' }}>1.2 L</div>
-                <div style={{ fontSize: '0.75rem', color: '#fbbf24', marginTop: '2px' }}>Reserve Tank</div>
-              </div>
-
-              <div
-                style={{
-                  background: 'rgba(34, 197, 94, 0.1)',
-                  border: '1px solid rgba(34, 197, 94, 0.3)',
-                  borderRadius: '14px',
-                  padding: '16px',
-                  textAlign: 'center',
-                }}
-              >
-                <div style={{ fontSize: '0.85rem', color: '#86efac', fontWeight: 600, marginBottom: '4px' }}>
-                  Condition
-                </div>
-                <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#22c55e' }}>80%</div>
-                <div style={{ fontSize: '0.75rem', color: '#4ade80', marginTop: '2px' }}>Operational</div>
-              </div>
+          <div
+            style={{
+              background: 'rgba(34, 197, 94, 0.1)',
+              border: '1px solid rgba(34, 197, 94, 0.3)',
+              borderRadius: '14px',
+              padding: '14px',
+              textAlign: 'center',
+            }}
+          >
+            <div style={{ fontSize: '0.8rem', color: '#86efac', fontWeight: 600, marginBottom: '4px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+              <IconWrench size={14} />
+              <span>{t('hud.condition')}</span>
             </div>
-
-            <p style={{ margin: '0 0 24px 0', color: '#cbd5e1', fontSize: '0.95rem', lineHeight: '1.5' }}>
-              {t('tutorial.bike.msg')}
-            </p>
-
-            <button
-              data-testid="tutorial-btn-bike"
-              onClick={() => advance?.('tea_stall')}
-              style={{ ...primaryBtnStyle, width: '100%' }}
-            >
-              <span>⚡</span> {t('tutorial.bike.btn')}
-            </button>
+            <div data-testid="tutorial-bike-condition" style={{ fontSize: '1.6rem', fontWeight: 800, color: '#22c55e' }}>
+              {localDigits(liveConditionPct)}%
+            </div>
           </div>
         </div>
-      </div>
+        <p style={{ margin: 0, color: '#cbd5e1', fontSize: '0.95rem', lineHeight: '1.5' }}>
+          {t('tutorial.bike.msg')}
+        </p>
+        <PrimaryButton
+          type="button"
+          data-testid="tutorial-btn-bike"
+          onClick={() => advance?.('tea_stall')}
+          style={{ width: '100%' }}
+        >
+          <IconPlayArrow />
+          <span>{t('tutorial.bike.btn')}</span>
+        </PrimaryButton>
+      </ModalPanel>
     );
   }
 
   // 5. Tea Stall Dialogue (Mintu)
   if (currentStep === 'tea_stall') {
     return (
-      <div data-testid="tutorial-overlay" style={containerStyle}>
-        <div style={cardStyle}>
-          <div style={headerStyle}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#10b981', fontWeight: 700 }}>
-              <span>☕</span> {t('tutorial.tea_stall.title')}
-            </div>
-            <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>Mirpara Tea Stall</span>
+      <ModalPanel testId="tutorial-overlay" ariaLabel={t('tutorial.tea_stall.title')} maxWidth="540px" zIndex={9520}>
+        <TutorialHeader
+          icon={<IconUser size={18} />}
+          title={t('tutorial.tea_stall.title')}
+          meta={t('poi.mirpara.tea_stall')}
+          accentColor="#10b981"
+          onSkip={skip}
+        />
+        <div
+          style={{
+            background: 'rgba(16, 185, 129, 0.08)',
+            border: '1px solid rgba(16, 185, 129, 0.25)',
+            borderRadius: '14px',
+            padding: '16px',
+          }}
+        >
+          <div style={{ fontSize: '0.85rem', color: '#34d399', fontWeight: 700, marginBottom: '6px' }}>
+            {t('character.mintu.name')}:
           </div>
-
-          <div style={{ padding: '28px 24px' }}>
-            <div
-              style={{
-                background: 'rgba(16, 185, 129, 0.08)',
-                border: '1px solid rgba(16, 185, 129, 0.25)',
-                borderRadius: '16px',
-                padding: '20px',
-                marginBottom: '24px',
-              }}
-            >
-              <div style={{ fontSize: '0.85rem', color: '#34d399', fontWeight: 700, marginBottom: '6px' }}>
-                Mintu (মিন্টু):
-              </div>
-              <p style={{ margin: 0, color: '#f1f5f9', fontSize: '1.05rem', lineHeight: '1.6' }}>
-                "{t('tutorial.tea_stall.msg')}"
-              </p>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px', fontSize: '0.9rem', color: '#94a3b8' }}>
-              <span>💡</span>
-              <span>Fulgate has heavy commuter traffic, but morning students in Mirpara provide quick reliable earnings.</span>
-            </div>
-
-            <button
-              data-testid="tutorial-btn-tea-stall"
-              onClick={() => advance?.('open_app')}
-              style={{ ...primaryBtnStyle, width: '100%' }}
-            >
-              <span>📱</span> {t('tutorial.tea_stall.btn')}
-            </button>
-          </div>
+          <p style={{ margin: 0, color: '#f1f5f9', fontSize: '1rem', lineHeight: '1.6' }}>
+            "{t('tutorial.tea_stall.msg')}"
+          </p>
         </div>
-      </div>
+        <PrimaryButton
+          type="button"
+          data-testid="tutorial-btn-tea-stall"
+          onClick={() => advance?.('open_app')}
+          style={{ width: '100%' }}
+        >
+          <IconPhone size={18} />
+          <span>{t('tutorial.tea_stall.btn')}</span>
+        </PrimaryButton>
+      </ModalPanel>
     );
   }
 
   // 6. Incoming Ride Request (Nabila)
   if (currentStep === 'open_app') {
     return (
-      <div data-testid="tutorial-overlay" style={containerStyle}>
-        <div style={cardStyle}>
-          <div style={headerStyle}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#22c55e', fontWeight: 700 }}>
-              <span>🔔</span> {t('tutorial.nabila.title')}
+      <ModalPanel testId="tutorial-overlay" ariaLabel={t('tutorial.nabila.title')} maxWidth="540px" zIndex={9520}>
+        <TutorialHeader
+          icon={<IconBell size={18} />}
+          title={t('tutorial.nabila.title')}
+          meta="Uthao"
+          accentColor="#22c55e"
+          onSkip={skip}
+        />
+        <div
+          style={{
+            background: 'rgba(255, 255, 255, 0.03)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: '14px',
+            padding: '16px',
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+            <div>
+              <div style={{ fontSize: '1.15rem', fontWeight: 800, color: '#f8fafc' }}>
+                {t('character.nabila.name')}
+              </div>
+              <div style={{ fontSize: '0.85rem', color: '#94a3b8' }}>{t('tutorial.nabila.intro')}</div>
             </div>
-            <span style={{ fontSize: '0.85rem', color: '#38bdf8', fontWeight: 700 }}>Uthao App • Online</span>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontSize: '1.35rem', fontWeight: 800, color: '#f59e0b' }}>
+                ৳{localDigits(80)}
+              </div>
+            </div>
           </div>
 
-          <div style={{ padding: '28px 24px' }}>
-            <div
-              style={{
-                background: 'rgba(255, 255, 255, 0.03)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                borderRadius: '16px',
-                padding: '20px',
-                marginBottom: '20px',
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-                <div>
-                  <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#f8fafc' }}>Nabila (নাবিলা)</div>
-                  <div style={{ fontSize: '0.85rem', color: '#94a3b8' }}>{t('tutorial.nabila.intro')}</div>
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#f59e0b' }}>৳80</div>
-                  <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Offered (Fair ৳100)</div>
-                </div>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '10px 14px', fontSize: '0.9rem' }}>
-                <span style={{ color: '#22c55e', fontWeight: 700 }}>📍 Pickup:</span>
-                <span style={{ color: '#e2e8f0' }}>Mirpara Community Clinic</span>
-                <span style={{ color: '#ef4444', fontWeight: 700 }}>🏁 Drop-off:</span>
-                <span style={{ color: '#e2e8f0' }}>Campus Gate (1.2 km)</span>
-              </div>
-            </div>
-
-            <p style={{ margin: '0 0 24px 0', color: '#94a3b8', fontSize: '0.9rem' }}>
-              Passenger offered ৳80, which is below the fair rate of ৳100. You can negotiate before accepting!
-            </p>
-
-            <button
-              data-testid="tutorial-btn-open-request"
-              onClick={() => advance?.('negotiation')}
-              style={{ ...primaryBtnStyle, width: '100%' }}
-            >
-              <span>🤝</span> Start Fare Negotiation / দরদাম করুন
-            </button>
+          <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '8px 12px', fontSize: '0.9rem' }}>
+            <span style={{ color: '#22c55e', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+              <IconMapPin size={14} /> {t('phone.pickup')}:
+            </span>
+            <span style={{ color: '#e2e8f0' }}>{t('poi.mirpara.clinic')}</span>
+            <span style={{ color: '#ef4444', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+              <IconFlag size={14} /> {t('phone.destination')}:
+            </span>
+            <span style={{ color: '#e2e8f0' }}>{t('poi.mirpara.campus_gate')}</span>
           </div>
         </div>
-      </div>
+        <PrimaryButton
+          type="button"
+          data-testid="tutorial-btn-open-request"
+          onClick={() => advance?.('negotiation')}
+          style={{ width: '100%' }}
+        >
+          <span>{t('tutorial.nego.title')}</span>
+        </PrimaryButton>
+      </ModalPanel>
     );
   }
 
-  // 7. Negotiation Tutorial (Verbatim GDD §6 Lines)
+  // 7. Negotiation Tutorial
   if (currentStep === 'negotiation') {
     const handlePickFare = (fare: number) => {
-      setSelectedOffer(fare);
-      setAgreedPrompt(t('tutorial.nabila.accepted'));
+      props.onSelectOffer(fare);
+      props.onSetAgreedPrompt(t('tutorial.nabila.accepted'));
       negotiate?.(fare);
     };
 
     return (
-      <div data-testid="tutorial-overlay" style={containerStyle}>
-        <div style={cardStyle}>
-          <div style={headerStyle}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#f59e0b', fontWeight: 700 }}>
-              <span>🤝</span> {t('tutorial.nego.title')}
-            </div>
-            <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>{t('tutorial.nego.passenger_label')}</span>
+      <ModalPanel testId="tutorial-overlay" ariaLabel={t('tutorial.nego.title')} maxWidth="540px" zIndex={9520}>
+        <TutorialHeader
+          icon={<IconShield size={18} />}
+          title={t('tutorial.nego.title')}
+          meta={t('tutorial.nego.passenger_label')}
+          accentColor="#f59e0b"
+          onSkip={skip}
+        />
+        <div
+          style={{
+            background: 'rgba(245, 158, 11, 0.08)',
+            border: '1px solid rgba(245, 158, 11, 0.3)',
+            borderRadius: '14px',
+            padding: '14px',
+          }}
+        >
+          <div style={{ fontSize: '0.85rem', color: '#fbbf24', fontWeight: 700, marginBottom: '4px' }}>
+            {t('tutorial.nego.offer_label')}
           </div>
-
-          <div style={{ padding: '24px' }}>
-            <div
-              style={{
-                background: 'rgba(245, 158, 11, 0.08)',
-                border: '1px solid rgba(245, 158, 11, 0.3)',
-                borderRadius: '14px',
-                padding: '16px',
-                marginBottom: '20px',
-              }}
-            >
-              <div style={{ fontSize: '0.85rem', color: '#fbbf24', fontWeight: 700, marginBottom: '4px' }}>
-                {t('tutorial.nego.offer_label')}
-              </div>
-              <div style={{ fontSize: '1.05rem', color: '#f8fafc', fontWeight: 600 }}>
-                "{t('tutorial.nabila.dialogue')}"
-              </div>
-            </div>
-
-            {agreedPrompt ? (
-              <div
-                style={{
-                  background: 'rgba(34, 197, 94, 0.1)',
-                  border: '1px solid rgba(34, 197, 94, 0.35)',
-                  borderRadius: '14px',
-                  padding: '16px',
-                  marginBottom: '20px',
-                }}
-              >
-                <div style={{ fontSize: '0.85rem', color: '#4ade80', fontWeight: 700, marginBottom: '4px' }}>
-                  {t('tutorial.nego.agreed_label', { fare: String(selectedOffer ?? 0) })}
-                </div>
-                <div style={{ fontSize: '1rem', color: '#f8fafc', fontWeight: 600 }}>
-                  "{agreedPrompt}"
-                </div>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
-                <button
-                  data-testid="tutorial-nego-counter-100"
-                  onClick={() => handlePickFare(100)}
-                  style={{
-                    padding: '12px 16px',
-                    borderRadius: '12px',
-                    border: '1px solid rgba(56, 189, 248, 0.35)',
-                    background: 'rgba(56, 189, 248, 0.12)',
-                    color: '#38bdf8',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                  }}
-                >
-                  <span style={{ fontWeight: 800 }}>৳100</span> — {t('tutorial.nabila.counter_100')}
-                </button>
-
-                <button
-                  data-testid="tutorial-nego-counter-90"
-                  onClick={() => handlePickFare(90)}
-                  style={{
-                    padding: '12px 16px',
-                    borderRadius: '12px',
-                    border: '1px solid rgba(245, 158, 11, 0.35)',
-                    background: 'rgba(245, 158, 11, 0.12)',
-                    color: '#f59e0b',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                  }}
-                >
-                  <span style={{ fontWeight: 800 }}>৳90</span> — {t('tutorial.nabila.counter_90')}
-                </button>
-
-                <button
-                  data-testid="tutorial-nego-accept-80"
-                  onClick={() => handlePickFare(80)}
-                  style={{
-                    padding: '12px 16px',
-                    borderRadius: '12px',
-                    border: '1px solid rgba(148, 163, 184, 0.35)',
-                    background: 'rgba(148, 163, 184, 0.1)',
-                    color: '#cbd5e1',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                  }}
-                >
-                  <span style={{ fontWeight: 800 }}>৳80</span> — {t('tutorial.nabila.accept_80')}
-                </button>
-
-                <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
-                  {t('tutorial.nabila.decline_example')}
-                </div>
-              </div>
-            )}
-
-            <button
-              data-testid="tutorial-btn-start-ride"
-              disabled={!agreedPrompt}
-              onClick={() => advance?.('riding')}
-              style={{
-                ...primaryBtnStyle,
-                width: '100%',
-                opacity: agreedPrompt ? 1 : 0.5,
-                cursor: agreedPrompt ? 'pointer' : 'not-allowed',
-              }}
-            >
-              <span>🏍️</span> {t('tutorial.nego.start_ride')}
-            </button>
+          <div style={{ fontSize: '1rem', color: '#f8fafc', fontWeight: 600 }}>
+            "{t('tutorial.nabila.dialogue')}"
           </div>
         </div>
-      </div>
+
+        {props.agreedPrompt ? (
+          <div
+            style={{
+              background: 'rgba(34, 197, 94, 0.1)',
+              border: '1px solid rgba(34, 197, 94, 0.35)',
+              borderRadius: '14px',
+              padding: '14px',
+            }}
+          >
+            <div style={{ fontSize: '0.85rem', color: '#4ade80', fontWeight: 700, marginBottom: '4px' }}>
+              {t('tutorial.nego.agreed_label', { fare: String(props.selectedOffer ?? 0) })}
+            </div>
+            <div style={{ fontSize: '0.95rem', color: '#f8fafc', fontWeight: 600 }}>
+              "{props.agreedPrompt}"
+            </div>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <button
+              type="button"
+              data-testid="tutorial-nego-counter-100"
+              onClick={() => handlePickFare(100)}
+              style={{
+                padding: '10px 14px',
+                borderRadius: '12px',
+                border: '1px solid rgba(56, 189, 248, 0.35)',
+                background: 'rgba(56, 189, 248, 0.12)',
+                color: '#38bdf8',
+                fontWeight: 600,
+                cursor: 'pointer',
+                textAlign: 'left',
+              }}
+            >
+              <span style={{ fontWeight: 800 }}>৳{localDigits(100)}</span> — {t('tutorial.nabila.counter_100')}
+            </button>
+
+            <button
+              type="button"
+              data-testid="tutorial-nego-counter-90"
+              onClick={() => handlePickFare(90)}
+              style={{
+                padding: '10px 14px',
+                borderRadius: '12px',
+                border: '1px solid rgba(245, 158, 11, 0.35)',
+                background: 'rgba(245, 158, 11, 0.12)',
+                color: '#f59e0b',
+                fontWeight: 600,
+                cursor: 'pointer',
+                textAlign: 'left',
+              }}
+            >
+              <span style={{ fontWeight: 800 }}>৳{localDigits(90)}</span> — {t('tutorial.nabila.counter_90')}
+            </button>
+
+            <button
+              type="button"
+              data-testid="tutorial-nego-accept-80"
+              onClick={() => handlePickFare(80)}
+              style={{
+                padding: '10px 14px',
+                borderRadius: '12px',
+                border: '1px solid rgba(148, 163, 184, 0.35)',
+                background: 'rgba(148, 163, 184, 0.1)',
+                color: '#cbd5e1',
+                fontWeight: 600,
+                cursor: 'pointer',
+                textAlign: 'left',
+              }}
+            >
+              <span style={{ fontWeight: 800 }}>৳{localDigits(80)}</span> — {t('tutorial.nabila.accept_80')}
+            </button>
+
+            <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+              {t('tutorial.nabila.decline_example')}
+            </div>
+          </div>
+        )}
+
+        <PrimaryButton
+          type="button"
+          data-testid="tutorial-btn-start-ride"
+          disabled={!props.agreedPrompt}
+          onClick={() => advance?.('riding')}
+          style={{ width: '100%' }}
+        >
+          <IconMotorcycle size={18} />
+          <span>{t('tutorial.nego.start_ride')}</span>
+        </PrimaryButton>
+      </ModalPanel>
     );
   }
 
@@ -551,120 +548,148 @@ export function FirstRideTutorial(props: FirstRideTutorialProps): JSX.Element | 
         data-testid="tutorial-overlay"
         style={{
           position: 'fixed',
-          top: '20px',
+          top: '16px',
           left: '50%',
           transform: 'translateX(-50%)',
           zIndex: 9520,
-          width: '90%',
-          maxWidth: '600px',
+          width: '92%',
+          maxWidth: '640px',
           background: 'rgba(15, 23, 42, 0.92)',
           border: '1px solid rgba(34, 197, 94, 0.4)',
           borderRadius: '16px',
-          padding: '16px 20px',
+          padding: '12px 16px',
           boxShadow: '0 10px 25px rgba(0, 0, 0, 0.5), 0 0 20px rgba(34, 197, 94, 0.15)',
           backdropFilter: 'blur(10px)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          gap: '16px',
+          gap: '12px',
+          flexWrap: 'wrap',
           color: '#f8fafc',
           pointerEvents: 'auto',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <span style={{ fontSize: '1.6rem' }}>🎓</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: '180px' }}>
+          <IconMotorcycle size={22} color="#22c55e" />
           <div>
-            <div style={{ fontSize: '0.85rem', color: '#22c55e', fontWeight: 700 }}>
-              Active Ride: Nabila (Agreed Fare: ৳{selectedOffer})
+            <div style={{ fontSize: '0.82rem', color: '#22c55e', fontWeight: 700 }}>
+              {t('character.nabila.name')} • ৳{localDigits(props.selectedOffer)}
             </div>
-            <div style={{ fontSize: '0.9rem', color: '#e2e8f0' }}>{t('tutorial.riding.tip')}</div>
+            <div style={{ fontSize: '0.85rem', color: '#e2e8f0' }}>{t('tutorial.riding.tip')}</div>
           </div>
         </div>
 
-        <button
-          data-testid="tutorial-btn-arrive-destination"
-          onClick={() => advance?.('receipt')}
-          style={{
-            ...primaryBtnStyle,
-            padding: '10px 18px',
-            fontSize: '0.85rem',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          <span>🏁</span> Arrive at Gate
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <button
+            type="button"
+            data-testid="tutorial-btn-skip"
+            onClick={skip}
+            style={{
+              padding: '8px 10px',
+              borderRadius: '10px',
+              border: '1px solid rgba(148, 163, 184, 0.35)',
+              background: 'rgba(15, 23, 42, 0.65)',
+              color: '#cbd5e1',
+              fontSize: '0.78rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+            }}
+          >
+            {t('tutorial.skip')}
+          </button>
+          <PrimaryButton
+            type="button"
+            data-testid="tutorial-btn-arrive-destination"
+            onClick={() => advance?.('receipt')}
+            style={{ padding: '8px 14px', fontSize: '0.85rem', whiteSpace: 'nowrap' }}
+          >
+            <IconFlag size={14} />
+            <span>{t('poi.mirpara.campus_gate')}</span>
+          </PrimaryButton>
+        </div>
       </div>
     );
   }
 
-  // 9. Receipt Explained Phase
+  // 9. Receipt Explained Phase (with live fuel cost)
   if (currentStep === 'receipt') {
-    const gross = selectedOffer;
-    const commission = Math.round(gross * 0.15);
-    const net = gross - commission;
+    const gross = Math.round(liveReceipt?.fare ?? props.selectedOffer);
+    const commission = Math.round(liveReceipt?.commission ?? gross * 0.15);
+    const fuelCost = Math.round(liveReceipt?.fuelCost ?? 14);
+    const net = Math.round(liveReceipt?.net ?? gross - commission - fuelCost);
 
     return (
-      <div data-testid="tutorial-overlay" style={containerStyle}>
-        <div style={cardStyle}>
-          <div style={headerStyle}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#22c55e', fontWeight: 700 }}>
-              <span>🧾</span> {t('tutorial.receipt.title')}
-            </div>
-            <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>Trip Completed</span>
-          </div>
-
-          <div style={{ padding: '28px 24px' }}>
-            <div
-              style={{
-                background: 'rgba(255, 255, 255, 0.03)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                borderRadius: '16px',
-                padding: '20px',
-                marginBottom: '20px',
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-                <span style={{ color: '#cbd5e1' }}>Gross Passenger Fare (নগদ ভাড়া):</span>
-                <span style={{ fontWeight: 700, color: '#f8fafc' }}>৳{gross}</span>
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-                <span style={{ color: '#ef4444' }}>Uthao Commission (15% উঠাও কমিশন):</span>
-                <span style={{ fontWeight: 700, color: '#ef4444' }}>-৳{commission}</span>
-              </div>
-
-              <div
-                style={{
-                  height: '1px',
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  margin: '12px 0',
-                }}
-              />
-
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: '#22c55e', fontWeight: 700, fontSize: '1.05rem' }}>Net Take-Home (প্রকৃত আয়):</span>
-                <span style={{ fontSize: '1.5rem', fontWeight: 800, color: '#22c55e' }}>+৳{net}</span>
-              </div>
-            </div>
-
-            <p style={{ margin: '0 0 24px 0', color: '#cbd5e1', fontSize: '0.95rem', lineHeight: '1.5' }}>
-              {t('tutorial.receipt.desc')}
-            </p>
-
-            <button
-              data-testid="tutorial-btn-finish-receipt"
-              onClick={() => {
-                complete?.();
-              }}
-              style={{ ...primaryBtnStyle, width: '100%' }}
-            >
-              <span>🎉</span> {t('tutorial.receipt.btn')}
-            </button>
-          </div>
+      <ModalPanel testId="tutorial-overlay" ariaLabel={t('tutorial.receipt.title')} maxWidth="540px" zIndex={9520}>
+        <TutorialHeader
+          icon={<IconTrophy size={18} />}
+          title={t('tutorial.receipt.title')}
+          meta={t('trip.summary.title')}
+          accentColor="#22c55e"
+          onSkip={skip}
+        />
+        <div
+          style={{
+            background: 'rgba(255, 255, 255, 0.03)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: '14px',
+            padding: '16px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '6px',
+          }}
+        >
+          <TransactionRow label={t('tutorial.receipt.gross')} amount={gross} kind="income" />
+          <TransactionRow label={t('tutorial.receipt.commission')} amount={commission} kind="expense" />
+          <TransactionRow
+            testId="tutorial-receipt-fuel"
+            label={t('tutorial.receipt.fuel')}
+            amount={fuelCost}
+            kind="expense"
+          />
+          <TransactionRow label={t('tutorial.receipt.net')} amount={net} kind="total" />
         </div>
-      </div>
+
+        <p style={{ margin: 0, color: '#cbd5e1', fontSize: '0.92rem', lineHeight: '1.5' }}>
+          {t('tutorial.receipt.desc')}
+        </p>
+
+        <PrimaryButton
+          type="button"
+          data-testid="tutorial-btn-finish-receipt"
+          onClick={() => complete?.()}
+          style={{ width: '100%' }}
+        >
+          <IconCheck size={18} />
+          <span>{t('tutorial.receipt.btn')}</span>
+        </PrimaryButton>
+      </ModalPanel>
     );
   }
 
   return null;
+}
+
+function IconPlayArrow(): JSX.Element {
+  return (
+    <svg width={16} height={16} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <polygon points="6 3 20 12 6 21 6 3" />
+    </svg>
+  );
+}
+
+export function FirstRideTutorial(props: FirstRideTutorialProps): JSX.Element | null {
+  const [selectedOffer, setSelectedOffer] = useState<number>(
+    () => tutorialSignal.value.agreedFare ?? 100
+  );
+  const [agreedPrompt, setAgreedPrompt] = useState<string>('');
+
+  return (
+    <FirstRideTutorialView
+      {...props}
+      selectedOffer={selectedOffer}
+      agreedPrompt={agreedPrompt}
+      onSelectOffer={setSelectedOffer}
+      onSetAgreedPrompt={setAgreedPrompt}
+    />
+  );
 }

@@ -51,5 +51,6 @@
   "negotiation.route": "রুট: {distance} কিমি, {eta} মিনিট",
   "negotiation.relocate": "পিকআপ সরান ({walk}মি হাঁটা, {min}মি বাঁচবে)",
   "negotiation.your_quote": "আপনার দর",
-  "negotiation.custom_counter": "নিজের পাল্টা দর"
+  "negotiation.custom_counter": "নিজের পাল্টা দর",
+  "negotiation.destination_label": "গন্তব্য: {place}"
 }

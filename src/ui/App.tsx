@@ -42,6 +42,8 @@ import {
   onResumeGameCallback,
   onSetWaypointCallback,
   onCallContactCallback,
+  onRecoverBikeCallback,
+  sendPhoneQuickChat,
   tutorialSignal,
   endingSignal,
   onSelectCareerChoiceCallback,
@@ -378,6 +380,7 @@ export function App(): JSX.Element {
             onClose={() => {
               phoneSignal.value = { ...phoneSignal.value, open: false };
             }}
+            phoneBattery={phoneSignal.value.phoneBattery}
             incomingRequest={phoneSignal.value.incomingRequest}
             requestQueue={phoneSignal.value.requestQueue}
             timeoutRemaining={phoneSignal.value.timeoutRemaining}
@@ -386,10 +389,14 @@ export function App(): JSX.Element {
             relationships={phoneSignal.value.relationships}
             availableDeliveries={phoneSignal.value.availableDeliveries}
             activeDeliveries={phoneSignal.value.activeDeliveries}
+            earningsSummary={phoneSignal.value.earningsSummary}
+            activeRide={phoneSignal.value.activeRide}
+            quickChatLog={phoneSignal.value.quickChatLog}
             onAcceptRequest={(id) => onAcceptRequestCallback?.(id)}
             onDeclineRequest={(id) => onDeclineRequestCallback?.(id)}
             onAcceptDelivery={(jobId) => onAcceptDeliveryCallback?.(jobId)}
             onCallContact={(charId) => onCallContactCallback?.(charId)}
+            onSendQuickChat={(preset) => sendPhoneQuickChat(preset)}
           />
         </div>
       )}
@@ -530,6 +537,19 @@ export function App(): JSX.Element {
             }}
             onOpenMap={() => {
               screenSignal.value = 'map';
+            }}
+            onOpenGarage={() => {
+              screenSignal.value = 'game';
+              pausedSignal.value = false;
+              garageSignal.value = { ...garageSignal.value, open: true };
+            }}
+            onOpenJournal={() => {
+              screenSignal.value = 'game';
+              pausedSignal.value = false;
+              journalSignal.value = true;
+            }}
+            onRecoverBike={() => {
+              onRecoverBikeCallback?.();
             }}
             onOpenSettings={() => setShowSettings(true)}
             onOpenSave={() => {

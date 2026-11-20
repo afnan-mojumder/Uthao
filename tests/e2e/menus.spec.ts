@@ -22,6 +22,7 @@ test.describe('T3.10 Menus, Settings, Pause and Dhaka Map E2E', () => {
 
     const menuTitle = page.locator('[data-testid="main-menu-title"]');
     await expect(menuTitle).toBeVisible();
+    await expect(page.locator('[data-testid="menu-btn-endless"]')).toContainText(/(কুইক রাইড|Quick Ride)/);
 
     // Open Settings
     const settingsBtn = page.locator('[data-testid="menu-btn-settings"]');
@@ -30,21 +31,34 @@ test.describe('T3.10 Menus, Settings, Pause and Dhaka Map E2E', () => {
 
     const settingsScreen = page.locator('[data-testid="settings-screen"]');
     await expect(settingsScreen).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('[data-testid="settings-auto-cruise-toggle"]')).toHaveCount(0);
+    await expect(page.locator('[data-testid="settings-scale-115"]')).toBeVisible();
 
     // Switch language to English
     const enLangBtn = page.locator('[data-testid="settings-lang-en"]');
     await expect(enLangBtn).toBeVisible();
     await enLangBtn.click();
+    await expect(page.locator('[data-testid="menu-btn-endless"]')).toContainText('Quick Ride');
 
     // Switch to Audio tab
     const audioTab = page.locator('[data-testid="settings-tab-audio"]');
     await audioTab.click();
     await expect(page.locator('[data-testid="settings-master-vol"]')).toBeVisible();
 
-    // Switch to Controls tab
+    // Switch to Controls tab and verify live key rebinding + conflict protection
     const controlsTab = page.locator('[data-testid="settings-tab-controls"]');
     await controlsTab.click();
     await expect(page.locator('[data-testid="settings-tilt-toggle"]')).toBeVisible();
+    await expect(page.locator('[data-testid="settings-rebind-horn"]')).toBeVisible();
+    // Conflict test: trying to bind horn to KeyM (already Map) shows conflict warning
+    await page.locator('[data-testid="settings-rebind-horn"]').click();
+    await page.keyboard.press('KeyM');
+    await expect(page.locator('[data-testid="settings-rebind-conflict"]')).toBeVisible();
+    // Valid rebind: KeyB
+    await page.locator('[data-testid="settings-rebind-horn"]').click();
+    await page.keyboard.press('KeyB');
+    await expect(page.locator('[data-testid="settings-rebind-horn"]')).toContainText('KeyB');
+    await page.locator('[data-testid="settings-reset-controls"]').click();
 
     // Save and return to Main Menu
     const saveSettingsBtn = page.locator('[data-testid="settings-save-btn"]');
@@ -249,8 +263,70 @@ test.describe('T3.10 Menus, Settings, Pause and Dhaka Map E2E', () => {
     });
     const endingScreen = page.getByTestId('ending-screen');
     await expect(endingScreen).toBeVisible({ timeout: 5000 });
+    await expect(endingScreen.getByTestId('share-scorecard-canvas')).toBeVisible();
+    await endingScreen.getByTestId('share-scorecard-btn').click();
+    await expect(endingScreen.getByTestId('share-status')).toBeVisible();
     await endingScreen.getByRole('button', { name: /Close|বন্ধ/ }).click({ timeout: 5000 });
     await expect(endingScreen).not.toBeVisible({ timeout: 5000 });
+  });
+
+  test('Pause opens Garage, Journal, and Recover Bike, and DayEnd renders Share Scorecard', async ({
+    page,
+  }) => {
+    test.setTimeout(60000);
+    const errors: string[] = [];
+    page.on('pageerror', (e) => errors.push(e.message));
+    await page.goto('/?debug=1&district=testloop&encounters=0');
+    await page.waitForSelector('#game-canvas');
+    await expect(page.locator('#hud')).toBeVisible();
+
+    // Pause -> Garage
+    await page.keyboard.press('Escape');
+    await expect(page.getByTestId('pause-menu')).toBeVisible();
+    await page.getByTestId('pause-btn-garage').click();
+    await expect(page.getByTestId('garage-screen')).toBeVisible();
+    await page.getByTestId('garage-exit-btn').click();
+    await expect(page.getByTestId('garage-screen')).toHaveCount(0);
+
+    // Pause -> Journal
+    await page.keyboard.press('Escape');
+    await page.getByTestId('pause-btn-journal').click();
+    const journalCloseBtn = page.getByRole('button', { name: /✕|Close|বন্ধ/ }).first();
+    await expect(journalCloseBtn).toBeVisible({ timeout: 5000 });
+    await journalCloseBtn.click();
+
+    // Pause -> Recover Bike
+    await page.keyboard.press('Escape');
+    await page.getByTestId('pause-btn-recover-bike').click();
+    await expect(page.getByTestId('pause-menu')).toHaveCount(0);
+
+    // DayEnd -> Share Scorecard
+    await page.evaluate(() => {
+      const ui = (window as unknown as { __uthaoUi?: { dayEndSignal: { value: unknown } } }).__uthaoUi;
+      if (ui) {
+        ui.dayEndSignal.value = {
+          active: true,
+          summary: {
+            day: 1,
+            revenue: 640,
+            expenses: 180,
+            net: 460,
+            ratingDelta: 0.1,
+            completedRides: 4,
+            relationshipsDelta: {},
+            cash: 1060,
+            savings: 0,
+            debt: 0,
+          },
+        };
+      }
+    });
+    const dayEnd = page.getByTestId('day-end-screen');
+    await expect(dayEnd).toBeVisible();
+    await expect(dayEnd.getByTestId('share-scorecard-canvas')).toBeVisible();
+    await dayEnd.getByTestId('share-scorecard-btn').click();
+    await expect(dayEnd.getByTestId('share-status')).toBeVisible();
+    expect(errors).toEqual([]);
   });
 
   test('G/J/N hotkeys are guarded outside game/when modal open, and Escape in Settings restores previewed language', async ({

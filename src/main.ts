@@ -18,6 +18,7 @@ import type { BikeInput } from './physics/bikeModel';
 import { RoadNetwork } from './sim/road/RoadNetwork';
 import { AutopilotController } from './debug/autopilot';
 import { InputManager } from './input';
+import { loadBindings } from './input/bindings';
 import { App } from './ui/App';
 import {
   bindEventBusToStore,
@@ -36,6 +37,9 @@ import {
   mapPlayerPosSignal,
   journalDataSignal,
   settingsSignal,
+  audioPreviewSignal,
+  audioPreviewSeqSignal,
+  phoneSignal,
   setActiveSaveSystem,
   type GameSettings,
 } from './ui/store';
@@ -44,7 +48,8 @@ import { getCharacter } from './sim/passenger/PassengerAI';
 import { setLanguage } from './ui/i18n';
 import { setDefaultSignLanguage } from './render/signage';
 import { consumeFreshCareer, resolveCareerSeed } from './ui/freshCareer';
-import { routeColorFor } from './ui/settingsEffects';
+import { applyDocumentSettings, routeColorFor } from './ui/settingsEffects';
+import { remainingRouteEtaMin } from './sim/road/navigation';
 import { bindUi } from './ui/bindings';
 import { SaveSystem } from './sim/save/SaveSystem';
 import { Minimap } from './render/minimap';
@@ -197,7 +202,10 @@ async function bootGame(): Promise<void> {
   watchOverlayFocus();
   // Sound: the audio context starts on the first gesture; settings and sim events drive it.
   audio = new AudioManager();
-  bindAudio(audio, gm.bus, settingsSignal, document);
+  bindAudio(audio, gm.bus, settingsSignal, document, {
+    subscribe: (fn) => audioPreviewSignal.subscribe(fn),
+    seq: { subscribe: (fn) => audioPreviewSeqSignal.subscribe(fn) },
+  });
   // The bike slid at the grip limit: a tyre sound (H-4 for the ear).
   bootCleanups.push(gm.bus.on('bike/wobble', () => audio.playWobble()));
   bootCleanups.push(gm.bus.on('bike/nearMiss', () => audio.playNearMiss()));
@@ -403,12 +411,12 @@ bootCleanups.push(bindUi(session, activeSaveSystem));
 // Settings take effect as soon as they are saved, and the saved language is
 // applied on boot. Cancel reverts the language preview (Settings.tsx).
 const applySettings = (s: GameSettings) => {
-  document.documentElement.dataset.reduceMotion = String(s.reduceMotion);
+  applyDocumentSettings(s);
   renderer?.cameraRig.setReduceMotion(s.reduceMotion);
   setDefaultSignLanguage(s.language); // storefront signs, for districts loaded from now on
   minimap?.setRouteColor(routeColorFor(s));
   gm.eventDirector.pauseOnDecisions = s.pauseOnDecisions;
-  inputManager.setBindings({ ...inputManager.getBindings(), tiltEnabled: s.tiltControls });
+  inputManager.setBindings({ ...loadBindings(), tiltEnabled: s.tiltControls });
 };
 bootCleanups.push(settingsSignal.subscribe(applySettings));
 
@@ -453,7 +461,16 @@ session.spawnAtHome();
 if (consumeFreshCareer()) {
   session.newCareer(bootSeed);
   syncBikeAppearance(renderer);
-  tutorialSignal.value = { active: true, step: 'alarm', agreedFare: 100 };
+  tutorialSignal.value = {
+    active: true,
+    step: 'alarm',
+    agreedFare: 100,
+    cash: gm.economy.cash,
+    fuelL: gm.economyManager.fuelLevel,
+    conditionPct: gm.economyManager.motorcycleCondition,
+    rentTarget: BALANCE.LIVING.familyPaymentDay3,
+    receipt: null,
+  };
   screenSignal.value = 'game';
 }
 
@@ -467,6 +484,7 @@ let lastTime = typeof performance !== 'undefined' ? performance.now() : 0;
 let roamNodeIndex = 0;
 let cameraHeld = false;
 let lastBikeBrake = 0;
+let lastSimBattery = Math.round(gm.economyManager.phoneBattery);
 
 // Pre-allocated scratch & cache for zero-alloc steady-state syncHud()
 const hudCache = createHudCache();
@@ -476,6 +494,9 @@ const hudInputScratch: HudSyncInput = {
   now: 0,
   simStepped: false,
   isFirstPerson: false,
+  districtId: '',
+  canRecoverBike: true,
+  gear: 1,
   objectiveKey: '',
   placeKey: '',
   navKind: '',
@@ -484,6 +505,7 @@ const hudInputScratch: HudSyncInput = {
   reqId: '',
   passengerStatus: 'None',
   passengerNameKey: undefined,
+  passengerMood: undefined,
   roadEventId: '',
   roadEventKind: '',
   roadEventTitles: undefined,
@@ -515,12 +537,24 @@ function syncHud(
   if (activeReq) {
     const activeProfile = session.requests.getProfile(activeReq.passengerId);
     const activeChar = activeReq.characterId ? getCharacter(activeReq.characterId) : undefined;
-    passengerNameKey = activeProfile?.nameKey ?? activeChar?.nameKey;
+    passengerNameKey = activeReq.passengerNameKey ?? activeProfile?.nameKey ?? activeChar?.nameKey;
   }
+
+  const districtId = roadNetwork.getNodeDistrict(gm.playerNodeId) ?? activeDistrict.districtId;
+  const routeEta = activeReq
+    ? remainingRouteEtaMin(
+        rideManager.currentRoute,
+        { x: session.bike.x, z: session.bike.z },
+        roadNetwork.getNodesMap()
+      )
+    : 0;
 
   hudInputScratch.now = now;
   hudInputScratch.simStepped = simStepped;
   hudInputScratch.isFirstPerson = renderer ? renderer.cameraRig.mode === 'firstPerson' : false;
+  hudInputScratch.districtId = districtId;
+  hudInputScratch.canRecoverBike = !tutorialSignal.value.active;
+  hudInputScratch.gear = session.bike.gear;
   hudInputScratch.objectiveKey = view.objectiveKey;
   hudInputScratch.placeKey = typeof view.objectiveVars.place === 'string' ? view.objectiveVars.place : '';
   hudInputScratch.navKind = view.instruction ? view.instruction.kind : '';
@@ -529,12 +563,17 @@ function syncHud(
   hudInputScratch.reqId = activeReq ? activeReq.requestId : '';
   hudInputScratch.passengerStatus = view.passenger;
   hudInputScratch.passengerNameKey = passengerNameKey;
+  hudInputScratch.passengerMood = activeReq ? rideManager.getPassengerMood() : undefined;
   hudInputScratch.roadEventId = activeRoadEv ? activeRoadEv.id : '';
   hudInputScratch.roadEventKind = activeRoadEv ? activeRoadEv.kind : '';
   hudInputScratch.roadEventTitles = activeRoadEv?.title;
   hudInputScratch.activeMissionCount = gm.story.activeMissions.length;
   hudInputScratch.fare = activeReq?.initialFare;
-  hudInputScratch.etaMinutes = activeReq ? activeReq.estimatedDuration : undefined;
+  hudInputScratch.etaMinutes = activeReq
+    ? (routeEta ?? 0) > 0
+      ? routeEta
+      : activeReq.estimatedDuration
+    : undefined;
   hudInputScratch.nearStation = session.nearFuelStation();
   hudInputScratch.chargeSpot =
     gm.economyManager.phoneBattery < BALANCE.PHONE.lowBatteryPct
@@ -553,6 +592,12 @@ function syncHud(
   hudInputScratch.fuelL = gm.economyManager.fuelLevel;
   hudInputScratch.fuelMaxL = gm.economyManager.maxFuelL();
   hudInputScratch.conditionPct = gm.economyManager.motorcycleCondition;
+
+  const simBattery = Math.round(gm.economyManager.phoneBattery);
+  if (simBattery !== lastSimBattery) {
+    lastSimBattery = simBattery;
+    phoneSignal.value = { ...phoneSignal.value, phoneBattery: simBattery };
+  }
 
   syncHudWithCache(hudCache, hudInputScratch);
 }

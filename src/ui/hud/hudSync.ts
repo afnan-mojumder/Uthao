@@ -1,4 +1,5 @@
 import type { PassengerStatus } from '../../core/types';
+import { BALANCE } from '../../config/balance';
 import { getLanguage, t } from '../i18n';
 import {
   getHudResetCount,
@@ -18,11 +19,14 @@ export interface HudSyncCache {
   lastObjKey: string;
   lastPlaceKey: string;
   cachedObjectiveText: string;
+  lastDistrictId: string;
+  cachedDistrictName: string;
   lastNavKind: string;
   lastNavTextKey: string;
   lastNavDistM: number;
   lastActiveReqId: string;
   lastPassengerView: string;
+  lastPassengerMoodBucket: number;
   lastRoadEventId: string;
   lastRoadEventKind: string;
   lastMissionCount: number;
@@ -33,6 +37,9 @@ export interface HudSyncInput {
   now: number;
   simStepped: boolean;
   isFirstPerson: boolean;
+  districtId?: string;
+  canRecoverBike?: boolean;
+  gear?: number;
   objectiveKey: string;
   placeKey: string;
   navKind: string;
@@ -41,6 +48,7 @@ export interface HudSyncInput {
   reqId: string;
   passengerStatus: PassengerStatus | 'None';
   passengerNameKey?: string;
+  passengerMood?: number;
   roadEventId: string;
   roadEventKind: string;
   roadEventTitles?: Partial<Record<'bn' | 'en', string>>;
@@ -70,11 +78,14 @@ export function createHudCache(): HudSyncCache {
     lastObjKey: '',
     lastPlaceKey: '',
     cachedObjectiveText: '',
+    lastDistrictId: '',
+    cachedDistrictName: '',
     lastNavKind: '',
     lastNavTextKey: '',
     lastNavDistM: -1,
     lastActiveReqId: '',
     lastPassengerView: '',
+    lastPassengerMoodBucket: -1,
     lastRoadEventId: '',
     lastRoadEventKind: '',
     lastMissionCount: -1,
@@ -89,11 +100,14 @@ export function resetHudCache(cache: HudSyncCache): void {
   cache.lastObjKey = '';
   cache.lastPlaceKey = '';
   cache.cachedObjectiveText = '';
+  cache.lastDistrictId = '';
+  cache.cachedDistrictName = '';
   cache.lastNavKind = '';
   cache.lastNavTextKey = '';
   cache.lastNavDistM = -1;
   cache.lastActiveReqId = '';
   cache.lastPassengerView = '';
+  cache.lastPassengerMoodBucket = -1;
   cache.lastRoadEventId = '';
   cache.lastRoadEventKind = '';
   cache.lastMissionCount = -1;
@@ -129,16 +143,27 @@ export function syncHudWithCache(cache: HudSyncCache, input: HudSyncInput): bool
     });
   }
 
+  const districtId = input.districtId ?? 'mirpara';
+  const districtChanged = langChanged || districtId !== cache.lastDistrictId;
+  if (districtChanged) {
+    cache.lastDistrictId = districtId;
+    cache.cachedDistrictName = t(`district.${districtId}`);
+  }
+
   const navChanged =
     langChanged ||
     input.navKind !== cache.lastNavKind ||
     input.navTextKey !== cache.lastNavTextKey ||
     input.navDistM !== cache.lastNavDistM;
 
+  const moodBucket =
+    input.passengerMood !== undefined ? Math.round(Math.max(0, Math.min(1, input.passengerMood)) * 20) : -1;
+
   const paxChanged =
     langChanged ||
     input.reqId !== cache.lastActiveReqId ||
-    input.passengerStatus !== cache.lastPassengerView;
+    input.passengerStatus !== cache.lastPassengerView ||
+    moodBucket !== cache.lastPassengerMoodBucket;
 
   const roadEvChanged =
     langChanged ||
@@ -151,9 +176,15 @@ export function syncHudWithCache(cache: HudSyncCache, input: HudSyncInput): bool
     input.activeMissionCount !== cache.lastMissionCount ||
     (input.simStepped && input.now - cache.lastMissionPollMs >= 100);
 
+  const nextGear = input.gear ?? 1;
+  const nextCanRecover = input.canRecoverBike ?? true;
+
   const priorityChanged =
     cache.lastHudPushMs === -Infinity ||
     langChanged ||
+    districtChanged ||
+    nextGear !== cur.gear ||
+    nextCanRecover !== cur.canRecoverBike ||
     input.isFirstPerson !== cur.isFirstPerson ||
     cache.cachedObjectiveText !== cur.objectiveText ||
     navChanged ||
@@ -172,8 +203,9 @@ export function syncHudWithCache(cache: HudSyncCache, input: HudSyncInput): bool
 
   const telemetryChanged =
     Math.round(input.speedKmh) !== Math.round(cur.speedKmh) ||
-    Math.round(input.fuelL * 10) !== Math.round(cur.fuelL * 10) ||
+    Math.round(input.fuelL * 100) !== Math.round(cur.fuelL * 100) ||
     (input.fuelL === 0) !== (cur.fuelL === 0) ||
+    (input.fuelL < BALANCE.FUEL.rescueBelowL) !== (cur.fuelL < BALANCE.FUEL.rescueBelowL) ||
     input.fuelMaxL !== cur.fuelMaxL ||
     Math.round(input.conditionPct) !== Math.round(cur.conditionPct ?? 100);
 
@@ -194,10 +226,12 @@ export function syncHudWithCache(cache: HudSyncCache, input: HudSyncInput): bool
   if (paxChanged) {
     cache.lastActiveReqId = input.reqId;
     cache.lastPassengerView = input.passengerStatus;
+    cache.lastPassengerMoodBucket = moodBucket;
     if (input.reqId) {
       passengerStatus = {
         status: input.passengerStatus,
-        name: input.passengerNameKey ? t(input.passengerNameKey) : 'Passenger',
+        name: input.passengerNameKey ? t(input.passengerNameKey) : t('hud.passenger.on_bike'),
+        mood: input.passengerMood,
       };
     } else {
       passengerStatus = undefined;
@@ -225,6 +259,10 @@ export function syncHudWithCache(cache: HudSyncCache, input: HudSyncInput): bool
 
   const p = cache.patch;
   p.speedKmh = input.speedKmh;
+  p.gear = nextGear;
+  p.districtId = districtId;
+  p.districtName = cache.cachedDistrictName;
+  p.canRecoverBike = nextCanRecover;
   p.objectiveText = cache.cachedObjectiveText;
   p.activeMission = activeMission;
   p.activeSideMissions = activeSideMissions;

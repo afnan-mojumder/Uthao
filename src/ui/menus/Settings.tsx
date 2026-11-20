@@ -1,13 +1,33 @@
 import type { JSX } from 'preact';
-import { useState, useEffect, useRef } from 'preact/hooks';
-import { makeRestInert } from '../focusTrap';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import {
-  type GameSettings,
-  settingsSignal,
+  cloneDefaultBindings,
+  loadBindings,
+  rebindGamepadAction,
+  rebindKeyboardAction,
+  saveBindings,
+  type RebindableGamepadAction,
+  type RebindableKeyboardAction,
+} from '../../input/bindings';
+import type { InputBindings } from '../../input/types';
+import {
+  IconClose,
+  IconGamepad,
+  IconSettings,
+  IconSliders,
+  IconVolume,
+} from '../components/icons';
+import { makeRestInert } from '../focusTrap';
+import { localDigits, setLanguage, t } from '../i18n';
+import { applyDocumentSettings, type UiScale } from '../settingsEffects';
+import {
+  audioPreviewSeqSignal,
+  audioPreviewSignal,
   saveSettings,
+  settingsSignal,
   Z_LAYER,
+  type GameSettings,
 } from '../store';
-import { t, setLanguage } from '../i18n';
 
 export interface SettingsProps {
   isOpen: boolean;
@@ -18,6 +38,44 @@ export interface SettingsProps {
   onSave?: (settings: GameSettings) => void;
 }
 
+const KEYBOARD_ACTIONS: Array<{ action: RebindableKeyboardAction; labelKey: string }> = [
+  { action: 'throttle', labelKey: 'settings.controls.action.throttle' },
+  { action: 'brake', labelKey: 'settings.controls.action.brake' },
+  { action: 'steerLeft', labelKey: 'settings.controls.action.steerLeft' },
+  { action: 'steerRight', labelKey: 'settings.controls.action.steerRight' },
+  { action: 'horn', labelKey: 'settings.controls.action.horn' },
+  { action: 'camera', labelKey: 'settings.controls.action.camera' },
+  { action: 'phone', labelKey: 'settings.controls.action.phone' },
+  { action: 'map', labelKey: 'settings.controls.action.map' },
+  { action: 'garage', labelKey: 'settings.controls.action.garage' },
+  { action: 'journal', labelKey: 'settings.controls.action.journal' },
+  { action: 'mute', labelKey: 'settings.controls.action.mute' },
+];
+
+const GAMEPAD_ACTIONS: Array<{ action: RebindableGamepadAction; labelKey: string }> = [
+  { action: 'throttleAxisOrButton', labelKey: 'settings.controls.action.throttle' },
+  { action: 'brakeAxisOrButton', labelKey: 'settings.controls.action.brake' },
+  { action: 'hornButton', labelKey: 'settings.controls.action.horn' },
+  { action: 'cameraButton', labelKey: 'settings.controls.action.camera' },
+  { action: 'phoneButton', labelKey: 'settings.controls.action.phone' },
+  { action: 'mapButton', labelKey: 'settings.controls.action.map' },
+  { action: 'pauseButton', labelKey: 'settings.controls.action.pause' },
+];
+
+function resolveActionLabel(actionName?: string): string {
+  if (!actionName) return '';
+  const kbMatch = KEYBOARD_ACTIONS.find((a) => a.action === actionName);
+  if (kbMatch) return t(kbMatch.labelKey);
+  const gpMatch = GAMEPAD_ACTIONS.find((a) => a.action === actionName);
+  if (gpMatch) return t(gpMatch.labelKey);
+  return actionName;
+}
+
+type ListeningTarget =
+  | { kind: 'keyboard'; action: RebindableKeyboardAction }
+  | { kind: 'gamepad'; action: RebindableGamepadAction }
+  | null;
+
 export function Settings({
   isOpen,
   initialTab = 'general',
@@ -27,11 +85,34 @@ export function Settings({
   onSave,
 }: SettingsProps): JSX.Element | null {
   const [activeTab, setActiveTab] = useState<'general' | 'audio' | 'controls'>(initialTab);
-  const [localSettings, setLocalSettings] = useState<GameSettings>({ ...settingsSignal.value });
+  const [localSettings, setLocalSettings] = useState<GameSettings>(() => ({
+    ...settingsSignal.value,
+  }));
+  const [draftBindings, setDraftBindings] = useState<InputBindings>(() => loadBindings());
+  const [listeningTarget, setListeningTarget] = useState<ListeningTarget>(null);
+  const [rebindError, setRebindError] = useState<string | null>(null);
+  const draftBindingsRef = useRef<InputBindings>(draftBindings);
+  draftBindingsRef.current = draftBindings;
+  const listeningTargetRef = useRef<ListeningTarget>(listeningTarget);
+  listeningTargetRef.current = listeningTarget;
 
-  // Cancel discards every change, including a language shown as a preview.
+  const updateListeningTarget = (target: ListeningTarget) => {
+    listeningTargetRef.current = target;
+    setListeningTarget(target);
+  };
+
+  const updateDraftBindings = (next: InputBindings) => {
+    draftBindingsRef.current = next;
+    setDraftBindings(next);
+  };
+
+  // Cancel discards every change, including language, scale, high-contrast, audio & control previews.
   const handleCancel = () => {
     setLanguage(settingsSignal.value.language);
+    applyDocumentSettings(settingsSignal.value);
+    audioPreviewSignal.value = null;
+    updateListeningTarget(null);
+    setRebindError(null);
     onCancel?.();
     onClose?.();
   };
@@ -44,12 +125,16 @@ export function Settings({
   useEffect(() => {
     if (!isOpen) {
       needsResetOnOpenRef.current = true;
+      audioPreviewSignal.value = null;
       return undefined;
     }
     if (needsResetOnOpenRef.current) {
       needsResetOnOpenRef.current = false;
       setActiveTab(initialTab);
       setLocalSettings({ ...settingsSignal.value });
+      updateDraftBindings(loadBindings());
+      updateListeningTarget(null);
+      setRebindError(null);
     }
     if (onCancelRef) {
       onCancelRef.current = () => handleCancelRef.current();
@@ -70,15 +155,136 @@ export function Settings({
     };
   }, [isOpen, initialTab, onCancelRef]);
 
+  // Always-on capture listener while Settings is open so key rebinds have zero rAF race
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    const onKeyDown = (e: KeyboardEvent) => {
+      const target = listeningTargetRef.current;
+      if (!target) return;
+      if (e.code === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation?.();
+        updateListeningTarget(null);
+        return;
+      }
+      if (target.kind !== 'keyboard') return;
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation?.();
+      const result = rebindKeyboardAction(draftBindingsRef.current, target.action, e.code);
+      updateListeningTarget(null);
+      if (!result.ok) {
+        setRebindError(
+          result.reason === 'reserved'
+            ? t('settings.controls.reserved', { key: e.code })
+            : t('settings.controls.conflict', {
+                key: e.code,
+                action: resolveActionLabel(result.conflictingAction),
+              })
+        );
+        return;
+      }
+      setRebindError(null);
+      updateDraftBindings(result.bindings);
+    };
+    window.addEventListener('keydown', onKeyDown, true);
+    return () => window.removeEventListener('keydown', onKeyDown, true);
+  }, [isOpen]);
+
+  // Poll gamepad buttons when listening for a controller rebind
+  useEffect(() => {
+    if (!isOpen || listeningTarget?.kind !== 'gamepad') return undefined;
+    let rafId = 0;
+    const targetAction = listeningTarget.action;
+    const prevPressed = new Set<number>();
+    const gpSnap = typeof navigator !== 'undefined' ? navigator.getGamepads?.() : null;
+    if (gpSnap) {
+      for (const pad of gpSnap) {
+        if (!pad) continue;
+        pad.buttons.forEach((btn, idx) => {
+          if (btn?.pressed) prevPressed.add(idx);
+        });
+      }
+    }
+
+    const poll = () => {
+      const pads = typeof navigator !== 'undefined' ? navigator.getGamepads?.() : null;
+      if (pads) {
+        for (const pad of pads) {
+          if (!pad) continue;
+          for (let i = 0; i < pad.buttons.length; i++) {
+            const isDown = Boolean(pad.buttons[i]?.pressed);
+            if (isDown && !prevPressed.has(i)) {
+              const result = rebindGamepadAction(draftBindingsRef.current, targetAction, i);
+              updateListeningTarget(null);
+              if (!result.ok) {
+                setRebindError(
+                  result.reason === 'reserved'
+                    ? t('settings.controls.reserved', { key: `B${i}` })
+                    : t('settings.controls.conflict', {
+                        key: `B${i}`,
+                        action: resolveActionLabel(result.conflictingAction),
+                      })
+                );
+              } else {
+                setRebindError(null);
+                updateDraftBindings(result.bindings);
+              }
+              return;
+            }
+            if (!isDown) prevPressed.delete(i);
+          }
+        }
+      }
+      rafId = requestAnimationFrame(poll);
+    };
+    rafId = requestAnimationFrame(poll);
+
+    return () => {
+      cancelAnimationFrame(rafId);
+    };
+  }, [isOpen, listeningTarget]);
+
   if (!isOpen) return null;
+
+  const updateAudioPreview = (next: GameSettings, triggerBeep: boolean) => {
+    audioPreviewSignal.value = {
+      masterVolume: next.masterVolume,
+      sfxVolume: next.sfxVolume,
+      ambientVolume: next.ambientVolume,
+      muted: next.muted,
+    };
+    if (triggerBeep) {
+      audioPreviewSeqSignal.value += 1;
+    }
+  };
 
   const handleLangChange = (lang: 'bn' | 'en') => {
     setLanguage(lang);
     setLocalSettings((prev) => ({ ...prev, language: lang }));
   };
 
+  const handleScaleChange = (scale: UiScale) => {
+    const next = { ...localSettings, uiScale: scale };
+    setLocalSettings(next);
+    applyDocumentSettings(next);
+  };
+
+  const handleHighContrastChange = (enabled: boolean) => {
+    const next = { ...localSettings, colorblindRoute: enabled };
+    setLocalSettings(next);
+    applyDocumentSettings(next);
+  };
+
   const handleSave = () => {
+    saveBindings({
+      ...draftBindings,
+      tiltEnabled: localSettings.tiltControls,
+    });
+    audioPreviewSignal.value = null;
     saveSettings(localSettings);
+    applyDocumentSettings(localSettings);
     onSave?.(localSettings);
     onClose?.();
   };
@@ -95,17 +301,20 @@ export function Settings({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '16px',
-        fontFamily: "'Hind Siliguri', 'Segoe UI', system-ui, sans-serif",
+        padding: '12px',
+        fontFamily: 'var(--font-sans)',
         color: '#f8fafc',
         pointerEvents: 'auto',
       }}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="settings-dialog-title"
         style={{
           width: '100%',
-          maxWidth: '620px',
-          maxHeight: '88vh',
+          maxWidth: '640px',
+          maxHeight: '90dvh',
           display: 'flex',
           flexDirection: 'column',
           background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.98))',
@@ -118,32 +327,55 @@ export function Settings({
         {/* Header */}
         <div
           style={{
-            padding: '18px 24px',
+            padding: '14px 20px',
             borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
             background: 'rgba(15, 23, 42, 0.5)',
+            flexShrink: 0,
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span style={{ fontSize: '1.4rem' }}>⚙️</span>
-            <h2 data-testid="settings-title" style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#38bdf8' }}>
+            <IconSettings size={20} />
+            <h2
+              id="settings-dialog-title"
+              data-testid="settings-title"
+              style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: '#f8fafc' }}
+            >
               {t('settings.title')}
             </h2>
           </div>
           <button
+            type="button"
             data-testid="settings-close-btn"
+            aria-label={t('menu.close')}
             onClick={handleCancel}
             style={{
               background: 'none',
               border: 'none',
               color: '#94a3b8',
-              fontSize: '1.3rem',
               cursor: 'pointer',
+              padding: '6px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              position: 'relative',
             }}
           >
-            ✕
+            <span
+              style={{
+                position: 'absolute',
+                width: '1px',
+                height: '1px',
+                overflow: 'hidden',
+                clip: 'rect(0 0 0 0)',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              ✕
+            </span>
+            <IconClose size={18} />
           </button>
         </div>
 
@@ -153,14 +385,16 @@ export function Settings({
             display: 'flex',
             borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
             background: 'rgba(15, 23, 42, 0.3)',
+            flexShrink: 0,
           }}
         >
           <button
+            type="button"
             data-testid="settings-tab-general"
             onClick={() => setActiveTab('general')}
             style={{
               flex: 1,
-              padding: '12px',
+              padding: '11px',
               border: 'none',
               background: activeTab === 'general' ? 'rgba(56, 189, 248, 0.15)' : 'transparent',
               borderBottom: activeTab === 'general' ? '2px solid #38bdf8' : '2px solid transparent',
@@ -168,16 +402,22 @@ export function Settings({
               fontWeight: 700,
               fontSize: '0.85rem',
               cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
             }}
           >
-            🖥️ {t('settings.tab_general')}
+            <IconSliders size={15} />
+            <span>{t('settings.tab_general')}</span>
           </button>
           <button
+            type="button"
             data-testid="settings-tab-audio"
             onClick={() => setActiveTab('audio')}
             style={{
               flex: 1,
-              padding: '12px',
+              padding: '11px',
               border: 'none',
               background: activeTab === 'audio' ? 'rgba(56, 189, 248, 0.15)' : 'transparent',
               borderBottom: activeTab === 'audio' ? '2px solid #38bdf8' : '2px solid transparent',
@@ -185,16 +425,22 @@ export function Settings({
               fontWeight: 700,
               fontSize: '0.85rem',
               cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
             }}
           >
-            🔊 {t('settings.tab_audio')}
+            <IconVolume size={15} />
+            <span>{t('settings.tab_audio')}</span>
           </button>
           <button
+            type="button"
             data-testid="settings-tab-controls"
             onClick={() => setActiveTab('controls')}
             style={{
               flex: 1,
-              padding: '12px',
+              padding: '11px',
               border: 'none',
               background: activeTab === 'controls' ? 'rgba(56, 189, 248, 0.15)' : 'transparent',
               borderBottom: activeTab === 'controls' ? '2px solid #38bdf8' : '2px solid transparent',
@@ -202,17 +448,32 @@ export function Settings({
               fontWeight: 700,
               fontSize: '0.85rem',
               cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
             }}
           >
-            🎮 {t('settings.tab_controls')}
+            <IconGamepad size={15} />
+            <span>{t('settings.tab_controls')}</span>
           </button>
         </div>
 
         {/* Content Body */}
-        <div style={{ padding: '24px', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div
+          style={{
+            padding: '18px 20px',
+            overflowY: 'auto',
+            minHeight: 0,
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '16px',
+          }}
+        >
           {/* General Tab */}
           {activeTab === 'general' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {/* Language Selection */}
               <div>
                 <label style={{ display: 'block', fontSize: '0.9rem', color: '#94a3b8', marginBottom: '8px', fontWeight: 600 }}>
@@ -220,11 +481,12 @@ export function Settings({
                 </label>
                 <div style={{ display: 'flex', gap: '10px' }}>
                   <button
+                    type="button"
                     data-testid="settings-lang-bn"
                     onClick={() => handleLangChange('bn')}
                     style={{
                       flex: 1,
-                      padding: '10px 16px',
+                      padding: '10px 14px',
                       borderRadius: '10px',
                       border: localSettings.language === 'bn' ? '1px solid #10b981' : '1px solid rgba(255, 255, 255, 0.1)',
                       background: localSettings.language === 'bn' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(30, 41, 59, 0.5)',
@@ -233,14 +495,15 @@ export function Settings({
                       cursor: 'pointer',
                     }}
                   >
-                    🇧🇩 বাংলা (Bengali)
+                    বাংলা (BN)
                   </button>
                   <button
+                    type="button"
                     data-testid="settings-lang-en"
                     onClick={() => handleLangChange('en')}
                     style={{
                       flex: 1,
-                      padding: '10px 16px',
+                      padding: '10px 14px',
                       borderRadius: '10px',
                       border: localSettings.language === 'en' ? '1px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.1)',
                       background: localSettings.language === 'en' ? 'rgba(56, 189, 248, 0.2)' : 'rgba(30, 41, 59, 0.5)',
@@ -249,7 +512,7 @@ export function Settings({
                       cursor: 'pointer',
                     }}
                   >
-                    🇬🇧 English
+                    English (EN)
                   </button>
                 </div>
               </div>
@@ -263,6 +526,7 @@ export function Settings({
                   {(['low', 'medium', 'high'] as const).map((q) => (
                     <button
                       key={q}
+                      type="button"
                       data-testid={`settings-quality-${q}`}
                       onClick={() => setLocalSettings((prev) => ({ ...prev, quality: q }))}
                       style={{
@@ -283,6 +547,40 @@ export function Settings({
                 </div>
               </div>
 
+              {/* UI Scale Selector */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.9rem', color: '#94a3b8', marginBottom: '8px', fontWeight: 600 }}>
+                  {t('settings.ui_scale')}
+                </label>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  {([
+                    { value: 1 as UiScale, testId: 'settings-scale-100', label: `${localDigits(100)}%` },
+                    { value: 1.15 as UiScale, testId: 'settings-scale-115', label: `${localDigits(115)}%` },
+                    { value: 1.3 as UiScale, testId: 'settings-scale-130', label: `${localDigits(130)}%` },
+                  ]).map((opt) => (
+                    <button
+                      key={opt.testId}
+                      type="button"
+                      data-testid={opt.testId}
+                      onClick={() => handleScaleChange(opt.value)}
+                      style={{
+                        flex: 1,
+                        padding: '10px 12px',
+                        borderRadius: '10px',
+                        border: localSettings.uiScale === opt.value ? '1px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.1)',
+                        background: localSettings.uiScale === opt.value ? 'rgba(56, 189, 248, 0.2)' : 'rgba(30, 41, 59, 0.5)',
+                        color: localSettings.uiScale === opt.value ? '#38bdf8' : '#cbd5e1',
+                        fontWeight: 700,
+                        fontSize: '0.85rem',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {/* Subtitles Size */}
               <div>
                 <label style={{ display: 'block', fontSize: '0.9rem', color: '#94a3b8', marginBottom: '8px', fontWeight: 600 }}>
@@ -292,11 +590,12 @@ export function Settings({
                   {(['normal', 'large'] as const).map((sz) => (
                     <button
                       key={sz}
+                      type="button"
                       data-testid={`settings-subtitles-${sz}`}
                       onClick={() => setLocalSettings((prev) => ({ ...prev, subtitlesSize: sz }))}
                       style={{
                         flex: 1,
-                        padding: '10px 16px',
+                        padding: '10px 14px',
                         borderRadius: '10px',
                         border: localSettings.subtitlesSize === sz ? '1px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.1)',
                         background: localSettings.subtitlesSize === sz ? 'rgba(56, 189, 248, 0.2)' : 'rgba(30, 41, 59, 0.5)',
@@ -312,15 +611,15 @@ export function Settings({
               </div>
 
               {/* Toggles */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', paddingTop: '6px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', paddingTop: '4px' }}>
                 <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
-                  <span style={{ fontSize: '0.9rem', color: '#cbd5e1' }}>{t('settings.colorblind_route')}</span>
+                  <span style={{ fontSize: '0.9rem', color: '#cbd5e1' }}>{t('settings.high_contrast')}</span>
                   <input
                     data-testid="settings-colorblind-toggle"
-                    aria-label={t('settings.colorblind_route')}
+                    aria-label={t('settings.high_contrast')}
                     type="checkbox"
                     checked={localSettings.colorblindRoute}
-                    onChange={(e) => setLocalSettings((prev) => ({ ...prev, colorblindRoute: e.currentTarget.checked }))}
+                    onChange={(e) => handleHighContrastChange(e.currentTarget.checked)}
                     style={{ width: '18px', height: '18px', accentColor: '#38bdf8', cursor: 'pointer' }}
                   />
                 </label>
@@ -332,10 +631,13 @@ export function Settings({
                     aria-label={t('settings.pause_on_decisions')}
                     type="checkbox"
                     checked={localSettings.pauseOnDecisions}
-                    onChange={(e) => setLocalSettings((prev) => ({ ...prev, pauseOnDecisions: e.currentTarget.checked }))}
+                    onChange={(e) =>
+                      setLocalSettings((prev) => ({ ...prev, pauseOnDecisions: e.currentTarget.checked }))
+                    }
                     style={{ width: '18px', height: '18px', accentColor: '#38bdf8', cursor: 'pointer' }}
                   />
                 </label>
+
                 <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
                   <span style={{ fontSize: '0.9rem', color: '#cbd5e1' }}>{t('settings.reduce_motion')}</span>
                   <input
@@ -343,39 +645,24 @@ export function Settings({
                     type="checkbox"
                     aria-label={t('settings.reduce_motion')}
                     checked={localSettings.reduceMotion}
-                    onChange={(e) => setLocalSettings((prev) => ({ ...prev, reduceMotion: e.currentTarget.checked }))}
+                    onChange={(e) =>
+                      setLocalSettings((prev) => ({ ...prev, reduceMotion: e.currentTarget.checked }))
+                    }
                     style={{ width: '18px', height: '18px', accentColor: '#38bdf8', cursor: 'pointer' }}
                   />
                 </label>
-
-                <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
-                  <span style={{ fontSize: '0.9rem', color: '#cbd5e1' }}>
-                    {t('settings.auto_cruise')}
-                    <span style={{ marginLeft: '8px', fontSize: '0.75rem', color: '#fbbf24' }}>{t('settings.prototype_note')}</span>
-                  </span>
-                  <input
-                    data-testid="settings-auto-cruise-toggle"
-                    type="checkbox"
-                    aria-label={t('settings.auto_cruise')}
-                    checked={localSettings.autoCruise}
-                    onChange={(e) => setLocalSettings((prev) => ({ ...prev, autoCruise: e.currentTarget.checked }))}
-                    style={{ width: '18px', height: '18px', accentColor: '#38bdf8', cursor: 'pointer' }}
-                  />
-                </label>
-
               </div>
             </div>
           )}
 
-          {/* Audio Tab */}
+          {/* Audio Tab (live volume preview) */}
           {activeTab === 'audio' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              {/* Master Volume */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                   <span style={{ fontSize: '0.9rem', color: '#cbd5e1' }}>{t('settings.master_vol')}</span>
                   <span style={{ fontSize: '0.9rem', color: '#38bdf8', fontWeight: 700 }}>
-                    {Math.round(localSettings.masterVolume * 100)}%
+                    {localDigits(Math.round(localSettings.masterVolume * 100))}%
                   </span>
                 </div>
                 <input
@@ -387,18 +674,25 @@ export function Settings({
                   value={localSettings.masterVolume}
                   onInput={(e) => {
                     const val = parseFloat(e.currentTarget.value);
-                    setLocalSettings((prev) => ({ ...prev, masterVolume: val }));
+                    const next = { ...localSettings, masterVolume: val };
+                    setLocalSettings(next);
+                    updateAudioPreview(next, false);
+                  }}
+                  onChange={(e) => {
+                    const val = parseFloat(e.currentTarget.value);
+                    const next = { ...localSettings, masterVolume: val };
+                    setLocalSettings(next);
+                    updateAudioPreview(next, true);
                   }}
                   style={{ width: '100%', accentColor: '#38bdf8', cursor: 'pointer' }}
                 />
               </div>
 
-              {/* SFX Volume */}
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                   <span style={{ fontSize: '0.9rem', color: '#cbd5e1' }}>{t('settings.sfx_vol')}</span>
                   <span style={{ fontSize: '0.9rem', color: '#38bdf8', fontWeight: 700 }}>
-                    {Math.round(localSettings.sfxVolume * 100)}%
+                    {localDigits(Math.round(localSettings.sfxVolume * 100))}%
                   </span>
                 </div>
                 <input
@@ -410,18 +704,25 @@ export function Settings({
                   value={localSettings.sfxVolume}
                   onInput={(e) => {
                     const val = parseFloat(e.currentTarget.value);
-                    setLocalSettings((prev) => ({ ...prev, sfxVolume: val }));
+                    const next = { ...localSettings, sfxVolume: val };
+                    setLocalSettings(next);
+                    updateAudioPreview(next, false);
+                  }}
+                  onChange={(e) => {
+                    const val = parseFloat(e.currentTarget.value);
+                    const next = { ...localSettings, sfxVolume: val };
+                    setLocalSettings(next);
+                    updateAudioPreview(next, true);
                   }}
                   style={{ width: '100%', accentColor: '#38bdf8', cursor: 'pointer' }}
                 />
               </div>
 
-              {/* Ambient Volume */}
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                   <span style={{ fontSize: '0.9rem', color: '#cbd5e1' }}>{t('settings.ambient_vol')}</span>
                   <span style={{ fontSize: '0.9rem', color: '#38bdf8', fontWeight: 700 }}>
-                    {Math.round(localSettings.ambientVolume * 100)}%
+                    {localDigits(Math.round(localSettings.ambientVolume * 100))}%
                   </span>
                 </div>
                 <input
@@ -433,7 +734,15 @@ export function Settings({
                   value={localSettings.ambientVolume}
                   onInput={(e) => {
                     const val = parseFloat(e.currentTarget.value);
-                    setLocalSettings((prev) => ({ ...prev, ambientVolume: val }));
+                    const next = { ...localSettings, ambientVolume: val };
+                    setLocalSettings(next);
+                    updateAudioPreview(next, false);
+                  }}
+                  onChange={(e) => {
+                    const val = parseFloat(e.currentTarget.value);
+                    const next = { ...localSettings, ambientVolume: val };
+                    setLocalSettings(next);
+                    updateAudioPreview(next, true);
                   }}
                   style={{ width: '100%', accentColor: '#38bdf8', cursor: 'pointer' }}
                 />
@@ -445,62 +754,155 @@ export function Settings({
                   data-testid="settings-mute"
                   type="checkbox"
                   checked={localSettings.muted}
-                  onChange={(e) => setLocalSettings((prev) => ({ ...prev, muted: e.currentTarget.checked }))}
+                  onChange={(e) => {
+                    const next = { ...localSettings, muted: e.currentTarget.checked };
+                    setLocalSettings(next);
+                    updateAudioPreview(next, !next.muted);
+                  }}
                   style={{ width: '18px', height: '18px', accentColor: '#38bdf8', cursor: 'pointer' }}
                 />
               </label>
             </div>
           )}
 
-          {/* Controls Tab */}
+          {/* Controls Tab (Interactive Keyboard & Controller Rebinding) */}
           {activeTab === 'controls' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
                 <span style={{ fontSize: '0.9rem', color: '#cbd5e1' }}>{t('settings.tilt_controls')}</span>
                 <input
                   data-testid="settings-tilt-toggle"
                   type="checkbox"
                   checked={localSettings.tiltControls}
-                  onChange={(e) => setLocalSettings((prev) => ({ ...prev, tiltControls: e.currentTarget.checked }))}
+                  onChange={(e) =>
+                    setLocalSettings((prev) => ({ ...prev, tiltControls: e.currentTarget.checked }))
+                  }
                   style={{ width: '18px', height: '18px', accentColor: '#38bdf8', cursor: 'pointer' }}
                 />
               </label>
 
-              <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.08)', paddingTop: '14px' }}>
-                <h4 style={{ margin: '0 0 10px 0', fontSize: '0.9rem', color: '#94a3b8' }}>Keyboard & Controller Map</h4>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '0.85rem' }}>
-                  <div style={{ background: 'rgba(15, 23, 42, 0.4)', padding: '8px 12px', borderRadius: '8px', display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: '#94a3b8' }}>Throttle</span>
-                    <strong style={{ color: '#38bdf8' }}>W / ↑</strong>
+              <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.08)', paddingTop: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+                    {t('settings.controls.rebind_hint')}
+                  </span>
+                  <button
+                    type="button"
+                    data-testid="settings-reset-controls"
+                    onClick={() => {
+                      updateDraftBindings(cloneDefaultBindings());
+                      updateListeningTarget(null);
+                      setRebindError(null);
+                    }}
+                    style={{
+                      padding: '6px 10px',
+                      borderRadius: '8px',
+                      border: '1px solid rgba(148, 163, 184, 0.3)',
+                      background: 'rgba(15, 23, 42, 0.6)',
+                      color: '#cbd5e1',
+                      fontSize: '0.78rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {t('settings.controls.reset')}
+                  </button>
+                </div>
+
+                {rebindError && (
+                  <div
+                    data-testid="settings-rebind-conflict"
+                    role="alert"
+                    style={{
+                      padding: '8px 12px',
+                      borderRadius: '8px',
+                      background: 'rgba(239, 68, 68, 0.16)',
+                      border: '1px solid rgba(239, 68, 68, 0.45)',
+                      color: '#fca5a5',
+                      fontSize: '0.82rem',
+                      fontWeight: 600,
+                    }}
+                  >
+                    {rebindError}
                   </div>
-                  <div style={{ background: 'rgba(15, 23, 42, 0.4)', padding: '8px 12px', borderRadius: '8px', display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: '#94a3b8' }}>Brake / Rev</span>
-                    <strong style={{ color: '#38bdf8' }}>S / ↓</strong>
-                  </div>
-                  <div style={{ background: 'rgba(15, 23, 42, 0.4)', padding: '8px 12px', borderRadius: '8px', display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: '#94a3b8' }}>Steer</span>
-                    <strong style={{ color: '#38bdf8' }}>A / D</strong>
-                  </div>
-                  <div style={{ background: 'rgba(15, 23, 42, 0.4)', padding: '8px 12px', borderRadius: '8px', display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: '#94a3b8' }}>Handbrake</span>
-                    <strong style={{ color: '#38bdf8' }}>Space</strong>
-                  </div>
-                  <div style={{ background: 'rgba(15, 23, 42, 0.4)', padding: '8px 12px', borderRadius: '8px', display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: '#94a3b8' }}>Horn</span>
-                    <strong style={{ color: '#38bdf8' }}>H</strong>
-                  </div>
-                  <div style={{ background: 'rgba(15, 23, 42, 0.4)', padding: '8px 12px', borderRadius: '8px', display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: '#94a3b8' }}>Phone UI</span>
-                    <strong style={{ color: '#38bdf8' }}>Tab</strong>
-                  </div>
-                  <div style={{ background: 'rgba(15, 23, 42, 0.4)', padding: '8px 12px', borderRadius: '8px', display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: '#94a3b8' }}>City Map</span>
-                    <strong style={{ color: '#38bdf8' }}>M</strong>
-                  </div>
-                  <div style={{ background: 'rgba(15, 23, 42, 0.4)', padding: '8px 12px', borderRadius: '8px', display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: '#94a3b8' }}>Pause</span>
-                    <strong style={{ color: '#38bdf8' }}>Esc</strong>
-                  </div>
+                )}
+
+                <h4 style={{ margin: '4px 0 0 0', fontSize: '0.85rem', color: '#94a3b8' }}>
+                  {t('settings.controls.keyboard_heading')}
+                </h4>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '8px', fontSize: '0.82rem' }}>
+                  {KEYBOARD_ACTIONS.map(({ action, labelKey }) => {
+                    const isListening =
+                      listeningTarget?.kind === 'keyboard' && listeningTarget.action === action;
+                    const keyCodes = draftBindings.keyboard[action].join(' / ');
+                    return (
+                      <button
+                        key={action}
+                        type="button"
+                        data-testid={`settings-rebind-${action}`}
+                        onClick={() => {
+                          setRebindError(null);
+                          updateListeningTarget({ kind: 'keyboard', action });
+                        }}
+                        style={{
+                          background: isListening ? 'rgba(245, 158, 11, 0.2)' : 'rgba(15, 23, 42, 0.5)',
+                          border: isListening ? '1px solid #f59e0b' : '1px solid rgba(255, 255, 255, 0.08)',
+                          padding: '8px 10px',
+                          borderRadius: '8px',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          gap: '8px',
+                          cursor: 'pointer',
+                          color: '#f8fafc',
+                        }}
+                      >
+                        <span style={{ color: '#cbd5e1' }}>{t(labelKey)}</span>
+                        <strong style={{ color: isListening ? '#fbbf24' : '#38bdf8' }}>
+                          {isListening ? t('settings.controls.listening') : keyCodes}
+                        </strong>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <h4 style={{ margin: '6px 0 0 0', fontSize: '0.85rem', color: '#94a3b8' }}>
+                  {t('settings.controls.gamepad_heading')}
+                </h4>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '8px', fontSize: '0.82rem' }}>
+                  {GAMEPAD_ACTIONS.map(({ action, labelKey }) => {
+                    const isListening =
+                      listeningTarget?.kind === 'gamepad' && listeningTarget.action === action;
+                    const btnNum = draftBindings.gamepad[action];
+                    return (
+                      <button
+                        key={action}
+                        type="button"
+                        data-testid={`settings-rebind-gp-${action}`}
+                        onClick={() => {
+                          setRebindError(null);
+                          updateListeningTarget({ kind: 'gamepad', action });
+                        }}
+                        style={{
+                          background: isListening ? 'rgba(245, 158, 11, 0.2)' : 'rgba(15, 23, 42, 0.5)',
+                          border: isListening ? '1px solid #f59e0b' : '1px solid rgba(255, 255, 255, 0.08)',
+                          padding: '8px 10px',
+                          borderRadius: '8px',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          gap: '8px',
+                          cursor: 'pointer',
+                          color: '#f8fafc',
+                        }}
+                      >
+                        <span style={{ color: '#cbd5e1' }}>{t(labelKey)}</span>
+                        <strong style={{ color: isListening ? '#fbbf24' : '#38bdf8' }}>
+                          {isListening ? t('settings.controls.listening') : `B${btnNum}`}
+                        </strong>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -510,15 +912,17 @@ export function Settings({
         {/* Footer */}
         <div
           style={{
-            padding: '16px 24px',
+            padding: '12px 20px',
             borderTop: '1px solid rgba(255, 255, 255, 0.08)',
             display: 'flex',
             justifyContent: 'flex-end',
             gap: '12px',
             background: 'rgba(15, 23, 42, 0.5)',
+            flexShrink: 0,
           }}
         >
           <button
+            type="button"
             data-testid="settings-cancel-btn"
             onClick={handleCancel}
             style={{
@@ -531,9 +935,10 @@ export function Settings({
               cursor: 'pointer',
             }}
           >
-            Cancel
+            {t('settings.cancel')}
           </button>
           <button
+            type="button"
             data-testid="settings-save-btn"
             onClick={handleSave}
             style={{

@@ -38,5 +38,19 @@
   "nav.straight": "{dist} মিটার সোজা যান",
   "nav.uturn": "ইউ-টার্ন নিন",
   "nav.arrive": "{dist} মিটার পরে পৌঁছাবেন",
-  "hud.charge_phone": "ফোন চার্জ দিন"
+  "hud.charge_phone": "ফোন চার্জ দিন",
+  "hud.condition": "অবস্থা",
+  "hud.recover_bike": "বাইক রাস্তায় তুলুন",
+  "hud.mood.happy": "খুশি",
+  "hud.mood.neutral": "স্বাভাবিক",
+  "hud.mood.tense": "অধৈর্য",
+  "hud.mood.angry": "বিরক্ত",
+  "district.mirpara": "মিরপাড়া",
+  "district.fulgate": "ফুলগেট",
+  "district.dhanbagh": "ধানবাগ",
+  "district.mohakhal": "মহাখাল",
+  "district.gulbari": "গুলবাড়ি",
+  "district.puranpara": "পুরানপাড়া",
+  "district.motinagar": "মতিনগর",
+  "district.testloop": "টেস্টলুপ"
 }

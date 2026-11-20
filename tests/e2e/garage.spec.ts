@@ -70,6 +70,23 @@ test('T4.4 Garage and Bike Upgrades e2e: condition gauges, repair actions, tab s
   const crimsonCard = page.locator('[data-testid="cosmetic-card-cosmetic_paint_crimson"]');
   await expect(crimsonCard).toBeVisible();
 
+  // Switch to Bikes tab and verify scrolling works cleanly even on 915x412 mobile viewport
+  const bikesTab = page.locator('[data-testid="garage-tab-bikes"]');
+  await bikesTab.click();
+  const new150Card = page.locator('[data-testid="bike-card-new150"]');
+  await new150Card.scrollIntoViewIfNeeded();
+  await expect(new150Card).toBeVisible();
+  const insideScroller = await page.evaluate(() => {
+    const card = document.querySelector('[data-testid="bike-card-new150"]');
+    const scroller = document.querySelector('[data-testid="garage-tab-content"]');
+    return Boolean(card && scroller && scroller.contains(card));
+  });
+  expect(insideScroller).toBe(true);
+  const box = await new150Card.boundingBox();
+  const vh = page.viewportSize()?.height ?? 720;
+  expect(box).not.toBeNull();
+  expect((box!.y + box!.height)).toBeLessThanOrEqual(vh);
+
   // Click Exit button to return to road
   const exitBtn = page.locator('[data-testid="garage-exit-btn"]');
   await expect(exitBtn).toBeVisible();

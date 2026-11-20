@@ -237,4 +237,63 @@ describe('T2.4 Negotiation Store & Logic', () => {
 
     unbind();
   });
+
+  it('P6.2: preserves destinationKey across multi-round counteroffers and renders destination label cleanly', async () => {
+    const road = RoadNetwork.fromDistricts([testloopData as DistrictData]);
+    const gm = new GameManager({ seed: 11, mode: 'career', data: {} });
+    const session = new GameSession({ gm, road, autoRequests: false, negotiation: true });
+    const unbind = bindEventBusToStore(gm.bus);
+    bindUi(session);
+
+    const profile = {
+      ...generateProfile('bargainer', new Rng(3), 'pass_p62_dest'),
+      patience: 0.95,
+    };
+    session.requests.setProfile(profile);
+    const [a, b] = road.getAllNodes();
+    session.ride.offer({
+      requestId: 'req_p62_dest',
+      passengerId: profile.passengerId,
+      pickupNodeId: a!.nodeId,
+      destinationNodeId: b!.nodeId,
+      destinationPlaceKey: 'poi.mirpara.bazaar',
+      initialFare: 80,
+      estimatedDistance: 1.5,
+      estimatedDuration: 6,
+      requestedArrivalTime: null,
+      bookingType: 'app',
+      status: 'WaitingForPickup',
+      surge: 1,
+    });
+    session.ride.accept('req_p62_dest');
+    const neg = session.beginNegotiation('req_p62_dest')!;
+    negotiationSignal.value = {
+      active: true,
+      session: neg,
+      lastResult: null,
+      destinationKey: 'poi.mirpara.bazaar',
+    };
+
+    onNegotiationActionCallback?.({ kind: 'counter', amount: neg.currentPassengerOffer + 15 });
+    expect(negotiationSignal.value.destinationKey).toBe('poi.mirpara.bazaar');
+
+    const { NegotiationPanelView } = await import('../../../src/ui/negotiation/NegotiationPanel');
+    const vnode = NegotiationPanelView({
+      active: true,
+      session: negotiationSignal.value.session!,
+      lastResult: negotiationSignal.value.lastResult,
+      destinationKey: negotiationSignal.value.destinationKey,
+      onAction: vi.fn(),
+      counterAmount: negotiationSignal.value.session!.currentPassengerOffer,
+      draftCounter: String(negotiationSignal.value.session!.currentPassengerOffer),
+      onStepFare: vi.fn(),
+      onDraftInput: vi.fn(),
+      onCommitDraft: () => negotiationSignal.value.session!.currentPassengerOffer,
+    });
+    const html = JSON.stringify(vnode);
+    expect(html).toContain('negotiation-destination');
+    expect(html).not.toContain('{destination}');
+
+    unbind();
+  });
 });

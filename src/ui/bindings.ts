@@ -4,6 +4,7 @@ import { respond } from '../sim/negotiation/NegotiationSystem';
 import { nearestPlaceKey } from '../sim/ride/rideView';
 import type { BikeId } from '../core/types';
 import type { SaveSlot } from '../sim/save/migrations';
+import { BALANCE } from '../config/balance';
 import { requestFreshCareer, resolveCareerSeed } from './freshCareer';
 import { saveSlotsRefreshSignal } from './menus/SaveSlots';
 import {
@@ -18,6 +19,7 @@ import {
   setBikeDispatchers,
   setFuelDispatchers,
   setChargePhoneDispatcher,
+  setRecoverBikeDispatcher,
   setMenuDispatchers,
   setHasSaveCallback,
   setSaveDispatchers,
@@ -83,6 +85,23 @@ export function bindUi(session: GameSession, saveSystem?: SaveSystem): () => voi
   };
 
   const syncGarage = () => syncGarageState(gm);
+  const syncPhoneSummary = () => {
+    if (!gm?.economyManager || !gm?.economy) return;
+    phoneSignal.value = {
+      ...phoneSignal.value,
+      phoneBattery: Math.round(gm.economyManager.phoneBattery),
+      earningsSummary: {
+        cash: gm.economy.cash,
+        savings: gm.economy.savings,
+        debt: gm.economy.debt,
+        todayRevenue: gm.economy.dailyRevenue,
+        todayExpenses: gm.economy.dailyExpenses,
+        todayNet: gm.economy.dailyRevenue - gm.economy.dailyExpenses,
+        completedRides: gm.todayCompletedRides ?? phoneSignal.value.tripHistory.length,
+        rating: gm.reputationSystem?.getAppRating?.() ?? 5.0,
+      },
+    };
+  };
   const syncContacts = () => {
     if (!gm?.reputationSystem) return;
     phoneSignal.value = {
@@ -90,7 +109,10 @@ export function bindUi(session: GameSession, saveSystem?: SaveSystem): () => voi
       relationships: gm.reputationSystem.getAllRelationships(),
     };
   };
-  if (gm?.economyManager) syncGarage();
+  if (gm?.economyManager) {
+    syncGarage();
+    syncPhoneSummary();
+  }
   if (gm?.reputationSystem) syncContacts();
   if (gm?.deliveryManager) syncDeliveries();
   syncPauseEndShift();
@@ -108,13 +130,20 @@ export function bindUi(session: GameSession, saveSystem?: SaveSystem): () => voi
   );
 
   if (gm?.bus) {
-    unsubscribers.push(gm.bus.on('economy/transaction', syncGarage));
+    unsubscribers.push(
+      gm.bus.on('economy/transaction', () => {
+        syncGarage();
+        syncPhoneSummary();
+      })
+    );
+    unsubscribers.push(gm.bus.on('ride/completed', syncPhoneSummary));
     unsubscribers.push(gm.bus.on('bike/swapped', syncGarage));
     unsubscribers.push(gm.bus.on('upgrade/purchased', syncGarage));
     unsubscribers.push(
       gm.bus.on('reputation/changed', () => {
         syncGarage();
         syncContacts();
+        syncPhoneSummary();
       })
     );
     unsubscribers.push(
@@ -125,12 +154,18 @@ export function bindUi(session: GameSession, saveSystem?: SaveSystem): () => voi
     );
     unsubscribers.push(gm.bus.on('player/kamalProximity', syncGarage));
     unsubscribers.push(gm.bus.on('bike/wearChanged', syncGarage));
-    unsubscribers.push(gm.bus.on('clock/hour', syncPauseEndShift));
+    unsubscribers.push(
+      gm.bus.on('clock/hour', () => {
+        syncPauseEndShift();
+        syncPhoneSummary();
+      })
+    );
     unsubscribers.push(gm.bus.on('trip/state', syncPauseEndShift));
     unsubscribers.push(
       gm.bus.on('day/ended', () => {
         syncGarage();
         syncPauseEndShift();
+        syncPhoneSummary();
       })
     );
     unsubscribers.push(
@@ -139,6 +174,7 @@ export function bindUi(session: GameSession, saveSystem?: SaveSystem): () => voi
         syncContacts();
         syncDeliveries();
         syncPauseEndShift();
+        syncPhoneSummary();
       })
     );
     unsubscribers.push(
@@ -147,6 +183,7 @@ export function bindUi(session: GameSession, saveSystem?: SaveSystem): () => voi
         syncContacts();
         syncDeliveries();
         syncPauseEndShift();
+        syncPhoneSummary();
       })
     );
   }
@@ -225,7 +262,12 @@ export function bindUi(session: GameSession, saveSystem?: SaveSystem): () => voi
         next = { ...current, currentPatience: result.session.currentPatience };
       }
     }
-    let nextDestinationKey = negotiationSignal.value.destinationKey;
+    let nextDestinationKey =
+      negotiationSignal.value.destinationKey ||
+      next.req.destinationPlaceKey ||
+      (rideManager.roadNetwork && next.req.destinationNodeId
+        ? nearestPlaceKey(rideManager, next.req.destinationNodeId)
+        : undefined);
     const alleyMoved =
       action.kind === 'refuseAlley' &&
       result.outcome === undefined &&
@@ -318,6 +360,18 @@ export function bindUi(session: GameSession, saveSystem?: SaveSystem): () => voi
   // T8.4: charge the phone at home or a tea stall (a real, timed action).
   setChargePhoneDispatcher((where) => void gm.dispatch({ type: 'chargePhone', location: where }));
 
+  // P1.3 / P6.2: manual recoverBike trigger resets bike safely onto road.
+  setRecoverBikeDispatcher(() => {
+    const res = gm.dispatch({ type: 'recoverBike' });
+    if (res.success) {
+      gm.paused = false;
+      pausedSignal.value = false;
+      if (screenSignal.value === 'pause') {
+        screenSignal.value = 'game';
+      }
+    }
+  });
+
   setBikeDispatchers(
     (bikeId, useTradeIn) =>
       gm.dispatch({ type: 'buyBike', bikeId: bikeId as BikeId, useTradeIn }),
@@ -333,7 +387,16 @@ export function bindUi(session: GameSession, saveSystem?: SaveSystem): () => voi
       return;
     }
     session.newCareer(resolveCareerSeed());
-    tutorialSignal.value = { active: true, step: 'alarm', agreedFare: 100 };
+    tutorialSignal.value = {
+      active: true,
+      step: 'alarm',
+      agreedFare: 100,
+      cash: gm.economy?.cash ?? 600,
+      fuelL: gm.economyManager?.fuelLevel ?? 1.2,
+      conditionPct: gm.economyManager?.motorcycleCondition ?? 80,
+      rentTarget: BALANCE.LIVING.familyPaymentDay3,
+      receipt: null,
+    };
   };
 
   const applyLoadedSave = (slot: SaveSlot): boolean => {
@@ -385,14 +448,29 @@ export function bindUi(session: GameSession, saveSystem?: SaveSystem): () => voi
 
   setTutorialDispatchers({
     advance: (nextStep) => {
-      tutorialSignal.value = { ...tutorialSignal.value, step: nextStep };
+      const liveFields = {
+        cash: gm.economy?.cash ?? 600,
+        fuelL: gm.economyManager?.fuelLevel ?? 1.2,
+        conditionPct: gm.economyManager?.motorcycleCondition ?? 80,
+        rentTarget: BALANCE.LIVING.familyPaymentDay3,
+      };
       if (nextStep === 'bike_inspection') {
         gm.bus.emit('story/flag', { key: 'tutorial_bike_started', value: true });
+        tutorialSignal.value = { ...tutorialSignal.value, ...liveFields, step: nextStep };
       } else if (nextStep === 'tea_stall') {
         gm.bus.emit('story/flag', { key: 'tutorial_mintu_advice', value: true });
+        tutorialSignal.value = { ...tutorialSignal.value, ...liveFields, step: nextStep };
       } else if (nextStep === 'receipt') {
         const fare = tutorialSignal.value.agreedFare ?? 100;
-        session.settleTutorialRide(fare);
+        const receipt = session.settleTutorialRide(fare);
+        tutorialSignal.value = {
+          ...tutorialSignal.value,
+          ...liveFields,
+          step: nextStep,
+          receipt,
+        };
+      } else {
+        tutorialSignal.value = { ...tutorialSignal.value, ...liveFields, step: nextStep };
       }
     },
     negotiate: (fare) => {
@@ -403,6 +481,19 @@ export function bindUi(session: GameSession, saveSystem?: SaveSystem): () => voi
     complete: () => {
       tutorialSignal.value = { active: false, step: 'completed' };
       gm.bus.emit('story/flag', { key: 'tutorial_ride_done', value: true });
+    },
+    skip: () => {
+      gm.bus.emit('story/flag', { key: 'tutorial_bike_started', value: true });
+      gm.bus.emit('story/flag', { key: 'tutorial_mintu_advice', value: true });
+      gm.bus.emit('story/flag', { key: 'tutorial_nabila_negotiated', value: true });
+      gm.bus.emit('story/flag', { key: 'tutorial_ride_done', value: true });
+      if (gm.missionManager?.isMissionActive?.('m1_first_ride')) {
+        gm.missionManager.completeMission('m1_first_ride');
+      }
+      tutorialSignal.value = { active: false, step: 'completed' };
+      gm.paused = false;
+      pausedSignal.value = false;
+      screenSignal.value = 'game';
     },
   });
 

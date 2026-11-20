@@ -5,6 +5,7 @@ import {
   type TripEvent,
 } from './tripFsm';
 import { nearestPlaceKey } from './rideView';
+import { getCharacter } from '../passenger/PassengerAI';
 import type { RoadNetwork } from '../road/RoadNetwork';
 import type { EventBus, GameEvents } from '../../core/events';
 import type {
@@ -38,7 +39,6 @@ import { Rng as SeededRng, hashSeed } from '../../core/rng';
 import type { EconomyManager } from '../economy/EconomyManager';
 import type { ReputationSystem } from '../reputation/ReputationSystem';
 import { defaultDialogueManager } from '../dialogue/DialogueManager';
-import { getCharacter } from '../passenger/PassengerAI';
 
 /**
  * Tip for a completed, paid trip. The roll is seeded by the request, so it replays.
@@ -967,6 +967,9 @@ export class RideManager {
         ...this.roadNetwork.getNodeZoneTags(params.req.destinationNodeId),
       ]);
       const weather = this.weatherSystem?.weather ?? this.weatherProvider?.();
+      const passengerNameKey =
+        params.req.passengerNameKey ??
+        (params.req.characterId ? getCharacter(params.req.characterId)?.nameKey : undefined);
       this.bus.emit('ride/completed', {
         requestId: params.req.requestId,
         receipt: tripReceipt,
@@ -974,6 +977,7 @@ export class RideManager {
         ...(params.req.characterId !== undefined
           ? { passengerCharacterId: params.req.characterId }
           : {}),
+        ...(passengerNameKey !== undefined ? { passengerNameKey } : {}),
         ...(district !== undefined ? { district } : {}),
         ...(pickupDistrict !== undefined ? { pickupDistrict } : {}),
         ...(destinationDistrict !== undefined ? { destinationDistrict } : {}),

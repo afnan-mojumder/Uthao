@@ -29,16 +29,31 @@ test('negotiation flow: debug-spawn a bargainer, counter twice, accept, assert t
   );
   expect(acceptedWhileNegotiating).toBe(acceptedBefore);
 
-  // Counter 1: step up high (+৳40) and counter (passenger rejects)
+  // P6.2: custom counter input must NOT snap "1" to "50" mid-typing when typing "120"
+  const customInput = page.locator('[data-testid="custom-counter-input"]');
+  await customInput.fill('');
+  await customInput.pressSequentially('120');
+  await expect(customInput).toHaveValue('120');
+  await expect(page.locator('[data-testid="counter-btn"]')).toContainText(/120/);
+
+  // Clamps cleanly on blur if below minimum 50
+  await customInput.fill('30');
+  await customInput.blur();
+  await expect(customInput).toHaveValue('50');
+
+  // Counter 1: step up high (+৳100 from 50 -> 150) and counter (passenger rejects)
   const plus10Btn = page.locator('[data-testid="stepper-plus-10"]');
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < 10; i++) {
     await plus10Btn.click();
   }
   const counterBtn = page.locator('[data-testid="counter-btn"]');
   await counterBtn.click();
 
-  // Wait for reaction chip / round 2
+  // Wait for reaction chip / round 2 and verify destination stays preserved across rounds
   await expect(page.locator('[data-testid="top-factor-chip"]')).toBeVisible({ timeout: 5000 });
+  await expect(page.locator('[data-testid="negotiation-destination"]')).toBeVisible();
+  await expect(page.locator('[data-testid="negotiation-destination"]')).not.toHaveText('');
+  await expect(negPanel).not.toContainText('{destination}');
 
   // Counter 2: step up high (+৳30) and counter again (passenger rejects)
   for (let i = 0; i < 3; i++) {

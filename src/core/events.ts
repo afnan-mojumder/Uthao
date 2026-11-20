@@ -33,6 +33,7 @@ export interface GameEvents extends Record<string, unknown> {
     receipt: TripReceipt;
     crashed?: boolean;
     passengerCharacterId?: string;
+    passengerNameKey?: string;
     district?: DistrictId;
     pickupDistrict?: DistrictId;
     destinationDistrict?: DistrictId;

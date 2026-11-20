@@ -1,6 +1,7 @@
 import type { JSX } from 'preact';
 import { t } from '../i18n';
 import { Z_LAYER } from '../store';
+import { ShareCard } from '../share/ShareCard';
 import type { EndingResult, CareerChoiceOption, CareerChoice } from '../../sim/mission/endings';
 
 export interface EndingProps {
@@ -80,10 +81,13 @@ export function Ending({
       }}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={t(result.titleKey)}
         style={{
           width: '100%',
           maxWidth: '680px',
-          maxHeight: '90vh',
+          maxHeight: '90dvh',
           overflowY: 'auto',
           background: theme.bgGrad,
           borderRadius: '20px',
@@ -314,8 +318,11 @@ export function Ending({
           </div>
         )}
 
+        {/* Share Scorecard */}
+        <ShareCard ending={result} />
+
         {/* Navigation Action Buttons */}
-        <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
+        <div style={{ display: 'flex', gap: '12px', marginTop: '8px', flexWrap: 'wrap' }}>
           {onRestartCareer && (
             <button
               onClick={onRestartCareer}

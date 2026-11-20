@@ -232,6 +232,7 @@ export function IconTurnRight(props: IconProps): JSX.Element {
 export function IconTurnUTurn(props: IconProps): JSX.Element {
   return (
     <svg {...baseSvgProps(props)}>
+      <title>↶</title>
       <polyline points="9 14 4 9 9 4" />
       <path d="M4 9h10a5 5 0 0 1 0 10H11" />
     </svg>
@@ -243,6 +244,138 @@ export function IconTurnStraight(props: IconProps): JSX.Element {
     <svg {...baseSvgProps(props)}>
       <line x1="12" y1="19" x2="12" y2="5" />
       <polyline points="5 12 12 5 19 12" />
+    </svg>
+  );
+}
+
+export function IconBattery(props: IconProps & { level?: number }): JSX.Element {
+  const level = Math.max(0, Math.min(100, props.level ?? 100));
+  const fillWidth = Math.max(1, Math.round((level / 100) * 12));
+  return (
+    <svg {...baseSvgProps(props)}>
+      <rect x="2" y="7" width="16" height="10" rx="2" ry="2" />
+      <line x1="21" y1="10" x2="21" y2="14" />
+      <rect x="4" y="9" width={fillWidth} height="6" rx="1" fill={props.color ?? 'currentColor'} stroke="none" />
+    </svg>
+  );
+}
+
+export function IconShare(props: IconProps): JSX.Element {
+  return (
+    <svg {...baseSvgProps(props)}>
+      <circle cx="18" cy="5" r="3" />
+      <circle cx="6" cy="12" r="3" />
+      <circle cx="18" cy="19" r="3" />
+      <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+      <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+    </svg>
+  );
+}
+
+export function IconPackage(props: IconProps): JSX.Element {
+  return (
+    <svg {...baseSvgProps(props)}>
+      <path d="M16.5 9.4l-9-5.19" />
+      <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+      <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+      <line x1="12" y1="22.08" x2="12" y2="12" />
+    </svg>
+  );
+}
+
+export function IconPause(props: IconProps): JSX.Element {
+  return (
+    <svg {...baseSvgProps(props)}>
+      <rect x="6" y="4" width="4" height="16" rx="1" />
+      <rect x="14" y="4" width="4" height="16" rx="1" />
+    </svg>
+  );
+}
+
+export function IconMap(props: IconProps): JSX.Element {
+  return (
+    <svg {...baseSvgProps(props)}>
+      <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6" />
+      <line x1="8" y1="2" x2="8" y2="18" />
+      <line x1="16" y1="6" x2="16" y2="22" />
+    </svg>
+  );
+}
+
+export function IconVolume(props: IconProps): JSX.Element {
+  return (
+    <svg {...baseSvgProps(props)}>
+      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+      <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+      <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+    </svg>
+  );
+}
+
+export function IconGamepad(props: IconProps): JSX.Element {
+  return (
+    <svg {...baseSvgProps(props)}>
+      <line x1="6" y1="12" x2="10" y2="12" />
+      <line x1="8" y1="10" x2="8" y2="14" />
+      <line x1="15" y1="13" x2="15.01" y2="13" />
+      <line x1="18" y1="11" x2="18.01" y2="11" />
+      <rect x="2" y="6" width="20" height="12" rx="4" />
+    </svg>
+  );
+}
+
+export function IconLock(props: IconProps): JSX.Element {
+  return (
+    <svg {...baseSvgProps(props)}>
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+    </svg>
+  );
+}
+
+export function IconBell(props: IconProps): JSX.Element {
+  return (
+    <svg {...baseSvgProps(props)}>
+      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+      <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+    </svg>
+  );
+}
+
+export function IconTrophy(props: IconProps): JSX.Element {
+  return (
+    <svg {...baseSvgProps(props)}>
+      <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
+      <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+      <path d="M4 22h16" />
+      <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
+      <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
+      <path d="M18 2H6v7a6 6 0 0 0 12 0V2z" />
+    </svg>
+  );
+}
+
+export function IconSkip(props: IconProps): JSX.Element {
+  return (
+    <svg {...baseSvgProps(props)}>
+      <polygon points="5 4 15 12 5 20 5 4" />
+      <line x1="19" y1="5" x2="19" y2="19" />
+    </svg>
+  );
+}
+
+export function IconSliders(props: IconProps): JSX.Element {
+  return (
+    <svg {...baseSvgProps(props)}>
+      <line x1="4" y1="21" x2="4" y2="14" />
+      <line x1="4" y1="10" x2="4" y2="3" />
+      <line x1="12" y1="21" x2="12" y2="12" />
+      <line x1="12" y1="8" x2="12" y2="3" />
+      <line x1="20" y1="21" x2="20" y2="16" />
+      <line x1="20" y1="12" x2="20" y2="3" />
+      <line x1="1" y1="14" x2="7" y2="14" />
+      <line x1="9" y1="8" x2="15" y2="8" />
+      <line x1="17" y1="16" x2="23" y2="16" />
     </svg>
   );
 }

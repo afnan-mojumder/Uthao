@@ -610,4 +610,57 @@ describe('T8.3 fuel recovery affordances', () => {
 
     unbind();
   });
+
+  it('P6.2: syncs districtId, gear, passengerMood, canRecoverBike, and 0.01L / rescueBelowL fuel diff', () => {
+    setLanguage('en');
+    const cache = createHudCache();
+    const baseInput = {
+      now: 1000,
+      simStepped: true,
+      isFirstPerson: false,
+      districtId: 'mirpara',
+      canRecoverBike: true,
+      gear: 4,
+      objectiveKey: 'hud.waiting_for_requests',
+      placeKey: '',
+      navKind: 'uturn',
+      navTextKey: 'hud.nav.turn_around',
+      navDistM: 25,
+      reqId: 'req_p62',
+      passengerStatus: 'OnTrip' as const,
+      passengerNameKey: 'character.nabila.name',
+      passengerMood: 0.85,
+      roadEventId: '',
+      roadEventKind: '',
+      activeMissionCount: 0,
+      pollMissions: () => ({ main: null, side: [] }),
+      fare: 120,
+      etaMinutes: 4.5,
+      nearStation: false,
+      chargeSpot: null,
+      todayNetEarnings: 0,
+      shiftClock: '08:10',
+      shiftDay: 1,
+      rating: 4.9,
+      dialogueSubtitle: { speaker: 'Nabila', text: 'Cholen!', seq: 1 },
+      speedKmh: 38,
+      fuelL: 4.0,
+      fuelMaxL: 8.0,
+      conditionPct: 74,
+    };
+
+    syncHudWithCache(cache, baseInput);
+    expect(hudSignal.value.districtId).toBe('mirpara');
+    expect(hudSignal.value.districtName).toBe('Mirpara');
+    expect(hudSignal.value.gear).toBe(4);
+    expect(hudSignal.value.passengerStatus?.mood).toBe(0.85);
+    expect(hudSignal.value.canRecoverBike).toBe(true);
+    expect(hudSignal.value.dialogueSubtitle?.text).toBe('Cholen!');
+
+    // 0.02L change propagates (0.01L precision instead of 0.1L quantization)
+    const refBefore = hudSignal.value;
+    updateHudState({ fuelL: 3.98 });
+    expect(hudSignal.value).not.toBe(refBefore);
+    expect(hudSignal.value.fuelL).toBe(3.98);
+  });
 });

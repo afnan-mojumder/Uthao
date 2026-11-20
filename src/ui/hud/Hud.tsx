@@ -1,7 +1,7 @@
 import type { JSX, Ref } from 'preact';
 import { useEffect, useRef } from 'preact/hooks';
 import { passengerHintKey } from './passengerHint';
-import { t } from '../i18n';
+import { t, localDigits } from '../i18n';
 import {
   hudSignal,
   minimapCanvasSignal,
@@ -9,6 +9,7 @@ import {
   onRefuelCallback,
   onFuelRescueCallback,
   onChargePhoneCallback,
+  onRecoverBikeCallback,
   type HudState,
   type HudPassengerInfo,
   type HudNavigationTurn,
@@ -18,25 +19,60 @@ import {
   IconChat,
   IconFuel,
   IconFullscreen,
+  IconMapPin,
   IconMotorcycle,
+  IconStar,
+  IconTurnLeft,
+  IconTurnRight,
+  IconTurnStraight,
+  IconTurnUTurn,
   IconUser,
   IconWarning,
+  IconWrench,
 } from '../components/icons';
 import { BALANCE } from '../../config/balance';
 
 export type { HudState, HudPassengerInfo, HudNavigationTurn, HudMissionInfo };
 
-function turnDirectionIcon(direction: string): string {
+function TurnDirectionIcon({ direction, size = 18 }: { direction: string; size?: number }): JSX.Element {
+  let icon: JSX.Element;
   switch (direction) {
     case 'left':
-      return '↰';
+      icon = <IconTurnLeft size={size} color="var(--info-sky, #38BDF8)" />;
+      break;
     case 'right':
-      return '↱';
+      icon = <IconTurnRight size={size} color="var(--info-sky, #38BDF8)" />;
+      break;
     case 'uturn':
-      return '↶';
+      icon = <IconTurnUTurn size={size} color="var(--dhaka-amber, #F59E0B)" />;
+      break;
     default:
-      return '↑';
+      icon = <IconTurnStraight size={size} color="var(--info-sky, #38BDF8)" />;
+      break;
   }
+  return (
+    <span
+      data-testid="hud-turn-icon"
+      data-direction={direction}
+      style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+    >
+      {icon}
+    </span>
+  );
+}
+
+function moodMeta(mood: number | undefined): { key: string; color: string } {
+  if (mood === undefined) return { key: 'hud.mood.neutral', color: 'var(--info-sky, #38BDF8)' };
+  if (mood >= 0.7) return { key: 'hud.mood.happy', color: 'var(--uthao-green, #22C55E)' };
+  if (mood >= 0.35) return { key: 'hud.mood.neutral', color: 'var(--info-sky, #38BDF8)' };
+  if (mood >= 0.15) return { key: 'hud.mood.tense', color: 'var(--dhaka-amber, #F59E0B)' };
+  return { key: 'hud.mood.angry', color: 'var(--danger-red, #EF4444)' };
+}
+
+function conditionColor(pct: number): string {
+  if (pct >= 70) return 'var(--uthao-green, #22C55E)';
+  if (pct >= BALANCE.WEAR.warnBelow) return 'var(--dhaka-amber, #F59E0B)';
+  return 'var(--danger-red, #EF4444)';
 }
 
 async function handleToggleFullscreenAndLock(): Promise<void> {
@@ -63,55 +99,438 @@ async function handleToggleFullscreenAndLock(): Promise<void> {
   }
 }
 
-const fuelBtnStyle = {
+const quickBtnStyle = {
   pointerEvents: 'auto' as const,
-  marginTop: '6px',
-  background: 'rgba(15, 23, 42, 0.88)',
-  border: '1px solid rgba(255, 255, 255, 0.3)',
+  background: 'var(--surface-panel, rgba(15, 23, 42, 0.92))',
+  border: '1px solid var(--border-strong, rgba(148, 163, 184, 0.35))',
   borderRadius: '10px',
-  color: '#f8fafc',
+  color: 'var(--text-primary, #F8FAFC)',
   padding: '6px 10px',
-  fontSize: '13px',
+  fontSize: '12px',
   fontWeight: 700,
   cursor: 'pointer',
   minHeight: '36px',
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: '6px',
+  whiteSpace: 'nowrap' as const,
 };
 
-/** Only renders actions that really exist right now: refuel needs a station nearby,
- * rescue needs a (nearly) empty tank. Both dispatch Commands; the UI never mutates state. */
-function FuelActions({ state }: { state: HudState }): JSX.Element | null {
+/** Renders contextual fuel/charge alerts and quick actions (refuel, rescue, charge, recover bike). */
+function QuickActions({ state, compact = false }: { state: HudState; compact?: boolean }): JSX.Element {
   const canRescue = state.fuelL < BALANCE.FUEL.rescueBelowL;
   const canRefuel = !!state.nearStation && state.fuelL < state.fuelMaxL - 0.5;
   const worn = (state.conditionPct ?? 100) < BALANCE.WEAR.warnBelow;
   const canCharge = !!state.chargeSpot;
-  if (!canRescue && !canRefuel && !worn && !canCharge) return null;
+  const showRecover = state.canRecoverBike !== false;
+
   return (
-    <div data-testid="hud-fuel-actions" style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}>
-      {canRescue && (
-        <div data-testid="hud-fuel-empty" style={{ color: 'var(--danger-red, #EF4444)', fontSize: '13px', fontWeight: 700 }}>
-          {t('hud.fuel_empty')}
+    <div
+      data-testid="hud-quick-actions"
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '4px',
+        pointerEvents: 'none',
+      }}
+    >
+      {(canRescue || worn) && (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
+          {canRescue && (
+            <div data-testid="hud-fuel-empty" style={{ color: 'var(--danger-red, #EF4444)', fontSize: '12px', fontWeight: 700, background: 'var(--surface-panel)', padding: '2px 8px', borderRadius: '6px' }}>
+              {t('hud.fuel_empty')}
+            </div>
+          )}
+          {worn && (
+            <div data-testid="hud-bike-warn" style={{ color: 'var(--dhaka-amber, #F59E0B)', fontSize: '12px', fontWeight: 700, background: 'var(--surface-panel)', padding: '2px 8px', borderRadius: '6px' }}>
+              {t('hud.bike_warn')}
+            </div>
+          )}
         </div>
       )}
-      {worn && (
-        <div data-testid="hud-bike-warn" style={{ color: 'var(--dhaka-amber, #F59E0B)', fontSize: '13px', fontWeight: 700 }}>
-          {t('hud.bike_warn')}
+      <div
+        data-testid="hud-fuel-actions"
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          justifyContent: 'center',
+          gap: '6px',
+        }}
+      >
+        {canRefuel && (
+          <button type="button" data-testid="hud-btn-refuel" style={quickBtnStyle} onClick={() => onRefuelCallback?.()}>
+            <IconFuel size={14} color="var(--uthao-green, #22C55E)" />
+            <span>{t('hud.refuel')}</span>
+          </button>
+        )}
+        {canCharge && (
+          <button
+            type="button"
+            data-testid="hud-btn-charge-phone"
+            style={quickBtnStyle}
+            onClick={() => onChargePhoneCallback?.(state.chargeSpot!)}
+          >
+            <span>{t('hud.charge_phone')}</span>
+          </button>
+        )}
+        {canRescue && (
+          <button type="button" data-testid="hud-btn-fuel-rescue" style={quickBtnStyle} onClick={() => onFuelRescueCallback?.()}>
+            <IconWarning size={14} color="var(--danger-red, #EF4444)" />
+            <span>{t('hud.fuel_rescue', { cost: BALANCE.FUEL.rescue.cost, min: BALANCE.FUEL.rescue.waitMin })}</span>
+          </button>
+        )}
+        {showRecover && (
+          <button
+            type="button"
+            data-testid="hud-btn-recover-bike"
+            style={{
+              ...quickBtnStyle,
+              padding: compact ? '4px 8px' : '6px 10px',
+              minHeight: compact ? '32px' : '36px',
+            }}
+            onClick={() => onRecoverBikeCallback?.()}
+          >
+            <IconWrench size={14} color="var(--info-sky, #38BDF8)" />
+            <span>{t('hud.recover_bike')}</span>
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function DistrictBadge({ districtName, districtId }: { districtName?: string; districtId?: string }): JSX.Element {
+  const label = districtName || t(`district.${districtId ?? 'mirpara'}`);
+  return (
+    <div
+      data-testid="hud-district"
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '5px',
+        background: 'var(--surface-panel, rgba(15, 23, 42, 0.92))',
+        border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.12))',
+        borderRadius: 'var(--radius-pill, 9999px)',
+        padding: '4px 10px',
+        fontSize: '12px',
+        fontWeight: 700,
+        color: 'var(--text-primary, #F8FAFC)',
+        backdropFilter: 'blur(8px)',
+        boxShadow: '0 4px 10px rgba(0, 0, 0, 0.35)',
+        alignSelf: 'flex-start',
+      }}
+    >
+      <IconMapPin size={13} color="var(--uthao-green, #22C55E)" />
+      <span>{label}</span>
+    </div>
+  );
+}
+
+function ConditionMeter({ conditionPct, compact = false }: { conditionPct: number; compact?: boolean }): JSX.Element {
+  const clamped = Math.max(0, Math.min(100, Math.round(conditionPct)));
+  const color = conditionColor(clamped);
+  return (
+    <div style={{ width: '100%', minWidth: compact ? '76px' : undefined }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: '6px',
+          fontSize: compact ? '11px' : '12px',
+          color: clamped < BALANCE.WEAR.warnBelow ? 'var(--dhaka-amber, #F59E0B)' : 'var(--text-muted, #94A3B8)',
+          fontWeight: 700,
+        }}
+      >
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+          <IconWrench size={12} color={color} />
+          {t('hud.condition')}
+        </span>
+        <span style={{ fontVariantNumeric: 'tabular-nums' }}>{localDigits(clamped)}%</span>
+      </div>
+      <div
+        role="progressbar"
+        aria-label={t('hud.condition')}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={clamped}
+        style={{
+          height: compact ? '5px' : '6px',
+          width: '100%',
+          background: 'rgba(255, 255, 255, 0.15)',
+          borderRadius: '4px',
+          overflow: 'hidden',
+          marginTop: '3px',
+        }}
+      >
+        <div
+          data-testid="hud-condition-bar"
+          style={{
+            height: '100%',
+            width: `${clamped}%`,
+            background: color,
+            transition: 'width 0.25s ease',
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function ObjectivePill({ state, compact = false }: { state: HudState; compact?: boolean }): JSX.Element {
+  return (
+    <div
+      data-testid="hud-objective-pill"
+      style={{
+        alignSelf: 'center',
+        background: 'var(--surface-panel, rgba(15, 23, 42, 0.92))',
+        border: '1px solid var(--uthao-green-border, rgba(34, 197, 94, 0.45))',
+        borderRadius: state.activeMission || (state.activeSideMissions?.length ?? 0) > 0 || state.roadEventAlert ? '14px' : 'var(--radius-pill, 9999px)',
+        padding: compact ? '6px 14px' : '7px 16px',
+        color: 'var(--text-primary, #F8FAFC)',
+        boxShadow: '0 6px 20px rgba(0, 0, 0, 0.45)',
+        textAlign: 'center',
+        backdropFilter: 'blur(8px)',
+        maxWidth: compact ? '320px' : '360px',
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', flexWrap: 'wrap' }}>
+        <span
+          style={{
+            fontSize: '11px',
+            textTransform: 'uppercase',
+            letterSpacing: '0.8px',
+            color: 'var(--uthao-green, #22C55E)',
+            fontWeight: 800,
+          }}
+        >
+          {t('hud.objective')}
+        </span>
+        <span id="hud-objective" style={{ fontSize: compact ? '13px' : '14px', fontWeight: 700, lineHeight: 1.25 }}>
+          {state.objectiveText}
+        </span>
+        {state.fare !== undefined && (
+          <span
+            style={{
+              fontSize: '12px',
+              color: 'var(--dhaka-amber, #F59E0B)',
+              background: 'var(--dhaka-amber-dim, rgba(245, 158, 11, 0.2))',
+              padding: '1px 8px',
+              borderRadius: '9999px',
+              fontWeight: 800,
+            }}
+          >
+            ৳{localDigits(state.fare)}
+          </span>
+        )}
+      </div>
+
+      {!compact && state.activeMission && (
+        <div
+          data-testid="hud-active-mission"
+          style={{
+            marginTop: '4px',
+            paddingTop: '4px',
+            borderTop: '1px solid rgba(255, 255, 255, 0.12)',
+            fontSize: '12px',
+            color: 'var(--text-secondary, #CBD5E1)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '2px',
+          }}
+        >
+          <div style={{ color: 'var(--info-sky, #38BDF8)', fontWeight: 700 }}>
+            {t(state.activeMission.titleKey)}
+          </div>
+          <div>
+            {t(state.activeMission.objectiveDescKey)} ({state.activeMission.progress}/{state.activeMission.target})
+            {state.activeMission.targetDistM !== undefined && (
+              <span style={{ color: 'var(--dhaka-amber, #F59E0B)', marginLeft: '6px', fontWeight: 700 }}>
+                • {Math.round(state.activeMission.targetDistM)}m
+              </span>
+            )}
+          </div>
         </div>
       )}
-      {canRefuel && (
-        <button data-testid="hud-btn-refuel" style={fuelBtnStyle} onClick={() => onRefuelCallback?.()}>
-          {t('hud.refuel')}
-        </button>
+
+      {!compact && state.activeSideMissions && state.activeSideMissions.length > 0 && (
+        <div
+          data-testid="hud-active-side-missions"
+          style={{
+            marginTop: '4px',
+            paddingTop: '4px',
+            borderTop: '1px solid rgba(255, 255, 255, 0.12)',
+            fontSize: '11px',
+            color: 'var(--text-secondary, #CBD5E1)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '3px',
+          }}
+        >
+          {state.activeSideMissions.map((sm) => (
+            <div
+              key={sm.id ?? sm.titleKey}
+              data-testid={sm.id ? `hud-side-mission-${sm.id}` : 'hud-side-mission'}
+            >
+              <div style={{ color: 'var(--dhaka-amber, #F59E0B)', fontWeight: 700 }}>
+                {t(sm.titleKey)}
+              </div>
+              <div>
+                {t(sm.objectiveDescKey)} ({sm.progress}/{sm.target})
+                {sm.targetDistM !== undefined && (
+                  <span style={{ color: 'var(--info-sky, #38BDF8)', marginLeft: '6px', fontWeight: 700 }}>
+                    • {Math.round(sm.targetDistM)}m
+                  </span>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
       )}
-      {canCharge && (
-        <button data-testid="hud-btn-charge-phone" style={fuelBtnStyle} onClick={() => onChargePhoneCallback?.(state.chargeSpot!)}>
-          {t('hud.charge_phone')}
-        </button>
+
+      {state.roadEventAlert && (
+        <div
+          data-testid="hud-road-event"
+          style={{
+            marginTop: '4px',
+            padding: '3px 8px',
+            borderRadius: '8px',
+            background: 'var(--dhaka-amber-dim, rgba(245, 158, 11, 0.2))',
+            border: '1px solid var(--dhaka-amber-border, rgba(245, 158, 11, 0.45))',
+            color: '#fde68a',
+            fontSize: '11px',
+            fontWeight: 700,
+          }}
+        >
+          {t('hud.road_event')}: {state.roadEventAlert.title}
+        </div>
       )}
-      {canRescue && (
-        <button data-testid="hud-btn-fuel-rescue" style={fuelBtnStyle} onClick={() => onFuelRescueCallback?.()}>
-          {t('hud.fuel_rescue', { cost: BALANCE.FUEL.rescue.cost, min: BALANCE.FUEL.rescue.waitMin })}
-        </button>
-      )}
+    </div>
+  );
+}
+
+function DialogueSubtitleBubble({ subtitle }: { subtitle: NonNullable<HudState['dialogueSubtitle']> }): JSX.Element {
+  return (
+    <div
+      data-testid="hud-dialogue-subtitle"
+      style={{
+        alignSelf: 'center',
+        marginBottom: '10px',
+        background: 'var(--surface-panel, rgba(15, 23, 42, 0.92))',
+        border: '1px solid var(--info-sky-border, rgba(56, 189, 248, 0.42))',
+        borderRadius: '16px',
+        padding: '8px 16px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '10px',
+        boxShadow: '0 8px 24px rgba(0, 0, 0, 0.6)',
+        maxWidth: '620px',
+        pointerEvents: 'auto',
+        backdropFilter: 'blur(10px)',
+      }}
+    >
+      <IconChat size={18} color="var(--info-sky, #38BDF8)" />
+      <div style={{ display: 'flex', flexDirection: 'column' }}>
+        {subtitle.speaker && (
+          <span style={{ fontSize: '12px', color: 'var(--info-sky, #38BDF8)', fontWeight: 800 }}>
+            {t(subtitle.speaker)}
+          </span>
+        )}
+        <span
+          style={{
+            fontSize: settingsSignal.value.subtitlesSize === 'large' ? '18px' : '15px',
+            color: 'var(--text-primary, #F8FAFC)',
+            fontWeight: 600,
+          }}
+        >
+          {subtitle.text}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function PassengerChip({ state, compact = false }: { state: HudState; compact?: boolean }): JSX.Element {
+  const moodInfo = moodMeta(state.passengerStatus?.mood);
+  const hasActivePassenger = Boolean(state.passengerStatus?.name || state.passengerStatus?.status === 'OnTrip');
+  const displayName =
+    state.passengerStatus?.name ||
+    (state.passengerStatus?.status === 'OnTrip' ? t('hud.passenger.on_bike') : t('hud.passenger.waiting'));
+
+  return (
+    <div
+      data-testid="hud-passenger-status"
+      style={{
+        background: 'var(--surface-panel, rgba(15, 23, 42, 0.9))',
+        border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.12))',
+        backdropFilter: 'blur(8px)',
+        borderRadius: '14px',
+        padding: compact ? '8px 12px' : '10px 16px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '10px',
+        boxShadow: '0 6px 20px rgba(0, 0, 0, 0.45)',
+        maxWidth: compact ? '210px' : '260px',
+      }}
+    >
+      <div
+        style={{
+          width: compact ? '32px' : '38px',
+          height: compact ? '32px' : '38px',
+          borderRadius: '50%',
+          background: 'var(--surface-card, rgba(30, 41, 59, 0.84))',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          border: `2px solid ${moodInfo.color}`,
+          flexShrink: 0,
+        }}
+      >
+        {state.passengerStatus?.status === 'OnTrip' ? (
+          <IconUser size={compact ? 16 : 19} color="var(--text-primary, #F8FAFC)" />
+        ) : (
+          <IconMotorcycle size={compact ? 16 : 19} color="var(--info-sky, #38BDF8)" />
+        )}
+      </div>
+      <div style={{ minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+          <span
+            style={{
+              fontSize: compact ? '13px' : '14px',
+              fontWeight: 800,
+              color: 'var(--text-primary, #F8FAFC)',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {displayName}
+          </span>
+          <span
+            data-testid="hud-passenger-mood"
+            style={{
+              fontSize: '10px',
+              fontWeight: 800,
+              color: moodInfo.color,
+              background: 'rgba(15, 23, 42, 0.7)',
+              border: `1px solid ${moodInfo.color}`,
+              borderRadius: '9999px',
+              padding: '1px 6px',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {hasActivePassenger && state.passengerStatus?.mood !== undefined
+              ? `${t(moodInfo.key)} ${localDigits(Math.round(state.passengerStatus.mood * 100))}%`
+              : t(moodInfo.key)}
+          </span>
+        </div>
+        <div style={{ fontSize: compact ? '11px' : '13px', color: 'var(--text-muted, #94A3B8)', fontWeight: 600 }}>
+          {t(passengerHintKey(state.passengerStatus?.status))}
+          {state.etaMinutes !== undefined && ` • ${t('hud.eta', { min: localDigits(state.etaMinutes) })}`}
+        </div>
+      </div>
     </div>
   );
 }
@@ -125,8 +544,10 @@ export function HudView({
 }): JSX.Element {
   const fuelPct = Math.max(0, Math.min(100, Math.round((state.fuelL / (state.fuelMaxL || 8)) * 100)));
   const isLowFuel = fuelPct <= 20;
+  const conditionPct = state.conditionPct ?? 100;
+  const gearLabel = `G${state.gear ?? 1}`;
 
-  // 1. Collapsed Dashboard for First-Person Helmet/Handlebar View
+  // 1. Complete First-Person Helmet/Handlebar View
   if (state.isFirstPerson) {
     return (
       <div
@@ -138,137 +559,149 @@ export function HudView({
           pointerEvents: 'none',
           display: 'flex',
           flexDirection: 'column',
-          justifyContent: 'flex-end',
-          alignItems: 'center',
-          padding: 'calc(16px + env(safe-area-inset-top, 0px)) calc(16px + env(safe-area-inset-right, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) calc(16px + env(safe-area-inset-left, 0px))',
+          justifyContent: 'space-between',
+          alignItems: 'stretch',
+          padding: 'calc(12px + env(safe-area-inset-top, 0px)) calc(12px + env(safe-area-inset-right, 0px)) calc(12px + env(safe-area-inset-bottom, 0px)) calc(12px + env(safe-area-inset-left, 0px))',
           boxSizing: 'border-box',
           fontFamily: "var(--font-sans, 'Hind Siliguri', 'Segoe UI', system-ui, sans-serif)",
-          color: '#f8fafc',
+          color: 'var(--text-primary, #F8FAFC)',
           userSelect: 'none',
         }}
       >
-        {/* Hidden objective and speed for test contract compatibility */}
-        <div id="hud-objective" style={{ display: 'none' }}>
-          {state.objectiveText}
-        </div>
-
-        {/* Passenger Dialogue Subtitle Bubble */}
-        {state.dialogueSubtitle && (
+        {/* Top Helmet Visor Strip: District, Objective Pill, Rating & Clock */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px', width: '100%' }}>
+          <DistrictBadge districtName={state.districtName} districtId={state.districtId} />
+          <ObjectivePill state={state} compact={true} />
           <div
-            data-testid="hud-dialogue-subtitle"
             style={{
-              alignSelf: 'center',
-              marginBottom: '12px',
               background: 'var(--surface-panel, rgba(15, 23, 42, 0.92))',
-              border: '1px solid rgba(56, 189, 248, 0.4)',
-              borderRadius: '16px',
-              padding: '10px 20px',
+              border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.12))',
+              borderRadius: '12px',
+              padding: '5px 10px',
               display: 'flex',
               alignItems: 'center',
-              gap: '12px',
-              boxShadow: '0 8px 24px rgba(0, 0, 0, 0.6)',
-              maxWidth: '650px',
-              pointerEvents: 'auto',
-              backdropFilter: 'blur(10px)',
+              gap: '8px',
+              fontSize: '12px',
+              fontWeight: 700,
+              backdropFilter: 'blur(8px)',
             }}
           >
-            <IconChat size={20} color="#38bdf8" />
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              {state.dialogueSubtitle.speaker && (
-                <span style={{ fontSize: '12px', color: '#38bdf8', fontWeight: 800 }}>
-                  {t(state.dialogueSubtitle.speaker)}
-                </span>
-              )}
-              <span
-                style={{
-                  fontSize: settingsSignal.value.subtitlesSize === 'large' ? '18px' : '15px',
-                  color: '#f8fafc',
-                  fontWeight: 600,
-                }}
-              >
-                {state.dialogueSubtitle.text}
-              </span>
-            </div>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--dhaka-amber, #F59E0B)' }}>
+              <IconStar size={13} color="var(--dhaka-amber, #F59E0B)" />
+              {state.rating ? state.rating.toFixed(1) : '5.0'}
+            </span>
+            <span style={{ color: '#475569' }}>|</span>
+            <span style={{ color: 'var(--text-secondary, #CBD5E1)' }}>
+              {state.shiftClock} • {t('hud.day', { day: state.shiftDay || 1 })}
+            </span>
           </div>
-        )}
+        </div>
 
-        {/* Compact Instrument Pod on Handlebars */}
-        <div
-          style={{
-            background: 'rgba(15, 23, 42, 0.92)',
-            border: '2px solid rgba(56, 189, 248, 0.4)',
-            borderRadius: '20px',
-            padding: '12px 24px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '24px',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.7)',
-            backdropFilter: 'blur(8px)',
-          }}
-        >
-          {/* Speed */}
-          <div style={{ textAlign: 'center' }}>
+        {/* Bottom Cluster: Subtitle, Quick Actions, Handlebar Pod + Passenger Chip */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+          {state.dialogueSubtitle && <DialogueSubtitleBubble subtitle={state.dialogueSubtitle} />}
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', width: '100%', gap: '10px' }}>
+            <PassengerChip state={state} compact={true} />
+
+            {/* Compact Instrument Pod on Handlebars */}
             <div
-              id="hud-speed"
+              data-testid="hud-speed-pod"
               style={{
-                fontSize: '32px',
-                fontWeight: 900,
-                lineHeight: 1,
-                color: '#ffffff',
-                fontVariantNumeric: 'tabular-nums',
+                background: 'var(--surface-panel, rgba(15, 23, 42, 0.92))',
+                border: '2px solid var(--info-sky-border, rgba(56, 189, 248, 0.42))',
+                borderRadius: '18px',
+                padding: '10px 18px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '16px',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.7)',
+                backdropFilter: 'blur(8px)',
               }}
             >
-              {Math.round(state.speedKmh)}
-            </div>
-            <div style={{ fontSize: '14px', color: '#94a3b8', letterSpacing: '1px', fontWeight: 700 }}>
-              {t('hud.speed_unit')}
-            </div>
-          </div>
-
-          <div style={{ width: '1px', height: '36px', background: 'rgba(255, 255, 255, 0.15)' }} />
-
-          {/* Compact Fuel Pod */}
-          <div style={{ minWidth: '90px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '6px', fontSize: '14px', fontWeight: 700, color: isLowFuel ? 'var(--danger-red, #EF4444)' : '#94a3b8' }}>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                <IconFuel size={14} /> {t('hud.fuel')}
-              </span>
-              <span>{fuelPct}%</span>
-            </div>
-            <div style={{ height: '8px', width: '100%', background: 'rgba(255, 255, 255, 0.15)', borderRadius: '4px', marginTop: '4px', overflow: 'hidden' }}>
-              <div
-                style={{
-                  height: '100%',
-                  width: `${fuelPct}%`,
-                  background: isLowFuel ? 'var(--danger-red, #EF4444)' : 'linear-gradient(90deg, var(--uthao-green, #22C55E), #06b6d4)',
-                  transition: 'width 0.3s ease',
-                }}
-              />
-            </div>
-            <FuelActions state={state} />
-          </div>
-
-          {/* Turn Guidance */}
-          {state.nextTurn && (
-            <>
-              <div style={{ width: '1px', height: '36px', background: 'rgba(255, 255, 255, 0.15)' }} />
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: 700, color: '#38bdf8' }}>
-                <span style={{ fontSize: '18px' }}>
-                  {turnDirectionIcon(state.nextTurn.direction)}
+              {/* Gear + Speed */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span
+                  data-testid="hud-gear"
+                  style={{
+                    fontSize: '14px',
+                    fontWeight: 800,
+                    color: 'var(--info-sky, #38BDF8)',
+                    background: 'var(--info-sky-dim, rgba(56, 189, 248, 0.2))',
+                    padding: '3px 8px',
+                    borderRadius: '6px',
+                  }}
+                >
+                  {gearLabel}
                 </span>
-                <span>{state.nextTurn.text}</span>
+                <div style={{ textAlign: 'center' }}>
+                  <div
+                    id="hud-speed"
+                    style={{
+                      fontSize: '28px',
+                      fontWeight: 900,
+                      lineHeight: 1,
+                      color: '#ffffff',
+                      fontVariantNumeric: 'tabular-nums',
+                    }}
+                  >
+                    {Math.round(state.speedKmh)}
+                  </div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted, #94A3B8)', letterSpacing: '1px', fontWeight: 700 }}>
+                    {t('hud.speed_unit')}
+                  </div>
+                </div>
               </div>
-            </>
-          )}
 
-          {/* Earnings */}
-          <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: '15px', fontWeight: 800, color: 'var(--uthao-green, #22C55E)' }}>
-              ৳{Math.round(state.todayNetEarnings)}
+              <div style={{ width: '1px', height: '36px', background: 'rgba(255, 255, 255, 0.15)' }} />
+
+              {/* Fuel & Bike Condition */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', minWidth: '100px' }}>
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: 700, color: isLowFuel ? 'var(--danger-red, #EF4444)' : 'var(--text-muted, #94A3B8)' }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                      <IconFuel size={12} /> {t('hud.fuel')}
+                    </span>
+                    <span>{fuelPct}%</span>
+                  </div>
+                  <div style={{ height: '5px', width: '100%', background: 'rgba(255, 255, 255, 0.15)', borderRadius: '4px', marginTop: '3px', overflow: 'hidden' }}>
+                    <div
+                      data-testid="hud-fuel-bar"
+                      style={{
+                        height: '100%',
+                        width: `${fuelPct}%`,
+                        background: isLowFuel ? 'var(--danger-red, #EF4444)' : 'linear-gradient(90deg, var(--uthao-green, #22C55E), var(--info-sky, #38BDF8))',
+                        transition: 'width 0.3s ease',
+                      }}
+                    />
+                  </div>
+                </div>
+                <ConditionMeter conditionPct={conditionPct} compact={true} />
+              </div>
+
+              {/* Turn Guidance */}
+              {state.nextTurn && (
+                <>
+                  <div style={{ width: '1px', height: '36px', background: 'rgba(255, 255, 255, 0.15)' }} />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 700, color: 'var(--info-sky, #38BDF8)' }}>
+                    <TurnDirectionIcon direction={state.nextTurn.direction} size={18} />
+                    <span>{state.nextTurn.text}</span>
+                  </div>
+                </>
+              )}
+
+              {/* Earnings */}
+              <div data-testid="hud-earnings" style={{ textAlign: 'right' }}>
+                <div style={{ fontSize: '15px', fontWeight: 800, color: 'var(--uthao-green, #22C55E)' }}>
+                  ৳{Math.round(state.todayNetEarnings)}
+                </div>
+                <div style={{ fontSize: '11px', color: 'var(--text-muted, #94A3B8)' }}>
+                  {state.shiftClock}
+                </div>
+              </div>
             </div>
-            <div style={{ fontSize: '14px', color: '#94a3b8' }}>
-              {state.shiftClock}
-            </div>
+
+            <QuickActions state={state} compact={true} />
           </div>
         </div>
       </div>
@@ -287,186 +720,74 @@ export function HudView({
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
-        padding: 'calc(16px + env(safe-area-inset-top, 0px)) calc(16px + env(safe-area-inset-right, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) calc(16px + env(safe-area-inset-left, 0px))',
+        padding: 'calc(12px + env(safe-area-inset-top, 0px)) calc(12px + env(safe-area-inset-right, 0px)) calc(12px + env(safe-area-inset-bottom, 0px)) calc(12px + env(safe-area-inset-left, 0px))',
         boxSizing: 'border-box',
         fontFamily: "var(--font-sans, 'Hind Siliguri', 'Segoe UI', system-ui, sans-serif)",
-        color: '#f8fafc',
+        color: 'var(--text-primary, #F8FAFC)',
         userSelect: 'none',
       }}
     >
-      {/* Top Header Bar: Minimap Anchor (Left), Objective (Center), Earnings, Clock & Fullscreen (Right) */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%' }}>
-        {/* Top-Left: Minimap Container Anchor & Next Turn */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+      {/* Top Header Bar: Minimap + District (Left), Objective Pill (Center), Earnings + Rating + Clock (Right) */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', width: '100%' }}>
+        {/* Top-Left: Minimap Container Anchor, District Badge & Next Turn */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
           <div
             id="minimap-container"
             data-testid="hud-minimap-host"
             ref={minimapHostRef}
             style={{
-              width: '160px',
-              height: '160px',
+              width: 'clamp(108px, 24vh, 152px)',
+              height: 'clamp(108px, 24vh, 152px)',
               position: 'relative',
               borderRadius: '50%',
               overflow: 'hidden',
             }}
           />
 
+          <DistrictBadge districtName={state.districtName} districtId={state.districtId} />
+
           {/* Next Turn Instruction Pill */}
           {state.nextTurn && (
             <div
               style={{
                 alignSelf: 'flex-start',
-                background: 'rgba(15, 23, 42, 0.88)',
-                border: '1px solid rgba(56, 189, 248, 0.4)',
+                background: 'var(--surface-panel, rgba(15, 23, 42, 0.9))',
+                border: '1px solid var(--info-sky-border, rgba(56, 189, 248, 0.42))',
                 backdropFilter: 'blur(8px)',
                 borderRadius: '12px',
-                padding: '8px 14px',
+                padding: '6px 12px',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
-                fontSize: '14px',
+                fontSize: '13px',
                 fontWeight: 700,
-                color: '#38bdf8',
+                color: 'var(--info-sky, #38BDF8)',
                 boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)',
               }}
             >
-              <span style={{ fontSize: '18px' }}>
-                {turnDirectionIcon(state.nextTurn.direction)}
-              </span>
+              <TurnDirectionIcon direction={state.nextTurn.direction} size={18} />
               <span>{state.nextTurn.text}</span>
             </div>
           )}
         </div>
 
-        {/* Top-Center: Objective & Fare Banner */}
-        <div
-          style={{
-            alignSelf: 'center',
-            background: 'rgba(15, 23, 42, 0.9)',
-            border: '1px solid rgba(16, 185, 129, 0.6)',
-            borderRadius: '16px',
-            padding: '12px 24px',
-            color: '#ffffff',
-            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.5)',
-            textAlign: 'center',
-            backdropFilter: 'blur(8px)',
-            maxWidth: '380px',
-          }}
-        >
-          <div
-            style={{
-              fontSize: '14px',
-              textTransform: 'uppercase',
-              letterSpacing: '1px',
-              color: 'var(--uthao-green, #22C55E)',
-              fontWeight: 800,
-              marginBottom: '2px',
-            }}
-          >
-            {t('hud.objective')}
-          </div>
-          <div id="hud-objective" style={{ fontSize: '16px', fontWeight: 700, lineHeight: 1.3 }}>
-            {state.objectiveText}
-          </div>
-          {state.fare !== undefined && (
-            <div style={{ fontSize: '14px', color: '#fbbf24', marginTop: '3px', fontWeight: 700 }}>
-              {t('hud.fare', { fare: state.fare })}
-            </div>
-          )}
-          {state.activeMission && (
-            <div
-              data-testid="hud-active-mission"
-              style={{
-                marginTop: '6px',
-                paddingTop: '6px',
-                borderTop: '1px solid rgba(255, 255, 255, 0.14)',
-                fontSize: '13px',
-                color: '#cbd5e1',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '2px',
-              }}
-            >
-              <div style={{ color: '#38bdf8', fontWeight: 700 }}>
-                {t(state.activeMission.titleKey)}
-              </div>
-              <div>
-                {t(state.activeMission.objectiveDescKey)} ({state.activeMission.progress}/{state.activeMission.target})
-                {state.activeMission.targetDistM !== undefined && (
-                  <span style={{ color: '#fbbf24', marginLeft: '6px', fontWeight: 700 }}>
-                    • {Math.round(state.activeMission.targetDistM)}m
-                  </span>
-                )}
-              </div>
-            </div>
-          )}
-          {state.activeSideMissions && state.activeSideMissions.length > 0 && (
-            <div
-              data-testid="hud-active-side-missions"
-              style={{
-                marginTop: '6px',
-                paddingTop: '6px',
-                borderTop: '1px solid rgba(255, 255, 255, 0.14)',
-                fontSize: '12px',
-                color: '#cbd5e1',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '4px',
-              }}
-            >
-              {state.activeSideMissions.map((sm) => (
-                <div
-                  key={sm.id ?? sm.titleKey}
-                  data-testid={sm.id ? `hud-side-mission-${sm.id}` : 'hud-side-mission'}
-                >
-                  <div style={{ color: '#fbbf24', fontWeight: 700 }}>
-                    {t(sm.titleKey)}
-                  </div>
-                  <div>
-                    {t(sm.objectiveDescKey)} ({sm.progress}/{sm.target})
-                    {sm.targetDistM !== undefined && (
-                      <span style={{ color: '#38bdf8', marginLeft: '6px', fontWeight: 700 }}>
-                        • {Math.round(sm.targetDistM)}m
-                      </span>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-          {state.roadEventAlert && (
-            <div
-              data-testid="hud-road-event"
-              style={{
-                marginTop: '6px',
-                padding: '4px 10px',
-                borderRadius: '8px',
-                background: 'rgba(245, 158, 11, 0.2)',
-                border: '1px solid rgba(245, 158, 11, 0.45)',
-                color: '#fde68a',
-                fontSize: '12px',
-                fontWeight: 700,
-              }}
-            >
-              {t('hud.road_event')}: {state.roadEventAlert.title}
-            </div>
-          )}
-        </div>
+        {/* Top-Center: Compact Objective & Fare Pill */}
+        <ObjectivePill state={state} />
 
         {/* Top-Right: Fullscreen button, Earnings, Rating & Shift Clock */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
-          {/* Fullscreen & Orientation Lock Button */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
           <button
+            type="button"
             data-testid="hud-btn-fullscreen"
             onClick={handleToggleFullscreenAndLock}
             style={{
               pointerEvents: 'auto',
-              background: 'rgba(15, 23, 42, 0.88)',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
+              background: 'var(--surface-panel, rgba(15, 23, 42, 0.9))',
+              border: '1px solid var(--border-strong, rgba(255, 255, 255, 0.2))',
               borderRadius: '12px',
-              color: '#f8fafc',
-              padding: '8px 14px',
-              fontSize: '14px',
+              color: 'var(--text-primary, #F8FAFC)',
+              padding: '6px 12px',
+              fontSize: '13px',
               fontWeight: 700,
               cursor: 'pointer',
               display: 'flex',
@@ -474,30 +795,30 @@ export function HudView({
               gap: '6px',
               backdropFilter: 'blur(8px)',
               boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)',
-              minHeight: '40px',
+              minHeight: '36px',
             }}
             title="Fullscreen & Landscape Lock"
           >
-            <IconFullscreen size={15} /> {t('hud.fullscreen') || 'পূর্ণপর্দা'}
+            <IconFullscreen size={14} /> {t('hud.fullscreen') || 'পূর্ণপর্দা'}
           </button>
 
           {/* Earnings Badge */}
           <div
             data-testid="hud-earnings"
             style={{
-              background: 'rgba(15, 23, 42, 0.88)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
+              background: 'var(--surface-panel, rgba(15, 23, 42, 0.9))',
+              border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.12))',
               backdropFilter: 'blur(8px)',
               borderRadius: '12px',
-              padding: '8px 16px',
+              padding: '6px 14px',
               textAlign: 'right',
               boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)',
             }}
           >
-            <div style={{ fontSize: '14px', textTransform: 'uppercase', color: '#94a3b8', fontWeight: 700 }}>
+            <div style={{ fontSize: '12px', textTransform: 'uppercase', color: 'var(--text-muted, #94A3B8)', fontWeight: 700 }}>
               {t('hud.earnings', { amount: '' }).replace(/: ৳/, '')}
             </div>
-            <div style={{ fontSize: '20px', fontWeight: 900, color: 'var(--uthao-green, #22C55E)', lineHeight: 1.2 }}>
+            <div style={{ fontSize: '18px', fontWeight: 900, color: 'var(--uthao-green, #22C55E)', lineHeight: 1.2 }}>
               ৳{Math.round(state.todayNetEarnings)}
             </div>
           </div>
@@ -505,23 +826,24 @@ export function HudView({
           {/* Rating & Shift Clock Badge */}
           <div
             style={{
-              background: 'rgba(15, 23, 42, 0.88)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
+              background: 'var(--surface-panel, rgba(15, 23, 42, 0.9))',
+              border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.12))',
               backdropFilter: 'blur(8px)',
               borderRadius: '12px',
-              padding: '8px 14px',
+              padding: '6px 12px',
               display: 'flex',
               alignItems: 'center',
-              gap: '12px',
-              fontSize: '14px',
+              gap: '10px',
+              fontSize: '13px',
               fontWeight: 700,
             }}
           >
-            <span style={{ color: 'var(--dhaka-amber, #F59E0B)' }}>
-              ★ {state.rating ? state.rating.toFixed(1) : '5.0'}
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--dhaka-amber, #F59E0B)' }}>
+              <IconStar size={14} color="var(--dhaka-amber, #F59E0B)" />
+              {state.rating ? state.rating.toFixed(1) : '5.0'}
             </span>
             <span style={{ color: '#475569' }}>|</span>
-            <span style={{ color: '#e2e8f0' }}>
+            <span style={{ color: 'var(--text-secondary, #CBD5E1)' }}>
               {state.shiftClock || '07:30'} • {t('hud.day', { day: state.shiftDay || 1 })}
             </span>
           </div>
@@ -529,127 +851,52 @@ export function HudView({
       </div>
 
       {/* Passenger Dialogue Subtitle Bubble */}
-      {state.dialogueSubtitle && (
+      {state.dialogueSubtitle && <DialogueSubtitleBubble subtitle={state.dialogueSubtitle} />}
+
+      {/* Bottom Bar: Passenger Chip (Left), Quick Actions (Center), Speedometer / Gear / Condition / Fuel Cluster (Right) */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: '12px', width: '100%' }}>
+        <PassengerChip state={state} />
+
+        <QuickActions state={state} />
+
+        {/* Bottom-Right: Speedometer, Gear, Condition & Fuel Gauge Pod */}
         <div
-          data-testid="hud-dialogue-subtitle"
+          data-testid="hud-speed-pod"
           style={{
-            alignSelf: 'center',
-            marginBottom: '16px',
             background: 'var(--surface-panel, rgba(15, 23, 42, 0.92))',
-            border: '1px solid rgba(56, 189, 248, 0.4)',
+            border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.12))',
             borderRadius: '16px',
-            padding: '10px 20px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.6)',
-            maxWidth: '650px',
-            pointerEvents: 'auto',
-            backdropFilter: 'blur(10px)',
-          }}
-        >
-          <IconChat size={20} color="#38bdf8" />
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            {state.dialogueSubtitle.speaker && (
-              <span style={{ fontSize: '12px', color: '#38bdf8', fontWeight: 800 }}>
-                {t(state.dialogueSubtitle.speaker)}
-              </span>
-            )}
-            <span
-              style={{
-                fontSize: settingsSignal.value.subtitlesSize === 'large' ? '18px' : '15px',
-                color: '#f8fafc',
-                fontWeight: 600,
-              }}
-            >
-              {state.dialogueSubtitle.text}
-            </span>
-          </div>
-        </div>
-      )}
-
-      {/* Bottom Bar: Passenger Chip (Left) & Speedometer / Fuel Cluster (Right) */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', width: '100%' }}>
-        {/* Bottom-Left: Passenger Status Chip */}
-        <div
-          data-testid="hud-passenger-status"
-          style={{
-            background: 'rgba(15, 23, 42, 0.88)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            backdropFilter: 'blur(8px)',
-            borderRadius: '16px',
-            padding: '12px 20px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            boxShadow: '0 6px 20px rgba(0, 0, 0, 0.5)',
-          }}
-        >
-          <div
-            style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '50%',
-              background: '#334155',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              border: '2px solid #38bdf8',
-            }}
-          >
-            {state.passengerStatus?.status === 'OnTrip' ? (
-              <IconUser size={20} color="#f8fafc" />
-            ) : (
-              <IconMotorcycle size={20} color="#38bdf8" />
-            )}
-          </div>
-          <div>
-            <div style={{ fontSize: '15px', fontWeight: 800, color: '#f8fafc' }}>
-              {state.passengerStatus?.name || (state.passengerStatus?.status === 'OnTrip' ? t('hud.passenger.on_bike') : t('hud.passenger.waiting'))}
-            </div>
-            <div style={{ fontSize: '14px', color: '#94a3b8', fontWeight: 600 }}>
-              {t(passengerHintKey(state.passengerStatus?.status))}
-              {state.etaMinutes !== undefined && ` • ${t('hud.eta', { min: state.etaMinutes })}`}
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom-Right: Speedometer, Gear & Fuel Gauge Pod */}
-        <div
-          style={{
-            background: 'rgba(15, 23, 42, 0.9)',
-            border: '1px solid rgba(51, 65, 85, 0.8)',
-            borderRadius: '18px',
-            padding: '16px 24px',
-            color: '#ffffff',
+            padding: '12px 18px',
+            color: 'var(--text-primary, #F8FAFC)',
             boxShadow: '0 8px 30px rgba(0, 0, 0, 0.6)',
             textAlign: 'right',
-            minWidth: '160px',
+            minWidth: '165px',
             backdropFilter: 'blur(8px)',
             display: 'flex',
             flexDirection: 'column',
-            gap: '8px',
+            gap: '6px',
           }}
         >
           {/* Speed & Gear */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '14px' }}>
             <span
+              data-testid="hud-gear"
               style={{
-                fontSize: '15px',
+                fontSize: '14px',
                 fontWeight: 800,
-                color: '#38bdf8',
-                background: 'rgba(56, 189, 248, 0.15)',
-                padding: '3px 10px',
+                color: 'var(--info-sky, #38BDF8)',
+                background: 'var(--info-sky-dim, rgba(56, 189, 248, 0.18))',
+                padding: '3px 9px',
                 borderRadius: '6px',
               }}
             >
-              {state.gear !== undefined ? `G${state.gear}` : 'D'}
+              {gearLabel}
             </span>
             <div>
               <div
                 id="hud-speed"
                 style={{
-                  fontSize: '44px',
+                  fontSize: '36px',
                   fontWeight: 900,
                   lineHeight: 1,
                   color: '#ffffff',
@@ -660,9 +907,9 @@ export function HudView({
               </div>
               <div
                 style={{
-                  fontSize: '14px',
+                  fontSize: '12px',
                   letterSpacing: '1px',
-                  color: '#94a3b8',
+                  color: 'var(--text-muted, #94A3B8)',
                   fontWeight: 700,
                   marginTop: '2px',
                 }}
@@ -672,24 +919,26 @@ export function HudView({
             </div>
           </div>
 
-          <FuelActions state={state} />
+          {/* Bike Condition Bar */}
+          <ConditionMeter conditionPct={conditionPct} />
+
           {/* Fuel Level Bar */}
-          <div style={{ width: '100%', marginTop: '4px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', fontSize: '14px', color: isLowFuel ? 'var(--danger-red, #EF4444)' : '#94a3b8', fontWeight: 700 }}>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-                {isLowFuel ? <IconWarning size={14} color="var(--danger-red, #EF4444)" /> : <IconFuel size={14} />}
+          <div style={{ width: '100%' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', fontSize: '12px', color: isLowFuel ? 'var(--danger-red, #EF4444)' : 'var(--text-muted, #94A3B8)', fontWeight: 700 }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                {isLowFuel ? <IconWarning size={13} color="var(--danger-red, #EF4444)" /> : <IconFuel size={13} />}
                 {isLowFuel ? t('hud.fuel_low') : t('hud.fuel')}
               </span>
               <span>{fuelPct}% ({state.fuelL.toFixed(1)}L)</span>
             </div>
             <div
               style={{
-                height: '8px',
+                height: '6px',
                 width: '100%',
                 background: 'rgba(255, 255, 255, 0.15)',
                 borderRadius: '4px',
                 overflow: 'hidden',
-                marginTop: '4px',
+                marginTop: '3px',
               }}
             >
               <div
@@ -699,7 +948,7 @@ export function HudView({
                   width: `${fuelPct}%`,
                   background: isLowFuel
                     ? 'var(--danger-red, #EF4444)'
-                    : 'linear-gradient(90deg, var(--uthao-green, #22C55E) 0%, #06b6d4 100%)',
+                    : 'linear-gradient(90deg, var(--uthao-green, #22C55E) 0%, var(--info-sky, #38BDF8) 100%)',
                   transition: 'width 0.25s ease',
                 }}
               />

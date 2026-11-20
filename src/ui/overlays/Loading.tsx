@@ -134,12 +134,6 @@ export function Loading({ message }: LoadingProps): JSX.Element {
           />
         </div>
       )}
-
-      <style>{`
-        @keyframes uthao-spin {
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
     </div>
   );
 }
