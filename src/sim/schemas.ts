@@ -557,6 +557,8 @@ export const DeliveryJobSchema = z.object({
   pickupPoiId: z.string(),
   pickupNodeId: z.string(),
   dropoffNodeId: z.string(),
+  pickupPlaceKey: z.string().optional(),
+  dropoffPlaceKey: z.string().optional(),
   itemType: z.enum(['food', 'document', 'medicine', 'fragile_electronics', 'parcel']),
   fragile: z.boolean(),
   basePayout: z.number().positive(),
@@ -601,3 +603,338 @@ export const DialogueLineSchema = z.object({
 export type DialogueLineDef = z.infer<typeof DialogueLineSchema>;
 export const DialogueDataSchema = z.array(DialogueLineSchema);
 export type DialogueData = z.infer<typeof DialogueDataSchema>;
+
+// --- Save v1 / v2 Runtime Validation Schemas (P5.2 / T11.4) ---
+
+export const SaveSlotSchema = z.enum(['auto', 'slot1', 'slot2', 'slot3']);
+
+export const SaveModeSchema = z.enum(['career', 'endless']);
+
+export const WeatherKindSchema = z.enum(['clear', 'cloudy', 'lightRain', 'heavyRain']);
+
+export const MeterIdSchema = z.enum([
+  'riderIntegrity',
+  'publicReputation',
+  'platformStanding',
+  'criminalExposure',
+  'evidenceExposure',
+  'safetyRecord',
+]);
+
+export const BikeIdSchema = z.enum(['old100', 'used125', 'new150']);
+
+export const EndingIdSchema = z.enum([
+  'independent_rider',
+  'workshop_owner',
+  'trusted_local',
+  'fast_money',
+  'fresh_start',
+]);
+
+const TransactionKindSchema = z.enum([
+  'fare',
+  'tip',
+  'event',
+  'commission',
+  'fuel',
+  'repair',
+  'maintenance',
+  'upgrade',
+  'food',
+  'rent',
+  'family',
+  'phoneData',
+  'parking',
+  'fine',
+  'reward',
+  'robbery',
+  'delivery',
+  'medical',
+  'bike_purchase',
+  'bonus',
+  'bribe',
+  'compensation',
+  'tea',
+  'savings',
+  'debt',
+]);
+
+export const SaveTransactionSchema = z.object({
+  id: z.string(),
+  day: z.number().finite(),
+  minute: z.number().finite(),
+  kind: TransactionKindSchema,
+  amount: z.number().finite(),
+  requestId: z.string().optional(),
+});
+
+export const SaveRoadEventSchema = z.object({
+  id: z.string(),
+  kind: z.enum([
+    'construction',
+    'stalled_vehicle',
+    'market_congestion',
+    'blocked_intersection',
+    'diversion',
+    'closure',
+    'vip_protocol',
+    'waterlogging',
+    'eid_rush',
+  ]),
+  segmentId: z.string(),
+  active: z.boolean(),
+  closesSegment: z.boolean(),
+  speedCapKmh: z.number().finite().optional(),
+  congestionMultiplier: z.number().finite().optional(),
+  hasWorkers: z.boolean().optional(),
+  diversionSegmentId: z.string().optional(),
+  startMinute: z.number().finite(),
+  durationMinutes: z.number().finite(),
+  remainingMinutes: z.number().finite(),
+  title: z
+    .object({
+      bn: z.string(),
+      en: z.string(),
+    })
+    .optional(),
+});
+
+export const SaveDeliverySnapshotSchema = z.object({
+  offeredDeliveries: z.array(DeliveryJobSchema),
+  activeDeliveries: z.array(DeliveryJobSchema),
+  completedDeliveries: z.array(DeliveryJobSchema).optional(),
+  partnershipActive: z.boolean().optional(),
+  jobSeq: z.number().finite().optional(),
+});
+
+export const SaveEconomySchema = z.object({
+  cash: z.number().finite(),
+  advancesTaken: z.number().finite().optional(),
+  deferredRent: z.number().finite().optional(),
+  dailyRevenue: z.number().finite(),
+  dailyExpenses: z.number().finite(),
+  fuelLevel: z.number().finite(),
+  motorcycleCondition: z.number().finite(),
+  appBalance: z.number().finite(),
+  debt: z.number().finite(),
+  reputation: z.number().finite(),
+  savings: z.number().finite(),
+  phoneBattery: z.number().finite(),
+  engineCondition: z.number().finite().optional(),
+  tiresCondition: z.number().finite().optional(),
+  brakesCondition: z.number().finite().optional(),
+  kmSinceOilChange: z.number().finite().optional(),
+  ownedUpgrades: z.array(z.string()).optional(),
+  installedCosmetics: z
+    .object({
+      paint: z.string().optional(),
+      seatCover: z.string().optional(),
+    })
+    .optional(),
+  currentBikeId: BikeIdSchema.optional(),
+  ownedBikes: z.array(BikeIdSchema).optional(),
+});
+
+export const SaveStorySchema = z.object({
+  currentChapter: z.number().int().positive(),
+  completedMissions: z.array(z.string()),
+  activeMissions: z.array(z.string()),
+  characterRelationships: z.record(z.string(), z.number().finite()),
+  promises: z.array(
+    z.object({
+      id: z.string(),
+      characterId: z.string(),
+      descriptionKey: z.string(),
+      dueDay: z.number().finite(),
+      dueMinute: z.number().finite().optional(),
+      fulfilled: z.boolean().optional(),
+    })
+  ),
+  branchFlags: z.record(z.string(), z.union([z.boolean(), z.number().finite(), z.string()])),
+  endingEligibility: z.record(EndingIdSchema, z.boolean()),
+});
+
+export const KarmaEventSchema = z.object({
+  id: z.string(),
+  day: z.number().int().positive(),
+  minute: z.number().finite(),
+  meter: MeterIdSchema,
+  delta: z.number().finite(),
+  applied: z.number().finite(),
+  reasonKey: z.string(),
+  subjectId: z.string().optional(),
+});
+
+export const SaveReputationSchema = z.object({
+  rating: z.number().finite(),
+  ratingsHistory: z.array(z.number().finite()).optional(),
+  localTrust: z.number().finite(),
+  safetyRecord: z.object({
+    nearMisses: z.number().finite().nonnegative(),
+    bumps: z.number().finite().nonnegative(),
+    crashes: z.number().finite().nonnegative(),
+    infractions: z.number().finite().nonnegative(),
+  }),
+  riskScore: z.number().finite().nonnegative(),
+  promises: z.object({
+    kept: z.number().finite().nonnegative(),
+    broken: z.number().finite().nonnegative(),
+  }),
+  meters: z.record(MeterIdSchema, z.number().finite()).optional(),
+  karmaLog: z.array(KarmaEventSchema).optional(),
+  passengerTrust: z.record(z.string(), z.number().finite()).optional(),
+  offAppStrikes: z.number().finite().nonnegative().optional(),
+  suspendedUntilDay: z.number().finite().nonnegative().optional(),
+  wasWarned: z.boolean().optional(),
+  wasSuspended: z.boolean().optional(),
+  ratingSuspensionCleared: z.boolean().optional(),
+  karmaSeq: z.number().finite().nonnegative().optional(),
+});
+
+export const SaveBikeSchema = z.object({
+  condition: z.number().finite(),
+  fuelLevel: z.number().finite(),
+  engineCondition: z.number().finite().optional(),
+  tiresCondition: z.number().finite().optional(),
+  brakesCondition: z.number().finite().optional(),
+  kmSinceOilChange: z.number().finite().optional(),
+  ownedUpgrades: z.array(z.string()).optional(),
+  installedCosmetics: z
+    .object({
+      paint: z.string().optional(),
+      seatCover: z.string().optional(),
+    })
+    .optional(),
+});
+
+export const ObjectiveStateSchema = z.object({
+  id: z.string(),
+  progress: z.number().finite(),
+  target: z.number().finite(),
+  completed: z.boolean(),
+  rawProgress: z.number().finite().optional(),
+});
+
+export const MissionSaveStateSchema = z.object({
+  visitedDistricts: z.array(z.string()),
+  objectiveStates: z.record(z.string(), z.array(ObjectiveStateSchema)).optional(),
+  activeMissions: z.array(z.string()).optional(),
+  completedMissions: z.array(z.string()).optional(),
+  currentDay: z.number().int().positive().optional(),
+});
+
+export const SaveRideMetaSchema = z.object({
+  offAppStrikes: z.number().int().nonnegative(),
+  appSuspendedUntilDay: z.number().int().nonnegative(),
+  directContacts: z.array(z.string()),
+  activeBikeId: BikeIdSchema,
+  hadUnsettledTrip: z.boolean().optional(),
+});
+
+export const SaveEconomyMetaSchema = z.object({
+  rentMissedCount: z.number().int().nonnegative(),
+  txSeq: z.number().int().nonnegative(),
+});
+
+export const SaveEventDirectorStateSchema = z.object({
+  cooldowns: z.record(z.string(), z.number().finite()),
+  firedToday: z.array(z.string()),
+  lastEvaluationMinute: z.number().finite(),
+  hasEvaluatedOnce: z.boolean(),
+  nextGlobalEncounterMinute: z.number().finite(),
+  rngState: z.number().finite().optional(),
+  pendingM4PoliceDecision: z.boolean().optional(),
+});
+
+export const SaveWeatherStateSchema = z.object({
+  weather: WeatherKindSchema,
+  roadWetness: z.number().finite(),
+  rainDurationMinutes: z.number().finite(),
+  segmentFloodLevels: z.record(z.string(), z.number().finite()),
+  manualOverride: z.boolean().optional(),
+});
+
+export const SaveBikePoseSchema = z.object({
+  x: z.number().finite(),
+  y: z.number().finite().optional(),
+  z: z.number().finite(),
+  heading: z.number().finite(),
+});
+
+export const SaveV1Schema = z.object({
+  version: z.literal(1),
+  timestamp: z.number().finite(),
+  slot: SaveSlotSchema,
+  seed: z.number().finite(),
+  mode: SaveModeSchema,
+  ticks: z.number().finite().nonnegative(),
+  rngState: z.number().finite(),
+  clock: z.object({
+    day: z.number().int().positive(),
+    minutes: z.number().finite().nonnegative(),
+  }),
+  economy: SaveEconomySchema,
+  story: SaveStorySchema,
+  reputation: SaveReputationSchema,
+  bike: SaveBikeSchema,
+  weather: WeatherKindSchema,
+  waypointNodeId: z.string().nullable(),
+  roadEvents: z.array(SaveRoadEventSchema).optional(),
+  ledger: z.array(SaveTransactionSchema).optional(),
+  settledRequests: z.array(z.string()).optional(),
+  requestSeq: z.number().finite().optional(),
+  negotiationHistory: z.number().finite().optional(),
+  shiftEnded: z.boolean().optional(),
+  todayRentPosted: z.number().finite().optional(),
+  todayRentDebt: z.number().finite().optional(),
+  todayRentAutoFlagged: z.boolean().optional(),
+  rentDelayedByCommand: z.boolean().optional(),
+  deliveries: SaveDeliverySnapshotSchema.optional(),
+  missions: MissionSaveStateSchema.optional(),
+});
+
+export const SaveV2Schema = z.object({
+  version: z.literal(2),
+  timestamp: z.number().finite(),
+  slot: SaveSlotSchema,
+  seed: z.number().finite(),
+  mode: SaveModeSchema,
+  ticks: z.number().finite().nonnegative(),
+  rngState: z.number().finite(),
+  clock: z.object({
+    day: z.number().int().positive(),
+    minutes: z.number().finite().nonnegative(),
+  }),
+  economy: SaveEconomySchema,
+  story: SaveStorySchema,
+  reputation: SaveReputationSchema.extend({
+    ratingsHistory: z.array(z.number().finite()),
+  }),
+  bike: SaveBikeSchema,
+  weather: WeatherKindSchema,
+  waypointNodeId: z.string().nullable(),
+  karmaMeters: z.record(MeterIdSchema, z.number().finite()),
+  karmaLog: z.array(KarmaEventSchema),
+  passengerTrust: z.record(z.string(), z.number().finite()),
+  visitedDistricts: z.array(z.string()),
+  missions: MissionSaveStateSchema.extend({
+    objectiveStates: z.record(z.string(), z.array(ObjectiveStateSchema)),
+  }),
+  rideMeta: SaveRideMetaSchema,
+  economyMeta: SaveEconomyMetaSchema,
+  eventDirectorState: SaveEventDirectorStateSchema,
+  weatherState: SaveWeatherStateSchema,
+  bikePose: SaveBikePoseSchema,
+  roadEvents: z.array(SaveRoadEventSchema).optional(),
+  ledger: z.array(SaveTransactionSchema).optional(),
+  settledRequests: z.array(z.string()).optional(),
+  requestSeq: z.number().finite().optional(),
+  negotiationHistory: z.number().finite().optional(),
+  shiftEnded: z.boolean().optional(),
+  todayRentPosted: z.number().finite().optional(),
+  todayRentDebt: z.number().finite().optional(),
+  todayRentAutoFlagged: z.boolean().optional(),
+  rentDelayedByCommand: z.boolean().optional(),
+  todayCompletedRides: z.number().int().nonnegative().optional(),
+  deliveries: SaveDeliverySnapshotSchema.optional(),
+});

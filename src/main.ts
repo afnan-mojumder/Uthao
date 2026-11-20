@@ -36,12 +36,13 @@ import {
   mapPlayerPosSignal,
   journalDataSignal,
   settingsSignal,
+  setActiveSaveSystem,
   type GameSettings,
 } from './ui/store';
 import { getCharacter } from './sim/passenger/PassengerAI';
 import { setLanguage } from './ui/i18n';
 import { setDefaultSignLanguage } from './render/signage';
-import { consumeFreshCareer } from './ui/freshCareer';
+import { consumeFreshCareer, resolveCareerSeed } from './ui/freshCareer';
 import { routeColorFor } from './ui/settingsEffects';
 import { bindUi } from './ui/bindings';
 import { SaveSystem } from './sim/save/SaveSystem';
@@ -178,8 +179,11 @@ async function bootGame(): Promise<void> {
     ? RoadNetwork.fromDistricts([activeDistrict])
     : RoadNetwork.fromWorld(worldDataJson as WorldData, allDistrictsList);
 
+  const bootSeed = resolveCareerSeed(
+    typeof window !== 'undefined' && window.location ? window.location.search : undefined
+  );
   const gm = new GameManager({
-    seed: 42,
+    seed: bootSeed,
     mode: 'career',
     data: allDistrictsMap,
   });
@@ -260,7 +264,13 @@ async function bootGame(): Promise<void> {
     syncBikeAppearance(renderer);
     bootCleanups.push(gm.bus.on('bike/swapped', () => syncBikeAppearance(renderer)));
     bootCleanups.push(gm.bus.on('upgrade/purchased', () => syncBikeAppearance(renderer)));
-    bootCleanups.push(gm.bus.on('state/restored', () => syncBikeAppearance(renderer)));
+    bootCleanups.push(
+      gm.bus.on('state/restored', () => {
+        syncBikeAppearance(renderer);
+        renderer?.snapBikeState(session.bike);
+        renderer?.syncFloodedSegments(gm.weatherSystem, roadNetwork);
+      })
+    );
     bootCleanups.push(
       gm.bus.on('bike/collision', ({ severity }) => {
         if (severity === 'crash') renderer?.cameraRig.triggerShake(0.45);
@@ -344,6 +354,7 @@ async function bootGame(): Promise<void> {
 setLoadingStage('loading.session', 85);
 const activeSaveSystem = new SaveSystem();
 saveSystem = activeSaveSystem;
+setActiveSaveSystem(activeSaveSystem);
 bootCleanups.push(
   activeSaveSystem.bindAutosave(
     gm,
@@ -434,7 +445,7 @@ session.spawnAtHome();
 
 // A new career requested from the menu before this reload: start it on this fresh game.
 if (consumeFreshCareer()) {
-  session.newCareer();
+  session.newCareer(bootSeed);
   syncBikeAppearance(renderer);
   tutorialSignal.value = { active: true, step: 'alarm', agreedFare: 100 };
   screenSignal.value = 'game';

@@ -72,6 +72,14 @@ export interface PendingDispute {
   unpaid: boolean;
 }
 
+export interface RideMetaSave {
+  offAppStrikes: number;
+  appSuspendedUntilDay: number;
+  directContacts: string[];
+  activeBikeId: BikeId;
+  hadUnsettledTrip?: boolean;
+}
+
 export interface RideManagerOptions {
   roadNetwork: RoadNetwork;
   bus: EventBus<GameEvents>;
@@ -742,12 +750,91 @@ export class RideManager {
     return this._appSuspendedUntilDay > 0 && currentDay < this._appSuspendedUntilDay;
   }
 
+  hasUnsettledTrip(): boolean {
+    if (!this.activeRequest) return false;
+    return !(this.economy?.getSettledIds().includes(this.activeRequest.requestId) ?? false);
+  }
+
+  exportMeta(): RideMetaSave {
+    return {
+      offAppStrikes: this.offAppStrikes,
+      appSuspendedUntilDay: this.appSuspendedUntilDay,
+      directContacts: Array.from(this.directContacts),
+      activeBikeId: this.activeBikeId,
+      hadUnsettledTrip: this.hasUnsettledTrip(),
+    };
+  }
+
+  importMeta(meta?: Partial<RideMetaSave>): void {
+    if (!meta) return;
+    if (Array.isArray(meta.directContacts)) {
+      this.directContacts.clear();
+      for (const id of meta.directContacts) {
+        this.directContacts.add(id);
+      }
+    }
+    if (meta.activeBikeId) {
+      this.activeBikeId = meta.activeBikeId;
+    }
+    if (!this.reputation) {
+      if (typeof meta.offAppStrikes === 'number' && Number.isFinite(meta.offAppStrikes)) {
+        this._offAppStrikes = Math.max(0, Math.floor(meta.offAppStrikes));
+      }
+      if (typeof meta.appSuspendedUntilDay === 'number' && Number.isFinite(meta.appSuspendedUntilDay)) {
+        this._appSuspendedUntilDay = Math.max(0, Math.floor(meta.appSuspendedUntilDay));
+      }
+    }
+  }
+
+  /** Cancels/resets any unsettled live ride or queued offers cleanly to Idle on reload without penalty. */
+  resetUnsettledToIdle(): boolean {
+    const active = this.activeRequest;
+    this.offeredRequests.clear();
+    this.offerDeadlines.clear();
+    this.pendingDispute = null;
+    this.currentRoute = null;
+    this.noticeKey = null;
+    this.noticeUntil = 0;
+
+    if (active) {
+      const reqId = active.requestId;
+      const state = this.trip.state;
+      if (state === 'Negotiating') {
+        this.go('decline');
+      } else if (this.trip.can('cancel')) {
+        this.go('cancel');
+      } else if (this.trip.can('abort')) {
+        this.go('abort');
+      } else if (this.trip.can('fail')) {
+        this.go('fail');
+      }
+      this.outcome = null;
+      this.clearActive();
+      this.settleToIdle();
+      this.bus.emit('ride/cancelled', { requestId: reqId, by: 'system', reason: 'reload_unsettled' });
+      return true;
+    }
+
+    if (this.trip.state === 'RequestAvailable') {
+      this.go('withdraw');
+    }
+    this.outcome = null;
+    this.clearActive();
+    this.settleToIdle();
+    return false;
+  }
+
   resetCareer(): void {
     if (this.activeRequest) {
       this.cancel(this.activeRequest.requestId, 'system', 'new_career');
     }
     this.offeredRequests.clear();
     this.offerDeadlines.clear();
+    if (this.trip.state === 'RequestAvailable') {
+      this.go('withdraw');
+    }
+    this.outcome = null;
+    this.settleToIdle();
     this.pendingDispute = null;
     this.currentRoute = null;
     this.directContacts.clear();

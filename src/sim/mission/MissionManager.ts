@@ -27,9 +27,20 @@ export interface HudMissionEntry {
   isSide: boolean;
 }
 
+export interface MissionSaveState {
+  visitedDistricts: string[];
+  objectiveStates: Record<string, ObjectiveState[]>;
+  activeMissions?: string[];
+  completedMissions?: string[];
+  currentDay?: number;
+}
+
 export interface MissionManagerSnapshot {
   visitedDistricts: string[];
   objectiveStates?: Record<string, ObjectiveState[]>;
+  activeMissions?: string[];
+  completedMissions?: string[];
+  currentDay?: number;
 }
 
 export interface MissionManagerOptions {
@@ -617,7 +628,43 @@ export class MissionManager {
     return Array.from(this.visitedDistricts);
   }
 
-  snapshot(): MissionManagerSnapshot {
+  private restoreActiveMission(id: string): void {
+    if (this.activeMissionIds.has(id) || this.completedMissionIds.has(id)) {
+      return;
+    }
+    const def = this.missions.get(id);
+    if (!def) return;
+
+    this.activeMissionIds.add(id);
+    if (!this.storyState.activeMissions.includes(id)) {
+      this.storyState.activeMissions.push(id);
+    }
+
+    const objMap = new Map<string, ObjectiveState>();
+    for (const obj of def.objectives) {
+      const state = createObjectiveState(obj);
+      if (obj.type === 'flag' && this.storyState.branchFlags[obj.key] === obj.value) {
+        state.progress = 1;
+        state.completed = true;
+      } else if (obj.type === 'relationship') {
+        const current = this.reputationSystem
+          ? this.reputationSystem.getRelationship(obj.characterId)
+          : (this.storyState.characterRelationships[obj.characterId] ?? 0);
+        evaluateRelationshipChanged(obj, state, obj.characterId, current);
+      }
+      objMap.set(obj.id, state);
+    }
+    this.objectiveStates.set(id, objMap);
+  }
+
+  setMissions(missions: MissionDef[]): void {
+    this.missions.clear();
+    for (const m of missions) {
+      this.missions.set(m.id, m);
+    }
+  }
+
+  exportState(): MissionSaveState {
     const objectiveStates: Record<string, ObjectiveState[]> = {};
     for (const [missionId, objMap] of this.objectiveStates) {
       objectiveStates[missionId] = Array.from(objMap.values()).map((s) => ({ ...s }));
@@ -625,12 +672,39 @@ export class MissionManager {
     return {
       visitedDistricts: Array.from(this.visitedDistricts),
       objectiveStates,
+      activeMissions: Array.from(this.activeMissionIds),
+      completedMissions: Array.from(this.completedMissionIds),
+      currentDay: this.currentDay,
     };
   }
 
-  applySnapshot(snap?: MissionManagerSnapshot): void {
+  importState(snap?: MissionManagerSnapshot): void {
+    if (!snap) {
+      this.visitedDistricts.clear();
+      return;
+    }
+    if (snap.completedMissions) {
+      this.completedMissionIds.clear();
+      this.storyState.completedMissions = [];
+      for (const id of snap.completedMissions) {
+        this.completedMissionIds.add(id);
+        if (!this.storyState.completedMissions.includes(id)) {
+          this.storyState.completedMissions.push(id);
+        }
+      }
+    }
+    if (snap.activeMissions) {
+      this.activeMissionIds.clear();
+      this.objectiveStates.clear();
+      this.storyState.activeMissions = [];
+      for (const id of snap.activeMissions) {
+        this.restoreActiveMission(id);
+      }
+    }
+    if (typeof snap.currentDay === 'number' && Number.isFinite(snap.currentDay)) {
+      this.currentDay = Math.max(1, Math.floor(snap.currentDay));
+    }
     this.visitedDistricts.clear();
-    if (!snap) return;
     for (const d of snap.visitedDistricts ?? []) {
       this.visitedDistricts.add(d);
     }
@@ -645,6 +719,14 @@ export class MissionManager {
         }
       }
     }
+  }
+
+  snapshot(): MissionSaveState {
+    return this.exportState();
+  }
+
+  applySnapshot(snap?: MissionManagerSnapshot): void {
+    this.importState(snap);
   }
 
   /** Resets manager tracking on a fresh career so completed triggerOnly missions can unlock again on new careers. */
@@ -670,7 +752,7 @@ export class MissionManager {
       this.completedMissionIds.add(id);
     }
     for (const id of this.storyState.activeMissions ?? []) {
-      this.activateMission(id);
+      this.restoreActiveMission(id);
     }
   }
 

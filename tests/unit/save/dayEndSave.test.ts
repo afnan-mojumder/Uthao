@@ -54,6 +54,35 @@ describe('day-end autosave (H-12)', () => {
     // Assert
     expect(res.success).toBe(true);
   });
+
+  it('loading a day/ended autosave opens DayEnd UI immediately so the player can sleep to the next day', async () => {
+    const { bindEventBusToStore, dayEndSignal } = await import('../../../src/ui/store');
+    const gm = newGame();
+    const system = new SaveSystem(new MemoryStorageAdapter());
+    system.bindAutosave(gm);
+    gm.clock.day = 2;
+    gm.clock.minutes = 23 * 60;
+    gm.todayCompletedRides = 3;
+    gm.dispatch({ type: 'endShift' });
+
+    const live = newGame();
+    const unbind = bindEventBusToStore(live.bus);
+    dayEndSignal.value = { active: false, summary: null };
+
+    try {
+      loadInto(live, system);
+      expect(dayEndSignal.value.active).toBe(true);
+      expect(dayEndSignal.value.summary?.day).toBe(2);
+      expect(dayEndSignal.value.summary?.completedRides).toBe(3);
+
+      const sleepRes = live.dispatch({ type: 'sleep' });
+      expect(sleepRes.success).toBe(true);
+      expect(dayEndSignal.value.active).toBe(false);
+      expect(live.clock.day).toBe(3);
+    } finally {
+      unbind();
+    }
+  });
 });
 
 describe('sleep', () => {

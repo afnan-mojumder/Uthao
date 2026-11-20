@@ -28,4 +28,15 @@ describe('SaveSystem.latestSlot (Continue resumes the newest save)', () => {
       vi.useRealTimers();
     }
   });
+
+  it('quarantines version 99 and truncated version 1 slots and still resolves the newest valid slot', () => {
+    const memory = saveSystem.storage as MemoryStorageAdapter;
+    saveSystem.save(gm, 'slot1');
+    memory.setItem(saveSystem.getSlotKey('slot2'), JSON.stringify({ version: 1, slot: 'slot2' }));
+    memory.setItem(saveSystem.getSlotKey('slot3'), JSON.stringify({ version: 99, slot: 'slot3' }));
+
+    expect(saveSystem.latestSlot()).toBe('slot1');
+    expect(saveSystem.hasCorruptBackup('slot2')).toBe(true);
+    expect(saveSystem.hasCorruptBackup('slot3')).toBe(true);
+  });
 });

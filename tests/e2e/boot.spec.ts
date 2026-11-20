@@ -58,7 +58,7 @@ test('autosaves on hidden', async ({ page }) => {
 
   expect(savedData).not.toBeNull();
   const parsed = JSON.parse(savedData!);
-  expect(parsed.version).toBe(1);
+  expect(parsed.version).toBe(2);
   expect(parsed.slot).toBe('auto');
 });
 

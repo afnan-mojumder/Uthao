@@ -29,6 +29,16 @@ export interface PendingEncounterCue {
   fireAtMinute: number;
 }
 
+export interface EventDirectorState {
+  cooldowns: Record<string, number>;
+  firedToday: string[];
+  lastEvaluationMinute: number;
+  hasEvaluatedOnce: boolean;
+  nextGlobalEncounterMinute: number;
+  rngState?: number;
+  pendingM4PoliceDecision?: boolean;
+}
+
 export interface EventDirectorOptions {
   definitions?: EncounterDef[];
   seed?: number;
@@ -92,6 +102,53 @@ export class EventDirector {
     this.hasEvaluatedOnce = false;
     this.currentPhase = 'roaming';
     this.lastContext = undefined;
+  }
+
+  setSeed(seed: number): void {
+    this.rng.setState(seed);
+  }
+
+  exportState(): EventDirectorState {
+    const cooldowns: Record<string, number> = {};
+    for (const [k, v] of this.cooldowns.entries()) {
+      cooldowns[k] = v;
+    }
+    return {
+      cooldowns,
+      firedToday: Array.from(this.firedToday),
+      lastEvaluationMinute: this.lastEvaluationMinute,
+      hasEvaluatedOnce: this.hasEvaluatedOnce,
+      nextGlobalEncounterMinute: this.nextGlobalEncounterMinute,
+      rngState: this.rng.getState(),
+    };
+  }
+
+  importState(state?: EventDirectorState): void {
+    this.resetCareer();
+    if (!state) return;
+    for (const [k, v] of Object.entries(state.cooldowns ?? {})) {
+      if (typeof v === 'number' && Number.isFinite(v)) {
+        this.cooldowns.set(k, v);
+      }
+    }
+    for (const id of state.firedToday ?? []) {
+      this.firedToday.add(id);
+    }
+    if (typeof state.lastEvaluationMinute === 'number' && Number.isFinite(state.lastEvaluationMinute)) {
+      this.lastEvaluationMinute = state.lastEvaluationMinute;
+    }
+    if (typeof state.hasEvaluatedOnce === 'boolean') {
+      this.hasEvaluatedOnce = state.hasEvaluatedOnce;
+    }
+    if (
+      typeof state.nextGlobalEncounterMinute === 'number' &&
+      Number.isFinite(state.nextGlobalEncounterMinute)
+    ) {
+      this.nextGlobalEncounterMinute = state.nextGlobalEncounterMinute;
+    }
+    if (typeof state.rngState === 'number' && Number.isFinite(state.rngState)) {
+      this.rng.setState(state.rngState);
+    }
   }
 
   private collectValidChoices(

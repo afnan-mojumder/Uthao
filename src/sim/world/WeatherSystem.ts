@@ -16,6 +16,14 @@ interface WeatherEpisode {
   weather: WeatherKind;
 }
 
+export interface WeatherSystemState {
+  weather: WeatherKind;
+  roadWetness: number;
+  rainDurationMinutes: number;
+  segmentFloodLevels: Record<string, number>;
+  manualOverride?: boolean;
+}
+
 export class WeatherSystem {
   weather: WeatherKind;
   roadWetness: number; // 0 (bone dry) to 1 (slick/soaked)
@@ -24,7 +32,7 @@ export class WeatherSystem {
   private floodedIds: Set<string> = new Set();
   private _floodVersion = 0;
 
-  private readonly seed: number;
+  private seed: number;
   private readonly bus?: EventBus<GameEvents>;
   private readonly dynamic: boolean;
   private manualOverride = false;
@@ -84,6 +92,54 @@ export class WeatherSystem {
     if (this.floodedIds.size > 0) {
       this.floodedIds.clear();
       this._floodVersion++;
+    }
+  }
+
+  setSeed(seed: number): void {
+    this.seed = seed;
+    this.scheduledDay = -1;
+    this.scheduledChapter = -1;
+    this.daySchedule.length = 0;
+  }
+
+  exportState(): WeatherSystemState {
+    const segmentFloodLevels: Record<string, number> = {};
+    for (const [k, v] of this.segmentFloodLevels.entries()) {
+      segmentFloodLevels[k] = v;
+    }
+    return {
+      weather: this.weather,
+      roadWetness: this.roadWetness,
+      rainDurationMinutes: this.rainDurationMinutes,
+      segmentFloodLevels,
+      manualOverride: this.manualOverride,
+    };
+  }
+
+  importState(state?: WeatherSystemState): void {
+    if (!state) return;
+    this.manualOverride = Boolean(state.manualOverride);
+    this.scheduledDay = -1;
+    this.scheduledChapter = -1;
+    this.daySchedule.length = 0;
+    this.weather = state.weather;
+    this.roadWetness = Number.isFinite(state.roadWetness)
+      ? clamp(state.roadWetness, 0, 1)
+      : state.weather === 'lightRain' || state.weather === 'heavyRain'
+        ? 1.0
+        : 0.0;
+    this.rainDurationMinutes = Number.isFinite(state.rainDurationMinutes)
+      ? Math.max(0, state.rainDurationMinutes)
+      : 0;
+    this.segmentFloodLevels.clear();
+    if (this.floodedIds.size > 0) {
+      this.floodedIds.clear();
+      this._floodVersion++;
+    }
+    for (const [segId, lvl] of Object.entries(state.segmentFloodLevels ?? {})) {
+      if (typeof lvl === 'number' && Number.isFinite(lvl)) {
+        this.setSegmentFloodInternal(segId, lvl);
+      }
     }
   }
 

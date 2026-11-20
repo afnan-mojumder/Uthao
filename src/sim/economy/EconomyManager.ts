@@ -210,6 +210,23 @@ export class EconomyManager {
     for (const id of settled) this.settled.add(id);
   }
 
+  exportMeta(): { rentMissedCount: number; txSeq: number } {
+    return {
+      rentMissedCount: this.rentMissedCount,
+      txSeq: this.txSeq,
+    };
+  }
+
+  importMeta(meta?: { rentMissedCount?: number; txSeq?: number }): void {
+    if (!meta) return;
+    if (typeof meta.rentMissedCount === 'number' && Number.isFinite(meta.rentMissedCount)) {
+      this.rentMissedCount = Math.max(0, Math.floor(meta.rentMissedCount));
+    }
+    if (typeof meta.txSeq === 'number' && Number.isFinite(meta.txSeq)) {
+      this.txSeq = Math.max(0, Math.floor(meta.txSeq));
+    }
+  }
+
   /**
    * Consumes fuel and emits 'bike/fuelEmpty' when tank reaches 0 L.
    */

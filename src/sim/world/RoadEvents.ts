@@ -137,6 +137,10 @@ export class RoadEventManager {
     this.nextEventSeq = 0;
   }
 
+  setSeed(seed: number): void {
+    this.rng.setState(seed);
+  }
+
   /**
    * Closes a road segment completely for a duration.
    */

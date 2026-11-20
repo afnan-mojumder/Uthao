@@ -17,4 +17,28 @@ describe('negotiation history survives a save', () => {
     // Assert
     expect(loaded.negotiationHistory).toBe(7);
   });
+
+  it('loading a save closes any stale open negotiation modal via state/restored', async () => {
+    const { bindEventBusToStore, negotiationSignal } = await import('../../../src/ui/store');
+    const gm = new GameManager({ seed: 4, mode: 'career', data: {} as never });
+    gm.negotiationHistory = 3;
+    const saved = JSON.parse(JSON.stringify(serialize(gm, 'auto')));
+
+    const live = new GameManager({ seed: 4, mode: 'career', data: {} as never });
+    const unbind = bindEventBusToStore(live.bus);
+    negotiationSignal.value = {
+      active: true,
+      session: { status: 'active' } as never,
+      lastResult: null,
+    };
+
+    try {
+      const loaded = deserialize(saved);
+      live.applySnapshot(loaded.snapshot(), saved.rngState);
+      expect(negotiationSignal.value.active).toBe(false);
+      expect(live.negotiationHistory).toBe(3);
+    } finally {
+      unbind();
+    }
+  });
 });

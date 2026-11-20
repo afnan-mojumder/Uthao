@@ -1,7 +1,7 @@
 import { EventBus, type GameEvents } from '../core/events';
 import { GameClock, TIME_SCALE } from '../core/clock';
 import { Rng } from '../core/rng';
-import { WeatherSystem } from './world/WeatherSystem';
+import { WeatherSystem, type WeatherSystemState } from './world/WeatherSystem';
 import {
   SIM_DT,
   MAX_FRAME_DT,
@@ -20,12 +20,12 @@ import type {
   WeatherKind,
   TransactionKind,
 } from '../core/types';
-import { EventDirector } from './events/EventDirector';
+import { EventDirector, type EventDirectorState } from './events/EventDirector';
 import { EconomyManager } from './economy/EconomyManager';
 import type { EncounterDef } from './schemas';
 import type { EncounterContext, EncounterPhase } from './events/conditions';
 import type { EffectContext } from './events/effects';
-import type { RideManager } from './ride/RideManager';
+import type { RideManager, RideMetaSave } from './ride/RideManager';
 import type { RoadNetwork } from './road/RoadNetwork';
 import routeEncounters from '../../data/encounters/route.json';
 import pickupEncounters from '../../data/encounters/pickup.json';
@@ -42,7 +42,7 @@ import type { SafetyRecord, Transaction } from '../core/types';
 import { RoadEventManager, type ActiveRoadEvent } from './world/RoadEvents';
 import defaultUpgrades from '../../data/upgrades.json';
 import type { RepairItem, UpgradeDef } from './economy/maintenance';
-import { MissionManager, type MissionManagerSnapshot } from './mission/MissionManager';
+import { MissionManager, type MissionSaveState } from './mission/MissionManager';
 import {
   evaluateEnding,
   getAvailableCareerChoices,
@@ -70,8 +70,30 @@ const DEFAULT_ENCOUNTERS: EncounterDef[] = [
   ...accidentEncounters,
 ] as EncounterDef[];
 
+const DEFAULT_CAMPAIGN_MISSIONS: MissionDef[] = [
+  ...ch1Missions,
+  ...ch2Missions,
+  ...ch3Missions,
+  ...ch4Missions,
+  ...ch5Missions,
+  ...ch6Missions,
+  ...sideMissions,
+] as MissionDef[];
+
 /** The mission where the player commits to a career; its flag ends the campaign. */
 const CAREER_DECISION_MISSION = 'm6_decision';
+
+export interface BikePoseSnapshot {
+  x: number;
+  y?: number;
+  z: number;
+  heading: number;
+}
+
+export interface EconomyMetaSnapshot {
+  rentMissedCount: number;
+  txSeq: number;
+}
 
 export interface GameData {
   districts?: unknown;
@@ -130,12 +152,18 @@ export interface SimSnapshot {
   todayRentDebt?: number;
   todayRentAutoFlagged?: boolean;
   rentDelayedByCommand?: boolean;
+  todayCompletedRides?: number;
   deliveries?: DeliverySnapshot;
-  missions?: MissionManagerSnapshot;
+  missions?: MissionSaveState;
+  rideMeta?: RideMetaSave;
+  economyMeta?: EconomyMetaSnapshot;
+  eventDirectorState?: EventDirectorState;
+  weatherState?: WeatherSystemState;
+  bikePose?: BikePoseSnapshot;
 }
 
 export class GameManager {
-  readonly seed: number;
+  seed: number;
   /** T7.4: mutable so `enterEndlessMode()` can convert a running career session
    * into a true endless one (no missions/endings) instead of only flipping a
    * UI screen signal. */
@@ -166,6 +194,15 @@ export class GameManager {
   spawnSpecialRequest?: (templateId: string) => void;
   /** Provided by GameSession so `{ type: 'recoverBike' }` resets the bike safely onto the road. */
   recoverBikeHandler?: () => boolean;
+  /** Provided by GameSession so snapshots read and restore live bike coordinates and heading. */
+  getBikePose?: () => BikePoseSnapshot;
+  restoreBikePose?: (pose?: BikePoseSnapshot) => void;
+  private savedBikePose?: BikePoseSnapshot;
+  private savedRideMeta?: RideMetaSave;
+  private restoringSnapshot: boolean = false;
+  get isRestoringSnapshot(): boolean {
+    return this.restoringSnapshot;
+  }
   /** Optional road segments registered by GameSession for monsoon flood accumulation. */
   private roadSegments?: readonly RoadSegment[];
   private readonly encounterCtxScratch: EncounterContext = {
@@ -313,20 +350,10 @@ export class GameManager {
       contextProvider: () => this.buildDefaultEncounterContext('roaming', 0),
     });
 
-    const allCampaignMissions = [
-      ...ch1Missions,
-      ...ch2Missions,
-      ...ch3Missions,
-      ...ch4Missions,
-      ...ch5Missions,
-      ...ch6Missions,
-      ...sideMissions,
-    ] as MissionDef[];
-
     const missionDefs =
       this.mode === 'endless'
         ? []
-        : ((this.data.missions as MissionDef[] | undefined) ?? allCampaignMissions);
+        : ((this.data.missions as MissionDef[] | undefined) ?? DEFAULT_CAMPAIGN_MISSIONS);
 
     if (this.mode === 'endless') {
       this.story.currentChapter = 6;
@@ -1049,6 +1076,23 @@ export class GameManager {
   }
 
   snapshot(): SimSnapshot {
+    const rideMeta: RideMetaSave = this.rideManager
+      ? this.rideManager.exportMeta()
+      : {
+          offAppStrikes: this.reputationSystem.getOffAppStrikes(),
+          appSuspendedUntilDay: this.reputationSystem.getAppSuspendedUntilDay(),
+          directContacts: [...(this.savedRideMeta?.directContacts ?? [])],
+          activeBikeId: this.savedRideMeta?.activeBikeId ?? this.economyManager.currentBikeId,
+          hadUnsettledTrip: this.savedRideMeta?.hadUnsettledTrip ?? false,
+        };
+    const bikePose: BikePoseSnapshot = this.getBikePose
+      ? this.getBikePose()
+      : this.savedBikePose
+        ? { ...this.savedBikePose }
+        : { x: 0, y: 0, z: 0, heading: 0 };
+    const eventDirectorState = this.eventDirector.exportState();
+    eventDirectorState.pendingM4PoliceDecision = this.pendingM4PoliceDecision;
+
     return {
       seed: this.seed,
       mode: this.mode,
@@ -1083,8 +1127,14 @@ export class GameManager {
       todayRentDebt: this.todayRentDebt,
       todayRentAutoFlagged: this.todayRentAutoFlagged,
       rentDelayedByCommand: this.rentDelayedByCommand,
+      todayCompletedRides: this.todayCompletedRides,
       deliveries: this.deliveryManager.getSnapshot(),
-      missions: this.missionManager.snapshot(),
+      missions: this.missionManager.exportState(),
+      rideMeta,
+      economyMeta: this.economyManager.exportMeta(),
+      eventDirectorState,
+      weatherState: this.weatherSystem.exportState(),
+      bikePose,
     };
   }
 
@@ -1097,7 +1147,15 @@ export class GameManager {
   }
 
   /** Resets career state cleanly through owning managers without bypassing EconomyManager or ReputationSystem. */
-  resetCareerState(): void {
+  resetCareerState(nextSeed?: number): void {
+    if (nextSeed !== undefined && Number.isFinite(nextSeed)) {
+      this.seed = (Math.floor(Math.abs(nextSeed)) >>> 0) || 1;
+    }
+    this.mode = 'career';
+    this.rng.setState(this.seed);
+    this.weatherSystem.setSeed(this.seed);
+    this.roadEvents.setSeed(this.seed);
+    this.eventDirector.setSeed(this.seed);
     this.clock.day = 1;
     this.clock.minutes = 7 * 60;
     this.economyManager.resetCareer();
@@ -1109,12 +1167,16 @@ export class GameManager {
     this.requestSeq = 0;
     this.negotiationHistory = 0;
     this.shiftEnded = false;
+    this.todayCompletedRides = 0;
     this.todayRentPosted = 0;
     this.todayRentDebt = 0;
     this.todayRentAutoFlagged = false;
     this.rentDelayedByCommand = false;
     this.todayLivingExpenses = null;
     this.pendingM4PoliceDecision = false;
+    this.savedBikePose = undefined;
+    this.savedRideMeta = undefined;
+    this.isNavigating = false;
     this.deliveryManager.reset();
     this.eventDirector.resetCareer();
     this.weatherSystem.reset('clear');
@@ -1132,76 +1194,156 @@ export class GameManager {
       fast_money: false,
       fresh_start: false,
     };
+    this.missionManager.setMissions(
+      (this.data.missions as MissionDef[] | undefined) ?? DEFAULT_CAMPAIGN_MISSIONS
+    );
     this.missionManager.resetCareer();
     this.missionManager.activateMission('m1_first_ride');
   }
 
   applySnapshot(snap: SimSnapshot, rngState?: number): void {
-    this.ticks = snap.ticks;
-    this.paused = snap.paused;
-    this.clock.day = snap.clock.day;
-    this.clock.minutes = snap.clock.minutes;
-    this.weather = snap.weather;
-    this.weatherSystem.restoreWeather(snap.weather);
-    this.waypointNodeId = snap.waypointNodeId;
-    this.eventDirector.resetCareer();
-
-    if (rngState !== undefined) {
-      this.rng.setState(rngState);
-    }
-
-    // Restore economy
-    this.economyManager.restoreState(snap.economy);
-    this.syncEconomy();
-
-    // Restore reputation BEFORE MissionManager so retro-checked relationship objectives
-    // read the saved relationships rather than fresh boot defaults.
-    this.reputationSystem.applySnapshot({
-      ...(snap.reputation ?? {}),
-      relationships: snap.story.characterRelationships,
-    });
-    this.economy.reputation = this.reputationSystem.getAppRating();
-    this.economyManager.reputation = this.economy.reputation;
-    this.todayStartRating = this.reputationSystem.getAppRating();
-    this.todayRelationshipsStart = this.reputationSystem.getAllRelationships();
-
-    // Restore story (characterRelationships stays owned & mutated exclusively by ReputationSystem)
-    this.story.currentChapter = snap.story.currentChapter;
-    this.story.completedMissions = [...snap.story.completedMissions];
-    this.story.activeMissions = [...snap.story.activeMissions];
-    this.story.promises = [...snap.story.promises];
-    this.story.branchFlags = { ...snap.story.branchFlags };
-    this.story.endingEligibility = { ...snap.story.endingEligibility };
-    this.missionManager.syncFromStoryState();
-    this.missionManager.applySnapshot(snap.missions);
-    this.pendingM4PoliceDecision = Boolean(
-      this.missionManager.isMissionActive('m4_home_safe') &&
-        !this.story.branchFlags['m4_police_decision_made']
-    );
-
-    this.economyManager.restoreLedger(snap.ledger ?? [], snap.settledRequests ?? []);
-    this.requestSeq = snap.requestSeq ?? 0;
-    this.negotiationHistory = snap.negotiationHistory ?? 0;
-    this.shiftEnded = snap.shiftEnded ?? false;
-    this.todayRentPosted = snap.todayRentPosted ?? 0;
-    this.rentDelayedByCommand = snap.rentDelayedByCommand ?? false;
-    this.todayRentDebt = snap.todayRentDebt ?? Math.min(this.economyManager.debt, this.todayRentPosted);
-    this.todayRentAutoFlagged =
-      snap.todayRentAutoFlagged ??
-      Boolean(this.todayRentPosted > 0 && this.story.branchFlags['rentDelayedOnce'] && !this.rentDelayedByCommand);
-    this.todayLivingExpenses = null;
-
-    // Restore road events
-    this.roadEvents.clearEvents();
-    if (snap.roadEvents) {
-      for (const ev of snap.roadEvents) {
-        this.roadEvents.addEvent(ev);
+    this.restoringSnapshot = true;
+    try {
+      if (Number.isFinite(snap.seed)) {
+        this.seed = snap.seed;
       }
+      this.mode = snap.mode;
+      this.ticks = snap.ticks;
+      this.paused = snap.paused;
+      this.clock.day = snap.clock.day;
+      this.clock.minutes = snap.clock.minutes;
+      this.waypointNodeId = snap.waypointNodeId;
+
+      this.weatherSystem.setSeed(this.seed);
+      this.roadEvents.setSeed(this.seed);
+      this.eventDirector.setSeed(this.seed);
+
+      if (snap.weatherState) {
+        this.weatherSystem.importState(snap.weatherState);
+        this.weather = this.weatherSystem.weather;
+      } else {
+        this.weather = snap.weather;
+        this.weatherSystem.restoreWeather(snap.weather);
+      }
+
+      if (snap.eventDirectorState) {
+        this.eventDirector.importState(snap.eventDirectorState);
+      } else {
+        this.eventDirector.resetCareer();
+      }
+
+      if (rngState !== undefined) {
+        this.rng.setState(rngState);
+      }
+
+      // Restore economy
+      this.economyManager.restoreState(snap.economy);
+      this.economyManager.restoreLedger(snap.ledger ?? [], snap.settledRequests ?? []);
+      this.economyManager.importMeta(snap.economyMeta);
+      this.syncEconomy();
+
+      // Restore reputation BEFORE MissionManager so retro-checked relationship objectives
+      // read the saved relationships rather than fresh boot defaults.
+      this.reputationSystem.applySnapshot({
+        ...(snap.reputation ?? {}),
+        relationships: snap.story.characterRelationships,
+        ...(!snap.reputation && snap.rideMeta
+          ? {
+              offAppStrikes: snap.rideMeta.offAppStrikes,
+              suspendedUntilDay: snap.rideMeta.appSuspendedUntilDay,
+            }
+          : {}),
+      });
+      this.economy.reputation = this.reputationSystem.getAppRating();
+      this.economyManager.reputation = this.economy.reputation;
+      this.todayStartRating = this.reputationSystem.getAppRating();
+      this.todayRelationshipsStart = this.reputationSystem.getAllRelationships();
+
+      // Restore story (characterRelationships stays owned & mutated exclusively by ReputationSystem)
+      this.story.currentChapter = snap.story.currentChapter;
+      this.story.completedMissions = [...snap.story.completedMissions];
+      this.story.activeMissions = [...snap.story.activeMissions];
+      this.story.promises = [...snap.story.promises];
+      this.story.branchFlags = { ...snap.story.branchFlags };
+      this.story.endingEligibility = { ...snap.story.endingEligibility };
+
+      if (this.mode === 'endless') {
+        this.pendingM4PoliceDecision = false;
+        this.missionManager.resetCareer();
+        this.missionManager.missions.clear();
+        this.story.activeMissions = [];
+        this.story.currentChapter = 6;
+      } else {
+        this.missionManager.setMissions(
+          (this.data.missions as MissionDef[] | undefined) ?? DEFAULT_CAMPAIGN_MISSIONS
+        );
+        this.missionManager.syncFromStoryState();
+        if (snap.missions) {
+          this.missionManager.importState({
+            visitedDistricts: snap.missions.visitedDistricts,
+            objectiveStates: snap.missions.objectiveStates,
+            currentDay: snap.missions.currentDay,
+          });
+        }
+        this.pendingM4PoliceDecision = Boolean(
+          this.missionManager.isMissionActive('m4_home_safe') &&
+            !this.story.branchFlags['m4_police_decision_made']
+        );
+      }
+
+      this.requestSeq = snap.requestSeq ?? 0;
+      this.negotiationHistory = snap.negotiationHistory ?? 0;
+      this.shiftEnded = snap.shiftEnded ?? false;
+      this.todayCompletedRides = snap.todayCompletedRides ?? 0;
+      this.todayRentPosted = snap.todayRentPosted ?? 0;
+      this.rentDelayedByCommand = snap.rentDelayedByCommand ?? false;
+      this.todayRentDebt =
+        snap.todayRentDebt ?? Math.min(this.economyManager.debt, this.todayRentPosted);
+      this.todayRentAutoFlagged =
+        snap.todayRentAutoFlagged ??
+        Boolean(
+          this.todayRentPosted > 0 &&
+            this.story.branchFlags['rentDelayedOnce'] &&
+            !this.rentDelayedByCommand
+        );
+      this.todayLivingExpenses = null;
+
+      // Restore road events
+      this.roadEvents.clearEvents();
+      if (snap.roadEvents) {
+        for (const ev of snap.roadEvents) {
+          this.roadEvents.addEvent(ev);
+        }
+      }
+
+      this.deliveryManager.restoreSnapshot(snap.deliveries);
+
+      this.savedRideMeta = snap.rideMeta
+        ? { ...snap.rideMeta, directContacts: [...snap.rideMeta.directContacts] }
+        : undefined;
+      this.savedBikePose = snap.bikePose ? { ...snap.bikePose } : undefined;
+
+      if (this.rideManager) {
+        this.rideManager.importMeta(snap.rideMeta);
+        this.rideManager.resetUnsettledToIdle();
+      }
+      this.isNavigating = false;
+      this.restoreBikePose?.(snap.bikePose);
+
+      this.bus.emit('state/restored', {});
+
+      if (this.shiftEnded) {
+        this.emitDaySummaryIfEnded();
+      } else if (
+        this.mode !== 'endless' &&
+        this.missionManager.isMissionActive(CAREER_DECISION_MISSION) &&
+        !this.story.branchFlags['ch6_decision_made']
+      ) {
+        this.offerCareerDecision();
+      }
+    } finally {
+      this.restoringSnapshot = false;
     }
-
-    this.deliveryManager.restoreSnapshot(snap.deliveries);
-
-    this.bus.emit('state/restored', {});
   }
 }
 

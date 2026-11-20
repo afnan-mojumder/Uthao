@@ -68,6 +68,8 @@ import { MapScreen } from './map/MapScreen';
 import { SaveSlots } from './menus/SaveSlots';
 import {
   saveSlotsSignal,
+  saveStatusSignal,
+  activeSaveSystemSignal,
   impactSignal,
   saveToSlotFromPanel,
   onLoadGameCallback,
@@ -520,9 +522,11 @@ export function App(): JSX.Element {
             }}
             onOpenSettings={() => setShowSettings(true)}
             onOpenSave={() => {
+              saveStatusSignal.value = null;
               saveSlotsSignal.value = { isOpen: true, mode: 'save' };
             }}
             onOpenLoad={() => {
+              saveStatusSignal.value = null;
               saveSlotsSignal.value = { isOpen: true, mode: 'load' };
             }}
             onEndShiftEarly={() => onEndShiftEarlyCallback?.()}
@@ -559,7 +563,9 @@ export function App(): JSX.Element {
         <SaveSlots
           isOpen={true}
           mode={saveSlotsSignal.value.mode}
+          saveSystem={activeSaveSystemSignal.value ?? undefined}
           onClose={() => {
+            saveStatusSignal.value = null;
             saveSlotsSignal.value = { ...saveSlotsSignal.value, isOpen: false };
           }}
           onSelectSlot={(slot) => {
@@ -571,6 +577,7 @@ export function App(): JSX.Element {
               screenSignal.value = 'game';
               pausedSignal.value = false;
             }
+            saveStatusSignal.value = null;
             saveSlotsSignal.value = { ...saveSlotsSignal.value, isOpen: false };
           }}
         />

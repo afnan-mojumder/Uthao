@@ -374,6 +374,13 @@ export class GameSession {
     this.gm.fuelStationNearby = () => this.nearFuelStation();
     this.gm.phoneChargeNearby = (where) => this.nearChargeSpot(where);
     this.gm.recoverBikeHandler = () => this.requestManualRecovery();
+    this.gm.getBikePose = () => ({
+      x: this.bike.x,
+      y: this.bike.y,
+      z: this.bike.z,
+      heading: this.bike.heading,
+    });
+    this.gm.restoreBikePose = (pose) => this.restoreBikePose(pose);
     this.gm.spawnSpecialRequest = (templateId) => {
       const res = templateId.startsWith('char_')
         ? this.requests.sampleRecurringRequest(
@@ -437,6 +444,12 @@ export class GameSession {
     this.gm.bus.on('state/restored', () => {
       this.lastPunctureMin = -Infinity;
       this.lastAccidentEncounterMin = -Infinity;
+      this.tripReqId = null;
+      this.tripFuelLiters = 0;
+      this.wedgedSec = 0;
+      this.stallSec = 0;
+      this.warnedWorn = false;
+      this.trafficContacts.clear();
       this.violationMonitor.reset();
       if (this.ride.getTripState() === 'EmergencyInterrupted') {
         this.ride.resumeTrip();
@@ -717,6 +730,41 @@ export class GameSession {
     const anchor = this.road.getNode(this.gm.homeNodeId) ?? this.road.getAllNodes()[0];
     if (!anchor) return;
     this.placeOnRoadNear(anchor.x, anchor.z, anchor.y ?? 0);
+    this.syncLocation();
+  }
+
+  /** Restores bike coordinates and heading safely against road/flyover elevation and static colliders. */
+  restoreBikePose(pose?: { x: number; y?: number; z: number; heading: number }): void {
+    if (
+      !pose ||
+      !Number.isFinite(pose.x) ||
+      !Number.isFinite(pose.z) ||
+      !Number.isFinite(pose.heading)
+    ) {
+      this.spawnAtHome();
+      return;
+    }
+
+    const refY = typeof pose.y === 'number' && Number.isFinite(pose.y) ? pose.y : 0;
+    const hit = this.road.segmentAtElevation(pose.x, pose.z, refY, 10, this.segElevScratch);
+    const resolvedY = hit.segment !== null ? hit.y : refY;
+
+    this.bike.x = pose.x;
+    this.bike.y = resolvedY;
+    this.bike.z = pose.z;
+    this.bike.heading = pose.heading;
+    this.bike.speed = 0;
+    this.bike.gear = 1;
+    this.bike.rpmNorm = 0.15;
+    this.bike.lean = 0;
+    this.bike.steer = 0;
+    this.bike.wobble = false;
+    this.bike.crashed = false;
+    this.bike.reverseHoldS = 0;
+
+    if (!this.isClearOfStaticColliders(this.bike.x, this.bike.z, this.bike.y)) {
+      this.placeOnRoadNear(this.bike.x, this.bike.z, this.bike.y);
+    }
     this.syncLocation();
   }
 
@@ -1230,16 +1278,25 @@ export class GameSession {
   }
 
   /** Resets story/economy/ride state and starts the opening tutorial. */
-  newCareer(): void {
+  newCareer(nextSeed?: number): void {
     this.lastPunctureMin = -Infinity;
     this.lastAccidentEncounterMin = -Infinity;
     this.lastStepSegment = null;
     this.offAppSeq = 0;
+    this.tripReqId = null;
+    this.tripFuelLiters = 0;
+    this.wedgedSec = 0;
+    this.stallSec = 0;
+    this.warnedWorn = false;
+    this.trafficContacts.clear();
     this.violationMonitor.reset();
     this.ride.resetCareer();
-    this.gm.resetCareerState();
+    this.gm.resetCareerState(nextSeed);
+    this.breakdownRng.setState(this.gm.rng.fork('breakdown').getState());
+    this.punctureRng.setState(this.gm.rng.fork('puncture').getState());
+    this.deliveryRng.setState(this.gm.rng.fork('delivery').getState());
     this.syncBikeSpec();
-    this.syncLocation();
+    this.spawnAtHome();
     this.gm.bus.emit('state/restored', {});
   }
 

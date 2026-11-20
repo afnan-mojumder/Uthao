@@ -11,6 +11,7 @@ import type {
 } from '../sim/negotiation/NegotiationSystem';
 import type { EndingResult, CareerChoiceOption, CareerChoice } from '../sim/mission/endings';
 import type { SaveSlot } from '../sim/save/migrations';
+import type { SaveSystem } from '../sim/save/SaveSystem';
 
 export type ScreenId = 'title' | 'game' | 'garage' | 'map' | 'pause';
 
@@ -619,6 +620,13 @@ export function setGarageDispatchers(
 /** Result of the last manual save, shown in the save slots. */
 export const saveStatusSignal = signal<'saved' | 'failed' | null>(null);
 
+/** Singleton SaveSystem shared between main.ts, bindUi(), and <SaveSlots />. */
+export const activeSaveSystemSignal = signal<SaveSystem | null>(null);
+
+export function setActiveSaveSystem(system: SaveSystem | null): void {
+  activeSaveSystemSignal.value = system;
+}
+
 /**
  * Runs a manual save to a slot and reports whether it worked. A failed save
  * leaves the save panel open with its failure message (audit H-13).
@@ -1147,6 +1155,13 @@ export function bindEventBusToStore(bus: EventBus<GameEvents>): () => void {
 
   const unsubStateRestored = bus.on('state/restored', () => {
     clearEncounterUi();
+    negotiationSignal.value = { active: false, session: null, lastResult: null };
+    tripSummarySignal.value = null;
+    endingSignal.value = { active: false, result: null, choices: undefined };
+    dayEndSignal.value = { active: false, summary: null };
+    tutorialSignal.value = { active: false, step: 'idle' };
+    garageSignal.value = { ...garageSignal.value, open: false };
+    journalSignal.value = false;
   });
   unsubscribers.push(unsubStateRestored);
 

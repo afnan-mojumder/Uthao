@@ -3,7 +3,9 @@ import { signal } from '@preact/signals';
 import { t } from '../i18n';
 import { saveStatusSignal, Z_LAYER } from '../store';
 import { SaveSystem } from '../../sim/save/SaveSystem';
-import type { SaveSlot, SaveV1 } from '../../sim/save/migrations';
+import type { SaveSlot, SaveV1, SaveV2 } from '../../sim/save/migrations';
+
+export type SaveSlotPreview = SaveV1 | SaveV2;
 
 export interface SaveSlotsProps {
   isOpen: boolean;
@@ -12,7 +14,7 @@ export interface SaveSlotsProps {
   onSelectSlot: (slot: SaveSlot) => void;
   onDeleteSlot?: (slot: SaveSlot) => void;
   saveSystem?: SaveSystem;
-  slotsData?: Record<SaveSlot, SaveV1 | null>;
+  slotsData?: Record<SaveSlot, SaveSlotPreview | null>;
 }
 
 export const saveSlotsRefreshSignal = signal<number>(0);
@@ -32,7 +34,8 @@ export function SaveSlots({
   void saveSlotsRefreshSignal.value;
 
   const activeSystem = saveSystem ?? new SaveSystem();
-  const slotsData: Record<SaveSlot, SaveV1 | null> = propSlotsData ?? activeSystem.listSlots();
+  const slotsData: Record<SaveSlot, SaveSlotPreview | null> =
+    propSlotsData ?? activeSystem.listSlots();
   const hasCorrupt = (['auto', 'slot1', 'slot2', 'slot3'] as SaveSlot[]).some((s) =>
     activeSystem.hasCorruptBackup(s)
   );
@@ -144,8 +147,7 @@ export function SaveSlots({
               lineHeight: 1.4,
             }}
           >
-            ⚠️ <strong>মেমোরি স্টোরেজ (Memory Fallback):</strong> লোকালস্টোরেজ সীমাবদ্ধ বা প্রাইভেট
-            মোড হওয়ায় ব্রাউজার ট্যাব বন্ধ করলে সেভ ফাইল মুছে যেতে পারে।
+            ⚠️ {t('save.memory_warning')}
           </div>
         )}
 
@@ -163,8 +165,7 @@ export function SaveSlots({
               lineHeight: 1.4,
             }}
           >
-            ⚠️ <strong>ত্রুটিযুক্ত সেভ ফাইল:</strong> একটি ক্ষতিগ্রস্ত সেভ ফাইল চিহ্নিত হয়েছে এবং ব্যাকআপ
-            হিসেবে `.corrupt` কি-তে স্থানান্তর করা হয়েছে।
+            ⚠️ {t('save.corrupt_notice')}
           </div>
         )}
 
@@ -179,7 +180,7 @@ export function SaveSlots({
           }}
         >
           {slotKeys.map(({ id, label, isAuto }) => {
-            const data: SaveV1 | null = slotsData[id];
+            const data: SaveSlotPreview | null = slotsData[id];
             const hasData = Boolean(data);
 
             return (

@@ -3,7 +3,9 @@ import type { SaveSystem } from '../sim/save/SaveSystem';
 import { respond } from '../sim/negotiation/NegotiationSystem';
 import { nearestPlaceKey } from '../sim/ride/rideView';
 import type { BikeId } from '../core/types';
-import { requestFreshCareer } from './freshCareer';
+import type { SaveSlot } from '../sim/save/migrations';
+import { requestFreshCareer, resolveCareerSeed } from './freshCareer';
+import { saveSlotsRefreshSignal } from './menus/SaveSlots';
 import {
   setChoiceDispatcher,
   setRequestDispatchers,
@@ -19,6 +21,7 @@ import {
   setMenuDispatchers,
   setHasSaveCallback,
   setSaveDispatchers,
+  setActiveSaveSystem,
   setTutorialDispatchers,
   setEndingDispatchers,
   syncGarageState,
@@ -50,6 +53,7 @@ export function bindUi(session: GameSession, saveSystem?: SaveSystem): () => voi
   const gm = session.gm;
   const rideManager = session.ride;
   const unsubscribers: Array<() => void> = [];
+  setActiveSaveSystem(saveSystem ?? null);
 
   const enrichDeliveryPlaces = (jobs: ReturnType<typeof gm.deliveryManager.getAvailableJobs>) => {
     const roadNet = (rideManager as { roadNetwork?: Parameters<typeof nearestPlaceKey>[0]['roadNetwork'] } | undefined)?.roadNetwork;
@@ -328,18 +332,29 @@ export function bindUi(session: GameSession, saveSystem?: SaveSystem): () => voi
       window.location.reload();
       return;
     }
-    session.newCareer();
+    session.newCareer(resolveCareerSeed());
     tutorialSignal.value = { active: true, step: 'alarm', agreedFare: 100 };
+  };
+
+  const applyLoadedSave = (slot: SaveSlot): boolean => {
+    if (!saveSystem) return false;
+    const res = saveSystem.loadGame(slot);
+    if (!res.success) {
+      saveSlotsRefreshSignal.value++;
+      return false;
+    }
+    gm.applySnapshot(res.gm.snapshot(), res.save.rngState);
+    if (res.save.rideMeta?.hadUnsettledTrip) {
+      showDeliveryNotice('save.unsettled_trip_cancelled');
+    }
+    return true;
   };
 
   setMenuDispatchers(
     startNewCareer,
     () => {
       const slot = saveSystem?.latestSlot();
-      if (saveSystem && slot) {
-        const res = saveSystem.loadGame(slot);
-        if (res.success) gm.applySnapshot(res.gm.snapshot(), res.save.rngState);
-      }
+      if (slot) applyLoadedSave(slot);
       gm.paused = false;
       pausedSignal.value = false;
     },
@@ -358,12 +373,13 @@ export function bindUi(session: GameSession, saveSystem?: SaveSystem): () => voi
   setSaveDispatchers(
     (slot) => {
       const res = saveSystem?.save(gm, slot);
-      if (res) saveStatusSignal.value = res.success ? 'saved' : 'failed';
+      if (res) {
+        saveStatusSignal.value = res.success ? 'saved' : 'failed';
+        saveSlotsRefreshSignal.value++;
+      }
     },
     (slot) => {
-      if (!saveSystem) return;
-      const res = saveSystem.loadGame(slot);
-      if (res.success) gm.applySnapshot(res.gm.snapshot(), res.save.rngState);
+      applyLoadedSave(slot);
     }
   );
 
