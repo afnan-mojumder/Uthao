@@ -21,7 +21,7 @@ test('T2.8 Rider HUD & Minimap e2e verification', async ({ page }) => {
   await expect(page.locator('[data-testid="hud-district"]')).toBeVisible();
   await expect(page.locator('[data-testid="hud-district"]')).not.toHaveText('');
   await expect(page.locator('[data-testid="hud-condition-bar"]')).toBeVisible();
-  await expect(page.locator('[data-testid="hud-gear"]')).toHaveText(/G[1-5]/);
+  await expect(page.locator('[data-testid="hud-gear"]')).toHaveText(/G[1-5১-৫]/);
   const fuelBar = page.locator('[data-testid="hud-fuel-bar"]');
   await expect(fuelBar).toBeVisible();
 
@@ -93,7 +93,7 @@ test('T2.8 Rider HUD & Minimap e2e verification', async ({ page }) => {
   await expect(collapsedPod).toBeVisible({ timeout: 5000 });
   await expect(collapsedPod.locator('[data-testid="hud-district"]')).toBeVisible();
   await expect(collapsedPod.locator('[data-testid="hud-condition-bar"]')).toBeVisible();
-  await expect(collapsedPod.locator('[data-testid="hud-gear"]')).toHaveText(/G[1-5]/);
+  await expect(collapsedPod.locator('[data-testid="hud-gear"]')).toHaveText(/G[1-5১-৫]/);
   await expect(collapsedPod.locator('[data-testid="hud-turn-icon"][data-direction="uturn"]')).toBeVisible();
   await expect(collapsedPod.locator('#hud-objective')).toBeVisible();
 

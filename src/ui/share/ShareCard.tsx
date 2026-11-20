@@ -76,7 +76,7 @@ function drawScorecardCanvas(
 
   // Brand header
   ctx.fillStyle = '#34D399';
-  ctx.font = 'bold 20px "Noto Sans Bengali", "Inter", sans-serif';
+  ctx.font = 'bold 20px "Hind Siliguri", "Noto Sans Bengali", "Inter", sans-serif';
   ctx.fillText(t('share.title'), 28, 46, w - 56);
 
   const subtitle = ending
@@ -85,7 +85,7 @@ function drawScorecardCanvas(
       ? t('share.day_heading', { day: localDigits(summary.day) })
       : '';
   ctx.fillStyle = '#94A3B8';
-  ctx.font = '600 15px "Noto Sans Bengali", "Inter", sans-serif';
+  ctx.font = '600 15px "Hind Siliguri", "Noto Sans Bengali", "Inter", sans-serif';
   ctx.fillText(subtitle, 28, 72, w - 56);
 
   // Card body box
@@ -97,7 +97,7 @@ function drawScorecardCanvas(
 
   if (ending) {
     ctx.fillStyle = '#F8FAFC';
-    ctx.font = 'bold 24px "Noto Sans Bengali", "Inter", sans-serif';
+    ctx.font = 'bold 24px "Hind Siliguri", "Noto Sans Bengali", "Inter", sans-serif';
     ctx.fillText(t(ending.titleKey), 42, 134, 516);
 
     const cols = [
@@ -108,10 +108,10 @@ function drawScorecardCanvas(
     cols.forEach((col, i) => {
       const x = 42 + i * 176;
       ctx.fillStyle = '#94A3B8';
-      ctx.font = '600 13px "Noto Sans Bengali", "Inter", sans-serif';
+      ctx.font = '600 13px "Hind Siliguri", "Noto Sans Bengali", "Inter", sans-serif';
       ctx.fillText(col.label, x, 186, 160);
       ctx.fillStyle = '#34D399';
-      ctx.font = 'bold 22px "Noto Sans Bengali", "Inter", sans-serif';
+      ctx.font = 'bold 22px "Hind Siliguri", "Noto Sans Bengali", "Inter", sans-serif';
       ctx.fillText(col.value, x, 218, 160);
     });
   } else if (summary) {
@@ -135,22 +135,22 @@ function drawScorecardCanvas(
     cols.forEach((col, i) => {
       const x = 42 + i * 176;
       ctx.fillStyle = '#94A3B8';
-      ctx.font = '600 14px "Noto Sans Bengali", "Inter", sans-serif';
+      ctx.font = '600 14px "Hind Siliguri", "Noto Sans Bengali", "Inter", sans-serif';
       ctx.fillText(col.label, x, 148, 160);
       ctx.fillStyle = i === 1 && summary.net < 0 ? '#F87171' : '#34D399';
-      ctx.font = 'bold 26px "Noto Sans Bengali", "Inter", sans-serif';
+      ctx.font = 'bold 26px "Hind Siliguri", "Noto Sans Bengali", "Inter", sans-serif';
       ctx.fillText(col.value, x, 188, 160);
     });
 
     const ratingStr = `${summary.ratingDelta >= 0 ? '+' : ''}${localDigits(summary.ratingDelta.toFixed(2))}`;
     ctx.fillStyle = '#FBBF24';
-    ctx.font = '600 15px "Noto Sans Bengali", "Inter", sans-serif';
+    ctx.font = '600 15px "Hind Siliguri", "Noto Sans Bengali", "Inter", sans-serif';
     ctx.fillText(`${t('share.rating')}: ${ratingStr}`, 42, 240, 516);
   }
 
   // Footer
   ctx.fillStyle = '#64748B';
-  ctx.font = '500 12px "Noto Sans Bengali", "Inter", sans-serif';
+  ctx.font = '500 12px "Hind Siliguri", "Noto Sans Bengali", "Inter", sans-serif';
   ctx.fillText('uthao.dhaka', 28, h - 18, w - 56);
 }
 

@@ -25,6 +25,17 @@ function borderForKind(kind: ChoiceOption['kind']): string {
   return 'rgba(255, 255, 255, 0.1)';
 }
 
+type ChoiceVars = Record<string, string | number>;
+
+function localizeVars(vars?: ChoiceVars): ChoiceVars | undefined {
+  if (!vars) return undefined;
+  const out: ChoiceVars = {};
+  for (const [k, v] of Object.entries(vars)) {
+    out[k] = typeof v === 'number' || /^\d+(\.\d+)?$/.test(String(v)) ? localDigits(v) : v;
+  }
+  return out;
+}
+
 export function ChoiceCardView({
   choice,
   onChoose,
@@ -95,7 +106,7 @@ export function ChoiceCardView({
             lineHeight: 1.4,
           }}
         >
-          {t(choice.prompt, choice.promptVars)}
+          {t(choice.prompt, localizeVars(choice.promptVars))}
         </h3>
       </div>
 
@@ -210,7 +221,7 @@ export function ChoiceCardView({
                   gap: '8px',
                 }}
               >
-                <span>{t(opt.text, opt.vars)}</span>
+                <span>{t(opt.text, localizeVars(opt.vars))}</span>
                 <span style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
                   {opt.kind === 'official' && (
                     <span

@@ -38,13 +38,13 @@ test('T4.1 Day end lifecycle e2e: end shift, assert breakdown, sleep to start ne
 
   // Verify Title and Living expenses itemized breakdown
   const title = page.locator('[data-testid="day-end-title"]');
-  await expect(title).toContainText('1');
+  await expect(title).toContainText(/(1|১)/);
 
   const foodExpense = page.locator('[data-testid="day-end-food"]');
-  await expect(foodExpense).toContainText('150');
+  await expect(foodExpense).toContainText(/(150|১৫০)/);
 
   const dataExpense = page.locator('[data-testid="day-end-data"]');
-  await expect(dataExpense).toContainText('30');
+  await expect(dataExpense).toContainText(/(30|৩০)/);
 
   // Click sleep button to finish day and start next day at 07:00
   const sleepBtn = page.locator('[data-testid="day-end-sleep-btn"]');

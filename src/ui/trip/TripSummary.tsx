@@ -38,7 +38,7 @@ export function TripSummary({ receipt, onContinue }: TripSummaryProps): JSX.Elem
               gap: '4px',
               color: '#f59e0b',
             }}
-            aria-label={`${t('trip.summary.rating')}: ${(receipt.rating ?? 5).toFixed(1)}`}
+            aria-label={`${t('trip.summary.rating')}: ${localDigits((receipt.rating ?? 5).toFixed(1))}`}
           >
             {Array.from({ length: 5 }, (_, idx) => (
               <IconStar

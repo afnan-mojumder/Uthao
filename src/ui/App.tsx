@@ -92,7 +92,7 @@ import { TripSummary } from './trip/TripSummary';
 import { Journal } from './journal/Journal';
 import { KarmaPanel } from './karma/KarmaPanel';
 import { UiSheet } from './sheet/UiSheet';
-import { t } from './i18n';
+import { localDigits, t } from './i18n';
 import { toggleMute } from './store';
 import { getActiveControlsBindings, hasSystemOverlay, startGamepadNav, uiModalOpen } from './gamepadNav';
 
@@ -354,7 +354,17 @@ export function App(): JSX.Element {
             fontWeight: 700,
           }}
         >
-          {t(deliveryNoticeSignal.value.messageKey, deliveryNoticeSignal.value.vars)}
+          {t(
+            deliveryNoticeSignal.value.messageKey,
+            deliveryNoticeSignal.value.vars
+              ? Object.fromEntries(
+                  Object.entries(deliveryNoticeSignal.value.vars).map(([k, v]) => [
+                    k,
+                    typeof v === 'number' ? localDigits(v) : v,
+                  ])
+                )
+              : undefined
+          )}
         </div>
       )}
 

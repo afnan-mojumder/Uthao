@@ -45,4 +45,4 @@ Please have a native speaker review the following files for natural colloquial D
 - [x] @afnan: T9.21 bn `encounter.friend_package.choice.accept` (data/dialogue/bn/encounters.json) is first-draft Bangla; native review needed. (resolved in P7.2)
 - [x] @afnan: T9.21 bn `career_choice_prototype_notice` (data/dialogue/bn/endings.json) is first-draft Bangla; native review needed. (resolved in P7.2)
 - [x] @afnan: T9.16 bn strings for menu.new_career_confirm* are first-draft Bangla; native review needed. (resolved in P7.2)
-- [ ] @afnan: T9.26 bn `settings.reduce_motion` and `settings.colorblind_route` (data/dialogue/bn/ui.json) are first-draft Bangla; native review needed.
+- [x] @afnan: T9.26 bn `settings.reduce_motion` and `settings.colorblind_route` (data/dialogue/bn/ui.json) are first-draft Bangla; native review needed. (resolved in P7.2: verified `settings.reduce_motion`, `settings.colorblind_route`, and `settings.high_contrast` in `data/dialogue/bn/ui.json`)

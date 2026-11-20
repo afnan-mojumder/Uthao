@@ -40,14 +40,14 @@ test('T4.4 Garage and Bike Upgrades e2e: condition gauges, repair actions, tab s
 
   // Verify cash display
   const cashElem = page.locator('[data-testid="garage-cash"]');
-  await expect(cashElem).toContainText('850');
+  await expect(cashElem).toContainText(/(850|৮৫০)/);
 
   // Verify condition percentages
   const engineCond = page.locator('[data-testid="garage-condition-engine"]');
-  await expect(engineCond).toContainText('50%');
+  await expect(engineCond).toContainText(/(50%|৫০%)/);
 
   const tiresCond = page.locator('[data-testid="garage-condition-tires"]');
-  await expect(tiresCond).toContainText('40%');
+  await expect(tiresCond).toContainText(/(40%|৪০%)/);
 
   // Click repair engine button
   const repairEngineBtn = page.locator('[data-testid="garage-repair-engine-btn"]');

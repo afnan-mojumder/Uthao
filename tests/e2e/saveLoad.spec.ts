@@ -129,13 +129,13 @@ test.describe('P5.2 Save v2 & Bulletproof Resume', () => {
 
     await page.getByTestId('pause-btn-save').click();
     await expect(page.getByTestId('corrupt-backup-banner')).toBeVisible({ timeout: 5000 });
-    await expect(page.getByTestId('save-slot-slot1')).toContainText('দিন 1');
+    await expect(page.getByTestId('save-slot-slot1')).toContainText(/দিন (1|১)/);
 
     // Trigger quota failure on slot3 -> keeps modal open, shows save-failed + memory-warning-banner, retains slot1
     await page.getByTestId('btn-action-save-slot3').click();
     await expect(page.getByTestId('save-failed')).toBeVisible({ timeout: 5000 });
     await expect(page.getByTestId('memory-warning-banner')).toBeVisible({ timeout: 5000 });
-    await expect(page.getByTestId('save-slot-slot1')).toContainText('দিন 1');
+    await expect(page.getByTestId('save-slot-slot1')).toContainText(/দিন (1|১)/);
   });
 
   test('loading a mid-trip save cancels live ride cleanly to Idle with no double-pay or penalty', async ({

@@ -68,7 +68,7 @@ test.describe('T4.3 Phone Contacts and Regulars E2E', () => {
     // Verify Locked Contact (Tanvir, 5 / 15)
     const tanvirLocked = page.locator('[data-testid="contact-locked-char_tanvir"]');
     await expect(tanvirLocked).toBeVisible();
-    await expect(tanvirLocked).toContainText('5 / 15');
+    await expect(tanvirLocked).toContainText(/(5 \/ 15|৫ \/ ১৫)/);
 
     // Close Phone
     const closeBtn = page.locator('[data-testid="phone-close-btn"]');
