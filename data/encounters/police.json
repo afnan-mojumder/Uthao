@@ -264,5 +264,63 @@
         ]
       }
     ]
+  },
+  {
+    "id": "enc_m4_police_decision",
+    "category": "story",
+    "trigger": {
+      "phase": "roaming",
+      "chapter": [4, 6],
+      "flags": { "crime_v1_resolved": true }
+    },
+    "weight": 12,
+    "cooldownMin": 9999,
+    "oncePerDay": true,
+    "lineKey": "encounter.m4_police_decision.title",
+    "choices": [
+      {
+        "id": "cooperate",
+        "labelKey": "encounter.m4_police_decision.choice.cooperate",
+        "kind": "official",
+        "effects": [
+          { "type": "relationship", "characterId": "char_morshed", "delta": 10 },
+          {
+            "type": "meter",
+            "meter": "riderIntegrity",
+            "delta": 6,
+            "reasonKey": "karma.police_investigation_cooperated",
+            "subjectId": "char_morshed"
+          },
+          {
+            "type": "meter",
+            "meter": "publicReputation",
+            "delta": 4,
+            "reasonKey": "karma.police_investigation_cooperated",
+            "subjectId": "char_morshed"
+          },
+          { "type": "flag", "key": "cooperatedPolice", "value": true },
+          { "type": "flag", "key": "m4_police_decision", "value": "cooperate" },
+          { "type": "flag", "key": "m4_police_decision_made", "value": true }
+        ]
+      },
+      {
+        "id": "decline",
+        "labelKey": "encounter.m4_police_decision.choice.decline",
+        "kind": "neutral",
+        "effects": [
+          { "type": "relationship", "characterId": "char_morshed", "delta": -5 },
+          {
+            "type": "meter",
+            "meter": "criminalExposure",
+            "delta": 4,
+            "reasonKey": "karma.police_investigation_declined",
+            "subjectId": "char_morshed"
+          },
+          { "type": "flag", "key": "cooperatedPolice", "value": false },
+          { "type": "flag", "key": "m4_police_decision", "value": "decline" },
+          { "type": "flag", "key": "m4_police_decision_made", "value": true }
+        ]
+      }
+    ]
   }
 ]

@@ -1,11 +1,5 @@
 [
   {
-    "id": "ending_v1_first_week",
-    "titleKey": "ending_v1_first_week_title",
-    "descKey": "ending_v1_first_week_desc",
-    "tendencySummary": true
-  },
-  {
     "id": "independent_rider",
     "titleKey": "ending_independent_rider_title",
     "descKey": "ending_independent_rider_desc"

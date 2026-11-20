@@ -46,4 +46,23 @@ describe('career endings are judged on the savings before the choice was paid (a
     const result = evaluateEnding(ctx({ careerChoice: 'bike', rating: 3.9 }));
     expect(result.endingId).toBe('fresh_start');
   });
+
+  it('rejects Trusted Local when riderIntegrity karma meter is critically low despite high rating and trust', () => {
+    const result = evaluateEnding(
+      ctx({
+        careerChoice: 'continue',
+        rating: 4.8,
+        localTrust: 75,
+        meters: {
+          riderIntegrity: 20,
+          publicReputation: 75,
+          platformStanding: 80,
+          criminalExposure: 10,
+          evidenceExposure: 10,
+          safetyRecord: 70,
+        },
+      })
+    );
+    expect(result.endingId).not.toBe('trusted_local');
+  });
 });

@@ -27,6 +27,11 @@ export interface HudMissionEntry {
   isSide: boolean;
 }
 
+export interface MissionManagerSnapshot {
+  visitedDistricts: string[];
+  objectiveStates?: Record<string, ObjectiveState[]>;
+}
+
 export interface MissionManagerOptions {
   bus: EventBus<GameEvents>;
   missions: MissionDef[];
@@ -48,6 +53,7 @@ export class MissionManager {
   private completedMissionIds: Set<string> = new Set();
   private objectiveStates: Map<string, Map<string, ObjectiveState>> = new Map();
   private visitedDistricts: Set<string> = new Set();
+  private currentDay: number = 1;
   private inRide: boolean = false;
   private currentTripCrashed: boolean = false;
 
@@ -81,12 +87,19 @@ export class MissionManager {
     this.refreshAvailableMissions(this.storyState.currentChapter, 1);
   }
 
+  private getCurrentDay(): number {
+    return this.getEffectContext?.()?.gameManager.clock.day ?? this.currentDay;
+  }
+
   private setupListeners(): void {
     this.bus.on('day/started', ({ day }) => {
+      this.currentDay = day;
+      this.checkFailConditions(day);
       this.refreshAvailableMissions(this.storyState.currentChapter, day);
     });
 
     this.bus.on('day/ended', ({ day }) => {
+      this.currentDay = Math.max(this.currentDay, day);
       this.checkFailConditions(day);
     });
 
@@ -106,10 +119,21 @@ export class MissionManager {
       }
     });
 
-    this.bus.on('ride/completed', ({ receipt, crashed }) => {
+    this.bus.on('ride/completed', (ev) => {
+      const { receipt, crashed } = ev;
       const didCrash = Boolean(crashed || this.currentTripCrashed);
       this.currentTripCrashed = false;
       this.inRide = false;
+
+      const gm = this.getEffectContext?.()?.gameManager;
+      const minute = ev.minute ?? gm?.clock.minutes ?? 0;
+      const weather = ev.weather ?? gm?.weather;
+      const district = ev.district ?? ev.destinationDistrict ?? ev.pickupDistrict;
+
+      if (ev.pickupDistrict) this.visitedDistricts.add(ev.pickupDistrict);
+      if (ev.destinationDistrict) this.visitedDistricts.add(ev.destinationDistrict);
+      if (district) this.visitedDistricts.add(district);
+
       for (const missionId of this.activeMissionIds) {
         const def = this.missions.get(missionId);
         const objMap = this.objectiveStates.get(missionId);
@@ -121,7 +145,13 @@ export class MissionManager {
 
           const changed = evaluateRideCompleted(obj, state, {
             receipt,
-            minute: 0,
+            passengerCharacterId: ev.passengerCharacterId,
+            district,
+            pickupDistrict: ev.pickupDistrict,
+            destinationDistrict: ev.destinationDistrict,
+            zoneTags: ev.zoneTags,
+            weather,
+            minute,
             crashed: didCrash,
             visitedDistricts: this.visitedDistricts,
           });
@@ -326,11 +356,15 @@ export class MissionManager {
     const objMap = new Map<string, ObjectiveState>();
     for (const obj of def.objectives) {
       const state = createObjectiveState(obj);
-      // A flag set before the mission unlocked still counts: flags are read here,
-      // because the event that set them has already been emitted.
+      // A flag or relationship threshold already satisfied before activation still counts.
       if (obj.type === 'flag' && this.storyState.branchFlags[obj.key] === obj.value) {
         state.progress = 1;
         state.completed = true;
+      } else if (obj.type === 'relationship') {
+        const current = this.reputationSystem
+          ? this.reputationSystem.getRelationship(obj.characterId)
+          : (this.storyState.characterRelationships[obj.characterId] ?? 0);
+        evaluateRelationshipChanged(obj, state, obj.characterId, current);
       }
       objMap.set(obj.id, state);
     }
@@ -357,6 +391,32 @@ export class MissionManager {
     }
   }
 
+  private advanceChapterForMission(missionId: string): void {
+    if (missionId === 'm1_household') {
+      this.storyState.currentChapter = Math.max(this.storyState.currentChapter, 2);
+    } else if (missionId === 'm2_evening_rush') {
+      this.storyState.currentChapter = Math.max(this.storyState.currentChapter, 3);
+    } else if (missionId === 'm3_hospital_run') {
+      this.storyState.currentChapter = Math.max(this.storyState.currentChapter, 4);
+    } else if (missionId === 'm4_home_safe') {
+      this.storyState.currentChapter = Math.max(this.storyState.currentChapter, 5);
+    } else if (missionId === 'm5_linked_jobs') {
+      this.storyState.currentChapter = Math.max(this.storyState.currentChapter, 6);
+    } else if (missionId === 'm6_decision') {
+      this.storyState.branchFlags['campaign_completed'] = true;
+    }
+  }
+
+  private unlockNextMissions(def: MissionDef): void {
+    const day = this.getCurrentDay();
+    for (const nextId of def.unlocks) {
+      const nextDef = this.missions.get(nextId);
+      if (!nextDef || nextDef.day <= day) {
+        this.activateMission(nextId);
+      }
+    }
+  }
+
   completeMission(missionId: string): void {
     const def = this.missions.get(missionId);
     if (!def) return;
@@ -375,25 +435,8 @@ export class MissionManager {
 
     this.bus.emit('mission/completed', { missionId });
 
-    // Chapter progression on final missions
-    if (missionId === 'm1_household') {
-      this.storyState.currentChapter = Math.max(this.storyState.currentChapter, 2);
-    } else if (missionId === 'm2_evening_rush') {
-      this.storyState.currentChapter = Math.max(this.storyState.currentChapter, 3);
-    } else if (missionId === 'm3_hospital_run') {
-      this.storyState.currentChapter = Math.max(this.storyState.currentChapter, 4);
-    } else if (missionId === 'm4_home_safe') {
-      this.storyState.currentChapter = Math.max(this.storyState.currentChapter, 5);
-    } else if (missionId === 'm5_linked_jobs') {
-      this.storyState.currentChapter = Math.max(this.storyState.currentChapter, 6);
-    } else if (missionId === 'm6_decision') {
-      this.storyState.branchFlags['campaign_completed'] = true;
-    }
-
-
-    for (const nextId of def.unlocks) {
-      this.activateMission(nextId);
-    }
+    this.advanceChapterForMission(missionId);
+    this.unlockNextMissions(def);
   }
 
   private checkFailConditions(day: number): void {
@@ -405,9 +448,12 @@ export class MissionManager {
       for (const fc of def.failConditions) {
         if (fc.type === 'earnNet' && fc.byDay && day > fc.byDay) {
           const objMap = this.objectiveStates.get(missionId);
-          const earnObj = def.objectives.find((o) => o.type === 'earnNet');
-          const state = earnObj && objMap ? objMap.get(earnObj.id) : null;
-          if (!state || !state.completed) {
+          const allRequiredDone = def.objectives.every((o) => {
+            if (o.optional) return true;
+            const st = objMap?.get(o.id);
+            return Boolean(st?.completed);
+          });
+          if (!allRequiredDone) {
             this.failMission(missionId, def.onFail);
             break;
           }
@@ -428,6 +474,12 @@ export class MissionManager {
 
     if (onFail && onFail.length > 0) {
       this.applyEffects(onFail);
+    }
+
+    this.advanceChapterForMission(missionId);
+    const def = this.missions.get(missionId);
+    if (def) {
+      this.unlockNextMissions(def);
     }
   }
 
@@ -526,12 +578,65 @@ export class MissionManager {
     return this.completedMissionIds.has(id);
   }
 
+  /** Returns characterIds required by incomplete `rideWith` objectives on active missions. */
+  getPendingRideWithCharacterIds(): string[] {
+    const result: string[] = [];
+    for (const missionId of this.activeMissionIds) {
+      const def = this.missions.get(missionId);
+      const objMap = this.objectiveStates.get(missionId);
+      if (!def || !objMap) continue;
+      for (const obj of def.objectives) {
+        if (obj.type !== 'rideWith') continue;
+        const state = objMap.get(obj.id);
+        if (state && !state.completed && !result.includes(obj.characterId)) {
+          result.push(obj.characterId);
+        }
+      }
+    }
+    return result;
+  }
+
+  getVisitedDistricts(): string[] {
+    return Array.from(this.visitedDistricts);
+  }
+
+  snapshot(): MissionManagerSnapshot {
+    const objectiveStates: Record<string, ObjectiveState[]> = {};
+    for (const [missionId, objMap] of this.objectiveStates) {
+      objectiveStates[missionId] = Array.from(objMap.values()).map((s) => ({ ...s }));
+    }
+    return {
+      visitedDistricts: Array.from(this.visitedDistricts),
+      objectiveStates,
+    };
+  }
+
+  applySnapshot(snap?: MissionManagerSnapshot): void {
+    this.visitedDistricts.clear();
+    if (!snap) return;
+    for (const d of snap.visitedDistricts ?? []) {
+      this.visitedDistricts.add(d);
+    }
+    if (snap.objectiveStates) {
+      for (const [missionId, states] of Object.entries(snap.objectiveStates)) {
+        const objMap = this.objectiveStates.get(missionId);
+        if (!objMap) continue;
+        for (const st of states) {
+          if (objMap.has(st.id)) {
+            objMap.set(st.id, { ...st });
+          }
+        }
+      }
+    }
+  }
+
   /** Resets manager tracking on a fresh career so completed triggerOnly missions can unlock again on new careers. */
   resetCareer(): void {
     this.activeMissionIds.clear();
     this.completedMissionIds.clear();
     this.objectiveStates.clear();
     this.visitedDistricts.clear();
+    this.currentDay = 1;
     this.inRide = false;
     this.currentTripCrashed = false;
   }
@@ -541,6 +646,7 @@ export class MissionManager {
     this.activeMissionIds.clear();
     this.completedMissionIds.clear();
     this.objectiveStates.clear();
+    this.visitedDistricts.clear();
     this.inRide = false;
     this.currentTripCrashed = false;
     for (const id of this.storyState.completedMissions ?? []) {

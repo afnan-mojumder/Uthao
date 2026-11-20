@@ -9,6 +9,7 @@ import type {
 } from '../../core/types';
 import type { DeliverySnapshot } from '../delivery/DeliveryManager';
 import type { ActiveRoadEvent } from '../world/RoadEvents';
+import type { MissionManagerSnapshot } from '../mission/MissionManager';
 
 export type SaveSlot = 'auto' | 'slot1' | 'slot2' | 'slot3';
 
@@ -71,6 +72,7 @@ export interface SaveV1 {
   todayRentAutoFlagged?: boolean;
   rentDelayedByCommand?: boolean;
   deliveries?: DeliverySnapshot;
+  missions?: MissionManagerSnapshot;
 }
 
 export type AnySave = SaveV1 | Record<string, unknown>;

@@ -168,6 +168,7 @@ export function serialize(gm: GameManager, slot: SaveSlot = 'auto'): SaveV1 {
     todayRentAutoFlagged: snap.todayRentAutoFlagged,
     rentDelayedByCommand: snap.rentDelayedByCommand,
     deliveries: snap.deliveries,
+    missions: snap.missions,
   };
 }
 
@@ -252,6 +253,7 @@ export function deserialize(save: SaveV1, gameData?: GameData): GameManager {
     todayRentAutoFlagged: save.todayRentAutoFlagged,
     rentDelayedByCommand: save.rentDelayedByCommand,
     deliveries: save.deliveries,
+    missions: save.missions,
   };
 
   gm.applySnapshot(snapshot, save.rngState);

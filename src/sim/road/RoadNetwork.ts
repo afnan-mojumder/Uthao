@@ -1,4 +1,4 @@
-import type { RoadNode, RoadSegment } from '../../core/types';
+import type { DistrictId, RoadNode, RoadSegment } from '../../core/types';
 import type { DistrictData, Poi, WorldData } from '../schemas';
 import {
   RoutingGraph,
@@ -17,12 +17,19 @@ export class RoadNetwork {
   private nodes: RoadNode[] = [];
   private segments: RoadSegment[] = [];
   private pois: Poi[] = [];
+  private nodeDistrict: Map<string, DistrictId> = new Map();
   private graph: RoutingGraph;
 
-  private constructor(nodes: RoadNode[], segments: RoadSegment[], pois: Poi[]) {
+  private constructor(
+    nodes: RoadNode[],
+    segments: RoadSegment[],
+    pois: Poi[],
+    nodeDistrict: Map<string, DistrictId> = new Map()
+  ) {
     this.nodes = nodes;
     this.segments = segments;
     this.pois = pois;
+    this.nodeDistrict = nodeDistrict;
     this.graph = new RoutingGraph(nodes, segments);
   }
 
@@ -33,6 +40,7 @@ export class RoadNetwork {
     const allNodes: RoadNode[] = [];
     const allSegments: RoadSegment[] = [];
     const allPois: Poi[] = [];
+    const nodeDistrict = new Map<string, DistrictId>();
 
     const nodeIds = new Set<string>();
     const segmentIds = new Set<string>();
@@ -42,6 +50,7 @@ export class RoadNetwork {
         if (!nodeIds.has(node.nodeId)) {
           nodeIds.add(node.nodeId);
           allNodes.push(node);
+          nodeDistrict.set(node.nodeId, d.districtId);
         }
       }
       for (const seg of d.segments) {
@@ -62,7 +71,7 @@ export class RoadNetwork {
       }
     }
 
-    return new RoadNetwork(allNodes, allSegments, allPois);
+    return new RoadNetwork(allNodes, allSegments, allPois, nodeDistrict);
   }
 
   static fromWorld(
@@ -133,6 +142,39 @@ export class RoadNetwork {
 
   getPois(): Poi[] {
     return this.pois;
+  }
+
+  getNodeDistrict(nodeId: string): DistrictId | undefined {
+    const direct = this.nodeDistrict.get(nodeId);
+    if (direct) return direct;
+    let fallback: DistrictId | undefined;
+    for (const seg of this.segments) {
+      if (seg.startNodeId !== nodeId && seg.endNodeId !== nodeId) continue;
+      if (!seg.tags.includes('connector')) {
+        return seg.district;
+      }
+      fallback ??= seg.district;
+    }
+    return fallback;
+  }
+
+  getNodeZoneTags(nodeId: string): string[] {
+    const tags = new Set<string>();
+    const node = this.getNode(nodeId);
+    if (node?.tags) {
+      for (const t of node.tags) tags.add(t);
+    }
+    for (const poi of this.pois) {
+      if (poi.nodeId === nodeId) {
+        tags.add(poi.kind);
+      }
+    }
+    for (const seg of this.segments) {
+      if (seg.startNodeId !== nodeId && seg.endNodeId !== nodeId) continue;
+      tags.add(seg.roadType);
+      for (const t of seg.tags) tags.add(t);
+    }
+    return Array.from(tags);
   }
 
   getGraph(): RoutingGraph {

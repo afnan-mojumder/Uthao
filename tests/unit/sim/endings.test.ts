@@ -5,6 +5,10 @@ import {
   type EndingEvaluationContext,
 } from '../../../src/sim/mission/endings';
 import type { PlayerEconomy, StoryState, SafetyRecord } from '../../../src/core/types';
+import { GameManager } from '../../../src/sim/GameManager';
+import endingsData from '../../../data/endings.json';
+import enEndings from '../../../data/dialogue/en/endings.json';
+import bnEndings from '../../../data/dialogue/bn/endings.json';
 
 describe('All Five Endings Evaluation (T5.5)', () => {
   const baseEconomy: PlayerEconomy = {
@@ -153,5 +157,106 @@ describe('All Five Endings Evaluation (T5.5)', () => {
 
     const cont = choices.find((c) => c.id === 'continue');
     expect(cont?.available).toBe(true);
+  });
+
+  it('removes legacy ending_v1_first_week from data/endings.json and dialogue dicts', () => {
+    const ids = (endingsData as Array<{ id: string }>).map((e) => e.id);
+    expect(ids).not.toContain('ending_v1_first_week');
+    expect(ids).toEqual([
+      'independent_rider',
+      'workshop_owner',
+      'trusted_local',
+      'fast_money',
+      'fresh_start',
+    ]);
+    expect('ending_v1_first_week_title' in enEndings).toBe(false);
+    expect('ending_v1_first_week_desc' in enEndings).toBe(false);
+    expect('ending_v1_first_week_title' in bnEndings).toBe(false);
+    expect('ending_v1_first_week_desc' in bnEndings).toBe(false);
+  });
+
+  it('evaluates Fast Money from live bounded karma meters (criminalExposure / evidenceExposure / low riderIntegrity)', () => {
+    const ctx: EndingEvaluationContext = {
+      day: 20,
+      economy: { ...baseEconomy, savings: 22000, cash: 5000 },
+      story: { ...baseStory },
+      rating: 4.3,
+      localTrust: 35,
+      safetyRecord: baseSafety,
+      riskScore: 0, // live game uses karma meters, not riskScore
+      meters: {
+        riderIntegrity: 25,
+        publicReputation: 35,
+        platformStanding: 65,
+        criminalExposure: 48,
+        evidenceExposure: 45,
+        safetyRecord: 60,
+      },
+      promises: { kept: 2, broken: 2 },
+      careerChoice: 'continue',
+    };
+
+    expect(evaluateEnding(ctx).endingId).toBe('fast_money');
+  });
+
+  it('drives all 5 endings on Day 20 through live GameManager m6_decision', () => {
+    const reachEnding = (
+      setup: (gm: GameManager) => void,
+      choice: 'workshop' | 'bike' | 'continue'
+    ): string => {
+      const gm = new GameManager({ seed: 101, mode: 'career', data: {} });
+      gm.clock.day = 20;
+      gm.story.currentChapter = 6;
+      setup(gm);
+      let reached: string | null = null;
+      gm.bus.on('ending/reached', (ev) => {
+        if (!ev.choices) reached = ev.endingId;
+      });
+      gm.missionManager.activateMission('m6_decision');
+      expect(gm.dispatch({ type: 'selectCareerChoice', choice }).success).toBe(true);
+      expect(reached).not.toBeNull();
+      return reached!;
+    };
+
+    expect(
+      reachEnding((gm) => {
+        gm.economyManager.savings = 30000;
+        gm.economy.savings = 30000;
+        gm.reputationSystem.setRelationship('char_kamal', 35);
+      }, 'workshop')
+    ).toBe('workshop_owner');
+
+    expect(
+      reachEnding((gm) => {
+        gm.economyManager.savings = 18000;
+        gm.economy.savings = 18000;
+      }, 'bike')
+    ).toBe('independent_rider');
+
+    expect(
+      reachEnding((gm) => {
+        gm.economyManager.savings = 4000;
+        gm.economy.savings = 4000;
+        gm.reputationSystem.applyMeter('publicReputation', 45, 'karma.community');
+        gm.reputationSystem.applyMeter('riderIntegrity', 15, 'karma.honest');
+      }, 'continue')
+    ).toBe('trusted_local');
+
+    expect(
+      reachEnding((gm) => {
+        gm.economyManager.savings = 22000;
+        gm.economy.savings = 22000;
+        gm.reputationSystem.applyMeter('criminalExposure', 50, 'karma.fled');
+        gm.reputationSystem.applyMeter('evidenceExposure', 45, 'karma.bribe');
+        gm.reputationSystem.applyMeter('riderIntegrity', -25, 'karma.bribe');
+      }, 'continue')
+    ).toBe('fast_money');
+
+    expect(
+      reachEnding((gm) => {
+        gm.economyManager.debt = 6000;
+        gm.economy.debt = 6000;
+      }, 'continue')
+    ).toBe('fresh_start');
   });
 });

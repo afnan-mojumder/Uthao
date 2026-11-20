@@ -158,9 +158,163 @@ describe('MissionManager (T4.7)', () => {
       },
     });
 
-    // Mission is resolved and onFail flag applied
+    // Mission is resolved and onFail flag applied AND unlocks Ch2 cleanly without trapping the player
     expect(manager.isMissionCompleted('m1_household')).toBe(true);
     expect(story.branchFlags['ma_payment_missed']).toBe(true);
+    expect(story.currentChapter).toBe(2);
+    expect(manager.isMissionActive('m2_rush_hustle')).toBe(true);
+  });
+
+  it('earnNet sums net operating profit (fare+tip+bonus-commission-fuel-repair-fine) and excludes transfers', () => {
+    manager.completeMission('m1_first_ride');
+    manager.completeMission('m1_fill_up');
+    manager.refreshAvailableMissions(1, 2);
+    expect(manager.isMissionActive('m1_household')).toBe(true);
+
+    // Transfers & non-operating transactions must NOT count toward earnNet
+    for (const tx of [
+      { id: 't_sav_w', day: 2, minute: 480, kind: 'savings' as const, amount: 2000 },
+      { id: 't_fam_a', day: 2, minute: 485, kind: 'family' as const, amount: 1000 },
+      { id: 't_rent', day: 2, minute: 490, kind: 'rent' as const, amount: 1500 },
+      { id: 't_evt', day: 2, minute: 495, kind: 'event' as const, amount: 900 },
+    ]) {
+      bus.emit('economy/transaction', { tx });
+    }
+    const earnAfterTransfers = manager
+      .getObjectiveStates('m1_household')
+      .find((s) => s.id === 'obj_m1_earn');
+    expect(earnAfterTransfers?.progress).toBe(0);
+
+    // Operating gross +1000 fare minus -150 commission and -200 fuel = +650 net
+    bus.emit('economy/transaction', {
+      tx: { id: 't_fare1', day: 2, minute: 500, kind: 'fare', amount: 1000 },
+    });
+    bus.emit('economy/transaction', {
+      tx: { id: 't_comm1', day: 2, minute: 500, kind: 'commission', amount: -150 },
+    });
+    bus.emit('economy/transaction', {
+      tx: { id: 't_fuel1', day: 2, minute: 505, kind: 'fuel', amount: -200 },
+    });
+
+    const earnAfterCosts = manager
+      .getObjectiveStates('m1_household')
+      .find((s) => s.id === 'obj_m1_earn');
+    expect(earnAfterCosts?.progress).toBe(650);
+    expect(earnAfterCosts?.completed).toBe(false);
+
+    // +900 fare + 100 tip - 150 commission = +850 net -> cumulative 1500
+    bus.emit('economy/transaction', {
+      tx: { id: 't_fare2', day: 2, minute: 520, kind: 'fare', amount: 900 },
+    });
+    bus.emit('economy/transaction', {
+      tx: { id: 't_tip2', day: 2, minute: 520, kind: 'tip', amount: 100 },
+    });
+    bus.emit('economy/transaction', {
+      tx: { id: 't_comm2', day: 2, minute: 520, kind: 'commission', amount: -150 },
+    });
+
+    const earnFinal = manager
+      .getObjectiveStates('m1_household')
+      .find((s) => s.id === 'obj_m1_earn');
+    expect(earnFinal?.progress).toBe(1500);
+    expect(earnFinal?.completed).toBe(true);
+  });
+
+  it('retro-checks relationship objectives on activateMission (e.g. m6_kamal_offer)', async () => {
+    const { ReputationSystem } = await import('../../../src/sim/reputation/ReputationSystem');
+    const ch6Missions = (await import('../../../data/missions/ch6.json')).default as MissionDef[];
+    const localBus = new EventBus<GameEvents>();
+    const localStory: StoryState = {
+      currentChapter: 6,
+      completedMissions: ['m5_linked_jobs'],
+      activeMissions: [],
+      characterRelationships: {},
+      promises: [],
+      branchFlags: {},
+      endingEligibility: {
+        independent_rider: false,
+        workshop_owner: false,
+        trusted_local: false,
+        fast_money: false,
+        fresh_start: false,
+      },
+    };
+    const rep = new ReputationSystem({
+      bus: localBus,
+      initialRelationships: localStory.characterRelationships,
+    });
+    expect(rep.getRelationship('char_kamal')).toBeGreaterThanOrEqual(15);
+
+    const mgr = new MissionManager({
+      bus: localBus,
+      missions: ch6Missions,
+      endings: endingsData as EndingDef[],
+      storyState: localStory,
+      reputationSystem: rep,
+    });
+
+    // m6_kamal_offer has day: 17; refreshing at day 17 activates and immediately completes it
+    mgr.refreshAvailableMissions(6, 17);
+    expect(mgr.isMissionCompleted('m6_kamal_offer')).toBe(true);
+    expect(localStory.branchFlags['workshop_offered']).toBe(true);
+  });
+
+  it('m6_decision does not fire before Day 20 when m6_test_ride completes on Day 18', async () => {
+    const { GameManager } = await import('../../../src/sim/GameManager');
+    const gm = new GameManager({ seed: 7, mode: 'career', data: {} });
+    const endings: string[] = [];
+    gm.bus.on('ending/reached', ({ endingId }) => endings.push(endingId));
+
+    gm.story.currentChapter = 6;
+    gm.clock.day = 18;
+    gm.missionManager.activateMission('m6_test_ride');
+    gm.missionManager.completeMission('m6_test_ride');
+
+    expect(gm.missionManager.isMissionActive('m6_decision')).toBe(false);
+    expect(endings).toEqual([]);
+
+    // Day 19 still does not open m6_decision
+    gm.clock.day = 19;
+    gm.bus.emit('day/started', { day: 19 });
+    expect(gm.missionManager.isMissionActive('m6_decision')).toBe(false);
+    expect(endings).toEqual([]);
+
+    // Day 20 opens m6_decision cleanly
+    gm.clock.day = 20;
+    gm.bus.emit('day/started', { day: 20 });
+    expect(gm.missionManager.isMissionActive('m6_decision')).toBe(true);
+    expect(endings).toHaveLength(1);
+  });
+
+  it('payExpense enforces positive cash-backed amount and m1_household obj_m1_pay_ma requires full 1200', async () => {
+    const { GameManager } = await import('../../../src/sim/GameManager');
+    const gm = new GameManager({ seed: 9, mode: 'career', data: {} });
+    gm.missionManager.completeMission('m1_first_ride');
+    gm.missionManager.completeMission('m1_fill_up');
+    gm.clock.day = 2;
+    gm.missionManager.refreshAvailableMissions(1, 2);
+    expect(gm.missionManager.isMissionActive('m1_household')).toBe(true);
+
+    gm.economyManager.cash = 1000;
+    expect(gm.dispatch({ type: 'payExpense', expenseId: 'family', amount: 0 }).success).toBe(false);
+    expect(gm.dispatch({ type: 'payExpense', expenseId: 'family', amount: -500 }).success).toBe(false);
+    expect(gm.dispatch({ type: 'payExpense', expenseId: 'family', amount: Number.NaN }).success).toBe(false);
+    expect(gm.dispatch({ type: 'payExpense', expenseId: 'family', amount: 1200 }).success).toBe(false);
+
+    // Partial payment (500) must NOT complete obj_m1_pay_ma (requires 1200)
+    expect(gm.dispatch({ type: 'payExpense', expenseId: 'family', amount: 500 }).success).toBe(true);
+    const payObjPartial = gm.missionManager
+      .getObjectiveStates('m1_household')
+      .find((s) => s.id === 'obj_m1_pay_ma');
+    expect(payObjPartial?.completed).toBe(false);
+
+    // Completing remaining 700 completes obj_m1_pay_ma
+    gm.economyManager.cash = 1000;
+    expect(gm.dispatch({ type: 'payExpense', expenseId: 'family', amount: 700 }).success).toBe(true);
+    const payObjFull = gm.missionManager
+      .getObjectiveStates('m1_household')
+      .find((s) => s.id === 'obj_m1_pay_ma');
+    expect(payObjFull?.completed).toBe(true);
   });
 
   it('no mission definition requires an upgrade', () => {

@@ -18,9 +18,11 @@ import {
 // actually has).
 const charactersPathForIds = path.resolve('data/characters.json');
 let validCharacterIds = new Set();
+const validCharactersMap = new Map();
 if (fs.existsSync(charactersPathForIds)) {
   const rawChars = JSON.parse(fs.readFileSync(charactersPathForIds, 'utf-8'));
   validCharacterIds = new Set(rawChars.map((c) => c.id));
+  for (const c of rawChars) validCharactersMap.set(c.id, c);
 }
 
 function collectCharacterIds(value, out) {
@@ -477,6 +479,9 @@ if (fs.existsSync(archetypesPath)) {
 }
 
 // Validate encounters
+const loadedEncountersMap = new Map();
+const flagSetters = new Set(['ch6_decision_made=true']);
+const startMissionTargets = [];
 const encountersDir = path.resolve('data/encounters');
 if (fs.existsSync(encountersDir)) {
   const files = fs.readdirSync(encountersDir);
@@ -495,6 +500,7 @@ if (fs.existsSync(encountersDir)) {
             console.error(`Encounter schema error in ${filePath} (${enc?.id}):`, res.error.format());
             process.exit(1);
           }
+          loadedEncountersMap.set(enc.id, enc);
           checkCharacterIds(enc, `Encounter ${enc.id} in ${filePath}`);
           if (typeof dicts.en[enc.lineKey] === 'undefined') {
             console.error(`Encounter ${enc.id} in ${filePath}: lineKey '${enc.lineKey}' missing in en dialogue`);
@@ -516,7 +522,11 @@ if (fs.existsSync(encountersDir)) {
           }
           const checkEffectKeys = (effects, choiceId) => {
             for (const eff of effects ?? []) {
-              if (eff.type === 'outcome') {
+              if (eff.type === 'flag') {
+                flagSetters.add(`${eff.key}=${String(eff.value)}`);
+              } else if (eff.type === 'startMission') {
+                startMissionTargets.push({ encounterId: enc.id, choiceId, missionId: eff.missionId });
+              } else if (eff.type === 'outcome') {
                 for (const entry of eff.table ?? []) {
                   if (typeof dicts.en[entry.lineKey] === 'undefined') {
                     console.error(`Encounter ${enc.id} choice ${choiceId}: outcome lineKey '${entry.lineKey}' missing in en dialogue`);
@@ -594,7 +604,8 @@ if (fs.existsSync(upgradesPath)) {
   }
 }
 
-// Validate missions: schema, dialogue keys, and no mission must require an upgrade
+// Validate missions: schema, dialogue keys, MASTER §15 fields, and no mission must require an upgrade
+const loadedMissionsMap = new Map();
 const missionsDir = path.resolve('data/missions');
 if (fs.existsSync(missionsDir)) {
   const files = fs.readdirSync(missionsDir);
@@ -610,7 +621,18 @@ if (fs.existsSync(missionsDir)) {
             console.error(`Mission schema error in ${filePath} (${m?.id}):`, res.error.format());
             process.exit(1);
           }
+          if (loadedMissionsMap.has(m.id)) {
+            console.error(`Duplicate mission id '${m.id}' in ${filePath}`);
+            process.exit(1);
+          }
+          loadedMissionsMap.set(m.id, { mission: m, filePath });
           checkCharacterIds(m, `Mission ${m.id} in ${filePath}`);
+
+          for (const rew of m.rewards ?? []) {
+            if (rew.type === 'flag') {
+              flagSetters.add(`${rew.key}=${String(rew.value)}`);
+            }
+          }
 
           if (typeof dicts.en[m.titleKey] === 'undefined') {
             console.error(`Mission ${m.id} in ${filePath}: titleKey '${m.titleKey}' missing in en dialogue`);
@@ -629,7 +651,13 @@ if (fs.existsSync(missionsDir)) {
             process.exit(1);
           }
 
+          const objIds = new Set();
           for (const obj of m.objectives) {
+            if (objIds.has(obj.id)) {
+              console.error(`Mission ${m.id} in ${filePath}: duplicate objective id '${obj.id}'`);
+              process.exit(1);
+            }
+            objIds.add(obj.id);
             if (typeof dicts.en[obj.descKey] === 'undefined') {
               console.error(`Mission ${m.id} objective ${obj.id}: descKey '${obj.descKey}' missing in en dialogue`);
               process.exit(1);
@@ -650,6 +678,128 @@ if (fs.existsSync(missionsDir)) {
       }
     }
   }
+
+  // MASTER §15 cross-reference validation over all missions & district/encounter data
+  const loadedPoiIds = new Set();
+  const loadedPoiKinds = new Set();
+  const loadedZoneTags = new Set();
+  for (const dist of loadedDistricts.values()) {
+    for (const poi of dist.pois ?? []) {
+      loadedPoiIds.add(poi.id);
+      loadedPoiKinds.add(poi.kind);
+      loadedZoneTags.add(poi.kind);
+    }
+    for (const node of dist.nodes ?? []) {
+      for (const tag of node.tags ?? []) loadedZoneTags.add(tag);
+    }
+    for (const seg of dist.segments ?? []) {
+      loadedZoneTags.add(seg.roadType);
+      for (const tag of seg.tags ?? []) loadedZoneTags.add(tag);
+    }
+  }
+
+  for (const target of startMissionTargets) {
+    if (!loadedMissionsMap.has(target.missionId)) {
+      console.error(`Encounter ${target.encounterId} choice ${target.choiceId}: startMission '${target.missionId}' does not exist`);
+      process.exit(1);
+    }
+  }
+
+  for (const { mission: m, filePath } of loadedMissionsMap.values()) {
+    for (const pre of m.prerequisites ?? []) {
+      if (!loadedMissionsMap.has(pre)) {
+        console.error(`Mission ${m.id} in ${filePath}: prerequisite '${pre}' does not exist`);
+        process.exit(1);
+      }
+    }
+    for (const unl of m.unlocks ?? []) {
+      if (!loadedMissionsMap.has(unl)) {
+        console.error(`Mission ${m.id} in ${filePath}: unlocks '${unl}' does not exist`);
+        process.exit(1);
+      }
+    }
+    for (const obj of m.objectives) {
+      if (obj.type === 'completeRides') {
+        if (obj.district && !loadedDistricts.has(obj.district)) {
+          console.error(`Mission ${m.id} objective ${obj.id}: unknown district '${obj.district}'`);
+          process.exit(1);
+        }
+        if (obj.zoneTag && !loadedZoneTags.has(obj.zoneTag)) {
+          console.error(`Mission ${m.id} objective ${obj.id}: zoneTag '${obj.zoneTag}' not found in any district`);
+          process.exit(1);
+        }
+        if (
+          obj.distinctDistricts !== undefined &&
+          (obj.distinctDistricts < 1 || obj.distinctDistricts > loadedDistricts.size || obj.distinctDistricts > obj.count)
+        ) {
+          console.error(`Mission ${m.id} objective ${obj.id}: invalid distinctDistricts=${obj.distinctDistricts}`);
+          process.exit(1);
+        }
+        if (obj.beforeMinute !== undefined && (obj.beforeMinute < 0 || obj.beforeMinute > 1440)) {
+          console.error(`Mission ${m.id} objective ${obj.id}: invalid beforeMinute=${obj.beforeMinute}`);
+          process.exit(1);
+        }
+      } else if (obj.type === 'rideWith') {
+        const ch = validCharactersMap.get(obj.characterId);
+        if (!ch) {
+          console.error(`Mission ${m.id} objective ${obj.id}: rideWith character '${obj.characterId}' missing`);
+          process.exit(1);
+        }
+        if (ch.canRide === false) {
+          console.error(`Mission ${m.id} objective ${obj.id}: rideWith character '${obj.characterId}' has canRide=false`);
+          process.exit(1);
+        }
+      } else if (obj.type === 'relationship') {
+        if (!validCharactersMap.has(obj.characterId)) {
+          console.error(`Mission ${m.id} objective ${obj.id}: relationship character '${obj.characterId}' missing`);
+          process.exit(1);
+        }
+        if (obj.min < -100 || obj.min > 100) {
+          console.error(`Mission ${m.id} objective ${obj.id}: relationship min=${obj.min} out of [-100, 100]`);
+          process.exit(1);
+        }
+      } else if (obj.type === 'reach') {
+        if (obj.poiId.startsWith('poi_kind:')) {
+          const kind = obj.poiId.slice('poi_kind:'.length);
+          if (!loadedPoiKinds.has(kind)) {
+            console.error(`Mission ${m.id} objective ${obj.id}: reach poi_kind '${kind}' missing from districts`);
+            process.exit(1);
+          }
+        } else if (!loadedPoiIds.has(obj.poiId)) {
+          console.error(`Mission ${m.id} objective ${obj.id}: reach poiId '${obj.poiId}' missing from districts`);
+          process.exit(1);
+        }
+      } else if (obj.type === 'choose' || obj.type === 'survive') {
+        const enc = loadedEncountersMap.get(obj.encounterId);
+        if (!enc) {
+          console.error(`Mission ${m.id} objective ${obj.id}: encounter '${obj.encounterId}' missing`);
+          process.exit(1);
+        }
+        for (const cid of obj.choiceIds ?? []) {
+          if (!enc.choices.some((c) => c.id === cid)) {
+            console.error(`Mission ${m.id} objective ${obj.id}: choiceId '${cid}' missing from '${obj.encounterId}'`);
+            process.exit(1);
+          }
+        }
+      } else if (obj.type === 'flag') {
+        const flagExpr = `${obj.key}=${String(obj.value)}`;
+        if (!flagSetters.has(flagExpr)) {
+          console.error(`Mission ${m.id} objective ${obj.id}: flag '${flagExpr}' has no mission reward, encounter choice, or engine setter`);
+          process.exit(1);
+        }
+      } else if (obj.type === 'earnNet') {
+        if (obj.amount <= 0 || (obj.byDay !== undefined && obj.byDay < 1)) {
+          console.error(`Mission ${m.id} objective ${obj.id}: invalid earnNet bounds`);
+          process.exit(1);
+        }
+      } else if (obj.type === 'payExpense') {
+        if (!obj.expenseId || (obj.amount !== undefined && obj.amount <= 0)) {
+          console.error(`Mission ${m.id} objective ${obj.id}: invalid payExpense bounds`);
+          process.exit(1);
+        }
+      }
+    }
+  }
 }
 
 // Validate endings.json
@@ -661,12 +811,25 @@ if (fs.existsSync(endingsPath)) {
       console.error(`Expected array of endings in ${endingsPath}`);
       process.exit(1);
     }
+    const REQUIRED_ENDING_IDS = [
+      'independent_rider',
+      'workshop_owner',
+      'trusted_local',
+      'fast_money',
+      'fresh_start',
+    ];
+    const seenEndingIds = new Set();
     for (const ending of raw) {
       const res = EndingDefSchema.safeParse(ending);
       if (!res.success) {
         console.error(`Ending schema error in ${endingsPath} (${ending?.id}):`, res.error.format());
         process.exit(1);
       }
+      if (ending.id === 'ending_v1_first_week') {
+        console.error(`Legacy ending 'ending_v1_first_week' must not be present in ${endingsPath}`);
+        process.exit(1);
+      }
+      seenEndingIds.add(ending.id);
       if (typeof dicts.en[ending.titleKey] === 'undefined') {
         console.error(`Ending ${ending.id}: titleKey '${ending.titleKey}' missing in en dialogue`);
         process.exit(1);
@@ -683,6 +846,16 @@ if (fs.existsSync(endingsPath)) {
         console.error(`Ending ${ending.id}: descKey '${ending.descKey}' missing in bn dialogue`);
         process.exit(1);
       }
+    }
+    for (const reqId of REQUIRED_ENDING_IDS) {
+      if (!seenEndingIds.has(reqId)) {
+        console.error(`Required ending '${reqId}' missing in ${endingsPath}`);
+        process.exit(1);
+      }
+    }
+    if (seenEndingIds.size !== REQUIRED_ENDING_IDS.length) {
+      console.error(`Expected exactly ${REQUIRED_ENDING_IDS.length} endings in ${endingsPath}, got ${seenEndingIds.size}`);
+      process.exit(1);
     }
   } catch (err) {
     console.error(`Failed reading endings file ${endingsPath}:`, err);

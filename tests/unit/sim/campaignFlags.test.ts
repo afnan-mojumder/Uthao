@@ -78,14 +78,29 @@ describe('campaign objectives completed through real encounter choices', () => {
   });
 
   it('Chapter 4: a flag set before a mission unlocks still counts when it unlocks', () => {
-    // The checkpoint happens during m4_wrong_pickup. m4_home_safe only unlocks
-    // after that mission completes, so its flag must be read on activation.
+    // The police investigation decision sets m4_police_decision_made (for both cooperate and decline).
+    // Even if set before m4_home_safe unlocks, activating m4_home_safe reads it cleanly.
     const gm = newGame(['m4_wrong_pickup']);
-    resolve(gm, 'enc_police_checkpoint', 'cooperate');
+    resolve(gm, 'enc_m4_police_decision', 'cooperate');
+    expect(gm.story.branchFlags['cooperatedPolice']).toBe(true);
+    expect(gm.story.branchFlags['m4_police_decision']).toBe('cooperate');
 
     expect(gm.missionManager.activateMission('m4_home_safe')).toBe(true);
 
     expect(objectiveDone(gm, 'm4_home_safe', 'obj_m4_safe_flag')).toBe(true);
+  });
+
+  it('Chapter 4: declining police cooperation still completes m4_home_safe without softlock', () => {
+    const gm = newGame(['m4_home_safe']);
+    const inst = gm.eventDirector.activeEncounter ?? gm.eventDirector.forceStart('enc_m4_police_decision', gm.bus);
+    expect(inst).not.toBeNull();
+    expect(gm.dispatch({ type: 'chooseEncounterOption', instanceId: inst!.id, choiceId: 'decline' }).success).toBe(true);
+
+    expect(gm.story.branchFlags['cooperatedPolice']).toBe(false);
+    expect(gm.story.branchFlags['m4_police_decision']).toBe('decline');
+    expect(gm.story.branchFlags['m4_police_decision_made']).toBe(true);
+    expect(gm.missionManager.isMissionCompleted('m4_home_safe')).toBe(true);
+    expect(gm.story.currentChapter).toBe(5);
   });
 
   it('the career decision flag is set when the player commits to a career', () => {

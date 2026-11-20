@@ -60,7 +60,10 @@
         "type": "choose",
         "encounterId": "enc_police_checkpoint",
         "choiceIds": [
-          "cooperate"
+          "cooperate",
+          "explain_rush",
+          "pay_fine",
+          "offer_bribe"
         ]
       }
     ],
@@ -98,7 +101,7 @@
         "id": "obj_m4_safe_flag",
         "descKey": "obj_m4_safe_flag_desc",
         "type": "flag",
-        "key": "cooperatedPolice",
+        "key": "m4_police_decision_made",
         "value": true
       }
     ],

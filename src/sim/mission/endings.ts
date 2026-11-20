@@ -1,4 +1,5 @@
-import type { EndingId, PlayerEconomy, StoryState, SafetyRecord } from '../../core/types';
+import type { EndingId, MeterId, PlayerEconomy, StoryState, SafetyRecord } from '../../core/types';
+import { BALANCE } from '../../config/balance';
 import {
   calculateIdentityTendencies,
   getDominantIdentity,
@@ -16,6 +17,7 @@ export interface EndingEvaluationContext {
   localTrust: number;
   safetyRecord: SafetyRecord;
   riskScore: number;
+  meters?: Partial<Record<MeterId, number>>;
   promises: { kept: number; broken: number };
   careerChoice?: CareerChoice;
   /** Savings the player had when they made the career choice, before paying for it. */
@@ -106,19 +108,44 @@ export function evaluateEnding(ctx: EndingEvaluationContext): EndingResult {
   const dominantIdentity = getDominantIdentity(tendencies);
 
   const kamalRel = story.characterRelationships['char_kamal'] ?? 0;
+  const maRel = story.characterRelationships['char_ma'] ?? 0;
   const decisionSavings = ctx.careerSavings ?? economy.savings;
-  const isSuspended = ctx.appSuspended || story.branchFlags['appSuspended'] === true;
+
+  const riderIntegrity = ctx.meters?.riderIntegrity ?? BALANCE.KARMA.starts.riderIntegrity;
+  const publicReputation = ctx.meters?.publicReputation ?? localTrust ?? BALANCE.KARMA.starts.publicReputation;
+  const platformStanding = ctx.meters?.platformStanding ?? BALANCE.KARMA.starts.platformStanding;
+  const criminalExposure = ctx.meters?.criminalExposure ?? BALANCE.KARMA.starts.criminalExposure;
+  const evidenceExposure = ctx.meters?.evidenceExposure ?? BALANCE.KARMA.starts.evidenceExposure;
+  const safetyMeter = ctx.meters?.safetyRecord ?? BALANCE.KARMA.starts.safetyRecord;
+
+  const isSuspended =
+    Boolean(ctx.appSuspended) ||
+    story.branchFlags['appSuspended'] === true ||
+    platformStanding < BALANCE.KARMA.platformSuspensionStandingThreshold;
+
+  const highCriminalHustle =
+    (criminalExposure >= 40 || evidenceExposure >= 40) &&
+    riderIntegrity < 40 &&
+    publicReputation < 70 &&
+    (decisionSavings >= 15000 || economy.cash >= 15000);
 
   let endingId: EndingId;
 
-  // 1. Fresh Start: appSuspended at Day 20 OR debt >= 5000 OR rating < 3.5
-  if (isSuspended || economy.debt >= 5000 || rating < 3.5) {
+  // 1. Fresh Start: appSuspended at Day 20 OR debt >= 5000 OR rating < 3.5 OR severe safety collapse
+  if (
+    isSuspended ||
+    economy.debt >= 5000 ||
+    rating < 3.5 ||
+    safetyMeter <= 20 ||
+    (evidenceExposure >= 80 && riderIntegrity < 30 && decisionSavings < 15000)
+  ) {
     endingId = 'fresh_start';
   }
-  // 2. Fast Money: joinedScheme OR (riskScore >= 8 AND localTrust < 40 AND savings >= 20000)
+  // 2. Fast Money: joinedScheme OR risky/illicit high-exposure hustle for big cash
   else if (
     story.branchFlags['joinedScheme'] === true ||
-    (riskScore >= 8 && localTrust < 40 && economy.savings >= 20000)
+    (riskScore >= 8 && publicReputation < 40 && decisionSavings >= 20000) ||
+    highCriminalHustle
   ) {
     endingId = 'fast_money';
   }
@@ -131,12 +158,19 @@ export function evaluateEnding(ctx: EndingEvaluationContext): EndingResult {
   else if (ctx.careerChoice === 'bike' && decisionSavings >= 15000) {
     endingId = 'independent_rider';
   }
-  // 5. Trusted Local: localTrust >= 70 AND rating >= 4.6 (accessible with low savings!)
-  else if (localTrust >= 70 && rating >= 4.6) {
+  // 5. Trusted Local: publicReputation >= 70 AND rating >= 4.6 AND intact riderIntegrity (accessible with low savings!)
+  else if (
+    (publicReputation >= 70 && rating >= 4.6 && riderIntegrity >= 45) ||
+    (publicReputation >= 60 &&
+      rating >= 4.5 &&
+      riderIntegrity >= 55 &&
+      maRel >= 40 &&
+      story.branchFlags['cooperatedPolice'] === true)
+  ) {
     endingId = 'trusted_local';
   }
   // 6. Fallback
-  else if (economy.savings >= 5000 && rating >= 4.0) {
+  else if (decisionSavings >= 5000 && rating >= 4.0) {
     endingId = 'independent_rider';
   } else {
     endingId = 'fresh_start';

@@ -91,5 +91,9 @@
   "encounter.accident.choice.medical": "Call emergency medical aid (৳250) and cancel the trip safely",
   "encounter.accident.choice.apologize": "Apologize sincerely and exchange contact details",
   "encounter.accident.choice.flee": "Pick up the bike and speed away before a crowd blocks the road",
-  "encounter.accident.risk.flee": "High risk: fleeing an accident raises criminal & evidence exposure"
+  "encounter.accident.risk.flee": "High risk: fleeing an accident raises criminal & evidence exposure",
+
+  "encounter.m4_police_decision.title": "SI Morshed calls after your dark-alley close call: 'Will you testify against the extortion ring in Puran Para?'",
+  "encounter.m4_police_decision.choice.cooperate": "Cooperate with the police investigation and share what you saw",
+  "encounter.m4_police_decision.choice.decline": "Stay out of the investigation to avoid street retaliation"
 }

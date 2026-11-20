@@ -42,7 +42,7 @@ import type { SafetyRecord, Transaction } from '../core/types';
 import { RoadEventManager, type ActiveRoadEvent } from './world/RoadEvents';
 import defaultUpgrades from '../../data/upgrades.json';
 import type { RepairItem, UpgradeDef } from './economy/maintenance';
-import { MissionManager } from './mission/MissionManager';
+import { MissionManager, type MissionManagerSnapshot } from './mission/MissionManager';
 import {
   evaluateEnding,
   getAvailableCareerChoices,
@@ -131,6 +131,7 @@ export interface SimSnapshot {
   todayRentAutoFlagged?: boolean;
   rentDelayedByCommand?: boolean;
   deliveries?: DeliverySnapshot;
+  missions?: MissionManagerSnapshot;
 }
 
 export class GameManager {
@@ -367,7 +368,20 @@ export class GameManager {
 
     // The career decision is offered as its mission starts, with the real standing.
     this.bus.on('mission/activated', ({ missionId }) => {
-      if (missionId === CAREER_DECISION_MISSION) this.offerCareerDecision();
+      if (missionId === CAREER_DECISION_MISSION) {
+        this.offerCareerDecision();
+      } else if (
+        missionId === 'm4_home_safe' &&
+        !this.story.branchFlags['m4_police_decision_made'] &&
+        this.eventDirector.enabled &&
+        this.eventDirector.activeEncounter === null
+      ) {
+        this.eventDirector.forceStart(
+          'enc_m4_police_decision',
+          this.bus,
+          this.buildDefaultEncounterContext('roaming', 0)
+        );
+      }
     });
     // Sync ReputationSystem / story flags onto story.branchFlags and trigger campaign completion.
     this.bus.on('story/flag', ({ key, value }) => {
@@ -660,6 +674,7 @@ export class GameManager {
       localTrust: rep.getMeters().publicReputation,
       safetyRecord: rep.getSafetyRecord(),
       riskScore: rep.getRiskScore(),
+      meters: rep.getMeters(),
       promises: rep.getPromisesRecord(),
       careerChoice: this.story.branchFlags.career_choice as CareerChoice | undefined,
       careerSavings: this.story.branchFlags.career_choice_savings as number | undefined,
@@ -669,6 +684,7 @@ export class GameManager {
 
   /** Shows the player's standing and the career options when the decision mission starts. */
   private offerCareerDecision(): void {
+    if (this.mode === 'endless') return;
     const result = evaluateEnding(this.endingContext());
     const kamalRel = this.reputationSystem.getRelationship('char_kamal');
     const choices = getAvailableCareerChoices(this.economyManager.getSnapshot().savings, kamalRel);
@@ -677,6 +693,7 @@ export class GameManager {
 
   /** Emits the final ending once the campaign's last flag is set. */
   private reachFinalEnding(): void {
+    if (this.mode === 'endless') return;
     const result = evaluateEnding(this.endingContext());
     this.bus.emit('ending/reached', { endingId: result.endingId, result });
   }
@@ -983,12 +1000,18 @@ export class GameManager {
       }
       case 'payExpense': {
         const amount = cmd.amount ?? 100;
+        if (!Number.isFinite(amount) || amount <= 0) {
+          return { success: false, reason: 'Invalid amount' };
+        }
+        if (this.economyManager.cash < amount) {
+          return { success: false, reason: 'Insufficient funds' };
+        }
         const kind: TransactionKind =
           cmd.expenseId === 'family' || cmd.expenseId === 'rent' || cmd.expenseId === 'food' || cmd.expenseId === 'fuel'
             ? cmd.expenseId
             : 'family';
         this.economyManager.post({
-          id: `tx_exp_${this.clock.day}_${Math.floor(this.clock.minutes)}_${cmd.expenseId}`,
+          id: `tx_exp_${this.clock.day}_${Math.floor(this.clock.minutes)}_${cmd.expenseId}_${this.ticks}`,
           day: this.clock.day,
           minute: this.clock.minutes,
           kind,
@@ -1039,6 +1062,7 @@ export class GameManager {
       todayRentAutoFlagged: this.todayRentAutoFlagged,
       rentDelayedByCommand: this.rentDelayedByCommand,
       deliveries: this.deliveryManager.getSnapshot(),
+      missions: this.missionManager.snapshot(),
     };
   }
 
@@ -1115,6 +1139,7 @@ export class GameManager {
     this.story.branchFlags = { ...snap.story.branchFlags };
     this.story.endingEligibility = { ...snap.story.endingEligibility };
     this.missionManager.syncFromStoryState();
+    this.missionManager.applySnapshot(snap.missions);
 
     // Restore reputation (meters, karmaLog, passengerTrust, promises, strikes, suspension, characterRelationships)
     this.reputationSystem.applySnapshot({

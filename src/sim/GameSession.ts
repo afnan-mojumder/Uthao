@@ -154,6 +154,7 @@ export class GameSession {
   private tripReqId: string | null = null;
   private warnedWorn = false;
   private stallSec = 0;
+  private missionRideOfferCooldownSec = 0;
   /** Seconds the bike has been wedged against an obstacle (see recoverBike). */
   private wedgedSec = 0;
   private wobbling = false;
@@ -374,13 +375,31 @@ export class GameSession {
     this.gm.phoneChargeNearby = (where) => this.nearChargeSpot(where);
     this.gm.recoverBikeHandler = () => this.requestManualRecovery();
     this.gm.spawnSpecialRequest = (templateId) => {
-      const res = this.requests.sampleRequest(
-        this.gm.clock.minutes,
-        this.gm.weather,
-        templateId === 'street' ? 'street' : 'app'
-      );
+      const res = templateId.startsWith('char_')
+        ? this.requests.sampleRecurringRequest(
+            this.gm.clock.minutes,
+            this.gm.weather,
+            templateId,
+            'direct',
+            true
+          )
+        : this.requests.sampleRequest(
+            this.gm.clock.minutes,
+            this.gm.weather,
+            templateId === 'street' ? 'street' : 'app'
+          );
       if (res) this.ride.offer(res.request);
     };
+
+    this.gm.bus.on('mission/activated', ({ missionId }) => {
+      const def = this.gm.missionManager.missions.get(missionId);
+      if (!def) return;
+      for (const obj of def.objectives) {
+        if (obj.type === 'rideWith') {
+          this.offerMissionRideWith(obj.characterId);
+        }
+      }
+    });
 
     this.gm.bus.on('bike/swapped', () => this.syncBikeSpec());
     this.gm.bus.on('upgrade/purchased', (ev) => {
@@ -394,11 +413,15 @@ export class GameSession {
     });
     this.gm.bus.on('day/started', () => {
       this.lastAccidentEncounterMin = -Infinity;
+      this.missionRideOfferCooldownSec = 0;
       this.violationMonitor.reset();
       if (this.ride.getTripState() === 'EmergencyInterrupted') {
         this.ride.resumeTrip();
       }
       this.spawnAtHome();
+      for (const charId of this.gm.missionManager.getPendingRideWithCharacterIds()) {
+        this.offerMissionRideWith(charId);
+      }
     });
     this.gm.bus.on('day/ended', () => {
       this.gm.story.branchFlags['accident'] = false;
@@ -1167,6 +1190,20 @@ export class GameSession {
     this.navigate();
 
     if (this.autoRequests) {
+      this.missionRideOfferCooldownSec = Math.max(0, this.missionRideOfferCooldownSec - dt);
+      if (
+        !this.gm.shiftEnded &&
+        !this.ride.getActiveRequest() &&
+        this.ride.getOfferedRequests().length === 0 &&
+        this.missionRideOfferCooldownSec <= 0
+      ) {
+        const pendingChars = this.gm.missionManager.getPendingRideWithCharacterIds();
+        if (pendingChars.length > 0) {
+          this.missionRideOfferCooldownSec = 5;
+          this.offerMissionRideWith(pendingChars[0]!);
+        }
+      }
+
       const dtMinutes = (dt * TIME_SCALE) / 60;
       const eventDemandMult = this.gm.roadEvents.getDemandMultiplier();
       const newRequests = this.requests.tick(
@@ -1238,6 +1275,25 @@ export class GameSession {
     }
   }
 
+  private offerMissionRideWith(characterId: string): boolean {
+    if (this.ride.getActiveRequest()?.characterId === characterId) {
+      return false;
+    }
+    if (this.ride.getOfferedRequests().some((r) => r.characterId === characterId)) {
+      return false;
+    }
+    const res = this.requests.sampleRecurringRequest(
+      this.gm.clock.minutes,
+      this.gm.weather,
+      characterId,
+      'direct',
+      true
+    );
+    if (!res) return false;
+    this.ride.offer(res.request);
+    return true;
+  }
+
   /** T8.2: settles the scripted tutorial ride through the same exactly-once path as a
    * live ride and announces `ride/completed`. If it was already settled it pays nothing
    * but still announces completion (so the tutorial and m1_first_ride cannot softlock). */
@@ -1261,7 +1317,17 @@ export class GameSession {
     const settled =
       gm.economyManager.settleTrip({ ...base, day: gm.clock.day, minute: gm.clock.minutes }) ??
       buildReceipt(base);
-    gm.bus.emit('ride/completed', { requestId: settled.requestId, receipt: settled });
+    gm.bus.emit('ride/completed', {
+      requestId: settled.requestId,
+      receipt: settled,
+      passengerCharacterId: 'char_nabila',
+      district: 'mirpara',
+      pickupDistrict: 'mirpara',
+      destinationDistrict: 'mirpara',
+      zoneTags: [],
+      weather: gm.weather,
+      minute: gm.clock.minutes,
+    });
     return settled;
   }
 

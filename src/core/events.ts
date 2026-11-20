@@ -6,6 +6,7 @@ import type {
   BookingType,
   DaySummary,
   DeliveryJob,
+  DistrictId,
   EncounterInstance,
   EndingId,
   KarmaEvent,
@@ -27,7 +28,18 @@ export interface GameEvents extends Record<string, unknown> {
   'ride/accepted': { requestId: string };
   'ride/arrivedPickup': { requestId: string };
   'ride/started': { requestId: string };
-  'ride/completed': { requestId: string; receipt: TripReceipt; crashed?: boolean };
+  'ride/completed': {
+    requestId: string;
+    receipt: TripReceipt;
+    crashed?: boolean;
+    passengerCharacterId?: string;
+    district?: DistrictId;
+    pickupDistrict?: DistrictId;
+    destinationDistrict?: DistrictId;
+    zoneTags?: string[];
+    weather?: WeatherKind;
+    minute?: number;
+  };
   'ride/disputed': {
     requestId: string;
     fare: number;

@@ -868,10 +868,27 @@ export class RideManager {
 
     // null: already settled (e.g. the tutorial settled it); never pay or announce twice.
     if (tripReceipt) {
+      const pickupDistrict = this.roadNetwork.getNodeDistrict(params.req.pickupNodeId);
+      const destinationDistrict = this.roadNetwork.getNodeDistrict(params.req.destinationNodeId);
+      const district = destinationDistrict ?? pickupDistrict;
+      const zoneTagSet = new Set<string>([
+        ...this.roadNetwork.getNodeZoneTags(params.req.pickupNodeId),
+        ...this.roadNetwork.getNodeZoneTags(params.req.destinationNodeId),
+      ]);
+      const weather = this.weatherSystem?.weather ?? this.weatherProvider?.();
       this.bus.emit('ride/completed', {
         requestId: params.req.requestId,
         receipt: tripReceipt,
         ...(params.crashed !== undefined ? { crashed: params.crashed } : {}),
+        ...(params.req.characterId !== undefined
+          ? { passengerCharacterId: params.req.characterId }
+          : {}),
+        ...(district !== undefined ? { district } : {}),
+        ...(pickupDistrict !== undefined ? { pickupDistrict } : {}),
+        ...(destinationDistrict !== undefined ? { destinationDistrict } : {}),
+        ...(zoneTagSet.size > 0 ? { zoneTags: Array.from(zoneTagSet) } : {}),
+        ...(weather !== undefined ? { weather } : {}),
+        ...(this.clock ? { minute: this.clock.minutes } : {}),
       });
     }
 

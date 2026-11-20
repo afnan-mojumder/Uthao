@@ -179,6 +179,7 @@ export class ReputationSystem {
   private ratingSuspensionCleared: boolean = false;
 
   private activeTrip: ActiveTripState | null = null;
+  private handlingBusEvent: boolean = false;
   private unsubscribeFns: Array<() => void> = [];
 
   constructor(opts: ReputationSystemOptions = {}) {
@@ -313,23 +314,29 @@ export class ReputationSystem {
 
     this.unsubscribeFns.push(
       bus.on('reputation/changed', ({ delta }) => {
-        if (delta.localTrust !== undefined) {
-          this.changeLocalTrust(delta.localTrust);
-        }
-        if (delta.relationship) {
-          this.changeRelationship(
-            delta.relationship.characterId,
-            delta.relationship.delta
-          );
-        }
-        if (delta.riskScore !== undefined) {
-          this.addRiskScore(delta.riskScore);
-        }
-        if (delta.promisesKept !== undefined) {
-          this.promisesKept += delta.promisesKept;
-        }
-        if (delta.promisesBroken !== undefined) {
-          this.promisesBroken += delta.promisesBroken;
+        if (this.handlingBusEvent) return;
+        this.handlingBusEvent = true;
+        try {
+          if (delta.localTrust !== undefined) {
+            this.changeLocalTrust(delta.localTrust);
+          }
+          if (delta.relationship) {
+            this.changeRelationship(
+              delta.relationship.characterId,
+              delta.relationship.delta
+            );
+          }
+          if (delta.riskScore !== undefined) {
+            this.addRiskScore(delta.riskScore);
+          }
+          if (delta.promisesKept !== undefined) {
+            this.promisesKept += delta.promisesKept;
+          }
+          if (delta.promisesBroken !== undefined) {
+            this.promisesBroken += delta.promisesBroken;
+          }
+        } finally {
+          this.handlingBusEvent = false;
         }
       })
     );
@@ -709,6 +716,16 @@ export class ReputationSystem {
   changeRelationship(characterId: string, delta: number): number {
     const next = (this.characterRelationships[characterId] ?? 0) + delta;
     this.setRelationship(characterId, next);
+    if (this.bus && !this.handlingBusEvent && delta !== 0) {
+      this.handlingBusEvent = true;
+      try {
+        this.bus.emit('reputation/changed', {
+          delta: { relationship: { characterId, delta } },
+        });
+      } finally {
+        this.handlingBusEvent = false;
+      }
+    }
     return this.getRelationship(characterId);
   }
 

@@ -347,7 +347,8 @@ export class RequestGenerator {
     currentMinute: number,
     weather: WeatherKind,
     forcedCharacterId?: string,
-    bookingType: BookingType = 'direct'
+    bookingType: BookingType = 'direct',
+    ignoreThresholds: boolean = false
   ): { request: RideRequest; profile: PassengerProfile } | null {
     if (this.eligibleNodeIds.length < 2) {
       return null;
@@ -361,10 +362,18 @@ export class RequestGenerator {
 
     let charDef: CharacterDef | undefined;
     if (forcedCharacterId) {
-      if (!this.canEmitRecurringRequest(forcedCharacterId, currentMinute)) {
-        return null;
+      if (ignoreThresholds) {
+        const found = this.characters.find((c) => c.id === forcedCharacterId);
+        if (!found || found.canRide === false) {
+          return null;
+        }
+        charDef = found;
+      } else {
+        if (!this.canEmitRecurringRequest(forcedCharacterId, currentMinute)) {
+          return null;
+        }
+        charDef = this.characters.find((c) => c.id === forcedCharacterId);
       }
-      charDef = this.characters.find((c) => c.id === forcedCharacterId);
     } else {
       const eligible = this.characters.filter((c) =>
         this.canEmitRecurringRequest(c.id, currentMinute)

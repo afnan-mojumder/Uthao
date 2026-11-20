@@ -91,5 +91,9 @@
   "encounter.accident.choice.medical": "জরুরি চিকিৎসা সহায়তা ডাকুন (২৫০ টাকা) এবং ট্রিপ নিরাপদে শেষ করুন",
   "encounter.accident.choice.apologize": "আন্তরিকভাবে দুঃখ প্রকাশ করে যোগাযোগের নম্বর দিন",
   "encounter.accident.choice.flee": "লোকজন ঘিরে ধরার আগেই বাইক তুলে দ্রুত পালিয়ে যান",
-  "encounter.accident.risk.flee": "উচ্চ ঝুঁকি: দুর্ঘটনা এড়িয়ে পালালে আইনি ও সাক্ষ্য ঝুঁকি অনেক বেড়ে যায়"
+  "encounter.accident.risk.flee": "উচ্চ ঝুঁকি: দুর্ঘটনা এড়িয়ে পালালে আইনি ও সাক্ষ্য ঝুঁকি অনেক বেড়ে যায়",
+
+  "encounter.m4_police_decision.title": "অন্ধ গলির ঘটনার পর এসআই মোর্শেদ ফোন করলেন: 'পুরান পাড়ার চাঁদাবাজ চক্রের বিরুদ্ধে তদন্তে সাক্ষ্য দেবেন?'",
+  "encounter.m4_police_decision.choice.cooperate": "পুলিশের তদন্তে সহযোগিতা করুন এবং যা দেখেছেন জানান",
+  "encounter.m4_police_decision.choice.decline": "ঝামেলা এড়াতে তদন্তের বাইরে থাকুন এবং নীরব থাকুন"
 }

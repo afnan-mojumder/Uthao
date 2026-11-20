@@ -47,11 +47,6 @@ const ENDING_THEMES: Record<string, EndingTheme> = {
     bgGrad: 'linear-gradient(145deg, rgba(126, 34, 206, 0.4), rgba(15, 23, 42, 0.95))',
     icon: '🌱',
   },
-  ending_v1_first_week: {
-    color: '#f59e0b',
-    bgGrad: 'linear-gradient(145deg, rgba(180, 83, 9, 0.4), rgba(15, 23, 42, 0.95))',
-    icon: '⭐',
-  },
 };
 
 export function Ending({
