@@ -476,6 +476,13 @@ export function setChoiceDispatcher(fn: (choiceId: string, instanceId: string) =
 export function chooseChoiceOption(index: number): boolean {
   const choice = choiceSignal.value;
   if (!choice.active || !choice.instanceId) return false;
+  if (choice.outcomeLineKey || choice.options.length === 0) {
+    if (index === 0) {
+      dismissChoiceOutcome();
+      return true;
+    }
+    return false;
+  }
   const option = choice.options[index];
   if (!option || !onChooseCallback) return false;
   onChooseCallback(String(option.id), choice.instanceId);
@@ -941,7 +948,25 @@ export function bindEventBusToStore(bus: EventBus<GameEvents>): () => void {
   });
   unsubscribers.push(unsubNegResult);
 
+  const clearEncounterCue = (): void => {
+    if (encounterCueClearTimer !== undefined) {
+      clearTimeout(encounterCueClearTimer);
+      encounterCueClearTimer = undefined;
+    }
+    encounterCueSignal.value = {
+      ...encounterCueSignal.value,
+      cueKey: null,
+      encounterId: undefined,
+    };
+  };
+
+  const clearEncounterUi = (): void => {
+    clearEncounterCue();
+    dismissChoiceOutcome();
+  };
+
   const unsubEncounterCue = bus.on('encounter/cue', (ev) => {
+    if (dayEndSignal.value.active || endingSignal.value.active) return;
     encounterCueSignal.value = {
       cueKey: ev.cueKey,
       encounterId: ev.encounterId,
@@ -955,12 +980,14 @@ export function bindEventBusToStore(bus: EventBus<GameEvents>): () => void {
   });
   unsubscribers.push(unsubEncounterCue);
 
+  const unsubEncounterCueCleared = bus.on('encounter/cueCleared', () => {
+    clearEncounterCue();
+  });
+  unsubscribers.push(unsubEncounterCueCleared);
+
   const unsubEncounterStart = bus.on('encounter/started', (ev) => {
-    if (encounterCueClearTimer !== undefined) {
-      clearTimeout(encounterCueClearTimer);
-      encounterCueClearTimer = undefined;
-    }
-    encounterCueSignal.value = { ...encounterCueSignal.value, cueKey: null, encounterId: undefined };
+    if (dayEndSignal.value.active || endingSignal.value.active) return;
+    clearEncounterCue();
     choiceSignal.value = {
       active: true,
       prompt: ev.instance.lineKey,
@@ -1096,6 +1123,7 @@ export function bindEventBusToStore(bus: EventBus<GameEvents>): () => void {
   unsubscribers.push(unsubDeliveryExpired);
 
   const unsubDayEnded = bus.on('day/ended', (ev) => {
+    clearEncounterUi();
     dayEndSignal.value = {
       active: true,
       summary: ev.summary,
@@ -1109,11 +1137,7 @@ export function bindEventBusToStore(bus: EventBus<GameEvents>): () => void {
   unsubscribers.push(unsubDayEnded);
 
   const unsubDayStarted = bus.on('day/started', () => {
-    if (encounterCueClearTimer !== undefined) {
-      clearTimeout(encounterCueClearTimer);
-      encounterCueClearTimer = undefined;
-    }
-    encounterCueSignal.value = { ...encounterCueSignal.value, cueKey: null, encounterId: undefined };
+    clearEncounterUi();
     dayEndSignal.value = {
       active: false,
       summary: null,
@@ -1121,9 +1145,15 @@ export function bindEventBusToStore(bus: EventBus<GameEvents>): () => void {
   });
   unsubscribers.push(unsubDayStarted);
 
+  const unsubStateRestored = bus.on('state/restored', () => {
+    clearEncounterUi();
+  });
+  unsubscribers.push(unsubStateRestored);
+
   const unsubEnding = bus.on('ending/reached', (ev) => {
     // Only a real evaluation from the sim opens the ending screen. There is no placeholder result.
     if (!ev.result) return;
+    clearEncounterUi();
     endingSignal.value = {
       active: true,
       result: ev.result,

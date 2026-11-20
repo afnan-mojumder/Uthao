@@ -82,12 +82,12 @@ export class EventDirector {
     this.nextGlobalEncounterMinute = 0;
     this.lastEvaluationMinute = -1;
     this.pendingCue = null;
+    this.activeEncounter = null;
+    this.activeEncounterDef = null;
   }
 
   resetCareer(): void {
     this.resetDaily();
-    this.activeEncounter = null;
-    this.activeEncounterDef = null;
     this.hasEvaluatedOnce = false;
     this.currentPhase = 'roaming';
     this.lastContext = undefined;
@@ -189,7 +189,11 @@ export class EventDirector {
         this.collectValidChoices(cueDef, ctx).length === 0
       ) {
         // Player avoided the severe encounter via counterplay or context changed
+        const clearedId = this.pendingCue.encounterId;
         this.pendingCue = null;
+        if (bus) {
+          bus.emit('encounter/cueCleared', { encounterId: clearedId });
+        }
       } else if (ctx.minute >= this.pendingCue.fireAtMinute) {
         if (!this.pauseOnDecisions && ctx.speedKmh >= 10) {
           return null;
@@ -448,11 +452,8 @@ export class EventDirector {
         id: `inst_${matchingDef.id}_${Math.floor(ctx.minute)}_${r.int(1000, 9999)}`,
         encounterId: matchingDef.id,
         lineKey: matchingDef.lineKey,
-        choices: validChoices.map((c) => ({
-          id: c.id,
-          labelKey: c.labelKey,
-          isMission: c.effects.some((e) => e.type === 'startMission'),
-        })),
+        ...(matchingDef.cueKey ? { cueKey: matchingDef.cueKey } : {}),
+        choices: validChoices.map((c) => this.buildChoiceMeta(c)),
       };
 
       this.activeEncounter = instance;

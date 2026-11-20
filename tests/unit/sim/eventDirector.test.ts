@@ -726,4 +726,131 @@ describe('EventDirector and Encounter Framework (T3.6)', () => {
     expect(gm1.economyManager.cash).toBe(50);
     expect(resolvedEvents[0]?.outcomeLineKey).toBe('encounter.outcome.accepted');
   });
+
+  it('resetDaily() clears activeEncounter, activeEncounterDef, and pendingCue alongside cooldowns', () => {
+    const severeEnc = {
+      id: 'enc_reset_active',
+      category: 'crime' as const,
+      trigger: { phase: 'roaming' as const },
+      weight: 10,
+      cooldownMin: 120,
+      lineKey: 'encounter.reset.title',
+      cueKey: 'encounter.reset.cue',
+      choices: [{ id: 'ok', labelKey: 'encounter.reset.ok', effects: [] }],
+    } as EncounterDef;
+
+    const director = new EventDirector({ definitions: [severeEnc], seed: 7 });
+    const ctx: EncounterContext = {
+      phase: 'roaming',
+      minute: 1200,
+      day: 1,
+      weather: 'clear',
+      chapter: 1,
+      flags: {},
+      relationships: {},
+      cash: 500,
+      speedKmh: 0,
+      bikeCondition: 100,
+    };
+
+    // Pending cue gets cleared by resetDaily()
+    expect(director.evaluate(ctx)).toBeNull();
+    expect(director.pendingCue).not.toBeNull();
+    director.resetDaily();
+    expect(director.pendingCue).toBeNull();
+
+    // Active encounter gets cleared by resetDaily()
+    const inst = director.forceStart('enc_reset_active');
+    expect(inst).not.toBeNull();
+    expect(director.activeEncounter).not.toBeNull();
+    expect(director.activeEncounterDef).not.toBeNull();
+    director.resetDaily();
+    expect(director.activeEncounter).toBeNull();
+    expect(director.activeEncounterDef).toBeNull();
+  });
+
+  it('emits encounter/cueCleared when counterplay cancels a pendingCue and preserves metadata in evaluateSegmentCrime', () => {
+    const bus = new EventBus<GameEvents>();
+    const cleared: Array<{ encounterId: string }> = [];
+    (bus as unknown as { on: (k: string, fn: (p: { encounterId: string }) => void) => void }).on(
+      'encounter/cueCleared',
+      (p) => cleared.push(p)
+    );
+
+    const crimeEnc = {
+      id: 'enc_crime_meta',
+      category: 'crime' as const,
+      trigger: { phase: 'onTrip' as const, roadType: ['alley'] },
+      weight: 10,
+      cooldownMin: 60,
+      lineKey: 'encounter.crime.title',
+      cueKey: 'encounter.crime.cue',
+      choices: [
+        {
+          id: 'try_flee',
+          labelKey: 'encounter.crime.flee',
+          kind: 'illicit' as const,
+          riskKey: 'encounter.crime.risk',
+          costHint: 50,
+          effects: [{ type: 'startMinigame' as const, kind: 'flee' as const }],
+        },
+      ],
+    } as EncounterDef;
+
+    const alleySeg = {
+      segmentId: 'seg_a',
+      startNodeId: 'n1',
+      endNodeId: 'n2',
+      width: 4,
+      surfaceCondition: 0.7,
+      trafficDensity: 0.1,
+      speedLimit: 20,
+      turnRestrictions: [],
+      motorcycleAccessible: true,
+      pedestrianDensity: 0.2,
+      riskLevel: 1.0,
+      oneWay: false,
+      divided: false,
+      lanes: 1,
+      roadType: 'alley' as const,
+      floodSensitivity: 0.5,
+      pickupPractical: true,
+      district: 'mirpara' as const,
+      tags: ['alley'],
+    };
+
+    const director = new EventDirector({ definitions: [crimeEnc], seed: 42 });
+    const alleyCtx: EncounterContext = {
+      phase: 'onTrip',
+      minute: 1200,
+      day: 1,
+      weather: 'clear',
+      chapter: 1,
+      flags: {},
+      relationships: {},
+      cash: 500,
+      speedKmh: 0,
+      bikeCondition: 100,
+      segment: alleySeg,
+    };
+
+    expect(director.evaluate(alleyCtx, bus)).toBeNull();
+    expect(director.pendingCue?.encounterId).toBe('enc_crime_meta');
+
+    // Leaving alley emits encounter/cueCleared immediately
+    director.evaluate(
+      { ...alleyCtx, minute: 1201, segment: { ...alleySeg, roadType: 'main', tags: [] } },
+      bus
+    );
+    expect(cleared).toEqual([{ encounterId: 'enc_crime_meta' }]);
+
+    // evaluateSegmentCrime preserves cueKey and choice metadata
+    const fakeRng = { next: () => 0.75, chance: () => true, int: () => 1234 };
+    const crimeRes = director.evaluateSegmentCrime(alleySeg, alleyCtx, bus, fakeRng as never);
+    expect(crimeRes.instance?.cueKey).toBe('encounter.crime.cue');
+    const fleeChoice = crimeRes.instance?.choices.find((c) => c.id === 'try_flee');
+    expect(fleeChoice?.kind).toBe('illicit');
+    expect(fleeChoice?.riskKey).toBe('encounter.crime.risk');
+    expect(fleeChoice?.costHint).toBe(50);
+  });
 });

@@ -68,6 +68,9 @@ export interface GameEvents extends Record<string, unknown> {
     cueKey: string;
     fireAtMinute: number;
   };
+  'encounter/cueCleared': {
+    encounterId: string;
+  };
   'encounter/started': { instance: EncounterInstance };
   // encounterId is the definition id (e.g. enc_traffic_checkpoint); missions match on it.
   'encounter/resolved': {

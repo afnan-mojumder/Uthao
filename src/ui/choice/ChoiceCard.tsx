@@ -2,8 +2,12 @@ import type { JSX } from 'preact';
 import { useEffect } from 'preact/hooks';
 import {
   choiceSignal,
+  dayEndSignal,
   dismissChoiceOutcome,
+  endingSignal,
   onChooseCallback,
+  saveSlotsSignal,
+  screenSignal,
   type ChoiceOption,
   type ChoiceState,
 } from '../store';
@@ -298,6 +302,40 @@ export function ChoiceCardView({
   );
 }
 
+export function handleChoiceCardKeyDown(
+  e: KeyboardEvent,
+  choice: ChoiceState,
+  chooseHandler?: (choiceId: string, instanceId: string) => void,
+  dismissHandler: () => void = dismissChoiceOutcome
+): void {
+  if (!choice.active) return;
+  if (
+    screenSignal.value !== 'game' ||
+    dayEndSignal.value.active ||
+    endingSignal.value.active ||
+    saveSlotsSignal.value.isOpen
+  ) {
+    return;
+  }
+
+  if (choice.outcomeLineKey || choice.options.length === 0) {
+    if (e.key === 'Enter' || e.key === ' ' || e.key === '1' || e.key === 'Escape') {
+      e.preventDefault();
+      dismissHandler();
+    }
+    return;
+  }
+
+  const keyNum = parseInt(e.key, 10);
+  if (keyNum >= 1 && keyNum <= choice.options.length) {
+    const selected = choice.options[keyNum - 1];
+    if (selected && choice.instanceId) {
+      e.preventDefault();
+      chooseHandler?.(String(selected.id), choice.instanceId);
+    }
+  }
+}
+
 export function ChoiceCard({ onChoose, onDismissOutcome }: ChoiceCardProps): JSX.Element | null {
   const choice = choiceSignal.value;
   const chooseHandler = onChoose ?? onChooseCallback ?? undefined;
@@ -307,22 +345,7 @@ export function ChoiceCard({ onChoose, onDismissOutcome }: ChoiceCardProps): JSX
     if (!choice.active) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (choice.outcomeLineKey || choice.options.length === 0) {
-        if (e.key === 'Enter' || e.key === ' ' || e.key === '1' || e.key === 'Escape') {
-          e.preventDefault();
-          dismissHandler();
-        }
-        return;
-      }
-
-      const keyNum = parseInt(e.key, 10);
-      if (keyNum >= 1 && keyNum <= choice.options.length) {
-        const selected = choice.options[keyNum - 1];
-        if (selected && choice.instanceId) {
-          e.preventDefault();
-          chooseHandler?.(String(selected.id), choice.instanceId);
-        }
-      }
+      handleChoiceCardKeyDown(e, choice, chooseHandler, dismissHandler);
     };
 
     window.addEventListener('keydown', handleKeyDown);

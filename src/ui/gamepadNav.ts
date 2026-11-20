@@ -141,10 +141,21 @@ export function startGamepadNav(isSettingsOpen: () => boolean): () => void {
     const snap = edges.poll(firstGamepad());
 
     if (!hasSystemOverlay()) {
-      if (choiceSignal.value.active) {
-        for (const btn of snap.pressed) {
-          const idx = choiceButtons.indexOf(btn);
-          if (idx >= 0) chooseChoiceOption(idx);
+      const choiceBlockedByModal =
+        screenSignal.value !== 'game' ||
+        dayEndSignal.value.active ||
+        endingSignal.value.active ||
+        saveSlotsSignal.value.isOpen;
+      if (choiceSignal.value.active && !choiceBlockedByModal) {
+        if (choiceSignal.value.outcomeLineKey || choiceSignal.value.options.length === 0) {
+          if (snap.pressed.includes(BTN_CONFIRM) || snap.pressed.includes(BTN_BACK)) {
+            chooseChoiceOption(0);
+          }
+        } else {
+          for (const btn of snap.pressed) {
+            const idx = choiceButtons.indexOf(btn);
+            if (idx >= 0) chooseChoiceOption(idx);
+          }
         }
       } else if (uiModalOpen(isSettingsOpen())) {
         if (snap.dir) moveFocus(snap.dir);

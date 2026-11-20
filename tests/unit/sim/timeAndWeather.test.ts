@@ -577,4 +577,50 @@ describe('P4.4 Dynamic monsoon WeatherSystem transitions and live flood wiring',
     expect(weatherEvents.length).toBeGreaterThan(0);
     expect(maxFloodSeen).toBeGreaterThanOrEqual(0.5);
   });
+
+  it('restoreWeather clears stale flood levels and resets rainDurationMinutes; drained segments are deleted from flood map', () => {
+    const ws = new WeatherSystem({ initialWeather: 'heavyRain' });
+    const seg: RoadSegment = {
+      segmentId: 'seg_flood_cleanup',
+      startNodeId: 'A',
+      endNodeId: 'B',
+      width: 6,
+      surfaceCondition: 0.8,
+      trafficDensity: 0.3,
+      speedLimit: 30,
+      turnRestrictions: [],
+      motorcycleAccessible: true,
+      pedestrianDensity: 0.2,
+      riskLevel: 0.2,
+      oneWay: false,
+      divided: false,
+      lanes: 1,
+      roadType: 'alley',
+      floodSensitivity: 0.8,
+      pickupPractical: true,
+      district: 'mirpara',
+      tags: ['alley'],
+    };
+
+    ws.update(30, [seg]);
+    expect(ws.isFlooded('seg_flood_cleanup')).toBe(true);
+    const vBeforeRestore = ws.floodVersion;
+
+    // restoreWeather clears old flood state and sets rainDurationMinutes appropriately
+    ws.restoreWeather('heavyRain');
+    expect(ws.isFlooded('seg_flood_cleanup')).toBe(false);
+    expect(ws.getFloodLevel('seg_flood_cleanup')).toBe(0);
+    expect(ws.floodVersion).toBeGreaterThan(vBeforeRestore);
+    expect(ws.rainDurationMinutes).toBe(30);
+
+    ws.restoreWeather('clear');
+    expect(ws.rainDurationMinutes).toBe(0);
+
+    // Draining a segment down to 0 removes it from internal segmentFloodLevels map
+    ws.setFloodLevel('seg_flood_cleanup', 0.4);
+    expect((ws as unknown as { segmentFloodLevels: Map<string, number> }).segmentFloodLevels.has('seg_flood_cleanup')).toBe(true);
+    ws.update(25, [seg]);
+    expect(ws.getFloodLevel('seg_flood_cleanup')).toBe(0);
+    expect((ws as unknown as { segmentFloodLevels: Map<string, number> }).segmentFloodLevels.has('seg_flood_cleanup')).toBe(false);
+  });
 });

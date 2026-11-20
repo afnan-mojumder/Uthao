@@ -48,7 +48,11 @@ export class WeatherSystem {
 
   private setSegmentFloodInternal(segmentId: string, level: number): void {
     const clamped = clamp(level, 0, 1);
-    this.segmentFloodLevels.set(segmentId, clamped);
+    if (clamped === 0) {
+      this.segmentFloodLevels.delete(segmentId);
+    } else {
+      this.segmentFloodLevels.set(segmentId, clamped);
+    }
     const flooded = clamped >= 0.5;
     if (flooded && !this.floodedIds.has(segmentId)) {
       this.floodedIds.add(segmentId);
@@ -75,8 +79,11 @@ export class WeatherSystem {
     this.scheduledChapter = -1;
     this.weather = w;
     this.roadWetness = w === 'lightRain' || w === 'heavyRain' ? 1.0 : 0.0;
-    if (w === 'clear' || w === 'cloudy') {
-      this.rainDurationMinutes = 0;
+    this.rainDurationMinutes = w === 'heavyRain' ? 30 : 0;
+    this.segmentFloodLevels.clear();
+    if (this.floodedIds.size > 0) {
+      this.floodedIds.clear();
+      this._floodVersion++;
     }
   }
 
