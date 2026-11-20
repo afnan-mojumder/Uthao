@@ -33,6 +33,8 @@ import paymentEncounters from '../../data/encounters/payment.json';
 import bikeEncounters from '../../data/encounters/bike.json';
 import crimeEncounters from '../../data/encounters/crime.json';
 import passengerEncounters from '../../data/encounters/passenger.json';
+import policeEncounters from '../../data/encounters/police.json';
+import accidentEncounters from '../../data/encounters/accident.json';
 import { ReputationSystem } from './reputation/ReputationSystem';
 import { getBikeDef } from './economy/bikes';
 import { DeliveryManager, type DeliverySnapshot } from './delivery/DeliveryManager';
@@ -64,6 +66,8 @@ const DEFAULT_ENCOUNTERS: EncounterDef[] = [
   ...bikeEncounters,
   ...passengerEncounters,
   ...crimeEncounters,
+  ...policeEncounters,
+  ...accidentEncounters,
 ] as EncounterDef[];
 
 /** The mission where the player commits to a career; its flag ends the campaign. */
@@ -396,6 +400,11 @@ export class GameManager {
       this.syncEconomy();
     });
 
+    this.bus.on('bike/infraction', ({ kind }) => {
+      this.story.branchFlags['policeViolation'] = true;
+      this.story.branchFlags['lastInfractionKind'] = kind;
+    });
+
     this.todayStartRating = this.reputationSystem.getAppRating();
     this.todayRelationshipsStart = this.reputationSystem.getAllRelationships();
   }
@@ -598,6 +607,7 @@ export class GameManager {
     ctx.bikeCondition = this.economyManager.motorcycleCondition;
     ctx.segment = null;
     ctx.activeRequest = this.rideManager?.getActiveRequest?.() ?? null;
+    ctx.meters = this.reputationSystem.getMetersView();
     ctx.passenger = null;
     return ctx;
   }
@@ -1067,7 +1077,7 @@ export class GameManager {
     this.story.promises = [];
     this.story.branchFlags = {};
     this.story.completedMissions = [];
-    this.story.activeMissions = ['m1_first_ride'];
+    this.story.activeMissions = [];
     this.story.endingEligibility = {
       independent_rider: false,
       workshop_owner: false,
@@ -1075,6 +1085,7 @@ export class GameManager {
       fast_money: false,
       fresh_start: false,
     };
+    this.missionManager.resetCareer();
     this.missionManager.activateMission('m1_first_ride');
   }
 
@@ -1103,6 +1114,7 @@ export class GameManager {
     this.story.promises = [...snap.story.promises];
     this.story.branchFlags = { ...snap.story.branchFlags };
     this.story.endingEligibility = { ...snap.story.endingEligibility };
+    this.missionManager.syncFromStoryState();
 
     // Restore reputation (meters, karmaLog, passengerTrust, promises, strikes, suspension, characterRelationships)
     this.reputationSystem.applySnapshot({

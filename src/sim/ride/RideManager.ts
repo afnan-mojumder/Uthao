@@ -65,6 +65,7 @@ export interface PendingDispute {
   bookingType: BookingType;
   fuelLiters: number;
   rating: number;
+  crashed?: boolean;
   day: number;
   minute: number;
   consequences: string[];
@@ -767,7 +768,16 @@ export class RideManager {
         this.outcome = by === 'passenger' ? 'passengerCancelled' : by === 'rider' ? 'riderCancelled' : null;
       } else if (this.trip.can('abort')) {
         this.go('abort');
-        this.outcome = by === 'passenger' ? 'passengerCancelled' : by === 'rider' ? 'riderCancelled' : null;
+        this.outcome =
+          by === 'passenger'
+            ? 'passengerCancelled'
+            : by === 'rider'
+              ? 'riderCancelled'
+              : reason === 'accident'
+                ? 'accident'
+                : reason === 'robbery'
+                  ? 'robbery'
+                  : null;
       }
       this.clearActive();
     } else if (this.offeredRequests.delete(requestId)) {
@@ -817,6 +827,7 @@ export class RideManager {
     tip: number;
     bonus?: number;
     rating: number;
+    crashed?: boolean;
     fuelLiters: number;
     day: number;
     minute: number;
@@ -860,6 +871,7 @@ export class RideManager {
       this.bus.emit('ride/completed', {
         requestId: params.req.requestId,
         receipt: tripReceipt,
+        ...(params.crashed !== undefined ? { crashed: params.crashed } : {}),
       });
     }
 
@@ -913,6 +925,7 @@ export class RideManager {
       tip: 0,
       bonus,
       rating: effectiveRating,
+      crashed: dispute.crashed,
       fuelLiters: dispute.fuelLiters,
       day: dispute.day,
       minute: dispute.minute,
@@ -1030,6 +1043,7 @@ export class RideManager {
             if (lateMin > 0) this.reputation?.recordLateness(lateMin);
           }
 
+          const crashed = this.reputation?.getActiveTrip()?.crashed ?? false;
           const rating = this.reputation?.getActiveTripRating() ?? 5;
           const spec = { model: this.activeBikeId, engineTune: this.hasEngineTune };
           const fuelLiters = this.tripFuelLiters?.() ?? fuelUsed(req.estimatedDistance, 0, spec);
@@ -1068,6 +1082,7 @@ export class RideManager {
               bookingType: req.bookingType,
               fuelLiters,
               rating,
+              crashed,
               day: this.clock?.day ?? 1,
               minute: this.clock?.minutes ?? 0,
               consequences: baseConsequences,
@@ -1087,6 +1102,7 @@ export class RideManager {
             fare: paidFare,
             tip: offApp?.unpaid ? 0 : tipAmountFor(req.requestId, paidFare, rating),
             rating,
+            crashed,
             fuelLiters,
             day: this.clock?.day ?? 1,
             minute: this.clock?.minutes ?? 0,

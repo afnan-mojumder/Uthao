@@ -8,8 +8,10 @@ import passenger from '../../../data/encounters/passenger.json';
 import payment from '../../../data/encounters/payment.json';
 import pickup from '../../../data/encounters/pickup.json';
 import route from '../../../data/encounters/route.json';
+import police from '../../../data/encounters/police.json';
+import accident from '../../../data/encounters/accident.json';
 
-const encounters = [...bike, ...crime, ...passenger, ...payment, ...pickup, ...route];
+const encounters = [...bike, ...crime, ...passenger, ...payment, ...pickup, ...route, ...police, ...accident];
 
 const FAR = 500;
 const NEAR = 30;

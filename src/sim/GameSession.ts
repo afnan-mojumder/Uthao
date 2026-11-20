@@ -6,6 +6,8 @@ import type { RoadNetwork } from './road/RoadNetwork';
 import type { SegmentElevationHit } from './road/spatial';
 import { encounterPhaseFor, type RidePhaseInput } from './events/phase';
 import type { EncounterContext, EncounterPhase } from './events/conditions';
+import { ViolationMonitor } from './events/violations';
+import { assessAccident } from './events/accidents';
 import { getCharacter } from './passenger/PassengerAI';
 import type { PhysicsWorld, DynamicObb, StaticBoxHandle } from '../physics/PhysicsWorld';
 import { MotorcycleController } from '../physics/MotorcycleController';
@@ -26,7 +28,7 @@ import { clamp } from '../core/math';
 import { receipt as buildReceipt, fuelUsed, type FuelOptions } from './economy/fuel';
 import { bikeDefToSpec, getBikeDef } from './economy/bikes';
 import { checkPuncture } from './economy/maintenance';
-import type { TripReceipt, PassengerProfile, RoadSegment, RideRequest } from '../core/types';
+import type { TripReceipt, PassengerProfile, RoadSegment, RideRequest, BikeInfractionKind } from '../core/types';
 import {
   startNegotiation,
   type NegotiationResult,
@@ -116,7 +118,18 @@ export class GameSession {
   };
   private lastAccidentEncounterMin = -Infinity;
   private lastPunctureMin = -Infinity;
+  private accidentSeq = 0;
   private lastStepSegment: RoadSegment | null = null;
+  private readonly violationMonitor = new ViolationMonitor();
+  private readonly infractionScratch: { kind: BikeInfractionKind; segmentId: string } = {
+    kind: 'speeding',
+    segmentId: '',
+  };
+  private readonly onInfraction = (kind: BikeInfractionKind, segmentId: string): void => {
+    this.infractionScratch.kind = kind;
+    this.infractionScratch.segmentId = segmentId;
+    this.gm.bus.emit('bike/infraction', this.infractionScratch);
+  };
   private readonly encounterPassengerScratch = {
     id: '',
     trust: 50,
@@ -262,10 +275,60 @@ export class GameSession {
     }
 
     this.gm.bus.on('bike/collision', (ev) => {
-      if (ev.severity === 'crash') {
-        this.traffic.pedestrians.reportAccident(this.bike.x, this.bike.z);
-        if (ev.otherKind === 'traffic') {
-          this.maybeStartAccidentEncounter();
+      if (ev.severity !== 'crash') return;
+      this.traffic.pedestrians.reportAccident(this.bike.x, this.bike.z);
+      const report = assessAccident(ev, {
+        id: `acc_${this.gm.clock.day}_${Math.floor(this.gm.clock.minutes)}_${++this.accidentSeq}`,
+        bikeSpeedKmh: ev.bikeSpeedKmh ?? Math.abs(this.bike.speed) * 3.6,
+        otherSpeedKmh: ev.otherSpeedKmh,
+        hasPassenger: this.env.hasPassenger,
+        wet: this.env.wet,
+        bikeCondition: this.gm.economyManager.motorcycleCondition,
+        pedestrianDensity: this.lastStepSegment?.pedestrianDensity ?? 0.3,
+      });
+
+      const nextCond = Math.max(0, this.gm.economyManager.motorcycleCondition - report.bikeDamage);
+      this.gm.economyManager.motorcycleCondition = nextCond;
+      this.gm.economy.motorcycleCondition = nextCond;
+
+      const isSerious =
+        report.severity === 'serious' || report.riderInjury >= 2 || report.passengerInjury >= 2;
+      this.gm.story.branchFlags['accident'] = true;
+      this.gm.story.branchFlags['accidentSeverity'] = report.severity;
+      this.gm.story.branchFlags['accidentSerious'] = isSerious;
+      this.gm.story.branchFlags['accidentOtherParty'] = report.otherParty;
+      this.gm.story.branchFlags['accidentResponsibility'] = report.responsibility;
+
+      const interrupted = this.ride.interrupt();
+      const started = this.maybeStartAccidentEncounter();
+      if (isSerious && !started) {
+        this.gm.economyManager.post({
+          id: `tx_med_${report.id}`,
+          day: this.gm.clock.day,
+          minute: this.gm.clock.minutes,
+          kind: 'medical',
+          amount: -250,
+        });
+        const req = this.ride.getActiveRequest();
+        if (req && this.ride.getTripState() === 'EmergencyInterrupted') {
+          this.ride.cancel(req.requestId, 'system', 'accident');
+        }
+      } else if (!started && interrupted && this.gm.eventDirector.enabled) {
+        this.ride.resumeTrip();
+      }
+    });
+
+    this.gm.bus.on('encounter/resolved', (ev) => {
+      if (ev.encounterId !== 'enc_accident_aftermath') return;
+      this.gm.story.branchFlags['accident'] = false;
+      if (this.ride.getTripState() === 'EmergencyInterrupted') {
+        if (this.gm.story.branchFlags['accidentSerious']) {
+          const req = this.ride.getActiveRequest();
+          if (req) {
+            this.ride.cancel(req.requestId, 'system', 'accident');
+          }
+        } else {
+          this.ride.resumeTrip();
         }
       }
     });
@@ -338,6 +401,7 @@ export class GameSession {
     this.gm.bus.on('state/restored', () => {
       this.lastPunctureMin = -Infinity;
       this.lastAccidentEncounterMin = -Infinity;
+      this.violationMonitor.reset();
       this.syncBikeSpec();
       this.syncLocation();
     });
@@ -510,15 +574,17 @@ export class GameSession {
     }
   }
 
-  /** Nearest POI matching the first active `reach` mission objective, for HUD/minimap guidance. */
-  getNearestMissionTarget(): { x: number; z: number; nameKey: string; distanceM: number } | null {
-    const target = this.gm.missionManager.getActiveReachTarget();
-    if (!target) return null;
-    const isKind = target.poiId.startsWith('poi_kind:');
-    const kind = isKind ? target.poiId.slice('poi_kind:'.length) : '';
+  /** Nearest POI matching an active `reach` mission objective, for HUD/minimap guidance. */
+  getNearestMissionTarget(
+    poiIdOverride?: string
+  ): { x: number; z: number; nameKey: string; distanceM: number } | null {
+    const targetPoiId = poiIdOverride ?? this.gm.missionManager.getActiveReachTarget()?.poiId;
+    if (!targetPoiId) return null;
+    const isKind = targetPoiId.startsWith('poi_kind:');
+    const kind = isKind ? targetPoiId.slice('poi_kind:'.length) : '';
     let best: { x: number; z: number; nameKey: string; distanceM: number } | null = null;
     for (const poi of this.poiPositions) {
-      if (isKind ? poi.kind !== kind : poi.id !== target.poiId) continue;
+      if (isKind ? poi.kind !== kind : poi.id !== targetPoiId) continue;
       const dist = Math.hypot(poi.x - this.bike.x, poi.z - this.bike.z);
       if (!best || dist < best.distanceM) {
         best = { x: poi.x, z: poi.z, nameKey: poi.nameKey, distanceM: dist };
@@ -731,7 +797,7 @@ export class GameSession {
     this.bike.reverseHoldS = 0;
   }
 
-  private maybeStartAccidentEncounter(): void {
+  private maybeStartAccidentEncounter(): boolean {
     if (
       this.gm.eventDirector.enabled &&
       this.gm.eventDirector.activeEncounter === null &&
@@ -739,8 +805,9 @@ export class GameSession {
     ) {
       this.lastAccidentEncounterMin = this.gm.clock.minutes;
       const ctx = this.buildEncounterContext(this.lastStepSegment, this.ride.getActiveRequest());
-      this.gm.eventDirector.forceStart('enc_accident_aftermath', this.gm.bus, ctx);
+      return this.gm.eventDirector.forceStart('enc_accident_aftermath', this.gm.bus, ctx) !== null;
     }
+    return false;
   }
 
   /** Syncs nearby traffic agents (<= 80m) as dynamic OBBs into PhysicsWorld. */
@@ -823,7 +890,14 @@ export class GameSession {
         severity = 'scuff';
         this.bike.speed *= 0.95;
       }
-      this.gm.bus.emit('bike/collision', { severity, relSpeedKmh, otherKind: 'traffic' });
+      this.gm.bus.emit('bike/collision', {
+        severity,
+        relSpeedKmh,
+        otherKind: 'traffic',
+        otherParty: true,
+        bikeSpeedKmh: speedKmh,
+        otherSpeedKmh: Math.abs(agentSpeed) * 3.6,
+      });
     }
     if (touching) return;
 
@@ -902,6 +976,18 @@ export class GameSession {
     ctx.bikeCondition = this.gm.economyManager.motorcycleCondition;
     ctx.segment = segment;
     ctx.activeRequest = activeReq;
+    ctx.meters = this.gm.reputationSystem.getMetersView();
+    ctx.witnesses = segment ? Math.round(clamp(segment.pedestrianDensity, 0, 1) * 5) : 0;
+    if (!segment) {
+      ctx.hasEscapePath = true;
+    } else {
+      const sNode = this.road.getNode(segment.startNodeId);
+      const eNode = this.road.getNode(segment.endNodeId);
+      ctx.hasEscapePath =
+        !segment.tags.includes('deadend') &&
+        sNode?.kind !== 'deadEnd' &&
+        eNode?.kind !== 'deadEnd';
+    }
     if (activeReq) {
       const p = this.encounterPassengerScratch;
       const profile = this.requests.getProfile(activeReq.passengerId);
@@ -981,6 +1067,15 @@ export class GameSession {
     if (postSegHit.segment !== null) {
       this.bike.y = postSegHit.y;
     }
+
+    this.violationMonitor.step(
+      this.bike,
+      postSegHit.segment ?? segment,
+      this.traffic.signals,
+      dt,
+      this.road.getNodesMap(),
+      this.onInfraction
+    );
 
     const mx = this.bike.x - prevX;
     const mz = this.bike.z - prevZ;
@@ -1087,6 +1182,7 @@ export class GameSession {
     this.lastAccidentEncounterMin = -Infinity;
     this.lastStepSegment = null;
     this.offAppSeq = 0;
+    this.violationMonitor.reset();
     this.ride.resetCareer();
     this.gm.resetCareerState();
     this.syncBikeSpec();

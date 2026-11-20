@@ -72,13 +72,24 @@
   "encounter.police_stop.risk.flee": "High risk: fleeing escalates police scrutiny",
   "encounter.police_stop.outcome.bribe_accepted": "The officer pockets the cash quietly and waves you on without a receipt.",
   "encounter.police_stop.outcome.bribe_rejected": "The sergeant snaps back, refuses the bribe, and writes you a full ৳400 citation!",
+  "encounter.police_stop.outcome.bribe_lenient_rejected": "The officer shakes their head, turns down your cash, and issues a reduced ৳200 fine.",
+  "encounter.police_stop.outcome.explain_by_the_book": "The sergeant checks your papers strictly, writes a ৳200 citation, and orders a clearance check.",
+  "encounter.police_stop.outcome.explain_lenient": "The officer appreciates your honesty and lets you go with a formal warning and clearance slip.",
+  "encounter.police_stop.outcome.explain_opportunist": "The officer keeps you waiting and still hands out a ৳400 fine with clearance paperwork.",
+  "encounter.police_stop.outcome.flee_escaped": "You slip into side traffic and get away—though your plate may have been noted.",
+  "encounter.police_stop.outcome.flee_caught": "A patrol ahead boxes you in! You face a steep ৳600 fine and a police record.",
 
   "encounter.crime.dark_alley.cue": "Voices and silhouettes gather ahead in the unlit alley—you can still turn back.",
   "encounter.crime.robbery_attempt.cue": "Two figures step off the dark curb ahead, signaling bikes to slow down.",
+  "encounter.crime.choice.protect": "Shield your passenger and guide them safely clear",
   "encounter.crime.risk.flee": "High risk: narrow alleys or worn tires can make escaping fail",
+  "encounter.crime.outcome.flee_escaped": "You thread past the ambush and speed back out onto a lit street!",
+  "encounter.crime.outcome.flee_caught": "They grab your handlebars as you try to bolt and take cash from your pocket.",
 
   "encounter.accident.title": "Heavy impact! Crowd gathers around as you steady the bike and check for injuries.",
   "encounter.accident.choice.settle": "Check everyone is okay and pay ৳300 for damages & medical aid",
+  "encounter.accident.choice.medical": "Call emergency medical aid (৳250) and cancel the trip safely",
   "encounter.accident.choice.apologize": "Apologize sincerely and exchange contact details",
-  "encounter.accident.choice.flee": "Pick up the bike and speed away before a crowd blocks the road"
+  "encounter.accident.choice.flee": "Pick up the bike and speed away before a crowd blocks the road",
+  "encounter.accident.risk.flee": "High risk: fleeing an accident raises criminal & evidence exposure"
 }

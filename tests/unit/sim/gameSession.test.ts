@@ -725,11 +725,13 @@ describe('P4.4 Live EncounterContext in GameSession & day-rollover accident rese
       expect(fired, `Expected ${encounterId} to trigger from live GameSession`).toContain(encounterId);
     };
 
-    // 1. enc_police_signal_stop (roaming, main roadType, hours [8, 22])
+    // 1. enc_police_signal_stop (triggered after a traffic infraction when slowed down)
     triggerSingle('enc_police_signal_stop', (s) => {
       s.gm.clock.minutes = 10 * 60;
       s.bike.x = 100;
       s.bike.z = 0;
+      s.bike.speed = 60 / 3.6; // speeding on main road (limit 40) -> emits bike/infraction
+      s.step({ throttle: 0, brake: 0, steer: 0 }, SIM_DT);
       s.bike.speed = 0;
     });
 

@@ -58,7 +58,7 @@
         "id": "obj_m4_police",
         "descKey": "obj_m4_police_desc",
         "type": "choose",
-        "encounterId": "enc_traffic_checkpoint",
+        "encounterId": "enc_police_checkpoint",
         "choiceIds": [
           "cooperate"
         ]

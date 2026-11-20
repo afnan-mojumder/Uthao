@@ -72,13 +72,24 @@
   "encounter.police_stop.risk.flee": "উচ্চ ঝুঁকি: পালানোর চেষ্টা করলে পুলিশি নজরদারি বাড়বে",
   "encounter.police_stop.outcome.bribe_accepted": "অফিসার চুপচাপ টাকাটা পকেটে রেখে কোনো রসিদ ছাড়াই আপনাকে যেতে দিলেন।",
   "encounter.police_stop.outcome.bribe_rejected": "সার্জেন্ট কড়া ধমক দিয়ে ঘুষ ফিরিয়ে দিলেন এবং পুরো ৪০০ টাকার মামলা কেটে দিলেন!",
+  "encounter.police_stop.outcome.bribe_lenient_rejected": "অফিসার মাথা নেড়ে টাকা ফিরিয়ে দিলেন এবং সতর্ক করে ২০০ টাকার ছোট জরিমানা লিখলেন।",
+  "encounter.police_stop.outcome.explain_by_the_book": "সার্জেন্ট নিয়ম মেনে কাগজপত্র দেখে ২০০ টাকার মামলা দিলেন ও ক্লিয়ারেন্সের নির্দেশ দিলেন।",
+  "encounter.police_stop.outcome.explain_lenient": "আপনার ভদ্র ব্যবহারে অফিসার সন্তুষ্ট হয়ে শুধু সতর্কবার্তা ও ক্লিয়ারেন্স স্লিপ দিয়ে ছেড়ে দিলেন।",
+  "encounter.police_stop.outcome.explain_opportunist": "অফিসার বেশ কিছুক্ষণ বসিয়ে রেখে শেষে ৪০০ টাকার জরিমানা ও ক্লিয়ারেন্সের কাজ ধরিয়ে দিলেন।",
+  "encounter.police_stop.outcome.flee_escaped": "ভিড়ের ফাঁক গলে আপনি পালিয়ে গেলেন—তবে আপনার নম্বরপ্লেট নোট হয়ে থাকতে পারে।",
+  "encounter.police_stop.outcome.flee_caught": "সামনের টহল দল রাস্তা আটকে ধরল! ৬০০ টাকা জরিমানার পাশাপাশি পুলিশের খাতায় নাম উঠল।",
 
   "encounter.crime.dark_alley.cue": "সামনের অন্ধকার গলিতে কয়েকজনকে জটলা করতে দেখা যাচ্ছে—এখনও ঘুরে ফেরার সুযোগ আছে।",
   "encounter.crime.robbery_attempt.cue": "সামনের অন্ধকার ফুটপাত থেকে দুইজন রাস্তায় নেমে বাইক থামানোর ইশারা করছে।",
+  "encounter.crime.choice.protect": "যাত্রীকে আগলে রেখে নিরাপদে বের হয়ে আসুন",
   "encounter.crime.risk.flee": "উচ্চ ঝুঁকি: সরু গলি বা দুর্বল টায়ারে পালানো ব্যর্থ হতে পারে",
+  "encounter.crime.outcome.flee_escaped": "বাধা কাটিয়ে আপনি দ্রুত আলোকিত বড় রাস্তায় বেরিয়ে আসতে পারলেন!",
+  "encounter.crime.outcome.flee_caught": "পালাতে গেলে তারা হ্যান্ডেল ধরে ফেলে এবং পকেট থেকে নগদ টাকা কেড়ে নেয়।",
 
   "encounter.accident.title": "জোরে ধাক্কা লেগেছে! বাইক সামলে ওঠার আগেই আশপাশে লোকজন জমে যাচ্ছে।",
   "encounter.accident.choice.settle": "সবার খোঁজ নিন এবং ক্ষতিপূরণ ও চিকিৎসার জন্য ৩০০ টাকা দিন",
+  "encounter.accident.choice.medical": "জরুরি চিকিৎসা সহায়তা ডাকুন (২৫০ টাকা) এবং ট্রিপ নিরাপদে শেষ করুন",
   "encounter.accident.choice.apologize": "আন্তরিকভাবে দুঃখ প্রকাশ করে যোগাযোগের নম্বর দিন",
-  "encounter.accident.choice.flee": "লোকজন ঘিরে ধরার আগেই বাইক তুলে দ্রুত পালিয়ে যান"
+  "encounter.accident.choice.flee": "লোকজন ঘিরে ধরার আগেই বাইক তুলে দ্রুত পালিয়ে যান",
+  "encounter.accident.risk.flee": "উচ্চ ঝুঁকি: দুর্ঘটনা এড়িয়ে পালালে আইনি ও সাক্ষ্য ঝুঁকি অনেক বেড়ে যায়"
 }

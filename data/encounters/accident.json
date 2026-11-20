@@ -1,0 +1,76 @@
+[
+  {
+    "id": "enc_accident_aftermath",
+    "category": "accident",
+    "trigger": {
+      "custom": "accident"
+    },
+    "weight": 5,
+    "cooldownMin": 60,
+    "oncePerDay": false,
+    "lineKey": "encounter.accident.title",
+    "choices": [
+      {
+        "id": "check_and_settle",
+        "labelKey": "encounter.accident.choice.settle",
+        "kind": "official",
+        "costHint": 300,
+        "requires": {
+          "minCash": 300
+        },
+        "effects": [
+          { "type": "money", "amount": -300, "kind": "compensation" },
+          { "type": "time", "min": 10 },
+          { "type": "meter", "meter": "publicReputation", "delta": 4, "reasonKey": "karma.accident_settled" },
+          { "type": "meter", "meter": "riderIntegrity", "delta": 3, "reasonKey": "karma.accident_settled" },
+          { "type": "startMission", "missionId": "side_accident_inspection" },
+          { "type": "flag", "key": "accident", "value": false }
+        ]
+      },
+      {
+        "id": "call_medical",
+        "labelKey": "encounter.accident.choice.medical",
+        "kind": "official",
+        "costHint": 250,
+        "requires": {
+          "flags": { "accidentSerious": true }
+        },
+        "effects": [
+          { "type": "money", "amount": -250, "kind": "medical" },
+          { "type": "time", "min": 20 },
+          { "type": "meter", "meter": "publicReputation", "delta": 5, "reasonKey": "karma.accident_medical" },
+          { "type": "meter", "meter": "riderIntegrity", "delta": 4, "reasonKey": "karma.accident_medical" },
+          { "type": "endTrip", "paid": false },
+          { "type": "startMission", "missionId": "side_accident_inspection" },
+          { "type": "flag", "key": "accident", "value": false }
+        ]
+      },
+      {
+        "id": "apologize_and_continue",
+        "labelKey": "encounter.accident.choice.apologize",
+        "kind": "neutral",
+        "effects": [
+          { "type": "time", "min": 6 },
+          { "type": "meter", "meter": "publicReputation", "delta": -1, "reasonKey": "karma.accident_minor" },
+          { "type": "rating", "delta": -0.2 },
+          { "type": "flag", "key": "accident", "value": false }
+        ]
+      },
+      {
+        "id": "flee_scene",
+        "labelKey": "encounter.accident.choice.flee",
+        "kind": "illicit",
+        "riskKey": "encounter.accident.risk.flee",
+        "effects": [
+          { "type": "meter", "meter": "publicReputation", "delta": -8, "reasonKey": "karma.fled_accident" },
+          { "type": "meter", "meter": "criminalExposure", "delta": 12, "reasonKey": "karma.fled_accident" },
+          { "type": "meter", "meter": "evidenceExposure", "delta": 8, "reasonKey": "karma.fled_accident" },
+          { "type": "rating", "delta": -0.5 },
+          { "type": "flag", "key": "fledAccident", "value": true },
+          { "type": "flag", "key": "accident", "value": false },
+          { "type": "endTrip", "paid": false }
+        ]
+      }
+    ]
+  }
+]

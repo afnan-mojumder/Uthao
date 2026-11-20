@@ -1,5 +1,6 @@
 import { Rng } from '../../core/rng';
 import { clamp } from '../../core/math';
+import type { RoadSegment } from '../../core/types';
 
 export type CrimeOutcome = 'harmless' | 'suspicious' | 'dangerous';
 
@@ -67,6 +68,7 @@ export function sampleCrimeOutcome(rng: Rng): CrimeOutcome {
 export interface FleeParams {
   speedKmh: number;
   bikeCondition: number; // 0 - 100
+  hasEscapePath?: boolean;
   rng?: Rng;
 }
 
@@ -76,11 +78,32 @@ export interface FleeResult {
 }
 
 /**
+ * Ordinary Chapter 1 alleys (low riskLevel, not story-flagged) are safe and
+ * never spawn robbery encounters per MASTER §11.
+ */
+export function isSafeCh1Alley(
+  segment: Pick<RoadSegment, 'roadType' | 'riskLevel'>,
+  chapter: number,
+  flags?: Record<string, boolean | number | string>
+): boolean {
+  return (
+    chapter <= 1 &&
+    segment.roadType === 'alley' &&
+    segment.riskLevel < 0.5 &&
+    !flags?.['allowCh1Robbery']
+  );
+}
+
+/**
  * Resolves flee attempt per GDD §8 / T4.6:
  * if bike speed > 15 km/h and condition > 50, success 80%, else 40%;
+ * when hasEscapePath is explicitly false, flee fails (0%);
  * failure -> forced comply
  */
 export function resolveFlee(params: FleeParams): FleeResult {
+  if (params.hasEscapePath === false) {
+    return { success: false, probability: 0 };
+  }
   const highSpeed = params.speedKmh > 15;
   const goodCondition = params.bikeCondition > 50;
 

@@ -12,6 +12,8 @@ import pickupEncounters from '../../../data/encounters/pickup.json';
 import bikeEncounters from '../../../data/encounters/bike.json';
 import paymentEncounters from '../../../data/encounters/payment.json';
 import passengerEncounters from '../../../data/encounters/passenger.json';
+import policeEncounters from '../../../data/encounters/police.json';
+import accidentEncounters from '../../../data/encounters/accident.json';
 
 describe('T4.5 Remaining Signature Situations', () => {
   const allEncounters: EncounterDef[] = [
@@ -20,6 +22,8 @@ describe('T4.5 Remaining Signature Situations', () => {
     ...(bikeEncounters as EncounterDef[]),
     ...(paymentEncounters as EncounterDef[]),
     ...(passengerEncounters as EncounterDef[]),
+    ...(policeEncounters as unknown as EncounterDef[]),
+    ...(accidentEncounters as unknown as EncounterDef[]),
   ];
 
   function createTestSetup(definitions: EncounterDef[]) {
@@ -103,7 +107,7 @@ describe('T4.5 Remaining Signature Situations', () => {
       minute,
       day: 1,
       weather,
-      chapter: typeof trig.chapter === 'number' ? trig.chapter : 1,
+      chapter: Array.isArray(trig.chapter) ? trig.chapter[0] : (trig.chapter ?? 1),
       flags,
       relationships: trig.minRelationship ? { ...trig.minRelationship } : {},
       cash: trig.minCash ?? 500,
@@ -148,7 +152,9 @@ describe('T4.5 Remaining Signature Situations', () => {
       'enc_wrong_pickup_pin',
       'enc_vendor_discount',
       'enc_phone_left',
-      'enc_traffic_checkpoint',
+      'enc_police_checkpoint',
+      'enc_police_signal_stop',
+      'enc_accident_aftermath',
       'enc_bus_block',
       'enc_regular_direct_call',
       'enc_friend_package',

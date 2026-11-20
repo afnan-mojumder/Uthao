@@ -27,7 +27,7 @@ export interface GameEvents extends Record<string, unknown> {
   'ride/accepted': { requestId: string };
   'ride/arrivedPickup': { requestId: string };
   'ride/started': { requestId: string };
-  'ride/completed': { requestId: string; receipt: TripReceipt };
+  'ride/completed': { requestId: string; receipt: TripReceipt; crashed?: boolean };
   'ride/disputed': {
     requestId: string;
     fare: number;
@@ -72,7 +72,7 @@ export interface GameEvents extends Record<string, unknown> {
     encounterId: string;
   };
   'encounter/started': { instance: EncounterInstance };
-  // encounterId is the definition id (e.g. enc_traffic_checkpoint); missions match on it.
+  // encounterId is the definition id (e.g. enc_police_checkpoint); missions match on it.
   'encounter/resolved': {
     instanceId: string;
     choiceId: string;
@@ -91,6 +91,9 @@ export interface GameEvents extends Record<string, unknown> {
     severity: BikeCollisionSeverity;
     relSpeedKmh: number;
     otherKind?: string;
+    otherParty?: boolean;
+    bikeSpeedKmh?: number;
+    otherSpeedKmh?: number;
   };
   'bike/nearMiss': { distanceM: number; speedKmh: number };
   /** The bike reached the grip limit and the tyres slid: shown to the rider as a wobble (audit H-4). */

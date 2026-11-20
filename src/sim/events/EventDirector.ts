@@ -12,6 +12,7 @@ import {
   type FleeResult,
   type RobberyResult,
   calculateSegmentEncounterProbability,
+  isSafeCh1Alley,
   sampleCrimeOutcome,
   resolveFlee,
   resolveRobbery,
@@ -403,6 +404,10 @@ export class EventDirector {
     outcome?: CrimeOutcome;
     instance?: EncounterInstance | null;
   } {
+    if (isSafeCh1Alley(segment, ctx.chapter, ctx.flags)) {
+      return { triggered: false };
+    }
+
     const prob = calculateSegmentEncounterProbability({
       riskLevel: segment.riskLevel,
       minute: ctx.minute,
@@ -421,11 +426,11 @@ export class EventDirector {
 
     // Look for matching crime encounter definitions
     const crimeDefs = this.definitions.filter((d) => d.category === 'crime');
-    let matchingDef = crimeDefs.find((d) =>
+    const matchingDef = crimeDefs.find((d) =>
       evaluateCondition(d.trigger, { ...ctx, segment })
     );
-    if (!matchingDef && crimeDefs.length > 0) {
-      matchingDef = crimeDefs[0];
+    if (!matchingDef) {
+      return { triggered: true, outcome: 'harmless', instance: null };
     }
 
     let instance: EncounterInstance | null = null;

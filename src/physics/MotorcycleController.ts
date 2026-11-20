@@ -155,10 +155,17 @@ export class MotorcycleController {
       // The physical response above applies every frame of contact, but the
       // event is one report per contact (audit: grinding fires every frame).
       if (this.contactHoldS <= 0) {
+        const isTraffic = this._hit.otherKind === 'traffic';
+        const otherSpeedKmh = isTraffic
+          ? Math.hypot(this._hit.otherVx, this._hit.otherVz) * 3.6
+          : 0;
         this.bus?.emit('bike/collision', {
           severity: collisionSeverity,
           relSpeedKmh: impactKmh,
-          otherKind: this._hit.otherKind === 'traffic' ? 'traffic' : 'static',
+          otherKind: isTraffic ? 'traffic' : 'static',
+          otherParty: isTraffic,
+          bikeSpeedKmh: totalSpeedKmh,
+          otherSpeedKmh,
         });
       }
     } else if (totalSpeedKmh > 20) {

@@ -6,13 +6,15 @@ import passenger from '../../../data/encounters/passenger.json';
 import payment from '../../../data/encounters/payment.json';
 import pickup from '../../../data/encounters/pickup.json';
 import route from '../../../data/encounters/route.json';
+import police from '../../../data/encounters/police.json';
+import accident from '../../../data/encounters/accident.json';
 
 // These walk the campaign through the real path a player takes: an encounter
 // is forced, the player picks a choice through the same dispatch the UI uses,
 // and the objective must complete. Nothing here calls completeMission or sets
 // a flag by hand.
 
-const encounters = [...bike, ...crime, ...passenger, ...payment, ...pickup, ...route];
+const encounters = [...bike, ...crime, ...passenger, ...payment, ...pickup, ...route, ...police, ...accident];
 
 function newGame(activeMissions: string[]): GameManager {
   const gm = new GameManager({ seed: 11, mode: 'career', data: { encounters } as never });
@@ -70,7 +72,7 @@ describe('campaign objectives completed through real encounter choices', () => {
   it('Chapter 4: cooperating at the checkpoint completes the police objective', () => {
     const gm = newGame(['m4_wrong_pickup']);
 
-    resolve(gm, 'enc_traffic_checkpoint', 'cooperate');
+    resolve(gm, 'enc_police_checkpoint', 'cooperate');
 
     expect(objectiveDone(gm, 'm4_wrong_pickup', 'obj_m4_police')).toBe(true);
   });
@@ -79,7 +81,7 @@ describe('campaign objectives completed through real encounter choices', () => {
     // The checkpoint happens during m4_wrong_pickup. m4_home_safe only unlocks
     // after that mission completes, so its flag must be read on activation.
     const gm = newGame(['m4_wrong_pickup']);
-    resolve(gm, 'enc_traffic_checkpoint', 'cooperate');
+    resolve(gm, 'enc_police_checkpoint', 'cooperate');
 
     expect(gm.missionManager.activateMission('m4_home_safe')).toBe(true);
 

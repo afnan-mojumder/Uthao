@@ -16,6 +16,17 @@ import { applyEffect } from '../events/effects';
 import { canonicalCharacterId } from '../passenger/PassengerAI';
 import type { ReputationSystem } from '../reputation/ReputationSystem';
 
+export interface HudMissionEntry {
+  id: string;
+  titleKey: string;
+  objectiveDescKey: string;
+  progress: number;
+  target: number;
+  targetNameKey?: string;
+  targetDistM?: number;
+  isSide: boolean;
+}
+
 export interface MissionManagerOptions {
   bus: EventBus<GameEvents>;
   missions: MissionDef[];
@@ -37,6 +48,8 @@ export class MissionManager {
   private completedMissionIds: Set<string> = new Set();
   private objectiveStates: Map<string, Map<string, ObjectiveState>> = new Map();
   private visitedDistricts: Set<string> = new Set();
+  private inRide: boolean = false;
+  private currentTripCrashed: boolean = false;
 
   constructor(opts: MissionManagerOptions) {
     this.bus = opts.bus;
@@ -77,7 +90,26 @@ export class MissionManager {
       this.checkFailConditions(day);
     });
 
-    this.bus.on('ride/completed', ({ receipt }) => {
+    this.bus.on('ride/started', () => {
+      this.inRide = true;
+      this.currentTripCrashed = false;
+    });
+
+    this.bus.on('ride/cancelled', () => {
+      this.inRide = false;
+      this.currentTripCrashed = false;
+    });
+
+    this.bus.on('bike/collision', ({ severity }) => {
+      if (severity === 'crash' && this.inRide) {
+        this.currentTripCrashed = true;
+      }
+    });
+
+    this.bus.on('ride/completed', ({ receipt, crashed }) => {
+      const didCrash = Boolean(crashed || this.currentTripCrashed);
+      this.currentTripCrashed = false;
+      this.inRide = false;
       for (const missionId of this.activeMissionIds) {
         const def = this.missions.get(missionId);
         const objMap = this.objectiveStates.get(missionId);
@@ -90,6 +122,7 @@ export class MissionManager {
           const changed = evaluateRideCompleted(obj, state, {
             receipt,
             minute: 0,
+            crashed: didCrash,
             visitedDistricts: this.visitedDistricts,
           });
 
@@ -279,6 +312,9 @@ export class MissionManager {
   }
 
   activateMission(id: string): boolean {
+    if (this.activeMissionIds.has(id) || this.completedMissionIds.has(id)) {
+      return false;
+    }
     const def = this.missions.get(id);
     if (!def) return false;
 
@@ -488,5 +524,70 @@ export class MissionManager {
 
   isMissionCompleted(id: string): boolean {
     return this.completedMissionIds.has(id);
+  }
+
+  /** Resets manager tracking on a fresh career so completed triggerOnly missions can unlock again on new careers. */
+  resetCareer(): void {
+    this.activeMissionIds.clear();
+    this.completedMissionIds.clear();
+    this.objectiveStates.clear();
+    this.visitedDistricts.clear();
+    this.inRide = false;
+    this.currentTripCrashed = false;
+  }
+
+  /** Re-synchronizes active/completed sets from `storyState` after snapshot restore. */
+  syncFromStoryState(): void {
+    this.activeMissionIds.clear();
+    this.completedMissionIds.clear();
+    this.objectiveStates.clear();
+    this.inRide = false;
+    this.currentTripCrashed = false;
+    for (const id of this.storyState.completedMissions ?? []) {
+      this.completedMissionIds.add(id);
+    }
+    for (const id of this.storyState.activeMissions ?? []) {
+      this.activateMission(id);
+    }
+  }
+
+  /** Builds structured HUD summaries for the primary main mission and any active side missions. */
+  getHudMissions(
+    getNearestTarget?: (poiId: string) => { nameKey: string; distanceM: number } | null
+  ): { main: HudMissionEntry | null; side: HudMissionEntry[] } {
+    let main: HudMissionEntry | null = null;
+    const side: HudMissionEntry[] = [];
+
+    for (const missionId of this.activeMissionIds) {
+      const def = this.missions.get(missionId);
+      const states = this.objectiveStates.get(missionId);
+      if (!def || def.objectives.length === 0) continue;
+
+      const nextObj =
+        def.objectives.find((o) => !states?.get(o.id)?.completed) ?? def.objectives[0]!;
+      const st = states?.get(nextObj.id);
+      const reachTarget =
+        nextObj.type === 'reach' && getNearestTarget ? getNearestTarget(nextObj.poiId) : null;
+      const isSide = Boolean(def.triggerOnly || def.id.startsWith('side_'));
+
+      const entry: HudMissionEntry = {
+        id: def.id,
+        titleKey: def.titleKey,
+        objectiveDescKey: nextObj.descKey,
+        progress: st?.progress ?? 0,
+        target: st?.target ?? 1,
+        targetNameKey: reachTarget?.nameKey,
+        targetDistM: reachTarget?.distanceM,
+        isSide,
+      };
+
+      if (isSide) {
+        side.push(entry);
+      } else if (!main) {
+        main = entry;
+      }
+    }
+
+    return { main, side };
   }
 }

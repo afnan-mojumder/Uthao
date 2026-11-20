@@ -630,6 +630,11 @@ export class ReputationSystem {
     return { ...this.meters };
   }
 
+  /** Zero-allocation read view for hot simulation ticks. */
+  getMetersView(): Readonly<Record<MeterId, number>> {
+    return this.meters;
+  }
+
   getKarmaLog(limit?: number): KarmaEvent[] {
     const slice =
       limit !== undefined

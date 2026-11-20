@@ -8,6 +8,7 @@ import { clamp } from '../../core/math';
 import { TIME_SCALE } from '../../config/constants';
 import { canonicalCharacterId } from '../passenger/PassengerAI';
 import { evaluateCondition, type EncounterContext } from './conditions';
+import { resolveRobbery } from './flee';
 
 export interface EffectContext {
   gameManager: GameManager;
@@ -41,6 +42,7 @@ function resolveEncounterContext(ctx: EffectContext): EncounterContext {
     speedKmh: 0,
     bikeCondition: ctx.economyManager.motorcycleCondition,
     activeRequest: ctx.rideManager?.getActiveRequest() ?? null,
+    meters: gm.reputationSystem.getMetersView(),
     passenger: ctx.activePassenger
       ? {
           id: ctx.rideManager?.getActiveRequest()?.passengerId ?? 'active',
@@ -91,11 +93,11 @@ export function applyEffect(effect: Effect, ctx: EffectContext): void {
         ctx.activePassenger.trust = clamp(ctx.activePassenger.trust + effect.delta, 0, 100);
       }
       const req = ctx.rideManager?.getActiveRequest?.();
-      if (req) {
-        ctx.gameManager.reputationSystem.changePassengerTrust(
-          req.characterId ?? req.passengerId,
-          effect.delta
-        );
+      const subjectId = req
+        ? (req.characterId ?? req.passengerId)
+        : ctx.encounterContext?.passenger?.id;
+      if (subjectId) {
+        ctx.gameManager.reputationSystem.changePassengerTrust(subjectId, effect.delta);
       }
       break;
     }
@@ -219,6 +221,26 @@ export function applyEffect(effect: Effect, ctx: EffectContext): void {
         );
         ctx.gameManager.economy.motorcycleCondition =
           ctx.economyManager.motorcycleCondition;
+      }
+      break;
+    }
+
+    case 'robbery': {
+      const rng = ctx.rng ?? ctx.gameManager.rng;
+      const res = resolveRobbery(ctx.economyManager.cash, rng);
+      if (res.cashLost > 0) {
+        const rngSuffix = rng.int(1000, 9999);
+        ctx.economyManager.post({
+          id: `tx_rob_${ctx.gameManager.clock.day}_${Math.floor(ctx.gameManager.clock.minutes)}_${rngSuffix}`,
+          day: ctx.gameManager.clock.day,
+          minute: ctx.gameManager.clock.minutes,
+          kind: 'robbery',
+          amount: -res.cashLost,
+        });
+        ctx.gameManager.economy.cash = ctx.economyManager.cash;
+        ctx.gameManager.economy.debt = ctx.economyManager.debt;
+        ctx.gameManager.economy.dailyRevenue = ctx.economyManager.dailyRevenue;
+        ctx.gameManager.economy.dailyExpenses = ctx.economyManager.dailyExpenses;
       }
       break;
     }

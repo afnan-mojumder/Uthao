@@ -32,6 +32,17 @@ function turnDirectionIcon(direction: string): string {
   }
 }
 
+export interface HudMissionInfo {
+  id?: string;
+  titleKey: string;
+  objectiveDescKey: string;
+  progress: number;
+  target: number;
+  targetNameKey?: string;
+  targetDistM?: number;
+  isSide?: boolean;
+}
+
 export interface HudState {
   // Speed & Physics
   speedKmh: number;
@@ -53,14 +64,8 @@ export interface HudState {
   destinationName?: string;
   etaMinutes?: number;
   nextTurn?: HudNavigationTurn | null;
-  activeMission?: {
-    titleKey: string;
-    objectiveDescKey: string;
-    progress: number;
-    target: number;
-    targetNameKey?: string;
-    targetDistM?: number;
-  } | null;
+  activeMission?: HudMissionInfo | null;
+  activeSideMissions?: HudMissionInfo[];
   roadEventAlert?: {
     title: string;
     kind: string;
@@ -436,6 +441,40 @@ export function HudView({ state }: { state: HudState }): JSX.Element {
                   </span>
                 )}
               </div>
+            </div>
+          )}
+          {state.activeSideMissions && state.activeSideMissions.length > 0 && (
+            <div
+              data-testid="hud-active-side-missions"
+              style={{
+                marginTop: '6px',
+                paddingTop: '6px',
+                borderTop: '1px solid rgba(255, 255, 255, 0.14)',
+                fontSize: '12px',
+                color: '#cbd5e1',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '4px',
+              }}
+            >
+              {state.activeSideMissions.map((sm) => (
+                <div
+                  key={sm.id ?? sm.titleKey}
+                  data-testid={sm.id ? `hud-side-mission-${sm.id}` : 'hud-side-mission'}
+                >
+                  <div style={{ color: '#fbbf24', fontWeight: 700 }}>
+                    {t(sm.titleKey)}
+                  </div>
+                  <div>
+                    {t(sm.objectiveDescKey)} ({sm.progress}/{sm.target})
+                    {sm.targetDistM !== undefined && (
+                      <span style={{ color: '#38bdf8', marginLeft: '6px', fontWeight: 700 }}>
+                        • {Math.round(sm.targetDistM)}m
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
           )}
           {state.roadEventAlert && (

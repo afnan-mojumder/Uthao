@@ -41,7 +41,8 @@
     "trigger": {
       "phase": "onTrip",
       "roadType": ["alley"],
-      "hours": [20, 5]
+      "hours": [20, 5],
+      "minRiskLevel": 0.5
     },
     "weight": 10,
     "cooldownMin": 60,
@@ -62,8 +63,61 @@
         "labelKey": "encounter.crime.choice.try_flee",
         "kind": "illicit",
         "riskKey": "encounter.crime.risk.flee",
+        "requires": {
+          "hasEscapePath": true
+        },
         "effects": [
-          { "type": "startMinigame", "kind": "flee" }
+          { "type": "startMinigame", "kind": "flee" },
+          {
+            "type": "outcome",
+            "table": [
+              {
+                "weight": 70,
+                "lineKey": "encounter.crime.outcome.flee_escaped",
+                "effects": [
+                  { "type": "time", "min": 2 },
+                  { "type": "flag", "key": "escapedRobbery", "value": true }
+                ]
+              },
+              {
+                "weight": 30,
+                "lineKey": "encounter.crime.outcome.flee_caught",
+                "effects": [
+                  { "type": "robbery" },
+                  { "type": "injury", "target": "bike", "severity": 8 },
+                  { "type": "flag", "key": "robberyComply", "value": true }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "protect",
+        "labelKey": "encounter.crime.choice.protect",
+        "kind": "official",
+        "requires": {
+          "passengerTrustMin": 50
+        },
+        "effects": [
+          { "type": "trust", "delta": 10 },
+          { "type": "meter", "meter": "publicReputation", "delta": 6, "reasonKey": "karma.protected_passenger" },
+          { "type": "meter", "meter": "riderIntegrity", "delta": 5, "reasonKey": "karma.protected_passenger" },
+          { "type": "rating", "delta": 0.2 },
+          { "type": "time", "min": 4 },
+          { "type": "flag", "key": "protectedPassenger", "value": true }
+        ]
+      },
+      {
+        "id": "call_help",
+        "labelKey": "encounter.crime.choice.call_help",
+        "kind": "official",
+        "requires": {
+          "witnessesMin": 1
+        },
+        "effects": [
+          { "type": "time", "min": 2 },
+          { "type": "meter", "meter": "publicReputation", "delta": 5, "reasonKey": "karma.called_help" }
         ]
       },
       {
@@ -71,16 +125,8 @@
         "labelKey": "encounter.crime.choice.comply",
         "kind": "neutral",
         "effects": [
+          { "type": "robbery" },
           { "type": "flag", "key": "robberyComply", "value": true }
-        ]
-      },
-      {
-        "id": "call_help",
-        "labelKey": "encounter.crime.choice.call_help",
-        "kind": "official",
-        "effects": [
-          { "type": "time", "min": 2 },
-          { "type": "localTrust", "delta": 5 }
         ]
       }
     ]
@@ -90,7 +136,10 @@
     "category": "crime",
     "trigger": {
       "phase": "roaming",
-      "hours": [22, 5]
+      "roadType": ["alley"],
+      "hours": [22, 5],
+      "chapter": [2, 6],
+      "minRiskLevel": 0.5
     },
     "weight": 7,
     "cooldownMin": 90,
@@ -111,8 +160,45 @@
         "labelKey": "encounter.crime.choice.try_flee",
         "kind": "illicit",
         "riskKey": "encounter.crime.risk.flee",
+        "requires": {
+          "hasEscapePath": true
+        },
         "effects": [
-          { "type": "startMinigame", "kind": "flee" }
+          { "type": "startMinigame", "kind": "flee" },
+          {
+            "type": "outcome",
+            "table": [
+              {
+                "weight": 70,
+                "lineKey": "encounter.crime.outcome.flee_escaped",
+                "effects": [
+                  { "type": "time", "min": 2 },
+                  { "type": "flag", "key": "escapedRobbery", "value": true }
+                ]
+              },
+              {
+                "weight": 30,
+                "lineKey": "encounter.crime.outcome.flee_caught",
+                "effects": [
+                  { "type": "robbery" },
+                  { "type": "injury", "target": "bike", "severity": 8 },
+                  { "type": "flag", "key": "robbed", "value": true }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "call_help",
+        "labelKey": "encounter.crime.choice.call_help",
+        "kind": "official",
+        "requires": {
+          "witnessesMin": 1
+        },
+        "effects": [
+          { "type": "time", "min": 2 },
+          { "type": "meter", "meter": "publicReputation", "delta": 5, "reasonKey": "karma.called_help" }
         ]
       },
       {
@@ -120,6 +206,7 @@
         "labelKey": "encounter.crime.choice.comply",
         "kind": "neutral",
         "effects": [
+          { "type": "robbery" },
           { "type": "flag", "key": "robbed", "value": true }
         ]
       }

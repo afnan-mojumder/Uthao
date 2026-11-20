@@ -1,4 +1,4 @@
-import type { WeatherKind, RoadSegment, RideRequest } from '../../core/types';
+import type { WeatherKind, RoadSegment, RideRequest, MeterId } from '../../core/types';
 import type { Condition } from '../schemas';
 
 export type EncounterPhase =
@@ -21,6 +21,9 @@ export interface EncounterContext {
   bikeCondition: number;
   segment?: RoadSegment | null;
   activeRequest?: RideRequest | null;
+  hasEscapePath?: boolean;
+  witnesses?: number;
+  meters?: Partial<Record<MeterId, number>>;
   passenger?: {
     id: string;
     trust: number;
@@ -149,6 +152,35 @@ export function evaluateCondition(
 
   if (cond.bikeConditionMax !== undefined && ctx.bikeCondition > cond.bikeConditionMax) {
     return false;
+  }
+
+  if (cond.hasEscapePath !== undefined) {
+    const escape =
+      ctx.hasEscapePath ??
+      (ctx.segment ? !ctx.segment.tags.includes('deadend') : true);
+    if (escape !== cond.hasEscapePath) return false;
+  }
+
+  if (cond.witnessesMin !== undefined) {
+    const witnesses =
+      ctx.witnesses ?? Math.round((ctx.segment?.pedestrianDensity ?? 0) * 5);
+    if (witnesses < cond.witnessesMin) return false;
+  }
+
+  if (cond.passengerTrustMin !== undefined) {
+    const current = ctx.passenger?.trust ?? 0;
+    if (current < cond.passengerTrustMin) return false;
+  }
+
+  if (cond.minRiskLevel !== undefined) {
+    if (!ctx.segment || ctx.segment.riskLevel < cond.minRiskLevel) return false;
+  }
+
+  if (cond.meterMax) {
+    for (const [meter, maxVal] of Object.entries(cond.meterMax)) {
+      const current = ctx.meters?.[meter as MeterId] ?? 0;
+      if (current > maxVal) return false;
+    }
   }
 
   if (cond.custom && !ctx.flags[cond.custom]) {

@@ -5,6 +5,9 @@ export type SignalPhase = 'green' | 'yellow' | 'red';
 
 export interface TrafficSignalState {
   nodeId: string;
+  x: number;
+  y: number;
+  z: number;
   activePhaseIndex: number;
   phaseTimer: number; // seconds remaining in current phase
   greenPhaseDuration: number;
@@ -20,6 +23,9 @@ export class SignalController {
       if (node.signal) {
         const state: TrafficSignalState = {
           nodeId: node.nodeId,
+          x: node.x,
+          y: node.y ?? 0,
+          z: node.z,
           activePhaseIndex: 0,
           phaseTimer: greenDuration,
           greenPhaseDuration: greenDuration,
@@ -29,6 +35,10 @@ export class SignalController {
         this.signalList.push(state);
       }
     }
+  }
+
+  getSignalStates(): readonly TrafficSignalState[] {
+    return this.signalList;
   }
 
   update(dt: number): void {

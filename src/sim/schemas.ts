@@ -214,6 +214,23 @@ export const ConditionSchema = z.object({
   bikeConditionMax: z.number().optional(),
   roadType: z.array(z.string()).optional(),
   district: z.array(z.string()).optional(),
+  hasEscapePath: z.boolean().optional(),
+  witnessesMin: z.number().optional(),
+  passengerTrustMin: z.number().optional(),
+  minRiskLevel: z.number().optional(),
+  meterMax: z
+    .record(
+      z.enum([
+        'riderIntegrity',
+        'publicReputation',
+        'platformStanding',
+        'criminalExposure',
+        'evidenceExposure',
+        'safetyRecord',
+      ]),
+      z.number()
+    )
+    .optional(),
   custom: z.string().optional(),
 });
 
@@ -297,6 +314,9 @@ export const BaseEffectSchema = z.discriminatedUnion('type', [
     target: z.enum(['rider', 'passenger', 'bike']).optional(),
     severity: z.number().optional(),
   }),
+  z.object({
+    type: z.literal('robbery'),
+  }),
 ]);
 
 export type BaseEffect = z.infer<typeof BaseEffectSchema>;
@@ -350,6 +370,8 @@ export const EncounterCategorySchema = z.enum([
   'bike',
   'world',
   'crime',
+  'police',
+  'accident',
   'story',
 ]);
 

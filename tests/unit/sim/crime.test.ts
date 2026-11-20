@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import crimeEncounters from '../../../data/encounters/crime.json';
+import mirparaData from '../../../data/districts/mirpara.json';
 import {
   sampleCrimeOutcome,
   calculateSegmentEncounterProbability,
@@ -8,13 +9,15 @@ import {
   isSuspiciousRequest,
   getTimeMultiplier,
 } from '../../../src/sim/events/flee';
+import { evaluateCondition } from '../../../src/sim/events/conditions';
 import { EventDirector } from '../../../src/sim/events/EventDirector';
+import { GameManager } from '../../../src/sim/GameManager';
 import { EventBus, type GameEvents } from '../../../src/core/events';
 import { EconomyManager } from '../../../src/sim/economy/EconomyManager';
 import { Rng } from '../../../src/core/rng';
 import type { RoadSegment, PlayerEconomy } from '../../../src/core/types';
 import type { EncounterContext } from '../../../src/sim/events/conditions';
-import type { EncounterDef } from '../../../src/sim/schemas';
+import type { DistrictData, EncounterDef } from '../../../src/sim/schemas';
 
 describe('Crime and Suspicious-Pickup System (T4.6)', () => {
   it('most risky-archetype rides are harmless (≥ 55% over 1k)', () => {
@@ -294,5 +297,251 @@ describe('Crime and Suspicious-Pickup System (T4.6)', () => {
         roadType: 'alley',
       })
     ).toBe(false);
+  });
+
+  it('5000 ordinary Ch1 alley visits trigger 0 robberies', () => {
+    const ch1Alleys = (mirparaData as DistrictData).segments.filter(
+      (s) => s.roadType === 'alley'
+    );
+    expect(ch1Alleys.length).toBeGreaterThan(0);
+
+    const director = new EventDirector({
+      definitions: crimeEncounters as unknown as EncounterDef[],
+      seed: 2026,
+    });
+    const rng = new Rng(99);
+
+    let robberyCount = 0;
+    for (let i = 0; i < 5000; i++) {
+      const seg = ch1Alleys[i % ch1Alleys.length]!;
+      const minute = 20 * 60 + (i % 240);
+      const ctx: EncounterContext = {
+        phase: i % 2 === 0 ? 'onTrip' : 'roaming',
+        minute,
+        day: 1 + Math.floor(i / 240),
+        weather: 'clear',
+        chapter: 1,
+        flags: {},
+        relationships: {},
+        cash: 600,
+        speedKmh: 0,
+        bikeCondition: 85,
+        segment: seg,
+      };
+      const evalInst = director.evaluate(ctx);
+      if (
+        evalInst &&
+        (evalInst.encounterId === 'enc_dark_alley_blockage' ||
+          evalInst.encounterId === 'enc_robbery_attempt')
+      ) {
+        robberyCount++;
+      }
+
+      const segCrime = director.evaluateSegmentCrime(seg, ctx, undefined, rng);
+      if (
+        segCrime.instance &&
+        (segCrime.instance.encounterId === 'enc_dark_alley_blockage' ||
+          segCrime.instance.encounterId === 'enc_robbery_attempt')
+      ) {
+        robberyCount++;
+      }
+      director.activeEncounter = null;
+      director.activeEncounterDef = null;
+    }
+
+    expect(robberyCount).toBe(0);
+  });
+
+  it('dark-alley robbery choices depend on hasEscapePath, witnesses, passengerTrust, and meterMax', () => {
+    const darkSeg: RoadSegment = {
+      segmentId: 'seg_dark_alley',
+      startNodeId: 'N1',
+      endNodeId: 'N2',
+      width: 4,
+      surfaceCondition: 0.5,
+      trafficDensity: 0.1,
+      speedLimit: 20,
+      turnRestrictions: [],
+      motorcycleAccessible: true,
+      pedestrianDensity: 0,
+      riskLevel: 0.9,
+      oneWay: false,
+      divided: false,
+      lanes: 1,
+      roadType: 'alley',
+      floodSensitivity: 0.1,
+      pickupPractical: true,
+      district: 'puranpara',
+      tags: ['alley', 'dark'],
+    };
+
+    const director = new EventDirector({
+      definitions: crimeEncounters as unknown as EncounterDef[],
+      seed: 42,
+    });
+
+    // Dead-end, no witnesses, low passenger trust -> no try_flee, no call_help, no protect
+    const blockedInst = director.forceStart('enc_dark_alley_blockage', undefined, {
+      phase: 'onTrip',
+      minute: 22 * 60,
+      day: 6,
+      weather: 'clear',
+      chapter: 3,
+      flags: {},
+      relationships: {},
+      cash: 500,
+      speedKmh: 0,
+      bikeCondition: 80,
+      segment: darkSeg,
+      hasEscapePath: false,
+      witnesses: 0,
+      passenger: { id: 'p1', trust: 20, mood: 0.6 },
+    });
+    expect(blockedInst).not.toBeNull();
+    const blockedIds = blockedInst!.choices.map((c) => c.id);
+    expect(blockedIds).not.toContain('try_flee');
+    expect(blockedIds).not.toContain('call_help');
+    expect(blockedIds).not.toContain('protect');
+    expect(blockedIds).toContain('comply');
+    director.activeEncounter = null;
+    director.activeEncounterDef = null;
+
+    // Escape path + witnesses + high passenger trust -> all contextual options offered
+    const openInst = director.forceStart('enc_dark_alley_blockage', undefined, {
+      phase: 'onTrip',
+      minute: 22 * 60,
+      day: 6,
+      weather: 'clear',
+      chapter: 3,
+      flags: {},
+      relationships: {},
+      cash: 500,
+      speedKmh: 0,
+      bikeCondition: 80,
+      segment: darkSeg,
+      hasEscapePath: true,
+      witnesses: 3,
+      passenger: { id: 'p1', trust: 70, mood: 0.8 },
+    });
+    expect(openInst).not.toBeNull();
+    const openIds = openInst!.choices.map((c) => c.id);
+    expect(openIds).toContain('try_flee');
+    expect(openIds).toContain('call_help');
+    expect(openIds).toContain('protect');
+
+    // Condition helpers directly verify passengerTrustMin, witnessesMin, hasEscapePath, meterMax
+    expect(
+      evaluateCondition(
+        {
+          hasEscapePath: true,
+          witnessesMin: 2,
+          passengerTrustMin: 50,
+          meterMax: { criminalExposure: 25 },
+        } as never,
+        {
+          phase: 'onTrip',
+          minute: 1300,
+          day: 5,
+          weather: 'clear',
+          chapter: 3,
+          flags: {},
+          relationships: {},
+          cash: 500,
+          speedKmh: 0,
+          bikeCondition: 80,
+          hasEscapePath: true,
+          witnesses: 2,
+          meters: { criminalExposure: 20 },
+          passenger: { id: 'p1', trust: 60, mood: 0.7 },
+        } as never
+      )
+    ).toBe(true);
+
+    expect(
+      evaluateCondition(
+        { meterMax: { criminalExposure: 10 } } as never,
+        {
+          phase: 'onTrip',
+          minute: 1300,
+          day: 5,
+          weather: 'clear',
+          chapter: 3,
+          flags: {},
+          relationships: {},
+          cash: 500,
+          speedKmh: 0,
+          bikeCondition: 80,
+          meters: { criminalExposure: 25 },
+        } as never
+      )
+    ).toBe(false);
+  });
+
+  it('comply loses cash via robbery tx without reputation hit; protect rewards trust and reputation', () => {
+    // 1. Comply
+    const gmComply = new GameManager({
+      seed: 31,
+      mode: 'career',
+      data: { encounters: crimeEncounters } as never,
+    });
+    gmComply.economyManager.cash = 1000;
+    gmComply.economy.cash = 1000;
+    gmComply.economyManager.savings = 5000;
+    const txs: Array<{ kind: string; amount: number }> = [];
+    gmComply.bus.on('economy/transaction', ({ tx }) => txs.push({ kind: tx.kind, amount: tx.amount }));
+
+    const repBefore = gmComply.reputationSystem.getMeters().publicReputation;
+    const integrityBefore = gmComply.reputationSystem.getMeters().riderIntegrity;
+    const standingBefore = gmComply.reputationSystem.getMeters().platformStanding;
+    const ratingBefore = gmComply.reputationSystem.getAppRating();
+
+    const instComply = gmComply.eventDirector.forceStart('enc_dark_alley_blockage', gmComply.bus);
+    expect(instComply).not.toBeNull();
+    gmComply.dispatch({
+      type: 'chooseEncounterOption',
+      instanceId: instComply!.id,
+      choiceId: 'comply',
+    });
+
+    expect(gmComply.economyManager.cash).toBeLessThan(1000);
+    expect(gmComply.economyManager.cash).toBeGreaterThanOrEqual(300);
+    expect(gmComply.economyManager.savings).toBe(5000);
+    expect(txs.some((t) => t.kind === 'robbery' && t.amount < 0)).toBe(true);
+    expect(gmComply.reputationSystem.getMeters().publicReputation).toBe(repBefore);
+    expect(gmComply.reputationSystem.getMeters().riderIntegrity).toBe(integrityBefore);
+    expect(gmComply.reputationSystem.getMeters().platformStanding).toBe(standingBefore);
+    expect(gmComply.reputationSystem.getAppRating()).toBe(ratingBefore);
+
+    // 2. Protect
+    const gmProtect = new GameManager({
+      seed: 32,
+      mode: 'career',
+      data: { encounters: crimeEncounters } as never,
+    });
+    const instProtect = gmProtect.eventDirector.forceStart('enc_dark_alley_blockage', gmProtect.bus, {
+      phase: 'onTrip',
+      minute: 22 * 60,
+      day: 5,
+      weather: 'clear',
+      chapter: 3,
+      flags: {},
+      relationships: {},
+      cash: 800,
+      speedKmh: 0,
+      bikeCondition: 80,
+      hasEscapePath: true,
+      witnesses: 0,
+      passenger: { id: 'char_nabila', trust: 75, mood: 0.8 },
+    } as never);
+    expect(instProtect).not.toBeNull();
+    const pub0 = gmProtect.reputationSystem.getMeters().publicReputation;
+    const int0 = gmProtect.reputationSystem.getMeters().riderIntegrity;
+    gmProtect.dispatch({
+      type: 'chooseEncounterOption',
+      instanceId: instProtect!.id,
+      choiceId: 'protect',
+    });
+    expect(gmProtect.reputationSystem.getMeters().publicReputation).toBeGreaterThan(pub0);
+    expect(gmProtect.reputationSystem.getMeters().riderIntegrity).toBeGreaterThan(int0);
   });
 });

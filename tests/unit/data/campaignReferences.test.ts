@@ -12,6 +12,8 @@ import passenger from '../../../data/encounters/passenger.json';
 import payment from '../../../data/encounters/payment.json';
 import pickup from '../../../data/encounters/pickup.json';
 import route from '../../../data/encounters/route.json';
+import police from '../../../data/encounters/police.json';
+import accident from '../../../data/encounters/accident.json';
 
 // Static cross-checks between the campaign content and the encounter content.
 // Each rule below is a way the campaign used to softlock: a mission waiting
@@ -51,7 +53,7 @@ interface Encounter {
 }
 
 const missions = [...ch1, ...ch2, ...ch3, ...ch4, ...ch5, ...ch6, ...side] as Mission[];
-const encounters = [...bike, ...crime, ...passenger, ...payment, ...pickup, ...route] as Encounter[];
+const encounters = [...bike, ...crime, ...passenger, ...payment, ...pickup, ...route, ...police, ...accident] as Encounter[];
 const encounterById = new Map(encounters.map((e) => [e.id, e]));
 
 // Flags the engine sets itself, not through data. Each must be emitted from code.
