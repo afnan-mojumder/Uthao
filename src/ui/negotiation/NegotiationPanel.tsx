@@ -7,14 +7,13 @@ import type {
   NegotiationResult,
   NegotiationSession,
 } from '../../sim/negotiation/NegotiationSystem';
-import { ModalPanel } from '../components';
+import { CharacterPortrait, ModalPanel } from '../components';
 import {
   IconCheck,
   IconClock,
   IconFlag,
   IconMapPin,
   IconShield,
-  IconUser,
   IconWarning,
 } from '../components/icons';
 import { getDictionary, getLanguage, localDigits, t } from '../i18n';
@@ -203,22 +202,13 @@ export function NegotiationPanelView({
       {/* Top Header: Passenger Info & Patience */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
-          <div
-            style={{
-              width: '44px',
-              height: '44px',
-              borderRadius: '50%',
-              background: '#334155',
-              border: '2px solid #38bdf8',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#e0f2fe',
-              flexShrink: 0,
-            }}
-          >
-            <IconUser size={22} />
-          </div>
+          <CharacterPortrait
+            characterId={session.profile.characterId ?? session.req.characterId}
+            archetype={session.profile.archetype}
+            mood={mood}
+            size={44}
+            hideLabels={true}
+          />
           <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
             <span style={{ fontSize: '16px', fontWeight: 700, color: '#f8fafc' }}>
               {passengerName}

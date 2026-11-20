@@ -3696,6 +3696,90 @@
     "category": "general"
   },
   {
+    "id": "dl_student_greeting_04",
+    "archetype": "student",
+    "phase": "greeting",
+    "key": "dialogue.pool.student.greeting.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_greeting_05",
+    "archetype": "student",
+    "phase": "greeting",
+    "key": "dialogue.pool.student.greeting.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_greeting_06",
+    "archetype": "student",
+    "phase": "greeting",
+    "key": "dialogue.pool.student.greeting.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_greeting_07",
+    "archetype": "student",
+    "phase": "greeting",
+    "key": "dialogue.pool.student.greeting.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_greeting_08",
+    "archetype": "student",
+    "phase": "greeting",
+    "key": "dialogue.pool.student.greeting.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_greeting_09",
+    "archetype": "student",
+    "phase": "greeting",
+    "key": "dialogue.pool.student.greeting.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_greeting_10",
+    "archetype": "student",
+    "phase": "greeting",
+    "key": "dialogue.pool.student.greeting.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_greeting_11",
+    "archetype": "student",
+    "phase": "greeting",
+    "key": "dialogue.pool.student.greeting.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_greeting_12",
+    "archetype": "student",
+    "phase": "greeting",
+    "key": "dialogue.pool.student.greeting.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_greeting_13",
+    "archetype": "student",
+    "phase": "greeting",
+    "key": "dialogue.pool.student.greeting.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_greeting_14",
+    "archetype": "student",
+    "phase": "greeting",
+    "key": "dialogue.pool.student.greeting.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_greeting_15",
+    "archetype": "student",
+    "phase": "greeting",
+    "key": "dialogue.pool.student.greeting.15",
+    "category": "general"
+  },
+  {
     "id": "dl_student_offer_01",
     "archetype": "student",
     "phase": "offer",
@@ -3707,6 +3791,97 @@
     "archetype": "student",
     "phase": "offer",
     "key": "dialogue.pool.student.offer.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_offer_03",
+    "archetype": "student",
+    "phase": "offer",
+    "key": "dialogue.pool.student.offer.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_offer_04",
+    "archetype": "student",
+    "phase": "offer",
+    "key": "dialogue.pool.student.offer.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_offer_05",
+    "archetype": "student",
+    "phase": "offer",
+    "key": "dialogue.pool.student.offer.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_offer_06",
+    "archetype": "student",
+    "phase": "offer",
+    "key": "dialogue.pool.student.offer.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_offer_07",
+    "archetype": "student",
+    "phase": "offer",
+    "key": "dialogue.pool.student.offer.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_offer_08",
+    "archetype": "student",
+    "phase": "offer",
+    "key": "dialogue.pool.student.offer.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_offer_09",
+    "archetype": "student",
+    "phase": "offer",
+    "key": "dialogue.pool.student.offer.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_offer_10",
+    "archetype": "student",
+    "phase": "offer",
+    "key": "dialogue.pool.student.offer.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_offer_11",
+    "archetype": "student",
+    "phase": "offer",
+    "key": "dialogue.pool.student.offer.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_offer_12",
+    "archetype": "student",
+    "phase": "offer",
+    "key": "dialogue.pool.student.offer.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_offer_13",
+    "archetype": "student",
+    "phase": "offer",
+    "key": "dialogue.pool.student.offer.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_offer_14",
+    "archetype": "student",
+    "phase": "offer",
+    "key": "dialogue.pool.student.offer.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_offer_15",
+    "archetype": "student",
+    "phase": "offer",
+    "key": "dialogue.pool.student.offer.15",
     "category": "general"
   },
   {
@@ -3724,6 +3899,97 @@
     "category": "general"
   },
   {
+    "id": "dl_student_counter_03",
+    "archetype": "student",
+    "phase": "counter",
+    "key": "dialogue.pool.student.counter.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_counter_04",
+    "archetype": "student",
+    "phase": "counter",
+    "key": "dialogue.pool.student.counter.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_counter_05",
+    "archetype": "student",
+    "phase": "counter",
+    "key": "dialogue.pool.student.counter.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_counter_06",
+    "archetype": "student",
+    "phase": "counter",
+    "key": "dialogue.pool.student.counter.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_counter_07",
+    "archetype": "student",
+    "phase": "counter",
+    "key": "dialogue.pool.student.counter.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_counter_08",
+    "archetype": "student",
+    "phase": "counter",
+    "key": "dialogue.pool.student.counter.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_counter_09",
+    "archetype": "student",
+    "phase": "counter",
+    "key": "dialogue.pool.student.counter.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_counter_10",
+    "archetype": "student",
+    "phase": "counter",
+    "key": "dialogue.pool.student.counter.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_counter_11",
+    "archetype": "student",
+    "phase": "counter",
+    "key": "dialogue.pool.student.counter.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_counter_12",
+    "archetype": "student",
+    "phase": "counter",
+    "key": "dialogue.pool.student.counter.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_counter_13",
+    "archetype": "student",
+    "phase": "counter",
+    "key": "dialogue.pool.student.counter.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_counter_14",
+    "archetype": "student",
+    "phase": "counter",
+    "key": "dialogue.pool.student.counter.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_counter_15",
+    "archetype": "student",
+    "phase": "counter",
+    "key": "dialogue.pool.student.counter.15",
+    "category": "general"
+  },
+  {
     "id": "dl_student_accept_01",
     "archetype": "student",
     "phase": "accept",
@@ -3735,6 +4001,97 @@
     "archetype": "student",
     "phase": "accept",
     "key": "dialogue.pool.student.accept.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_accept_03",
+    "archetype": "student",
+    "phase": "accept",
+    "key": "dialogue.pool.student.accept.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_accept_04",
+    "archetype": "student",
+    "phase": "accept",
+    "key": "dialogue.pool.student.accept.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_accept_05",
+    "archetype": "student",
+    "phase": "accept",
+    "key": "dialogue.pool.student.accept.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_accept_06",
+    "archetype": "student",
+    "phase": "accept",
+    "key": "dialogue.pool.student.accept.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_accept_07",
+    "archetype": "student",
+    "phase": "accept",
+    "key": "dialogue.pool.student.accept.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_accept_08",
+    "archetype": "student",
+    "phase": "accept",
+    "key": "dialogue.pool.student.accept.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_accept_09",
+    "archetype": "student",
+    "phase": "accept",
+    "key": "dialogue.pool.student.accept.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_accept_10",
+    "archetype": "student",
+    "phase": "accept",
+    "key": "dialogue.pool.student.accept.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_accept_11",
+    "archetype": "student",
+    "phase": "accept",
+    "key": "dialogue.pool.student.accept.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_accept_12",
+    "archetype": "student",
+    "phase": "accept",
+    "key": "dialogue.pool.student.accept.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_accept_13",
+    "archetype": "student",
+    "phase": "accept",
+    "key": "dialogue.pool.student.accept.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_accept_14",
+    "archetype": "student",
+    "phase": "accept",
+    "key": "dialogue.pool.student.accept.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_accept_15",
+    "archetype": "student",
+    "phase": "accept",
+    "key": "dialogue.pool.student.accept.15",
     "category": "general"
   },
   {
@@ -3752,6 +4109,97 @@
     "category": "general"
   },
   {
+    "id": "dl_student_reject_03",
+    "archetype": "student",
+    "phase": "reject",
+    "key": "dialogue.pool.student.reject.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_reject_04",
+    "archetype": "student",
+    "phase": "reject",
+    "key": "dialogue.pool.student.reject.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_reject_05",
+    "archetype": "student",
+    "phase": "reject",
+    "key": "dialogue.pool.student.reject.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_reject_06",
+    "archetype": "student",
+    "phase": "reject",
+    "key": "dialogue.pool.student.reject.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_reject_07",
+    "archetype": "student",
+    "phase": "reject",
+    "key": "dialogue.pool.student.reject.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_reject_08",
+    "archetype": "student",
+    "phase": "reject",
+    "key": "dialogue.pool.student.reject.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_reject_09",
+    "archetype": "student",
+    "phase": "reject",
+    "key": "dialogue.pool.student.reject.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_reject_10",
+    "archetype": "student",
+    "phase": "reject",
+    "key": "dialogue.pool.student.reject.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_reject_11",
+    "archetype": "student",
+    "phase": "reject",
+    "key": "dialogue.pool.student.reject.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_reject_12",
+    "archetype": "student",
+    "phase": "reject",
+    "key": "dialogue.pool.student.reject.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_reject_13",
+    "archetype": "student",
+    "phase": "reject",
+    "key": "dialogue.pool.student.reject.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_reject_14",
+    "archetype": "student",
+    "phase": "reject",
+    "key": "dialogue.pool.student.reject.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_reject_15",
+    "archetype": "student",
+    "phase": "reject",
+    "key": "dialogue.pool.student.reject.15",
+    "category": "general"
+  },
+  {
     "id": "dl_student_small_talk_01",
     "archetype": "student",
     "phase": "small_talk",
@@ -3766,6 +4214,97 @@
     "category": "exams"
   },
   {
+    "id": "dl_student_small_talk_03",
+    "archetype": "student",
+    "phase": "small_talk",
+    "key": "dialogue.pool.student.small_talk.03",
+    "category": "jam"
+  },
+  {
+    "id": "dl_student_small_talk_04",
+    "archetype": "student",
+    "phase": "small_talk",
+    "key": "dialogue.pool.student.small_talk.04",
+    "category": "rain"
+  },
+  {
+    "id": "dl_student_small_talk_05",
+    "archetype": "student",
+    "phase": "small_talk",
+    "key": "dialogue.pool.student.small_talk.05",
+    "category": "family"
+  },
+  {
+    "id": "dl_student_small_talk_06",
+    "archetype": "student",
+    "phase": "small_talk",
+    "key": "dialogue.pool.student.small_talk.06",
+    "category": "humour"
+  },
+  {
+    "id": "dl_student_small_talk_07",
+    "archetype": "student",
+    "phase": "small_talk",
+    "key": "dialogue.pool.student.small_talk.07",
+    "category": "cricket"
+  },
+  {
+    "id": "dl_student_small_talk_08",
+    "archetype": "student",
+    "phase": "small_talk",
+    "key": "dialogue.pool.student.small_talk.08",
+    "category": "exams"
+  },
+  {
+    "id": "dl_student_small_talk_09",
+    "archetype": "student",
+    "phase": "small_talk",
+    "key": "dialogue.pool.student.small_talk.09",
+    "category": "jam"
+  },
+  {
+    "id": "dl_student_small_talk_10",
+    "archetype": "student",
+    "phase": "small_talk",
+    "key": "dialogue.pool.student.small_talk.10",
+    "category": "rain"
+  },
+  {
+    "id": "dl_student_small_talk_11",
+    "archetype": "student",
+    "phase": "small_talk",
+    "key": "dialogue.pool.student.small_talk.11",
+    "category": "family"
+  },
+  {
+    "id": "dl_student_small_talk_12",
+    "archetype": "student",
+    "phase": "small_talk",
+    "key": "dialogue.pool.student.small_talk.12",
+    "category": "humour"
+  },
+  {
+    "id": "dl_student_small_talk_13",
+    "archetype": "student",
+    "phase": "small_talk",
+    "key": "dialogue.pool.student.small_talk.13",
+    "category": "cricket"
+  },
+  {
+    "id": "dl_student_small_talk_14",
+    "archetype": "student",
+    "phase": "small_talk",
+    "key": "dialogue.pool.student.small_talk.14",
+    "category": "exams"
+  },
+  {
+    "id": "dl_student_small_talk_15",
+    "archetype": "student",
+    "phase": "small_talk",
+    "key": "dialogue.pool.student.small_talk.15",
+    "category": "jam"
+  },
+  {
     "id": "dl_student_drop_off_01",
     "archetype": "student",
     "phase": "drop_off",
@@ -3777,6 +4316,97 @@
     "archetype": "student",
     "phase": "drop_off",
     "key": "dialogue.pool.student.drop_off.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_drop_off_03",
+    "archetype": "student",
+    "phase": "drop_off",
+    "key": "dialogue.pool.student.drop_off.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_drop_off_04",
+    "archetype": "student",
+    "phase": "drop_off",
+    "key": "dialogue.pool.student.drop_off.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_drop_off_05",
+    "archetype": "student",
+    "phase": "drop_off",
+    "key": "dialogue.pool.student.drop_off.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_drop_off_06",
+    "archetype": "student",
+    "phase": "drop_off",
+    "key": "dialogue.pool.student.drop_off.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_drop_off_07",
+    "archetype": "student",
+    "phase": "drop_off",
+    "key": "dialogue.pool.student.drop_off.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_drop_off_08",
+    "archetype": "student",
+    "phase": "drop_off",
+    "key": "dialogue.pool.student.drop_off.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_drop_off_09",
+    "archetype": "student",
+    "phase": "drop_off",
+    "key": "dialogue.pool.student.drop_off.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_drop_off_10",
+    "archetype": "student",
+    "phase": "drop_off",
+    "key": "dialogue.pool.student.drop_off.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_drop_off_11",
+    "archetype": "student",
+    "phase": "drop_off",
+    "key": "dialogue.pool.student.drop_off.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_drop_off_12",
+    "archetype": "student",
+    "phase": "drop_off",
+    "key": "dialogue.pool.student.drop_off.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_drop_off_13",
+    "archetype": "student",
+    "phase": "drop_off",
+    "key": "dialogue.pool.student.drop_off.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_drop_off_14",
+    "archetype": "student",
+    "phase": "drop_off",
+    "key": "dialogue.pool.student.drop_off.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_student_drop_off_15",
+    "archetype": "student",
+    "phase": "drop_off",
+    "key": "dialogue.pool.student.drop_off.15",
     "category": "general"
   },
   {
@@ -3801,6 +4431,90 @@
     "category": "general"
   },
   {
+    "id": "dl_office_greeting_04",
+    "archetype": "office",
+    "phase": "greeting",
+    "key": "dialogue.pool.office.greeting.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_greeting_05",
+    "archetype": "office",
+    "phase": "greeting",
+    "key": "dialogue.pool.office.greeting.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_greeting_06",
+    "archetype": "office",
+    "phase": "greeting",
+    "key": "dialogue.pool.office.greeting.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_greeting_07",
+    "archetype": "office",
+    "phase": "greeting",
+    "key": "dialogue.pool.office.greeting.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_greeting_08",
+    "archetype": "office",
+    "phase": "greeting",
+    "key": "dialogue.pool.office.greeting.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_greeting_09",
+    "archetype": "office",
+    "phase": "greeting",
+    "key": "dialogue.pool.office.greeting.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_greeting_10",
+    "archetype": "office",
+    "phase": "greeting",
+    "key": "dialogue.pool.office.greeting.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_greeting_11",
+    "archetype": "office",
+    "phase": "greeting",
+    "key": "dialogue.pool.office.greeting.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_greeting_12",
+    "archetype": "office",
+    "phase": "greeting",
+    "key": "dialogue.pool.office.greeting.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_greeting_13",
+    "archetype": "office",
+    "phase": "greeting",
+    "key": "dialogue.pool.office.greeting.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_greeting_14",
+    "archetype": "office",
+    "phase": "greeting",
+    "key": "dialogue.pool.office.greeting.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_greeting_15",
+    "archetype": "office",
+    "phase": "greeting",
+    "key": "dialogue.pool.office.greeting.15",
+    "category": "general"
+  },
+  {
     "id": "dl_office_offer_01",
     "archetype": "office",
     "phase": "offer",
@@ -3812,6 +4526,97 @@
     "archetype": "office",
     "phase": "offer",
     "key": "dialogue.pool.office.offer.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_offer_03",
+    "archetype": "office",
+    "phase": "offer",
+    "key": "dialogue.pool.office.offer.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_offer_04",
+    "archetype": "office",
+    "phase": "offer",
+    "key": "dialogue.pool.office.offer.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_offer_05",
+    "archetype": "office",
+    "phase": "offer",
+    "key": "dialogue.pool.office.offer.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_offer_06",
+    "archetype": "office",
+    "phase": "offer",
+    "key": "dialogue.pool.office.offer.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_offer_07",
+    "archetype": "office",
+    "phase": "offer",
+    "key": "dialogue.pool.office.offer.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_offer_08",
+    "archetype": "office",
+    "phase": "offer",
+    "key": "dialogue.pool.office.offer.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_offer_09",
+    "archetype": "office",
+    "phase": "offer",
+    "key": "dialogue.pool.office.offer.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_offer_10",
+    "archetype": "office",
+    "phase": "offer",
+    "key": "dialogue.pool.office.offer.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_offer_11",
+    "archetype": "office",
+    "phase": "offer",
+    "key": "dialogue.pool.office.offer.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_offer_12",
+    "archetype": "office",
+    "phase": "offer",
+    "key": "dialogue.pool.office.offer.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_offer_13",
+    "archetype": "office",
+    "phase": "offer",
+    "key": "dialogue.pool.office.offer.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_offer_14",
+    "archetype": "office",
+    "phase": "offer",
+    "key": "dialogue.pool.office.offer.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_offer_15",
+    "archetype": "office",
+    "phase": "offer",
+    "key": "dialogue.pool.office.offer.15",
     "category": "general"
   },
   {
@@ -3829,6 +4634,97 @@
     "category": "general"
   },
   {
+    "id": "dl_office_counter_03",
+    "archetype": "office",
+    "phase": "counter",
+    "key": "dialogue.pool.office.counter.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_counter_04",
+    "archetype": "office",
+    "phase": "counter",
+    "key": "dialogue.pool.office.counter.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_counter_05",
+    "archetype": "office",
+    "phase": "counter",
+    "key": "dialogue.pool.office.counter.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_counter_06",
+    "archetype": "office",
+    "phase": "counter",
+    "key": "dialogue.pool.office.counter.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_counter_07",
+    "archetype": "office",
+    "phase": "counter",
+    "key": "dialogue.pool.office.counter.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_counter_08",
+    "archetype": "office",
+    "phase": "counter",
+    "key": "dialogue.pool.office.counter.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_counter_09",
+    "archetype": "office",
+    "phase": "counter",
+    "key": "dialogue.pool.office.counter.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_counter_10",
+    "archetype": "office",
+    "phase": "counter",
+    "key": "dialogue.pool.office.counter.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_counter_11",
+    "archetype": "office",
+    "phase": "counter",
+    "key": "dialogue.pool.office.counter.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_counter_12",
+    "archetype": "office",
+    "phase": "counter",
+    "key": "dialogue.pool.office.counter.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_counter_13",
+    "archetype": "office",
+    "phase": "counter",
+    "key": "dialogue.pool.office.counter.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_counter_14",
+    "archetype": "office",
+    "phase": "counter",
+    "key": "dialogue.pool.office.counter.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_counter_15",
+    "archetype": "office",
+    "phase": "counter",
+    "key": "dialogue.pool.office.counter.15",
+    "category": "general"
+  },
+  {
     "id": "dl_office_accept_01",
     "archetype": "office",
     "phase": "accept",
@@ -3840,6 +4736,97 @@
     "archetype": "office",
     "phase": "accept",
     "key": "dialogue.pool.office.accept.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_accept_03",
+    "archetype": "office",
+    "phase": "accept",
+    "key": "dialogue.pool.office.accept.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_accept_04",
+    "archetype": "office",
+    "phase": "accept",
+    "key": "dialogue.pool.office.accept.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_accept_05",
+    "archetype": "office",
+    "phase": "accept",
+    "key": "dialogue.pool.office.accept.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_accept_06",
+    "archetype": "office",
+    "phase": "accept",
+    "key": "dialogue.pool.office.accept.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_accept_07",
+    "archetype": "office",
+    "phase": "accept",
+    "key": "dialogue.pool.office.accept.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_accept_08",
+    "archetype": "office",
+    "phase": "accept",
+    "key": "dialogue.pool.office.accept.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_accept_09",
+    "archetype": "office",
+    "phase": "accept",
+    "key": "dialogue.pool.office.accept.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_accept_10",
+    "archetype": "office",
+    "phase": "accept",
+    "key": "dialogue.pool.office.accept.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_accept_11",
+    "archetype": "office",
+    "phase": "accept",
+    "key": "dialogue.pool.office.accept.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_accept_12",
+    "archetype": "office",
+    "phase": "accept",
+    "key": "dialogue.pool.office.accept.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_accept_13",
+    "archetype": "office",
+    "phase": "accept",
+    "key": "dialogue.pool.office.accept.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_accept_14",
+    "archetype": "office",
+    "phase": "accept",
+    "key": "dialogue.pool.office.accept.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_accept_15",
+    "archetype": "office",
+    "phase": "accept",
+    "key": "dialogue.pool.office.accept.15",
     "category": "general"
   },
   {
@@ -3857,6 +4844,97 @@
     "category": "general"
   },
   {
+    "id": "dl_office_reject_03",
+    "archetype": "office",
+    "phase": "reject",
+    "key": "dialogue.pool.office.reject.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_reject_04",
+    "archetype": "office",
+    "phase": "reject",
+    "key": "dialogue.pool.office.reject.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_reject_05",
+    "archetype": "office",
+    "phase": "reject",
+    "key": "dialogue.pool.office.reject.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_reject_06",
+    "archetype": "office",
+    "phase": "reject",
+    "key": "dialogue.pool.office.reject.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_reject_07",
+    "archetype": "office",
+    "phase": "reject",
+    "key": "dialogue.pool.office.reject.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_reject_08",
+    "archetype": "office",
+    "phase": "reject",
+    "key": "dialogue.pool.office.reject.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_reject_09",
+    "archetype": "office",
+    "phase": "reject",
+    "key": "dialogue.pool.office.reject.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_reject_10",
+    "archetype": "office",
+    "phase": "reject",
+    "key": "dialogue.pool.office.reject.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_reject_11",
+    "archetype": "office",
+    "phase": "reject",
+    "key": "dialogue.pool.office.reject.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_reject_12",
+    "archetype": "office",
+    "phase": "reject",
+    "key": "dialogue.pool.office.reject.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_reject_13",
+    "archetype": "office",
+    "phase": "reject",
+    "key": "dialogue.pool.office.reject.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_reject_14",
+    "archetype": "office",
+    "phase": "reject",
+    "key": "dialogue.pool.office.reject.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_reject_15",
+    "archetype": "office",
+    "phase": "reject",
+    "key": "dialogue.pool.office.reject.15",
+    "category": "general"
+  },
+  {
     "id": "dl_office_small_talk_01",
     "archetype": "office",
     "phase": "small_talk",
@@ -3871,6 +4949,97 @@
     "category": "exams"
   },
   {
+    "id": "dl_office_small_talk_03",
+    "archetype": "office",
+    "phase": "small_talk",
+    "key": "dialogue.pool.office.small_talk.03",
+    "category": "jam"
+  },
+  {
+    "id": "dl_office_small_talk_04",
+    "archetype": "office",
+    "phase": "small_talk",
+    "key": "dialogue.pool.office.small_talk.04",
+    "category": "rain"
+  },
+  {
+    "id": "dl_office_small_talk_05",
+    "archetype": "office",
+    "phase": "small_talk",
+    "key": "dialogue.pool.office.small_talk.05",
+    "category": "family"
+  },
+  {
+    "id": "dl_office_small_talk_06",
+    "archetype": "office",
+    "phase": "small_talk",
+    "key": "dialogue.pool.office.small_talk.06",
+    "category": "humour"
+  },
+  {
+    "id": "dl_office_small_talk_07",
+    "archetype": "office",
+    "phase": "small_talk",
+    "key": "dialogue.pool.office.small_talk.07",
+    "category": "cricket"
+  },
+  {
+    "id": "dl_office_small_talk_08",
+    "archetype": "office",
+    "phase": "small_talk",
+    "key": "dialogue.pool.office.small_talk.08",
+    "category": "exams"
+  },
+  {
+    "id": "dl_office_small_talk_09",
+    "archetype": "office",
+    "phase": "small_talk",
+    "key": "dialogue.pool.office.small_talk.09",
+    "category": "jam"
+  },
+  {
+    "id": "dl_office_small_talk_10",
+    "archetype": "office",
+    "phase": "small_talk",
+    "key": "dialogue.pool.office.small_talk.10",
+    "category": "rain"
+  },
+  {
+    "id": "dl_office_small_talk_11",
+    "archetype": "office",
+    "phase": "small_talk",
+    "key": "dialogue.pool.office.small_talk.11",
+    "category": "family"
+  },
+  {
+    "id": "dl_office_small_talk_12",
+    "archetype": "office",
+    "phase": "small_talk",
+    "key": "dialogue.pool.office.small_talk.12",
+    "category": "humour"
+  },
+  {
+    "id": "dl_office_small_talk_13",
+    "archetype": "office",
+    "phase": "small_talk",
+    "key": "dialogue.pool.office.small_talk.13",
+    "category": "cricket"
+  },
+  {
+    "id": "dl_office_small_talk_14",
+    "archetype": "office",
+    "phase": "small_talk",
+    "key": "dialogue.pool.office.small_talk.14",
+    "category": "exams"
+  },
+  {
+    "id": "dl_office_small_talk_15",
+    "archetype": "office",
+    "phase": "small_talk",
+    "key": "dialogue.pool.office.small_talk.15",
+    "category": "jam"
+  },
+  {
     "id": "dl_office_drop_off_01",
     "archetype": "office",
     "phase": "drop_off",
@@ -3882,6 +5051,97 @@
     "archetype": "office",
     "phase": "drop_off",
     "key": "dialogue.pool.office.drop_off.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_drop_off_03",
+    "archetype": "office",
+    "phase": "drop_off",
+    "key": "dialogue.pool.office.drop_off.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_drop_off_04",
+    "archetype": "office",
+    "phase": "drop_off",
+    "key": "dialogue.pool.office.drop_off.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_drop_off_05",
+    "archetype": "office",
+    "phase": "drop_off",
+    "key": "dialogue.pool.office.drop_off.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_drop_off_06",
+    "archetype": "office",
+    "phase": "drop_off",
+    "key": "dialogue.pool.office.drop_off.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_drop_off_07",
+    "archetype": "office",
+    "phase": "drop_off",
+    "key": "dialogue.pool.office.drop_off.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_drop_off_08",
+    "archetype": "office",
+    "phase": "drop_off",
+    "key": "dialogue.pool.office.drop_off.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_drop_off_09",
+    "archetype": "office",
+    "phase": "drop_off",
+    "key": "dialogue.pool.office.drop_off.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_drop_off_10",
+    "archetype": "office",
+    "phase": "drop_off",
+    "key": "dialogue.pool.office.drop_off.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_drop_off_11",
+    "archetype": "office",
+    "phase": "drop_off",
+    "key": "dialogue.pool.office.drop_off.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_drop_off_12",
+    "archetype": "office",
+    "phase": "drop_off",
+    "key": "dialogue.pool.office.drop_off.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_drop_off_13",
+    "archetype": "office",
+    "phase": "drop_off",
+    "key": "dialogue.pool.office.drop_off.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_drop_off_14",
+    "archetype": "office",
+    "phase": "drop_off",
+    "key": "dialogue.pool.office.drop_off.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_office_drop_off_15",
+    "archetype": "office",
+    "phase": "drop_off",
+    "key": "dialogue.pool.office.drop_off.15",
     "category": "general"
   },
   {
@@ -3906,6 +5166,90 @@
     "category": "general"
   },
   {
+    "id": "dl_urgent_greeting_04",
+    "archetype": "urgent",
+    "phase": "greeting",
+    "key": "dialogue.pool.urgent.greeting.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_greeting_05",
+    "archetype": "urgent",
+    "phase": "greeting",
+    "key": "dialogue.pool.urgent.greeting.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_greeting_06",
+    "archetype": "urgent",
+    "phase": "greeting",
+    "key": "dialogue.pool.urgent.greeting.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_greeting_07",
+    "archetype": "urgent",
+    "phase": "greeting",
+    "key": "dialogue.pool.urgent.greeting.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_greeting_08",
+    "archetype": "urgent",
+    "phase": "greeting",
+    "key": "dialogue.pool.urgent.greeting.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_greeting_09",
+    "archetype": "urgent",
+    "phase": "greeting",
+    "key": "dialogue.pool.urgent.greeting.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_greeting_10",
+    "archetype": "urgent",
+    "phase": "greeting",
+    "key": "dialogue.pool.urgent.greeting.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_greeting_11",
+    "archetype": "urgent",
+    "phase": "greeting",
+    "key": "dialogue.pool.urgent.greeting.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_greeting_12",
+    "archetype": "urgent",
+    "phase": "greeting",
+    "key": "dialogue.pool.urgent.greeting.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_greeting_13",
+    "archetype": "urgent",
+    "phase": "greeting",
+    "key": "dialogue.pool.urgent.greeting.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_greeting_14",
+    "archetype": "urgent",
+    "phase": "greeting",
+    "key": "dialogue.pool.urgent.greeting.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_greeting_15",
+    "archetype": "urgent",
+    "phase": "greeting",
+    "key": "dialogue.pool.urgent.greeting.15",
+    "category": "general"
+  },
+  {
     "id": "dl_urgent_offer_01",
     "archetype": "urgent",
     "phase": "offer",
@@ -3917,6 +5261,97 @@
     "archetype": "urgent",
     "phase": "offer",
     "key": "dialogue.pool.urgent.offer.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_offer_03",
+    "archetype": "urgent",
+    "phase": "offer",
+    "key": "dialogue.pool.urgent.offer.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_offer_04",
+    "archetype": "urgent",
+    "phase": "offer",
+    "key": "dialogue.pool.urgent.offer.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_offer_05",
+    "archetype": "urgent",
+    "phase": "offer",
+    "key": "dialogue.pool.urgent.offer.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_offer_06",
+    "archetype": "urgent",
+    "phase": "offer",
+    "key": "dialogue.pool.urgent.offer.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_offer_07",
+    "archetype": "urgent",
+    "phase": "offer",
+    "key": "dialogue.pool.urgent.offer.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_offer_08",
+    "archetype": "urgent",
+    "phase": "offer",
+    "key": "dialogue.pool.urgent.offer.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_offer_09",
+    "archetype": "urgent",
+    "phase": "offer",
+    "key": "dialogue.pool.urgent.offer.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_offer_10",
+    "archetype": "urgent",
+    "phase": "offer",
+    "key": "dialogue.pool.urgent.offer.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_offer_11",
+    "archetype": "urgent",
+    "phase": "offer",
+    "key": "dialogue.pool.urgent.offer.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_offer_12",
+    "archetype": "urgent",
+    "phase": "offer",
+    "key": "dialogue.pool.urgent.offer.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_offer_13",
+    "archetype": "urgent",
+    "phase": "offer",
+    "key": "dialogue.pool.urgent.offer.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_offer_14",
+    "archetype": "urgent",
+    "phase": "offer",
+    "key": "dialogue.pool.urgent.offer.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_offer_15",
+    "archetype": "urgent",
+    "phase": "offer",
+    "key": "dialogue.pool.urgent.offer.15",
     "category": "general"
   },
   {
@@ -3934,6 +5369,97 @@
     "category": "general"
   },
   {
+    "id": "dl_urgent_counter_03",
+    "archetype": "urgent",
+    "phase": "counter",
+    "key": "dialogue.pool.urgent.counter.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_counter_04",
+    "archetype": "urgent",
+    "phase": "counter",
+    "key": "dialogue.pool.urgent.counter.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_counter_05",
+    "archetype": "urgent",
+    "phase": "counter",
+    "key": "dialogue.pool.urgent.counter.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_counter_06",
+    "archetype": "urgent",
+    "phase": "counter",
+    "key": "dialogue.pool.urgent.counter.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_counter_07",
+    "archetype": "urgent",
+    "phase": "counter",
+    "key": "dialogue.pool.urgent.counter.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_counter_08",
+    "archetype": "urgent",
+    "phase": "counter",
+    "key": "dialogue.pool.urgent.counter.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_counter_09",
+    "archetype": "urgent",
+    "phase": "counter",
+    "key": "dialogue.pool.urgent.counter.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_counter_10",
+    "archetype": "urgent",
+    "phase": "counter",
+    "key": "dialogue.pool.urgent.counter.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_counter_11",
+    "archetype": "urgent",
+    "phase": "counter",
+    "key": "dialogue.pool.urgent.counter.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_counter_12",
+    "archetype": "urgent",
+    "phase": "counter",
+    "key": "dialogue.pool.urgent.counter.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_counter_13",
+    "archetype": "urgent",
+    "phase": "counter",
+    "key": "dialogue.pool.urgent.counter.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_counter_14",
+    "archetype": "urgent",
+    "phase": "counter",
+    "key": "dialogue.pool.urgent.counter.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_counter_15",
+    "archetype": "urgent",
+    "phase": "counter",
+    "key": "dialogue.pool.urgent.counter.15",
+    "category": "general"
+  },
+  {
     "id": "dl_urgent_accept_01",
     "archetype": "urgent",
     "phase": "accept",
@@ -3945,6 +5471,97 @@
     "archetype": "urgent",
     "phase": "accept",
     "key": "dialogue.pool.urgent.accept.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_accept_03",
+    "archetype": "urgent",
+    "phase": "accept",
+    "key": "dialogue.pool.urgent.accept.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_accept_04",
+    "archetype": "urgent",
+    "phase": "accept",
+    "key": "dialogue.pool.urgent.accept.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_accept_05",
+    "archetype": "urgent",
+    "phase": "accept",
+    "key": "dialogue.pool.urgent.accept.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_accept_06",
+    "archetype": "urgent",
+    "phase": "accept",
+    "key": "dialogue.pool.urgent.accept.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_accept_07",
+    "archetype": "urgent",
+    "phase": "accept",
+    "key": "dialogue.pool.urgent.accept.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_accept_08",
+    "archetype": "urgent",
+    "phase": "accept",
+    "key": "dialogue.pool.urgent.accept.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_accept_09",
+    "archetype": "urgent",
+    "phase": "accept",
+    "key": "dialogue.pool.urgent.accept.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_accept_10",
+    "archetype": "urgent",
+    "phase": "accept",
+    "key": "dialogue.pool.urgent.accept.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_accept_11",
+    "archetype": "urgent",
+    "phase": "accept",
+    "key": "dialogue.pool.urgent.accept.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_accept_12",
+    "archetype": "urgent",
+    "phase": "accept",
+    "key": "dialogue.pool.urgent.accept.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_accept_13",
+    "archetype": "urgent",
+    "phase": "accept",
+    "key": "dialogue.pool.urgent.accept.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_accept_14",
+    "archetype": "urgent",
+    "phase": "accept",
+    "key": "dialogue.pool.urgent.accept.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_accept_15",
+    "archetype": "urgent",
+    "phase": "accept",
+    "key": "dialogue.pool.urgent.accept.15",
     "category": "general"
   },
   {
@@ -3962,6 +5579,97 @@
     "category": "general"
   },
   {
+    "id": "dl_urgent_reject_03",
+    "archetype": "urgent",
+    "phase": "reject",
+    "key": "dialogue.pool.urgent.reject.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_reject_04",
+    "archetype": "urgent",
+    "phase": "reject",
+    "key": "dialogue.pool.urgent.reject.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_reject_05",
+    "archetype": "urgent",
+    "phase": "reject",
+    "key": "dialogue.pool.urgent.reject.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_reject_06",
+    "archetype": "urgent",
+    "phase": "reject",
+    "key": "dialogue.pool.urgent.reject.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_reject_07",
+    "archetype": "urgent",
+    "phase": "reject",
+    "key": "dialogue.pool.urgent.reject.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_reject_08",
+    "archetype": "urgent",
+    "phase": "reject",
+    "key": "dialogue.pool.urgent.reject.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_reject_09",
+    "archetype": "urgent",
+    "phase": "reject",
+    "key": "dialogue.pool.urgent.reject.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_reject_10",
+    "archetype": "urgent",
+    "phase": "reject",
+    "key": "dialogue.pool.urgent.reject.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_reject_11",
+    "archetype": "urgent",
+    "phase": "reject",
+    "key": "dialogue.pool.urgent.reject.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_reject_12",
+    "archetype": "urgent",
+    "phase": "reject",
+    "key": "dialogue.pool.urgent.reject.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_reject_13",
+    "archetype": "urgent",
+    "phase": "reject",
+    "key": "dialogue.pool.urgent.reject.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_reject_14",
+    "archetype": "urgent",
+    "phase": "reject",
+    "key": "dialogue.pool.urgent.reject.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_reject_15",
+    "archetype": "urgent",
+    "phase": "reject",
+    "key": "dialogue.pool.urgent.reject.15",
+    "category": "general"
+  },
+  {
     "id": "dl_urgent_small_talk_01",
     "archetype": "urgent",
     "phase": "small_talk",
@@ -3976,6 +5684,97 @@
     "category": "exams"
   },
   {
+    "id": "dl_urgent_small_talk_03",
+    "archetype": "urgent",
+    "phase": "small_talk",
+    "key": "dialogue.pool.urgent.small_talk.03",
+    "category": "jam"
+  },
+  {
+    "id": "dl_urgent_small_talk_04",
+    "archetype": "urgent",
+    "phase": "small_talk",
+    "key": "dialogue.pool.urgent.small_talk.04",
+    "category": "rain"
+  },
+  {
+    "id": "dl_urgent_small_talk_05",
+    "archetype": "urgent",
+    "phase": "small_talk",
+    "key": "dialogue.pool.urgent.small_talk.05",
+    "category": "family"
+  },
+  {
+    "id": "dl_urgent_small_talk_06",
+    "archetype": "urgent",
+    "phase": "small_talk",
+    "key": "dialogue.pool.urgent.small_talk.06",
+    "category": "humour"
+  },
+  {
+    "id": "dl_urgent_small_talk_07",
+    "archetype": "urgent",
+    "phase": "small_talk",
+    "key": "dialogue.pool.urgent.small_talk.07",
+    "category": "cricket"
+  },
+  {
+    "id": "dl_urgent_small_talk_08",
+    "archetype": "urgent",
+    "phase": "small_talk",
+    "key": "dialogue.pool.urgent.small_talk.08",
+    "category": "exams"
+  },
+  {
+    "id": "dl_urgent_small_talk_09",
+    "archetype": "urgent",
+    "phase": "small_talk",
+    "key": "dialogue.pool.urgent.small_talk.09",
+    "category": "jam"
+  },
+  {
+    "id": "dl_urgent_small_talk_10",
+    "archetype": "urgent",
+    "phase": "small_talk",
+    "key": "dialogue.pool.urgent.small_talk.10",
+    "category": "rain"
+  },
+  {
+    "id": "dl_urgent_small_talk_11",
+    "archetype": "urgent",
+    "phase": "small_talk",
+    "key": "dialogue.pool.urgent.small_talk.11",
+    "category": "family"
+  },
+  {
+    "id": "dl_urgent_small_talk_12",
+    "archetype": "urgent",
+    "phase": "small_talk",
+    "key": "dialogue.pool.urgent.small_talk.12",
+    "category": "humour"
+  },
+  {
+    "id": "dl_urgent_small_talk_13",
+    "archetype": "urgent",
+    "phase": "small_talk",
+    "key": "dialogue.pool.urgent.small_talk.13",
+    "category": "cricket"
+  },
+  {
+    "id": "dl_urgent_small_talk_14",
+    "archetype": "urgent",
+    "phase": "small_talk",
+    "key": "dialogue.pool.urgent.small_talk.14",
+    "category": "exams"
+  },
+  {
+    "id": "dl_urgent_small_talk_15",
+    "archetype": "urgent",
+    "phase": "small_talk",
+    "key": "dialogue.pool.urgent.small_talk.15",
+    "category": "jam"
+  },
+  {
     "id": "dl_urgent_drop_off_01",
     "archetype": "urgent",
     "phase": "drop_off",
@@ -3987,6 +5786,97 @@
     "archetype": "urgent",
     "phase": "drop_off",
     "key": "dialogue.pool.urgent.drop_off.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_drop_off_03",
+    "archetype": "urgent",
+    "phase": "drop_off",
+    "key": "dialogue.pool.urgent.drop_off.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_drop_off_04",
+    "archetype": "urgent",
+    "phase": "drop_off",
+    "key": "dialogue.pool.urgent.drop_off.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_drop_off_05",
+    "archetype": "urgent",
+    "phase": "drop_off",
+    "key": "dialogue.pool.urgent.drop_off.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_drop_off_06",
+    "archetype": "urgent",
+    "phase": "drop_off",
+    "key": "dialogue.pool.urgent.drop_off.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_drop_off_07",
+    "archetype": "urgent",
+    "phase": "drop_off",
+    "key": "dialogue.pool.urgent.drop_off.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_drop_off_08",
+    "archetype": "urgent",
+    "phase": "drop_off",
+    "key": "dialogue.pool.urgent.drop_off.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_drop_off_09",
+    "archetype": "urgent",
+    "phase": "drop_off",
+    "key": "dialogue.pool.urgent.drop_off.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_drop_off_10",
+    "archetype": "urgent",
+    "phase": "drop_off",
+    "key": "dialogue.pool.urgent.drop_off.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_drop_off_11",
+    "archetype": "urgent",
+    "phase": "drop_off",
+    "key": "dialogue.pool.urgent.drop_off.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_drop_off_12",
+    "archetype": "urgent",
+    "phase": "drop_off",
+    "key": "dialogue.pool.urgent.drop_off.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_drop_off_13",
+    "archetype": "urgent",
+    "phase": "drop_off",
+    "key": "dialogue.pool.urgent.drop_off.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_drop_off_14",
+    "archetype": "urgent",
+    "phase": "drop_off",
+    "key": "dialogue.pool.urgent.drop_off.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_urgent_drop_off_15",
+    "archetype": "urgent",
+    "phase": "drop_off",
+    "key": "dialogue.pool.urgent.drop_off.15",
     "category": "general"
   },
   {
@@ -4011,6 +5901,90 @@
     "category": "general"
   },
   {
+    "id": "dl_traveler_greeting_04",
+    "archetype": "traveler",
+    "phase": "greeting",
+    "key": "dialogue.pool.traveler.greeting.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_greeting_05",
+    "archetype": "traveler",
+    "phase": "greeting",
+    "key": "dialogue.pool.traveler.greeting.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_greeting_06",
+    "archetype": "traveler",
+    "phase": "greeting",
+    "key": "dialogue.pool.traveler.greeting.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_greeting_07",
+    "archetype": "traveler",
+    "phase": "greeting",
+    "key": "dialogue.pool.traveler.greeting.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_greeting_08",
+    "archetype": "traveler",
+    "phase": "greeting",
+    "key": "dialogue.pool.traveler.greeting.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_greeting_09",
+    "archetype": "traveler",
+    "phase": "greeting",
+    "key": "dialogue.pool.traveler.greeting.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_greeting_10",
+    "archetype": "traveler",
+    "phase": "greeting",
+    "key": "dialogue.pool.traveler.greeting.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_greeting_11",
+    "archetype": "traveler",
+    "phase": "greeting",
+    "key": "dialogue.pool.traveler.greeting.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_greeting_12",
+    "archetype": "traveler",
+    "phase": "greeting",
+    "key": "dialogue.pool.traveler.greeting.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_greeting_13",
+    "archetype": "traveler",
+    "phase": "greeting",
+    "key": "dialogue.pool.traveler.greeting.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_greeting_14",
+    "archetype": "traveler",
+    "phase": "greeting",
+    "key": "dialogue.pool.traveler.greeting.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_greeting_15",
+    "archetype": "traveler",
+    "phase": "greeting",
+    "key": "dialogue.pool.traveler.greeting.15",
+    "category": "general"
+  },
+  {
     "id": "dl_traveler_offer_01",
     "archetype": "traveler",
     "phase": "offer",
@@ -4022,6 +5996,97 @@
     "archetype": "traveler",
     "phase": "offer",
     "key": "dialogue.pool.traveler.offer.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_offer_03",
+    "archetype": "traveler",
+    "phase": "offer",
+    "key": "dialogue.pool.traveler.offer.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_offer_04",
+    "archetype": "traveler",
+    "phase": "offer",
+    "key": "dialogue.pool.traveler.offer.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_offer_05",
+    "archetype": "traveler",
+    "phase": "offer",
+    "key": "dialogue.pool.traveler.offer.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_offer_06",
+    "archetype": "traveler",
+    "phase": "offer",
+    "key": "dialogue.pool.traveler.offer.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_offer_07",
+    "archetype": "traveler",
+    "phase": "offer",
+    "key": "dialogue.pool.traveler.offer.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_offer_08",
+    "archetype": "traveler",
+    "phase": "offer",
+    "key": "dialogue.pool.traveler.offer.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_offer_09",
+    "archetype": "traveler",
+    "phase": "offer",
+    "key": "dialogue.pool.traveler.offer.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_offer_10",
+    "archetype": "traveler",
+    "phase": "offer",
+    "key": "dialogue.pool.traveler.offer.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_offer_11",
+    "archetype": "traveler",
+    "phase": "offer",
+    "key": "dialogue.pool.traveler.offer.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_offer_12",
+    "archetype": "traveler",
+    "phase": "offer",
+    "key": "dialogue.pool.traveler.offer.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_offer_13",
+    "archetype": "traveler",
+    "phase": "offer",
+    "key": "dialogue.pool.traveler.offer.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_offer_14",
+    "archetype": "traveler",
+    "phase": "offer",
+    "key": "dialogue.pool.traveler.offer.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_offer_15",
+    "archetype": "traveler",
+    "phase": "offer",
+    "key": "dialogue.pool.traveler.offer.15",
     "category": "general"
   },
   {
@@ -4039,6 +6104,97 @@
     "category": "general"
   },
   {
+    "id": "dl_traveler_counter_03",
+    "archetype": "traveler",
+    "phase": "counter",
+    "key": "dialogue.pool.traveler.counter.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_counter_04",
+    "archetype": "traveler",
+    "phase": "counter",
+    "key": "dialogue.pool.traveler.counter.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_counter_05",
+    "archetype": "traveler",
+    "phase": "counter",
+    "key": "dialogue.pool.traveler.counter.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_counter_06",
+    "archetype": "traveler",
+    "phase": "counter",
+    "key": "dialogue.pool.traveler.counter.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_counter_07",
+    "archetype": "traveler",
+    "phase": "counter",
+    "key": "dialogue.pool.traveler.counter.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_counter_08",
+    "archetype": "traveler",
+    "phase": "counter",
+    "key": "dialogue.pool.traveler.counter.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_counter_09",
+    "archetype": "traveler",
+    "phase": "counter",
+    "key": "dialogue.pool.traveler.counter.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_counter_10",
+    "archetype": "traveler",
+    "phase": "counter",
+    "key": "dialogue.pool.traveler.counter.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_counter_11",
+    "archetype": "traveler",
+    "phase": "counter",
+    "key": "dialogue.pool.traveler.counter.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_counter_12",
+    "archetype": "traveler",
+    "phase": "counter",
+    "key": "dialogue.pool.traveler.counter.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_counter_13",
+    "archetype": "traveler",
+    "phase": "counter",
+    "key": "dialogue.pool.traveler.counter.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_counter_14",
+    "archetype": "traveler",
+    "phase": "counter",
+    "key": "dialogue.pool.traveler.counter.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_counter_15",
+    "archetype": "traveler",
+    "phase": "counter",
+    "key": "dialogue.pool.traveler.counter.15",
+    "category": "general"
+  },
+  {
     "id": "dl_traveler_accept_01",
     "archetype": "traveler",
     "phase": "accept",
@@ -4050,6 +6206,97 @@
     "archetype": "traveler",
     "phase": "accept",
     "key": "dialogue.pool.traveler.accept.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_accept_03",
+    "archetype": "traveler",
+    "phase": "accept",
+    "key": "dialogue.pool.traveler.accept.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_accept_04",
+    "archetype": "traveler",
+    "phase": "accept",
+    "key": "dialogue.pool.traveler.accept.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_accept_05",
+    "archetype": "traveler",
+    "phase": "accept",
+    "key": "dialogue.pool.traveler.accept.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_accept_06",
+    "archetype": "traveler",
+    "phase": "accept",
+    "key": "dialogue.pool.traveler.accept.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_accept_07",
+    "archetype": "traveler",
+    "phase": "accept",
+    "key": "dialogue.pool.traveler.accept.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_accept_08",
+    "archetype": "traveler",
+    "phase": "accept",
+    "key": "dialogue.pool.traveler.accept.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_accept_09",
+    "archetype": "traveler",
+    "phase": "accept",
+    "key": "dialogue.pool.traveler.accept.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_accept_10",
+    "archetype": "traveler",
+    "phase": "accept",
+    "key": "dialogue.pool.traveler.accept.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_accept_11",
+    "archetype": "traveler",
+    "phase": "accept",
+    "key": "dialogue.pool.traveler.accept.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_accept_12",
+    "archetype": "traveler",
+    "phase": "accept",
+    "key": "dialogue.pool.traveler.accept.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_accept_13",
+    "archetype": "traveler",
+    "phase": "accept",
+    "key": "dialogue.pool.traveler.accept.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_accept_14",
+    "archetype": "traveler",
+    "phase": "accept",
+    "key": "dialogue.pool.traveler.accept.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_accept_15",
+    "archetype": "traveler",
+    "phase": "accept",
+    "key": "dialogue.pool.traveler.accept.15",
     "category": "general"
   },
   {
@@ -4067,6 +6314,97 @@
     "category": "general"
   },
   {
+    "id": "dl_traveler_reject_03",
+    "archetype": "traveler",
+    "phase": "reject",
+    "key": "dialogue.pool.traveler.reject.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_reject_04",
+    "archetype": "traveler",
+    "phase": "reject",
+    "key": "dialogue.pool.traveler.reject.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_reject_05",
+    "archetype": "traveler",
+    "phase": "reject",
+    "key": "dialogue.pool.traveler.reject.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_reject_06",
+    "archetype": "traveler",
+    "phase": "reject",
+    "key": "dialogue.pool.traveler.reject.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_reject_07",
+    "archetype": "traveler",
+    "phase": "reject",
+    "key": "dialogue.pool.traveler.reject.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_reject_08",
+    "archetype": "traveler",
+    "phase": "reject",
+    "key": "dialogue.pool.traveler.reject.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_reject_09",
+    "archetype": "traveler",
+    "phase": "reject",
+    "key": "dialogue.pool.traveler.reject.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_reject_10",
+    "archetype": "traveler",
+    "phase": "reject",
+    "key": "dialogue.pool.traveler.reject.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_reject_11",
+    "archetype": "traveler",
+    "phase": "reject",
+    "key": "dialogue.pool.traveler.reject.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_reject_12",
+    "archetype": "traveler",
+    "phase": "reject",
+    "key": "dialogue.pool.traveler.reject.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_reject_13",
+    "archetype": "traveler",
+    "phase": "reject",
+    "key": "dialogue.pool.traveler.reject.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_reject_14",
+    "archetype": "traveler",
+    "phase": "reject",
+    "key": "dialogue.pool.traveler.reject.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_reject_15",
+    "archetype": "traveler",
+    "phase": "reject",
+    "key": "dialogue.pool.traveler.reject.15",
+    "category": "general"
+  },
+  {
     "id": "dl_traveler_small_talk_01",
     "archetype": "traveler",
     "phase": "small_talk",
@@ -4081,6 +6419,97 @@
     "category": "exams"
   },
   {
+    "id": "dl_traveler_small_talk_03",
+    "archetype": "traveler",
+    "phase": "small_talk",
+    "key": "dialogue.pool.traveler.small_talk.03",
+    "category": "jam"
+  },
+  {
+    "id": "dl_traveler_small_talk_04",
+    "archetype": "traveler",
+    "phase": "small_talk",
+    "key": "dialogue.pool.traveler.small_talk.04",
+    "category": "rain"
+  },
+  {
+    "id": "dl_traveler_small_talk_05",
+    "archetype": "traveler",
+    "phase": "small_talk",
+    "key": "dialogue.pool.traveler.small_talk.05",
+    "category": "family"
+  },
+  {
+    "id": "dl_traveler_small_talk_06",
+    "archetype": "traveler",
+    "phase": "small_talk",
+    "key": "dialogue.pool.traveler.small_talk.06",
+    "category": "humour"
+  },
+  {
+    "id": "dl_traveler_small_talk_07",
+    "archetype": "traveler",
+    "phase": "small_talk",
+    "key": "dialogue.pool.traveler.small_talk.07",
+    "category": "cricket"
+  },
+  {
+    "id": "dl_traveler_small_talk_08",
+    "archetype": "traveler",
+    "phase": "small_talk",
+    "key": "dialogue.pool.traveler.small_talk.08",
+    "category": "exams"
+  },
+  {
+    "id": "dl_traveler_small_talk_09",
+    "archetype": "traveler",
+    "phase": "small_talk",
+    "key": "dialogue.pool.traveler.small_talk.09",
+    "category": "jam"
+  },
+  {
+    "id": "dl_traveler_small_talk_10",
+    "archetype": "traveler",
+    "phase": "small_talk",
+    "key": "dialogue.pool.traveler.small_talk.10",
+    "category": "rain"
+  },
+  {
+    "id": "dl_traveler_small_talk_11",
+    "archetype": "traveler",
+    "phase": "small_talk",
+    "key": "dialogue.pool.traveler.small_talk.11",
+    "category": "family"
+  },
+  {
+    "id": "dl_traveler_small_talk_12",
+    "archetype": "traveler",
+    "phase": "small_talk",
+    "key": "dialogue.pool.traveler.small_talk.12",
+    "category": "humour"
+  },
+  {
+    "id": "dl_traveler_small_talk_13",
+    "archetype": "traveler",
+    "phase": "small_talk",
+    "key": "dialogue.pool.traveler.small_talk.13",
+    "category": "cricket"
+  },
+  {
+    "id": "dl_traveler_small_talk_14",
+    "archetype": "traveler",
+    "phase": "small_talk",
+    "key": "dialogue.pool.traveler.small_talk.14",
+    "category": "exams"
+  },
+  {
+    "id": "dl_traveler_small_talk_15",
+    "archetype": "traveler",
+    "phase": "small_talk",
+    "key": "dialogue.pool.traveler.small_talk.15",
+    "category": "jam"
+  },
+  {
     "id": "dl_traveler_drop_off_01",
     "archetype": "traveler",
     "phase": "drop_off",
@@ -4092,6 +6521,97 @@
     "archetype": "traveler",
     "phase": "drop_off",
     "key": "dialogue.pool.traveler.drop_off.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_drop_off_03",
+    "archetype": "traveler",
+    "phase": "drop_off",
+    "key": "dialogue.pool.traveler.drop_off.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_drop_off_04",
+    "archetype": "traveler",
+    "phase": "drop_off",
+    "key": "dialogue.pool.traveler.drop_off.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_drop_off_05",
+    "archetype": "traveler",
+    "phase": "drop_off",
+    "key": "dialogue.pool.traveler.drop_off.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_drop_off_06",
+    "archetype": "traveler",
+    "phase": "drop_off",
+    "key": "dialogue.pool.traveler.drop_off.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_drop_off_07",
+    "archetype": "traveler",
+    "phase": "drop_off",
+    "key": "dialogue.pool.traveler.drop_off.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_drop_off_08",
+    "archetype": "traveler",
+    "phase": "drop_off",
+    "key": "dialogue.pool.traveler.drop_off.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_drop_off_09",
+    "archetype": "traveler",
+    "phase": "drop_off",
+    "key": "dialogue.pool.traveler.drop_off.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_drop_off_10",
+    "archetype": "traveler",
+    "phase": "drop_off",
+    "key": "dialogue.pool.traveler.drop_off.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_drop_off_11",
+    "archetype": "traveler",
+    "phase": "drop_off",
+    "key": "dialogue.pool.traveler.drop_off.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_drop_off_12",
+    "archetype": "traveler",
+    "phase": "drop_off",
+    "key": "dialogue.pool.traveler.drop_off.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_drop_off_13",
+    "archetype": "traveler",
+    "phase": "drop_off",
+    "key": "dialogue.pool.traveler.drop_off.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_drop_off_14",
+    "archetype": "traveler",
+    "phase": "drop_off",
+    "key": "dialogue.pool.traveler.drop_off.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_traveler_drop_off_15",
+    "archetype": "traveler",
+    "phase": "drop_off",
+    "key": "dialogue.pool.traveler.drop_off.15",
     "category": "general"
   },
   {
@@ -4116,6 +6636,90 @@
     "category": "general"
   },
   {
+    "id": "dl_unreliable_greeting_04",
+    "archetype": "unreliable",
+    "phase": "greeting",
+    "key": "dialogue.pool.unreliable.greeting.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_greeting_05",
+    "archetype": "unreliable",
+    "phase": "greeting",
+    "key": "dialogue.pool.unreliable.greeting.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_greeting_06",
+    "archetype": "unreliable",
+    "phase": "greeting",
+    "key": "dialogue.pool.unreliable.greeting.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_greeting_07",
+    "archetype": "unreliable",
+    "phase": "greeting",
+    "key": "dialogue.pool.unreliable.greeting.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_greeting_08",
+    "archetype": "unreliable",
+    "phase": "greeting",
+    "key": "dialogue.pool.unreliable.greeting.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_greeting_09",
+    "archetype": "unreliable",
+    "phase": "greeting",
+    "key": "dialogue.pool.unreliable.greeting.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_greeting_10",
+    "archetype": "unreliable",
+    "phase": "greeting",
+    "key": "dialogue.pool.unreliable.greeting.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_greeting_11",
+    "archetype": "unreliable",
+    "phase": "greeting",
+    "key": "dialogue.pool.unreliable.greeting.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_greeting_12",
+    "archetype": "unreliable",
+    "phase": "greeting",
+    "key": "dialogue.pool.unreliable.greeting.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_greeting_13",
+    "archetype": "unreliable",
+    "phase": "greeting",
+    "key": "dialogue.pool.unreliable.greeting.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_greeting_14",
+    "archetype": "unreliable",
+    "phase": "greeting",
+    "key": "dialogue.pool.unreliable.greeting.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_greeting_15",
+    "archetype": "unreliable",
+    "phase": "greeting",
+    "key": "dialogue.pool.unreliable.greeting.15",
+    "category": "general"
+  },
+  {
     "id": "dl_unreliable_offer_01",
     "archetype": "unreliable",
     "phase": "offer",
@@ -4127,6 +6731,97 @@
     "archetype": "unreliable",
     "phase": "offer",
     "key": "dialogue.pool.unreliable.offer.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_offer_03",
+    "archetype": "unreliable",
+    "phase": "offer",
+    "key": "dialogue.pool.unreliable.offer.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_offer_04",
+    "archetype": "unreliable",
+    "phase": "offer",
+    "key": "dialogue.pool.unreliable.offer.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_offer_05",
+    "archetype": "unreliable",
+    "phase": "offer",
+    "key": "dialogue.pool.unreliable.offer.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_offer_06",
+    "archetype": "unreliable",
+    "phase": "offer",
+    "key": "dialogue.pool.unreliable.offer.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_offer_07",
+    "archetype": "unreliable",
+    "phase": "offer",
+    "key": "dialogue.pool.unreliable.offer.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_offer_08",
+    "archetype": "unreliable",
+    "phase": "offer",
+    "key": "dialogue.pool.unreliable.offer.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_offer_09",
+    "archetype": "unreliable",
+    "phase": "offer",
+    "key": "dialogue.pool.unreliable.offer.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_offer_10",
+    "archetype": "unreliable",
+    "phase": "offer",
+    "key": "dialogue.pool.unreliable.offer.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_offer_11",
+    "archetype": "unreliable",
+    "phase": "offer",
+    "key": "dialogue.pool.unreliable.offer.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_offer_12",
+    "archetype": "unreliable",
+    "phase": "offer",
+    "key": "dialogue.pool.unreliable.offer.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_offer_13",
+    "archetype": "unreliable",
+    "phase": "offer",
+    "key": "dialogue.pool.unreliable.offer.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_offer_14",
+    "archetype": "unreliable",
+    "phase": "offer",
+    "key": "dialogue.pool.unreliable.offer.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_offer_15",
+    "archetype": "unreliable",
+    "phase": "offer",
+    "key": "dialogue.pool.unreliable.offer.15",
     "category": "general"
   },
   {
@@ -4144,6 +6839,97 @@
     "category": "general"
   },
   {
+    "id": "dl_unreliable_counter_03",
+    "archetype": "unreliable",
+    "phase": "counter",
+    "key": "dialogue.pool.unreliable.counter.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_counter_04",
+    "archetype": "unreliable",
+    "phase": "counter",
+    "key": "dialogue.pool.unreliable.counter.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_counter_05",
+    "archetype": "unreliable",
+    "phase": "counter",
+    "key": "dialogue.pool.unreliable.counter.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_counter_06",
+    "archetype": "unreliable",
+    "phase": "counter",
+    "key": "dialogue.pool.unreliable.counter.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_counter_07",
+    "archetype": "unreliable",
+    "phase": "counter",
+    "key": "dialogue.pool.unreliable.counter.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_counter_08",
+    "archetype": "unreliable",
+    "phase": "counter",
+    "key": "dialogue.pool.unreliable.counter.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_counter_09",
+    "archetype": "unreliable",
+    "phase": "counter",
+    "key": "dialogue.pool.unreliable.counter.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_counter_10",
+    "archetype": "unreliable",
+    "phase": "counter",
+    "key": "dialogue.pool.unreliable.counter.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_counter_11",
+    "archetype": "unreliable",
+    "phase": "counter",
+    "key": "dialogue.pool.unreliable.counter.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_counter_12",
+    "archetype": "unreliable",
+    "phase": "counter",
+    "key": "dialogue.pool.unreliable.counter.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_counter_13",
+    "archetype": "unreliable",
+    "phase": "counter",
+    "key": "dialogue.pool.unreliable.counter.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_counter_14",
+    "archetype": "unreliable",
+    "phase": "counter",
+    "key": "dialogue.pool.unreliable.counter.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_counter_15",
+    "archetype": "unreliable",
+    "phase": "counter",
+    "key": "dialogue.pool.unreliable.counter.15",
+    "category": "general"
+  },
+  {
     "id": "dl_unreliable_accept_01",
     "archetype": "unreliable",
     "phase": "accept",
@@ -4155,6 +6941,97 @@
     "archetype": "unreliable",
     "phase": "accept",
     "key": "dialogue.pool.unreliable.accept.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_accept_03",
+    "archetype": "unreliable",
+    "phase": "accept",
+    "key": "dialogue.pool.unreliable.accept.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_accept_04",
+    "archetype": "unreliable",
+    "phase": "accept",
+    "key": "dialogue.pool.unreliable.accept.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_accept_05",
+    "archetype": "unreliable",
+    "phase": "accept",
+    "key": "dialogue.pool.unreliable.accept.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_accept_06",
+    "archetype": "unreliable",
+    "phase": "accept",
+    "key": "dialogue.pool.unreliable.accept.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_accept_07",
+    "archetype": "unreliable",
+    "phase": "accept",
+    "key": "dialogue.pool.unreliable.accept.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_accept_08",
+    "archetype": "unreliable",
+    "phase": "accept",
+    "key": "dialogue.pool.unreliable.accept.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_accept_09",
+    "archetype": "unreliable",
+    "phase": "accept",
+    "key": "dialogue.pool.unreliable.accept.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_accept_10",
+    "archetype": "unreliable",
+    "phase": "accept",
+    "key": "dialogue.pool.unreliable.accept.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_accept_11",
+    "archetype": "unreliable",
+    "phase": "accept",
+    "key": "dialogue.pool.unreliable.accept.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_accept_12",
+    "archetype": "unreliable",
+    "phase": "accept",
+    "key": "dialogue.pool.unreliable.accept.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_accept_13",
+    "archetype": "unreliable",
+    "phase": "accept",
+    "key": "dialogue.pool.unreliable.accept.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_accept_14",
+    "archetype": "unreliable",
+    "phase": "accept",
+    "key": "dialogue.pool.unreliable.accept.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_accept_15",
+    "archetype": "unreliable",
+    "phase": "accept",
+    "key": "dialogue.pool.unreliable.accept.15",
     "category": "general"
   },
   {
@@ -4172,6 +7049,97 @@
     "category": "general"
   },
   {
+    "id": "dl_unreliable_reject_03",
+    "archetype": "unreliable",
+    "phase": "reject",
+    "key": "dialogue.pool.unreliable.reject.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_reject_04",
+    "archetype": "unreliable",
+    "phase": "reject",
+    "key": "dialogue.pool.unreliable.reject.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_reject_05",
+    "archetype": "unreliable",
+    "phase": "reject",
+    "key": "dialogue.pool.unreliable.reject.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_reject_06",
+    "archetype": "unreliable",
+    "phase": "reject",
+    "key": "dialogue.pool.unreliable.reject.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_reject_07",
+    "archetype": "unreliable",
+    "phase": "reject",
+    "key": "dialogue.pool.unreliable.reject.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_reject_08",
+    "archetype": "unreliable",
+    "phase": "reject",
+    "key": "dialogue.pool.unreliable.reject.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_reject_09",
+    "archetype": "unreliable",
+    "phase": "reject",
+    "key": "dialogue.pool.unreliable.reject.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_reject_10",
+    "archetype": "unreliable",
+    "phase": "reject",
+    "key": "dialogue.pool.unreliable.reject.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_reject_11",
+    "archetype": "unreliable",
+    "phase": "reject",
+    "key": "dialogue.pool.unreliable.reject.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_reject_12",
+    "archetype": "unreliable",
+    "phase": "reject",
+    "key": "dialogue.pool.unreliable.reject.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_reject_13",
+    "archetype": "unreliable",
+    "phase": "reject",
+    "key": "dialogue.pool.unreliable.reject.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_reject_14",
+    "archetype": "unreliable",
+    "phase": "reject",
+    "key": "dialogue.pool.unreliable.reject.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_reject_15",
+    "archetype": "unreliable",
+    "phase": "reject",
+    "key": "dialogue.pool.unreliable.reject.15",
+    "category": "general"
+  },
+  {
     "id": "dl_unreliable_small_talk_01",
     "archetype": "unreliable",
     "phase": "small_talk",
@@ -4186,6 +7154,97 @@
     "category": "exams"
   },
   {
+    "id": "dl_unreliable_small_talk_03",
+    "archetype": "unreliable",
+    "phase": "small_talk",
+    "key": "dialogue.pool.unreliable.small_talk.03",
+    "category": "jam"
+  },
+  {
+    "id": "dl_unreliable_small_talk_04",
+    "archetype": "unreliable",
+    "phase": "small_talk",
+    "key": "dialogue.pool.unreliable.small_talk.04",
+    "category": "rain"
+  },
+  {
+    "id": "dl_unreliable_small_talk_05",
+    "archetype": "unreliable",
+    "phase": "small_talk",
+    "key": "dialogue.pool.unreliable.small_talk.05",
+    "category": "family"
+  },
+  {
+    "id": "dl_unreliable_small_talk_06",
+    "archetype": "unreliable",
+    "phase": "small_talk",
+    "key": "dialogue.pool.unreliable.small_talk.06",
+    "category": "humour"
+  },
+  {
+    "id": "dl_unreliable_small_talk_07",
+    "archetype": "unreliable",
+    "phase": "small_talk",
+    "key": "dialogue.pool.unreliable.small_talk.07",
+    "category": "cricket"
+  },
+  {
+    "id": "dl_unreliable_small_talk_08",
+    "archetype": "unreliable",
+    "phase": "small_talk",
+    "key": "dialogue.pool.unreliable.small_talk.08",
+    "category": "exams"
+  },
+  {
+    "id": "dl_unreliable_small_talk_09",
+    "archetype": "unreliable",
+    "phase": "small_talk",
+    "key": "dialogue.pool.unreliable.small_talk.09",
+    "category": "jam"
+  },
+  {
+    "id": "dl_unreliable_small_talk_10",
+    "archetype": "unreliable",
+    "phase": "small_talk",
+    "key": "dialogue.pool.unreliable.small_talk.10",
+    "category": "rain"
+  },
+  {
+    "id": "dl_unreliable_small_talk_11",
+    "archetype": "unreliable",
+    "phase": "small_talk",
+    "key": "dialogue.pool.unreliable.small_talk.11",
+    "category": "family"
+  },
+  {
+    "id": "dl_unreliable_small_talk_12",
+    "archetype": "unreliable",
+    "phase": "small_talk",
+    "key": "dialogue.pool.unreliable.small_talk.12",
+    "category": "humour"
+  },
+  {
+    "id": "dl_unreliable_small_talk_13",
+    "archetype": "unreliable",
+    "phase": "small_talk",
+    "key": "dialogue.pool.unreliable.small_talk.13",
+    "category": "cricket"
+  },
+  {
+    "id": "dl_unreliable_small_talk_14",
+    "archetype": "unreliable",
+    "phase": "small_talk",
+    "key": "dialogue.pool.unreliable.small_talk.14",
+    "category": "exams"
+  },
+  {
+    "id": "dl_unreliable_small_talk_15",
+    "archetype": "unreliable",
+    "phase": "small_talk",
+    "key": "dialogue.pool.unreliable.small_talk.15",
+    "category": "jam"
+  },
+  {
     "id": "dl_unreliable_drop_off_01",
     "archetype": "unreliable",
     "phase": "drop_off",
@@ -4197,6 +7256,97 @@
     "archetype": "unreliable",
     "phase": "drop_off",
     "key": "dialogue.pool.unreliable.drop_off.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_drop_off_03",
+    "archetype": "unreliable",
+    "phase": "drop_off",
+    "key": "dialogue.pool.unreliable.drop_off.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_drop_off_04",
+    "archetype": "unreliable",
+    "phase": "drop_off",
+    "key": "dialogue.pool.unreliable.drop_off.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_drop_off_05",
+    "archetype": "unreliable",
+    "phase": "drop_off",
+    "key": "dialogue.pool.unreliable.drop_off.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_drop_off_06",
+    "archetype": "unreliable",
+    "phase": "drop_off",
+    "key": "dialogue.pool.unreliable.drop_off.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_drop_off_07",
+    "archetype": "unreliable",
+    "phase": "drop_off",
+    "key": "dialogue.pool.unreliable.drop_off.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_drop_off_08",
+    "archetype": "unreliable",
+    "phase": "drop_off",
+    "key": "dialogue.pool.unreliable.drop_off.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_drop_off_09",
+    "archetype": "unreliable",
+    "phase": "drop_off",
+    "key": "dialogue.pool.unreliable.drop_off.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_drop_off_10",
+    "archetype": "unreliable",
+    "phase": "drop_off",
+    "key": "dialogue.pool.unreliable.drop_off.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_drop_off_11",
+    "archetype": "unreliable",
+    "phase": "drop_off",
+    "key": "dialogue.pool.unreliable.drop_off.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_drop_off_12",
+    "archetype": "unreliable",
+    "phase": "drop_off",
+    "key": "dialogue.pool.unreliable.drop_off.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_drop_off_13",
+    "archetype": "unreliable",
+    "phase": "drop_off",
+    "key": "dialogue.pool.unreliable.drop_off.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_drop_off_14",
+    "archetype": "unreliable",
+    "phase": "drop_off",
+    "key": "dialogue.pool.unreliable.drop_off.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_unreliable_drop_off_15",
+    "archetype": "unreliable",
+    "phase": "drop_off",
+    "key": "dialogue.pool.unreliable.drop_off.15",
     "category": "general"
   },
   {
@@ -4221,6 +7371,90 @@
     "category": "general"
   },
   {
+    "id": "dl_family_greeting_04",
+    "archetype": "family",
+    "phase": "greeting",
+    "key": "dialogue.pool.family.greeting.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_greeting_05",
+    "archetype": "family",
+    "phase": "greeting",
+    "key": "dialogue.pool.family.greeting.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_greeting_06",
+    "archetype": "family",
+    "phase": "greeting",
+    "key": "dialogue.pool.family.greeting.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_greeting_07",
+    "archetype": "family",
+    "phase": "greeting",
+    "key": "dialogue.pool.family.greeting.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_greeting_08",
+    "archetype": "family",
+    "phase": "greeting",
+    "key": "dialogue.pool.family.greeting.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_greeting_09",
+    "archetype": "family",
+    "phase": "greeting",
+    "key": "dialogue.pool.family.greeting.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_greeting_10",
+    "archetype": "family",
+    "phase": "greeting",
+    "key": "dialogue.pool.family.greeting.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_greeting_11",
+    "archetype": "family",
+    "phase": "greeting",
+    "key": "dialogue.pool.family.greeting.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_greeting_12",
+    "archetype": "family",
+    "phase": "greeting",
+    "key": "dialogue.pool.family.greeting.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_greeting_13",
+    "archetype": "family",
+    "phase": "greeting",
+    "key": "dialogue.pool.family.greeting.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_greeting_14",
+    "archetype": "family",
+    "phase": "greeting",
+    "key": "dialogue.pool.family.greeting.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_greeting_15",
+    "archetype": "family",
+    "phase": "greeting",
+    "key": "dialogue.pool.family.greeting.15",
+    "category": "general"
+  },
+  {
     "id": "dl_family_offer_01",
     "archetype": "family",
     "phase": "offer",
@@ -4232,6 +7466,97 @@
     "archetype": "family",
     "phase": "offer",
     "key": "dialogue.pool.family.offer.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_offer_03",
+    "archetype": "family",
+    "phase": "offer",
+    "key": "dialogue.pool.family.offer.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_offer_04",
+    "archetype": "family",
+    "phase": "offer",
+    "key": "dialogue.pool.family.offer.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_offer_05",
+    "archetype": "family",
+    "phase": "offer",
+    "key": "dialogue.pool.family.offer.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_offer_06",
+    "archetype": "family",
+    "phase": "offer",
+    "key": "dialogue.pool.family.offer.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_offer_07",
+    "archetype": "family",
+    "phase": "offer",
+    "key": "dialogue.pool.family.offer.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_offer_08",
+    "archetype": "family",
+    "phase": "offer",
+    "key": "dialogue.pool.family.offer.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_offer_09",
+    "archetype": "family",
+    "phase": "offer",
+    "key": "dialogue.pool.family.offer.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_offer_10",
+    "archetype": "family",
+    "phase": "offer",
+    "key": "dialogue.pool.family.offer.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_offer_11",
+    "archetype": "family",
+    "phase": "offer",
+    "key": "dialogue.pool.family.offer.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_offer_12",
+    "archetype": "family",
+    "phase": "offer",
+    "key": "dialogue.pool.family.offer.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_offer_13",
+    "archetype": "family",
+    "phase": "offer",
+    "key": "dialogue.pool.family.offer.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_offer_14",
+    "archetype": "family",
+    "phase": "offer",
+    "key": "dialogue.pool.family.offer.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_offer_15",
+    "archetype": "family",
+    "phase": "offer",
+    "key": "dialogue.pool.family.offer.15",
     "category": "general"
   },
   {
@@ -4249,6 +7574,97 @@
     "category": "general"
   },
   {
+    "id": "dl_family_counter_03",
+    "archetype": "family",
+    "phase": "counter",
+    "key": "dialogue.pool.family.counter.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_counter_04",
+    "archetype": "family",
+    "phase": "counter",
+    "key": "dialogue.pool.family.counter.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_counter_05",
+    "archetype": "family",
+    "phase": "counter",
+    "key": "dialogue.pool.family.counter.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_counter_06",
+    "archetype": "family",
+    "phase": "counter",
+    "key": "dialogue.pool.family.counter.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_counter_07",
+    "archetype": "family",
+    "phase": "counter",
+    "key": "dialogue.pool.family.counter.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_counter_08",
+    "archetype": "family",
+    "phase": "counter",
+    "key": "dialogue.pool.family.counter.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_counter_09",
+    "archetype": "family",
+    "phase": "counter",
+    "key": "dialogue.pool.family.counter.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_counter_10",
+    "archetype": "family",
+    "phase": "counter",
+    "key": "dialogue.pool.family.counter.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_counter_11",
+    "archetype": "family",
+    "phase": "counter",
+    "key": "dialogue.pool.family.counter.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_counter_12",
+    "archetype": "family",
+    "phase": "counter",
+    "key": "dialogue.pool.family.counter.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_counter_13",
+    "archetype": "family",
+    "phase": "counter",
+    "key": "dialogue.pool.family.counter.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_counter_14",
+    "archetype": "family",
+    "phase": "counter",
+    "key": "dialogue.pool.family.counter.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_counter_15",
+    "archetype": "family",
+    "phase": "counter",
+    "key": "dialogue.pool.family.counter.15",
+    "category": "general"
+  },
+  {
     "id": "dl_family_accept_01",
     "archetype": "family",
     "phase": "accept",
@@ -4260,6 +7676,97 @@
     "archetype": "family",
     "phase": "accept",
     "key": "dialogue.pool.family.accept.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_accept_03",
+    "archetype": "family",
+    "phase": "accept",
+    "key": "dialogue.pool.family.accept.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_accept_04",
+    "archetype": "family",
+    "phase": "accept",
+    "key": "dialogue.pool.family.accept.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_accept_05",
+    "archetype": "family",
+    "phase": "accept",
+    "key": "dialogue.pool.family.accept.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_accept_06",
+    "archetype": "family",
+    "phase": "accept",
+    "key": "dialogue.pool.family.accept.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_accept_07",
+    "archetype": "family",
+    "phase": "accept",
+    "key": "dialogue.pool.family.accept.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_accept_08",
+    "archetype": "family",
+    "phase": "accept",
+    "key": "dialogue.pool.family.accept.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_accept_09",
+    "archetype": "family",
+    "phase": "accept",
+    "key": "dialogue.pool.family.accept.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_accept_10",
+    "archetype": "family",
+    "phase": "accept",
+    "key": "dialogue.pool.family.accept.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_accept_11",
+    "archetype": "family",
+    "phase": "accept",
+    "key": "dialogue.pool.family.accept.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_accept_12",
+    "archetype": "family",
+    "phase": "accept",
+    "key": "dialogue.pool.family.accept.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_accept_13",
+    "archetype": "family",
+    "phase": "accept",
+    "key": "dialogue.pool.family.accept.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_accept_14",
+    "archetype": "family",
+    "phase": "accept",
+    "key": "dialogue.pool.family.accept.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_accept_15",
+    "archetype": "family",
+    "phase": "accept",
+    "key": "dialogue.pool.family.accept.15",
     "category": "general"
   },
   {
@@ -4277,6 +7784,97 @@
     "category": "general"
   },
   {
+    "id": "dl_family_reject_03",
+    "archetype": "family",
+    "phase": "reject",
+    "key": "dialogue.pool.family.reject.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_reject_04",
+    "archetype": "family",
+    "phase": "reject",
+    "key": "dialogue.pool.family.reject.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_reject_05",
+    "archetype": "family",
+    "phase": "reject",
+    "key": "dialogue.pool.family.reject.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_reject_06",
+    "archetype": "family",
+    "phase": "reject",
+    "key": "dialogue.pool.family.reject.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_reject_07",
+    "archetype": "family",
+    "phase": "reject",
+    "key": "dialogue.pool.family.reject.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_reject_08",
+    "archetype": "family",
+    "phase": "reject",
+    "key": "dialogue.pool.family.reject.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_reject_09",
+    "archetype": "family",
+    "phase": "reject",
+    "key": "dialogue.pool.family.reject.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_reject_10",
+    "archetype": "family",
+    "phase": "reject",
+    "key": "dialogue.pool.family.reject.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_reject_11",
+    "archetype": "family",
+    "phase": "reject",
+    "key": "dialogue.pool.family.reject.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_reject_12",
+    "archetype": "family",
+    "phase": "reject",
+    "key": "dialogue.pool.family.reject.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_reject_13",
+    "archetype": "family",
+    "phase": "reject",
+    "key": "dialogue.pool.family.reject.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_reject_14",
+    "archetype": "family",
+    "phase": "reject",
+    "key": "dialogue.pool.family.reject.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_reject_15",
+    "archetype": "family",
+    "phase": "reject",
+    "key": "dialogue.pool.family.reject.15",
+    "category": "general"
+  },
+  {
     "id": "dl_family_small_talk_01",
     "archetype": "family",
     "phase": "small_talk",
@@ -4291,6 +7889,97 @@
     "category": "exams"
   },
   {
+    "id": "dl_family_small_talk_03",
+    "archetype": "family",
+    "phase": "small_talk",
+    "key": "dialogue.pool.family.small_talk.03",
+    "category": "jam"
+  },
+  {
+    "id": "dl_family_small_talk_04",
+    "archetype": "family",
+    "phase": "small_talk",
+    "key": "dialogue.pool.family.small_talk.04",
+    "category": "rain"
+  },
+  {
+    "id": "dl_family_small_talk_05",
+    "archetype": "family",
+    "phase": "small_talk",
+    "key": "dialogue.pool.family.small_talk.05",
+    "category": "family"
+  },
+  {
+    "id": "dl_family_small_talk_06",
+    "archetype": "family",
+    "phase": "small_talk",
+    "key": "dialogue.pool.family.small_talk.06",
+    "category": "humour"
+  },
+  {
+    "id": "dl_family_small_talk_07",
+    "archetype": "family",
+    "phase": "small_talk",
+    "key": "dialogue.pool.family.small_talk.07",
+    "category": "cricket"
+  },
+  {
+    "id": "dl_family_small_talk_08",
+    "archetype": "family",
+    "phase": "small_talk",
+    "key": "dialogue.pool.family.small_talk.08",
+    "category": "exams"
+  },
+  {
+    "id": "dl_family_small_talk_09",
+    "archetype": "family",
+    "phase": "small_talk",
+    "key": "dialogue.pool.family.small_talk.09",
+    "category": "jam"
+  },
+  {
+    "id": "dl_family_small_talk_10",
+    "archetype": "family",
+    "phase": "small_talk",
+    "key": "dialogue.pool.family.small_talk.10",
+    "category": "rain"
+  },
+  {
+    "id": "dl_family_small_talk_11",
+    "archetype": "family",
+    "phase": "small_talk",
+    "key": "dialogue.pool.family.small_talk.11",
+    "category": "family"
+  },
+  {
+    "id": "dl_family_small_talk_12",
+    "archetype": "family",
+    "phase": "small_talk",
+    "key": "dialogue.pool.family.small_talk.12",
+    "category": "humour"
+  },
+  {
+    "id": "dl_family_small_talk_13",
+    "archetype": "family",
+    "phase": "small_talk",
+    "key": "dialogue.pool.family.small_talk.13",
+    "category": "cricket"
+  },
+  {
+    "id": "dl_family_small_talk_14",
+    "archetype": "family",
+    "phase": "small_talk",
+    "key": "dialogue.pool.family.small_talk.14",
+    "category": "exams"
+  },
+  {
+    "id": "dl_family_small_talk_15",
+    "archetype": "family",
+    "phase": "small_talk",
+    "key": "dialogue.pool.family.small_talk.15",
+    "category": "jam"
+  },
+  {
     "id": "dl_family_drop_off_01",
     "archetype": "family",
     "phase": "drop_off",
@@ -4302,6 +7991,97 @@
     "archetype": "family",
     "phase": "drop_off",
     "key": "dialogue.pool.family.drop_off.02",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_drop_off_03",
+    "archetype": "family",
+    "phase": "drop_off",
+    "key": "dialogue.pool.family.drop_off.03",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_drop_off_04",
+    "archetype": "family",
+    "phase": "drop_off",
+    "key": "dialogue.pool.family.drop_off.04",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_drop_off_05",
+    "archetype": "family",
+    "phase": "drop_off",
+    "key": "dialogue.pool.family.drop_off.05",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_drop_off_06",
+    "archetype": "family",
+    "phase": "drop_off",
+    "key": "dialogue.pool.family.drop_off.06",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_drop_off_07",
+    "archetype": "family",
+    "phase": "drop_off",
+    "key": "dialogue.pool.family.drop_off.07",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_drop_off_08",
+    "archetype": "family",
+    "phase": "drop_off",
+    "key": "dialogue.pool.family.drop_off.08",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_drop_off_09",
+    "archetype": "family",
+    "phase": "drop_off",
+    "key": "dialogue.pool.family.drop_off.09",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_drop_off_10",
+    "archetype": "family",
+    "phase": "drop_off",
+    "key": "dialogue.pool.family.drop_off.10",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_drop_off_11",
+    "archetype": "family",
+    "phase": "drop_off",
+    "key": "dialogue.pool.family.drop_off.11",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_drop_off_12",
+    "archetype": "family",
+    "phase": "drop_off",
+    "key": "dialogue.pool.family.drop_off.12",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_drop_off_13",
+    "archetype": "family",
+    "phase": "drop_off",
+    "key": "dialogue.pool.family.drop_off.13",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_drop_off_14",
+    "archetype": "family",
+    "phase": "drop_off",
+    "key": "dialogue.pool.family.drop_off.14",
+    "category": "general"
+  },
+  {
+    "id": "dl_family_drop_off_15",
+    "archetype": "family",
+    "phase": "drop_off",
+    "key": "dialogue.pool.family.drop_off.15",
     "category": "general"
   },
   {

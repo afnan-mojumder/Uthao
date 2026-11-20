@@ -1,6 +1,8 @@
 import type { JSX } from 'preact';
 import { CHARACTERS, isContactUnlocked } from '../../sim/passenger/PassengerAI';
 import type { CharacterDef } from '../../core/types';
+import { CharacterPortrait, resolvePortraitSrc } from '../components';
+import { IconLock, IconPhone } from '../components/icons';
 import { localDigits, t } from '../i18n';
 import { contactsSelectedSignal } from '../store';
 
@@ -19,30 +21,7 @@ export function formatTime(minutes: number): string {
 }
 
 export function getCharacterIcon(charId: string): string {
-  switch (charId) {
-    case 'char_ma':
-      return '👵';
-    case 'char_mintu':
-      return '☕';
-    case 'char_kamal':
-      return '🔧';
-    case 'char_nabila':
-      return '🎓';
-    case 'char_tanvir':
-      return '💼';
-    case 'char_rahim':
-      return '👴';
-    case 'char_ferdousi':
-      return '👶';
-    case 'char_jamil':
-      return '🕶️';
-    case 'char_morshed':
-      return '👮';
-    case 'char_bablu':
-      return '🧺';
-    default:
-      return '👤';
-  }
+  return resolvePortraitSrc(charId) ?? '/assets/portraits/regular.webp';
 }
 
 export function Contacts({
@@ -145,10 +124,10 @@ export function Contacts({
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontSize: '18px',
+                    color: '#94a3b8',
                   }}
                 >
-                  🔒
+                  <IconLock size={18} />
                 </div>
                 <div style={{ flex: 1 }}>
                   <span style={{ fontSize: '13px', fontWeight: 700, color: '#94a3b8' }}>
@@ -218,23 +197,13 @@ export function Contacts({
                   gap: '12px',
                 }}
               >
-                <div
-                  aria-hidden="true"
-                  style={{
-                    width: '40px',
-                    height: '40px',
-                    borderRadius: '50%',
-                    background: 'rgba(56, 189, 248, 0.15)',
-                    border: '1px solid rgba(56, 189, 248, 0.3)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '20px',
-                    flexShrink: 0,
-                  }}
-                >
-                  {getCharacterIcon(char.id)}
-                </div>
+                <CharacterPortrait
+                  characterId={char.id}
+                  archetype={char.archetype}
+                  mood={rel >= 35 ? 'happy' : 'neutral'}
+                  size={40}
+                  hideLabels={true}
+                />
 
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
@@ -329,7 +298,7 @@ export function Contacts({
                         gap: '6px',
                       }}
                     >
-                      <span aria-hidden="true">📞</span>
+                      <IconPhone size={14} color="#0f172a" />
                       <span>{t('phone.contacts.call')}</span>
                     </button>
                   )}

@@ -15,6 +15,7 @@ import {
   type HudNavigationTurn,
   type HudMissionInfo,
 } from '../store';
+import { CharacterPortrait } from '../components';
 import {
   IconChat,
   IconFuel,
@@ -493,25 +494,20 @@ function PassengerChip({
         maxWidth: maxWidth ?? (compact ? '210px' : '260px'),
       }}
     >
-      <div
-        style={{
-          width: compact ? '32px' : '38px',
-          height: compact ? '32px' : '38px',
-          borderRadius: '50%',
-          background: 'var(--surface-card, rgba(30, 41, 59, 0.84))',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          border: `2px solid ${moodInfo.color}`,
-          flexShrink: 0,
-        }}
-      >
-        {state.passengerStatus?.status === 'OnTrip' ? (
-          <IconUser size={compact ? 16 : 19} color="var(--text-primary, #F8FAFC)" />
-        ) : (
-          <IconMotorcycle size={compact ? 16 : 19} color="var(--info-sky, #38BDF8)" />
-        )}
-      </div>
+      <CharacterPortrait
+        characterId={state.passengerStatus?.characterId}
+        archetype={state.passengerStatus?.archetype}
+        mood={state.passengerStatus?.mood}
+        size={compact ? 32 : 38}
+        hideLabels={true}
+        icon={
+          state.passengerStatus?.status === 'OnTrip' ? (
+            <IconUser size={compact ? 16 : 19} color="var(--text-primary, #F8FAFC)" />
+          ) : (
+            <IconMotorcycle size={compact ? 16 : 19} color="var(--info-sky, #38BDF8)" />
+          )
+        }
+      />
       <div style={{ minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
           <span

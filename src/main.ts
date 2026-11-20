@@ -520,6 +520,8 @@ const hudInputScratch: HudSyncInput = {
   reqId: '',
   passengerStatus: 'None',
   passengerNameKey: undefined,
+  passengerCharacterId: undefined,
+  passengerArchetype: undefined,
   passengerMood: undefined,
   roadEventId: '',
   roadEventKind: '',
@@ -549,10 +551,14 @@ function syncHud(
 ): void {
   const activeRoadEv = gm.roadEvents.getFirstActiveEvent();
   let passengerNameKey: string | undefined;
+  let passengerCharacterId: string | undefined;
+  let passengerArchetype: string | undefined;
   if (activeReq) {
     const activeProfile = session.requests.getProfile(activeReq.passengerId);
     const activeChar = activeReq.characterId ? getCharacter(activeReq.characterId) : undefined;
     passengerNameKey = activeReq.passengerNameKey ?? activeProfile?.nameKey ?? activeChar?.nameKey;
+    passengerCharacterId = activeReq.characterId ?? activeProfile?.characterId;
+    passengerArchetype = activeProfile?.archetype ?? activeChar?.archetype;
   }
 
   const districtId = roadNetwork.getNodeDistrict(gm.playerNodeId) ?? activeDistrict.districtId;
@@ -578,6 +584,8 @@ function syncHud(
   hudInputScratch.reqId = activeReq ? activeReq.requestId : '';
   hudInputScratch.passengerStatus = view.passenger;
   hudInputScratch.passengerNameKey = passengerNameKey;
+  hudInputScratch.passengerCharacterId = passengerCharacterId;
+  hudInputScratch.passengerArchetype = passengerArchetype;
   hudInputScratch.passengerMood = activeReq ? rideManager.getPassengerMood() : undefined;
   hudInputScratch.roadEventId = activeRoadEv ? activeRoadEv.id : '';
   hudInputScratch.roadEventKind = activeRoadEv ? activeRoadEv.kind : '';

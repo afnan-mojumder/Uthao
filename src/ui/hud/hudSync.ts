@@ -59,6 +59,8 @@ export interface HudSyncInput {
   reqId: string;
   passengerStatus: PassengerStatus | 'None';
   passengerNameKey?: string;
+  passengerCharacterId?: string;
+  passengerArchetype?: string;
   passengerMood?: number;
   roadEventId: string;
   roadEventKind: string;
@@ -257,6 +259,8 @@ export function syncHudWithCache(cache: HudSyncCache, input: HudSyncInput): bool
       passengerStatus = {
         status: input.passengerStatus,
         name: input.passengerNameKey ? t(input.passengerNameKey) : t('hud.passenger.on_bike'),
+        characterId: input.passengerCharacterId,
+        archetype: input.passengerArchetype,
         mood: input.passengerMood,
       };
     } else {

@@ -99,7 +99,7 @@ const templates = {
     ],
     small_talk: [
       { en: "Did you catch yesterday's cricket match? What a finish!", bn: "কালকের ক্রিকেট ম্যাচটা দেখেছিলেন? কী অবিশ্বাস্য ফিনিশ!" },
-      { en: "Karwan Bazar wholesale vegetable prices jumped again this morning.", bn: "কাওরান বাজারে পাইকারি শাকসবজির দাম আজকে সকালে আবার বাড়ল।" },
+      { en: "Fulgate wholesale vegetable prices jumped again this morning.", bn: "ফুলগেটে পাইকারি শাকসবজির দাম আজকে সকালে আবার বাড়ল।" },
       { en: "Dhaka traffic has no rhyme or reason, but two-wheelers survive.", bn: "ঢাকার জ্যামের কোনো আগামাথা নাই, তবে দুই চাকার ভরসায় চলা যায়।" },
       { en: "If Tigers win the next series, the entire city will celebrate.", bn: "টাইগাররা পরের সিরিজটা জিতলে পুরো শহরে উৎসব লেগে যাবে।" },
       { en: "Brother, buying fish in Dhaka requires an Olympic bargaining medal!", bn: "ভাই, ঢাকায় মাছ কিনতে গেলে তো দরদামের অলিম্পিক মেডেল লাগে!" },
@@ -904,10 +904,12 @@ const bnDict = {};
 // T8.6: the six new archetypes live in their own file; merged here so one generator writes everything.
 Object.assign(templates, t86Templates);
 for (const arch of archetypes) {
-  const total = phases.reduce((n, ph) => n + (templates[arch]?.[ph]?.length ?? 0), 0);
-  if (total < 15) {
-    console.error(`Error: Archetype ${arch} has ${total} lines across phases, need >= 15!`);
-    process.exit(1);
+  for (const ph of phases) {
+    const count = templates[arch]?.[ph]?.length ?? 0;
+    if (count < 15) {
+      console.error(`Error: Archetype ${arch} phase ${ph} has ${count} lines, need >= 15!`);
+      process.exit(1);
+    }
   }
 }
 
@@ -915,11 +917,6 @@ for (const arch of archetypes) {
 for (const arch of archetypes) {
   for (const ph of phases) {
     const pool = templates[arch]?.[ph] || [];
-    // T8.6: the bar is 15 lines per archetype across phases, and at least one per phase.
-    if (pool.length < 1) {
-      console.error(`Error: Archetype ${arch} phase ${ph} has no lines!`);
-      process.exit(1);
-    }
     pool.forEach((item, idx) => {
       const id = `dl_${arch}_${ph}_${String(idx + 1).padStart(2, '0')}`;
       const key = `dialogue.pool.${arch}.${ph}.${String(idx + 1).padStart(2, '0')}`;

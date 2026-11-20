@@ -41,6 +41,7 @@ export interface DialogueSubtitleState {
 export interface HudPassengerInfo {
   status: PassengerStatus | 'None';
   name?: string;
+  characterId?: string;
   archetype?: string;
   rating?: number;
   mood?: number;
@@ -523,6 +524,7 @@ function sameHudPassenger(a: HudPassengerInfo | undefined, b: HudPassengerInfo |
   return (
     a.status === b.status &&
     a.name === b.name &&
+    a.characterId === b.characterId &&
     a.archetype === b.archetype &&
     a.rating === b.rating &&
     a.mood === b.mood

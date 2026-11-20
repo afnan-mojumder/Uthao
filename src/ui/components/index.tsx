@@ -346,13 +346,56 @@ export function StatusBar({
 }
 
 export interface CharacterPortraitProps {
-  name: string;
+  name?: string;
   role?: string;
+  characterId?: string;
+  archetype?: string;
+  portraitUrl?: string;
   mood?: 'happy' | 'neutral' | 'tense' | 'angry' | number;
   size?: number;
   icon?: ComponentChildren;
+  hideLabels?: boolean;
   testId?: string;
   style?: CSSProperties;
+}
+
+const KNOWN_PORTRAIT_IDS = new Set([
+  'char_ma',
+  'char_mintu',
+  'char_kamal',
+  'char_nabila',
+  'char_tanvir',
+  'char_rahim',
+  'char_ferdousi',
+  'char_jamil',
+  'char_morshed',
+  'char_bablu',
+  'bargainer',
+  'commuter',
+  'careful',
+  'regular',
+  'risky',
+  'student',
+  'office',
+  'urgent',
+  'traveler',
+  'unreliable',
+  'family',
+]);
+
+export function resolvePortraitSrc(
+  characterId?: string,
+  archetype?: string,
+  portraitUrl?: string
+): string | null {
+  if (portraitUrl) return portraitUrl;
+  if (characterId && KNOWN_PORTRAIT_IDS.has(characterId)) {
+    return `/assets/portraits/${characterId}.webp`;
+  }
+  if (archetype && KNOWN_PORTRAIT_IDS.has(archetype)) {
+    return `/assets/portraits/${archetype}.webp`;
+  }
+  return null;
 }
 
 function moodBorderColor(mood: CharacterPortraitProps['mood']): string {
@@ -370,20 +413,26 @@ function moodBorderColor(mood: CharacterPortraitProps['mood']): string {
 export function CharacterPortrait({
   name,
   role,
+  characterId,
+  archetype,
+  portraitUrl,
   mood = 'neutral',
   size = 44,
   icon,
+  hideLabels = false,
   testId,
   style,
 }: CharacterPortraitProps): JSX.Element {
   const ringColor = moodBorderColor(mood);
+  const resolvedSrc = resolvePortraitSrc(characterId, archetype, portraitUrl);
+  const showLabels = !hideLabels && Boolean(name || role);
   return (
     <div
       data-testid={testId}
       style={{
         display: 'inline-flex',
         alignItems: 'center',
-        gap: '10px',
+        gap: showLabels ? '10px' : '0px',
         fontFamily: 'var(--font-sans)',
         ...style,
       }}
@@ -400,15 +449,32 @@ export function CharacterPortrait({
           alignItems: 'center',
           justifyContent: 'center',
           color: 'var(--text-primary, #F8FAFC)',
+          overflow: 'hidden',
           flexShrink: 0,
         }}
       >
-        {icon ?? <IconUser size={Math.round(size * 0.5)} />}
+        {resolvedSrc ? (
+          <img
+            src={resolvedSrc}
+            alt=""
+            width={size}
+            height={size}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+          />
+        ) : (
+          icon ?? <IconUser size={Math.round(size * 0.5)} />
+        )}
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-        <span style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-primary, #F8FAFC)' }}>{name}</span>
-        {role && <span style={{ fontSize: '0.8rem', color: 'var(--text-muted, #94A3B8)' }}>{role}</span>}
-      </div>
+      {showLabels && (
+        <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+          {name && (
+            <span style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-primary, #F8FAFC)' }}>
+              {name}
+            </span>
+          )}
+          {role && <span style={{ fontSize: '0.8rem', color: 'var(--text-muted, #94A3B8)' }}>{role}</span>}
+        </div>
+      )}
     </div>
   );
 }

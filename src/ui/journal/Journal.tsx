@@ -400,6 +400,8 @@ export function Journal({
                     <CharacterPortrait
                       name={t(charDef.nameKey)}
                       role={t(charDef.roleKey)}
+                      characterId={charDef.id}
+                      archetype={charDef.archetype}
                       mood={moodTone}
                       size={36}
                     />

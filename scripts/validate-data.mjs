@@ -75,6 +75,28 @@ if (fs.existsSync(dialogueDir)) {
     }
   }
 
+  // Verify per-file bidirectional key parity between bn and en dialogue files
+  const bnDir = path.join(dialogueDir, 'bn');
+  const enDir = path.join(dialogueDir, 'en');
+  if (fs.existsSync(bnDir) && fs.existsSync(enDir)) {
+    const bnFiles = fs.readdirSync(bnDir).filter((f) => f.endsWith('.json')).sort();
+    const enFiles = fs.readdirSync(enDir).filter((f) => f.endsWith('.json')).sort();
+    if (bnFiles.join(',') !== enFiles.join(',')) {
+      console.error(`Dialogue file list mismatch between bn (${bnFiles.join(', ')}) and en (${enFiles.join(', ')})`);
+      process.exit(1);
+    }
+    for (const file of enFiles) {
+      const enContent = JSON.parse(fs.readFileSync(path.join(enDir, file), 'utf-8'));
+      const bnContent = JSON.parse(fs.readFileSync(path.join(bnDir, file), 'utf-8'));
+      const missingInBn = Object.keys(enContent).filter((k) => typeof bnContent[k] === 'undefined');
+      const missingInEn = Object.keys(bnContent).filter((k) => typeof enContent[k] === 'undefined');
+      if (missingInBn.length > 0 || missingInEn.length > 0) {
+        console.error(`Key parity mismatch in dialogue file '${file}': missingInBn=${missingInBn.length}, missingInEn=${missingInEn.length}`);
+        process.exit(1);
+      }
+    }
+  }
+
   // Verify two-way key parity between bn and en dialogue dictionaries
   const enKeys = Object.keys(dicts.en);
   const missingBnKeys = enKeys.filter((k) => typeof dicts.bn[k] === 'undefined');
@@ -478,6 +500,29 @@ if (fs.existsSync(archetypesPath)) {
       console.error(`Schema validation failed for ${archetypesPath}:`, result.error.format());
       process.exit(1);
     }
+    const seenPassengerNames = new Set();
+    for (const [archId, archDef] of Object.entries(result.data)) {
+      const archPortraitPath = path.resolve('public/assets/portraits', `${archId}.webp`);
+      if (!fs.existsSync(archPortraitPath)) {
+        console.error(`Archetype '${archId}': missing portrait file ${archPortraitPath}`);
+        process.exit(1);
+      }
+      for (const nameKey of archDef.names) {
+        if (seenPassengerNames.has(nameKey)) {
+          console.error(`Archetypes ${archetypesPath}: duplicate passenger name key '${nameKey}' in '${archId}'`);
+          process.exit(1);
+        }
+        seenPassengerNames.add(nameKey);
+        if (typeof dicts.en[nameKey] === 'undefined') {
+          console.error(`Archetype '${archId}': passenger nameKey '${nameKey}' missing in en dialogue`);
+          process.exit(1);
+        }
+        if (typeof dicts.bn[nameKey] === 'undefined') {
+          console.error(`Archetype '${archId}': passenger nameKey '${nameKey}' missing in bn dialogue`);
+          process.exit(1);
+        }
+      }
+    }
   } catch (err) {
     console.error(`Failed reading archetypes ${archetypesPath}:`, err);
     process.exit(1);
@@ -880,6 +925,11 @@ if (fs.existsSync(charactersPath)) {
       process.exit(1);
     }
     for (const char of res.data) {
+      const charPortraitPath = path.resolve('public/assets/portraits', `${char.id}.webp`);
+      if (!fs.existsSync(charPortraitPath)) {
+        console.error(`Character ${char.id}: missing portrait file ${charPortraitPath}`);
+        process.exit(1);
+      }
       if (typeof dicts.en[char.nameKey] === 'undefined') {
         console.error(`Character ${char.id}: nameKey '${char.nameKey}' missing in en dialogue`);
         process.exit(1);
@@ -973,16 +1023,36 @@ if (fs.existsSync(dialogueLinesPath)) {
       }
     }
 
-    // Check 2: >= 15 lines per archetype per phase
-    const archetypes = ['bargainer', 'commuter', 'careful', 'regular', 'risky'];
+    // Check 2: >= 15 unique lines per archetype per phase across all 11 archetypes
+    const archetypes = [
+      'bargainer',
+      'commuter',
+      'careful',
+      'regular',
+      'risky',
+      'student',
+      'office',
+      'urgent',
+      'traveler',
+      'unreliable',
+      'family',
+    ];
     const phases = ['greeting', 'offer', 'counter', 'accept', 'reject', 'small_talk', 'drop_off'];
 
     for (const arch of archetypes) {
       for (const ph of phases) {
-        const matching = lines.filter((l) => l.archetype === arch && l.phase === ph);
+        const matching = lines.filter((l) => l.archetype === arch && l.phase === ph && !l.characterId);
         if (matching.length < 15) {
           console.error(
             `DialogueLine validation failed: Archetype '${arch}' phase '${ph}' has ${matching.length} lines, required >= 15!`
+          );
+          process.exit(1);
+        }
+        const uniqueEn = new Set(matching.map((l) => String(dicts.en[l.key] ?? '').trim()));
+        const uniqueBn = new Set(matching.map((l) => String(dicts.bn[l.key] ?? '').trim()));
+        if (uniqueEn.size < 15 || uniqueBn.size < 15) {
+          console.error(
+            `DialogueLine uniqueness failed: Archetype '${arch}' phase '${ph}' has uniqueEn=${uniqueEn.size}, uniqueBn=${uniqueBn.size} (required >= 15)!`
           );
           process.exit(1);
         }

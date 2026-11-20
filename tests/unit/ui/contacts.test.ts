@@ -42,12 +42,12 @@ describe('T4.3 Contacts UI & Phone Tab', () => {
     expect(formatTime(1200)).toBe('20:00');
   });
 
-  it('provides icons for characters', () => {
-    expect(getCharacterIcon('char_ma')).toBe('👵');
-    expect(getCharacterIcon('char_mintu')).toBe('☕');
-    expect(getCharacterIcon('char_kamal')).toBe('🔧');
-    expect(getCharacterIcon('char_nabila')).toBe('🎓');
-    expect(getCharacterIcon('char_unknown')).toBe('👤');
+  it('provides portrait asset paths for characters', () => {
+    expect(getCharacterIcon('char_ma')).toBe('/assets/portraits/char_ma.webp');
+    expect(getCharacterIcon('char_mintu')).toBe('/assets/portraits/char_mintu.webp');
+    expect(getCharacterIcon('char_kamal')).toBe('/assets/portraits/char_kamal.webp');
+    expect(getCharacterIcon('char_nabila')).toBe('/assets/portraits/char_nabila.webp');
+    expect(getCharacterIcon('char_unknown')).toBe('/assets/portraits/regular.webp');
   });
 
   it('renders contacts with locked and unlocked indicators', () => {
