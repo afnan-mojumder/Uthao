@@ -13,7 +13,8 @@
 //   Select              camera (handled in main.ts from InputManager)
 
 import { GamepadEdges, pickNeighbor, type Box, type NavDir } from '../input/gamepadNav';
-import { loadBindings } from '../input/bindings';
+import { loadBindings, SETTINGS_STORAGE_KEY } from '../input/bindings';
+import type { InputBindings } from '../input/types';
 import { effect } from '@preact/signals';
 import {
   choiceSignal,
@@ -32,6 +33,7 @@ import {
   rotateOverlaySignal,
   saveSlotsSignal,
   screenSignal,
+  settingsSignal,
   tripSummarySignal,
   tutorialSignal,
   unsupportedSignal,
@@ -88,6 +90,40 @@ function boxOf(el: HTMLElement): Box {
   return { x: r.left, y: r.top, w: r.width, h: r.height };
 }
 
+function isRangeSlider(el: HTMLElement | null): el is HTMLInputElement {
+  return Boolean(el && el.tagName === 'INPUT' && (el as HTMLInputElement).type === 'range');
+}
+
+function adjustRangeSlider(el: HTMLInputElement, dir: 'left' | 'right'): void {
+  const min = Number.isFinite(parseFloat(el.min)) ? parseFloat(el.min) : 0;
+  const max = Number.isFinite(parseFloat(el.max)) ? parseFloat(el.max) : 100;
+  const stepRaw = parseFloat(el.step);
+  const step = Number.isFinite(stepRaw) && stepRaw > 0 ? stepRaw : 1;
+  const current = Number.isFinite(parseFloat(el.value)) ? parseFloat(el.value) : min;
+  const delta = dir === 'right' ? step : -step;
+  const next = Math.min(max, Math.max(min, Math.round((current + delta) * 1e6) / 1e6));
+  if (next === current) return;
+  el.value = String(next);
+  if (typeof Event === 'function') {
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+  } else {
+    el.dispatchEvent?.({ type: 'input', bubbles: true } as unknown as Event);
+    el.dispatchEvent?.({ type: 'change', bubbles: true } as unknown as Event);
+  }
+}
+
+export function getActiveControlsBindings(): InputBindings {
+  try {
+    if (typeof localStorage !== 'undefined' && localStorage.getItem(SETTINGS_STORAGE_KEY) !== null) {
+      return loadBindings();
+    }
+  } catch {
+    // Fallback to settingsSignal below
+  }
+  return settingsSignal.value.controls ?? loadBindings();
+}
+
 /** Moves focus to the nearest control in `dir`; focuses the first control if none has focus. */
 export function moveFocus(dir: NavDir): void {
   const els = focusables();
@@ -95,6 +131,10 @@ export function moveFocus(dir: NavDir): void {
   const active = document.activeElement as HTMLElement | null;
   if (!active || !els.includes(active)) {
     els[0]!.focus();
+    return;
+  }
+  if ((dir === 'left' || dir === 'right') && isRangeSlider(active)) {
+    adjustRangeSlider(active, dir);
     return;
   }
   const next = pickNeighbor(boxOf(active), els.map(boxOf), dir);
@@ -139,7 +179,7 @@ export function startGamepadNav(isSettingsOpen: () => boolean): () => void {
 
   const tick = () => {
     if (!running) return;
-    const gp = loadBindings().gamepad;
+    const gp = getActiveControlsBindings().gamepad;
     const choiceButtons = gp.choiceButtons;
     const snap = edges.poll(firstGamepad());
 

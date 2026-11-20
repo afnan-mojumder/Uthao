@@ -415,6 +415,11 @@ export const settingsSignal = signal<GameSettings>(loadSettings());
 export const audioPreviewSignal = signal<AudioSettings | null>(null);
 export const audioPreviewSeqSignal = signal<number>(0);
 export const isGamepadRebindingSignal = signal<boolean>(false);
+export const touchFeedbackSignal = signal<{ throttle: boolean; brake: boolean; steer: number }>({
+  throttle: false,
+  brake: false,
+  steer: 0,
+});
 
 export const DEFAULT_HUD_STATE: HudState = {
   speedKmh: 0,

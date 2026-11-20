@@ -92,9 +92,8 @@ import { Journal } from './journal/Journal';
 import { KarmaPanel } from './karma/KarmaPanel';
 import { UiSheet } from './sheet/UiSheet';
 import { t } from './i18n';
-import { loadBindings } from '../input/bindings';
 import { toggleMute } from './store';
-import { hasSystemOverlay, startGamepadNav, uiModalOpen } from './gamepadNav';
+import { getActiveControlsBindings, hasSystemOverlay, startGamepadNav, uiModalOpen } from './gamepadNav';
 
 export function App(): JSX.Element {
   const [showSettings, setShowSettings] = useState(false);
@@ -140,7 +139,7 @@ export function App(): JSX.Element {
         return;
       }
       // Hotkeys follow the bindings config, matched by key code (audit: hotkeys ignored it).
-      const bound = loadBindings().keyboard;
+      const bound = getActiveControlsBindings().keyboard;
       const pressed = (codes: string[]) => codes.includes(e.code);
       if (pressed(bound.phone)) {
         // Tab opens the phone only while driving. In menus and modals, and
@@ -455,7 +454,7 @@ export function App(): JSX.Element {
       {uiSheetSignal.value && (
         <UiSheet
           isOpen={true}
-          controls={settingsSignal.value.controls ?? loadBindings()}
+          controls={settingsSignal.value.controls ?? getActiveControlsBindings()}
           tiltControls={settingsSignal.value.tiltControls}
           onOpenMap={() => {
             uiSheetSignal.value = false;

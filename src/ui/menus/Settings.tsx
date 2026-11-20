@@ -9,6 +9,7 @@ import {
   type RebindableGamepadAction,
   type RebindableKeyboardAction,
 } from '../../input/bindings';
+import { requestTiltPermission } from '../../input/InputManager';
 import type { InputBindings } from '../../input/types';
 import { ModalPanel } from '../components';
 import {
@@ -778,12 +779,51 @@ export function Settings({
                   data-testid="settings-tilt-toggle"
                   type="checkbox"
                   checked={localSettings.tiltControls}
-                  onChange={(e) =>
-                    setLocalSettings((prev) => ({ ...prev, tiltControls: e.currentTarget.checked }))
-                  }
+                  onChange={(e) => {
+                    const nextChecked = e.currentTarget.checked;
+                    setLocalSettings((prev) => ({ ...prev, tiltControls: nextChecked }));
+                    if (nextChecked) {
+                      void requestTiltPermission().then((granted) => {
+                        if (!granted) {
+                          setLocalSettings((prev) => ({ ...prev, tiltControls: false }));
+                        }
+                      });
+                    }
+                  }}
                   style={{ width: '18px', height: '18px', accentColor: '#38bdf8', cursor: 'pointer' }}
                 />
               </label>
+
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
+                <span style={{ fontSize: '0.9rem', color: '#cbd5e1' }}>
+                  {t('settings.controls.touch_steer_mode')}
+                </span>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  {(['slider', 'buttons'] as const).map((mode) => {
+                    const active = (draftBindings.touchSteerMode ?? 'slider') === mode;
+                    return (
+                      <button
+                        key={mode}
+                        type="button"
+                        data-testid={`settings-touch-steer-${mode}`}
+                        onClick={() => updateDraftBindings({ ...draftBindings, touchSteerMode: mode })}
+                        style={{
+                          padding: '6px 12px',
+                          borderRadius: '8px',
+                          border: active ? '1px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.12)',
+                          background: active ? 'rgba(56, 189, 248, 0.2)' : 'rgba(30, 41, 59, 0.5)',
+                          color: active ? '#38bdf8' : '#cbd5e1',
+                          fontWeight: 700,
+                          fontSize: '0.8rem',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {t(`settings.controls.touch_steer_${mode}`)}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
 
               <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.08)', paddingTop: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>

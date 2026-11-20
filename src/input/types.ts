@@ -62,9 +62,12 @@ export interface GamepadBindings {
   choiceButtons: [number, number, number, number]; // [A=0, B=1, X=2, Y=3]
 }
 
+export type TouchSteerMode = 'slider' | 'buttons';
+
 export interface InputBindings {
   keyboard: KeyboardBindings;
   gamepad: GamepadBindings;
   tiltEnabled: boolean;
   tiltSensitivity: number;
+  touchSteerMode?: TouchSteerMode;
 }

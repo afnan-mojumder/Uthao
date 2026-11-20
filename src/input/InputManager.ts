@@ -1,6 +1,26 @@
-import type { InputState, InputBindings, TouchLayout } from './types';
+import type { InputState, InputBindings, Rect, TouchLayout } from './types';
 import { loadBindings, saveBindings } from './bindings';
 import { touchLayout } from './layout';
+import {
+  choiceSignal,
+  contextLostSignal,
+  dayEndSignal,
+  endingSignal,
+  garageSignal,
+  journalSignal,
+  karmaPanelSignal,
+  loadingSignal,
+  negotiationSignal,
+  pausedSignal,
+  phoneSignal,
+  rotateOverlaySignal,
+  saveSlotsSignal,
+  screenSignal,
+  tripSummarySignal,
+  tutorialSignal,
+  uiSheetSignal,
+  unsupportedSignal,
+} from '../ui/store';
 
 export interface RawKeyboardInput {
   throttle?: boolean;
@@ -19,6 +39,116 @@ export interface InputManagerOptions {
   useWindowListeners?: boolean;
   target?: Window | HTMLElement;
   bindings?: InputBindings;
+  isModalOpen?: () => boolean;
+}
+
+const TRIGGER_DEADZONE = 0.08;
+const GAMEPLAY_PREVENT_DEFAULT_CODES = new Set([
+  'Space',
+  'ArrowUp',
+  'ArrowDown',
+  'ArrowLeft',
+  'ArrowRight',
+]);
+const UI_TARGET_SELECTOR =
+  'button, input, select, textarea, a[href], [role="dialog"], [data-ui-control], [data-ui-interactive]';
+
+function pointInRect(px: number, py: number, rect: Rect): boolean {
+  return (
+    px >= rect.x &&
+    px <= rect.x + rect.width &&
+    py >= rect.y &&
+    py <= rect.y + rect.height
+  );
+}
+
+function isTextInputTarget(target: EventTarget | null): boolean {
+  if (!target || typeof target !== 'object') return false;
+  const el = target as HTMLElement;
+  return (
+    el.tagName === 'INPUT' ||
+    el.tagName === 'TEXTAREA' ||
+    el.tagName === 'SELECT' ||
+    Boolean(el.isContentEditable)
+  );
+}
+
+function isUiTarget(target: EventTarget | null): boolean {
+  if (!target || typeof (target as HTMLElement).closest !== 'function') return false;
+  return Boolean((target as HTMLElement).closest(UI_TARGET_SELECTOR));
+}
+
+function defaultIsModalOpen(): boolean {
+  if (
+    pausedSignal.value ||
+    loadingSignal.value.active ||
+    contextLostSignal.value ||
+    rotateOverlaySignal.value ||
+    Boolean(unsupportedSignal.value) ||
+    choiceSignal.value.active ||
+    negotiationSignal.value.active ||
+    dayEndSignal.value.active ||
+    endingSignal.value.active ||
+    garageSignal.value.open ||
+    journalSignal.value ||
+    karmaPanelSignal.value ||
+    uiSheetSignal.value ||
+    tripSummarySignal.value !== null ||
+    tutorialSignal.value.active ||
+    saveSlotsSignal.value.isOpen ||
+    phoneSignal.value.open ||
+    screenSignal.value === 'pause' ||
+    screenSignal.value === 'map' ||
+    screenSignal.value === 'garage'
+  ) {
+    return true;
+  }
+  if (typeof document !== 'undefined' && typeof document.querySelector === 'function') {
+    return Boolean(
+      document.querySelector('[role="dialog"], [data-testid="choice-card"], [data-testid="settings-screen"]')
+    );
+  }
+  return false;
+}
+
+function readTrigger(btn: GamepadButton | undefined): number {
+  if (!btn) return 0;
+  const val = typeof btn.value === 'number' ? btn.value : 0;
+  if (val >= TRIGGER_DEADZONE) return val;
+  return btn.pressed ? 1 : 0;
+}
+
+function isLandscapeViewport(): boolean {
+  if (typeof window === 'undefined') return true;
+  if (typeof window.innerWidth === 'number' && typeof window.innerHeight === 'number') {
+    return window.innerWidth >= window.innerHeight;
+  }
+  return true;
+}
+
+function isLandscapeSecondary(): boolean {
+  if (typeof screen !== 'undefined' && screen.orientation && typeof screen.orientation.angle === 'number') {
+    return screen.orientation.angle === 270 || screen.orientation.angle === -90;
+  }
+  if (typeof window !== 'undefined') {
+    const orient = (window as unknown as { orientation?: number }).orientation;
+    return orient === -90 || orient === 270;
+  }
+  return false;
+}
+
+export function requestTiltPermission(): Promise<boolean> {
+  if (
+    typeof DeviceOrientationEvent !== 'undefined' &&
+    typeof (DeviceOrientationEvent as unknown as { requestPermission?: () => Promise<string> })
+      .requestPermission === 'function'
+  ) {
+    return (DeviceOrientationEvent as unknown as { requestPermission: () => Promise<string> })
+      .requestPermission()
+      .then((perm) => perm === 'granted')
+      .catch(() => false);
+  }
+  return Promise.resolve(true);
 }
 
 export class InputManager {
@@ -28,14 +158,19 @@ export class InputManager {
   private activeKeys = new Set<string>();
   /** Keys pressed since the last update, so a quick tap is not lost between frames (audit: tap of C dropped). */
   private tappedKeys = new Set<string>();
+  private isModalOpenFn?: () => boolean;
 
-  // Touch state
+  // Touch & pointer state
   private touchSteer = 0; // -1..1
-  // Each pad tracks the fingers on it, so lifting one releases only that pad.
+  // Each pad tracks the fingers/pointers on it, so lifting or sliding off releases only that pad.
   private throttleTouchIds = new Set<number>();
   private brakeTouchIds = new Set<number>();
   private touchSteerTouchId: number | null = null;
   private touchSteerStartX = 0;
+  private throttlePointerIds = new Set<number>();
+  private brakePointerIds = new Set<number>();
+  private steerPointerId: number | null = null;
+  private steerPointerStartX = 0;
 
   // Tilt state
   private tiltSteer = 0;
@@ -49,6 +184,7 @@ export class InputManager {
 
   constructor(options: InputManagerOptions = {}) {
     this.bindings = options.bindings ?? loadBindings();
+    this.isModalOpenFn = options.isModalOpen;
     this.state = {
       throttle: 0,
       brake: 0,
@@ -79,11 +215,45 @@ export class InputManager {
     this.rawKeyboard = { ...this.rawKeyboard, ...raw };
   }
 
+  public getTouchVisualState(): { throttle: boolean; brake: boolean; steer: number } {
+    return {
+      throttle: this.throttleTouchIds.size > 0 || this.throttlePointerIds.size > 0,
+      brake: this.brakeTouchIds.size > 0 || this.brakePointerIds.size > 0,
+      steer: this.touchSteer,
+    };
+  }
+
+  private isDrivingBlocked(): boolean {
+    if (this.isModalOpenFn) return this.isModalOpenFn();
+    return defaultIsModalOpen();
+  }
+
+  private clearTouchInputs(): void {
+    this.throttleTouchIds.clear();
+    this.brakeTouchIds.clear();
+    this.throttlePointerIds.clear();
+    this.brakePointerIds.clear();
+    this.touchSteerTouchId = null;
+    this.steerPointerId = null;
+    this.touchSteer = 0;
+  }
+
+  private clearActiveInputs(): void {
+    this.activeKeys.clear();
+    this.tappedKeys.clear();
+    this.rawKeyboard = {};
+    this.clearTouchInputs();
+    this.tiltSteer = 0;
+    this.currentSteer = 0;
+  }
+
   /**
    * Updates analog smoothing and reads gamepads/touch devices.
    * dt is elapsed delta time in seconds.
    */
   public update(dt: number): void {
+    const blocked = this.isDrivingBlocked();
+
     // Determine raw digital/analog keyboard targets
     let kbThrottle = 0;
     let kbBrake = 0;
@@ -95,18 +265,21 @@ export class InputManager {
     let pause = Boolean(this.rawKeyboard.pause);
     let choice: 0 | 1 | 2 | 3 | null = this.rawKeyboard.choice ?? null;
 
-    if (this.rawKeyboard.throttle) kbThrottle = 1.0;
-    if (this.rawKeyboard.brake) kbBrake = 1.0;
-    if (this.rawKeyboard.steerLeft) targetKbSteer -= 1.0;
-    if (this.rawKeyboard.steerRight) targetKbSteer += 1.0;
+    if (!blocked) {
+      if (this.rawKeyboard.throttle) kbThrottle = 1.0;
+      if (this.rawKeyboard.brake) kbBrake = 1.0;
+      if (this.rawKeyboard.steerLeft) targetKbSteer -= 1.0;
+      if (this.rawKeyboard.steerRight) targetKbSteer += 1.0;
 
-    // Keys active from DOM keyboard events
-    if (this.matchesAny(this.bindings.keyboard.throttle)) kbThrottle = 1.0;
-    if (this.matchesAny(this.bindings.keyboard.brake)) kbBrake = 1.0;
-    if (this.matchesAny(this.bindings.keyboard.steerLeft)) targetKbSteer -= 1.0;
-    if (this.matchesAny(this.bindings.keyboard.steerRight)) targetKbSteer += 1.0;
-    if (this.matchesPressed(this.bindings.keyboard.horn)) horn = true;
-    if (this.matchesPressed(this.bindings.keyboard.camera)) camera = true;
+      // Keys active from DOM keyboard events
+      if (this.matchesAny(this.bindings.keyboard.throttle)) kbThrottle = 1.0;
+      if (this.matchesAny(this.bindings.keyboard.brake)) kbBrake = 1.0;
+      if (this.matchesAny(this.bindings.keyboard.steerLeft)) targetKbSteer -= 1.0;
+      if (this.matchesAny(this.bindings.keyboard.steerRight)) targetKbSteer += 1.0;
+    }
+
+    if (this.matchesPressed(this.bindings.keyboard.horn)) horn = !blocked && true;
+    if (this.matchesPressed(this.bindings.keyboard.camera)) camera = !blocked && true;
     if (this.matchesPressed(this.bindings.keyboard.phone)) phone = true;
     if (this.matchesPressed(this.bindings.keyboard.map)) map = true;
     if (this.matchesPressed(this.bindings.keyboard.pause)) pause = true;
@@ -116,8 +289,11 @@ export class InputManager {
     if (this.matchesPressed(this.bindings.keyboard.choice3)) choice = 3;
     this.tappedKeys.clear();
 
-    // Smooth keyboard steer towards target
-    if (dt > 0) {
+    if (blocked) {
+      this.currentSteer = 0;
+      this.clearTouchInputs();
+    } else if (dt > 0) {
+      // Smooth keyboard steer towards target
       const step = (1.0 / this.STEER_RAMP_TIME) * dt;
       if (this.currentSteer < targetKbSteer) {
         this.currentSteer = Math.min(targetKbSteer, this.currentSteer + step);
@@ -132,24 +308,23 @@ export class InputManager {
     let gpSteer = 0;
     const gp = this.getPrimaryGamepad();
     if (gp) {
-      // RT throttle (trigger or button)
-      const rtBtn = gp.buttons[this.bindings.gamepad.throttleAxisOrButton];
-      if (rtBtn) gpThrottle = rtBtn.value ?? (rtBtn.pressed ? 1 : 0);
+      if (!blocked) {
+        // RT throttle (trigger or button with < 0.08 analog deadzone)
+        gpThrottle = readTrigger(gp.buttons[this.bindings.gamepad.throttleAxisOrButton]);
 
-      // LT brake (trigger or button)
-      const ltBtn = gp.buttons[this.bindings.gamepad.brakeAxisOrButton];
-      if (ltBtn) gpBrake = ltBtn.value ?? (ltBtn.pressed ? 1 : 0);
+        // LT brake (trigger or button with < 0.08 analog deadzone)
+        gpBrake = readTrigger(gp.buttons[this.bindings.gamepad.brakeAxisOrButton]);
 
-      // Left stick steer (axis 0)
-      const stick = gp.axes[this.bindings.gamepad.steerAxis] ?? 0;
-      if (Math.abs(stick) > 0.08) {
-        // Deadzone
-        gpSteer = stick;
+        // Left stick steer (axis 0)
+        const stick = gp.axes[this.bindings.gamepad.steerAxis] ?? 0;
+        if (Math.abs(stick) > 0.08) {
+          gpSteer = stick;
+        }
+
+        if (gp.buttons[this.bindings.gamepad.hornButton]?.pressed) horn = true;
+        if (gp.buttons[this.bindings.gamepad.cameraButton]?.pressed) camera = true;
       }
 
-      // Buttons
-      if (gp.buttons[this.bindings.gamepad.hornButton]?.pressed) horn = true;
-      if (gp.buttons[this.bindings.gamepad.cameraButton]?.pressed) camera = true;
       if (gp.buttons[this.bindings.gamepad.phoneButton]?.pressed) phone = true;
       if (gp.buttons[this.bindings.gamepad.mapButton]?.pressed) map = true;
       if (gp.buttons[this.bindings.gamepad.pauseButton]?.pressed) pause = true;
@@ -160,9 +335,24 @@ export class InputManager {
       });
     }
 
+    if (blocked) {
+      this.state = {
+        throttle: 0,
+        brake: 0,
+        steer: 0,
+        horn: false,
+        camera: false,
+        phone,
+        map,
+        pause,
+        choice,
+      };
+      return;
+    }
+
     // Combine throttle, brake, steer across Keyboard, Gamepad, Touch, and Tilt
-    const touchThrottle = this.throttleTouchIds.size > 0 ? 1 : 0;
-    const touchBrake = this.brakeTouchIds.size > 0 ? 1 : 0;
+    const touchThrottle = this.throttleTouchIds.size > 0 || this.throttlePointerIds.size > 0 ? 1 : 0;
+    const touchBrake = this.brakeTouchIds.size > 0 || this.brakePointerIds.size > 0 ? 1 : 0;
     const finalThrottle = Math.max(kbThrottle, gpThrottle, touchThrottle);
     const finalBrake = Math.max(kbBrake, gpBrake, touchBrake);
 
@@ -191,17 +381,7 @@ export class InputManager {
   }
 
   public requestTiltPermission(): Promise<boolean> {
-    if (
-      typeof DeviceOrientationEvent !== 'undefined' &&
-      typeof (DeviceOrientationEvent as unknown as { requestPermission?: () => Promise<string> })
-        .requestPermission === 'function'
-    ) {
-      return (DeviceOrientationEvent as unknown as { requestPermission: () => Promise<string> })
-        .requestPermission()
-        .then((perm) => perm === 'granted')
-        .catch(() => false);
-    }
-    return Promise.resolve(true);
+    return requestTiltPermission();
   }
 
   public detach(): void {
@@ -209,7 +389,7 @@ export class InputManager {
       teardown();
     }
     this.teardownFns = [];
-    this.activeKeys.clear();
+    this.clearActiveInputs();
   }
 
   /** True if any of `codes` is held now, or was pressed since the last update. */
@@ -236,8 +416,22 @@ export class InputManager {
     return null;
   }
 
+  private steerFromZonePosition(px: number, startX: number, zone: Rect, viewportW: number): number {
+    if (this.bindings.touchSteerMode === 'buttons') {
+      const midX = zone.x + zone.width / 2;
+      return px < midX ? -1.0 : 1.0;
+    }
+    const deltaX = px - startX;
+    const maxDrag = Math.max(1, Math.min(120, viewportW * 0.15));
+    return Math.max(-1.0, Math.min(1.0, deltaX / maxDrag));
+  }
+
   private attachListeners(target: Window | HTMLElement): void {
     const onKeyDown = (e: KeyboardEvent) => {
+      if (isTextInputTarget(e.target)) return;
+      if (!this.isDrivingBlocked() && GAMEPLAY_PREVENT_DEFAULT_CODES.has(e.code)) {
+        e.preventDefault?.();
+      }
       this.activeKeys.add(e.code);
       this.tappedKeys.add(e.code);
     };
@@ -246,26 +440,72 @@ export class InputManager {
       this.activeKeys.delete(e.code);
     };
 
-    // A key released while another window has focus never reaches us, so
-    // forget everything held when focus leaves; otherwise the bike keeps
-    // throttling or steering until the key is pressed and released again.
+    // A key or touch released while another window/tab has focus never reaches us,
+    // so forget everything held when focus leaves or the document becomes hidden.
     const onBlur = () => {
-      this.activeKeys.clear();
+      this.clearActiveInputs();
+    };
+
+    const onVisibilityChange = () => {
+      if (typeof document !== 'undefined' && document.hidden) {
+        this.clearActiveInputs();
+      }
     };
 
     window.addEventListener('keydown', onKeyDown);
     window.addEventListener('keyup', onKeyUp);
     window.addEventListener('blur', onBlur);
+    if (typeof document !== 'undefined' && typeof document.addEventListener === 'function') {
+      document.addEventListener('visibilitychange', onVisibilityChange);
+    }
 
     this.teardownFns.push(() => {
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
       window.removeEventListener('blur', onBlur);
+      if (typeof document !== 'undefined' && typeof document.removeEventListener === 'function') {
+        document.removeEventListener('visibilitychange', onVisibilityChange);
+      }
     });
 
-    // Touch event listeners
+    // Touch, pointer, and device orientation event listeners
     if (typeof window !== 'undefined') {
       const onTouchStart = (e: TouchEvent) => {
+        if (this.isDrivingBlocked() || isUiTarget(e.target)) return;
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        const layout: TouchLayout = touchLayout(w, h);
+
+        for (let i = 0; i < e.changedTouches.length; i++) {
+          const t = e.changedTouches[i];
+          if (!t) continue;
+          if (isUiTarget((t as unknown as { target?: EventTarget | null }).target ?? null)) continue;
+          const px = t.clientX;
+          const py = t.clientY;
+
+          if (pointInRect(px, py, layout.steerZone)) {
+            this.touchSteerTouchId = t.identifier;
+            this.touchSteerStartX = px;
+            if (this.bindings.touchSteerMode === 'buttons') {
+              this.touchSteer = this.steerFromZonePosition(px, px, layout.steerZone, w);
+            }
+          }
+
+          if (pointInRect(px, py, layout.throttlePad)) {
+            this.throttleTouchIds.add(t.identifier);
+          }
+
+          if (pointInRect(px, py, layout.brakePad)) {
+            this.brakeTouchIds.add(t.identifier);
+          }
+        }
+      };
+
+      const onTouchMove = (e: TouchEvent) => {
+        if (this.isDrivingBlocked()) {
+          this.clearTouchInputs();
+          return;
+        }
         const w = window.innerWidth;
         const h = window.innerHeight;
         const layout: TouchLayout = touchLayout(w, h);
@@ -276,44 +516,19 @@ export class InputManager {
           const px = t.clientX;
           const py = t.clientY;
 
-          // Steer drag zone (left 35%)
-          if (px <= layout.steerZone.width) {
-            this.touchSteerTouchId = t.identifier;
-            this.touchSteerStartX = px;
+          if (this.throttleTouchIds.has(t.identifier) && !pointInRect(px, py, layout.throttlePad)) {
+            this.throttleTouchIds.delete(t.identifier);
+          }
+          if (this.brakeTouchIds.has(t.identifier) && !pointInRect(px, py, layout.brakePad)) {
+            this.brakeTouchIds.delete(t.identifier);
           }
 
-          // Throttle pad
-          if (
-            px >= layout.throttlePad.x &&
-            px <= layout.throttlePad.x + layout.throttlePad.width &&
-            py >= layout.throttlePad.y &&
-            py <= layout.throttlePad.y + layout.throttlePad.height
-          ) {
-            this.throttleTouchIds.add(t.identifier);
-          }
-
-          // Brake pad
-          if (
-            px >= layout.brakePad.x &&
-            px <= layout.brakePad.x + layout.brakePad.width &&
-            py >= layout.brakePad.y &&
-            py <= layout.brakePad.y + layout.brakePad.height
-          ) {
-            this.brakeTouchIds.add(t.identifier);
-          }
-        }
-      };
-
-      const onTouchMove = (e: TouchEvent) => {
-        const w = window.innerWidth;
-        for (let i = 0; i < e.changedTouches.length; i++) {
-          const t = e.changedTouches[i];
-          if (!t) continue;
           if (t.identifier === this.touchSteerTouchId) {
-            const deltaX = t.clientX - this.touchSteerStartX;
-            // Drag distance across ~100px gives full steer (-1 left, +1 right)
-            const maxDrag = Math.max(1, Math.min(120, w * 0.15));
-            this.touchSteer = Math.max(-1.0, Math.min(1.0, deltaX / maxDrag));
+            if (this.bindings.touchSteerMode === 'buttons' && !pointInRect(px, py, layout.steerZone)) {
+              this.touchSteer = 0;
+            } else {
+              this.touchSteer = this.steerFromZonePosition(px, this.touchSteerStartX, layout.steerZone, w);
+            }
           }
         }
       };
@@ -337,18 +552,88 @@ export class InputManager {
         }
       };
 
+      const onPointerDown = (e: PointerEvent) => {
+        if (e.pointerType === 'mouse') return;
+        if (this.isDrivingBlocked() || isUiTarget(e.target)) return;
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        const layout: TouchLayout = touchLayout(w, h);
+        const px = e.clientX;
+        const py = e.clientY;
+
+        if (pointInRect(px, py, layout.steerZone)) {
+          this.steerPointerId = e.pointerId;
+          this.steerPointerStartX = px;
+          if (this.bindings.touchSteerMode === 'buttons') {
+            this.touchSteer = this.steerFromZonePosition(px, px, layout.steerZone, w);
+          }
+        }
+        if (pointInRect(px, py, layout.throttlePad)) {
+          this.throttlePointerIds.add(e.pointerId);
+        }
+        if (pointInRect(px, py, layout.brakePad)) {
+          this.brakePointerIds.add(e.pointerId);
+        }
+      };
+
+      const onPointerMove = (e: PointerEvent) => {
+        if (e.pointerType === 'mouse') return;
+        if (this.isDrivingBlocked()) {
+          this.clearTouchInputs();
+          return;
+        }
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        const layout: TouchLayout = touchLayout(w, h);
+        const px = e.clientX;
+        const py = e.clientY;
+
+        if (this.throttlePointerIds.has(e.pointerId) && !pointInRect(px, py, layout.throttlePad)) {
+          this.throttlePointerIds.delete(e.pointerId);
+        }
+        if (this.brakePointerIds.has(e.pointerId) && !pointInRect(px, py, layout.brakePad)) {
+          this.brakePointerIds.delete(e.pointerId);
+        }
+        if (e.pointerId === this.steerPointerId) {
+          if (this.bindings.touchSteerMode === 'buttons' && !pointInRect(px, py, layout.steerZone)) {
+            this.touchSteer = 0;
+          } else {
+            this.touchSteer = this.steerFromZonePosition(px, this.steerPointerStartX, layout.steerZone, w);
+          }
+        }
+      };
+
+      const onPointerEnd = (e: PointerEvent) => {
+        if (e.pointerType === 'mouse') return;
+        this.throttlePointerIds.delete(e.pointerId);
+        this.brakePointerIds.delete(e.pointerId);
+        if (e.pointerId === this.steerPointerId) {
+          this.steerPointerId = null;
+          this.touchSteer = 0;
+        }
+      };
+
       const onDeviceOrientation = (e: DeviceOrientationEvent) => {
-        if (!this.bindings.tiltEnabled || e.gamma === null) return;
-        // Gamma is left-to-right tilt in degrees (-90..90)
+        if (!this.bindings.tiltEnabled) return;
+        let tiltDeg: number | null = null;
+        if (isLandscapeViewport() && typeof e.beta === 'number') {
+          tiltDeg = isLandscapeSecondary() ? -e.beta : e.beta;
+        } else if (typeof e.gamma === 'number') {
+          tiltDeg = e.gamma;
+        }
+        if (tiltDeg === null) return;
         // Normalize ~30 degrees tilt to full lock
-        const steer = Math.max(-1.0, Math.min(1.0, e.gamma / 30));
-        this.tiltSteer = steer;
+        this.tiltSteer = Math.max(-1.0, Math.min(1.0, tiltDeg / 30));
       };
 
       target.addEventListener('touchstart', onTouchStart as EventListener, { passive: true });
       target.addEventListener('touchmove', onTouchMove as EventListener, { passive: true });
       target.addEventListener('touchend', onTouchEnd as EventListener, { passive: true });
       target.addEventListener('touchcancel', onTouchEnd as EventListener, { passive: true });
+      target.addEventListener('pointerdown', onPointerDown as EventListener, { passive: true });
+      target.addEventListener('pointermove', onPointerMove as EventListener, { passive: true });
+      target.addEventListener('pointerup', onPointerEnd as EventListener, { passive: true });
+      target.addEventListener('pointercancel', onPointerEnd as EventListener, { passive: true });
       window.addEventListener('deviceorientation', onDeviceOrientation);
 
       this.teardownFns.push(() => {
@@ -356,6 +641,10 @@ export class InputManager {
         target.removeEventListener('touchmove', onTouchMove as EventListener);
         target.removeEventListener('touchend', onTouchEnd as EventListener);
         target.removeEventListener('touchcancel', onTouchEnd as EventListener);
+        target.removeEventListener('pointerdown', onPointerDown as EventListener);
+        target.removeEventListener('pointermove', onPointerMove as EventListener);
+        target.removeEventListener('pointerup', onPointerEnd as EventListener);
+        target.removeEventListener('pointercancel', onPointerEnd as EventListener);
         window.removeEventListener('deviceorientation', onDeviceOrientation);
       });
     }

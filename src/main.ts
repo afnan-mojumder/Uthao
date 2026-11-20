@@ -1,6 +1,6 @@
 import { render, h } from 'preact';
 import './ui/tokens.css';
-import { watchOverlayFocus } from './ui/gamepadNav';
+import { uiModalOpen, watchOverlayFocus } from './ui/gamepadNav';
 import { AudioManager } from './audio/AudioManager';
 import { getBikeDef } from './sim/economy/bikes';
 import { bindAudio } from './audio/bindAudio';
@@ -37,6 +37,7 @@ import {
   mapPlayerPosSignal,
   journalDataSignal,
   settingsSignal,
+  touchFeedbackSignal,
   audioPreviewSignal,
   audioPreviewSeqSignal,
   phoneSignal,
@@ -398,7 +399,13 @@ if (minimap) {
 }
 const autopilot = new AutopilotController(roadNetwork);
 const trafficManager = session.traffic;
-const inputManager = new InputManager();
+const inputManager = new InputManager({
+  isModalOpen: () =>
+    gm.paused ||
+    screenSignal.value !== 'game' ||
+    uiModalOpen(false) ||
+    (typeof document !== 'undefined' && Boolean(document.querySelector('[role="dialog"]'))),
+});
 
 initDebugApi(gm, {
   renderer,
@@ -635,6 +642,15 @@ function frame(now: number) {
 
   for (let s = 0; s < steps; s++) {
     inputManager.update(SIM_DT);
+    const touchVis = inputManager.getTouchVisualState();
+    const prevTouchVis = touchFeedbackSignal.value;
+    if (
+      touchVis.throttle !== prevTouchVis.throttle ||
+      touchVis.brake !== prevTouchVis.brake ||
+      Math.abs(touchVis.steer - prevTouchVis.steer) > 0.02
+    ) {
+      touchFeedbackSignal.value = touchVis;
+    }
     const activeReq = rideManager.getActiveRequest();
     const driveView = deriveRideView(rideManager);
 

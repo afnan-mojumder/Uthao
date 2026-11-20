@@ -31,6 +31,7 @@ import {
   IconWrench,
 } from '../components/icons';
 import { BALANCE } from '../../config/balance';
+import { isTouchDevice } from '../touch/TouchActions';
 
 export type { HudState, HudPassengerInfo, HudNavigationTurn, HudMissionInfo };
 
@@ -279,12 +280,21 @@ function ConditionMeter({ conditionPct, compact = false }: { conditionPct: numbe
   );
 }
 
-function ObjectivePill({ state, compact = false }: { state: HudState; compact?: boolean }): JSX.Element {
+function ObjectivePill({
+  state,
+  compact = false,
+  topOffsetPx = 0,
+}: {
+  state: HudState;
+  compact?: boolean;
+  topOffsetPx?: number;
+}): JSX.Element {
   return (
     <div
       data-testid="hud-objective-pill"
       style={{
         alignSelf: 'center',
+        marginTop: topOffsetPx > 0 ? `${topOffsetPx}px` : undefined,
         background: 'var(--surface-panel, rgba(15, 23, 42, 0.92))',
         border: '1px solid var(--uthao-green-border, rgba(34, 197, 94, 0.45))',
         borderRadius: state.activeMission || (state.activeSideMissions?.length ?? 0) > 0 || state.roadEventAlert ? '14px' : 'var(--radius-pill, 9999px)',
@@ -546,6 +556,7 @@ export function HudView({
   const isLowFuel = fuelPct <= 20;
   const conditionPct = state.conditionPct ?? 100;
   const gearLabel = `G${state.gear ?? 1}`;
+  const isTouch = isTouchDevice();
 
   // 1. Complete First-Person Helmet/Handlebar View
   if (state.isFirstPerson) {
@@ -571,7 +582,7 @@ export function HudView({
         {/* Top Helmet Visor Strip: District, Objective Pill, Rating & Clock */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px', width: '100%' }}>
           <DistrictBadge districtName={state.districtName} districtId={state.districtId} />
-          <ObjectivePill state={state} compact={true} />
+          <ObjectivePill state={state} compact={true} topOffsetPx={isTouch ? 56 : 0} />
           <div
             style={{
               background: 'var(--surface-panel, rgba(15, 23, 42, 0.92))',
@@ -601,7 +612,18 @@ export function HudView({
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
           {state.dialogueSubtitle && <DialogueSubtitleBubble subtitle={state.dialogueSubtitle} />}
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', width: '100%', gap: '10px' }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'flex-end',
+              width: '100%',
+              gap: '10px',
+              paddingLeft: isTouch ? '27%' : undefined,
+              paddingRight: isTouch ? '27%' : undefined,
+              boxSizing: 'border-box',
+            }}
+          >
             <PassengerChip state={state} compact={true} />
 
             {/* Compact Instrument Pod on Handlebars */}
@@ -736,8 +758,8 @@ export function HudView({
             data-testid="hud-minimap-host"
             ref={minimapHostRef}
             style={{
-              width: 'clamp(108px, 24vh, 152px)',
-              height: 'clamp(108px, 24vh, 152px)',
+              width: isTouch ? 'clamp(92px, 22vh, 152px)' : 'clamp(108px, 24vh, 152px)',
+              height: isTouch ? 'clamp(92px, 22vh, 152px)' : 'clamp(108px, 24vh, 152px)',
               position: 'relative',
               borderRadius: '50%',
               overflow: 'hidden',
@@ -772,10 +794,10 @@ export function HudView({
         </div>
 
         {/* Top-Center: Compact Objective & Fare Pill */}
-        <ObjectivePill state={state} />
+        <ObjectivePill state={state} compact={isTouch} topOffsetPx={isTouch ? 56 : 0} />
 
         {/* Top-Right: Fullscreen button, Earnings, Rating & Shift Clock */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: isTouch ? '4px' : '6px' }}>
           <button
             type="button"
             data-testid="hud-btn-fullscreen"
@@ -786,20 +808,20 @@ export function HudView({
               border: '1px solid var(--border-strong, rgba(255, 255, 255, 0.2))',
               borderRadius: '12px',
               color: 'var(--text-primary, #F8FAFC)',
-              padding: '6px 12px',
-              fontSize: '13px',
+              padding: isTouch ? '4px 8px' : '6px 12px',
+              fontSize: isTouch ? '11px' : '13px',
               fontWeight: 700,
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              gap: '6px',
+              gap: '5px',
               backdropFilter: 'blur(8px)',
               boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)',
-              minHeight: '36px',
+              minHeight: isTouch ? '30px' : '36px',
             }}
             title="Fullscreen & Landscape Lock"
           >
-            <IconFullscreen size={14} /> {t('hud.fullscreen') || 'পূর্ণপর্দা'}
+            <IconFullscreen size={isTouch ? 12 : 14} /> {t('hud.fullscreen') || 'পূর্ণপর্দা'}
           </button>
 
           {/* Earnings Badge */}
@@ -810,15 +832,15 @@ export function HudView({
               border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.12))',
               backdropFilter: 'blur(8px)',
               borderRadius: '12px',
-              padding: '6px 14px',
+              padding: isTouch ? '4px 10px' : '6px 14px',
               textAlign: 'right',
               boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)',
             }}
           >
-            <div style={{ fontSize: '12px', textTransform: 'uppercase', color: 'var(--text-muted, #94A3B8)', fontWeight: 700 }}>
+            <div style={{ fontSize: isTouch ? '10px' : '12px', textTransform: 'uppercase', color: 'var(--text-muted, #94A3B8)', fontWeight: 700 }}>
               {t('hud.earnings', { amount: '' }).replace(/: ৳/, '')}
             </div>
-            <div style={{ fontSize: '18px', fontWeight: 900, color: 'var(--uthao-green, #22C55E)', lineHeight: 1.2 }}>
+            <div style={{ fontSize: isTouch ? '15px' : '18px', fontWeight: 900, color: 'var(--uthao-green, #22C55E)', lineHeight: 1.2 }}>
               ৳{Math.round(state.todayNetEarnings)}
             </div>
           </div>
@@ -830,16 +852,17 @@ export function HudView({
               border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.12))',
               backdropFilter: 'blur(8px)',
               borderRadius: '12px',
-              padding: '6px 12px',
+              padding: isTouch ? '4px 8px' : '6px 12px',
               display: 'flex',
               alignItems: 'center',
-              gap: '10px',
-              fontSize: '13px',
+              gap: isTouch ? '6px' : '10px',
+              fontSize: isTouch ? '11px' : '13px',
               fontWeight: 700,
+              whiteSpace: 'nowrap',
             }}
           >
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--dhaka-amber, #F59E0B)' }}>
-              <IconStar size={14} color="var(--dhaka-amber, #F59E0B)" />
+              <IconStar size={isTouch ? 12 : 14} color="var(--dhaka-amber, #F59E0B)" />
               {state.rating ? state.rating.toFixed(1) : '5.0'}
             </span>
             <span style={{ color: '#475569' }}>|</span>
@@ -854,10 +877,29 @@ export function HudView({
       {state.dialogueSubtitle && <DialogueSubtitleBubble subtitle={state.dialogueSubtitle} />}
 
       {/* Bottom Bar: Passenger Chip (Left), Quick Actions (Center), Speedometer / Gear / Condition / Fuel Cluster (Right) */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: '12px', width: '100%' }}>
-        <PassengerChip state={state} />
-
-        <QuickActions state={state} />
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-end',
+          gap: isTouch ? '8px' : '12px',
+          width: '100%',
+          paddingLeft: isTouch ? '27%' : undefined,
+          paddingRight: isTouch ? '27%' : undefined,
+          boxSizing: 'border-box',
+        }}
+      >
+        {isTouch ? (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '6px', minWidth: 0 }}>
+            <QuickActions state={state} compact={true} />
+            <PassengerChip state={state} compact={true} />
+          </div>
+        ) : (
+          <>
+            <PassengerChip state={state} />
+            <QuickActions state={state} />
+          </>
+        )}
 
         {/* Bottom-Right: Speedometer, Gear, Condition & Fuel Gauge Pod */}
         <div
@@ -866,27 +908,27 @@ export function HudView({
             background: 'var(--surface-panel, rgba(15, 23, 42, 0.92))',
             border: '1px solid var(--border-subtle, rgba(255, 255, 255, 0.12))',
             borderRadius: '16px',
-            padding: '12px 18px',
+            padding: isTouch ? '8px 10px' : '12px 18px',
             color: 'var(--text-primary, #F8FAFC)',
             boxShadow: '0 8px 30px rgba(0, 0, 0, 0.6)',
             textAlign: 'right',
-            minWidth: '165px',
+            minWidth: isTouch ? '124px' : '165px',
             backdropFilter: 'blur(8px)',
             display: 'flex',
             flexDirection: 'column',
-            gap: '6px',
+            gap: isTouch ? '4px' : '6px',
           }}
         >
           {/* Speed & Gear */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '14px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: isTouch ? '8px' : '14px' }}>
             <span
               data-testid="hud-gear"
               style={{
-                fontSize: '14px',
+                fontSize: isTouch ? '12px' : '14px',
                 fontWeight: 800,
                 color: 'var(--info-sky, #38BDF8)',
                 background: 'var(--info-sky-dim, rgba(56, 189, 248, 0.18))',
-                padding: '3px 9px',
+                padding: isTouch ? '2px 7px' : '3px 9px',
                 borderRadius: '6px',
               }}
             >
@@ -896,7 +938,7 @@ export function HudView({
               <div
                 id="hud-speed"
                 style={{
-                  fontSize: '36px',
+                  fontSize: isTouch ? '24px' : '36px',
                   fontWeight: 900,
                   lineHeight: 1,
                   color: '#ffffff',
@@ -907,7 +949,7 @@ export function HudView({
               </div>
               <div
                 style={{
-                  fontSize: '12px',
+                  fontSize: isTouch ? '10px' : '12px',
                   letterSpacing: '1px',
                   color: 'var(--text-muted, #94A3B8)',
                   fontWeight: 700,
@@ -920,11 +962,11 @@ export function HudView({
           </div>
 
           {/* Bike Condition Bar */}
-          <ConditionMeter conditionPct={conditionPct} />
+          <ConditionMeter conditionPct={conditionPct} compact={isTouch} />
 
           {/* Fuel Level Bar */}
           <div style={{ width: '100%' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', fontSize: '12px', color: isLowFuel ? 'var(--danger-red, #EF4444)' : 'var(--text-muted, #94A3B8)', fontWeight: 700 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', fontSize: isTouch ? '11px' : '12px', color: isLowFuel ? 'var(--danger-red, #EF4444)' : 'var(--text-muted, #94A3B8)', fontWeight: 700 }}>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                 {isLowFuel ? <IconWarning size={13} color="var(--danger-red, #EF4444)" /> : <IconFuel size={13} />}
                 {isLowFuel ? t('hud.fuel_low') : t('hud.fuel')}

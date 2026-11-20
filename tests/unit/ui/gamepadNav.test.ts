@@ -23,6 +23,7 @@ vi.mock('preact/hooks', () => ({
 }));
 
 import { uiModalOpen, startGamepadNav } from '../../../src/ui/gamepadNav';
+import { cloneDefaultBindings, saveBindings } from '../../../src/input/bindings';
 import { App } from '../../../src/ui/App';
 import {
   choiceSignal,
@@ -264,6 +265,147 @@ describe('uiModalOpen & system overlay guards', () => {
     stop();
 
     expect(dispatched).toEqual([{ type: 'keydown', key: 'Escape', code: 'Escape' }]);
+  });
+
+  it('adjusts focused <input type="range"> sliders with D-pad/stick left and right and dispatches input/change', () => {
+    const { fakeWindow } = makeFakeWindow();
+    const events: string[] = [];
+    const fakeSlider = {
+      tagName: 'INPUT',
+      type: 'range',
+      min: '0',
+      max: '1',
+      step: '0.05',
+      value: '0.5',
+      disabled: false,
+      closest: () => null,
+      getClientRects: () => [{ left: 0, top: 0, width: 200, height: 24 }],
+      getBoundingClientRect: () => ({ left: 0, top: 0, right: 200, bottom: 24, width: 200, height: 24 }),
+      focus: vi.fn(),
+      click: vi.fn(),
+      dispatchEvent: (ev: { type: string }) => {
+        events.push(ev.type);
+        return true;
+      },
+    } as unknown as HTMLInputElement;
+
+    vi.stubGlobal('window', fakeWindow);
+    vi.stubGlobal('document', {
+      activeElement: fakeSlider,
+      querySelectorAll: () => [fakeSlider],
+    });
+
+    let activeButtons: number[] = [15]; // D-pad right
+    const makePad = () =>
+      ({
+        id: 'slider-pad',
+        index: 0,
+        connected: true,
+        mapping: 'standard',
+        timestamp: 0,
+        axes: [0, 0, 0, 0],
+        buttons: Array.from({ length: 17 }, (_, i) => ({
+          pressed: activeButtons.includes(i),
+          touched: false,
+          value: activeButtons.includes(i) ? 1 : 0,
+        })),
+      }) as unknown as Gamepad;
+
+    const ticks: Array<() => void> = [];
+    vi.stubGlobal('navigator', { getGamepads: () => [makePad()] });
+    vi.stubGlobal('requestAnimationFrame', (cb: () => void) => {
+      ticks.push(cb);
+      return ticks.length;
+    });
+    vi.stubGlobal('cancelAnimationFrame', vi.fn());
+
+    const stop = startGamepadNav(() => true);
+    ticks.shift()?.();
+    expect(fakeSlider.value).toBe('0.55');
+    expect(events).toEqual(['input', 'change']);
+
+    activeButtons = [];
+    ticks.shift()?.();
+    activeButtons = [14]; // D-pad left
+    ticks.shift()?.();
+    stop();
+
+    expect(fakeSlider.value).toBe('0.5');
+    expect(events).toEqual(['input', 'change', 'input', 'change']);
+  });
+
+  it('reads updated gamepad bindings dynamically from settingsSignal.value.controls and loadBindings()', () => {
+    const { fakeWindow, dispatched } = makeFakeWindow();
+    vi.stubGlobal('window', fakeWindow);
+    vi.stubGlobal('document', { activeElement: null, querySelectorAll: () => [] });
+    vi.stubGlobal('KeyboardEvent', class {
+      type: string;
+      key: string;
+      code: string;
+      constructor(type: string, init: { key: string; code: string }) {
+        this.type = type;
+        this.key = init.key;
+        this.code = init.code;
+      }
+    });
+
+    let pressedButtons: number[] = [];
+    const makePad = () =>
+      ({
+        id: 'rebind-nav-pad',
+        index: 0,
+        connected: true,
+        mapping: 'standard',
+        timestamp: 0,
+        axes: [0, 0, 0, 0],
+        buttons: Array.from({ length: 17 }, (_, i) => ({
+          pressed: pressedButtons.includes(i),
+          touched: false,
+          value: pressedButtons.includes(i) ? 1 : 0,
+        })),
+      }) as unknown as Gamepad;
+
+    const ticks: Array<() => void> = [];
+    vi.stubGlobal('navigator', { getGamepads: () => [makePad()] });
+    vi.stubGlobal('requestAnimationFrame', (cb: () => void) => {
+      ticks.push(cb);
+      return ticks.length;
+    });
+    vi.stubGlobal('cancelAnimationFrame', vi.fn());
+
+    // 1. Update via settingsSignal.value.controls without localStorage
+    const customFromSettings = cloneDefaultBindings();
+    customFromSettings.gamepad.mapButton = 11; // R3 instead of default 5
+    saveSettings({ ...DEFAULT_SETTINGS, muted: false, controls: customFromSettings });
+
+    const stop = startGamepadNav(() => false);
+    pressedButtons = [11];
+    ticks.shift()?.();
+    expect(dispatched).toEqual([{ type: 'keydown', key: 'm', code: 'KeyM' }]);
+
+    // 2. Update via localStorage/saveBindings dynamically on the next frame
+    const store: Record<string, string> = {};
+    vi.stubGlobal('localStorage', {
+      getItem: (k: string) => store[k] ?? null,
+      setItem: (k: string, v: string) => {
+        store[k] = v;
+      },
+      removeItem: (k: string) => {
+        delete store[k];
+      },
+    });
+    const customFromStorage = cloneDefaultBindings();
+    customFromStorage.gamepad.phoneButton = 10;
+    saveBindings(customFromStorage);
+
+    pressedButtons = [10];
+    ticks.shift()?.();
+    stop();
+
+    expect(dispatched).toEqual([
+      { type: 'keydown', key: 'm', code: 'KeyM' },
+      { type: 'keydown', key: 'Tab', code: 'Tab' },
+    ]);
   });
 
   describe('App keyboard hotkeys and Escape guards', () => {

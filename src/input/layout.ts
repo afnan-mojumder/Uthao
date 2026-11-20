@@ -11,35 +11,35 @@ export function rectsIntersect(a: Rect, b: Rect): boolean {
 
 /**
  * Returns the layout rectangles for touch controls.
- * - left 35% of the screen is a horizontal steer slider (relative drag)
- * - right-bottom has big throttle and brake pads
- * - top-right holds horn/phone/camera/pause icons
+ * - bottom-left is a compact steering pad clear of top-left minimap & choice card
+ * - bottom-right has brake and throttle pedals clear of the speedometer/fuel pod
+ * - top-center-right holds the compact 44px action strip clear of earnings & clock
  */
 export function touchLayout(w: number, h: number): TouchLayout {
   return {
     steerZone: {
-      x: 0,
-      y: 0,
-      width: w * 0.35,
-      height: h,
+      x: w * 0.02,
+      y: h * 0.5,
+      width: w * 0.24,
+      height: h * 0.46,
     },
     throttlePad: {
-      x: w * 0.8,
-      y: h * 0.65,
-      width: w * 0.18,
-      height: h * 0.3,
+      x: w * 0.86,
+      y: h * 0.6,
+      width: w * 0.12,
+      height: h * 0.36,
     },
     brakePad: {
-      x: w * 0.6,
-      y: h * 0.7,
-      width: w * 0.18,
-      height: h * 0.25,
+      x: w * 0.74,
+      y: h * 0.66,
+      width: w * 0.11,
+      height: h * 0.3,
     },
     iconsZone: {
-      x: w * 0.65,
+      x: w * 0.17,
       y: h * 0.02,
-      width: w * 0.33,
-      height: h * 0.18,
+      width: w * 0.59,
+      height: h * 0.14,
     },
   };
 }

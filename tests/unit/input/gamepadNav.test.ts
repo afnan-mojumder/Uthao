@@ -78,6 +78,16 @@ describe('GamepadEdges', () => {
     // Assert
     expect(reconnected.pressed).toEqual([0]);
   });
+
+  it('repeats a held D-pad direction after the initial delay and at the repeat interval', () => {
+    const edges = new GamepadEdges();
+
+    expect(edges.poll(pad({ dpad: [13] }), 0).dir).toBe('down');
+    expect(edges.poll(pad({ dpad: [13] }), 150).dir).toBeNull();
+    expect(edges.poll(pad({ dpad: [13] }), 400).dir).toBe('down');
+    expect(edges.poll(pad({ dpad: [13] }), 450).dir).toBeNull();
+    expect(edges.poll(pad({ dpad: [13] }), 530).dir).toBe('down');
+  });
 });
 
 describe('pickNeighbor', () => {

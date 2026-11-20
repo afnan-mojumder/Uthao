@@ -12,23 +12,29 @@ const DPAD_BUTTONS: Array<[number, NavDir]> = [
 ];
 
 const STICK_THRESHOLD = 0.6;
+const INITIAL_REPEAT_DELAY_MS = 380;
+const REPEAT_INTERVAL_MS = 120;
 
 export interface PadSnapshot {
   /** Indexes of buttons that went down since the previous poll. */
   pressed: number[];
-  /** A menu direction that just started (D-pad or left stick), or null. */
+  /** A menu direction that just started or repeated (D-pad or left stick), or null. */
   dir: NavDir | null;
 }
 
-/** Turns held gamepad state into edges, so a held button fires once. */
+/** Turns held gamepad state into edges, with hold-repeat for navigation directions. */
 export class GamepadEdges {
   private prevButtons = new Set<number>();
   private prevDir: NavDir | null = null;
+  private holdStartMs = 0;
+  private lastRepeatMs = 0;
 
-  poll(pad: Gamepad | null): PadSnapshot {
+  poll(pad: Gamepad | null, nowMs = typeof performance !== 'undefined' ? performance.now() : Date.now()): PadSnapshot {
     if (!pad) {
       this.prevButtons.clear();
       this.prevDir = null;
+      this.holdStartMs = 0;
+      this.lastRepeatMs = 0;
       return { pressed: [], dir: null };
     }
 
@@ -42,8 +48,6 @@ export class GamepadEdges {
     }
     this.prevButtons = down;
 
-    // A held direction fires once, like a button; the stick must return to
-    // centre before it can fire again.
     let dir: NavDir | null = null;
     for (const [btn, d] of DPAD_BUTTONS) {
       if (pad.buttons[btn]?.pressed) {
@@ -60,10 +64,25 @@ export class GamepadEdges {
         dir = x < 0 ? 'left' : 'right';
       }
     }
-    const newDir = dir !== null && dir !== this.prevDir ? dir : null;
+
+    let emittedDir: NavDir | null = null;
+    if (dir === null) {
+      this.holdStartMs = 0;
+      this.lastRepeatMs = 0;
+    } else if (dir !== this.prevDir) {
+      emittedDir = dir;
+      this.holdStartMs = nowMs;
+      this.lastRepeatMs = nowMs;
+    } else if (
+      nowMs - this.holdStartMs >= INITIAL_REPEAT_DELAY_MS &&
+      nowMs - this.lastRepeatMs >= REPEAT_INTERVAL_MS
+    ) {
+      emittedDir = dir;
+      this.lastRepeatMs = nowMs;
+    }
     this.prevDir = dir;
 
-    return { pressed, dir: newDir };
+    return { pressed, dir: emittedDir };
   }
 }
 

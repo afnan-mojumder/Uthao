@@ -36,6 +36,7 @@ export const DEFAULT_BINDINGS: InputBindings = {
   },
   tiltEnabled: false,
   tiltSensitivity: 1.0,
+  touchSteerMode: 'slider',
 };
 
 export type RebindableKeyboardAction = Exclude<
@@ -173,6 +174,7 @@ export function cloneDefaultBindings(): InputBindings {
     },
     tiltEnabled: DEFAULT_BINDINGS.tiltEnabled,
     tiltSensitivity: DEFAULT_BINDINGS.tiltSensitivity,
+    touchSteerMode: DEFAULT_BINDINGS.touchSteerMode,
   };
 }
 
@@ -188,6 +190,7 @@ export function loadBindings(storage?: Storage): InputBindings {
       gamepad: { ...cloneDefaultBindings().gamepad, ...parsed.gamepad },
       tiltEnabled: parsed.tiltEnabled ?? DEFAULT_BINDINGS.tiltEnabled,
       tiltSensitivity: parsed.tiltSensitivity ?? DEFAULT_BINDINGS.tiltSensitivity,
+      touchSteerMode: parsed.touchSteerMode ?? DEFAULT_BINDINGS.touchSteerMode,
     };
   } catch {
     return cloneDefaultBindings();

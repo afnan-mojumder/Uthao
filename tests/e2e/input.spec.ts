@@ -331,3 +331,92 @@ test.describe('human steering direction', () => {
     expect(right.headingDelta).toBeLessThan(-0.05);
   });
 });
+
+test.describe('mobile landscape touch ergonomics (P6.4)', () => {
+  test('TouchActions pads and 8-button strip have >=44px targets and zero HUD overlap at 915x412 and 667x375', async ({
+    page,
+  }, testInfo) => {
+    test.skip(testInfo.project.name !== 'pixel7', 'TouchActions only renders on touch devices');
+    test.setTimeout(60000);
+
+    for (const vp of [
+      { width: 915, height: 412 },
+      { width: 667, height: 375 },
+    ]) {
+      await page.setViewportSize(vp);
+      await page.goto('/?debug=1&district=testloop&encounters=0');
+      await page.waitForSelector('#game-canvas', { timeout: 30000 });
+      await expect(page.locator('#hud')).toBeVisible({ timeout: 15000 });
+      await expect(page.getByTestId('touch-actions')).toBeVisible({ timeout: 15000 });
+
+      const report = await page.evaluate(() => {
+        const touchIds = ['touch-zone-steer', 'touch-zone-throttle', 'touch-zone-brake', 'touch-icons'];
+        const hudIds = [
+          'hud-minimap-host',
+          'hud-district',
+          'hud-btn-fullscreen',
+          'hud-earnings',
+          'hud-objective-pill',
+          'hud-passenger-status',
+          'hud-quick-actions',
+          'hud-speed-pod',
+        ];
+        const buttonIds = [
+          'touch-btn-phone',
+          'touch-btn-map',
+          'touch-btn-garage',
+          'touch-btn-journal',
+          'touch-btn-karma',
+          'touch-btn-pause',
+          'touch-btn-horn',
+          'touch-btn-camera',
+          'touch-zone-throttle',
+          'touch-zone-brake',
+        ];
+
+        const boxOf = (id: string) => {
+          const el = document.querySelector(`[data-testid="${id}"]`);
+          if (!el) return null;
+          const r = el.getBoundingClientRect();
+          return {
+            id,
+            left: r.left,
+            top: r.top,
+            right: r.right,
+            bottom: r.bottom,
+            width: r.width,
+            height: r.height,
+          };
+        };
+
+        const touchBoxes = touchIds.map(boxOf);
+        const hudBoxes = hudIds.map(boxOf);
+        const buttonBoxes = buttonIds.map(boxOf);
+
+        const missingTouch = touchIds.filter((_id, i) => !touchBoxes[i] || touchBoxes[i]!.width <= 0 || touchBoxes[i]!.height <= 0);
+        const missingHud = hudIds.filter((_id, i) => !hudBoxes[i] || hudBoxes[i]!.width <= 0 || hudBoxes[i]!.height <= 0);
+        const undersizedButtons = buttonIds.filter((_id, i) => {
+          const b = buttonBoxes[i];
+          return !b || b.width < 44 || b.height < 44;
+        });
+
+        const overlaps: string[] = [];
+        for (const tb of touchBoxes) {
+          if (!tb) continue;
+          for (const hb of hudBoxes) {
+            if (!hb) continue;
+            const inter = !(tb.right <= hb.left + 1 || hb.right <= tb.left + 1 || tb.bottom <= hb.top + 1 || hb.bottom <= tb.top + 1);
+            if (inter) overlaps.push(`${tb.id}<->${hb.id}`);
+          }
+        }
+
+        return { missingTouch, missingHud, undersizedButtons, overlaps };
+      });
+
+      expect(report.missingTouch, `missing touch at ${vp.width}x${vp.height}`).toEqual([]);
+      expect(report.missingHud, `missing hud at ${vp.width}x${vp.height}`).toEqual([]);
+      expect(report.undersizedButtons, `undersized buttons at ${vp.width}x${vp.height}`).toEqual([]);
+      expect(report.overlaps, `overlaps at ${vp.width}x${vp.height}`).toEqual([]);
+    }
+  });
+});

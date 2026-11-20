@@ -31,13 +31,14 @@ describe('T1.4 Input System', () => {
       }
     });
 
-    it('steer zone spans left 35% of screen', () => {
+    it('steer zone sits in bottom-left clear of top-left minimap', () => {
       const w = 1000;
       const h = 500;
       const layout = touchLayout(w, h);
-      expect(layout.steerZone.x).toBe(0);
-      expect(layout.steerZone.width).toBe(350);
-      expect(layout.steerZone.height).toBe(500);
+      expect(layout.steerZone.x).toBeLessThan(50);
+      expect(layout.steerZone.y).toBeGreaterThanOrEqual(h * 0.45);
+      expect(layout.steerZone.x + layout.steerZone.width).toBeLessThanOrEqual(w * 0.35);
+      expect(layout.steerZone.height).toBeGreaterThan(100);
     });
   });
 
@@ -361,5 +362,305 @@ describe('Canonical steer sign (-1 = left, +1 = right) across all input devices'
     listeners.deviceorientation!({ gamma: 30 });
     input.update(0.016);
     expect(input.read().steer).toBe(1);
+  });
+
+  it('landscape beta drives tilt steering properly while ignoring forward/back gamma', () => {
+    const listeners: Record<string, (e: unknown) => void> = {};
+    vi.stubGlobal('window', {
+      innerWidth: 915,
+      innerHeight: 412,
+      addEventListener: (type: string, fn: (e: unknown) => void) => {
+        listeners[type] = fn;
+      },
+      removeEventListener: () => {},
+    });
+
+    const input = new InputManager({
+      bindings: { ...DEFAULT_BINDINGS, tiltEnabled: true, tiltSensitivity: 1.0 },
+    });
+
+    // In landscape, beta drives left/right tilt even if gamma has pitch noise
+    listeners.deviceorientation!({ beta: -30, gamma: 20 });
+    input.update(0.016);
+    expect(input.read().steer).toBe(-1);
+
+    listeners.deviceorientation!({ beta: 30, gamma: -20 });
+    input.update(0.016);
+    expect(input.read().steer).toBe(1);
+
+    // Zero beta with non-zero gamma does not falsely steer in landscape
+    listeners.deviceorientation!({ beta: 0, gamma: 25 });
+    input.update(0.016);
+    expect(input.read().steer).toBe(0);
+  });
+});
+
+describe('P6.4 Input ergonomics, latch safety, deadzones, and modal isolation', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('sliding thumb off Throttle via touchmove, pointermove, or pointercancel does not leave throttle latched', () => {
+    const listeners: Record<string, (e: unknown) => void> = {};
+    const W = 915;
+    const H = 412;
+    vi.stubGlobal('window', {
+      innerWidth: W,
+      innerHeight: H,
+      addEventListener: (type: string, fn: (e: unknown) => void) => {
+        listeners[type] = fn;
+      },
+      removeEventListener: () => {},
+    });
+
+    const input = new InputManager({ bindings: DEFAULT_BINDINGS });
+    const pad = touchLayout(W, H).throttlePad;
+
+    // 1. Touch slide off throttle pad
+    listeners.touchstart!({
+      changedTouches: [{ identifier: 2, clientX: pad.x + 10, clientY: pad.y + 10 }],
+      touches: { length: 1 },
+    });
+    input.update(0.016);
+    expect(input.read().throttle).toBe(1);
+
+    listeners.touchmove!({
+      changedTouches: [{ identifier: 2, clientX: 10, clientY: 10 }],
+      touches: { length: 1 },
+    });
+    input.update(0.016);
+    expect(input.read().throttle).toBe(0);
+
+    // 2. Pointer slide off throttle pad
+    listeners.pointerdown!({
+      pointerId: 11,
+      pointerType: 'touch',
+      clientX: pad.x + 10,
+      clientY: pad.y + 10,
+      target: null,
+    });
+    input.update(0.016);
+    expect(input.read().throttle).toBe(1);
+
+    listeners.pointermove!({
+      pointerId: 11,
+      pointerType: 'touch',
+      clientX: 50,
+      clientY: 50,
+    });
+    input.update(0.016);
+    expect(input.read().throttle).toBe(0);
+
+    // 3. pointercancel clears throttle
+    listeners.pointerdown!({
+      pointerId: 12,
+      pointerType: 'touch',
+      clientX: pad.x + 10,
+      clientY: pad.y + 10,
+      target: null,
+    });
+    input.update(0.016);
+    expect(input.read().throttle).toBe(1);
+
+    listeners.pointercancel!({
+      pointerId: 12,
+      pointerType: 'touch',
+    });
+    input.update(0.016);
+    expect(input.read().throttle).toBe(0);
+  });
+
+  it('window blur and document visibilitychange clear active touches and pressed driving keys', () => {
+    const winListeners: Record<string, (e: unknown) => void> = {};
+    const docListeners: Record<string, (e: unknown) => void> = {};
+    const W = 915;
+    const H = 412;
+    vi.stubGlobal('window', {
+      innerWidth: W,
+      innerHeight: H,
+      addEventListener: (type: string, fn: (e: unknown) => void) => {
+        winListeners[type] = fn;
+      },
+      removeEventListener: () => {},
+    });
+    const fakeDoc = {
+      hidden: false,
+      addEventListener: (type: string, fn: (e: unknown) => void) => {
+        docListeners[type] = fn;
+      },
+      removeEventListener: () => {},
+    };
+    vi.stubGlobal('document', fakeDoc);
+
+    const input = new InputManager({ bindings: DEFAULT_BINDINGS });
+    const pad = touchLayout(W, H).throttlePad;
+
+    // Press W + touch throttle
+    winListeners.keydown!({ code: 'KeyW', target: null });
+    winListeners.touchstart!({
+      changedTouches: [{ identifier: 1, clientX: pad.x + 10, clientY: pad.y + 10 }],
+      touches: { length: 1 },
+    });
+    input.update(0.016);
+    expect(input.read().throttle).toBe(1);
+
+    // Window blur clears both keys and touches
+    winListeners.blur!({});
+    input.update(0.016);
+    expect(input.read().throttle).toBe(0);
+
+    // Re-press key + touch, then hide document
+    winListeners.keydown!({ code: 'KeyS', target: null });
+    winListeners.touchstart!({
+      changedTouches: [{ identifier: 2, clientX: pad.x + 10, clientY: pad.y + 10 }],
+      touches: { length: 1 },
+    });
+    input.update(0.016);
+    expect(input.read().throttle).toBe(1);
+    expect(input.read().brake).toBe(1);
+
+    fakeDoc.hidden = true;
+    docListeners.visibilitychange!({});
+    input.update(0.016);
+    expect(input.read().throttle).toBe(0);
+    expect(input.read().brake).toBe(0);
+  });
+
+  it('gamepad analog trigger < 0.08 deadzone suppresses drift and does not kill keyboard/digital throttle', () => {
+    vi.stubGlobal('navigator', {
+      getGamepads: () => [
+        {
+          axes: [0, 0, 0, 0],
+          buttons: Array.from({ length: 17 }, (_, i) => {
+            if (i === 7) return { pressed: false, value: 0.04 }; // RT noise < 0.08
+            if (i === 6) return { pressed: false, value: 0.05 }; // LT noise < 0.08
+            return { pressed: false, value: 0 };
+          }),
+        },
+      ],
+    });
+
+    const input = new InputManager({ useWindowListeners: false, bindings: DEFAULT_BINDINGS });
+    input.update(0.016);
+    expect(input.read().throttle).toBe(0);
+    expect(input.read().brake).toBe(0);
+
+    // Keyboard throttle remains 1.0 despite RT deadzone noise
+    input.setRawKeyboardState({ throttle: true });
+    input.update(0.016);
+    expect(input.read().throttle).toBe(1);
+    expect(input.read().brake).toBe(0);
+  });
+
+  it('tapping UI controls (button, input, [role="dialog"], [data-ui-control], [data-ui-interactive]) never triggers canvas throttle/steer', () => {
+    const winListeners: Record<string, (e: unknown) => void> = {};
+    const W = 915;
+    const H = 412;
+    vi.stubGlobal('window', {
+      innerWidth: W,
+      innerHeight: H,
+      addEventListener: (type: string, fn: (e: unknown) => void) => {
+        winListeners[type] = fn;
+      },
+      removeEventListener: () => {},
+    });
+
+    const input = new InputManager({ bindings: DEFAULT_BINDINGS });
+    const layout = touchLayout(W, H);
+    const selectors = ['button', 'input', '[role="dialog"]', '[data-ui-control]', '[data-ui-interactive]'];
+
+    for (const sel of selectors) {
+      const target = {
+        closest: (query: string) => (query.includes(sel) ? {} : null),
+      };
+      winListeners.touchstart!({
+        target,
+        changedTouches: [
+          { identifier: 5, clientX: layout.throttlePad.x + 10, clientY: layout.throttlePad.y + 10, target },
+          { identifier: 6, clientX: layout.steerZone.x + 10, clientY: layout.steerZone.y + 10, target },
+        ],
+        touches: { length: 2 },
+      });
+      winListeners.touchmove!({
+        target,
+        changedTouches: [{ identifier: 6, clientX: layout.steerZone.x + 100, clientY: layout.steerZone.y + 10, target }],
+        touches: { length: 2 },
+      });
+      input.update(0.016);
+      expect(input.read().throttle, sel).toBe(0);
+      expect(input.read().steer, sel).toBe(0);
+    }
+  });
+
+  it('active blocking modals suppress driving inputs and active gameplay calls preventDefault on Space/Arrows without blocking text inputs', () => {
+    const winListeners: Record<string, (e: unknown) => void> = {};
+    vi.stubGlobal('window', {
+      innerWidth: 1280,
+      innerHeight: 720,
+      addEventListener: (type: string, fn: (e: unknown) => void) => {
+        winListeners[type] = fn;
+      },
+      removeEventListener: () => {},
+    });
+
+    let modalOpen = false;
+    const input = new InputManager({
+      bindings: DEFAULT_BINDINGS,
+      isModalOpen: () => modalOpen,
+    });
+
+    // 1. Active gameplay calls preventDefault on Space & Arrows
+    for (const code of ['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight']) {
+      let prevented = false;
+      winListeners.keydown!({
+        code,
+        target: null,
+        preventDefault: () => {
+          prevented = true;
+        },
+      });
+      winListeners.keyup!({ code });
+      expect(prevented, code).toBe(true);
+    }
+
+    // Driving works when modal is closed
+    winListeners.keydown!({ code: 'KeyW', target: null, preventDefault: () => {} });
+    winListeners.keydown!({ code: 'KeyD', target: null, preventDefault: () => {} });
+    input.update(0.2);
+    expect(input.read().throttle).toBe(1);
+    expect(input.read().steer).toBe(1);
+
+    // 2. Text inputs are NOT blocked and do NOT trigger driving or preventDefault
+    winListeners.keyup!({ code: 'KeyW' });
+    winListeners.keyup!({ code: 'KeyD' });
+    input.update(0.2);
+    let textPrevented = false;
+    winListeners.keydown!({
+      code: 'Space',
+      target: { tagName: 'INPUT', isContentEditable: false },
+      preventDefault: () => {
+        textPrevented = true;
+      },
+    });
+    input.update(0.016);
+    expect(textPrevented).toBe(false);
+    expect(input.read().brake).toBe(0);
+
+    // 3. Active blocking modal suppresses driving inputs and skips Space/Arrow preventDefault
+    modalOpen = true;
+    let modalSpacePrevented = false;
+    winListeners.keydown!({
+      code: 'Space',
+      target: null,
+      preventDefault: () => {
+        modalSpacePrevented = true;
+      },
+    });
+    winListeners.keydown!({ code: 'KeyW', target: null, preventDefault: () => {} });
+    input.update(0.016);
+    expect(modalSpacePrevented).toBe(false);
+    expect(input.read().throttle).toBe(0);
+    expect(input.read().brake).toBe(0);
+    expect(input.read().steer).toBe(0);
   });
 });
