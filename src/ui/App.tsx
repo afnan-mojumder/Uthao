@@ -18,6 +18,11 @@ import {
   onSleepCallback,
   onDelayRentCallback,
   onAskAdvanceCallback,
+  onDepositSavingsCallback,
+  onWithdrawSavingsCallback,
+  onRepayDebtCallback,
+  onEndShiftEarlyCallback,
+  onAcceptDeliveryCallback,
   garageSignal,
   screenSignal,
   onRepairCallback,
@@ -317,8 +322,11 @@ export function App(): JSX.Element {
             tripHistory={phoneSignal.value.tripHistory}
             navigationTurn={phoneSignal.value.navigationTurn}
             relationships={phoneSignal.value.relationships}
+            availableDeliveries={phoneSignal.value.availableDeliveries}
+            activeDeliveries={phoneSignal.value.activeDeliveries}
             onAcceptRequest={(id) => onAcceptRequestCallback?.(id)}
             onDeclineRequest={(id) => onDeclineRequestCallback?.(id)}
+            onAcceptDelivery={(jobId) => onAcceptDeliveryCallback?.(jobId)}
             onCallContact={(charId) => onCallContactCallback?.(charId)}
           />
         </div>
@@ -423,6 +431,9 @@ export function App(): JSX.Element {
             onSleep={() => onSleepCallback?.()}
             onDelayRent={() => onDelayRentCallback?.()}
             onAskAdvance={(from, amount) => onAskAdvanceCallback?.(from, amount)}
+            onDepositSavings={(amount) => onDepositSavingsCallback?.(amount)}
+            onWithdrawSavings={(amount) => onWithdrawSavingsCallback?.(amount)}
+            onRepayDebt={(amount) => onRepayDebtCallback?.(amount)}
           />
         </div>
       )}
@@ -465,6 +476,7 @@ export function App(): JSX.Element {
             onOpenLoad={() => {
               saveSlotsSignal.value = { isOpen: true, mode: 'load' };
             }}
+            onEndShiftEarly={() => onEndShiftEarlyCallback?.()}
             onExitToMainMenu={() => exitToTitle()}
           />
         </div>

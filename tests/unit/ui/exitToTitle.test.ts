@@ -13,6 +13,7 @@ import {
   tripSummarySignal,
   choiceSignal,
   saveSlotsSignal,
+  impactSignal,
 } from '../../../src/ui/store';
 
 describe('exitToTitle (audit H-2: tutorial must not cover the title)', () => {
@@ -58,6 +59,24 @@ describe('exitToTitle (audit H-2: tutorial must not cover the title)', () => {
     };
     choiceSignal.value = { active: true, prompt: 'test', options: [{ id: '1', text: 'opt' }], instanceId: 'inst' };
     saveSlotsSignal.value = { isOpen: true, mode: 'save' };
+    impactSignal.value = { kind: 'bump', seq: 1 };
+    phoneSignal.value = {
+      ...phoneSignal.value,
+      availableDeliveries: [
+        {
+          id: 'del_test',
+          senderNameKey: 'poi.mirpara.tea_stall',
+          pickupPoiId: 'poi_mirpara_tea_stall',
+          pickupNodeId: 'N1',
+          dropoffNodeId: 'N2',
+          itemType: 'parcel',
+          fragile: false,
+          basePayout: 120,
+          timeLimitMinutes: 20,
+          status: 'offered',
+        },
+      ],
+    };
 
     exitToTitle();
 
@@ -76,5 +95,8 @@ describe('exitToTitle (audit H-2: tutorial must not cover the title)', () => {
     expect(tripSummarySignal.value).toBeNull();
     expect(choiceSignal.value.active).toBe(false);
     expect(saveSlotsSignal.value.isOpen).toBe(false);
+    expect(impactSignal.value.kind).toBeNull();
+    expect(phoneSignal.value.availableDeliveries).toEqual([]);
+    expect(phoneSignal.value.activeDeliveries).toEqual([]);
   });
 });

@@ -184,16 +184,18 @@ async function bootGame(): Promise<void> {
     data: allDistrictsMap,
   });
 
+  const bootCleanups: Array<() => void> = [];
+
   // Bind reactive signals store to sim event bus
-  bindEventBusToStore(gm.bus);
+  bootCleanups.push(bindEventBusToStore(gm.bus));
   // Keyboard and pad focus move into a panel when it opens.
   watchOverlayFocus();
   // Sound: the audio context starts on the first gesture; settings and sim events drive it.
   audio = new AudioManager();
   bindAudio(audio, gm.bus, settingsSignal, document);
   // The bike slid at the grip limit: a tyre sound (H-4 for the ear).
-  gm.bus.on('bike/wobble', () => audio.playWobble());
-  gm.bus.on('bike/nearMiss', () => audio.playNearMiss());
+  bootCleanups.push(gm.bus.on('bike/wobble', () => audio.playWobble()));
+  bootCleanups.push(gm.bus.on('bike/nearMiss', () => audio.playNearMiss()));
 
   // Deterministic 2.5D spatial-hash physics world, used by GameSession's
   // MotorcycleController (collisions/near-misses) and CityBuilder colliders.
@@ -256,27 +258,37 @@ async function bootGame(): Promise<void> {
     loadRendererScene(renderer);
     renderer.cityBuilder?.signageAtlas.setLanguage(settingsSignal.value.language);
     syncBikeAppearance(renderer);
-    gm.bus.on('bike/swapped', () => syncBikeAppearance(renderer));
-    gm.bus.on('upgrade/purchased', () => syncBikeAppearance(renderer));
-    gm.bus.on('state/restored', () => syncBikeAppearance(renderer));
-    gm.bus.on('bike/collision', ({ severity }) => {
-      if (severity === 'crash') renderer?.cameraRig.triggerShake(0.45);
-      else if (severity === 'bump') renderer?.cameraRig.triggerShake(0.18);
-    });
-    gm.bus.on('bike/wobble', () => {
-      renderer?.cameraRig.triggerShake(0.12);
-    });
-    gm.bus.on('bike/speedBump', ({ speedKmh }) => {
-      const intensity = Math.max(0.06, Math.min(0.18, 0.06 + (speedKmh / 60) * 0.12));
-      renderer?.cameraRig.triggerShake(intensity);
-    });
+    bootCleanups.push(gm.bus.on('bike/swapped', () => syncBikeAppearance(renderer)));
+    bootCleanups.push(gm.bus.on('upgrade/purchased', () => syncBikeAppearance(renderer)));
+    bootCleanups.push(gm.bus.on('state/restored', () => syncBikeAppearance(renderer)));
+    bootCleanups.push(
+      gm.bus.on('bike/collision', ({ severity }) => {
+        if (severity === 'crash') renderer?.cameraRig.triggerShake(0.45);
+        else if (severity === 'bump') renderer?.cameraRig.triggerShake(0.18);
+      })
+    );
+    bootCleanups.push(
+      gm.bus.on('bike/wobble', () => {
+        renderer?.cameraRig.triggerShake(0.12);
+      })
+    );
+    bootCleanups.push(
+      gm.bus.on('bike/speedBump', ({ speedKmh }) => {
+        const intensity = Math.max(0.06, Math.min(0.18, 0.06 + (speedKmh / 60) * 0.12));
+        renderer?.cameraRig.triggerShake(intensity);
+      })
+    );
     // Storefront signs follow a language change while playing.
-    settingsSignal.subscribe((s) => renderer?.cityBuilder?.signageAtlas.setLanguage(s.language));
+    bootCleanups.push(
+      settingsSignal.subscribe((s) => renderer?.cityBuilder?.signageAtlas.setLanguage(s.language))
+    );
     // A quality change in Settings reaches the running renderer. A URL override still wins.
-    settingsSignal.subscribe((s) => {
-      const level = resolveQualityLevel(urlParams?.get('quality'), s.quality);
-      if (renderer && level !== renderer.qualityManager.config.level) renderer.setQuality(level);
-    });
+    bootCleanups.push(
+      settingsSignal.subscribe((s) => {
+        const level = resolveQualityLevel(urlParams?.get('quality'), s.quality);
+        if (renderer && level !== renderer.qualityManager.config.level) renderer.setQuality(level);
+      })
+    );
 
     // WebGL context lost & restored lifecycle listeners
     canvas.addEventListener('webglcontextlost', (e) => {
@@ -332,20 +344,24 @@ async function bootGame(): Promise<void> {
 setLoadingStage('loading.session', 85);
 const activeSaveSystem = new SaveSystem();
 saveSystem = activeSaveSystem;
-activeSaveSystem.bindAutosave(
-  gm,
-  typeof document !== 'undefined' ? document : undefined,
-  // On the title screen the game is blank: never save it over the real career.
-  () => screenSignal.value !== 'title'
+bootCleanups.push(
+  activeSaveSystem.bindAutosave(
+    gm,
+    typeof document !== 'undefined' ? document : undefined,
+    // On the title screen the game is blank: never save it over the real career.
+    () => screenSignal.value !== 'title'
+  )
 );
 
 if (typeof document !== 'undefined') {
-  document.addEventListener('visibilitychange', () => {
+  const onVisibilityChange = () => {
     if (document.hidden) {
       gm.dispatch({ type: 'pause' });
       pausedSignal.value = true;
     }
-  });
+  };
+  document.addEventListener('visibilitychange', onVisibilityChange);
+  bootCleanups.push(() => document.removeEventListener('visibilitychange', onVisibilityChange));
 }
 
 const hud = typeof document !== 'undefined' ? new Hud() : undefined;
@@ -365,7 +381,7 @@ initDebugApi(gm, {
 // T7.4: every UI dispatcher slot (request accept/decline, negotiation,
 // menu, save/load, tutorial, garage, bike, ending, phone contacts) is bound
 // here in one place instead of scattered across this file.
-bindUi(session, activeSaveSystem);
+bootCleanups.push(bindUi(session, activeSaveSystem));
 
 // Settings take effect as soon as they are saved, and the saved language is
 // applied on boot. Cancel reverts the language preview (Settings.tsx).
@@ -377,23 +393,33 @@ const applySettings = (s: GameSettings) => {
   gm.eventDirector.pauseOnDecisions = s.pauseOnDecisions;
   inputManager.setBindings({ ...inputManager.getBindings(), tiltEnabled: s.tiltControls });
 };
-settingsSignal.subscribe(applySettings);
+bootCleanups.push(settingsSignal.subscribe(applySettings));
 
 // T8.1: negotiation now happens before pickup, as soon as the rider accepts.
-gm.bus.on('negotiation/started', (ev) => {
-  const negotiation = session.beginNegotiation(ev.requestId);
-  if (negotiation) {
-    negotiationSignal.value = {
-      active: true,
-      session: negotiation,
-      lastResult: null,
-      mood: rideManager.getPassengerMood(),
-      pickup: session.pickupChoice(),
-      alley: session.alleyChoice(),
-      destinationKey: nearestPlaceKey(rideManager, negotiation.req.destinationNodeId ?? ''),
-    };
-  }
-});
+bootCleanups.push(
+  gm.bus.on('negotiation/started', (ev) => {
+    const negotiation = session.beginNegotiation(ev.requestId);
+    if (negotiation) {
+      negotiationSignal.value = {
+        active: true,
+        session: negotiation,
+        lastResult: null,
+        mood: rideManager.getPassengerMood(),
+        pickup: session.pickupChoice(),
+        alley: session.alleyChoice(),
+        destinationKey: nearestPlaceKey(rideManager, negotiation.req.destinationNodeId ?? ''),
+      };
+    }
+  })
+);
+
+if (typeof window !== 'undefined') {
+  const onPageHide = () => {
+    for (const cleanup of bootCleanups) cleanup();
+    bootCleanups.length = 0;
+  };
+  window.addEventListener('pagehide', onPageHide, { once: true });
+}
 
 // T7.2: single-district debug/test boots get one deterministic ride (the old
 // hardcoded sample ride) since `autoRequests` is off for them; the real game

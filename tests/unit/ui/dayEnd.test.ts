@@ -5,6 +5,9 @@ import {
   onSleepCallback,
   onDelayRentCallback,
   onAskAdvanceCallback,
+  onDepositSavingsCallback,
+  onWithdrawSavingsCallback,
+  onRepayDebtCallback,
 } from '../../../src/ui/store';
 import { DayEnd } from '../../../src/ui/menus/DayEnd';
 import { t, setLanguage } from '../../../src/ui/i18n';
@@ -105,5 +108,50 @@ describe('T4.1 Day End Screen & Store', () => {
 
     expect(vnode).not.toBeNull();
     expect(vnode?.props['data-testid']).toBe('day-end-screen');
+  });
+
+  it('dispatches P4.2 savings deposit/withdraw and debt repayment callbacks and bilingual strings', () => {
+    const mockSleep = vi.fn();
+    const mockDelayRent = vi.fn();
+    const mockAskAdvance = vi.fn();
+    const mockDeposit = vi.fn();
+    const mockWithdraw = vi.fn();
+    const mockRepayDebt = vi.fn();
+
+    setDayEndDispatchers(
+      mockSleep,
+      mockDelayRent,
+      mockAskAdvance,
+      mockDeposit,
+      mockWithdraw,
+      mockRepayDebt
+    );
+
+    onDepositSavingsCallback?.(100);
+    onWithdrawSavingsCallback?.(100);
+    onRepayDebtCallback?.(250);
+
+    expect(mockDeposit).toHaveBeenCalledWith(100);
+    expect(mockWithdraw).toHaveBeenCalledWith(100);
+    expect(mockRepayDebt).toHaveBeenCalledWith(250);
+
+    setLanguage('en');
+    expect(t('dayend.savings')).toBe('Savings');
+    setLanguage('bn');
+    expect(t('dayend.savings')).toBe('সঞ্চয়');
+
+    const vnode = DayEnd({
+      summary: { ...mockSummary, cash: 500, savings: 300, debt: 200 },
+      onSleep: mockSleep,
+      onDelayRent: mockDelayRent,
+      onAskAdvance: mockAskAdvance,
+      onDepositSavings: mockDeposit,
+      onWithdrawSavings: mockWithdraw,
+      onRepayDebt: mockRepayDebt,
+    });
+    expect(JSON.stringify(vnode)).toContain('day-end-savings');
+    expect(JSON.stringify(vnode)).toContain('day-end-deposit-savings-btn');
+    expect(JSON.stringify(vnode)).toContain('day-end-withdraw-savings-btn');
+    expect(JSON.stringify(vnode)).toContain('day-end-repay-debt-btn');
   });
 });

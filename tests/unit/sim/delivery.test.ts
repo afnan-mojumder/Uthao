@@ -1,9 +1,15 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { GameManager } from '../../../src/sim/GameManager';
+import { GameSession } from '../../../src/sim/GameSession';
+import { RoadNetwork } from '../../../src/sim/road/RoadNetwork';
 import { DeliveryManager } from '../../../src/sim/delivery/DeliveryManager';
 import { EconomyManager } from '../../../src/sim/economy/EconomyManager';
 import { EventBus, type GameEvents } from '../../../src/core/events';
 import type { DeliveryJob } from '../../../src/core/types';
+import type { DistrictData } from '../../../src/sim/schemas';
+import mirparaData from '../../../data/districts/mirpara.json';
+import { SIM_DT } from '../../../src/config/constants';
+import { TIME_SCALE } from '../../../src/core/clock';
 
 describe('T5.8 Delivery jobs and logistics', () => {
   let bus: EventBus<GameEvents>;
@@ -164,5 +170,50 @@ describe('T5.8 Delivery jobs and logistics', () => {
     const completeRes = gm.dispatch({ type: 'completeDelivery', deliveryId: 'deliv_pharmacy_01' });
     expect(completeRes.success).toBe(true);
     expect(gm.economy.cash).toBe(startCash + 250);
+  });
+
+  it('P4.2 buying upgrade_luggage_carrier unlocks parcel delivery offers and acceptDelivery uses jobId', () => {
+    const road = RoadNetwork.fromDistricts([mirparaData as DistrictData]);
+    const gm = new GameManager({ seed: 202, mode: 'career', data: {} });
+    gm.economyManager.cash = 2000;
+    const session = new GameSession({ gm, road, autoRequests: true });
+    session.spawnAtHome();
+
+    // Without upgrade_luggage_carrier, no parcel delivery offers are unlocked/generated
+    const steps30Min = Math.ceil((30 * 60) / (SIM_DT * TIME_SCALE));
+    for (let i = 0; i < steps30Min; i++) {
+      session.step({ throttle: 0, brake: 0, steer: 0 }, SIM_DT);
+    }
+    expect(gm.deliveryManager.getAvailableJobs()).toHaveLength(0);
+
+    // Buy upgrade_luggage_carrier -> unlocks parcel delivery offers
+    const upgRes = gm.dispatch({ type: 'buyUpgrade', upgradeId: 'upgrade_luggage_carrier' });
+    expect(upgRes.success).toBe(true);
+
+    for (let i = 0; i < steps30Min && gm.deliveryManager.getAvailableJobs().length === 0; i++) {
+      session.step({ throttle: 0, brake: 0, steer: 0 }, SIM_DT);
+    }
+    const jobs = gm.deliveryManager.getAvailableJobs();
+    expect(jobs.length).toBeGreaterThan(0);
+
+    const job = jobs[0]!;
+    const acceptRes = gm.dispatch({ type: 'acceptDelivery', jobId: job.id });
+    expect(acceptRes.success).toBe(true);
+    expect(gm.deliveryManager.getActiveJobs().some((j) => j.id === job.id)).toBe(true);
+
+    // Driving to pickup then dropoff completes the delivery and pays out
+    const pickupNode = road.getNode(job.pickupNodeId)!;
+    session.bike.x = pickupNode.x;
+    session.bike.z = pickupNode.z;
+    session.step({ throttle: 0, brake: 0, steer: 0 }, SIM_DT);
+    expect(gm.deliveryManager.activeDeliveries.get(job.id)?.status).toBe('in_transit');
+
+    const cashBefore = gm.economyManager.cash;
+    const dropoffNode = road.getNode(job.dropoffNodeId)!;
+    session.bike.x = dropoffNode.x;
+    session.bike.z = dropoffNode.z;
+    session.step({ throttle: 0, brake: 0, steer: 0 }, SIM_DT);
+    expect(gm.deliveryManager.completedDeliveries.some((j) => j.id === job.id)).toBe(true);
+    expect(gm.economyManager.cash).toBeGreaterThan(cashBefore);
   });
 });

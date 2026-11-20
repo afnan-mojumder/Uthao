@@ -1,5 +1,5 @@
 import type { JSX } from 'preact';
-import type { RideRequest } from '../../core/types';
+import type { DeliveryJob, RideRequest } from '../../core/types';
 import { RequestCard } from './RequestCard';
 import { Contacts } from './Contacts';
 import { t } from '../i18n';
@@ -23,10 +23,13 @@ export interface PhoneProps {
   tripHistory?: TripHistoryItem[];
   navigationTurn?: { direction: string; text: string } | null;
   relationships?: Record<string, number>;
-  activeTab?: 'requests' | 'history' | 'contacts';
-  onSelectTab?: (tab: 'requests' | 'history' | 'contacts') => void;
+  availableDeliveries?: DeliveryJob[];
+  activeDeliveries?: DeliveryJob[];
+  activeTab?: 'requests' | 'history' | 'contacts' | 'deliveries';
+  onSelectTab?: (tab: 'requests' | 'history' | 'contacts' | 'deliveries') => void;
   onAcceptRequest?: (requestId: string) => void;
   onDeclineRequest?: (requestId: string) => void;
+  onAcceptDelivery?: (jobId: string) => void;
   onCallContact?: (characterId: string) => void;
 }
 
@@ -39,15 +42,18 @@ export function Phone({
   tripHistory = [],
   navigationTurn,
   relationships = {},
+  availableDeliveries = [],
+  activeDeliveries = [],
   activeTab: propActiveTab,
   onSelectTab,
   onAcceptRequest,
   onDeclineRequest,
+  onAcceptDelivery,
   onCallContact,
 }: PhoneProps): JSX.Element | null {
   const activeTab = propActiveTab ?? phoneTabSignal.value ?? 'requests';
 
-  const handleSelectTab = (tab: 'requests' | 'history' | 'contacts') => {
+  const handleSelectTab = (tab: 'requests' | 'history' | 'contacts' | 'deliveries') => {
     phoneTabSignal.value = tab;
     onSelectTab?.(tab);
   };
@@ -250,6 +256,43 @@ export function Phone({
           >
             {t('phone.tabs.contacts')}
           </button>
+
+          <button
+            type="button"
+            data-testid="phone-tab-deliveries"
+            onClick={() => handleSelectTab('deliveries')}
+            style={{
+              flex: 1,
+              padding: '12px',
+              border: 'none',
+              borderBottom: activeTab === 'deliveries' ? '2px solid #22c55e' : '2px solid transparent',
+              background: 'none',
+              color: activeTab === 'deliveries' ? '#22c55e' : '#94a3b8',
+              fontWeight: 700,
+              fontSize: '13px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '4px',
+            }}
+          >
+            <span>{t('delivery.tab')}</span>
+            {availableDeliveries.length > 0 && (
+              <span
+                style={{
+                  background: '#f59e0b',
+                  color: '#0f172a',
+                  fontSize: '10px',
+                  borderRadius: '10px',
+                  padding: '1px 5px',
+                  fontWeight: 800,
+                }}
+              >
+                {availableDeliveries.length}
+              </span>
+            )}
+          </button>
         </div>
 
         {/* Tab Content Area */}
@@ -267,6 +310,84 @@ export function Phone({
               relationships={relationships}
               onCallContact={onCallContact}
             />
+          ) : activeTab === 'deliveries' ? (
+            <div data-testid="phone-deliveries-list" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {activeDeliveries.map((job) => (
+                <div
+                  key={job.id}
+                  data-testid={`delivery-active-${job.id}`}
+                  style={{
+                    background: 'rgba(16, 185, 129, 0.12)',
+                    borderRadius: '12px',
+                    padding: '12px',
+                    border: '1px solid rgba(16, 185, 129, 0.35)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '4px',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', fontWeight: 700 }}>
+                    <span>📦 {t(job.senderNameKey)}</span>
+                    <span style={{ color: '#22c55e' }}>৳{job.basePayout}</span>
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#94a3b8' }}>
+                    {job.status === 'in_transit' ? t('delivery.in_transit') : t('delivery.accepted_status')} • {job.pickupNodeId} → {job.dropoffNodeId}
+                  </div>
+                </div>
+              ))}
+              {availableDeliveries.length === 0 && activeDeliveries.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '40px 16px', color: '#64748b', fontSize: '13px' }}>
+                  {t('delivery.no_jobs')}
+                </div>
+              ) : (
+                availableDeliveries.map((job) => (
+                  <div
+                    key={job.id}
+                    data-testid={`delivery-offer-${job.id}`}
+                    style={{
+                      background: 'rgba(30, 41, 59, 0.7)',
+                      borderRadius: '12px',
+                      padding: '12px',
+                      border: '1px solid rgba(255, 255, 255, 0.08)',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      gap: '10px',
+                    }}
+                  >
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                      <span style={{ fontSize: '13px', fontWeight: 700, color: '#f8fafc' }}>
+                        📦 {t(job.senderNameKey)}
+                      </span>
+                      <span style={{ fontSize: '11px', color: '#94a3b8' }}>
+                        {job.pickupNodeId} → {job.dropoffNodeId}
+                        {job.fragile ? ` • ${t('delivery.fragile')}` : ''}
+                      </span>
+                      <span style={{ fontSize: '12px', fontWeight: 700, color: '#22c55e' }}>
+                        {t('delivery.payout', { amount: job.basePayout })}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      data-testid={`accept-delivery-${job.id}`}
+                      onClick={() => onAcceptDelivery?.(job.id)}
+                      style={{
+                        padding: '8px 12px',
+                        borderRadius: '8px',
+                        background: '#22c55e',
+                        border: 'none',
+                        color: '#0f172a',
+                        fontWeight: 800,
+                        fontSize: '12px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {t('delivery.accept')}
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
           ) : activeTab === 'requests' ? (
             incomingRequest ? (
               <RequestCard

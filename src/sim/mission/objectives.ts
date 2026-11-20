@@ -104,7 +104,12 @@ export function evaluateTransaction(
   let changed = false;
 
   if (objective.type === 'earnNet') {
-    if (payload.amount > 0) {
+    const isEarnedKind =
+      payload.kind !== 'savings' &&
+      payload.kind !== 'family' &&
+      payload.kind !== 'rent' &&
+      payload.kind !== 'event';
+    if (isEarnedKind && payload.amount > 0) {
       state.progress = Math.min(state.target, state.progress + payload.amount);
       if (state.progress >= state.target) {
         state.completed = true;

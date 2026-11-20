@@ -1,12 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { GameClock } from '../../../src/core/clock';
+import { GameClock, TIME_SCALE } from '../../../src/core/clock';
 
 describe('GameClock', () => {
-  it('clock 1 real s = 20 game s', () => {
+  it('clock 1 real s = TIME_SCALE game s', () => {
     const clock = new GameClock(1, 7 * 60); // 07:00
     clock.advance(1); // 1 real second
-    // 20 game seconds = 20/60 game minutes = 1/3 game minute
-    expect(clock.minutes).toBeCloseTo(7 * 60 + 20 / 60, 5);
+    expect(clock.minutes).toBeCloseTo(7 * 60 + TIME_SCALE / 60, 5);
   });
 
   it('clock rolls day at 23:00 only via endShift (not auto)', () => {

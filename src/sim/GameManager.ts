@@ -6,6 +6,7 @@ import {
   SIM_DT,
   MAX_FRAME_DT,
   MAX_SIM_STEPS_PER_FRAME,
+  DISTANCE_SCALE,
 } from '../config/constants';
 import { BALANCE } from '../config/balance';
 import type { Command, CommandResult } from '../core/commands';
@@ -110,6 +111,9 @@ export interface SimSnapshot {
   /** The day-end step already ran today; a reload must not run it again (H-12). */
   shiftEnded?: boolean;
   todayRentPosted?: number;
+  todayRentDebt?: number;
+  todayRentAutoFlagged?: boolean;
+  rentDelayedByCommand?: boolean;
 }
 
 export class GameManager {
@@ -161,6 +165,14 @@ export class GameManager {
   shiftEnded: boolean = false;
   /** Rent posted at this shift's end; a delay can move it to the next rent day. */
   todayRentPosted = 0;
+  /** Portion of today's posted rent that overflowed into debt (reversible on delayRent). */
+  todayRentDebt = 0;
+  /** Whether today's endShift already flagged rentDelayedOnce / penalized char_ma. */
+  todayRentAutoFlagged = false;
+  /** Whether the player has already manually used their one delayRent allowance. */
+  rentDelayedByCommand = false;
+  private todayLivingExpenses: DaySummary['livingExpenses'] | null = null;
+  private readonly kamalProxScratch = { atKamalBhai: false };
   homeNodeId: string = 'res_n2_0';
   playerNodeId: string = 'res_n2_0';
   atKamalBhai: boolean = false;
@@ -175,6 +187,23 @@ export class GameManager {
 
   isNearKamalBhai(): boolean {
     return this.atKamalBhai || this.playerNodeId === 'poi_mirpara_garage';
+  }
+
+  /** Syncs player road node, virtual distance from home POI, and Kamal garage proximity. */
+  syncPlayerLocation(nodeId: string, distFromHomeM: number, atKamalBhai: boolean): void {
+    const prevNearKamal = this.isNearKamalBhai();
+    this.playerNodeId = nodeId;
+    this.playerDistFromHomeM = Number.isFinite(distFromHomeM) ? Math.max(0, distFromHomeM) : 0;
+    this.atKamalBhai = atKamalBhai;
+    const nextNearKamal = this.isNearKamalBhai();
+    if (nextNearKamal !== prevNearKamal) {
+      this.kamalProxScratch.atKamalBhai = nextNearKamal;
+      this.bus.emit('player/kamalProximity', this.kamalProxScratch);
+    }
+  }
+
+  isAtHome(): boolean {
+    return this.playerDistFromHomeM <= BALANCE.PHONE.chargeRangeM * DISTANCE_SCALE;
   }
 
   economy: PlayerEconomy = {
@@ -329,6 +358,119 @@ export class GameManager {
 
   private syncEconomy(): void {
     this.economy = this.economyManager.getSnapshot();
+  }
+
+  private buildDaySummary(): DaySummary {
+    const currentRating = this.reputationSystem.getAppRating();
+    const ratingDelta = Math.round((currentRating - this.todayStartRating) * 100) / 100;
+    const relationshipsDelta: Record<string, number> = {};
+    for (const [charId, rel] of Object.entries(this.story.characterRelationships)) {
+      const start = this.todayRelationshipsStart[charId] ?? 0;
+      if (rel !== start) {
+        relationshipsDelta[charId] = rel - start;
+      }
+    }
+
+    const living = this.todayLivingExpenses ?? {
+      food: BALANCE.LIVING.foodPerDay,
+      phoneData: BALANCE.LIVING.phoneDataPerDay,
+      rent: this.todayRentPosted,
+      family: this.clock.day === 3 ? BALANCE.LIVING.familyPaymentDay3 : 0,
+      total:
+        BALANCE.LIVING.foodPerDay +
+        BALANCE.LIVING.phoneDataPerDay +
+        this.todayRentPosted +
+        (this.clock.day === 3 ? BALANCE.LIVING.familyPaymentDay3 : 0),
+      rentDelayed: Boolean(this.story.branchFlags['rentDelayedOnce']),
+      evictionWarning: Boolean(this.story.branchFlags['rentEvictionWarning']),
+    };
+
+    return {
+      day: this.clock.day,
+      revenue: this.economyManager.dailyRevenue,
+      expenses: this.economyManager.dailyExpenses,
+      net: this.economyManager.dailyRevenue - this.economyManager.dailyExpenses,
+      ratingDelta,
+      completedRides: this.todayCompletedRides,
+      relationshipsDelta,
+      breakdown: {
+        food: living.food,
+        phoneData: living.phoneData,
+        rent: living.rent,
+        family: living.family,
+      },
+      livingExpenses: { ...living },
+      cash: this.economyManager.cash,
+      savings: this.economyManager.savings,
+      debt: this.economyManager.debt,
+    };
+  }
+
+  private emitDaySummaryIfEnded(): void {
+    if (!this.shiftEnded) return;
+    this.bus.emit('day/ended', { day: this.clock.day, summary: this.buildDaySummary() });
+  }
+
+  private finalizeShiftEnd(): CommandResult {
+    if (this.shiftEnded) {
+      return { success: false, reason: 'Shift already ended' };
+    }
+    if (this.rideInProgress() && this.clock.minutes < 24 * 60) {
+      return { success: false, reason: 'Finish the active ride first' };
+    }
+
+    // A negotiation is not a ride in progress, but it must not outlive the
+    // shift: the trip would stay in `Negotiating` overnight and every later
+    // accept would be refused. The passenger walks away instead.
+    if (this.rideManager?.getTripState() === 'Negotiating') {
+      this.rideManager.walkAwayNegotiation();
+    }
+
+    // Commute home if > 1.5 km (1500m)
+    if (this.playerDistFromHomeM > 1500) {
+      const kmPerL = BALANCE.FUEL.kmPerL[this.economyManager.currentBikeId] ?? 40;
+      const fuelNeeded = this.playerDistFromHomeM / 1000 / kmPerL;
+      this.economyManager.consumeFuel(fuelNeeded);
+      this.syncPlayerLocation(this.homeNodeId, 0, false);
+    }
+
+    // Post bike daily insurance if applicable
+    const activeBike = getBikeDef(this.economyManager.currentBikeId);
+    if (activeBike.dailyInsuranceCost > 0) {
+      this.economyManager.post({
+        id: `tx_insurance_${this.clock.day}_${Math.floor(this.clock.minutes)}`,
+        day: this.clock.day,
+        minute: this.clock.minutes,
+        kind: 'maintenance',
+        amount: -activeBike.dailyInsuranceCost,
+      });
+    }
+
+    // Post living expenses
+    const { rentDebtAdded, ...living } = this.economyManager.postDailyLivingExpenses(
+      this.clock.day,
+      this.clock.minutes
+    );
+
+    this.todayRentPosted = living.rent;
+    this.todayRentDebt = rentDebtAdded;
+    this.todayRentAutoFlagged = Boolean(living.rentDelayed);
+    this.todayLivingExpenses = { ...living };
+
+    if (living.rentDelayed) {
+      this.story.branchFlags['rentDelayedOnce'] = true;
+      this.reputationSystem.changeRelationship('char_ma', -10);
+    }
+    if (living.evictionWarning) {
+      this.story.branchFlags['rentEvictionWarning'] = true;
+      this.reputationSystem.changeRelationship('char_ma', -25);
+    }
+
+    this.syncEconomy();
+    const summary = this.buildDaySummary();
+    this.shiftEnded = true;
+    this.bus.emit('day/ended', { day: this.clock.day, summary });
+    return { success: true, data: summary };
   }
 
   /** T7.4: the real effect of "endless mode" — no missions to track or
@@ -507,8 +649,10 @@ export class GameManager {
         this.bus.emit('story/flag', { key: 'ch6_decision_made', value: true });
         return { success: true };
       }
-      case 'acceptDelivery':
-        return this.deliveryManager.accept(cmd.deliveryId, this.clock.minutes);
+      case 'acceptDelivery': {
+        const id = 'deliveryId' in cmd ? cmd.deliveryId : cmd.jobId;
+        return this.deliveryManager.accept(id, this.clock.minutes);
+      }
       case 'pickupDelivery':
         return this.deliveryManager.pickup(cmd.deliveryId, this.clock.minutes);
       case 'completeDelivery': {
@@ -619,92 +763,16 @@ export class GameManager {
         if (this.clock.minutes < 12 * 60 && !this.shiftEnded) {
           return { success: false, reason: 'Shift cannot end before 12:00' };
         }
-        if (this.shiftEnded) {
-          return { success: false, reason: 'Shift already ended' };
+        return this.finalizeShiftEnd();
+      }
+      case 'endShiftEarly': {
+        if (!this.shiftEnded && this.clock.minutes < 11 * 60 && !this.isAtHome()) {
+          return {
+            success: false,
+            reason: 'Shift can only end early after 4 hours or at home',
+          };
         }
-        if (this.rideInProgress() && this.clock.minutes < 24 * 60) {
-          return { success: false, reason: 'Finish the active ride first' };
-        }
-
-        // A negotiation is not a ride in progress, but it must not outlive the
-        // shift: the trip would stay in `Negotiating` overnight and every later
-        // accept would be refused. The passenger walks away instead.
-        if (this.rideManager?.getTripState() === 'Negotiating') {
-          this.rideManager.walkAwayNegotiation();
-        }
-
-        // Commute home if > 1.5 km (1500m)
-        if (this.playerDistFromHomeM > 1500) {
-          const kmPerL = BALANCE.FUEL.kmPerL[this.economyManager.currentBikeId] ?? 40;
-          const fuelNeeded = (this.playerDistFromHomeM / 1000) / kmPerL;
-          this.economyManager.consumeFuel(fuelNeeded);
-          this.playerDistFromHomeM = 0;
-          this.playerNodeId = this.homeNodeId;
-        }
-
-        // Post bike daily insurance if applicable
-        const activeBike = getBikeDef(this.economyManager.currentBikeId);
-        if (activeBike.dailyInsuranceCost > 0) {
-          this.economyManager.post({
-            id: `tx_insurance_${this.clock.day}_${Math.floor(this.clock.minutes)}`,
-            day: this.clock.day,
-            minute: this.clock.minutes,
-            kind: 'maintenance',
-            amount: -activeBike.dailyInsuranceCost,
-          });
-          // T7.5: post() above already adds this to dailyExpenses — a
-          // second `+=` here was double-counting insurance every day.
-        }
-
-        // Post living expenses
-        const living = this.economyManager.postDailyLivingExpenses(
-          this.clock.day,
-          this.clock.minutes
-        );
-
-        this.todayRentPosted = living.rent;
-        if (living.rentDelayed) {
-          this.story.branchFlags['rentDelayedOnce'] = true;
-          this.reputationSystem.changeRelationship('char_ma', -10);
-        }
-        if (living.evictionWarning) {
-          this.story.branchFlags['rentEvictionWarning'] = true;
-          this.reputationSystem.changeRelationship('char_ma', -25);
-        }
-
-        const currentRating = this.reputationSystem.getAppRating();
-        const ratingDelta = Math.round((currentRating - this.todayStartRating) * 100) / 100;
-        const relationshipsDelta: Record<string, number> = {};
-        for (const [charId, rel] of Object.entries(this.story.characterRelationships)) {
-          const start = this.todayRelationshipsStart[charId] ?? 0;
-          if (rel !== start) {
-            relationshipsDelta[charId] = rel - start;
-          }
-        }
-
-        this.syncEconomy();
-        const summary: DaySummary = {
-          day: this.clock.day,
-          revenue: this.economyManager.dailyRevenue,
-          expenses: this.economyManager.dailyExpenses,
-          net: this.economyManager.dailyRevenue - this.economyManager.dailyExpenses,
-          ratingDelta,
-          completedRides: this.todayCompletedRides,
-          relationshipsDelta,
-          breakdown: {
-            food: living.food,
-            phoneData: living.phoneData,
-            rent: living.rent,
-            family: living.family,
-          },
-          livingExpenses: living,
-          cash: this.economyManager.cash,
-          debt: this.economyManager.debt,
-        };
-
-        this.shiftEnded = true;
-        this.bus.emit('day/ended', { day: this.clock.day, summary });
-        return { success: true, data: summary };
+        return this.finalizeShiftEnd();
       }
       case 'sleep': {
         if (!this.shiftEnded) {
@@ -715,6 +783,10 @@ export class GameManager {
         this.economyManager.phoneBattery = 100;
         this.syncEconomy();
         this.shiftEnded = false;
+        this.todayRentPosted = 0;
+        this.todayRentDebt = 0;
+        this.todayRentAutoFlagged = false;
+        this.todayLivingExpenses = null;
         this.todayCompletedRides = 0;
         this.todayStartRating = this.reputationSystem.getAppRating();
         this.todayRelationshipsStart = { ...this.story.characterRelationships };
@@ -736,20 +808,78 @@ export class GameManager {
         this.waitGameMinutes(BALANCE.PHONE.chargeWaitMin[cmd.location]);
         return { success: true };
       }
+      case 'depositSavings': {
+        const res = this.economyManager.depositSavings(
+          cmd.amount,
+          this.clock.day,
+          this.clock.minutes
+        );
+        this.syncEconomy();
+        if (res.success) this.emitDaySummaryIfEnded();
+        return { success: res.success, reason: res.reason, data: res };
+      }
+      case 'withdrawSavings': {
+        const res = this.economyManager.withdrawSavings(
+          cmd.amount,
+          this.clock.day,
+          this.clock.minutes
+        );
+        this.syncEconomy();
+        if (res.success) this.emitDaySummaryIfEnded();
+        return { success: res.success, reason: res.reason, data: res };
+      }
+      case 'repayDebt': {
+        const res = this.economyManager.repayDebt(
+          cmd.amount,
+          this.clock.day,
+          this.clock.minutes
+        );
+        this.syncEconomy();
+        if (res.success) this.emitDaySummaryIfEnded();
+        return { success: res.success, reason: res.reason, data: res };
+      }
       case 'delayRent': {
         if (!BALANCE.LIVING.rentDueDays.includes(this.clock.day)) {
           return { success: false, reason: 'Rent is not due today' };
         }
-        if (this.story.branchFlags['rentDelayedOnce']) {
+        if (this.story.branchFlags['rentEvictionWarning']) {
+          return { success: false, reason: 'Rent cannot be delayed after eviction warning' };
+        }
+        if (
+          this.rentDelayedByCommand ||
+          (this.story.branchFlags['rentDelayedOnce'] && !this.todayRentAutoFlagged)
+        ) {
           return { success: false, reason: 'Rent was already delayed once' };
         }
-        if (!this.economyManager.delayRent(this.todayRentPosted, this.clock.day, this.clock.minutes)) {
+        const delayedAmount = this.todayRentPosted;
+        if (
+          !this.economyManager.delayRent(
+            delayedAmount,
+            this.clock.day,
+            this.clock.minutes,
+            this.todayRentDebt
+          )
+        ) {
           return { success: false, reason: 'No rent to delay' };
         }
+        if (!this.todayRentAutoFlagged) {
+          this.reputationSystem.changeRelationship('char_ma', -10);
+        }
         this.todayRentPosted = 0;
+        this.todayRentDebt = 0;
+        this.todayRentAutoFlagged = false;
+        this.rentDelayedByCommand = true;
         this.story.branchFlags['rentDelayedOnce'] = true;
-        this.reputationSystem.changeRelationship('char_ma', -10);
+        if (this.todayLivingExpenses) {
+          this.todayLivingExpenses = {
+            ...this.todayLivingExpenses,
+            rent: 0,
+            total: Math.max(0, this.todayLivingExpenses.total - delayedAmount),
+            rentDelayed: true,
+          };
+        }
         this.syncEconomy();
+        this.emitDaySummaryIfEnded();
         return { success: true };
       }
       case 'askAdvance': {
@@ -759,6 +889,7 @@ export class GameManager {
           return { success: false, reason: 'Family cannot advance any more money' };
         }
         this.reputationSystem.changeRelationship(cmd.from, -5);
+        this.emitDaySummaryIfEnded();
         return { success: true };
       }
       case 'payExpense': {
@@ -775,6 +906,7 @@ export class GameManager {
           amount: -amount,
         });
         this.syncEconomy();
+        this.emitDaySummaryIfEnded();
         return { success: true };
       }
       default:
@@ -821,6 +953,9 @@ export class GameManager {
       negotiationHistory: this.negotiationHistory,
       shiftEnded: this.shiftEnded,
       todayRentPosted: this.todayRentPosted,
+      todayRentDebt: this.todayRentDebt,
+      todayRentAutoFlagged: this.todayRentAutoFlagged,
+      rentDelayedByCommand: this.rentDelayedByCommand,
     };
   }
 
@@ -875,6 +1010,12 @@ export class GameManager {
     this.negotiationHistory = snap.negotiationHistory ?? 0;
     this.shiftEnded = snap.shiftEnded ?? false;
     this.todayRentPosted = snap.todayRentPosted ?? 0;
+    this.rentDelayedByCommand = snap.rentDelayedByCommand ?? false;
+    this.todayRentDebt = snap.todayRentDebt ?? Math.min(this.economyManager.debt, this.todayRentPosted);
+    this.todayRentAutoFlagged =
+      snap.todayRentAutoFlagged ??
+      Boolean(this.todayRentPosted > 0 && this.story.branchFlags['rentDelayedOnce'] && !this.rentDelayedByCommand);
+    this.todayLivingExpenses = null;
 
     // Restore road events
     this.roadEvents.clearEvents();

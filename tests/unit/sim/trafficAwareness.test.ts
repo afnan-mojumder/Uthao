@@ -557,9 +557,12 @@ describe('P3.2 Alive & Fair Traffic AI + Pedestrians', () => {
       const input = autopilot.step(session.bike);
       session.step(input, SIM_DT);
 
-      // Keep fuel topped up during 10-min continuous drive
+      // Keep fuel topped up and stay in evening rush hour (17:00..19:30) during 10-min continuous drive
       if (tick % 600 === 0) {
         gm.economyManager.fuelLevel = 100;
+        if (gm.clock.minutes >= 19 * 60 + 30) {
+          gm.clock.minutes = 17 * 60;
+        }
       }
 
       // Check new spawns are strictly on-road

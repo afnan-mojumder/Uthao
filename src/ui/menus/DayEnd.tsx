@@ -7,6 +7,9 @@ export interface DayEndProps {
   onSleep?: () => void;
   onDelayRent?: () => void;
   onAskAdvance?: (from: 'char_mintu' | 'char_ma', amount: number) => void;
+  onDepositSavings?: (amount: number) => void;
+  onWithdrawSavings?: (amount: number) => void;
+  onRepayDebt?: (amount: number) => void;
 }
 
 export function DayEnd({
@@ -14,6 +17,9 @@ export function DayEnd({
   onSleep,
   onDelayRent,
   onAskAdvance,
+  onDepositSavings,
+  onWithdrawSavings,
+  onRepayDebt,
 }: DayEndProps): JSX.Element | null {
   if (!summary) return null;
 
@@ -22,6 +28,12 @@ export function DayEnd({
   const isRentDue = (living?.rent ?? 0) > 0 || (summary.breakdown?.rent ?? 0) > 0;
   const rentDelayed = living?.rentDelayed;
   const evictionWarning = living?.evictionWarning;
+  const cashVal = Math.max(0, Math.floor(summary.cash ?? 0));
+  const savingsVal = Math.max(0, Math.floor(summary.savings ?? 0));
+  const debtVal = Math.max(0, Math.floor(summary.debt ?? 0));
+  const depositAmount = Math.min(500, cashVal);
+  const withdrawAmount = Math.min(500, savingsVal);
+  const repayAmount = Math.min(500, cashVal, debtVal);
 
   return (
     <div
@@ -256,9 +268,10 @@ export function DayEnd({
         {/* Wallet & Debt Status */}
         <div
           style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            padding: '12px 18px',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(4, 1fr)',
+            gap: '8px',
+            padding: '12px 16px',
             background: 'rgba(30, 41, 59, 0.4)',
             borderRadius: '12px',
             border: '1px solid rgba(255, 255, 255, 0.05)',
@@ -266,30 +279,39 @@ export function DayEnd({
           }}
         >
           <div>
-            <span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>{t('dayend.cash')}: </span>
-            <span
+            <div style={{ color: '#94a3b8', fontSize: '0.75rem' }}>{t('dayend.cash')}</div>
+            <div
               data-testid="day-end-cash"
               style={{ fontWeight: 700, color: '#f8fafc', fontSize: '1rem' }}
             >
-              ৳{summary.cash ?? 0}
-            </span>
+              ৳{cashVal}
+            </div>
           </div>
           <div>
-            <span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>{t('dayend.debt')}: </span>
-            <span
+            <div style={{ color: '#94a3b8', fontSize: '0.75rem' }}>{t('dayend.savings')}</div>
+            <div
+              data-testid="day-end-savings"
+              style={{ fontWeight: 700, color: '#38bdf8', fontSize: '1rem' }}
+            >
+              ৳{savingsVal}
+            </div>
+          </div>
+          <div>
+            <div style={{ color: '#94a3b8', fontSize: '0.75rem' }}>{t('dayend.debt')}</div>
+            <div
               data-testid="day-end-debt"
               style={{
                 fontWeight: 700,
-                color: (summary.debt ?? 0) > 0 ? '#fb923c' : '#34d399',
+                color: debtVal > 0 ? '#fb923c' : '#34d399',
                 fontSize: '1rem',
               }}
             >
-              ৳{summary.debt ?? 0}
-            </span>
+              ৳{debtVal}
+            </div>
           </div>
           <div>
-            <span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>{t('dayend.rating_change')}: </span>
-            <span
+            <div style={{ color: '#94a3b8', fontSize: '0.75rem' }}>{t('dayend.rating_change')}</div>
+            <div
               style={{
                 fontWeight: 700,
                 color: summary.ratingDelta >= 0 ? '#34d399' : '#f87171',
@@ -297,7 +319,7 @@ export function DayEnd({
               }}
             >
               {summary.ratingDelta >= 0 ? '+' : ''}{summary.ratingDelta}★
-            </span>
+            </div>
           </div>
         </div>
 
@@ -345,6 +367,80 @@ export function DayEnd({
             >
               ⏳ {t('dayend.btn_delay_rent')}
             </button>
+          )}
+
+          {/* Savings Deposit / Withdraw & Debt Repayment */}
+          {(onDepositSavings || onWithdrawSavings || (debtVal > 0 && onRepayDebt)) && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                {onDepositSavings && (
+                  <button
+                    data-testid="day-end-deposit-savings-btn"
+                    disabled={depositAmount <= 0}
+                    onClick={() => onDepositSavings(depositAmount)}
+                    style={{
+                      padding: '9px 12px',
+                      borderRadius: '10px',
+                      background:
+                        depositAmount > 0
+                          ? 'rgba(16, 185, 129, 0.14)'
+                          : 'rgba(100, 116, 139, 0.2)',
+                      border: '1px solid rgba(16, 185, 129, 0.35)',
+                      color: depositAmount > 0 ? '#34d399' : '#64748b',
+                      fontWeight: 600,
+                      fontSize: '0.85rem',
+                      cursor: depositAmount > 0 ? 'pointer' : 'not-allowed',
+                    }}
+                  >
+                    🏦 {t('dayend.btn_deposit_savings', { amount: depositAmount || 500 })}
+                  </button>
+                )}
+                {onWithdrawSavings && (
+                  <button
+                    data-testid="day-end-withdraw-savings-btn"
+                    disabled={withdrawAmount <= 0}
+                    onClick={() => onWithdrawSavings(withdrawAmount)}
+                    style={{
+                      padding: '9px 12px',
+                      borderRadius: '10px',
+                      background:
+                        withdrawAmount > 0
+                          ? 'rgba(56, 189, 248, 0.14)'
+                          : 'rgba(100, 116, 139, 0.2)',
+                      border: '1px solid rgba(56, 189, 248, 0.35)',
+                      color: withdrawAmount > 0 ? '#38bdf8' : '#64748b',
+                      fontWeight: 600,
+                      fontSize: '0.85rem',
+                      cursor: withdrawAmount > 0 ? 'pointer' : 'not-allowed',
+                    }}
+                  >
+                    💸 {t('dayend.btn_withdraw_savings', { amount: withdrawAmount || 500 })}
+                  </button>
+                )}
+              </div>
+              {debtVal > 0 && onRepayDebt && (
+                <button
+                  data-testid="day-end-repay-debt-btn"
+                  disabled={repayAmount <= 0}
+                  onClick={() => onRepayDebt(repayAmount)}
+                  style={{
+                    padding: '9px 12px',
+                    borderRadius: '10px',
+                    background:
+                      repayAmount > 0
+                        ? 'rgba(245, 158, 11, 0.16)'
+                        : 'rgba(100, 116, 139, 0.2)',
+                    border: '1px solid rgba(245, 158, 11, 0.4)',
+                    color: repayAmount > 0 ? '#fbbf24' : '#64748b',
+                    fontWeight: 700,
+                    fontSize: '0.85rem',
+                    cursor: repayAmount > 0 ? 'pointer' : 'not-allowed',
+                  }}
+                >
+                  💳 {t('dayend.btn_repay_debt', { amount: repayAmount || debtVal })}
+                </button>
+              )}
+            </div>
           )}
 
           {/* Bad day recovery advances: borrow from Mintu or Ma */}

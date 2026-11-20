@@ -1,6 +1,26 @@
 import type { EventBus, GameEvents } from '../../core/events';
 import type { DeliveryJob } from '../../core/types';
+import type { Rng } from '../../core/rng';
+import type { RoadNetwork } from '../road/RoadNetwork';
 import type { EconomyManager } from '../economy/EconomyManager';
+
+const DELIVERY_SENDER_KINDS = new Set([
+  'pharmacy',
+  'market',
+  'teaStall',
+  'officeGate',
+  'apartment',
+  'bistro',
+]);
+const DELIVERY_ITEM_TYPES: DeliveryJob['itemType'][] = [
+  'food',
+  'document',
+  'medicine',
+  'fragile_electronics',
+  'parcel',
+];
+const DELIVERY_ARRIVAL_RADIUS_SQ = 15 * 15;
+const MAX_OFFERED_DELIVERIES = 3;
 
 export interface DeliveryManagerOptions {
   bus: EventBus<GameEvents>;
@@ -15,6 +35,7 @@ export class DeliveryManager {
   readonly activeDeliveries: Map<string, DeliveryJob> = new Map();
   readonly completedDeliveries: DeliveryJob[] = [];
   partnershipActive = false;
+  private jobSeq = 0;
 
   constructor(opts: DeliveryManagerOptions) {
     this.bus = opts.bus;
@@ -33,7 +54,100 @@ export class DeliveryManager {
    * 1 standard, or 3 with the heavy-duty luggage carrier upgrade.
    */
   getMaxCapacity(): number {
-    return this.economyManager.hasUpgrade('upgrade_luggage_carrier') ? 3 : 1;
+    return this.isUnlocked() ? 3 : 1;
+  }
+
+  /** Parcel delivery offers unlock once the heavy-duty luggage carrier is installed. */
+  isUnlocked(): boolean {
+    return this.economyManager.hasUpgrade('upgrade_luggage_carrier');
+  }
+
+  reset(): void {
+    this.offeredDeliveries.clear();
+    this.activeDeliveries.clear();
+    this.completedDeliveries.length = 0;
+    this.jobSeq = 0;
+  }
+
+  /**
+   * Generates and offers a parcel delivery job from the road network when
+   * `upgrade_luggage_carrier` is owned. Returns null if locked, at offer cap,
+   * or no valid route exists.
+   */
+  generateOffer(road: RoadNetwork, rng: Rng, day: number): DeliveryJob | null {
+    if (!this.isUnlocked()) return null;
+    if (this.offeredDeliveries.size >= MAX_OFFERED_DELIVERIES) return null;
+
+    const nodes = road.getAllNodes();
+    if (nodes.length < 2) return null;
+
+    const pois = road.getPois();
+    const senderPois = pois.filter((p) => DELIVERY_SENDER_KINDS.has(p.kind) && road.getNode(p.nodeId));
+    const fallbackPois = senderPois.length > 0 ? senderPois : pois.filter((p) => road.getNode(p.nodeId));
+
+    for (let attempt = 0; attempt < 15; attempt++) {
+      const pickupPoi = fallbackPois.length > 0 ? rng.pick(fallbackPois) : null;
+      const pickupNodeId = pickupPoi ? pickupPoi.nodeId : rng.pick(nodes).nodeId;
+      const dropoffNode = rng.pick(nodes);
+      if (dropoffNode.nodeId === pickupNodeId) continue;
+
+      const route = road.route(pickupNodeId, dropoffNode.nodeId, { mode: 'motorcycle' });
+      if (!route || route.nodeIds.length < 2) continue;
+      if (!road.route(dropoffNode.nodeId, pickupNodeId, { mode: 'motorcycle' })) continue;
+
+      const itemType = rng.pick(DELIVERY_ITEM_TYPES);
+      const fragile = itemType === 'medicine' || itemType === 'fragile_electronics';
+      const basePayout = Math.max(80, Math.round((80 + route.virtualKm * 35) / 5) * 5);
+      const timeLimitMinutes = Math.max(15, Math.ceil(route.etaMin * 2));
+
+      const job: DeliveryJob = {
+        id: `deliv_${day}_${++this.jobSeq}`,
+        senderNameKey: pickupPoi?.nameKey ?? 'poi.mirpara.bazaar',
+        pickupPoiId: pickupPoi?.id ?? pickupNodeId,
+        pickupNodeId,
+        dropoffNodeId: dropoffNode.nodeId,
+        itemType,
+        fragile,
+        basePayout,
+        timeLimitMinutes,
+        status: 'offered',
+      };
+      this.offer(job);
+      return job;
+    }
+
+    return null;
+  }
+
+  /** Advances accepted/in-transit deliveries when the bike reaches pickup or dropoff. */
+  updateProximity(
+    x: number,
+    z: number,
+    road: RoadNetwork,
+    currentMinute: number,
+    day: number
+  ): void {
+    if (this.activeDeliveries.size === 0) return;
+
+    for (const job of this.activeDeliveries.values()) {
+      if (job.status === 'accepted') {
+        const pickup = road.getNode(job.pickupNodeId);
+        if (!pickup) continue;
+        const dx = pickup.x - x;
+        const dz = pickup.z - z;
+        if (dx * dx + dz * dz <= DELIVERY_ARRIVAL_RADIUS_SQ) {
+          this.pickup(job.id, currentMinute);
+        }
+      } else if (job.status === 'in_transit') {
+        const dropoff = road.getNode(job.dropoffNodeId);
+        if (!dropoff) continue;
+        const dx = dropoff.x - x;
+        const dz = dropoff.z - z;
+        if (dx * dx + dz * dz <= DELIVERY_ARRIVAL_RADIUS_SQ) {
+          this.complete(job.id, currentMinute, day);
+        }
+      }
+    }
   }
 
   offer(job: DeliveryJob): void {

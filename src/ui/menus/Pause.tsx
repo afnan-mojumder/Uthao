@@ -8,6 +8,7 @@ export interface PauseProps {
   onOpenSettings?: () => void;
   onOpenSave?: () => void;
   onOpenLoad?: () => void;
+  onEndShiftEarly?: () => void;
   onExitToMainMenu?: () => void;
 }
 
@@ -18,6 +19,7 @@ export function Pause({
   onOpenSettings,
   onOpenSave,
   onOpenLoad,
+  onEndShiftEarly,
   onExitToMainMenu,
 }: PauseProps): JSX.Element | null {
   if (!isOpen) return null;
@@ -201,6 +203,30 @@ export function Pause({
           >
             <span>⚙️</span> {t('pause.settings')}
           </button>
+
+          {onEndShiftEarly && (
+            <button
+              data-testid="pause-btn-end-shift"
+              onClick={onEndShiftEarly}
+              style={{
+                width: '100%',
+                padding: '13px',
+                borderRadius: '12px',
+                border: '1px solid rgba(16, 185, 129, 0.3)',
+                background: 'rgba(16, 185, 129, 0.12)',
+                color: '#34d399',
+                fontSize: '0.95rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+              }}
+            >
+              <span>🌙</span> {t('pause.end_shift')}
+            </button>
+          )}
 
           <button
             data-testid="pause-btn-exit"

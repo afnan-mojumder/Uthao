@@ -10,6 +10,8 @@ import {
   setPhoneContactDispatcher,
   setNegotiationActionDispatcher,
   setDayEndDispatchers,
+  setEndShiftEarlyDispatcher,
+  setDeliveryDispatcher,
   setGarageDispatchers,
   setBikeDispatchers,
   setFuelDispatchers,
@@ -19,12 +21,17 @@ import {
   setSaveDispatchers,
   setTutorialDispatchers,
   setEndingDispatchers,
+  syncGarageState,
   negotiationSignal,
   choiceSignal,
   tutorialSignal,
   pausedSignal,
+  screenSignal,
+  phoneSignal,
   saveStatusSignal,
 } from './store';
+
+let activeBindingsCleanup: (() => void) | null = null;
 
 /**
  * Wires every UI dispatcher slot declared in `store.ts` to the running
@@ -35,9 +42,48 @@ import {
  * single place that turns a UI button press into a real game-state change —
  * UI components themselves only read signals and invoke `on*Callback`.
  */
-export function bindUi(session: GameSession, saveSystem?: SaveSystem): void {
+export function bindUi(session: GameSession, saveSystem?: SaveSystem): () => void {
+  activeBindingsCleanup?.();
+
   const gm = session.gm;
   const rideManager = session.ride;
+  const unsubscribers: Array<() => void> = [];
+
+  const syncDeliveries = () => {
+    const dm = gm?.deliveryManager;
+    if (!dm) return;
+    phoneSignal.value = {
+      ...phoneSignal.value,
+      availableDeliveries: dm.getAvailableJobs(),
+      activeDeliveries: dm.getActiveJobs(),
+    };
+  };
+
+  const syncGarage = () => syncGarageState(gm);
+  if (gm?.economyManager) syncGarage();
+  if (gm?.deliveryManager) syncDeliveries();
+
+  if (gm?.bus) {
+    unsubscribers.push(gm.bus.on('economy/transaction', syncGarage));
+    unsubscribers.push(gm.bus.on('bike/swapped', syncGarage));
+    unsubscribers.push(gm.bus.on('upgrade/purchased', syncGarage));
+    unsubscribers.push(gm.bus.on('reputation/changed', syncGarage));
+    unsubscribers.push(gm.bus.on('player/kamalProximity', syncGarage));
+    unsubscribers.push(gm.bus.on('bike/wearChanged', syncGarage));
+    unsubscribers.push(gm.bus.on('day/ended', syncGarage));
+    unsubscribers.push(
+      gm.bus.on('day/started', () => {
+        syncGarage();
+        syncDeliveries();
+      })
+    );
+    unsubscribers.push(
+      gm.bus.on('state/restored', () => {
+        syncGarage();
+        syncDeliveries();
+      })
+    );
+  }
 
   setChoiceDispatcher((choiceId, instanceId) => {
     if (instanceId.startsWith('dispute:')) {
@@ -158,8 +204,21 @@ export function bindUi(session: GameSession, saveSystem?: SaveSystem): void {
   setDayEndDispatchers(
     () => gm.dispatch({ type: 'sleep' }),
     () => gm.dispatch({ type: 'delayRent' }),
-    (from, amount) => gm.dispatch({ type: 'askAdvance', from, amount })
+    (from, amount) => gm.dispatch({ type: 'askAdvance', from, amount }),
+    (amount) => gm.dispatch({ type: 'depositSavings', amount }),
+    (amount) => gm.dispatch({ type: 'withdrawSavings', amount }),
+    (amount) => gm.dispatch({ type: 'repayDebt', amount })
   );
+
+  setEndShiftEarlyDispatcher(() => {
+    const res = gm.dispatch({ type: 'endShiftEarly' });
+    if (res.success) {
+      pausedSignal.value = false;
+      screenSignal.value = 'game';
+    }
+  });
+
+  setDeliveryDispatcher((jobId) => gm.dispatch({ type: 'acceptDelivery', jobId }));
 
   setGarageDispatchers(
     (item) => gm.dispatch({ type: 'repair', item }),
@@ -206,8 +265,14 @@ export function bindUi(session: GameSession, saveSystem?: SaveSystem): void {
         const res = saveSystem.loadGame(slot);
         if (res.success) gm.applySnapshot(res.gm.snapshot(), res.save.rngState);
       }
+      gm.paused = false;
+      pausedSignal.value = false;
     },
-    () => session.enterEndless(),
+    () => {
+      session.enterEndless();
+      gm.paused = false;
+      pausedSignal.value = false;
+    },
     () => {
       pausedSignal.value = false;
     },
@@ -259,4 +324,16 @@ export function bindUi(session: GameSession, saveSystem?: SaveSystem): void {
     startNewCareer,
     () => session.enterEndless()
   );
+
+  const cleanup = () => {
+    for (const unsub of unsubscribers) {
+      unsub();
+    }
+    unsubscribers.length = 0;
+    if (activeBindingsCleanup === cleanup) {
+      activeBindingsCleanup = null;
+    }
+  };
+  activeBindingsCleanup = cleanup;
+  return cleanup;
 }

@@ -139,6 +139,9 @@ export function serialize(gm: GameManager, slot: SaveSlot = 'auto'): SaveV1 {
     negotiationHistory: snap.negotiationHistory ?? 0,
     shiftEnded: snap.shiftEnded ?? false,
     todayRentPosted: snap.todayRentPosted ?? 0,
+    todayRentDebt: snap.todayRentDebt,
+    todayRentAutoFlagged: snap.todayRentAutoFlagged,
+    rentDelayedByCommand: snap.rentDelayedByCommand,
   };
 }
 
@@ -194,6 +197,9 @@ export function deserialize(save: SaveV1, gameData?: GameData): GameManager {
     negotiationHistory: save.negotiationHistory ?? 0,
     shiftEnded: save.shiftEnded ?? false,
     todayRentPosted: save.todayRentPosted ?? 0,
+    todayRentDebt: save.todayRentDebt,
+    todayRentAutoFlagged: save.todayRentAutoFlagged,
+    rentDelayedByCommand: save.rentDelayedByCommand,
   };
 
   gm.applySnapshot(snapshot, save.rngState);

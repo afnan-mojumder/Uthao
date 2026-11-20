@@ -10,11 +10,14 @@ export function nearestNode(
   let closest: RoadNode | null = null;
   let minDistSq = Infinity;
 
-  for (const node of nodes) {
+  for (let i = 0; i < nodes.length; i++) {
+    const node = nodes[i]!;
     if (filter && !filter(node)) {
       continue;
     }
-    const distSq = (node.x - x) ** 2 + (node.z - z) ** 2;
+    const dx = node.x - x;
+    const dz = node.z - z;
+    const distSq = dx * dx + dz * dz;
     if (distSq < minDistSq) {
       minDistSq = distSq;
       closest = node;

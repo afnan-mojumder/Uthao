@@ -4,6 +4,7 @@ import type { EconomyManager } from '../economy/EconomyManager';
 import type { RideManager } from '../ride/RideManager';
 import type { EventBus, GameEvents } from '../../core/events';
 import { clamp } from '../../core/math';
+import { TIME_SCALE } from '../../config/constants';
 import { canonicalCharacterId } from '../passenger/PassengerAI';
 
 export interface EffectContext {
@@ -43,7 +44,7 @@ export function applyEffect(effect: Effect, ctx: EffectContext): void {
     }
 
     case 'time': {
-      ctx.gameManager.clock.advance(effect.min * 60 / 20); // advance by minutes
+      ctx.gameManager.clock.advance((effect.min * 60) / TIME_SCALE); // advance by minutes
       break;
     }
 

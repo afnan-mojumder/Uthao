@@ -49,6 +49,9 @@ export interface SaveV1 {
   /** The day-end step already ran on this day; optional so older saves load as false. */
   shiftEnded?: boolean;
   todayRentPosted?: number;
+  todayRentDebt?: number;
+  todayRentAutoFlagged?: boolean;
+  rentDelayedByCommand?: boolean;
 }
 
 export type AnySave = SaveV1 | Record<string, unknown>;

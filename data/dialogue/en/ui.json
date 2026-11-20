@@ -303,5 +303,15 @@
   "trip.consequence.disputeAcceptedPartial": "Settled dispute by accepting partial fare",
   "trip.consequence.disputeRecoveredFull": "Passenger agreed to pay the full fare",
   "trip.consequence.disputeEscalated": "Passenger refused after dispute escalated",
-  "trip.consequence.disputeReported": "Reported dispute to platform support"
+  "trip.consequence.disputeReported": "Reported dispute to platform support",
+  "dayend.savings": "Savings",
+  "dayend.btn_deposit_savings": "Deposit ৳{amount} to Savings",
+  "dayend.btn_withdraw_savings": "Withdraw ৳{amount} from Savings",
+  "dayend.btn_repay_debt": "Repay ৳{amount} Debt",
+  "pause.end_shift": "End Shift Early",
+  "delivery.no_jobs": "No parcel deliveries available. Install the luggage carrier at Kamal Bhai's workshop.",
+  "delivery.accept": "Accept Parcel",
+  "delivery.in_transit": "In Transit",
+  "delivery.accepted_status": "Accepted (Head to Pickup)",
+  "delivery.payout": "Payout: ৳{amount}"
 }

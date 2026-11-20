@@ -94,8 +94,11 @@ export class GameSession {
   private readonly fuelOpts: FuelOptions = {};
   private readonly breakdownRng: Rng;
   private readonly punctureRng: Rng;
+  private readonly deliveryRng: Rng;
   private readonly fuelStations: { x: number; z: number }[] = [];
   private readonly teaStalls: { x: number; z: number }[] = [];
+  private readonly homePos: { x: number; z: number } | null;
+  private readonly kamalGaragePos: { x: number; z: number } | null;
   private readonly poiPositions: { id: string; kind: string; nameKey: string; x: number; z: number }[] = [];
   private readonly nearbyPoiIds = new Set<string>();
   private readonly speedBumps = new Map<string, { midX: number; midZ: number; ux: number; uz: number }>();
@@ -228,6 +231,7 @@ export class GameSession {
 
     this.breakdownRng = this.gm.rng.fork('breakdown');
     this.punctureRng = this.gm.rng.fork('puncture');
+    this.deliveryRng = this.gm.rng.fork('delivery');
     for (const poi of this.road.getPois()) {
       const node = this.road.getNode(poi.nodeId);
       if (node) {
@@ -236,6 +240,14 @@ export class GameSession {
         if (poi.kind === 'teaStall') this.teaStalls.push({ x: node.x, z: node.z });
       }
     }
+    const homeNode = this.road.getNode(this.gm.homeNodeId) ?? this.road.getAllNodes()[0];
+    this.homePos = homeNode ? { x: homeNode.x, z: homeNode.z } : null;
+    const kamalPoi =
+      this.poiPositions.find(
+        (p) => p.id === 'poi_mirpara_garage' || p.nameKey === 'poi.mirpara.garage'
+      ) ??
+      this.poiPositions.find((p) => p.kind === 'garage' && p.id !== 'poi_mohakhal_garage');
+    this.kamalGaragePos = kamalPoi ? { x: kamalPoi.x, z: kamalPoi.z } : null;
     for (const seg of this.road.getAllSegments()) {
       if (!seg.tags || (!seg.tags.includes('speed_bump') && !seg.tags.includes('school'))) continue;
       const sNode = this.road.getNode(seg.startNodeId);
@@ -265,12 +277,44 @@ export class GameSession {
     };
 
     this.gm.bus.on('bike/swapped', () => this.syncBikeSpec());
-    this.gm.bus.on('upgrade/purchased', () => this.syncBikeSpec());
+    this.gm.bus.on('upgrade/purchased', (ev) => {
+      this.syncBikeSpec();
+      if (
+        ev.upgradeId === 'upgrade_luggage_carrier' &&
+        this.gm.deliveryManager.offeredDeliveries.size === 0
+      ) {
+        this.gm.deliveryManager.generateOffer(this.road, this.deliveryRng, this.gm.clock.day);
+      }
+    });
+    this.gm.bus.on('day/started', () => this.spawnAtHome());
     this.gm.bus.on('state/restored', () => {
       this.lastPunctureMin = -Infinity;
       this.syncBikeSpec();
+      this.syncLocation();
     });
     this.syncBikeSpec();
+    this.syncLocation();
+  }
+
+  /** Updates GameManager's node, virtual home distance, and Kamal garage proximity without allocating. */
+  private syncLocation(): void {
+    if (this.gm.shiftEnded) return;
+    const nearest = this.road.nearestNode(this.bike.x, this.bike.z);
+    const nodeId = nearest ? nearest.nodeId : this.gm.playerNodeId;
+    let distFromHomeM = 0;
+    if (this.homePos) {
+      const dx = this.bike.x - this.homePos.x;
+      const dz = this.bike.z - this.homePos.z;
+      distFromHomeM = Math.hypot(dx, dz) * DISTANCE_SCALE;
+    }
+    let atKamal = false;
+    if (this.kamalGaragePos) {
+      const gx = this.bike.x - this.kamalGaragePos.x;
+      const gz = this.bike.z - this.kamalGaragePos.z;
+      const r = BALANCE.FUEL.stationRangeM;
+      atKamal = gx * gx + gz * gz <= r * r;
+    }
+    this.gm.syncPlayerLocation(nodeId, distFromHomeM, atKamal);
   }
 
   /** Rebuilds live bike specs and upgrade modifiers from EconomyManager and pushes
@@ -518,6 +562,7 @@ export class GameSession {
     const anchor = this.road.getNode(this.gm.homeNodeId) ?? this.road.getAllNodes()[0];
     if (!anchor) return;
     this.placeOnRoadNear(anchor.x, anchor.z, anchor.y ?? 0);
+    this.syncLocation();
   }
 
   /** Recovers a crashed or stuck bike: back onto the nearest road, stopped and
@@ -792,6 +837,7 @@ export class GameSession {
   /** Advances clock/weather/encounters, bike physics, traffic and ride state
    * by one tick, then (when enabled) offers any newly generated requests. */
   step(input: BikeInput, dt: number = SIM_DT): void {
+    this.syncLocation();
     this.gm.tick(dt, this.bike.speed * 3.6, this.currentEncounterPhase());
 
     const activeReq = this.ride.getActiveRequest();
@@ -908,6 +954,14 @@ export class GameSession {
     }
 
     this.ride.update(this.pose, dt);
+    this.syncLocation();
+    this.gm.deliveryManager.updateProximity(
+      this.bike.x,
+      this.bike.z,
+      this.road,
+      this.gm.clock.minutes,
+      this.gm.clock.day
+    );
     this.checkMissionPois();
     this.navigate();
 
@@ -923,6 +977,16 @@ export class GameSession {
       );
       for (const req of newRequests) {
         this.ride.offer(req);
+      }
+
+      if (
+        !this.gm.shiftEnded &&
+        this.gm.deliveryManager.isUnlocked() &&
+        this.gm.economyManager.phoneBattery > 0 &&
+        this.gm.deliveryManager.offeredDeliveries.size < 2 &&
+        this.deliveryRng.chance(0.15 * dtMinutes)
+      ) {
+        this.gm.deliveryManager.generateOffer(this.road, this.deliveryRng, this.gm.clock.day);
       }
     }
   }
@@ -942,10 +1006,17 @@ export class GameSession {
     this.gm.economyManager.restoreLedger([], []);
     this.gm.requestSeq = 0;
     this.gm.negotiationHistory = 0;
+    this.gm.shiftEnded = false;
+    this.gm.todayRentPosted = 0;
+    this.gm.todayRentDebt = 0;
+    this.gm.todayRentAutoFlagged = false;
+    this.gm.rentDelayedByCommand = false;
+    this.gm.deliveryManager.reset();
     this.gm.story.branchFlags = {};
     this.gm.story.completedMissions = [];
     this.gm.story.activeMissions = ['m1_first_ride'];
     this.gm.missionManager.activateMission('m1_first_ride');
+    this.syncLocation();
   }
 
   /** T8.2: settles the scripted tutorial ride through the same exactly-once path as a

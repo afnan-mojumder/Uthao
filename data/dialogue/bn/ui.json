@@ -303,5 +303,15 @@
   "trip.consequence.disputeAcceptedPartial": "আংশিক ভাড়া মেনে নিয়ে বিতর্ক নিষ্পত্তি হয়েছে",
   "trip.consequence.disputeRecoveredFull": "যাত্রী পুরো ভাড়া দিতে রাজি হয়েছেন",
   "trip.consequence.disputeEscalated": "বিতর্ক বাড়ায় যাত্রী পুরো ভাড়া দিতে অস্বীকার করেছেন",
-  "trip.consequence.disputeReported": "বিতর্কটি প্ল্যাটফর্ম সাপোর্টে রিপোর্ট করা হয়েছে"
+  "trip.consequence.disputeReported": "বিতর্কটি প্ল্যাটফর্ম সাপোর্টে রিপোর্ট করা হয়েছে",
+  "dayend.savings": "সঞ্চয়",
+  "dayend.btn_deposit_savings": "সঞ্চয়ে ৳{amount} জমা দিন",
+  "dayend.btn_withdraw_savings": "সঞ্চয় থেকে ৳{amount} তুলুন",
+  "dayend.btn_repay_debt": "ঋণ পরিশোধ করুন (৳{amount})",
+  "pause.end_shift": "আগেই শিফট শেষ করুন",
+  "delivery.no_jobs": "কোনো পার্সেল ডেলিভারি নেই। কামাল ভাইয়ের গ্যারেজ থেকে লাগেজ ক্যারিয়ার যুক্ত করুন।",
+  "delivery.accept": "পার্সেল নিন",
+  "delivery.in_transit": "পথে আছে",
+  "delivery.accepted_status": "গৃহীত (পিকআপে যান)",
+  "delivery.payout": "পারিশ্রমিক: ৳{amount}"
 }

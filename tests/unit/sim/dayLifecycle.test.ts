@@ -6,9 +6,10 @@ import { RoadNetwork } from '../../../src/sim/road/RoadNetwork';
 import { EventBus, type GameEvents } from '../../../src/core/events';
 import { Rng } from '../../../src/core/rng';
 import { BALANCE } from '../../../src/config/balance';
-import { SIM_DT } from '../../../src/config/constants';
+import { SIM_DT, TIME_SCALE } from '../../../src/config/constants';
 import type { DistrictData } from '../../../src/sim/schemas';
 import testloopData from '../../../data/districts/testloop.json';
+import { bindEventBusToStore, dayEndSignal } from '../../../src/ui/store';
 
 describe('T4.1 Day lifecycle and living expenses', () => {
   it('expenses posted at day end', () => {
@@ -153,8 +154,7 @@ describe('T4.1 Day lifecycle and living expenses', () => {
     // Start navigating: 3% per game hour
     gm.isNavigating = true;
     // Advance 2 game hours (120 game minutes)
-    // 120 game min at TIME_SCALE 20 is 120 * 60 / 20 = 360 real seconds
-    const dt = 360;
+    const dt = (120 * 60) / TIME_SCALE;
     gm.tick(dt);
 
     // Drained ~6% (3% per hour * 2 hours)
@@ -181,5 +181,109 @@ describe('T4.1 Day lifecycle and living expenses', () => {
     gm.dispatch({ type: 'askAdvance', from: 'char_ma', amount: 500 });
     expect(gm.economyManager.cash).toBe(initialCash + 1000);
     expect(gm.economyManager.debt).toBe(initialDebt + 1000);
+  });
+});
+
+describe('P4.2 Shift pacing, early end, delayRent when broke, and live DayEnd refresh', () => {
+  it('TIME_SCALE paces a full shift (07:00–23:00 / 08:00–23:00) within 10–14 real minutes', () => {
+    const fullShiftGameSeconds = (23 - 7) * 3600;
+    const coreShiftGameSeconds = (23 - 8) * 3600;
+    const fullRealMinutes = fullShiftGameSeconds / TIME_SCALE / 60;
+    const coreRealMinutes = coreShiftGameSeconds / TIME_SCALE / 60;
+
+    expect(fullRealMinutes).toBeGreaterThanOrEqual(10);
+    expect(fullRealMinutes).toBeLessThanOrEqual(14);
+    expect(coreRealMinutes).toBeGreaterThanOrEqual(10);
+    expect(coreRealMinutes).toBeLessThanOrEqual(14);
+  });
+
+  it('endShiftEarly requires 4 shift hours elapsed (>= 11:00) or being at home POI', () => {
+    const gm = new GameManager({ seed: 101, mode: 'career', data: {} });
+    // Move away from home early in the morning (08:30 = 510 min)
+    gm.clock.minutes = 8 * 60 + 30;
+    gm.syncPlayerLocation('art_s_2', 500, false);
+
+    const tooEarly = gm.dispatch({ type: 'endShiftEarly' });
+    expect(tooEarly.success).toBe(false);
+    expect(gm.shiftEnded).toBe(false);
+
+    // At home POI, endShiftEarly succeeds even before 11:00
+    gm.syncPlayerLocation('res_n2_0', 0, false);
+    const atHomeRes = gm.dispatch({ type: 'endShiftEarly' });
+    expect(atHomeRes.success).toBe(true);
+    expect(gm.shiftEnded).toBe(true);
+
+    // Next day, away from home after 4 shift hours (11:00 = 660 min), endShiftEarly succeeds
+    gm.dispatch({ type: 'sleep' });
+    gm.clock.minutes = 11 * 60;
+    gm.syncPlayerLocation('art_s_2', 800, false);
+    const after4hRes = gm.dispatch({ type: 'endShiftEarly' });
+    expect(after4hRes.success).toBe(true);
+    expect(gm.shiftEnded).toBe(true);
+  });
+
+  it('delayRent succeeds when broke on rent day, refunds rent debt, and refreshes DayEnd summary', () => {
+    const gm = new GameManager({ seed: 202, mode: 'career', data: {} });
+    const unbind = bindEventBusToStore(gm.bus);
+
+    gm.clock.day = 7;
+    gm.clock.minutes = 13 * 60;
+    gm.economyManager.cash = 200; // broke: cannot cover food (150) + data (30) + rent (4000)
+
+    const endRes = gm.dispatch({ type: 'endShift' });
+    expect(endRes.success).toBe(true);
+    expect(dayEndSignal.value.active).toBe(true);
+    expect(dayEndSignal.value.summary?.debt).toBe(3980);
+    expect(dayEndSignal.value.summary?.cash).toBe(0);
+
+    const maRelAfterEnd = gm.reputationSystem.getRelationship('char_ma');
+    const delayRes = gm.dispatch({ type: 'delayRent' });
+    expect(delayRes.success).toBe(true);
+    expect(gm.economyManager.debt).toBe(0);
+    expect(gm.economyManager.cash).toBe(20); // 200 - 150 - 30
+    expect(gm.economyManager.deferredRent).toBe(BALANCE.LIVING.rentAmount);
+    // Ma relationship is not penalized twice
+    expect(gm.reputationSystem.getRelationship('char_ma')).toBe(maRelAfterEnd);
+
+    // DayEnd signal reflects the delayed rent immediately
+    expect(dayEndSignal.value.summary?.cash).toBe(20);
+    expect(dayEndSignal.value.summary?.debt).toBe(0);
+    expect(dayEndSignal.value.summary?.breakdown?.rent).toBe(0);
+    expect(dayEndSignal.value.summary?.livingExpenses?.rentDelayed).toBe(true);
+
+    // Second delay attempt is still refused
+    expect(gm.dispatch({ type: 'delayRent' }).success).toBe(false);
+    unbind();
+  });
+
+  it('DayEnd summary refreshes immediately after askAdvance, depositSavings, and repayDebt', () => {
+    const gm = new GameManager({ seed: 303, mode: 'career', data: {} });
+    const unbind = bindEventBusToStore(gm.bus);
+
+    gm.clock.day = 2;
+    gm.clock.minutes = 13 * 60;
+    gm.economyManager.cash = 800;
+
+    gm.dispatch({ type: 'endShift' });
+    expect(dayEndSignal.value.active).toBe(true);
+    expect(dayEndSignal.value.summary?.cash).toBe(620); // 800 - 180
+    expect(dayEndSignal.value.summary?.debt).toBe(0);
+
+    // 1. askAdvance updates cash and debt in DayEnd summary
+    expect(gm.dispatch({ type: 'askAdvance', from: 'char_mintu', amount: 500 }).success).toBe(true);
+    expect(dayEndSignal.value.summary?.cash).toBe(1120);
+    expect(dayEndSignal.value.summary?.debt).toBe(500);
+
+    // 2. depositSavings updates cash and savings in DayEnd summary
+    expect(gm.dispatch({ type: 'depositSavings', amount: 400 }).success).toBe(true);
+    expect(dayEndSignal.value.summary?.cash).toBe(720);
+    expect(dayEndSignal.value.summary?.savings).toBe(400);
+
+    // 3. repayDebt updates cash and debt down to 0 in DayEnd summary
+    expect(gm.dispatch({ type: 'repayDebt', amount: 500 }).success).toBe(true);
+    expect(dayEndSignal.value.summary?.cash).toBe(220);
+    expect(dayEndSignal.value.summary?.debt).toBe(0);
+
+    unbind();
   });
 });

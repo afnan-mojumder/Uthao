@@ -11,6 +11,8 @@ import { serialize, deserialize } from '../../../src/sim/save/SaveSystem';
 import { BALANCE } from '../../../src/config/balance';
 import { GameManager } from '../../../src/sim/GameManager';
 import type { DaySummary, Transaction } from '../../../src/core/types';
+import ch1Missions from '../../../data/missions/ch1.json';
+import type { MissionDef } from '../../../src/sim/schemas';
 
 describe('Economy and Fuel (T2.6)', () => {
   it('net formula matches GDD', () => {
@@ -273,5 +275,102 @@ describe('Exactly-once settlement and ledger (T8.2)', () => {
     const loaded = deserialize(save);
     expect(loaded.economyManager.getLedger()).toHaveLength(0);
     expect(loaded.requestSeq).toBe(0);
+  });
+});
+
+describe('P4.2 Savings deposits/withdrawals and debt repayment', () => {
+  it('player can deposit cash into savings and withdraw savings without inflating daily revenue/expenses', () => {
+    const gm = new GameManager({
+      seed: 12,
+      mode: 'career',
+      data: { missions: ch1Missions as MissionDef[] },
+    });
+    gm.economyManager.cash = 1000;
+    gm.economyManager.savings = 200;
+    gm.economyManager.dailyRevenue = 0;
+    gm.economyManager.dailyExpenses = 0;
+
+    // Activate m1_household (has earnNet objective) to ensure savings withdrawal cannot cheese earnNet
+    gm.missionManager.completeMission('m1_first_ride');
+    gm.missionManager.completeMission('m1_fill_up');
+    gm.missionManager.refreshAvailableMissions(1, 2);
+
+    gm.economyManager.cash = 1000;
+    gm.economyManager.savings = 200;
+    gm.economyManager.dailyRevenue = 0;
+    gm.economyManager.dailyExpenses = 0;
+
+    const earnBefore = gm.missionManager
+      .getObjectiveStates('m1_household')
+      .find((s) => s.id === 'obj_m1_household_earn')?.progress ?? 0;
+
+    const depSpy = vi.spyOn(gm.economyManager, 'depositSavings');
+    const wdSpy = vi.spyOn(gm.economyManager, 'withdrawSavings');
+
+    const depRes = gm.dispatch({ type: 'depositSavings', amount: 400 });
+    expect(depRes.success).toBe(true);
+    expect(depSpy).toHaveBeenCalledWith(400, gm.clock.day, gm.clock.minutes);
+    expect(gm.economyManager.cash).toBe(600);
+    expect(gm.economyManager.savings).toBe(600);
+    expect(gm.economy.cash).toBe(600);
+    expect(gm.economy.savings).toBe(600);
+    expect(gm.economyManager.dailyExpenses).toBe(0);
+
+    // Reject deposit exceeding cash
+    expect(gm.dispatch({ type: 'depositSavings', amount: 1000 }).success).toBe(false);
+    expect(gm.dispatch({ type: 'depositSavings', amount: 0 }).success).toBe(false);
+    expect(gm.economyManager.cash).toBe(600);
+
+    const wdRes = gm.dispatch({ type: 'withdrawSavings', amount: 250 });
+    expect(wdRes.success).toBe(true);
+    expect(wdSpy).toHaveBeenCalledWith(250, gm.clock.day, gm.clock.minutes);
+    expect(gm.economyManager.cash).toBe(850);
+    expect(gm.economyManager.savings).toBe(350);
+    expect(gm.economy.cash).toBe(850);
+    expect(gm.economy.savings).toBe(350);
+    expect(gm.economyManager.dailyRevenue).toBe(0);
+
+    const earnAfter = gm.missionManager
+      .getObjectiveStates('m1_household')
+      .find((s) => s.id === 'obj_m1_household_earn')?.progress ?? 0;
+    expect(earnAfter).toBe(earnBefore);
+
+    // Reject withdraw exceeding savings
+    expect(gm.dispatch({ type: 'withdrawSavings', amount: 500 }).success).toBe(false);
+    expect(gm.economyManager.savings).toBe(350);
+  });
+
+  it('player can repay debt down to 0 and debt never goes negative', () => {
+    const gm = new GameManager({ seed: 13, mode: 'career', data: {} });
+    gm.economyManager.cash = 1000;
+    gm.economyManager.debt = 700;
+    gm.economyManager.dailyExpenses = 0;
+
+    const repaySpy = vi.spyOn(gm.economyManager, 'repayDebt');
+
+    // Partial repayment
+    const res1 = gm.dispatch({ type: 'repayDebt', amount: 300 });
+    expect(res1.success).toBe(true);
+    expect(repaySpy).toHaveBeenCalledWith(300, gm.clock.day, gm.clock.minutes);
+    expect(gm.economyManager.cash).toBe(700);
+    expect(gm.economyManager.debt).toBe(400);
+    expect(gm.economy.debt).toBe(400);
+    expect(gm.economyManager.dailyExpenses).toBe(0);
+
+    // Repayment >= remaining debt settles down to 0 without going negative
+    const res2 = gm.dispatch({ type: 'repayDebt', amount: 600 });
+    expect(res2.success).toBe(true);
+    expect(gm.economyManager.cash).toBe(300);
+    expect(gm.economyManager.debt).toBe(0);
+    expect(gm.economy.debt).toBe(0);
+
+    // Reject when debt is already 0 or cash is insufficient
+    expect(gm.dispatch({ type: 'repayDebt', amount: 100 }).success).toBe(false);
+
+    gm.economyManager.debt = 500;
+    gm.economyManager.cash = 100;
+    expect(gm.dispatch({ type: 'repayDebt', amount: 200 }).success).toBe(false);
+    expect(gm.economyManager.debt).toBe(500);
+    expect(gm.economyManager.cash).toBe(100);
   });
 });

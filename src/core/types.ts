@@ -348,6 +348,7 @@ export interface DaySummary {
     evictionWarning?: boolean;
   };
   cash?: number;
+  savings?: number;
   debt?: number;
 }
 

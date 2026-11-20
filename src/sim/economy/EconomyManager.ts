@@ -62,6 +62,7 @@ export class EconomyManager {
   currentBikeId: BikeId = 'old100';
   ownedBikes: BikeId[] = ['old100'];
   private batteryDrainMultiplier: number = 1;
+  private readonly wearScratch: Record<string, never> = {};
 
   constructor(
     bus: EventBus<GameEvents>,
@@ -263,6 +264,10 @@ export class EconomyManager {
   /** T8.3: wear per virtual km ridden. Allocation-free (runs every sim step). */
   applyWear(virtualKm: number): void {
     if (!(virtualKm > 0)) return;
+    const prevEngine = Math.round(this.engineCondition);
+    const prevTires = Math.round(this.tiresCondition);
+    const prevBrakes = Math.round(this.brakesCondition);
+    const prevOil = Math.round(this.kmSinceOilChange);
     const w = conditionWear(virtualKm);
     const before = this.getOverallCondition();
     this.engineCondition = Math.max(0, this.engineCondition - w);
@@ -275,6 +280,14 @@ export class EconomyManager {
       0,
       this.motorcycleCondition - (before - this.getOverallCondition())
     );
+    if (
+      Math.round(this.engineCondition) !== prevEngine ||
+      Math.round(this.tiresCondition) !== prevTires ||
+      Math.round(this.brakesCondition) !== prevBrakes ||
+      Math.round(this.kmSinceOilChange) !== prevOil
+    ) {
+      this.bus.emit('bike/wearChanged', this.wearScratch);
+    }
   }
 
   private syncUpgradeEffects(): void {
@@ -319,6 +332,7 @@ export class EconomyManager {
     total: number;
     rentDelayed?: boolean;
     evictionWarning?: boolean;
+    rentDebtAdded: number;
   } {
     const food = BALANCE.LIVING.foodPerDay;
     const phoneData = BALANCE.LIVING.phoneDataPerDay;
@@ -326,6 +340,7 @@ export class EconomyManager {
     let family = 0;
     let rentDelayed = false;
     let evictionWarning = false;
+    let rentDebtAdded = 0;
 
     // 1. Food
     this.post({
@@ -372,6 +387,7 @@ export class EconomyManager {
         }
       }
 
+      const debtBeforeRent = this.debt;
       this.post({
         id: `tx_rent_${day}_${minute}_${++this.txSeq}`,
         day,
@@ -379,6 +395,7 @@ export class EconomyManager {
         kind: 'rent',
         amount: -rent,
       });
+      rentDebtAdded = Math.max(0, this.debt - debtBeforeRent);
     }
 
     const total = food + phoneData + rent + family;
@@ -390,6 +407,7 @@ export class EconomyManager {
       total,
       rentDelayed,
       evictionWarning,
+      rentDebtAdded,
     };
   }
 
@@ -420,14 +438,18 @@ export class EconomyManager {
   }
 
   /**
-   * The player delays today's rent: the amount posted at shift end comes back
-   * to cash now, and is charged again on the next rent day. Returns false when
-   * there is nothing to delay.
+   * The player delays today's rent: any debt created by posting today's rent
+   * is reversed first and the remainder returns to cash, while the full bill
+   * moves to the next rent day. Returns false when there is nothing to delay.
    */
-  delayRent(amount: number, day: number, minute: number): boolean {
+  delayRent(amount: number, day: number, minute: number, debtCreated = 0): boolean {
     if (!Number.isFinite(amount) || amount <= 0) return false;
-    this.cash += amount;
+    const debtRefund = Math.min(this.debt, Math.max(0, debtCreated));
+    const cashRefund = amount - debtRefund;
+    this.debt = Math.max(0, this.debt - debtRefund);
+    this.cash += cashRefund;
     this.deferredRent += amount;
+    this.dailyExpenses = Math.max(0, this.dailyExpenses - amount);
     this.record({
       id: `tx_rent_delay_${day}_${minute}_${++this.txSeq}`,
       day,
@@ -460,6 +482,82 @@ export class EconomyManager {
     this.savings -= amount;
   }
 
+  /** Transfers cash into bank savings without altering daily operating revenue/expenses. */
+  depositSavings(
+    amount: number,
+    day = 1,
+    minute = 0
+  ): { success: boolean; amount: number; reason?: string } {
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return { success: false, amount: 0, reason: 'Invalid amount' };
+    }
+    if (this.cash < amount) {
+      return { success: false, amount: 0, reason: 'Insufficient funds' };
+    }
+    this.cash -= amount;
+    this.savings += amount;
+    this.record({
+      id: `tx_savings_dep_${day}_${Math.floor(minute)}_${++this.txSeq}`,
+      day,
+      minute,
+      kind: 'savings',
+      amount: -amount,
+    });
+    return { success: true, amount };
+  }
+
+  /** Transfers funds from bank savings back to pocket cash without inflating revenue. */
+  withdrawSavings(
+    amount: number,
+    day = 1,
+    minute = 0
+  ): { success: boolean; amount: number; reason?: string } {
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return { success: false, amount: 0, reason: 'Invalid amount' };
+    }
+    if (this.savings < amount) {
+      return { success: false, amount: 0, reason: 'Insufficient savings' };
+    }
+    this.savings -= amount;
+    this.cash += amount;
+    this.record({
+      id: `tx_savings_wd_${day}_${Math.floor(minute)}_${++this.txSeq}`,
+      day,
+      minute,
+      kind: 'savings',
+      amount,
+    });
+    return { success: true, amount };
+  }
+
+  /** Repays outstanding debt down to 0 using pocket cash. */
+  repayDebt(
+    amount: number,
+    day = 1,
+    minute = 0
+  ): { success: boolean; amount: number; reason?: string } {
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return { success: false, amount: 0, reason: 'Invalid amount' };
+    }
+    if (this.debt <= 0) {
+      return { success: false, amount: 0, reason: 'No debt to repay' };
+    }
+    const payable = Math.min(amount, this.debt);
+    if (this.cash < payable) {
+      return { success: false, amount: 0, reason: 'Insufficient funds' };
+    }
+    this.cash -= payable;
+    this.debt = Math.max(0, this.debt - payable);
+    this.record({
+      id: `tx_debt_repay_${day}_${Math.floor(minute)}_${++this.txSeq}`,
+      day,
+      minute,
+      kind: 'family',
+      amount: -payable,
+    });
+    return { success: true, amount: payable };
+  }
+
   repair(
     item: RepairItem,
     atKamalBhai = false,
@@ -471,14 +569,6 @@ export class EconomyManager {
     if (this.cash < cost) {
       return { success: false, cost, reason: 'Insufficient funds' };
     }
-
-    this.post({
-      id: `tx_repair_${item}_${day}_${minute}_${++this.txSeq}`,
-      day,
-      minute,
-      kind: 'repair',
-      amount: -cost,
-    });
 
     switch (item) {
       case 'engine':
@@ -501,6 +591,14 @@ export class EconomyManager {
         break;
     }
     this.motorcycleCondition = this.getOverallCondition();
+
+    this.post({
+      id: `tx_repair_${item}_${day}_${minute}_${++this.txSeq}`,
+      day,
+      minute,
+      kind: 'repair',
+      amount: -cost,
+    });
     return { success: true, cost };
   }
 

@@ -1,7 +1,8 @@
 import { signal } from '@preact/signals';
 import { DEFAULT_VOLUMES } from '../audio/AudioManager';
 import type { EventBus, GameEvents } from '../core/events';
-import type { DaySummary, RideRequest, TripReceipt } from '../core/types';
+import type { DaySummary, DeliveryJob, RideRequest, TripReceipt } from '../core/types';
+import type { GameManager } from '../sim/GameManager';
 import type { TripHistoryItem } from './phone/Phone';
 import type {
   NegotiationSession,
@@ -61,6 +62,8 @@ export interface PhoneState {
   tripHistory: TripHistoryItem[];
   navigationTurn: { direction: string; text: string } | null;
   relationships?: Record<string, number>;
+  availableDeliveries?: DeliveryJob[];
+  activeDeliveries?: DeliveryJob[];
 }
 
 export interface NegotiationUiState {
@@ -272,9 +275,11 @@ export const phoneSignal = signal<PhoneState>({
   tripHistory: [],
   navigationTurn: null,
   relationships: {},
+  availableDeliveries: [],
+  activeDeliveries: [],
 });
 
-export const phoneTabSignal = signal<'requests' | 'history' | 'contacts'>('requests');
+export const phoneTabSignal = signal<'requests' | 'history' | 'contacts' | 'deliveries'>('requests');
 export const contactsSelectedSignal = signal<string | null>(null);
 
 export const negotiationSignal = signal<NegotiationUiState>({
@@ -341,6 +346,11 @@ export let onNegotiationActionCallback: ((action: NegotiationAction) => void) | 
 export let onSleepCallback: (() => void) | null = null;
 export let onDelayRentCallback: (() => void) | null = null;
 export let onAskAdvanceCallback: ((from: 'char_mintu' | 'char_ma', amount: number) => void) | null = null;
+export let onDepositSavingsCallback: ((amount: number) => void) | null = null;
+export let onWithdrawSavingsCallback: ((amount: number) => void) | null = null;
+export let onRepayDebtCallback: ((amount: number) => void) | null = null;
+export let onEndShiftEarlyCallback: (() => void) | null = null;
+export let onAcceptDeliveryCallback: ((jobId: string) => void) | null = null;
 export let onRepairCallback: ((item: string) => void) | null = null;
 export let onBuyUpgradeCallback: ((upgradeId: string) => void) | null = null;
 export let onStartNewCareerCallback: (() => void) | null = null;
@@ -387,10 +397,10 @@ export function setHasSaveCallback(fn: () => boolean): void {
  * state, and every open modal or panel signal so nothing sits over the title.
  */
 export function exitToTitle(): void {
+  resetTransientUiState();
   tutorialSignal.value = { active: false, step: 'idle' };
   pausedSignal.value = false;
-  inActiveTrip = false;
-  activeOfferQueue = [];
+  impactSignal.value = { kind: null, seq: impactSignal.value.seq };
   phoneSignal.value = {
     ...phoneSignal.value,
     open: false,
@@ -398,6 +408,10 @@ export function exitToTitle(): void {
     requestQueue: [],
     unreadCount: 0,
     timeoutRemaining: 15,
+    tripHistory: [],
+    navigationTurn: null,
+    availableDeliveries: [],
+    activeDeliveries: [],
   };
   dialogueSubtitleSignal.value = null;
   hudSignal.value = { ...hudSignal.value, dialogueSubtitle: null };
@@ -466,11 +480,87 @@ export function setNegotiationActionDispatcher(fn: (action: NegotiationAction) =
 export function setDayEndDispatchers(
   sleepFn: () => void,
   delayRentFn?: () => void,
-  askAdvanceFn?: (from: 'char_mintu' | 'char_ma', amount: number) => void
+  askAdvanceFn?: (from: 'char_mintu' | 'char_ma', amount: number) => void,
+  depositSavingsFn?: (amount: number) => void,
+  withdrawSavingsFn?: (amount: number) => void,
+  repayDebtFn?: (amount: number) => void
 ): void {
   onSleepCallback = sleepFn;
   if (delayRentFn) onDelayRentCallback = delayRentFn;
   if (askAdvanceFn) onAskAdvanceCallback = askAdvanceFn;
+  if (depositSavingsFn) onDepositSavingsCallback = depositSavingsFn;
+  if (withdrawSavingsFn) onWithdrawSavingsCallback = withdrawSavingsFn;
+  if (repayDebtFn) onRepayDebtCallback = repayDebtFn;
+}
+
+export function setEndShiftEarlyDispatcher(fn: () => void): void {
+  onEndShiftEarlyCallback = fn;
+}
+
+export function setDeliveryDispatcher(acceptFn: (jobId: string) => void): void {
+  onAcceptDeliveryCallback = acceptFn;
+}
+
+function sameStringArray(a: readonly string[] | undefined, b: readonly string[]): boolean {
+  if (!a || a.length !== b.length) return false;
+  for (let i = 0; i < b.length; i++) {
+    if (a[i] !== b[i]) return false;
+  }
+  return true;
+}
+
+/** Mirrors live GameManager economy, wear, upgrades, and Kamal proximity into `garageSignal`. */
+export function syncGarageState(gm: GameManager): void {
+  const em = gm?.economyManager;
+  if (!em) return;
+  const cur = garageSignal.value;
+  const atKamalBhai =
+    typeof gm.isNearKamalBhai === 'function' ? gm.isNearKamalBhai() : cur.atKamalBhai;
+  const kamalRelationship =
+    gm.reputationSystem?.getRelationship?.('char_kamal') ?? cur.kamalRelationship;
+  const cash = em.cash;
+  const savings = em.savings;
+  const currentBikeId = em.currentBikeId;
+  const engineCondition = Math.round(em.engineCondition);
+  const tiresCondition = Math.round(em.tiresCondition);
+  const brakesCondition = Math.round(em.brakesCondition);
+  const kmSinceOilChange = Math.round(em.kmSinceOilChange);
+  const paint = em.installedCosmetics.paint;
+  const seatCover = em.installedCosmetics.seatCover;
+
+  if (
+    cur.atKamalBhai === atKamalBhai &&
+    cur.kamalRelationship === kamalRelationship &&
+    cur.cash === cash &&
+    cur.savings === savings &&
+    cur.currentBikeId === currentBikeId &&
+    cur.engineCondition === engineCondition &&
+    cur.tiresCondition === tiresCondition &&
+    cur.brakesCondition === brakesCondition &&
+    cur.kmSinceOilChange === kmSinceOilChange &&
+    cur.installedCosmetics?.paint === paint &&
+    cur.installedCosmetics?.seatCover === seatCover &&
+    sameStringArray(cur.ownedBikes, em.ownedBikes) &&
+    sameStringArray(cur.ownedUpgrades, em.ownedUpgrades)
+  ) {
+    return;
+  }
+
+  garageSignal.value = {
+    open: cur.open,
+    atKamalBhai,
+    kamalRelationship,
+    cash,
+    savings,
+    currentBikeId,
+    ownedBikes: [...em.ownedBikes],
+    engineCondition,
+    tiresCondition,
+    brakesCondition,
+    kmSinceOilChange,
+    ownedUpgrades: [...em.ownedUpgrades],
+    installedCosmetics: { ...em.installedCosmetics },
+  };
 }
 
 export function setGarageDispatchers(
@@ -536,6 +626,7 @@ const MAX_PHONE_OFFER_QUEUE = 3;
 const PHONE_OFFER_TIMEOUT_SEC = 15;
 let activeOfferQueue: Array<{ request: RideRequest; timeoutRemaining: number }> = [];
 let inActiveTrip = false;
+let heldRequest: RideRequest | null = null;
 
 const ACTIVE_TRIP_STATES = new Set([
   'Negotiating',
@@ -571,14 +662,24 @@ export function tickPhoneOffers(dtSec: number): void {
 const DIALOGUE_SUBTITLE_MS = 5000;
 let dialogueClearTimer: ReturnType<typeof setTimeout> | undefined;
 
+function resetTransientUiState(): void {
+  if (dialogueClearTimer !== undefined) {
+    clearTimeout(dialogueClearTimer);
+    dialogueClearTimer = undefined;
+  }
+  if (impactClearTimer !== undefined) {
+    clearTimeout(impactClearTimer);
+    impactClearTimer = undefined;
+  }
+  inActiveTrip = false;
+  activeOfferQueue = [];
+  heldRequest = null;
+}
+
 export function bindEventBusToStore(bus: EventBus<GameEvents>): () => void {
   const unsubscribers: Array<() => void> = [];
 
-  activeOfferQueue = [];
-  inActiveTrip = false;
-  // A request that arrives under an open story card is held and shown once the
-  // card closes, so it never covers the card or starts its timer unseen.
-  let heldRequest: RideRequest | null = null;
+  resetTransientUiState();
 
   const closeDisputeChoiceCard = (requestId?: string): void => {
     const cur = choiceSignal.value.instanceId;
@@ -791,6 +892,72 @@ export function bindEventBusToStore(bus: EventBus<GameEvents>): () => void {
   });
   unsubscribers.push(unsubBikeSwapped);
 
+  const unsubKamalProx = bus.on('player/kamalProximity', (ev) => {
+    if (garageSignal.value.atKamalBhai !== ev.atKamalBhai) {
+      garageSignal.value = {
+        ...garageSignal.value,
+        atKamalBhai: ev.atKamalBhai,
+      };
+    }
+  });
+  unsubscribers.push(unsubKamalProx);
+
+  const unsubUpgradePurchased = bus.on('upgrade/purchased', (ev) => {
+    const owned = garageSignal.value.ownedUpgrades ?? [];
+    if (!owned.includes(ev.upgradeId)) {
+      garageSignal.value = {
+        ...garageSignal.value,
+        ownedUpgrades: [...owned, ev.upgradeId],
+      };
+    }
+  });
+  unsubscribers.push(unsubUpgradePurchased);
+
+  const unsubDeliveryOffered = bus.on('delivery/offered', (ev) => {
+    const existing = phoneSignal.value.availableDeliveries ?? [];
+    if (!existing.some((j) => j.id === ev.delivery.id)) {
+      phoneSignal.value = {
+        ...phoneSignal.value,
+        availableDeliveries: [...existing, { ...ev.delivery, status: 'offered' }],
+      };
+    }
+  });
+  unsubscribers.push(unsubDeliveryOffered);
+
+  const unsubDeliveryAccepted = bus.on('delivery/accepted', (ev) => {
+    const avail = phoneSignal.value.availableDeliveries ?? [];
+    const job = avail.find((j) => j.id === ev.deliveryId);
+    const active = phoneSignal.value.activeDeliveries ?? [];
+    phoneSignal.value = {
+      ...phoneSignal.value,
+      availableDeliveries: avail.filter((j) => j.id !== ev.deliveryId),
+      activeDeliveries: job
+        ? [...active.filter((j) => j.id !== ev.deliveryId), { ...job, status: 'accepted' }]
+        : active,
+    };
+  });
+  unsubscribers.push(unsubDeliveryAccepted);
+
+  const unsubDeliveryPickedUp = bus.on('delivery/pickedUp', (ev) => {
+    const active = phoneSignal.value.activeDeliveries ?? [];
+    phoneSignal.value = {
+      ...phoneSignal.value,
+      activeDeliveries: active.map((j) =>
+        j.id === ev.deliveryId ? { ...j, status: 'in_transit' } : j
+      ),
+    };
+  });
+  unsubscribers.push(unsubDeliveryPickedUp);
+
+  const unsubDeliveryCompleted = bus.on('delivery/completed', (ev) => {
+    const active = phoneSignal.value.activeDeliveries ?? [];
+    phoneSignal.value = {
+      ...phoneSignal.value,
+      activeDeliveries: active.filter((j) => j.id !== ev.deliveryId),
+    };
+  });
+  unsubscribers.push(unsubDeliveryCompleted);
+
   const unsubDayEnded = bus.on('day/ended', (ev) => {
     dayEndSignal.value = {
       active: true,
@@ -819,12 +986,7 @@ export function bindEventBusToStore(bus: EventBus<GameEvents>): () => void {
   unsubscribers.push(unsubEnding);
 
   return () => {
-    if (dialogueClearTimer !== undefined) {
-      clearTimeout(dialogueClearTimer);
-      dialogueClearTimer = undefined;
-    }
-    inActiveTrip = false;
-    activeOfferQueue = [];
+    resetTransientUiState();
     for (const unsub of unsubscribers) {
       unsub();
     }

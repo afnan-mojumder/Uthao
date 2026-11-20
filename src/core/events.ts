@@ -89,6 +89,8 @@ export interface GameEvents extends Record<string, unknown> {
   'bike/breakdown': { conditionPct: number };
   'bike/speedBump': { speedKmh: number };
   'bike/swapped': { bikeId: BikeId; prevBikeId: BikeId };
+  'bike/wearChanged': Record<string, never>;
+  'player/kamalProximity': { atKamalBhai: boolean };
   'upgrade/purchased': { upgradeId: string; category: 'mechanical' | 'cosmetic' };
   'state/restored': Record<string, never>;
   'delivery/offered': { delivery: DeliveryJob };

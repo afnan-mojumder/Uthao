@@ -1,4 +1,6 @@
-export const TIME_SCALE = 20;
+import { TIME_SCALE } from '../config/constants';
+
+export { TIME_SCALE };
 
 export class GameClock {
   day: number;

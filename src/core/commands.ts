@@ -18,13 +18,18 @@ export type Command =
   | { type: 'buyBike'; bikeId: BikeId; useTradeIn?: boolean }
   | { type: 'switchBike'; bikeId: BikeId }
   | { type: 'acceptDelivery'; deliveryId: string }
+  | { type: 'acceptDelivery'; jobId: string }
   | { type: 'pickupDelivery'; deliveryId: string }
   | { type: 'completeDelivery'; deliveryId: string }
   | { type: 'payExpense'; expenseId: string; amount?: number }
   | { type: 'chargePhone'; location?: 'home' | 'teaStall'; cost?: number }
+  | { type: 'depositSavings'; amount: number }
+  | { type: 'withdrawSavings'; amount: number }
+  | { type: 'repayDebt'; amount: number }
   | { type: 'delayRent' }
   | { type: 'askAdvance'; from: 'char_mintu' | 'char_ma'; amount: number }
   | { type: 'endShift' }
+  | { type: 'endShiftEarly' }
   | { type: 'sleep' }
   | { type: 'setWaypoint'; nodeId: string | null }
   | { type: 'recoverBike' }
