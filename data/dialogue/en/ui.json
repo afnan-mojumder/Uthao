@@ -309,9 +309,14 @@
   "dayend.btn_withdraw_savings": "Withdraw ৳{amount} from Savings",
   "dayend.btn_repay_debt": "Repay ৳{amount} Debt",
   "pause.end_shift": "End Shift Early",
+  "pause.end_shift_blocked_early": "Available after 11:00 AM or when parked near Rafi's Home.",
+  "pause.end_shift_blocked_ride": "Finish your active passenger ride before ending the shift.",
+  "pause.end_shift_blocked_ended": "Today's shift has already ended.",
   "delivery.no_jobs": "No parcel deliveries available. Install the luggage carrier at Kamal Bhai's workshop.",
   "delivery.accept": "Accept Parcel",
   "delivery.in_transit": "In Transit",
   "delivery.accepted_status": "Accepted (Head to Pickup)",
-  "delivery.payout": "Payout: ৳{amount}"
+  "delivery.payout": "Payout: ৳{amount}",
+  "delivery.expired": "Parcel pickup window expired!",
+  "delivery.blocked_active_ride": "Finish your current passenger ride before accepting a parcel."
 }

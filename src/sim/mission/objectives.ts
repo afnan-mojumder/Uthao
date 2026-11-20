@@ -106,6 +106,7 @@ export function evaluateTransaction(
   if (objective.type === 'earnNet') {
     const isEarnedKind =
       payload.kind !== 'savings' &&
+      payload.kind !== 'debt' &&
       payload.kind !== 'family' &&
       payload.kind !== 'rent' &&
       payload.kind !== 'event';
@@ -117,7 +118,10 @@ export function evaluateTransaction(
       changed = true;
     }
   } else if (objective.type === 'payExpense') {
-    if (payload.expenseId === objective.expenseId || payload.kind === objective.expenseId) {
+    const matchesTarget = payload.expenseId === objective.expenseId || payload.kind === objective.expenseId;
+    const meetsAmount =
+      objective.amount === undefined || -payload.amount >= objective.amount;
+    if (payload.amount < 0 && matchesTarget && meetsAmount) {
       state.progress = 1;
       state.completed = true;
       changed = true;

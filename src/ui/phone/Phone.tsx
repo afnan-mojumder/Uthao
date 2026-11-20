@@ -331,7 +331,7 @@ export function Phone({
                     <span style={{ color: '#22c55e' }}>৳{job.basePayout}</span>
                   </div>
                   <div style={{ fontSize: '11px', color: '#94a3b8' }}>
-                    {job.status === 'in_transit' ? t('delivery.in_transit') : t('delivery.accepted_status')} • {job.pickupNodeId} → {job.dropoffNodeId}
+                    {job.status === 'in_transit' ? t('delivery.in_transit') : t('delivery.accepted_status')} • {job.pickupPlaceKey ? t(job.pickupPlaceKey) : job.pickupNodeId} → {job.dropoffPlaceKey ? t(job.dropoffPlaceKey) : job.dropoffNodeId}
                   </div>
                 </div>
               ))}
@@ -360,7 +360,7 @@ export function Phone({
                         📦 {t(job.senderNameKey)}
                       </span>
                       <span style={{ fontSize: '11px', color: '#94a3b8' }}>
-                        {job.pickupNodeId} → {job.dropoffNodeId}
+                        {job.pickupPlaceKey ? t(job.pickupPlaceKey) : job.pickupNodeId} → {job.dropoffPlaceKey ? t(job.dropoffPlaceKey) : job.dropoffNodeId}
                         {job.fragile ? ` • ${t('delivery.fragile')}` : ''}
                       </span>
                       <span style={{ fontSize: '12px', fontWeight: 700, color: '#22c55e' }}>

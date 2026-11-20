@@ -955,13 +955,15 @@ export class GameSession {
 
     this.ride.update(this.pose, dt);
     this.syncLocation();
-    this.gm.deliveryManager.updateProximity(
-      this.bike.x,
-      this.bike.z,
-      this.road,
-      this.gm.clock.minutes,
-      this.gm.clock.day
-    );
+    if (!this.gm.shiftEnded) {
+      this.gm.deliveryManager.updateProximity(
+        this.bike.x,
+        this.bike.z,
+        this.road,
+        this.gm.clock.minutes,
+        this.gm.clock.day
+      );
+    }
     this.checkMissionPois();
     this.navigate();
 
@@ -996,27 +998,10 @@ export class GameSession {
   newCareer(): void {
     this.lastPunctureMin = -Infinity;
     this.offAppSeq = 0;
-    this.gm.clock.day = 1;
-    this.gm.clock.minutes = 7 * 60;
-    this.gm.economy.cash = 600;
-    this.gm.economyManager.cash = 600;
-    this.gm.economy.fuelLevel = 1.2;
-    this.gm.economyManager.fuelLevel = 1.2;
-    // A new career starts with a clean paid-trip record, or the tutorial ride would count as already settled.
-    this.gm.economyManager.restoreLedger([], []);
-    this.gm.requestSeq = 0;
-    this.gm.negotiationHistory = 0;
-    this.gm.shiftEnded = false;
-    this.gm.todayRentPosted = 0;
-    this.gm.todayRentDebt = 0;
-    this.gm.todayRentAutoFlagged = false;
-    this.gm.rentDelayedByCommand = false;
-    this.gm.deliveryManager.reset();
-    this.gm.story.branchFlags = {};
-    this.gm.story.completedMissions = [];
-    this.gm.story.activeMissions = ['m1_first_ride'];
-    this.gm.missionManager.activateMission('m1_first_ride');
+    this.gm.resetCareerState();
+    this.syncBikeSpec();
     this.syncLocation();
+    this.gm.bus.emit('state/restored', {});
   }
 
   /** T8.2: settles the scripted tutorial ride through the same exactly-once path as a

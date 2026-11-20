@@ -172,4 +172,17 @@ describe('T3.10 Menus & Settings Store', () => {
     expect(json).not.toContain('Kenney');
     expect(json).not.toContain('OpenGameArt');
   });
+
+  it('disables pause-btn-end-shift and renders localized blocked reason when endShiftEarly unavailable', () => {
+    setLanguage('en');
+    const vnode = Pause({
+      isOpen: true,
+      onEndShiftEarly: vi.fn(),
+      endShiftBlockedKey: 'pause.end_shift_blocked_early',
+    });
+    const json = JSON.stringify(vnode);
+    expect(json).toContain('pause-btn-end-shift');
+    expect(json).toContain('"disabled":true');
+    expect(json).toContain('pause-end-shift-notice');
+  });
 });

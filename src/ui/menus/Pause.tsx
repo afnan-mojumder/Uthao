@@ -9,6 +9,7 @@ export interface PauseProps {
   onOpenSave?: () => void;
   onOpenLoad?: () => void;
   onEndShiftEarly?: () => void;
+  endShiftBlockedKey?: string | null;
   onExitToMainMenu?: () => void;
 }
 
@@ -20,6 +21,7 @@ export function Pause({
   onOpenSave,
   onOpenLoad,
   onEndShiftEarly,
+  endShiftBlockedKey,
   onExitToMainMenu,
 }: PauseProps): JSX.Element | null {
   if (!isOpen) return null;
@@ -205,27 +207,47 @@ export function Pause({
           </button>
 
           {onEndShiftEarly && (
-            <button
-              data-testid="pause-btn-end-shift"
-              onClick={onEndShiftEarly}
-              style={{
-                width: '100%',
-                padding: '13px',
-                borderRadius: '12px',
-                border: '1px solid rgba(16, 185, 129, 0.3)',
-                background: 'rgba(16, 185, 129, 0.12)',
-                color: '#34d399',
-                fontSize: '0.95rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-              }}
-            >
-              <span>🌙</span> {t('pause.end_shift')}
-            </button>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', width: '100%' }}>
+              <button
+                data-testid="pause-btn-end-shift"
+                disabled={Boolean(endShiftBlockedKey)}
+                onClick={onEndShiftEarly}
+                style={{
+                  width: '100%',
+                  padding: '13px',
+                  borderRadius: '12px',
+                  border: endShiftBlockedKey
+                    ? '1px solid rgba(148, 163, 184, 0.2)'
+                    : '1px solid rgba(16, 185, 129, 0.3)',
+                  background: endShiftBlockedKey
+                    ? 'rgba(30, 41, 59, 0.45)'
+                    : 'rgba(16, 185, 129, 0.12)',
+                  color: endShiftBlockedKey ? '#64748b' : '#34d399',
+                  fontSize: '0.95rem',
+                  fontWeight: 600,
+                  cursor: endShiftBlockedKey ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                }}
+              >
+                <span>🌙</span> {t('pause.end_shift')}
+              </button>
+              {endShiftBlockedKey && (
+                <div
+                  data-testid="pause-end-shift-notice"
+                  style={{
+                    fontSize: '0.75rem',
+                    color: '#fbbf24',
+                    textAlign: 'center',
+                    padding: '2px 4px',
+                  }}
+                >
+                  {t(endShiftBlockedKey)}
+                </div>
+              )}
+            </div>
           )}
 
           <button

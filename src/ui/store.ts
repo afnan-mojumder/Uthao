@@ -401,6 +401,8 @@ export function exitToTitle(): void {
   tutorialSignal.value = { active: false, step: 'idle' };
   pausedSignal.value = false;
   impactSignal.value = { kind: null, seq: impactSignal.value.seq };
+  deliveryNoticeSignal.value = { messageKey: null, vars: undefined, seq: deliveryNoticeSignal.value.seq };
+  endShiftBlockedKeySignal.value = null;
   phoneSignal.value = {
     ...phoneSignal.value,
     open: false,
@@ -608,10 +610,41 @@ export interface ImpactState {
 }
 
 export const impactSignal = signal<ImpactState>({ kind: null, seq: 0 });
+export const endShiftBlockedKeySignal = signal<string | null>(null);
+
+export interface DeliveryNoticeState {
+  messageKey: string | null;
+  vars?: Record<string, string | number>;
+  seq: number;
+}
+
+export const deliveryNoticeSignal = signal<DeliveryNoticeState>({
+  messageKey: null,
+  vars: undefined,
+  seq: 0,
+});
 
 /** How long an impact banner stays up before it clears itself. */
 const IMPACT_BANNER_MS = 1200;
+const DELIVERY_NOTICE_MS = 2800;
 let impactClearTimer: ReturnType<typeof setTimeout> | undefined;
+let deliveryNoticeClearTimer: ReturnType<typeof setTimeout> | undefined;
+
+export function showDeliveryNotice(
+  messageKey: string,
+  vars?: Record<string, string | number>
+): void {
+  deliveryNoticeSignal.value = {
+    messageKey,
+    vars,
+    seq: deliveryNoticeSignal.value.seq + 1,
+  };
+  if (deliveryNoticeClearTimer !== undefined) clearTimeout(deliveryNoticeClearTimer);
+  deliveryNoticeClearTimer = setTimeout(() => {
+    deliveryNoticeSignal.value = { ...deliveryNoticeSignal.value, messageKey: null };
+    deliveryNoticeClearTimer = undefined;
+  }, DELIVERY_NOTICE_MS);
+}
 
 function showImpact(kind: NonNullable<ImpactState['kind']>): void {
   impactSignal.value = { kind, seq: impactSignal.value.seq + 1 };
@@ -671,6 +704,11 @@ function resetTransientUiState(): void {
     clearTimeout(impactClearTimer);
     impactClearTimer = undefined;
   }
+  if (deliveryNoticeClearTimer !== undefined) {
+    clearTimeout(deliveryNoticeClearTimer);
+    deliveryNoticeClearTimer = undefined;
+  }
+  deliveryNoticeSignal.value = { messageKey: null, vars: undefined, seq: deliveryNoticeSignal.value.seq };
   inActiveTrip = false;
   activeOfferQueue = [];
   heldRequest = null;
@@ -955,13 +993,47 @@ export function bindEventBusToStore(bus: EventBus<GameEvents>): () => void {
       ...phoneSignal.value,
       activeDeliveries: active.filter((j) => j.id !== ev.deliveryId),
     };
+    showDeliveryNotice('delivery.completed', { amount: ev.payout });
   });
   unsubscribers.push(unsubDeliveryCompleted);
+
+  const unsubDeliveryDamaged = bus.on('delivery/damaged', (ev) => {
+    const active = phoneSignal.value.activeDeliveries ?? [];
+    const job = active.find((j) => j.id === ev.deliveryId);
+    const penalty = job?.damagePenalty ?? (job ? Math.round(job.basePayout * 0.6) : 0);
+    if (job) {
+      phoneSignal.value = {
+        ...phoneSignal.value,
+        activeDeliveries: active.map((j) =>
+          j.id === ev.deliveryId ? { ...j, damaged: true } : j
+        ),
+      };
+    }
+    showDeliveryNotice('delivery.damaged', { penalty });
+  });
+  unsubscribers.push(unsubDeliveryDamaged);
+
+  const unsubDeliveryExpired = bus.on('delivery/expired', (ev) => {
+    const active = phoneSignal.value.activeDeliveries ?? [];
+    phoneSignal.value = {
+      ...phoneSignal.value,
+      activeDeliveries: active.filter((j) => j.id !== ev.deliveryId),
+    };
+    if (ev.reason.toLowerCase().includes('deadline')) {
+      showDeliveryNotice('delivery.expired');
+    }
+  });
+  unsubscribers.push(unsubDeliveryExpired);
 
   const unsubDayEnded = bus.on('day/ended', (ev) => {
     dayEndSignal.value = {
       active: true,
       summary: ev.summary,
+    };
+    phoneSignal.value = {
+      ...phoneSignal.value,
+      availableDeliveries: [],
+      activeDeliveries: [],
     };
   });
   unsubscribers.push(unsubDayEnded);

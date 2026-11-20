@@ -98,6 +98,7 @@ export interface GameEvents extends Record<string, unknown> {
   'delivery/pickedUp': { deliveryId: string };
   'delivery/completed': { deliveryId: string; payout: number; damageDeduction: number };
   'delivery/damaged': { deliveryId: string; reason: string };
+  'delivery/expired': { deliveryId: string; reason: string };
   'story/flag': { key: string; value: boolean | number | string };
   'character/contactAdded': { characterId: string };
   // result is the real sim evaluation; choices is set only for the career decision.

@@ -309,9 +309,14 @@
   "dayend.btn_withdraw_savings": "সঞ্চয় থেকে ৳{amount} তুলুন",
   "dayend.btn_repay_debt": "ঋণ পরিশোধ করুন (৳{amount})",
   "pause.end_shift": "আগেই শিফট শেষ করুন",
+  "pause.end_shift_blocked_early": "বেলা ১১:০০টার পর অথবা রাফির বাসার কাছাকাছি থাকলে শিফট শেষ করা যাবে।",
+  "pause.end_shift_blocked_ride": "শিফট শেষ করার আগে চলমান রাইডটি সম্পন্ন করুন।",
+  "pause.end_shift_blocked_ended": "আজকের শিফট ইতিমধ্যেই শেষ হয়েছে।",
   "delivery.no_jobs": "কোনো পার্সেল ডেলিভারি নেই। কামাল ভাইয়ের গ্যারেজ থেকে লাগেজ ক্যারিয়ার যুক্ত করুন।",
   "delivery.accept": "পার্সেল নিন",
   "delivery.in_transit": "পথে আছে",
   "delivery.accepted_status": "গৃহীত (পিকআপে যান)",
-  "delivery.payout": "পারিশ্রমিক: ৳{amount}"
+  "delivery.payout": "পারিশ্রমিক: ৳{amount}",
+  "delivery.expired": "পার্সেল পিকআপের সময়সীমা শেষ হয়েছে!",
+  "delivery.blocked_active_ride": "পার্সেল নেওয়ার আগে চলমান রাইডটি শেষ করুন।"
 }

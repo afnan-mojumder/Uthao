@@ -192,6 +192,27 @@ describe('newCareer resets settlement state (T8.2 fix)', () => {
     expect(s.gm.economyManager.cash).toBe(cash);
     expect(completed).toHaveLength(1);
   });
+
+  it('newCareer resets upgrades, savings, debt, bike, and syncs bikeSpec cleanly via EconomyManager.resetCareer', () => {
+    const s = makeSession({ seed: 6, autoRequests: false });
+    s.gm.economyManager.cash = 9999;
+    s.gm.economyManager.savings = 5000;
+    s.gm.economyManager.debt = 400;
+    s.gm.economyManager.ownedUpgrades.push('upgrade_good_tires', 'upgrade_engine_tune');
+    s.gm.economyManager.currentBikeId = 'new150';
+    s.syncBikeSpec();
+    expect(s.ride.hasEngineTune).toBe(true);
+
+    s.newCareer();
+
+    expect(s.gm.economyManager.cash).toBe(600);
+    expect(s.gm.economyManager.savings).toBe(0);
+    expect(s.gm.economyManager.debt).toBe(0);
+    expect(s.gm.economyManager.ownedUpgrades).toEqual([]);
+    expect(s.gm.economyManager.currentBikeId).toBe('old100');
+    expect(s.ride.hasEngineTune).toBe(false);
+    expect(s.ride.activeBikeId).toBe('old100');
+  });
 });
 
 describe('T8.3 live fuel, wear and recovery', () => {

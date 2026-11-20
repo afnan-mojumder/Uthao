@@ -274,7 +274,8 @@ export type TransactionKind =
   | 'bribe'
   | 'compensation'
   | 'tea'
-  | 'savings';
+  | 'savings'
+  | 'debt';
 
 export interface Transaction {
   id: string;
@@ -401,6 +402,8 @@ export interface DeliveryJob {
   pickupPoiId: string;
   pickupNodeId: string;
   dropoffNodeId: string;
+  pickupPlaceKey?: string;
+  dropoffPlaceKey?: string;
   itemType: 'food' | 'document' | 'medicine' | 'fragile_electronics' | 'parcel';
   fragile: boolean;
   basePayout: number;

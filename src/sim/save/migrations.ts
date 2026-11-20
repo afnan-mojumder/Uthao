@@ -1,4 +1,5 @@
 import type { Transaction, WeatherKind, SafetyRecord, PlayerEconomy, StoryState } from '../../core/types';
+import type { DeliverySnapshot } from '../delivery/DeliveryManager';
 import type { ActiveRoadEvent } from '../world/RoadEvents';
 
 export type SaveSlot = 'auto' | 'slot1' | 'slot2' | 'slot3';
@@ -52,6 +53,7 @@ export interface SaveV1 {
   todayRentDebt?: number;
   todayRentAutoFlagged?: boolean;
   rentDelayedByCommand?: boolean;
+  deliveries?: DeliverySnapshot;
 }
 
 export type AnySave = SaveV1 | Record<string, unknown>;

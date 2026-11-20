@@ -23,6 +23,8 @@ import {
   onRepayDebtCallback,
   onEndShiftEarlyCallback,
   onAcceptDeliveryCallback,
+  deliveryNoticeSignal,
+  endShiftBlockedKeySignal,
   garageSignal,
   screenSignal,
   onRepairCallback,
@@ -280,6 +282,29 @@ export function App(): JSX.Element {
         </div>
       )}
 
+      {deliveryNoticeSignal.value.messageKey !== null && (
+        <div
+          data-testid="delivery-notice-banner"
+          role="status"
+          style={{
+            position: 'absolute',
+            top: '25%',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            pointerEvents: 'none',
+            zIndex: Z_LAYER.TOAST,
+            padding: '8px 16px',
+            borderRadius: '10px',
+            background: 'rgba(15, 23, 42, 0.88)',
+            border: '1px solid rgba(56, 189, 248, 0.3)',
+            color: '#f8fafc',
+            fontWeight: 700,
+          }}
+        >
+          {t(deliveryNoticeSignal.value.messageKey, deliveryNoticeSignal.value.vars)}
+        </div>
+      )}
+
       {installPromptSignal.value && (
         <button
           data-testid="pwa-install-btn"
@@ -477,6 +502,7 @@ export function App(): JSX.Element {
               saveSlotsSignal.value = { isOpen: true, mode: 'load' };
             }}
             onEndShiftEarly={() => onEndShiftEarlyCallback?.()}
+            endShiftBlockedKey={endShiftBlockedKeySignal.value}
             onExitToMainMenu={() => exitToTitle()}
           />
         </div>

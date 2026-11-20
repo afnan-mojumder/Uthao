@@ -197,6 +197,8 @@ describe('T5.8 Delivery jobs and logistics', () => {
     expect(jobs.length).toBeGreaterThan(0);
 
     const job = jobs[0]!;
+    expect(job.pickupPlaceKey).toMatch(/^poi\./);
+    expect(job.dropoffPlaceKey).toMatch(/^poi\./);
     const acceptRes = gm.dispatch({ type: 'acceptDelivery', jobId: job.id });
     expect(acceptRes.success).toBe(true);
     expect(gm.deliveryManager.getActiveJobs().some((j) => j.id === job.id)).toBe(true);
@@ -215,5 +217,86 @@ describe('T5.8 Delivery jobs and logistics', () => {
     session.step({ throttle: 0, brake: 0, steer: 0 }, SIM_DT);
     expect(gm.deliveryManager.completedDeliveries.some((j) => j.id === job.id)).toBe(true);
     expect(gm.economyManager.cash).toBeGreaterThan(cashBefore);
+  });
+
+  it('P4.2 review: pickupDeadlineMinute expires overdue deliveries and !shiftEnded guards proximity', () => {
+    const road = RoadNetwork.fromDistricts([mirparaData as DistrictData]);
+    const gm = new GameManager({ seed: 205, mode: 'career', data: {} });
+    gm.clock.minutes = 500;
+    const session = new GameSession({ gm, road, autoRequests: false });
+    session.spawnAtHome();
+
+    gm.deliveryManager.offer({ ...sampleStandardJob, id: 'deliv_exp_1' });
+    gm.dispatch({ type: 'acceptDelivery', jobId: 'deliv_exp_1' });
+    const accepted = gm.deliveryManager.activeDeliveries.get('deliv_exp_1')!;
+    expect(accepted.pickupDeadlineMinute).toBe(515);
+
+    // Direct pickup after deadline fails cleanly
+    expect(gm.deliveryManager.pickup('deliv_exp_1', 516).success).toBe(false);
+    expect(accepted.status).toBe('failed');
+    expect(gm.deliveryManager.activeDeliveries.has('deliv_exp_1')).toBe(false);
+
+    // Proximity tick after deadline expires active job and emits delivery/expired
+    gm.deliveryManager.offer({ ...sampleStandardJob, id: 'deliv_exp_2' });
+    gm.dispatch({ type: 'acceptDelivery', jobId: 'deliv_exp_2' });
+    const expiredEvents: string[] = [];
+    gm.bus.on('delivery/expired', (e) => expiredEvents.push(e.deliveryId));
+    gm.clock.minutes = 530;
+    gm.deliveryManager.updateProximity(0, 0, road, 530, 1);
+    expect(gm.deliveryManager.activeDeliveries.has('deliv_exp_2')).toBe(false);
+    expect(expiredEvents).toContain('deliv_exp_2');
+
+    // !shiftEnded guard stops updateProximity inside GameSession.step
+    gm.deliveryManager.offer({ ...sampleStandardJob, id: 'deliv_shift_guard' });
+    gm.dispatch({ type: 'acceptDelivery', jobId: 'deliv_shift_guard' });
+    const pickupNode = road.getNode(sampleStandardJob.pickupNodeId)!;
+    session.bike.x = pickupNode.x;
+    session.bike.z = pickupNode.z;
+    gm.shiftEnded = true;
+    session.step({ throttle: 0, brake: 0, steer: 0 }, SIM_DT);
+    expect(gm.deliveryManager.activeDeliveries.get('deliv_shift_guard')?.status).toBe('accepted');
+  });
+
+  it('P4.2 review: finalizeShiftEnd clears offered/active deliveries and blocks accepting during active ride', () => {
+    const road = RoadNetwork.fromDistricts([mirparaData as DistrictData]);
+    const gm = new GameManager({ seed: 206, mode: 'career', data: {} });
+    gm.economyManager.cash = 1000;
+    const session = new GameSession({ gm, road, autoRequests: false });
+    session.spawnAtHome();
+
+    gm.deliveryManager.offer({ ...sampleStandardJob, id: 'deliv_offered_shift' });
+    gm.deliveryManager.offer({ ...sampleFragileJob, id: 'deliv_active_shift' });
+    gm.dispatch({ type: 'acceptDelivery', jobId: 'deliv_active_shift' });
+
+    // End shift clears both offered and active deliveries before sleep resets clock to 07:00
+    gm.clock.minutes = 15 * 60;
+    const endRes = gm.dispatch({ type: 'endShift' });
+    expect(endRes.success).toBe(true);
+    expect(gm.deliveryManager.getAvailableJobs()).toHaveLength(0);
+    expect(gm.deliveryManager.getActiveJobs()).toHaveLength(0);
+
+    expect(gm.dispatch({ type: 'sleep' }).success).toBe(true);
+    expect(gm.deliveryManager.getActiveJobs()).toHaveLength(0);
+
+    // Block accepting delivery while passenger ride is active
+    gm.deliveryManager.offer({ ...sampleStandardJob, id: 'deliv_during_ride' });
+    session.ride.offer({
+      requestId: 'req_active_ride',
+      passengerId: 'p1',
+      pickupNodeId: 'res_n2_0',
+      destinationNodeId: 'res_n1_0',
+      initialFare: 120,
+      estimatedDistance: 2,
+      estimatedDuration: 8,
+      requestedArrivalTime: null,
+      bookingType: 'app',
+      status: 'Negotiating',
+      surge: 1,
+    });
+    session.ride.openNegotiation('req_active_ride');
+    session.ride.agreeFare(120);
+    const blocked = gm.dispatch({ type: 'acceptDelivery', jobId: 'deliv_during_ride' });
+    expect(blocked.success).toBe(false);
+    expect(blocked.reason).toBe('Finish the active ride first');
   });
 });

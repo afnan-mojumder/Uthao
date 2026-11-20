@@ -299,4 +299,59 @@ describe('SaveSystem (T4.9)', () => {
     expect(latest?.slot).toBe('slot2');
     expect(latest?.clock.day).toBe(5);
   });
+
+  it('round-trips DeliveryManager offered/active jobs and loads legacy saves without deliveries', () => {
+    gm.economyManager.ownedUpgrades.push('upgrade_luggage_carrier');
+    gm.clock.minutes = 600;
+    gm.deliveryManager.offer({
+      id: 'deliv_save_offered',
+      senderNameKey: 'poi.mirpara.tea_stall',
+      pickupPoiId: 'poi_mirpara_tea_stall',
+      pickupNodeId: 'res_n2_1',
+      dropoffNodeId: 'res_n3_0',
+      itemType: 'parcel',
+      fragile: false,
+      basePayout: 140,
+      timeLimitMinutes: 20,
+      status: 'offered',
+    });
+    gm.deliveryManager.offer({
+      id: 'deliv_save_active',
+      senderNameKey: 'poi.mirpara.pharmacy',
+      pickupPoiId: 'poi_mirpara_pharmacy',
+      pickupNodeId: 'res_n1_2',
+      dropoffNodeId: 'res_n2_0',
+      itemType: 'medicine',
+      fragile: true,
+      basePayout: 220,
+      timeLimitMinutes: 18,
+      status: 'offered',
+    });
+    expect(gm.dispatch({ type: 'acceptDelivery', jobId: 'deliv_save_active' }).success).toBe(true);
+
+    expect(saveSystem.save(gm, 'slot1').success).toBe(true);
+    const loaded = saveSystem.loadGame('slot1');
+    expect(loaded.success).toBe(true);
+    if (loaded.success) {
+      expect(loaded.gm.deliveryManager.getAvailableJobs().map((j) => j.id)).toEqual([
+        'deliv_save_offered',
+      ]);
+      const active = loaded.gm.deliveryManager.getActiveJobs();
+      expect(active).toHaveLength(1);
+      expect(active[0]?.id).toBe('deliv_save_active');
+      expect(active[0]?.pickupDeadlineMinute).toBe(615);
+    }
+
+    // Legacy save lacking deliveries property loads cleanly with empty delivery pools
+    const rawKey = saveSystem.getSlotKey('slot2');
+    const legacy = serialize(gm, 'slot2') as unknown as Record<string, unknown>;
+    delete legacy.deliveries;
+    memoryStorage.setItem(rawKey, JSON.stringify(legacy));
+    const legacyLoaded = saveSystem.loadGame('slot2');
+    expect(legacyLoaded.success).toBe(true);
+    if (legacyLoaded.success) {
+      expect(legacyLoaded.gm.deliveryManager.getAvailableJobs()).toHaveLength(0);
+      expect(legacyLoaded.gm.deliveryManager.getActiveJobs()).toHaveLength(0);
+    }
+  });
 });

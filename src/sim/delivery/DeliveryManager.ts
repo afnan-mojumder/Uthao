@@ -3,6 +3,7 @@ import type { DeliveryJob } from '../../core/types';
 import type { Rng } from '../../core/rng';
 import type { RoadNetwork } from '../road/RoadNetwork';
 import type { EconomyManager } from '../economy/EconomyManager';
+import { nearestPlaceKey } from '../ride/rideView';
 
 const DELIVERY_SENDER_KINDS = new Set([
   'pharmacy',
@@ -25,6 +26,14 @@ const MAX_OFFERED_DELIVERIES = 3;
 export interface DeliveryManagerOptions {
   bus: EventBus<GameEvents>;
   economyManager: EconomyManager;
+}
+
+export interface DeliverySnapshot {
+  offeredDeliveries: DeliveryJob[];
+  activeDeliveries: DeliveryJob[];
+  completedDeliveries?: DeliveryJob[];
+  partnershipActive?: boolean;
+  jobSeq?: number;
 }
 
 export class DeliveryManager {
@@ -99,6 +108,8 @@ export class DeliveryManager {
       const fragile = itemType === 'medicine' || itemType === 'fragile_electronics';
       const basePayout = Math.max(80, Math.round((80 + route.virtualKm * 35) / 5) * 5);
       const timeLimitMinutes = Math.max(15, Math.ceil(route.etaMin * 2));
+      const pickupPlaceKey = nearestPlaceKey({ roadNetwork: road }, pickupNodeId) || undefined;
+      const dropoffPlaceKey = nearestPlaceKey({ roadNetwork: road }, dropoffNode.nodeId) || undefined;
 
       const job: DeliveryJob = {
         id: `deliv_${day}_${++this.jobSeq}`,
@@ -106,6 +117,8 @@ export class DeliveryManager {
         pickupPoiId: pickupPoi?.id ?? pickupNodeId,
         pickupNodeId,
         dropoffNodeId: dropoffNode.nodeId,
+        pickupPlaceKey,
+        dropoffPlaceKey,
         itemType,
         fragile,
         basePayout,
@@ -119,6 +132,70 @@ export class DeliveryManager {
     return null;
   }
 
+  /** Expires accepted deliveries whose pickup deadline has passed (allocation-free). */
+  expireOverdue(currentMinute: number): void {
+    if (this.activeDeliveries.size === 0) return;
+
+    for (const job of this.activeDeliveries.values()) {
+      if (
+        job.status === 'accepted' &&
+        job.pickupDeadlineMinute !== undefined &&
+        currentMinute > job.pickupDeadlineMinute
+      ) {
+        job.status = 'failed';
+        this.activeDeliveries.delete(job.id);
+        this.bus.emit('delivery/expired', {
+          deliveryId: job.id,
+          reason: 'Pickup deadline expired',
+        });
+      }
+    }
+  }
+
+  /** Clears unaccepted offers and fails active jobs cleanly when a shift ends. */
+  endShiftCleanup(): void {
+    this.offeredDeliveries.clear();
+    if (this.activeDeliveries.size === 0) return;
+
+    for (const job of this.activeDeliveries.values()) {
+      job.status = 'failed';
+      this.activeDeliveries.delete(job.id);
+      this.bus.emit('delivery/expired', {
+        deliveryId: job.id,
+        reason: 'Shift ended before delivery completed',
+      });
+    }
+  }
+
+  getSnapshot(): DeliverySnapshot {
+    return {
+      offeredDeliveries: Array.from(this.offeredDeliveries.values(), (j) => ({ ...j })),
+      activeDeliveries: Array.from(this.activeDeliveries.values(), (j) => ({ ...j })),
+      completedDeliveries: this.completedDeliveries.map((j) => ({ ...j })),
+      partnershipActive: this.partnershipActive,
+      jobSeq: this.jobSeq,
+    };
+  }
+
+  restoreSnapshot(snap?: DeliverySnapshot): void {
+    this.offeredDeliveries.clear();
+    this.activeDeliveries.clear();
+    this.completedDeliveries.length = 0;
+    this.partnershipActive = snap?.partnershipActive ?? false;
+    this.jobSeq = snap?.jobSeq ?? 0;
+
+    if (!snap) return;
+    for (const job of snap.offeredDeliveries ?? []) {
+      this.offeredDeliveries.set(job.id, { ...job, status: 'offered' });
+    }
+    for (const job of snap.activeDeliveries ?? []) {
+      this.activeDeliveries.set(job.id, { ...job });
+    }
+    for (const job of snap.completedDeliveries ?? []) {
+      this.completedDeliveries.push({ ...job });
+    }
+  }
+
   /** Advances accepted/in-transit deliveries when the bike reaches pickup or dropoff. */
   updateProximity(
     x: number,
@@ -127,6 +204,8 @@ export class DeliveryManager {
     currentMinute: number,
     day: number
   ): void {
+    if (this.activeDeliveries.size === 0) return;
+    this.expireOverdue(currentMinute);
     if (this.activeDeliveries.size === 0) return;
 
     for (const job of this.activeDeliveries.values()) {
@@ -181,6 +260,15 @@ export class DeliveryManager {
     }
     if (job.status !== 'accepted') {
       return { success: false, reason: `Invalid status: ${job.status}` };
+    }
+    if (job.pickupDeadlineMinute !== undefined && currentMinute > job.pickupDeadlineMinute) {
+      job.status = 'failed';
+      this.activeDeliveries.delete(deliveryId);
+      this.bus.emit('delivery/expired', {
+        deliveryId: job.id,
+        reason: 'Pickup deadline expired',
+      });
+      return { success: false, reason: 'Pickup deadline expired' };
     }
 
     job.status = 'in_transit';

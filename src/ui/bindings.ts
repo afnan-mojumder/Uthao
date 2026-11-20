@@ -22,6 +22,7 @@ import {
   setTutorialDispatchers,
   setEndingDispatchers,
   syncGarageState,
+  showDeliveryNotice,
   negotiationSignal,
   choiceSignal,
   tutorialSignal,
@@ -29,6 +30,7 @@ import {
   screenSignal,
   phoneSignal,
   saveStatusSignal,
+  endShiftBlockedKeySignal,
 } from './store';
 
 let activeBindingsCleanup: (() => void) | null = null;
@@ -49,19 +51,49 @@ export function bindUi(session: GameSession, saveSystem?: SaveSystem): () => voi
   const rideManager = session.ride;
   const unsubscribers: Array<() => void> = [];
 
+  const enrichDeliveryPlaces = (jobs: ReturnType<typeof gm.deliveryManager.getAvailableJobs>) => {
+    const roadNet = (rideManager as { roadNetwork?: Parameters<typeof nearestPlaceKey>[0]['roadNetwork'] } | undefined)?.roadNetwork;
+    if (!roadNet) return jobs;
+    return jobs.map((job) => ({
+      ...job,
+      pickupPlaceKey: job.pickupPlaceKey ?? (nearestPlaceKey({ roadNetwork: roadNet }, job.pickupNodeId) || undefined),
+      dropoffPlaceKey: job.dropoffPlaceKey ?? (nearestPlaceKey({ roadNetwork: roadNet }, job.dropoffNodeId) || undefined),
+    }));
+  };
+
   const syncDeliveries = () => {
     const dm = gm?.deliveryManager;
     if (!dm) return;
     phoneSignal.value = {
       ...phoneSignal.value,
-      availableDeliveries: dm.getAvailableJobs(),
-      activeDeliveries: dm.getActiveJobs(),
+      availableDeliveries: enrichDeliveryPlaces(dm.getAvailableJobs()),
+      activeDeliveries: enrichDeliveryPlaces(dm.getActiveJobs()),
     };
+  };
+
+  const syncPauseEndShift = () => {
+    endShiftBlockedKeySignal.value =
+      typeof gm.getEndShiftEarlyBlockedReasonKey === 'function'
+        ? gm.getEndShiftEarlyBlockedReasonKey()
+        : null;
   };
 
   const syncGarage = () => syncGarageState(gm);
   if (gm?.economyManager) syncGarage();
   if (gm?.deliveryManager) syncDeliveries();
+  syncPauseEndShift();
+
+  unsubscribers.push(
+    pausedSignal.subscribe((isPaused) => {
+      if (isPaused) syncPauseEndShift();
+      else endShiftBlockedKeySignal.value = null;
+    })
+  );
+  unsubscribers.push(
+    screenSignal.subscribe((scr) => {
+      if (scr === 'pause') syncPauseEndShift();
+    })
+  );
 
   if (gm?.bus) {
     unsubscribers.push(gm.bus.on('economy/transaction', syncGarage));
@@ -70,17 +102,26 @@ export function bindUi(session: GameSession, saveSystem?: SaveSystem): () => voi
     unsubscribers.push(gm.bus.on('reputation/changed', syncGarage));
     unsubscribers.push(gm.bus.on('player/kamalProximity', syncGarage));
     unsubscribers.push(gm.bus.on('bike/wearChanged', syncGarage));
-    unsubscribers.push(gm.bus.on('day/ended', syncGarage));
+    unsubscribers.push(gm.bus.on('clock/hour', syncPauseEndShift));
+    unsubscribers.push(gm.bus.on('trip/state', syncPauseEndShift));
+    unsubscribers.push(
+      gm.bus.on('day/ended', () => {
+        syncGarage();
+        syncPauseEndShift();
+      })
+    );
     unsubscribers.push(
       gm.bus.on('day/started', () => {
         syncGarage();
         syncDeliveries();
+        syncPauseEndShift();
       })
     );
     unsubscribers.push(
       gm.bus.on('state/restored', () => {
         syncGarage();
         syncDeliveries();
+        syncPauseEndShift();
       })
     );
   }
@@ -215,10 +256,22 @@ export function bindUi(session: GameSession, saveSystem?: SaveSystem): () => voi
     if (res.success) {
       pausedSignal.value = false;
       screenSignal.value = 'game';
+      endShiftBlockedKeySignal.value = null;
+    } else {
+      syncPauseEndShift();
     }
   });
 
-  setDeliveryDispatcher((jobId) => gm.dispatch({ type: 'acceptDelivery', jobId }));
+  setDeliveryDispatcher((jobId) => {
+    const res = gm.dispatch({ type: 'acceptDelivery', jobId });
+    if (!res.success && res.reason === 'Finish the active ride first') {
+      showDeliveryNotice('delivery.blocked_active_ride');
+    } else if (!res.success && res.reason === 'Luggage capacity full') {
+      showDeliveryNotice('delivery.luggage_full', {
+        max: gm.deliveryManager.getMaxCapacity(),
+      });
+    }
+  });
 
   setGarageDispatchers(
     (item) => gm.dispatch({ type: 'repair', item }),

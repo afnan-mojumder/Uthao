@@ -552,10 +552,38 @@ export class EconomyManager {
       id: `tx_debt_repay_${day}_${Math.floor(minute)}_${++this.txSeq}`,
       day,
       minute,
-      kind: 'family',
+      kind: 'debt',
       amount: -payable,
     });
     return { success: true, amount: payable };
+  }
+
+  /** Resets all economy state to fresh career starting defaults (sole writer). */
+  resetCareer(): void {
+    this.cash = BALANCE.LIVING.startCash;
+    this.debt = 0;
+    this.savings = 0;
+    this.advancesTaken = 0;
+    this.deferredRent = 0;
+    this.dailyRevenue = 0;
+    this.dailyExpenses = 0;
+    this.fuelLevel = BALANCE.FUEL.startL;
+    this.appBalance = 0;
+    this.reputation = 5.0;
+    this.phoneBattery = 100;
+    this.rentMissedCount = 0;
+    this.engineCondition = 85;
+    this.tiresCondition = 80;
+    this.brakesCondition = 85;
+    this.kmSinceOilChange = 15;
+    this.ownedUpgrades = [];
+    this.installedCosmetics = {};
+    this.currentBikeId = 'old100';
+    this.ownedBikes = ['old100'];
+    this.motorcycleCondition = this.getOverallCondition();
+    this.syncUpgradeEffects();
+    this.restoreLedger([], []);
+    this.txSeq = 0;
   }
 
   repair(

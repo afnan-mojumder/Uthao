@@ -32,7 +32,7 @@ import crimeEncounters from '../../data/encounters/crime.json';
 import passengerEncounters from '../../data/encounters/passenger.json';
 import { ReputationSystem } from './reputation/ReputationSystem';
 import { getBikeDef } from './economy/bikes';
-import { DeliveryManager } from './delivery/DeliveryManager';
+import { DeliveryManager, type DeliverySnapshot } from './delivery/DeliveryManager';
 import type { SafetyRecord, Transaction } from '../core/types';
 import { RoadEventManager, type ActiveRoadEvent } from './world/RoadEvents';
 import defaultUpgrades from '../../data/upgrades.json';
@@ -114,6 +114,7 @@ export interface SimSnapshot {
   todayRentDebt?: number;
   todayRentAutoFlagged?: boolean;
   rentDelayedByCommand?: boolean;
+  deliveries?: DeliverySnapshot;
 }
 
 export class GameManager {
@@ -425,6 +426,7 @@ export class GameManager {
     if (this.rideManager?.getTripState() === 'Negotiating') {
       this.rideManager.walkAwayNegotiation();
     }
+    this.deliveryManager.endShiftCleanup();
 
     // Commute home if > 1.5 km (1500m)
     if (this.playerDistFromHomeM > 1500) {
@@ -650,6 +652,9 @@ export class GameManager {
         return { success: true };
       }
       case 'acceptDelivery': {
+        if (this.rideInProgress()) {
+          return { success: false, reason: 'Finish the active ride first' };
+        }
         const id = 'deliveryId' in cmd ? cmd.deliveryId : cmd.jobId;
         return this.deliveryManager.accept(id, this.clock.minutes);
       }
@@ -778,6 +783,7 @@ export class GameManager {
         if (!this.shiftEnded) {
           return { success: false, reason: 'End the shift before sleeping' };
         }
+        this.deliveryManager.endShiftCleanup();
         this.clock.endShift();
         this.economyManager.resetDaily();
         this.economyManager.phoneBattery = 100;
@@ -956,7 +962,37 @@ export class GameManager {
       todayRentDebt: this.todayRentDebt,
       todayRentAutoFlagged: this.todayRentAutoFlagged,
       rentDelayedByCommand: this.rentDelayedByCommand,
+      deliveries: this.deliveryManager.getSnapshot(),
     };
+  }
+
+  /** Returns a localized UI key if `endShiftEarly` is currently blocked, else `null`. */
+  getEndShiftEarlyBlockedReasonKey(): string | null {
+    if (this.shiftEnded) return 'pause.end_shift_blocked_ended';
+    if (this.rideInProgress() && this.clock.minutes < 24 * 60) return 'pause.end_shift_blocked_ride';
+    if (this.clock.minutes < 11 * 60 && !this.isAtHome()) return 'pause.end_shift_blocked_early';
+    return null;
+  }
+
+  /** Resets career state cleanly through owning managers without bypassing EconomyManager. */
+  resetCareerState(): void {
+    this.clock.day = 1;
+    this.clock.minutes = 7 * 60;
+    this.economyManager.resetCareer();
+    this.syncEconomy();
+    this.requestSeq = 0;
+    this.negotiationHistory = 0;
+    this.shiftEnded = false;
+    this.todayRentPosted = 0;
+    this.todayRentDebt = 0;
+    this.todayRentAutoFlagged = false;
+    this.rentDelayedByCommand = false;
+    this.todayLivingExpenses = null;
+    this.deliveryManager.reset();
+    this.story.branchFlags = {};
+    this.story.completedMissions = [];
+    this.story.activeMissions = ['m1_first_ride'];
+    this.missionManager.activateMission('m1_first_ride');
   }
 
   applySnapshot(snap: SimSnapshot, rngState?: number): void {
@@ -1024,6 +1060,8 @@ export class GameManager {
         this.roadEvents.addEvent(ev);
       }
     }
+
+    this.deliveryManager.restoreSnapshot(snap.deliveries);
 
     this.bus.emit('state/restored', {});
   }

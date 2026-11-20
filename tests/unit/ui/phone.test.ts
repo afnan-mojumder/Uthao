@@ -2,12 +2,15 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   phoneSignal,
   choiceSignal,
+  deliveryNoticeSignal,
   bindEventBusToStore,
   tickPhoneOffers,
   setRequestDispatchers,
   onAcceptRequestCallback,
   onDeclineRequestCallback,
+  exitToTitle,
 } from '../../../src/ui/store';
+import { Phone } from '../../../src/ui/phone/Phone';
 import { EventBus, type GameEvents } from '../../../src/core/events';
 import { t, setLanguage } from '../../../src/ui/i18n';
 import type { RideRequest } from '../../../src/core/types';
@@ -192,6 +195,51 @@ describe('T2.4 Phone Store & Logic', () => {
     choiceSignal.value = { active: false, prompt: '', options: [] };
     expect(phoneSignal.value.incomingRequest).toBeNull();
 
+    unbind();
+  });
+
+  it('P4.2 review: renders localized delivery place names and shows feedback on delivery/damaged', () => {
+    setLanguage('en');
+    const bus = new EventBus<GameEvents>();
+    const unbind = bindEventBusToStore(bus);
+
+    bus.emit('delivery/offered', {
+      delivery: {
+        id: 'deliv_ui_1',
+        senderNameKey: 'poi.mirpara.tea_stall',
+        pickupPoiId: 'poi_mirpara_tea_stall',
+        pickupNodeId: 'res_n2_1',
+        dropoffNodeId: 'res_n3_0',
+        pickupPlaceKey: 'poi.mirpara.tea_stall',
+        dropoffPlaceKey: 'poi.mirpara.bazaar',
+        itemType: 'fragile_electronics',
+        fragile: true,
+        basePayout: 200,
+        timeLimitMinutes: 20,
+        status: 'offered',
+      },
+    });
+    bus.emit('delivery/accepted', { deliveryId: 'deliv_ui_1' });
+
+    const vnode = Phone({
+      isOpen: true,
+      onClose: vi.fn(),
+      activeTab: 'deliveries',
+      availableDeliveries: phoneSignal.value.availableDeliveries,
+      activeDeliveries: phoneSignal.value.activeDeliveries,
+    });
+    const html = JSON.stringify(vnode);
+    expect(html).toContain("Mintu's Tea Stall");
+    expect(html).toContain('Mirpara Kacha Bazaar');
+    expect(html).not.toContain('res_n2_1');
+    expect(html).not.toContain('res_n3_0');
+
+    bus.emit('delivery/damaged', { deliveryId: 'deliv_ui_1', reason: 'Parcel damaged in bike bump' });
+    expect(deliveryNoticeSignal.value.messageKey).toBe('delivery.damaged');
+    expect(deliveryNoticeSignal.value.vars?.penalty).toBe(120);
+
+    exitToTitle();
+    expect(deliveryNoticeSignal.value.messageKey).toBeNull();
     unbind();
   });
 });

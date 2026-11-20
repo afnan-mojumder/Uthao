@@ -300,9 +300,11 @@ describe('P4.2 Savings deposits/withdrawals and debt repayment', () => {
     gm.economyManager.dailyRevenue = 0;
     gm.economyManager.dailyExpenses = 0;
 
-    const earnBefore = gm.missionManager
+    const earnBeforeState = gm.missionManager
       .getObjectiveStates('m1_household')
-      .find((s) => s.id === 'obj_m1_household_earn')?.progress ?? 0;
+      .find((s) => s.id === 'obj_m1_earn');
+    expect(earnBeforeState).toBeDefined();
+    const earnBefore = earnBeforeState!.progress;
 
     const depSpy = vi.spyOn(gm.economyManager, 'depositSavings');
     const wdSpy = vi.spyOn(gm.economyManager, 'withdrawSavings');
@@ -316,9 +318,11 @@ describe('P4.2 Savings deposits/withdrawals and debt repayment', () => {
     expect(gm.economy.savings).toBe(600);
     expect(gm.economyManager.dailyExpenses).toBe(0);
 
-    // Reject deposit exceeding cash
+    // Reject invalid/negative/NaN/excess amounts
     expect(gm.dispatch({ type: 'depositSavings', amount: 1000 }).success).toBe(false);
     expect(gm.dispatch({ type: 'depositSavings', amount: 0 }).success).toBe(false);
+    expect(gm.dispatch({ type: 'depositSavings', amount: -50 }).success).toBe(false);
+    expect(gm.dispatch({ type: 'depositSavings', amount: Number.NaN }).success).toBe(false);
     expect(gm.economyManager.cash).toBe(600);
 
     const wdRes = gm.dispatch({ type: 'withdrawSavings', amount: 250 });
@@ -330,13 +334,16 @@ describe('P4.2 Savings deposits/withdrawals and debt repayment', () => {
     expect(gm.economy.savings).toBe(350);
     expect(gm.economyManager.dailyRevenue).toBe(0);
 
-    const earnAfter = gm.missionManager
+    const earnAfterState = gm.missionManager
       .getObjectiveStates('m1_household')
-      .find((s) => s.id === 'obj_m1_household_earn')?.progress ?? 0;
-    expect(earnAfter).toBe(earnBefore);
+      .find((s) => s.id === 'obj_m1_earn');
+    expect(earnAfterState).toBeDefined();
+    expect(earnAfterState!.progress).toBe(earnBefore);
 
-    // Reject withdraw exceeding savings
+    // Reject invalid/negative/NaN/excess withdraw
     expect(gm.dispatch({ type: 'withdrawSavings', amount: 500 }).success).toBe(false);
+    expect(gm.dispatch({ type: 'withdrawSavings', amount: -25 }).success).toBe(false);
+    expect(gm.dispatch({ type: 'withdrawSavings', amount: Number.NaN }).success).toBe(false);
     expect(gm.economyManager.savings).toBe(350);
   });
 
@@ -364,13 +371,52 @@ describe('P4.2 Savings deposits/withdrawals and debt repayment', () => {
     expect(gm.economyManager.debt).toBe(0);
     expect(gm.economy.debt).toBe(0);
 
-    // Reject when debt is already 0 or cash is insufficient
+    // Reject when debt is already 0, amount invalid, or cash is insufficient
     expect(gm.dispatch({ type: 'repayDebt', amount: 100 }).success).toBe(false);
+    expect(gm.dispatch({ type: 'repayDebt', amount: -50 }).success).toBe(false);
+    expect(gm.dispatch({ type: 'repayDebt', amount: Number.NaN }).success).toBe(false);
 
     gm.economyManager.debt = 500;
     gm.economyManager.cash = 100;
     expect(gm.dispatch({ type: 'repayDebt', amount: 200 }).success).toBe(false);
     expect(gm.economyManager.debt).toBe(500);
     expect(gm.economyManager.cash).toBe(100);
+  });
+
+  it('repayDebt and askAdvance do not complete m1_household obj_m1_pay_ma or advance obj_m1_earn', () => {
+    const gm = new GameManager({
+      seed: 14,
+      mode: 'career',
+      data: { missions: ch1Missions as MissionDef[] },
+    });
+    gm.missionManager.completeMission('m1_first_ride');
+    gm.missionManager.completeMission('m1_fill_up');
+    gm.missionManager.refreshAvailableMissions(1, 2);
+    expect(gm.missionManager.isMissionActive('m1_household')).toBe(true);
+
+    gm.economyManager.cash = 2500;
+    gm.economyManager.debt = 1500;
+
+    // 1. Repay debt and take advance -> must NOT complete obj_m1_pay_ma or advance obj_m1_earn
+    expect(gm.dispatch({ type: 'repayDebt', amount: 1200 }).success).toBe(true);
+    expect(gm.dispatch({ type: 'askAdvance', from: 'char_ma', amount: 500 }).success).toBe(true);
+
+    const maObjBefore = gm.missionManager
+      .getObjectiveStates('m1_household')
+      .find((s) => s.id === 'obj_m1_pay_ma');
+    expect(maObjBefore).toBeDefined();
+    expect(maObjBefore!.completed).toBe(false);
+
+    const earnObj = gm.missionManager
+      .getObjectiveStates('m1_household')
+      .find((s) => s.id === 'obj_m1_earn');
+    expect(earnObj?.progress).toBe(0);
+
+    // 2. Real household payment completes obj_m1_pay_ma
+    gm.dispatch({ type: 'payExpense', expenseId: 'family', amount: 1200 });
+    const maObjAfter = gm.missionManager
+      .getObjectiveStates('m1_household')
+      .find((s) => s.id === 'obj_m1_pay_ma');
+    expect(maObjAfter?.completed).toBe(true);
   });
 });
