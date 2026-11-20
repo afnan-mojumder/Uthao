@@ -1,7 +1,9 @@
 import { describe, it, expect, beforeEach } from 'vitest';
+import fs from 'node:fs';
 import { render, h, type VNode } from 'preact';
 import { act } from 'preact/test-utils';
 import { Hud, HudView, type HudState } from '../../../src/ui/hud/Hud';
+import { createHudCache, syncHudWithCache } from '../../../src/ui/hud/hudSync';
 import { ChoiceCardView } from '../../../src/ui/choice/ChoiceCard';
 import {
   choiceSignal,
@@ -468,5 +470,144 @@ describe('T8.3 fuel recovery affordances', () => {
       });
       globalThis.document = prevDoc;
     }
+  });
+
+  it('P6.1 R1: invalidates hudCache on runtime setLanguage(bn <-> en) even when keys are unchanged, and keeps steady-state zero-alloc', () => {
+    setLanguage('bn');
+    const cache = createHudCache();
+
+    const makeInput = () => ({
+      now: 1000,
+      simStepped: false,
+      isFirstPerson: false,
+      objectiveKey: 'hud.waiting_for_requests',
+      placeKey: 'poi.mirpara.tea_stall',
+      navKind: 'uturn',
+      navTextKey: 'hud.nav.uturn',
+      navDistM: 120,
+      reqId: 'req_1',
+      passengerStatus: 'OnTrip' as const,
+      passengerNameKey: 'character.tanvir.name',
+      roadEventId: 'ev_water_1',
+      roadEventKind: 'waterlogging',
+      roadEventTitles: { bn: 'জলাবদ্ধতা', en: 'Waterlogging' },
+      activeMissionCount: 1,
+      pollMissions: () => ({
+        main: {
+          id: 'm1',
+          titleKey: 'mission_01_title',
+          objectiveDescKey: 'mission_01_obj',
+          progress: 0,
+          target: 1,
+        },
+        side: [],
+      }),
+      fare: 120,
+      etaMinutes: 8,
+      nearStation: false,
+      chargeSpot: null,
+      todayNetEarnings: 250,
+      shiftClock: '08:30',
+      shiftDay: 1,
+      rating: 4.9,
+      dialogueSubtitle: null,
+      speedKmh: 30,
+      fuelL: 5.0,
+      fuelMaxL: 8.0,
+      conditionPct: 95,
+    });
+
+    // Initial Bangla sync
+    syncHudWithCache(cache, makeInput());
+    const bnState = hudSignal.value;
+    expect(bnState.objectiveText).toBe(t('hud.waiting_for_requests', { place: t('poi.mirpara.tea_stall') }));
+    expect(bnState.roadEventAlert?.title).toBe('জলাবদ্ধতা');
+    expect(bnState.passengerStatus?.name).toBe(t('character.tanvir.name'));
+
+    // Steady-state frame with identical state -> no signal update
+    syncHudWithCache(cache, { ...makeInput(), now: 1016 });
+    expect(hudSignal.value).toBe(bnState);
+
+    // Runtime locale toggle (bn -> en) without changing keys/IDs or settingsSignal
+    setLanguage('en');
+    syncHudWithCache(cache, { ...makeInput(), now: 1032 });
+    const enState = hudSignal.value;
+    expect(enState).not.toBe(bnState);
+    expect(enState.objectiveText).toBe(t('hud.waiting_for_requests', { place: t('poi.mirpara.tea_stall') }));
+    expect(enState.roadEventAlert?.title).toBe('Waterlogging');
+    expect(enState.passengerStatus?.name).toBe(t('character.tanvir.name'));
+
+    // Switch back en -> bn
+    setLanguage('bn');
+    syncHudWithCache(cache, { ...makeInput(), now: 1048 });
+    expect(hudSignal.value.roadEventAlert?.title).toBe('জলাবদ্ধতা');
+  });
+
+  it('P6.1 R1: clears minimapCanvasSignal on pagehide teardown in src/main.ts', () => {
+    const mainSrc = fs.readFileSync('src/main.ts', 'utf-8');
+    expect(mainSrc).toContain('minimapCanvasSignal.value = null');
+  });
+
+  it('P6.1 R1: resets hudCache on state/restored and refreshes on roadEventKind change', () => {
+    setLanguage('en');
+    const bus = new EventBus<GameEvents>();
+    const unbind = bindEventBusToStore(bus);
+    const cache = createHudCache();
+
+    let pollCount = 0;
+    const baseInput = {
+      now: 1000,
+      simStepped: false,
+      isFirstPerson: false,
+      objectiveKey: 'hud.waiting_for_requests',
+      placeKey: '',
+      navKind: '',
+      navTextKey: '',
+      navDistM: -1,
+      reqId: '',
+      passengerStatus: 'None' as const,
+      roadEventId: 'ev_1',
+      roadEventKind: 'waterlogging',
+      roadEventTitles: { en: 'Waterlogging', bn: 'জলাবদ্ধতা' },
+      activeMissionCount: 1,
+      pollMissions: () => {
+        pollCount++;
+        return { main: null, side: [] };
+      },
+      fare: undefined,
+      etaMinutes: undefined,
+      nearStation: false,
+      chargeSpot: null,
+      todayNetEarnings: 0,
+      shiftClock: '07:30',
+      shiftDay: 1,
+      rating: 5.0,
+      dialogueSubtitle: null,
+      speedKmh: 0,
+      fuelL: 6.0,
+      fuelMaxL: 8.0,
+      conditionPct: 100,
+    };
+
+    syncHudWithCache(cache, baseInput);
+    expect(pollCount).toBe(1);
+    expect(hudSignal.value.roadEventAlert?.kind).toBe('waterlogging');
+
+    // roadEventKind change with same roadEventId updates alert
+    syncHudWithCache(cache, {
+      ...baseInput,
+      now: 1016,
+      roadEventKind: 'roadblock',
+      roadEventTitles: { en: 'Roadblock', bn: 'অবরোধ' },
+    });
+    expect(hudSignal.value.roadEventAlert?.kind).toBe('roadblock');
+    expect(hudSignal.value.roadEventAlert?.title).toBe('Roadblock');
+
+    // state/restored resets hudState + invalidates hudCache so missions re-poll on next sync
+    bus.emit('state/restored', {});
+    syncHudWithCache(cache, { ...baseInput, now: 1032 });
+    expect(pollCount).toBe(2);
+
+    unbind();
   });
 });

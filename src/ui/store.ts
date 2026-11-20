@@ -1352,6 +1352,7 @@ export function bindEventBusToStore(bus: EventBus<GameEvents>): () => void {
     tutorialSignal.value = { active: false, step: 'idle' };
     garageSignal.value = { ...garageSignal.value, open: false };
     journalSignal.value = false;
+    resetHudState();
   });
   unsubscribers.push(unsubStateRestored);
 
