@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'preact/hooks';
 import { useModalFocusTrap } from '../focusTrap';
-import { t, localDigits } from '../i18n';
+import { t, localDigits, getLanguage, getLocaleVersion } from '../i18n';
 import { mapLayout } from './mapLayout';
 import {
   HAS_DHAKA_MAP_ASSET,
@@ -539,6 +539,9 @@ export function MapScreen({
     return true;
   });
 
+  const currentLang = getLanguage();
+  const currentLocaleVersion = getLocaleVersion();
+
   useEffect(() => {
     if (!isOpen) return;
     const canvas = canvasRef.current;
@@ -831,6 +834,8 @@ export function MapScreen({
     colorblindRoute,
     displayedPois,
     model,
+    currentLang,
+    currentLocaleVersion,
   ]);
 
   if (!isOpen) return null;

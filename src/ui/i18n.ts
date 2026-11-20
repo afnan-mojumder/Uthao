@@ -95,20 +95,18 @@ export function ensureLocaleLoaded(lang: Language): Promise<Record<string, strin
 }
 
 if (import.meta.env.DEV && typeof process !== 'undefined' && process.versions?.node) {
-  // In Node / Vitest unit tests, pre-populate English synchronously from disk so
+  // In Node / Vitest unit tests, pre-populate English from disk so
   // synchronous `setLanguage('en'); t(...)` assertions continue to work with zero changes.
-  try {
-    const req = (globalThis as unknown as { process: { mainModule?: { require?: (id: string) => unknown } } }).process;
-    void req;
-    void ensureLocaleLoaded('en');
-  } catch {
-    // ignore
-  }
+  void ensureLocaleLoaded('en');
 }
 
 // Default to Bangla for authentic Dhaka experience. A signal, so components that
 // call t() re-render when the language changes.
 const languageSignal = signal<Language>('bn');
+
+export function getLocaleVersion(): number {
+  return localeVersionSignal.value;
+}
 
 export function setLanguage(lang: Language): void {
   if (!localeLoaded[lang]) {

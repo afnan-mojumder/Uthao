@@ -1,6 +1,6 @@
 import type { PassengerStatus } from '../../core/types';
 import { BALANCE } from '../../config/balance';
-import { getLanguage, localDigits, t } from '../i18n';
+import { getLanguage, getLocaleVersion, localDigits, t } from '../i18n';
 import {
   getHudResetCount,
   HUD_THROTTLE_MS,
@@ -25,6 +25,7 @@ export function resolveHudEtaMinutes(
 export interface HudSyncCache {
   readonly patch: Partial<HudState>;
   lastLang: string;
+  lastLocaleVersion: number;
   lastHudPushMs: number;
   lastMissionPollMs: number;
   lastObjKey: string;
@@ -86,6 +87,7 @@ export function createHudCache(): HudSyncCache {
   return {
     patch: {},
     lastLang: '',
+    lastLocaleVersion: -1,
     lastHudPushMs: -Infinity,
     lastMissionPollMs: -Infinity,
     lastObjKey: '',
@@ -108,6 +110,7 @@ export function createHudCache(): HudSyncCache {
 
 export function resetHudCache(cache: HudSyncCache): void {
   cache.lastLang = '';
+  cache.lastLocaleVersion = -1;
   cache.lastHudPushMs = -Infinity;
   cache.lastMissionPollMs = -Infinity;
   cache.lastObjKey = '';
@@ -138,10 +141,12 @@ export function syncHudWithCache(cache: HudSyncCache, input: HudSyncInput): bool
   }
 
   const lang = getLanguage();
-  const langChanged = lang !== cache.lastLang;
+  const localeVersion = getLocaleVersion();
+  const langChanged = lang !== cache.lastLang || localeVersion !== cache.lastLocaleVersion;
   if (langChanged) {
     resetHudCache(cache);
     cache.lastLang = lang;
+    cache.lastLocaleVersion = localeVersion;
   }
 
   const cur = hudSignal.value;
