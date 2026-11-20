@@ -23,6 +23,8 @@ import {
   garageSignal,
   isGamepadRebindingSignal,
   journalSignal,
+  karmaPanelSignal,
+  uiSheetSignal,
   loadingSignal,
   negotiationSignal,
   pausedSignal,
@@ -64,6 +66,8 @@ export function uiModalOpen(settingsOpen: boolean, opts: { ignoreTutorial?: bool
     endingSignal.value.active ||
     garageSignal.value.open ||
     journalSignal.value ||
+    karmaPanelSignal.value ||
+    uiSheetSignal.value ||
     tripSummarySignal.value !== null ||
     (!opts.ignoreTutorial && tutorialSignal.value.active) ||
     saveSlotsSignal.value.isOpen ||
@@ -190,6 +194,8 @@ export function watchOverlayFocus(): () => void {
       loadingSignal.value.active,
       Boolean(unsupportedSignal.value),
       journalSignal.value,
+      karmaPanelSignal.value,
+      uiSheetSignal.value,
       saveSlotsSignal.value.isOpen,
       garageSignal.value.open,
       pausedSignal.value,

@@ -1,4 +1,6 @@
 import { signal } from '@preact/signals';
+import type { InputBindings } from '../input/types';
+import { cloneDefaultBindings } from '../input/bindings';
 import { DEFAULT_VOLUMES } from '../audio/AudioManager';
 import type { AudioSettings } from '../audio/bindAudio';
 import { BALANCE } from '../config/balance';
@@ -192,12 +194,56 @@ export const tripSummarySignal = signal<TripReceipt | null>(null);
 /** T7.4: toggled by the 'j' keybinding, same pattern as garage ('g') and the
  * map ('m'). */
 export const journalSignal = signal<boolean>(false);
+export const karmaPanelSignal = signal<boolean>(false);
+export const uiSheetSignal = signal<boolean>(false);
 export const mapPlayerPosSignal = signal<{ x: number; z: number }>({ x: 0, z: 0 });
+
+export interface KarmaPanelData {
+  meters: Record<import('../sim/reputation/ReputationSystem').MeterId, number>;
+  passengerTrust: Record<string, number>;
+  karmaLog: import('../sim/reputation/ReputationSystem').KarmaEvent[];
+  day: number;
+  appWarned: boolean;
+  appSuspended: boolean;
+  appSuspendedUntilDay: number;
+  promises: { kept: number; broken: number };
+}
+
+export const karmaDataSignal = signal<KarmaPanelData | null>(null);
+
+export const mapNetworkSignal = signal<import('../sim/road/RoadNetwork').RoadNetwork | null>(null);
+export const mapWorldSignal = signal<import('../sim/schemas').WorldData | null>(null);
+
+export interface MapLiveState {
+  routeNodes: string[];
+  pickupNodeId: string | null;
+  dropoffNodeId: string | null;
+  waypointNodeId: string | null;
+  activeEvents: Array<{
+    id: string;
+    nodeId: string;
+    type: string;
+    severity: number;
+    x?: number;
+    z?: number;
+  }>;
+  storyNodeIds: string[];
+}
+
+export const mapLiveSignal = signal<MapLiveState>({
+  routeNodes: [],
+  pickupNodeId: null,
+  dropoffNodeId: null,
+  waypointNodeId: null,
+  activeEvents: [],
+  storyNodeIds: [],
+});
 
 export interface JournalData {
   snapshot: import('../sim/GameManager').SimSnapshot;
   activeMissions: import('../sim/schemas').MissionDef[];
   getObjectiveStates: (missionId: string) => import('../sim/mission/objectives').ObjectiveState[];
+  ownedUpgrades?: string[];
 }
 
 /** T7.4: filled by main.ts's frame loop only while `journalSignal` is open,
@@ -301,6 +347,8 @@ export interface GameSettings {
   ambientVolume: number;
   /** Silences all game sound (audit: no mute control). */
   muted: boolean;
+  /** Optional snapshot of active keybindings synced by Settings & read by UiSheet. */
+  controls?: InputBindings;
 }
 
 export const DEFAULT_SETTINGS: GameSettings = {
@@ -317,6 +365,7 @@ export const DEFAULT_SETTINGS: GameSettings = {
   sfxVolume: DEFAULT_VOLUMES.sfx,
   ambientVolume: DEFAULT_VOLUMES.ambient,
   muted: DEFAULT_VOLUMES.muted,
+  controls: cloneDefaultBindings(),
 };
 
 export const SETTINGS_STORAGE_KEY = 'uthao_user_settings';
@@ -613,6 +662,10 @@ if (typeof window !== 'undefined') {
     rotateOverlaySignal,
     tripSummarySignal,
     journalSignal,
+    karmaPanelSignal,
+    uiSheetSignal,
+    karmaDataSignal,
+    mapLiveSignal,
     encounterCueSignal,
     isGamepadRebindingSignal,
   };
@@ -724,6 +777,16 @@ export function exitToTitle(): void {
   negotiationSignal.value = { active: false, session: null, lastResult: null };
   garageSignal.value = { ...garageSignal.value, open: false };
   journalSignal.value = false;
+  karmaPanelSignal.value = false;
+  uiSheetSignal.value = false;
+  mapLiveSignal.value = {
+    routeNodes: [],
+    pickupNodeId: null,
+    dropoffNodeId: null,
+    waypointNodeId: null,
+    activeEvents: [],
+    storyNodeIds: [],
+  };
   dayEndSignal.value = { active: false, summary: null };
   endingSignal.value = { active: false, result: null, choices: undefined };
   tripSummarySignal.value = null;
@@ -1498,6 +1561,8 @@ export function bindEventBusToStore(bus: EventBus<GameEvents>): () => void {
     tutorialSignal.value = { active: false, step: 'idle' };
     garageSignal.value = { ...garageSignal.value, open: false };
     journalSignal.value = false;
+    karmaPanelSignal.value = false;
+    uiSheetSignal.value = false;
     resetHudState();
   });
   unsubscribers.push(unsubStateRestored);

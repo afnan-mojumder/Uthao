@@ -42,6 +42,10 @@ export interface KeyboardBindings {
   garage: string[];
   /** Opens the rider journal. */
   journal: string[];
+  /** Opens the unified UI sheet. */
+  uiSheet: string[];
+  /** Opens the karma & reputation panel. */
+  karma: string[];
   /** Toggles all game sound. */
   mute: string[];
 }

@@ -19,6 +19,8 @@ export const DEFAULT_BINDINGS: InputBindings = {
     choice3: ['Digit4', 'Numpad4'],
     garage: ['KeyG'],
     journal: ['KeyJ'],
+    uiSheet: ['KeyU'],
+    karma: ['KeyK'],
     mute: ['KeyN'],
   },
   gamepad: {
@@ -161,6 +163,8 @@ export function cloneDefaultBindings(): InputBindings {
       choice3: [...DEFAULT_BINDINGS.keyboard.choice3],
       garage: [...DEFAULT_BINDINGS.keyboard.garage],
       journal: [...DEFAULT_BINDINGS.keyboard.journal],
+      uiSheet: [...DEFAULT_BINDINGS.keyboard.uiSheet],
+      karma: [...DEFAULT_BINDINGS.keyboard.karma],
       mute: [...DEFAULT_BINDINGS.keyboard.mute],
     },
     gamepad: {

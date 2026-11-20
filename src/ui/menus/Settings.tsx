@@ -51,6 +51,8 @@ const KEYBOARD_ACTIONS: Array<{ action: RebindableKeyboardAction; labelKey: stri
   { action: 'map', labelKey: 'settings.controls.action.map' },
   { action: 'garage', labelKey: 'settings.controls.action.garage' },
   { action: 'journal', labelKey: 'settings.controls.action.journal' },
+  { action: 'uiSheet', labelKey: 'settings.controls.action.uiSheet' },
+  { action: 'karma', labelKey: 'settings.controls.action.karma' },
   { action: 'mute', labelKey: 'settings.controls.action.mute' },
 ];
 
@@ -288,16 +290,21 @@ export function Settings({
   };
 
   const handleSave = () => {
-    saveBindings({
+    const nextBindings = {
       ...draftBindings,
       tiltEnabled: localSettings.tiltControls,
-    });
+    };
+    saveBindings(nextBindings);
+    const nextSettings = {
+      ...localSettings,
+      controls: nextBindings,
+    };
     audioPreviewSignal.value = null;
     updateListeningTarget(null);
     isGamepadRebindingSignal.value = false;
-    saveSettings(localSettings);
-    applyDocumentSettings(localSettings);
-    onSave?.(localSettings);
+    saveSettings(nextSettings);
+    applyDocumentSettings(nextSettings);
+    onSave?.(nextSettings);
     onClose?.();
   };
 

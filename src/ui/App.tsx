@@ -53,6 +53,13 @@ import {
   journalSignal,
   mapPlayerPosSignal,
   journalDataSignal,
+  karmaPanelSignal,
+  karmaDataSignal,
+  uiSheetSignal,
+  mapNetworkSignal,
+  mapWorldSignal,
+  mapLiveSignal,
+  settingsSignal,
   choiceSignal,
   encounterCueSignal,
   Z_LAYER,
@@ -82,6 +89,8 @@ import {
 import { FirstRideTutorial } from './tutorial/FirstRideTutorial';
 import { TripSummary } from './trip/TripSummary';
 import { Journal } from './journal/Journal';
+import { KarmaPanel } from './karma/KarmaPanel';
+import { UiSheet } from './sheet/UiSheet';
 import { t } from './i18n';
 import { loadBindings } from '../input/bindings';
 import { toggleMute } from './store';
@@ -102,7 +111,7 @@ export function App(): JSX.Element {
       rotateOverlaySignal.value = isPortrait;
     };
 
-    const hasBlockingOverlay = (except?: 'garage' | 'journal' | 'map') =>
+    const hasBlockingOverlay = (except?: 'garage' | 'journal' | 'map' | 'uiSheet' | 'karma') =>
       hasSystemOverlay() ||
       showSettingsRef.current ||
       saveSlotsSignal.value.isOpen ||
@@ -114,7 +123,9 @@ export function App(): JSX.Element {
       tutorialSignal.value.active ||
       phoneSignal.value.open ||
       (except !== 'garage' && garageSignal.value.open) ||
-      (except !== 'journal' && journalSignal.value);
+      (except !== 'journal' && journalSignal.value) ||
+      (except !== 'karma' && karmaPanelSignal.value) ||
+      (except !== 'uiSheet' && uiSheetSignal.value);
 
     const handleKeyDown = (e: KeyboardEvent) => {
       // Never take keys from text fields.
@@ -161,6 +172,20 @@ export function App(): JSX.Element {
           journalSignal.value = true;
         }
       }
+      if (pressed(bound.karma) && screenSignal.value === 'game') {
+        if (karmaPanelSignal.value && !hasBlockingOverlay('karma')) {
+          karmaPanelSignal.value = false;
+        } else if (!uiModalOpen(showSettingsRef.current)) {
+          karmaPanelSignal.value = true;
+        }
+      }
+      if (pressed(bound.uiSheet) && screenSignal.value === 'game') {
+        if (uiSheetSignal.value && !hasBlockingOverlay('uiSheet')) {
+          uiSheetSignal.value = false;
+        } else if (!uiModalOpen(showSettingsRef.current)) {
+          uiSheetSignal.value = true;
+        }
+      }
       if (pressed(bound.mute) && screenSignal.value === 'game' && !uiModalOpen(showSettingsRef.current)) {
         toggleMute();
       }
@@ -183,6 +208,10 @@ export function App(): JSX.Element {
           negotiationSignal.value.active
         ) {
           return;
+        } else if (uiSheetSignal.value) {
+          uiSheetSignal.value = false;
+        } else if (karmaPanelSignal.value) {
+          karmaPanelSignal.value = false;
         } else if (garageSignal.value.open) {
           garageSignal.value = { ...garageSignal.value, open: false };
           if (screenSignal.value === 'garage') screenSignal.value = 'game';
@@ -406,8 +435,59 @@ export function App(): JSX.Element {
           snapshot={journalDataSignal.value.snapshot}
           activeMissions={journalDataSignal.value.activeMissions}
           getObjectiveStates={journalDataSignal.value.getObjectiveStates}
+          ownedUpgrades={journalDataSignal.value.ownedUpgrades}
           onClose={() => {
             journalSignal.value = false;
+          }}
+        />
+      )}
+
+      {karmaPanelSignal.value && karmaDataSignal.value && (
+        <KarmaPanel
+          isOpen={true}
+          data={karmaDataSignal.value}
+          relationships={phoneSignal.value.relationships}
+          onClose={() => {
+            karmaPanelSignal.value = false;
+          }}
+        />
+      )}
+
+      {uiSheetSignal.value && (
+        <UiSheet
+          isOpen={true}
+          controls={settingsSignal.value.controls}
+          tiltControls={settingsSignal.value.tiltControls}
+          onOpenMap={() => {
+            uiSheetSignal.value = false;
+            screenSignal.value = 'map';
+          }}
+          onOpenPhone={() => {
+            uiSheetSignal.value = false;
+            phoneSignal.value = { ...phoneSignal.value, open: true, unreadCount: 0 };
+          }}
+          onOpenGarage={() => {
+            uiSheetSignal.value = false;
+            garageSignal.value = { ...garageSignal.value, open: true };
+          }}
+          onOpenJournal={() => {
+            uiSheetSignal.value = false;
+            journalSignal.value = true;
+          }}
+          onOpenKarma={() => {
+            uiSheetSignal.value = false;
+            karmaPanelSignal.value = true;
+          }}
+          onOpenPause={() => {
+            uiSheetSignal.value = false;
+            screenSignal.value = 'pause';
+          }}
+          onOpenSettings={() => {
+            uiSheetSignal.value = false;
+            setShowSettings(true);
+          }}
+          onClose={() => {
+            uiSheetSignal.value = false;
           }}
         />
       )}
@@ -464,6 +544,15 @@ export function App(): JSX.Element {
         <MapScreen
           isOpen={true}
           playerPos={mapPlayerPosSignal.value}
+          routeNodes={mapLiveSignal.value.routeNodes}
+          pickupNodeId={mapLiveSignal.value.pickupNodeId}
+          dropoffNodeId={mapLiveSignal.value.dropoffNodeId}
+          waypointNodeId={mapLiveSignal.value.waypointNodeId}
+          roadEvents={mapLiveSignal.value.activeEvents}
+          storyNodeIds={mapLiveSignal.value.storyNodeIds}
+          roadNetwork={mapNetworkSignal.value ?? undefined}
+          worldData={mapWorldSignal.value ?? undefined}
+          colorblindRoute={settingsSignal.value.colorblindRoute}
           onSetWaypoint={(nodeId) => onSetWaypointCallback?.(nodeId)}
           onClose={() => {
             screenSignal.value = 'game';

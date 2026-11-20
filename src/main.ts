@@ -55,7 +55,7 @@ import { setDefaultSignLanguage } from './render/signage';
 import { consumeFreshCareer, resolveCareerSeed } from './ui/freshCareer';
 import { applyDocumentSettings, routeColorFor } from './ui/settingsEffects';
 import { remainingRouteEtaMin } from './sim/road/navigation';
-import { bindUi } from './ui/bindings';
+import { bindUi, syncMapLiveFromSession } from './ui/bindings';
 import { SaveSystem } from './sim/save/SaveSystem';
 import { Minimap } from './render/minimap';
 import { deriveRideView, nearestPlaceKey } from './sim/ride/rideView';
@@ -732,6 +732,7 @@ function frame(now: number) {
         .map((id) => gm.missionManager.missions.get(id))
         .filter((m): m is NonNullable<typeof m> => Boolean(m)),
       getObjectiveStates: (missionId) => gm.missionManager.getObjectiveStates(missionId),
+      ownedUpgrades: [...gm.economyManager.ownedUpgrades],
     };
   }
 
@@ -755,6 +756,7 @@ function frame(now: number) {
       if (Math.abs(prevMapPos.x - session.bike.x) > 0.25 || Math.abs(prevMapPos.z - session.bike.z) > 0.25) {
         mapPlayerPosSignal.value = { x: session.bike.x, z: session.bike.z };
       }
+      syncMapLiveFromSession(session);
     }
   }
 

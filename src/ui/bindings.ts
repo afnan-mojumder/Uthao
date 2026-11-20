@@ -1,7 +1,7 @@
 import type { GameSession } from '../sim/GameSession';
 import type { SaveSystem } from '../sim/save/SaveSystem';
 import { respond } from '../sim/negotiation/NegotiationSystem';
-import { nearestPlaceKey } from '../sim/ride/rideView';
+import { deriveRideView, nearestPlaceKey } from '../sim/ride/rideView';
 import type { BikeId } from '../core/types';
 import type { SaveSlot } from '../sim/save/migrations';
 import { BALANCE } from '../config/balance';
@@ -36,6 +36,10 @@ import {
   phoneSignal,
   saveStatusSignal,
   endShiftBlockedKeySignal,
+  journalDataSignal,
+  karmaDataSignal,
+  mapNetworkSignal,
+  mapLiveSignal,
 } from './store';
 
 let activeBindingsCleanup: (() => void) | null = null;
@@ -49,6 +53,88 @@ let activeBindingsCleanup: (() => void) | null = null;
  * single place that turns a UI button press into a real game-state change —
  * UI components themselves only read signals and invoke `on*Callback`.
  */
+export function syncMapLiveFromSession(session: GameSession): void {
+  const gm = session.gm;
+  const rideManager = session.ride;
+  if (
+    !rideManager ||
+    typeof rideManager.getTripState !== 'function' ||
+    !gm?.roadEvents ||
+    !gm?.missionManager ||
+    !session.road
+  ) {
+    return;
+  }
+  const view = deriveRideView(rideManager);
+  const req = rideManager.getActiveRequest();
+  const routeNodes = rideManager.currentRoute?.nodeIds ?? [];
+  const pickupNodeId = req && view.pickupVisible ? req.pickupNodeId : null;
+  const dropoffNodeId = req && view.dropoffVisible ? req.destinationNodeId : null;
+  const waypointNodeId = gm.waypointNodeId ?? null;
+
+  const activeEvents = gm.roadEvents
+    .getActiveEvents()
+    .map((ev) => {
+      const seg = ev.segmentId ? session.road.getSegment(ev.segmentId) : undefined;
+      const nA = seg ? session.road.getNode(seg.startNodeId) : undefined;
+      const nB = seg ? session.road.getNode(seg.endNodeId) : undefined;
+      const nodeId = seg?.startNodeId ?? '';
+      return {
+        id: ev.id,
+        nodeId,
+        type: ev.kind,
+        severity: ev.closesSegment ? 1 : 0.6,
+        x: nA && nB ? (nA.x + nB.x) / 2 : undefined,
+        z: nA && nB ? (nA.z + nB.z) / 2 : undefined,
+      };
+    })
+    .filter((ev) => ev.nodeId.length > 0);
+
+  const reachTarget = gm.missionManager.getActiveReachTarget();
+  const storyNodeIds: string[] = [];
+  if (reachTarget) {
+    const matchedPoi = session.road
+      .getPois()
+      .find((p) => p.id === reachTarget.poiId || p.kind === reachTarget.poiId);
+    if (matchedPoi) {
+      storyNodeIds.push(matchedPoi.nodeId);
+    }
+  }
+
+  const prev = mapLiveSignal.value;
+  const sameRoute =
+    prev.routeNodes.length === routeNodes.length &&
+    prev.routeNodes.every((id, idx) => id === routeNodes[idx]);
+  const sameEvents =
+    prev.activeEvents.length === activeEvents.length &&
+    prev.activeEvents.every(
+      (ev, idx) => ev.id === activeEvents[idx]?.id && ev.nodeId === activeEvents[idx]?.nodeId
+    );
+  const sameStory =
+    prev.storyNodeIds.length === storyNodeIds.length &&
+    prev.storyNodeIds.every((id, idx) => id === storyNodeIds[idx]);
+
+  if (
+    sameRoute &&
+    sameEvents &&
+    sameStory &&
+    prev.pickupNodeId === pickupNodeId &&
+    prev.dropoffNodeId === dropoffNodeId &&
+    prev.waypointNodeId === waypointNodeId
+  ) {
+    return;
+  }
+
+  mapLiveSignal.value = {
+    routeNodes: [...routeNodes],
+    pickupNodeId,
+    dropoffNodeId,
+    waypointNodeId,
+    activeEvents,
+    storyNodeIds,
+  };
+}
+
 export function bindUi(session: GameSession, saveSystem?: SaveSystem): () => void {
   activeBindingsCleanup?.();
 
@@ -109,12 +195,45 @@ export function bindUi(session: GameSession, saveSystem?: SaveSystem): () => voi
       relationships: gm.reputationSystem.getAllRelationships(),
     };
   };
+  const syncKarma = () => {
+    if (!gm?.reputationSystem) return;
+    const repSnap = gm.reputationSystem.snapshot();
+    karmaDataSignal.value = {
+      meters: repSnap.meters,
+      passengerTrust: repSnap.passengerTrust,
+      karmaLog: repSnap.karmaLog,
+      day: gm.clock.day,
+      appWarned: repSnap.wasWarned,
+      appSuspended: repSnap.suspendedUntilDay > 0 && gm.clock.day <= repSnap.suspendedUntilDay,
+      appSuspendedUntilDay: repSnap.suspendedUntilDay,
+      promises: repSnap.promises,
+    };
+  };
+  const syncJournal = () => {
+    if (!gm?.missionManager || !gm?.story) return;
+    journalDataSignal.value = {
+      snapshot: gm.snapshot(),
+      activeMissions: gm.story.activeMissions
+        .map((id) => gm.missionManager.missions.get(id))
+        .filter((m): m is NonNullable<typeof m> => Boolean(m)),
+      getObjectiveStates: (missionId) => gm.missionManager.getObjectiveStates(missionId),
+      ownedUpgrades: gm.economyManager ? [...gm.economyManager.ownedUpgrades] : [],
+    };
+  };
+  const syncMapLive = () => {
+    syncMapLiveFromSession(session);
+  };
+
+  mapNetworkSignal.value = session.road ?? null;
   if (gm?.economyManager) {
     syncGarage();
     syncPhoneSummary();
   }
   if (gm?.reputationSystem) syncContacts();
   if (gm?.deliveryManager) syncDeliveries();
+  syncKarma();
+  syncJournal();
+  syncMapLive();
   syncPauseEndShift();
 
   unsubscribers.push(
@@ -144,12 +263,16 @@ export function bindUi(session: GameSession, saveSystem?: SaveSystem): () => voi
         syncGarage();
         syncContacts();
         syncPhoneSummary();
+        syncKarma();
+        syncJournal();
       })
     );
     unsubscribers.push(
       gm.bus.on('karma/changed', () => {
         syncGarage();
         syncContacts();
+        syncKarma();
+        syncJournal();
       })
     );
     unsubscribers.push(gm.bus.on('player/kamalProximity', syncGarage));
@@ -160,12 +283,19 @@ export function bindUi(session: GameSession, saveSystem?: SaveSystem): () => voi
         syncPhoneSummary();
       })
     );
-    unsubscribers.push(gm.bus.on('trip/state', syncPauseEndShift));
+    unsubscribers.push(
+      gm.bus.on('trip/state', () => {
+        syncPauseEndShift();
+        syncMapLive();
+      })
+    );
     unsubscribers.push(
       gm.bus.on('day/ended', () => {
         syncGarage();
         syncPauseEndShift();
         syncPhoneSummary();
+        syncKarma();
+        syncJournal();
       })
     );
     unsubscribers.push(
@@ -175,6 +305,9 @@ export function bindUi(session: GameSession, saveSystem?: SaveSystem): () => voi
         syncDeliveries();
         syncPauseEndShift();
         syncPhoneSummary();
+        syncKarma();
+        syncJournal();
+        syncMapLive();
       })
     );
     unsubscribers.push(
@@ -184,8 +317,43 @@ export function bindUi(session: GameSession, saveSystem?: SaveSystem): () => voi
         syncDeliveries();
         syncPauseEndShift();
         syncPhoneSummary();
+        syncKarma();
+        syncJournal();
+        syncMapLive();
       })
     );
+    unsubscribers.push(
+      gm.bus.on('story/flag', () => {
+        syncJournal();
+        syncMapLive();
+      })
+    );
+    unsubscribers.push(
+      gm.bus.on('mission/activated', () => {
+        syncJournal();
+        syncMapLive();
+      })
+    );
+    unsubscribers.push(
+      gm.bus.on('mission/objectiveUpdated', () => {
+        syncJournal();
+        syncMapLive();
+      })
+    );
+    unsubscribers.push(
+      gm.bus.on('mission/completed', () => {
+        syncJournal();
+        syncMapLive();
+      })
+    );
+    unsubscribers.push(gm.bus.on('character/contactAdded', syncJournal));
+    unsubscribers.push(gm.bus.on('upgrade/purchased', syncJournal));
+    unsubscribers.push(gm.bus.on('world/roadEvent', syncMapLive));
+    unsubscribers.push(gm.bus.on('ride/accepted', syncMapLive));
+    unsubscribers.push(gm.bus.on('ride/arrivedPickup', syncMapLive));
+    unsubscribers.push(gm.bus.on('ride/started', syncMapLive));
+    unsubscribers.push(gm.bus.on('ride/cancelled', syncMapLive));
+    unsubscribers.push(gm.bus.on('ride/completed', syncMapLive));
   }
 
   setChoiceDispatcher((choiceId, instanceId) => {
@@ -420,16 +588,25 @@ export function bindUi(session: GameSession, saveSystem?: SaveSystem): () => voi
       if (slot) applyLoadedSave(slot);
       gm.paused = false;
       pausedSignal.value = false;
+      syncKarma();
+      syncJournal();
+      syncMapLive();
     },
     () => {
       session.enterEndless();
       gm.paused = false;
       pausedSignal.value = false;
+      syncKarma();
+      syncJournal();
+      syncMapLive();
     },
     () => {
       pausedSignal.value = false;
     },
-    (nodeId) => gm.dispatch({ type: 'setWaypoint', nodeId })
+    (nodeId) => {
+      gm.dispatch({ type: 'setWaypoint', nodeId });
+      syncMapLive();
+    }
   );
   setHasSaveCallback(() => saveSystem?.hasAnySave() ?? false);
 

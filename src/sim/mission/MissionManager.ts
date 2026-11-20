@@ -546,8 +546,7 @@ export class MissionManager {
   }
 
 
-  getUnlockedDistricts(chapter?: number): DistrictId[] {
-    const ch = chapter ?? this.storyState.currentChapter;
+  static getUnlockedDistrictsForChapter(ch: number): DistrictId[] {
     if (ch <= 1) {
       return ['mirpara'];
     }
@@ -573,6 +572,11 @@ export class MissionManager {
       'mohakhal',
       'testloop',
     ];
+  }
+
+  getUnlockedDistricts(chapter?: number): DistrictId[] {
+    const ch = chapter ?? this.storyState.currentChapter;
+    return MissionManager.getUnlockedDistrictsForChapter(ch);
   }
 
   getObjectiveStates(missionId: string): ObjectiveState[] {

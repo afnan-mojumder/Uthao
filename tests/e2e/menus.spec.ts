@@ -237,7 +237,7 @@ test.describe('T3.10 Menus, Settings, Pause and Dhaka Map E2E', () => {
 
     // 2. Journal opens via 'J' and closes via real pointer click
     await page.keyboard.press('KeyJ');
-    const journalCloseBtn = page.getByRole('button', { name: /✕/ });
+    const journalCloseBtn = page.getByRole('button', { name: /✕|Close|বন্ধ/ });
     await expect(journalCloseBtn).toBeVisible({ timeout: 5000 });
     await journalCloseBtn.click({ timeout: 5000 });
     await expect(journalCloseBtn).not.toBeVisible({ timeout: 5000 });

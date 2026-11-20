@@ -1,379 +1,552 @@
 import { useState } from 'preact/hooks';
-import { t } from '../i18n';
-import { Z_LAYER } from '../store';
 import type { SimSnapshot } from '../../sim/GameManager';
 import type { MissionDef } from '../../sim/schemas';
+import type { StoryPromise } from '../../core/types';
 import type { ObjectiveState } from '../../sim/mission/objectives';
-import { calculateTendenciesFromSnapshot } from '../../sim/reputation/identity';
+import { CHARACTERS, isContactUnlocked } from '../../sim/passenger/PassengerAI';
+import { MissionManager } from '../../sim/mission/MissionManager';
+import { ModalPanel, CharacterPortrait, StatusBar } from '../components';
+import {
+  IconBell,
+  IconCheck,
+  IconClock,
+  IconFlag,
+  IconLock,
+  IconMapPin,
+  IconPhone,
+  IconScroll,
+  IconStar,
+  IconWrench,
+} from '../components/icons';
+import { t, localDigits } from '../i18n';
+import { Z_LAYER } from '../store';
 
 export interface JournalProps {
   snapshot: SimSnapshot;
   activeMissions: MissionDef[];
   getObjectiveStates: (missionId: string) => ObjectiveState[];
+  ownedUpgrades?: string[];
   onClose: () => void;
+  zIndex?: number;
+}
+
+const KNOWN_FLAG_KEYS = new Set([
+  'ch1_completed',
+  'ch2_completed',
+  'ch2_regulars_known',
+  'ch2_rush_done',
+  'ch3_completed',
+  'ch4_completed',
+  'ch5_calls_done',
+  'ch5_completed',
+  'ch6_decision_made',
+  'appSuspended',
+  'career_choice',
+  'career_choice_savings',
+]);
+
+function formatDecisionLabel(flagKey: string, value: boolean | number | string): string {
+  if (KNOWN_FLAG_KEYS.has(flagKey)) {
+    return t(`journal.flag_label.${flagKey}`);
+  }
+  const clean = flagKey.replace(/[_-]+/g, ' ');
+  return typeof value === 'string' && value.length > 0 && value !== 'true'
+    ? `${clean}: ${value}`
+    : clean;
+}
+
+function formatPromiseLabel(promise: StoryPromise): string {
+  const translated = t(promise.descriptionKey);
+  if (translated !== promise.descriptionKey) return translated;
+  return promise.id.replace(/^promise_/, '').replace(/[_-]+/g, ' ');
+}
+
+function upgradeName(upgradeId: string): string {
+  const short = upgradeId.replace(/^upgrade_/, '');
+  const key = `upgrade.${short}.name`;
+  const translated = t(key);
+  return translated === key ? short.replace(/[_-]+/g, ' ') : translated;
 }
 
 export function Journal({
   snapshot,
   activeMissions,
   getObjectiveStates,
+  ownedUpgrades: ownedUpgradesProp = [],
   onClose,
+  zIndex = Z_LAYER.PANEL,
 }: JournalProps) {
-  const [activeTab, setActiveTab] = useState<'missions' | 'characters' | 'reputation' | 'tendencies'>('missions');
+  const [activeTab, setActiveTab] = useState<'missions' | 'relations' | 'records'>('missions');
 
-  const { story, reputation } = snapshot;
+  const { day } = snapshot.clock;
+  const { story, economy, reputation, todayCompletedRides } = snapshot;
+  const chapter = story.currentChapter;
+  const relationships = story.characterRelationships ?? {};
+  const rating = reputation?.rating ?? economy.reputation ?? 5.0;
+  const promisesRecord = reputation?.promises ?? { kept: 0, broken: 0 };
+  const ownedUpgrades = ownedUpgradesProp;
 
-  // Derive identity tendencies (0-100) using the centralized identity calculator
-  const rating = reputation?.rating ?? 5.0;
-  const safety = reputation?.safetyRecord ?? { nearMisses: 0, bumps: 0, crashes: 0, infractions: 0 };
-  const localTrust = reputation?.localTrust ?? 30;
+  const unlockedDistricts = MissionManager.getUnlockedDistrictsForChapter(chapter).filter(
+    (d) => d !== 'testloop'
+  );
+  const activeFlags = Object.entries(story.branchFlags).filter(([, val]) => Boolean(val));
+  const pendingPromises = story.promises.filter((p) => !p.fulfilled);
+  const unlockedContacts = CHARACTERS.filter((c) => {
+    const rel = relationships[c.id] ?? c.initialRelationship;
+    return isContactUnlocked(c.id, rel);
+  });
 
-  const tendencies = calculateTendenciesFromSnapshot(snapshot);
-  const proScore = tendencies.professional;
-  const negScore = tendencies.negotiator;
-  const hustlerScore = tendencies.hustler;
-  const regularScore = tendencies.regular;
+  const opportunities: Array<{ id: string; kind: 'district' | 'contact' | 'upgrade'; text: string }> = [
+    ...unlockedDistricts.map((d) => ({
+      id: `dist_${d}`,
+      kind: 'district' as const,
+      text: t('journal.opp_district', { name: t(`district.${d}`) }),
+    })),
+    ...unlockedContacts.map((c) => ({
+      id: `contact_${c.id}`,
+      kind: 'contact' as const,
+      text: t('journal.opp_contact', { name: t(c.nameKey) }),
+    })),
+    ...ownedUpgrades.map((u) => ({
+      id: `upg_${u}`,
+      kind: 'upgrade' as const,
+      text: t('journal.opp_upgrade', { name: upgradeName(u) }),
+    })),
+  ];
+
+  const tabButtonStyle = (selected: boolean) => ({
+    padding: '7px 14px',
+    borderRadius: '9px',
+    border: selected
+      ? '1px solid rgba(245, 158, 11, 0.55)'
+      : '1px solid rgba(148, 163, 184, 0.18)',
+    backgroundColor: selected ? 'rgba(245, 158, 11, 0.18)' : 'rgba(30, 41, 59, 0.6)',
+    color: selected ? '#FCD34D' : '#CBD5E1',
+    fontWeight: 700,
+    fontSize: '13px',
+    cursor: 'pointer',
+    whiteSpace: 'nowrap' as const,
+  });
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(15, 23, 42, 0.85)',
-        backdropFilter: 'blur(8px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: Z_LAYER.PANEL,
-        pointerEvents: 'auto',
-        color: '#f8fafc',
-        fontFamily: "'Noto Sans Bengali', system-ui, sans-serif",
-      }}
+    <ModalPanel
+      testId="journal-panel"
+      title={t('journal.title')}
+      subtitle={t('journal.subtitle', {
+        chapter: localDigits(chapter),
+        day: localDigits(day),
+      })}
+      onClose={onClose}
+      closeLabel={t('btn_close')}
+      zIndex={zIndex}
+      maxWidth="min(760px, 94vw)"
+      panelStyle={{ maxHeight: '90dvh', overflowY: 'auto' }}
     >
-      <div
-        style={{
-          width: '90%',
-          maxWidth: '800px',
-          height: '85vh',
-          backgroundColor: '#1e293b',
-          borderRadius: '16px',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
-        }}
-      >
-        {/* Header */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+        {/* Compact Stats Strip */}
         <div
           style={{
-            padding: '16px 24px',
-            borderBottom: '1px solid #334155',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            backgroundColor: '#0f172a',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+            gap: '8px',
           }}
         >
-          <div>
-            <h2 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 700, color: '#f59e0b' }}>
-              {t('journal_title')}
-            </h2>
-            <div style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
-              অধ্যায় {story.currentChapter} · দিন {snapshot.clock.day}
-            </div>
-          </div>
-          <button
-            onClick={onClose}
+          <div
             style={{
-              background: '#334155',
-              border: 'none',
-              color: '#f8fafc',
-              padding: '8px 16px',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontWeight: 600,
-              fontSize: '0.9rem',
+              padding: '8px 10px',
+              borderRadius: '10px',
+              backgroundColor: 'rgba(30, 41, 59, 0.62)',
+              border: '1px solid rgba(148, 163, 184, 0.14)',
             }}
           >
-            ✕ {t('btn_close')}
+            <div style={{ fontSize: '11px', color: '#94A3B8' }}>{t('journal.summary_rides')}</div>
+            <div style={{ fontSize: '16px', fontWeight: 700 }}>
+              {localDigits(todayCompletedRides ?? 0)}
+            </div>
+          </div>
+          <div
+            style={{
+              padding: '8px 10px',
+              borderRadius: '10px',
+              backgroundColor: 'rgba(30, 41, 59, 0.62)',
+              border: '1px solid rgba(148, 163, 184, 0.14)',
+            }}
+          >
+            <div style={{ fontSize: '11px', color: '#94A3B8' }}>{t('journal.summary_earnings')}</div>
+            <div style={{ fontSize: '16px', fontWeight: 700, color: '#4ADE80' }}>
+              ৳{localDigits(economy.cash)}
+            </div>
+          </div>
+          <div
+            style={{
+              padding: '8px 10px',
+              borderRadius: '10px',
+              backgroundColor: 'rgba(30, 41, 59, 0.62)',
+              border: '1px solid rgba(148, 163, 184, 0.14)',
+            }}
+          >
+            <div style={{ fontSize: '11px', color: '#94A3B8' }}>{t('journal.summary_rating')}</div>
+            <div style={{ fontSize: '16px', fontWeight: 700, color: '#FBBF24' }}>
+              ★ {localDigits(rating.toFixed(1))}
+            </div>
+          </div>
+          <div
+            style={{
+              padding: '8px 10px',
+              borderRadius: '10px',
+              backgroundColor: 'rgba(30, 41, 59, 0.62)',
+              border: '1px solid rgba(148, 163, 184, 0.14)',
+            }}
+          >
+            <div style={{ fontSize: '11px', color: '#94A3B8' }}>{t('journal.summary_district')}</div>
+            <div style={{ fontSize: '16px', fontWeight: 700, color: '#38BDF8' }}>
+              {localDigits(unlockedDistricts.length)} / {localDigits(7)}
+            </div>
+          </div>
+        </div>
+
+        {/* Navigation Tabs */}
+        <div role="tablist" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'missions'}
+            data-testid="journal-tab-missions"
+            onClick={() => setActiveTab('missions')}
+            style={tabButtonStyle(activeTab === 'missions')}
+          >
+            {t('journal.tab_missions')} ({localDigits(activeMissions.length)})
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'relations'}
+            data-testid="journal-tab-relations"
+            onClick={() => setActiveTab('relations')}
+            style={tabButtonStyle(activeTab === 'relations')}
+          >
+            {t('journal.tab_relations', { count: localDigits(CHARACTERS.length) })}
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'records'}
+            data-testid="journal-tab-records"
+            onClick={() => setActiveTab('records')}
+            style={tabButtonStyle(activeTab === 'records')}
+          >
+            {t('journal.tab_records')}
           </button>
         </div>
 
-        {/* Tab Bar */}
-        <div
-          style={{
-            display: 'flex',
-            borderBottom: '1px solid #334155',
-            backgroundColor: '#1e293b',
-          }}
-        >
-          {(
-            [
-              { id: 'missions', label: 'মিশন (Missions)' },
-              { id: 'characters', label: 'পরিচিত মুখ (Characters)' },
-              { id: 'reputation', label: 'সুনাম ও নিরাপত্তা (Reputation)' },
-              { id: 'tendencies', label: 'রাইডার পরিচয় (Identity)' },
-            ] as const
-          ).map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              style={{
-                flex: 1,
-                padding: '12px 8px',
-                border: 'none',
-                backgroundColor: activeTab === tab.id ? '#334155' : 'transparent',
-                color: activeTab === tab.id ? '#f59e0b' : '#94a3b8',
-                fontWeight: activeTab === tab.id ? 700 : 500,
-                borderBottom: activeTab === tab.id ? '3px solid #f59e0b' : 'none',
-                cursor: 'pointer',
-                fontSize: '0.9rem',
-                transition: 'all 0.2s',
-              }}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Tab Content */}
-        <div style={{ flex: 1, padding: '24px', overflowY: 'auto' }}>
-          {activeTab === 'missions' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <div>
-                <h3 style={{ margin: '0 0 12px 0', fontSize: '1.1rem', color: '#38bdf8' }}>
-                  চলতি মিশন (Active Missions)
-                </h3>
-                {activeMissions.length === 0 ? (
-                  <div style={{ color: '#64748b', fontStyle: 'italic' }}>
-                    আপাতত কোনো সক্রিয় মিশন নেই। নতুন দিনের অপেক্ষা করুন।
-                  </div>
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    {activeMissions.map((m) => {
-                      const states = getObjectiveStates(m.id);
-                      return (
-                        <div
-                          key={m.id}
-                          style={{
-                            backgroundColor: '#0f172a',
-                            padding: '16px',
-                            borderRadius: '12px',
-                            border: '1px solid #334155',
-                          }}
-                        >
-                          <div style={{ fontWeight: 700, fontSize: '1rem', color: '#f59e0b', marginBottom: '4px' }}>
-                            {t(m.titleKey)}
-                          </div>
-                          <div style={{ fontSize: '0.85rem', color: '#cbd5e1', marginBottom: '12px' }}>
-                            {t(m.descKey)}
-                          </div>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                            {m.objectives.map((obj) => {
-                              const s = states.find((st) => st.id === obj.id);
-                              const done = s?.completed ?? false;
-                              const progress = s?.progress ?? 0;
-                              const target = s?.target ?? 1;
-                              return (
-                                <div
-                                  key={obj.id}
-                                  style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'space-between',
-                                    backgroundColor: '#1e293b',
-                                    padding: '8px 12px',
-                                    borderRadius: '8px',
-                                    fontSize: '0.85rem',
-                                  }}
-                                >
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <span style={{ color: done ? '#10b981' : '#f59e0b', fontWeight: 'bold' }}>
-                                      {done ? '✓' : '○'}
-                                    </span>
-                                    <span style={{ textDecoration: done ? 'line-through' : 'none', color: done ? '#94a3b8' : '#f8fafc' }}>
-                                      {t(obj.descKey)}
-                                    </span>
-                                  </div>
-                                  <div style={{ color: '#94a3b8', fontSize: '0.8rem', fontWeight: 600 }}>
-                                    {target > 1 ? `${progress}/${target}` : done ? 'সম্পন্ন' : 'বাকি'}
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
+        {/* Tab 1: Active Missions */}
+        {activeTab === 'missions' && (
+          <section
+            data-testid="journal-missions-section"
+            style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}
+          >
+            {activeMissions.length === 0 ? (
+              <div
+                style={{
+                  padding: '20px',
+                  borderRadius: '12px',
+                  backgroundColor: 'rgba(30, 41, 59, 0.5)',
+                  border: '1px solid rgba(148, 163, 184, 0.16)',
+                  color: '#94A3B8',
+                  fontSize: '13px',
+                  textAlign: 'center',
+                }}
+              >
+                {t('journal.no_missions')}
               </div>
-
-              {story.completedMissions.length > 0 && (
-                <div>
-                  <h3 style={{ margin: '16px 0 12px 0', fontSize: '1.1rem', color: '#10b981' }}>
-                    সম্পন্ন মিশন (Completed Missions)
-                  </h3>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {story.completedMissions.map((id) => (
-                      <div
-                        key={id}
-                        style={{
-                          backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                          border: '1px solid rgba(16, 185, 129, 0.2)',
-                          padding: '10px 14px',
-                          borderRadius: '8px',
-                          fontSize: '0.85rem',
-                          color: '#a7f3d0',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px',
-                        }}
-                      >
-                        <span>✓</span>
-                        <span style={{ fontWeight: 600 }}>{t(`mission_${id}_title`) !== `mission_${id}_title` ? t(`mission_${id}_title`) : id}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {activeTab === 'characters' && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '16px' }}>
-              {[
-                { id: 'char_ma', name: 'মা (Mother)', role: 'পরিবার ও দায়িত্ব' },
-                { id: 'char_mintu', name: 'মিন্টু (Mintu)', role: 'চা স্টল ও বন্ধু' },
-                { id: 'char_kamal', name: 'কামাল ভাই (Kamal Bhai)', role: 'বিশ্বস্ত মেকানিক' },
-                { id: 'char_nabila', name: 'নাবিলা (Nabila)', role: 'বিশ্ববিদ্যালয় শিক্ষার্থী' },
-                { id: 'char_morshed', name: 'এসআই মোর্শেদ (SI Morshed)', role: 'ট্রাফিক পুলিশ' },
-                { id: 'char_jamil', name: 'জামিল (Jamil)', role: 'রহস্যময় ক্লায়েন্ট' },
-              ].map((c) => {
-                const rel = story.characterRelationships[c.id] ?? 0;
+            ) : (
+              activeMissions.map((mission) => {
+                const states = getObjectiveStates(mission.id);
+                const isSide = mission.id.startsWith('side_');
                 return (
                   <div
-                    key={c.id}
+                    key={mission.id}
+                    data-testid={`journal-mission-${mission.id}`}
                     style={{
-                      backgroundColor: '#0f172a',
-                      padding: '16px',
+                      padding: '12px 14px',
                       borderRadius: '12px',
-                      border: '1px solid #334155',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '8px',
+                      backgroundColor: 'rgba(30, 41, 59, 0.68)',
+                      border: '1px solid rgba(148, 163, 184, 0.18)',
                     }}
                   >
-                    <div style={{ fontWeight: 700, fontSize: '0.95rem', color: '#f8fafc' }}>{c.name}</div>
-                    <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>{c.role}</div>
-                    <div style={{ marginTop: '8px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '4px' }}>
-                        <span>সম্পর্ক (Trust)</span>
-                        <span style={{ fontWeight: 700, color: rel >= 0 ? '#10b981' : '#ef4444' }}>
-                          {rel > 0 ? `+${rel}` : rel}
-                        </span>
-                      </div>
-                      <div style={{ height: '6px', backgroundColor: '#334155', borderRadius: '3px', overflow: 'hidden' }}>
-                        <div
-                          style={{
-                            height: '100%',
-                            width: `${Math.min(100, Math.max(0, 50 + rel / 2))}%`,
-                            backgroundColor: rel >= 0 ? '#10b981' : '#ef4444',
-                            borderRadius: '3px',
-                          }}
-                        />
-                      </div>
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        gap: '8px',
+                        marginBottom: '4px',
+                      }}
+                    >
+                      <span style={{ fontWeight: 700, fontSize: '15px', color: '#F8FAFC' }}>
+                        {t(mission.titleKey)}
+                      </span>
+                      <span
+                        style={{
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          color: isSide ? '#38BDF8' : '#FBBF24',
+                        }}
+                      >
+                        {isSide ? t('map.poi_mission') : t('journal.story_focus_label')}
+                      </span>
+                    </div>
+                    <p style={{ margin: '0 0 10px 0', fontSize: '13px', color: '#CBD5E1' }}>
+                      {t(mission.descKey)}
+                    </p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      {states.map((st, idx) => {
+                        const objDef = mission.objectives.find((o) => o.id === st.id);
+                        return (
+                          <div
+                            key={st.id || idx}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '8px',
+                              fontSize: '13px',
+                              color: st.completed ? '#4ADE80' : '#E2E8F0',
+                            }}
+                          >
+                            {st.completed ? (
+                              <IconCheck size={14} color="#4ADE80" />
+                            ) : (
+                              <IconScroll size={14} color="#F59E0B" />
+                            )}
+                            <span style={{ flex: 1 }}>
+                              {objDef ? t(objDef.descKey) : st.id}
+                            </span>
+                            {st.target > 1 && (
+                              <span style={{ fontSize: '12px', color: '#94A3B8' }}>
+                                {localDigits(st.progress)}/{localDigits(st.target)}
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 );
-              })}
-            </div>
-          )}
+              })
+            )}
+          </section>
+        )}
 
-          {activeTab === 'reputation' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
-                <div style={{ backgroundColor: '#0f172a', padding: '16px', borderRadius: '12px', border: '1px solid #334155' }}>
-                  <div style={{ color: '#94a3b8', fontSize: '0.85rem' }}>অ্যাপ রেটিং (App Rating)</div>
-                  <div style={{ fontSize: '2rem', fontWeight: 800, color: '#f59e0b', marginTop: '4px' }}>
-                    ★ {rating.toFixed(2)}
-                  </div>
-                </div>
-                <div style={{ backgroundColor: '#0f172a', padding: '16px', borderRadius: '12px', border: '1px solid #334155' }}>
-                  <div style={{ color: '#94a3b8', fontSize: '0.85rem' }}>লোকাল আস্থা (Local Trust)</div>
-                  <div style={{ fontSize: '2rem', fontWeight: 800, color: '#10b981', marginTop: '4px' }}>
-                    {localTrust}/100
-                  </div>
-                </div>
-              </div>
+        {/* Tab 2: All 10 Characters & Relationships */}
+        {activeTab === 'relations' && (
+          <section
+            data-testid="journal-relations-section"
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+              gap: '10px',
+            }}
+          >
+            {CHARACTERS.map((charDef) => {
+              const rel = relationships[charDef.id] ?? charDef.initialRelationship;
+              const unlocked = isContactUnlocked(charDef.id, rel);
+              const clampedPct = Math.max(0, Math.min(100, Math.round(((rel + 50) / 150) * 100)));
+              const moodTone: 'happy' | 'neutral' | 'tense' =
+                rel >= 35 ? 'happy' : rel >= 0 ? 'neutral' : 'tense';
 
-              <div style={{ backgroundColor: '#0f172a', padding: '16px', borderRadius: '12px', border: '1px solid #334155' }}>
-                <h4 style={{ margin: '0 0 12px 0', fontSize: '0.95rem', color: '#e2e8f0' }}>নিরাপত্তা রেকর্ড (Safety Record)</h4>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', textAlign: 'center' }}>
-                  <div>
-                    <div style={{ fontSize: '1.2rem', fontWeight: 700, color: '#f8fafc' }}>{safety.nearMisses}</div>
-                    <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>নিয়ার মিস</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '1.2rem', fontWeight: 700, color: '#fbbf24' }}>{safety.bumps}</div>
-                    <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>ধাক্কা</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '1.2rem', fontWeight: 700, color: '#ef4444' }}>{safety.crashes}</div>
-                    <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>দুর্ঘটনা</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '1.2rem', fontWeight: 700, color: '#f97316' }}>{safety.infractions}</div>
-                    <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>আইন অমান্য</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'tendencies' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div style={{ fontSize: '0.9rem', color: '#cbd5e1', marginBottom: '8px' }}>
-                আপনার সিদ্ধান্ত এবং রাইডিং স্টাইল নির্ধারণ করবে ঢাকার রাস্তায় আপনার চূড়ান্ত পরিচয় ও সমাপ্তি:
-              </div>
-              {[
-                { name: 'পেশাদার (Professional)', score: proScore, desc: 'নিরাপদ রাইডিং, উচ্চ রেটিং এবং সময়ানুবর্তিতা', color: '#38bdf8' },
-                { name: 'দরকষাকষিবিদ (Negotiator)', score: negScore, desc: 'ভাড়া আদায় এবং নায্য লাভের ক্ষেত্রে কৌশলী', color: '#fbbf24' },
-                { name: 'হাঁটুরে / ঝুঁকিপ্রিয় (Hustler)', score: hustlerScore, desc: 'দ্রুত আয়, আইন এড়িয়ে শর্টকাট ও ঝুঁকিপূর্ণ ট্রিপ', color: '#f97316' },
-                { name: 'পাড়ার নিয়মিত (Regular)', score: regularScore, desc: 'স্থানীয় সম্পর্ক, প্রতিশ্রুতি রক্ষা ও সামাজিক বিশ্বাস', color: '#10b981' },
-              ].map((item) => (
+              return (
                 <div
-                  key={item.name}
+                  key={charDef.id}
+                  data-testid={`journal-char-${charDef.id}`}
                   style={{
-                    backgroundColor: '#0f172a',
-                    padding: '16px',
+                    padding: '10px 12px',
                     borderRadius: '12px',
-                    border: '1px solid #334155',
+                    backgroundColor: 'rgba(30, 41, 59, 0.68)',
+                    border: unlocked
+                      ? '1px solid rgba(56, 189, 248, 0.35)'
+                      : '1px solid rgba(148, 163, 184, 0.16)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px',
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                    <span style={{ fontWeight: 700, color: item.color }}>{item.name}</span>
-                    <span style={{ fontWeight: 700, color: item.color }}>{item.score}%</span>
-                  </div>
-                  <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginBottom: '8px' }}>{item.desc}</div>
-                  <div style={{ height: '8px', backgroundColor: '#334155', borderRadius: '4px', overflow: 'hidden' }}>
-                    <div
-                      style={{
-                        height: '100%',
-                        width: `${item.score}%`,
-                        backgroundColor: item.color,
-                        borderRadius: '4px',
-                        transition: 'width 0.4s ease',
-                      }}
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      gap: '8px',
+                    }}
+                  >
+                    <CharacterPortrait
+                      name={t(charDef.nameKey)}
+                      role={t(charDef.roleKey)}
+                      mood={moodTone}
+                      size={36}
                     />
+                    <span
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        color: unlocked ? '#38BDF8' : '#94A3B8',
+                      }}
+                    >
+                      {unlocked ? <IconPhone size={12} /> : <IconLock size={12} />}
+                      <span>
+                        {unlocked
+                          ? t('journal.char_contact_unlocked')
+                          : t('journal.char_contact_locked', { min: localDigits(15) })}
+                      </span>
+                    </span>
                   </div>
+                  <StatusBar
+                    label={t('journal.relationship_label')}
+                    value={clampedPct}
+                    max={100}
+                    tone={rel >= 25 ? 'green' : rel >= 0 ? 'amber' : 'red'}
+                    valueText={localDigits(Math.round(rel))}
+                  />
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
+              );
+            })}
+          </section>
+        )}
+
+        {/* Tab 3: Promises, Recent Decisions, and Unlocked Opportunities */}
+        {activeTab === 'records' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            {/* Active Promises */}
+            <section
+              data-testid="journal-promises-section"
+              style={{
+                padding: '12px 14px',
+                borderRadius: '12px',
+                backgroundColor: 'rgba(30, 41, 59, 0.64)',
+                border: '1px solid rgba(148, 163, 184, 0.16)',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  gap: '8px',
+                  marginBottom: '8px',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 700, fontSize: '14px' }}>
+                  <IconClock size={15} color="#FBBF24" />
+                  <span>{t('journal.promises_title')}</span>
+                </div>
+                <span style={{ fontSize: '12px', color: '#94A3B8', fontWeight: 600 }}>
+                  {t('journal.promises_tally', {
+                    kept: localDigits(promisesRecord.kept),
+                    broken: localDigits(promisesRecord.broken),
+                  })}
+                </span>
+              </div>
+              {pendingPromises.length === 0 ? (
+                <div style={{ fontSize: '13px', color: '#94A3B8' }}>{t('journal.no_promises')}</div>
+              ) : (
+                <ul style={{ margin: 0, paddingLeft: '18px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  {pendingPromises.map((promise) => (
+                    <li key={promise.id} style={{ fontSize: '13px', color: '#FDE68A' }}>
+                      {formatPromiseLabel(promise)}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+
+            {/* Recent Decisions */}
+            <section
+              data-testid="journal-decisions-section"
+              style={{
+                padding: '12px 14px',
+                borderRadius: '12px',
+                backgroundColor: 'rgba(30, 41, 59, 0.64)',
+                border: '1px solid rgba(148, 163, 184, 0.16)',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 700, fontSize: '14px', marginBottom: '8px' }}>
+                <IconFlag size={15} color="#38BDF8" />
+                <span>{t('journal.decisions_title')}</span>
+              </div>
+              {activeFlags.length === 0 ? (
+                <div style={{ fontSize: '13px', color: '#94A3B8' }}>{t('journal.no_decisions')}</div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  {activeFlags.slice(-8).reverse().map(([flagKey, val]) => (
+                    <div
+                      key={flagKey}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        fontSize: '13px',
+                        color: '#E2E8F0',
+                      }}
+                    >
+                      <IconCheck size={14} color="#38BDF8" />
+                      <span>{formatDecisionLabel(flagKey, val)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            {/* Unlocked Opportunities */}
+            <section
+              data-testid="journal-opportunities-section"
+              style={{
+                padding: '12px 14px',
+                borderRadius: '12px',
+                backgroundColor: 'rgba(30, 41, 59, 0.64)',
+                border: '1px solid rgba(148, 163, 184, 0.16)',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 700, fontSize: '14px', marginBottom: '8px' }}>
+                <IconStar size={15} color="#4ADE80" />
+                <span>{t('journal.opportunities_title')}</span>
+              </div>
+              {opportunities.length === 0 ? (
+                <div style={{ fontSize: '13px', color: '#94A3B8' }}>{t('journal.no_opportunities')}</div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'row', gap: '6px', flexWrap: 'wrap' }}>
+                  {opportunities.map((opp) => (
+                    <span
+                      key={opp.id}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '5px',
+                        padding: '4px 9px',
+                        borderRadius: '999px',
+                        fontSize: '12px',
+                        backgroundColor: 'rgba(15, 23, 42, 0.65)',
+                        border: '1px solid rgba(148, 163, 184, 0.22)',
+                        color: '#E2E8F0',
+                      }}
+                    >
+                      {opp.kind === 'district' ? (
+                        <IconMapPin size={12} color="#38BDF8" />
+                      ) : opp.kind === 'contact' ? (
+                        <IconBell size={12} color="#4ADE80" />
+                      ) : (
+                        <IconWrench size={12} color="#F59E0B" />
+                      )}
+                      <span>{opp.text}</span>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </section>
+          </div>
+        )}
       </div>
-    </div>
+    </ModalPanel>
   );
 }
