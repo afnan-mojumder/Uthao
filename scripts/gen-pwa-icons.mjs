@@ -36,14 +36,24 @@ function writePngChunk(type, data) {
   return chunk;
 }
 
-function generatePng(size) {
+/**
+ * Generates an RGBA PNG icon.
+ * @param {number} size - Width and height in pixels.
+ * @param {object} [opts]
+ * @param {boolean} [opts.maskable=false] - When true, scales badge & artwork into the 80% W3C maskable safe zone (radius <= 0.38 * size).
+ */
+function generatePng(size, opts = {}) {
+  const maskable = Boolean(opts.maskable);
   const width = size;
   const height = size;
   const rawScanlines = Buffer.alloc((width * 4 + 1) * height);
 
   const cx = width / 2;
   const cy = height / 2;
-  const radius = width * 0.45;
+  const scale = maskable ? 0.8 : 1.0;
+  const drawSize = size * scale;
+  const radius = drawSize * 0.45; // 0.36 * size when maskable (strictly inside 0.40 * size 80% safe zone)
+  const rimThickness = Math.max(2, Math.round((size / 64) * scale));
 
   let offset = 0;
   for (let y = 0; y < height; y++) {
@@ -58,16 +68,16 @@ function generatePng(size) {
       if (dist <= radius) {
         // Outer badge circle
         r = 30; g = 41; b = 59; // #1e293b
-        if (dist > radius - 8) {
+        if (dist > radius - rimThickness) {
           // Emerald rim
           r = 16; g = 185; b = 129; // #10b981
         } else {
           // Motorcycle wheels and chassis stylized silhouette
-          const distWheelL = Math.hypot(x - (cx - size * 0.2), y - (cy + size * 0.12));
-          const distWheelR = Math.hypot(x - (cx + size * 0.2), y - (cy + size * 0.12));
+          const distWheelL = Math.hypot(x - (cx - drawSize * 0.2), y - (cy + drawSize * 0.12));
+          const distWheelR = Math.hypot(x - (cx + drawSize * 0.2), y - (cy + drawSize * 0.12));
 
-          const wheelRadius = size * 0.11;
-          const rimRadius = size * 0.07;
+          const wheelRadius = drawSize * 0.11;
+          const rimRadius = drawSize * 0.07;
 
           if (
             (distWheelL <= wheelRadius && distWheelL >= rimRadius * 0.5) ||
@@ -77,13 +87,13 @@ function generatePng(size) {
           } else if (distWheelL < rimRadius * 0.5 || distWheelR < rimRadius * 0.5) {
             r = 15; g = 23; b = 42;
           } else if (
-            x >= cx - size * 0.25 &&
-            x <= cx + size * 0.25 &&
-            y >= cy - size * 0.18 &&
-            y <= cy + size * 0.12
+            x >= cx - drawSize * 0.25 &&
+            x <= cx + drawSize * 0.25 &&
+            y >= cy - drawSize * 0.18 &&
+            y <= cy + drawSize * 0.12
           ) {
-            const relX = (x - cx) / size;
-            const relY = (y - cy) / size;
+            const relX = (x - cx) / drawSize;
+            const relY = (y - cy) / drawSize;
             if (relY >= -0.15 && relY <= 0.05 && relX >= -0.2 && relX <= 0.15) {
               r = 245; g = 158; b = 11; // #f59e0b amber
             } else if (relY >= -0.22 && relY <= -0.12 && relX >= 0.08 && relX <= 0.2) {
@@ -120,14 +130,49 @@ function generatePng(size) {
   return Buffer.concat([signature, ihdrChunk, idatChunk, iendChunk]);
 }
 
+/**
+ * Wraps a PNG buffer inside a valid Windows ICO container (`00 00 01 00` header).
+ */
+function generateIcoFromPng(pngBuf, size) {
+  const header = Buffer.alloc(6);
+  header.writeUInt16LE(0, 0); // Reserved = 0
+  header.writeUInt16LE(1, 2); // Type = 1 (ICO)
+  header.writeUInt16LE(1, 4); // Image count = 1
+
+  const dirEntry = Buffer.alloc(16);
+  dirEntry[0] = size >= 256 ? 0 : size; // Width
+  dirEntry[1] = size >= 256 ? 0 : size; // Height
+  dirEntry[2] = 0; // Color palette
+  dirEntry[3] = 0; // Reserved
+  dirEntry.writeUInt16LE(1, 4); // Color planes
+  dirEntry.writeUInt16LE(32, 6); // Bits per pixel
+  dirEntry.writeUInt32LE(pngBuf.length, 8); // Image byte size
+  dirEntry.writeUInt32LE(6 + 16, 12); // Offset to PNG data (22)
+
+  return Buffer.concat([header, dirEntry, pngBuf]);
+}
+
 const outDir = path.resolve('public/icons');
 fs.mkdirSync(outDir, { recursive: true });
 
-const png192 = generatePng(192);
-fs.writeFileSync(path.join(outDir, 'icon-192x192.png'), png192);
+const png192 = generatePng(192, { maskable: false });
+const png192Maskable = generatePng(192, { maskable: true });
+const png512 = generatePng(512, { maskable: false });
+const png512Maskable = generatePng(512, { maskable: true });
+const png180 = generatePng(180, { maskable: false });
+const png32 = generatePng(32, { maskable: false });
+const icoBuf = generateIcoFromPng(png32, 32);
 
-const png512 = generatePng(512);
+// Standard & alias filenames so both legacy and separate any/maskable references resolve cleanly
+fs.writeFileSync(path.join(outDir, 'icon-192x192.png'), png192);
+fs.writeFileSync(path.join(outDir, 'icon-192.png'), png192);
+fs.writeFileSync(path.join(outDir, 'icon-192-maskable.png'), png192Maskable);
+fs.writeFileSync(path.join(outDir, 'maskable-icon-192x192.png'), png192Maskable);
+
 fs.writeFileSync(path.join(outDir, 'icon-512x512.png'), png512);
+fs.writeFileSync(path.join(outDir, 'icon-512.png'), png512);
+fs.writeFileSync(path.join(outDir, 'icon-512-maskable.png'), png512Maskable);
+fs.writeFileSync(path.join(outDir, 'maskable-icon-512x512.png'), png512Maskable);
 
 const svgIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <rect width="512" height="512" rx="128" fill="#111827"/>
@@ -144,7 +189,7 @@ const svgIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" w
   <text x="256" y="420" font-family="system-ui, sans-serif" font-size="44" font-weight="900" fill="#10b981" text-anchor="middle" letter-spacing="4">UTHAO</text>
 </svg>`;
 fs.writeFileSync(path.join(outDir, 'icon.svg'), svgIcon);
-fs.writeFileSync(path.resolve('public/apple-touch-icon.png'), png192);
-fs.writeFileSync(path.resolve('public/favicon.ico'), png192);
+fs.writeFileSync(path.resolve('public/apple-touch-icon.png'), png180);
+fs.writeFileSync(path.resolve('public/favicon.ico'), icoBuf);
 
 console.log('PWA icons generated successfully in public/icons');

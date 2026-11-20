@@ -581,5 +581,13 @@
   "menu.credits_font_item": "হিন্দ শিলিগুড়ি — Hind Siliguri (SIL Open Font License 1.1)",
   "menu.credits_engine_heading": "ওপেন সোর্স ইঞ্জিন ও ফিজিক্স:",
   "menu.credits_engine_items": "Three.js (MIT), Rapier Physics / @dimforge/rapier3d-compat (Apache-2.0), Preact (MIT), Vite (MIT)",
-  "menu.credits_dedication": "ঢাকার অদম্য রাইডার ও প্রাণবন্ত রাজপথের উদ্দেশ্যে উৎসর্গীকৃত।"
+  "menu.credits_dedication": "ঢাকার অদম্য রাইডার ও প্রাণবন্ত রাজপথের উদ্দেশ্যে উৎসর্গীকৃত।",
+  "error.title": "একটি অপ্রত্যাশিত ত্রুটি ঘটেছে",
+  "error.desc": "উঠাও চলাকালীন একটি সমস্যা দেখা দিয়েছে। আপনার সেভ করা গেম নিরাপদ আছে — আপনি চাইলে সেভ ডাটার JSON ব্যাকআপ নামিয়ে নিতে পারেন অথবা গেমটি পুনরায় চালু করতে পারেন।",
+  "error.export_save": "সেভ ডাটা ডাউনলোড করুন (JSON)",
+  "error.export_copied": "সেভ ডাটা এক্সপোর্ট হয়েছে!",
+  "error.reload": "গেম পুনরায় চালু করুন",
+  "ui.sw_update_available": "নতুন আপডেট প্রস্তুত — রিলোড করুন",
+  "ui.sw_reload_btn": "এখনই রিলোড করুন",
+  "ui.ios_install_tip": "আইফোন/আইপ্যাড সাফারিতে ফুল-স্ক্রিনে খেলতে Share বাটনে চাপ দিয়ে 'Add to Home Screen' বেছে নিন।"
 }

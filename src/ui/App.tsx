@@ -3,15 +3,14 @@ import './tokens.css';
 import { TouchActions, isTouchDevice } from './touch/TouchActions';
 import { useState, useEffect, useRef } from 'preact/hooks';
 import { Hud } from './hud/Hud';
-import { IconPhone } from './components/icons';
 import {
   rotateOverlaySignal,
   unsupportedSignal,
   loadingSignal,
   contextLostSignal,
   pausedSignal,
-  installPromptSignal,
-  promptPwaInstall,
+  swUpdateAvailableSignal,
+  applySwUpdate,
   phoneSignal,
   negotiationSignal,
   onAcceptRequestCallback,
@@ -68,6 +67,7 @@ import {
 import { RotateOverlay } from './overlays/RotateOverlay';
 import { Unsupported } from './overlays/Unsupported';
 import { Loading } from './overlays/Loading';
+import { ErrorBoundary } from './overlays/ErrorBoundary';
 import { ChoiceCard } from './choice/ChoiceCard';
 import { Phone } from './phone/Phone';
 import { NegotiationPanel } from './negotiation/NegotiationPanel';
@@ -264,6 +264,7 @@ export function App(): JSX.Element {
   });
 
   return (
+    <ErrorBoundary>
     <div
       id="uthao-app-root"
       style={{
@@ -391,32 +392,50 @@ export function App(): JSX.Element {
         </div>
       )}
 
-      {installPromptSignal.value && (
-        <button
-          data-testid="pwa-install-btn"
-          onClick={() => void promptPwaInstall()}
+      {swUpdateAvailableSignal.value && (
+        <div
+          data-testid="sw-update-toast"
+          role="status"
+          aria-live="polite"
           style={{
             position: 'absolute',
-            bottom: '24px',
-            right: '24px',
-            background: 'linear-gradient(135deg, var(--uthao-green, #22C55E) 0%, #059669 100%)',
-            border: 'none',
-            color: '#fff',
-            padding: '10px 18px',
-            borderRadius: '9999px',
-            fontWeight: 700,
-            fontSize: '0.85rem',
-            cursor: 'pointer',
-            boxShadow: '0 4px 14px rgba(34, 197, 94, 0.4)',
-            pointerEvents: 'auto',
+            bottom: '20px',
+            left: '50%',
+            transform: 'translateX(-50%)',
             zIndex: Z_LAYER.TOAST,
-            display: 'flex',
+            pointerEvents: 'auto',
+            display: 'inline-flex',
             alignItems: 'center',
-            gap: '8px',
+            gap: '12px',
+            padding: '10px 16px',
+            borderRadius: '14px',
+            background: 'rgba(15, 23, 42, 0.94)',
+            border: '1px solid rgba(56, 189, 248, 0.45)',
+            boxShadow: '0 10px 25px rgba(0, 0, 0, 0.5)',
+            color: '#f8fafc',
+            fontSize: '0.88rem',
+            fontWeight: 700,
           }}
         >
-          <IconPhone size={18} /> {t('ui.install_app')}
-        </button>
+          <span>{t('ui.sw_update_available')}</span>
+          <button
+            type="button"
+            data-testid="sw-update-reload-btn"
+            onClick={() => void applySwUpdate()}
+            style={{
+              padding: '6px 12px',
+              borderRadius: '8px',
+              border: '1px solid rgba(34, 197, 94, 0.5)',
+              background: 'linear-gradient(135deg, var(--uthao-green, #22C55E) 0%, #059669 100%)',
+              color: '#ffffff',
+              fontSize: '0.82rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+            }}
+          >
+            {t('ui.sw_reload_btn')}
+          </button>
+        </div>
       )}
 
       {/* 4. Panel layer */}
@@ -769,5 +788,6 @@ export function App(): JSX.Element {
 
       {unsupportedSignal.value && <Unsupported message={unsupportedSignal.value} />}
     </div>
+    </ErrorBoundary>
   );
 }

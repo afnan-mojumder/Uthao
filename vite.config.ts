@@ -6,7 +6,8 @@ export default defineConfig({
   plugins: [
     preact(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
+      includeManifestIcons: false,
       manifest: {
         name: 'Uthao',
         short_name: 'Uthao',
@@ -17,27 +18,60 @@ export default defineConfig({
         orientation: 'landscape',
         icons: [
           {
-            src: '/icons/icon-192x192.png',
+            src: '/icons/icon-192.png',
             sizes: '192x192',
             type: 'image/png',
+            purpose: 'any',
           },
           {
-            src: '/icons/icon-512x512.png',
+            src: '/icons/icon-512.png',
             sizes: '512x512',
             type: 'image/png',
+            purpose: 'any',
           },
           {
-            src: '/icons/icon-512x512.png',
+            src: '/icons/icon-192-maskable.png',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'maskable',
+          },
+          {
+            src: '/icons/icon-512-maskable.png',
             sizes: '512x512',
             type: 'image/png',
-            purpose: 'any maskable',
+            purpose: 'maskable',
           },
         ],
       },
       workbox: {
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,json,wasm}'],
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,json,wasm,woff2}'],
+        globIgnores: [
+          '**/district-*.js',
+          '**/locale-en-*.js',
+          'assets/audio/**',
+          'assets/portraits/**',
+          'icons/icon-192x192.png',
+          'icons/icon-512x512.png',
+          'icons/maskable-icon-*.png',
+        ],
         runtimeCaching: [
+          {
+            urlPattern: ({ url }) =>
+              url.pathname.startsWith('/assets/district-') ||
+              url.pathname.startsWith('/assets/locale-') ||
+              url.pathname.startsWith('/assets/audio/') ||
+              url.pathname.startsWith('/assets/portraits/') ||
+              url.pathname.startsWith('/assets/models/'),
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'lazy-game-assets',
+              expiration: {
+                maxEntries: 120,
+                maxAgeSeconds: 60 * 60 * 24 * 30,
+              },
+            },
+          },
           {
             urlPattern: ({ request }) => request.destination === 'image',
             handler: 'CacheFirst',

@@ -581,5 +581,13 @@
   "menu.credits_font_item": "Hind Siliguri (SIL Open Font License 1.1)",
   "menu.credits_engine_heading": "Open Source Engine & Physics:",
   "menu.credits_engine_items": "Three.js (MIT), Rapier Physics / @dimforge/rapier3d-compat (Apache-2.0), Preact (MIT), Vite (MIT)",
-  "menu.credits_dedication": "Dedicated to the resilient riders and bustling streets of Dhaka, Bangladesh."
+  "menu.credits_dedication": "Dedicated to the resilient riders and bustling streets of Dhaka, Bangladesh.",
+  "error.title": "Something Went Wrong",
+  "error.desc": "Uthao hit an unexpected error. Your saved progress is intact — you can export a backup JSON copy of your saves or reload to return to the streets.",
+  "error.export_save": "Export Save Data (JSON)",
+  "error.export_copied": "Save data exported!",
+  "error.reload": "Reload Game",
+  "ui.sw_update_available": "Update Available — Reload",
+  "ui.sw_reload_btn": "Reload Now",
+  "ui.ios_install_tip": "On iPhone/iPad Safari: tap Share and choose 'Add to Home Screen' for full-screen Dhaka riding."
 }

@@ -15,13 +15,17 @@ import type { Renderer } from './render/Renderer';
 import { InputManager } from './input';
 import { loadBindings } from './input/bindings';
 import { App } from './ui/App';
+import { registerSW } from 'virtual:pwa-register';
 import {
   bindEventBusToStore,
+  bindGlobalCrashHandlers,
+  bindScreenWakeLock,
   pausedSignal,
   contextLostSignal,
   unsupportedSignal,
   loadingSignal,
   initPwaInstall,
+  setSwUpdateAvailable,
   negotiationSignal,
   minimapCanvasSignal,
   dialogueSubtitleSignal,
@@ -97,6 +101,19 @@ let uiMounted = false;
 function mountUiApp(): void {
   if (uiMounted || typeof document === 'undefined') return;
   initPwaInstall();
+  bindGlobalCrashHandlers();
+  if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
+    try {
+      const updateSW = registerSW({
+        immediate: true,
+        onNeedRefresh() {
+          setSwUpdateAvailable(updateSW);
+        },
+      });
+    } catch {
+      // Ignore SW registration in unsupported or non-secure test contexts
+    }
+  }
   const uiRoot = document.getElementById('ui-root');
   if (uiRoot) {
     render(h(App, null), uiRoot);
@@ -214,6 +231,8 @@ async function bootGame(): Promise<void> {
 
   // Bind reactive signals store to sim event bus
   bootCleanups.push(bindEventBusToStore(gm.bus));
+  // Keep phone screen awake while actively riding in-game.
+  bootCleanups.push(bindScreenWakeLock());
   // Keyboard and pad focus move into a panel when it opens.
   watchOverlayFocus();
   // Sound: the audio context starts on the first gesture; settings and sim events drive it.

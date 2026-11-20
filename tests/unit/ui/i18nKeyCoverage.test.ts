@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
-import { t, setLanguage } from '../../../src/ui/i18n';
+import { t, setLanguage, ensureLocaleLoaded } from '../../../src/ui/i18n';
 import upgradesData from '../../../data/upgrades.json';
 
 /** Every .ts/.tsx file under src/ui, recursively. */
@@ -71,7 +71,8 @@ describe('every literal UI string key resolves in both languages (audit: raw key
   });
 
   for (const lang of ['en', 'bn'] as const) {
-    it(`no key shows raw in ${lang}`, () => {
+    it(`no key shows raw in ${lang}`, async () => {
+      await ensureLocaleLoaded(lang);
       setLanguage(lang);
       const raw = [...keys].filter((k) => t(k) === k);
       expect(raw).toEqual([]);

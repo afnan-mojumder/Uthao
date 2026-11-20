@@ -31,6 +31,7 @@ import {
   pausedSignal,
   phoneSignal,
   rotateOverlaySignal,
+  runtimeCrashSignal,
   saveSlotsSignal,
   screenSignal,
   settingsOpenSignal,
@@ -53,7 +54,8 @@ export function hasSystemOverlay(): boolean {
     loadingSignal.value.active ||
     contextLostSignal.value ||
     rotateOverlaySignal.value ||
-    Boolean(unsupportedSignal.value)
+    Boolean(unsupportedSignal.value) ||
+    Boolean(runtimeCrashSignal.value)
   );
 }
 

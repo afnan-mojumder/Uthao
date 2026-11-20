@@ -38,6 +38,7 @@ import { Ending } from '../../../src/ui/menus/Ending';
 import { Garage } from '../../../src/ui/garage/Garage';
 import { TripSummary } from '../../../src/ui/trip/TripSummary';
 import { Loading } from '../../../src/ui/overlays/Loading';
+import { ErrorBoundary } from '../../../src/ui/overlays/ErrorBoundary';
 import { App } from '../../../src/ui/App';
 import {
   PrimaryButton,
@@ -1038,5 +1039,302 @@ describe('P6.5 WCAG AA Accessibility Sweep', () => {
         value: prevStorage,
       });
     }
+  });
+});
+
+describe('P8.2 Runtime Resilience, Mobile In-App Browser Compatibility & Optional Lightweight PWA', () => {
+  let dom: { root: FakeElement; cleanup: () => void };
+
+  beforeEach(() => {
+    dom = installDomEnv();
+    setLanguage('en');
+    exitToTitle();
+    loadingSignal.value = { active: false, stageKey: 'loading.boot', progress: 0 };
+    unsupportedSignal.value = null;
+    rotateOverlaySignal.value = false;
+    contextLostSignal.value = false;
+    pausedSignal.value = false;
+  });
+
+  afterEach(async () => {
+    exitToTitle();
+    act(() => {
+      render(null, dom.root as unknown as Element);
+    });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    dom.cleanup();
+  });
+
+  it('ErrorBoundary catches child render throws and global window error/unhandledrejection events, rendering localized recovery UI with JSON Save Export and Reload', async () => {
+    const storeModule = await import('../../../src/ui/store') as Record<string, unknown>;
+    const ebModule = await import('../../../src/ui/overlays/ErrorBoundary') as Record<string, unknown>;
+    const exportSaveDataJson = ebModule.exportSaveDataJson as (() => string) | undefined;
+    const reportRuntimeCrash = (ebModule.reportRuntimeCrash ?? storeModule.reportRuntimeCrash) as ((err: unknown) => void) | undefined;
+    const clearRuntimeCrash = (ebModule.clearRuntimeCrash ?? storeModule.clearRuntimeCrash) as (() => void) | undefined;
+
+    expect(typeof exportSaveDataJson).toBe('function');
+    expect(typeof reportRuntimeCrash).toBe('function');
+
+    const prevStorage = globalThis.localStorage;
+    const store = new Map<string, string>([
+      ['uthao.save.auto', JSON.stringify({ version: 2, slot: 'auto', seed: 42 })],
+      ['uthao_save_slot1', JSON.stringify({ version: 2, slot: 'slot1', seed: 99 })],
+    ]);
+    Object.defineProperty(globalThis, 'localStorage', {
+      configurable: true,
+      value: {
+        get length() {
+          return store.size;
+        },
+        key: (idx: number) => [...store.keys()][idx] ?? null,
+        getItem: (k: string) => store.get(k) ?? null,
+        setItem: (k: string, v: string) => store.set(k, v),
+        removeItem: (k: string) => store.delete(k),
+      },
+    });
+
+    try {
+      clearRuntimeCrash?.();
+
+      const exported = JSON.parse(exportSaveDataJson!()) as { saves: Record<string, unknown> };
+      expect(exported.saves).toBeDefined();
+      expect(Object.keys(exported.saves).length).toBeGreaterThanOrEqual(1);
+
+      const BoomChild = (): FakeElement => {
+        throw new Error('Synthetic child render explosion');
+      };
+
+      act(() => {
+        render(h(ErrorBoundary, null, h(BoomChild as unknown as () => null, null)), dom.root as unknown as Element);
+      });
+
+      const boundaryEl = dom.root.querySelector('[data-testid="error-boundary-overlay"]');
+      expect(boundaryEl).not.toBeNull();
+      expect(boundaryEl?.textContent).toContain('Synthetic child render explosion');
+
+      const exportBtn = dom.root.querySelector('[data-testid="error-export-save-btn"]');
+      const reloadBtn = dom.root.querySelector('[data-testid="error-reload-btn"]');
+      expect(exportBtn).not.toBeNull();
+      expect(reloadBtn).not.toBeNull();
+
+      // Also test global crash reporting signal
+      act(() => {
+        render(null, dom.root as unknown as Element);
+      });
+      clearRuntimeCrash?.();
+
+      act(() => {
+        render(h(ErrorBoundary, null, h('div', { 'data-testid': 'healthy-child' }, 'OK')), dom.root as unknown as Element);
+      });
+      expect(dom.root.querySelector('[data-testid="healthy-child"]')).not.toBeNull();
+
+      act(() => {
+        reportRuntimeCrash?.(new Error('Global unhandled rejection boom'));
+      });
+      expect(dom.root.querySelector('[data-testid="error-boundary-overlay"]')).not.toBeNull();
+      expect(dom.root.querySelector('[data-testid="error-boundary-overlay"]')?.textContent).toContain(
+        'Global unhandled rejection boom'
+      );
+      clearRuntimeCrash?.();
+    } finally {
+      Object.defineProperty(globalThis, 'localStorage', {
+        configurable: true,
+        value: prevStorage,
+      });
+    }
+  });
+
+  it('Screen Wake Lock helper acquires wakeLock while riding in game, releases on pause/menu/hidden, and re-acquires on visibilitychange', async () => {
+    const storeModule = await import('../../../src/ui/store') as Record<string, unknown>;
+    const bindScreenWakeLock = storeModule.bindScreenWakeLock as
+      | ((doc?: unknown, nav?: unknown) => () => void)
+      | undefined;
+    expect(typeof bindScreenWakeLock).toBe('function');
+
+    let requestCount = 0;
+    let releaseCount = 0;
+    let fakeHidden = false;
+    const visListeners = new Set<() => void>();
+
+    const fakeDoc = {
+      get hidden() {
+        return fakeHidden;
+      },
+      get visibilityState() {
+        return fakeHidden ? 'hidden' : 'visible';
+      },
+      addEventListener: (ev: string, fn: () => void) => {
+        if (ev === 'visibilitychange') visListeners.add(fn);
+      },
+      removeEventListener: (ev: string, fn: () => void) => {
+        if (ev === 'visibilitychange') visListeners.delete(fn);
+      },
+    };
+
+    const fakeNav = {
+      wakeLock: {
+        request: async (type: string) => {
+          expect(type).toBe('screen');
+          requestCount++;
+          let released = false;
+          const releaseListeners = new Set<() => void>();
+          return {
+            get released() {
+              return released;
+            },
+            release: async () => {
+              if (!released) {
+                released = true;
+                releaseCount++;
+                for (const fn of releaseListeners) fn();
+              }
+            },
+            addEventListener: (ev: string, fn: () => void) => {
+              if (ev === 'release') releaseListeners.add(fn);
+            },
+          };
+        },
+      },
+    };
+
+    screenSignal.value = 'title';
+    pausedSignal.value = false;
+    const unbind = bindScreenWakeLock!(fakeDoc, fakeNav);
+    await new Promise((r) => setTimeout(r, 0));
+    expect(requestCount).toBe(0);
+
+    // Entering game acquires wake lock
+    screenSignal.value = 'game';
+    await new Promise((r) => setTimeout(r, 0));
+    expect(requestCount).toBe(1);
+
+    // Pausing releases wake lock
+    pausedSignal.value = true;
+    await new Promise((r) => setTimeout(r, 0));
+    expect(releaseCount).toBe(1);
+
+    // Resuming re-acquires wake lock
+    pausedSignal.value = false;
+    await new Promise((r) => setTimeout(r, 0));
+    expect(requestCount).toBe(2);
+
+    // Document hidden releases, then returning visible while in-game re-acquires
+    fakeHidden = true;
+    for (const fn of visListeners) fn();
+    await new Promise((r) => setTimeout(r, 0));
+    expect(releaseCount).toBe(2);
+
+    fakeHidden = false;
+    for (const fn of visListeners) fn();
+    await new Promise((r) => setTimeout(r, 0));
+    expect(requestCount).toBe(3);
+
+    unbind();
+    await new Promise((r) => setTimeout(r, 0));
+    expect(releaseCount).toBe(3);
+  });
+
+  it('PWA icons have separate any and 80%-safe-zone maskable variants, 180x180 apple-touch-icon.png, and valid ICO header in favicon.ico', () => {
+    const readPngDimensions = (filePath: string) => {
+      const buf = fs.readFileSync(filePath);
+      expect(buf.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))).toBe(true);
+      return {
+        width: buf.readUInt32BE(16),
+        height: buf.readUInt32BE(20),
+        buf,
+      };
+    };
+
+    const maskablePath = fs.existsSync('public/icons/icon-512-maskable.png')
+      ? 'public/icons/icon-512-maskable.png'
+      : 'public/icons/maskable-icon-512x512.png';
+    expect(fs.existsSync(maskablePath)).toBe(true);
+    const maskable512 = readPngDimensions(maskablePath);
+    expect(maskable512.width).toBe(512);
+    expect(maskable512.height).toBe(512);
+
+    const any512Path = fs.existsSync('public/icons/icon-512.png')
+      ? 'public/icons/icon-512.png'
+      : 'public/icons/icon-512x512.png';
+    const any512 = readPngDimensions(any512Path);
+    expect(any512.width).toBe(512);
+    expect(any512.height).toBe(512);
+    // Maskable icon must differ from the regular 'any' icon (80% safe-zone inset)
+    expect(maskable512.buf.equals(any512.buf)).toBe(false);
+
+    const appleTouch = readPngDimensions('public/apple-touch-icon.png');
+    expect(appleTouch.width).toBe(180);
+    expect(appleTouch.height).toBe(180);
+
+    const icoBuf = fs.readFileSync('public/favicon.ico');
+    expect(icoBuf[0]).toBe(0x00);
+    expect(icoBuf[1]).toBe(0x00);
+    expect(icoBuf[2]).toBe(0x01);
+    expect(icoBuf[3]).toBe(0x00);
+
+    const viteCfg = fs.readFileSync('vite.config.ts', 'utf-8');
+    expect(viteCfg).toContain("registerType: 'prompt'");
+    expect(viteCfg).not.toContain("purpose: 'any maskable'");
+    expect(viteCfg).toContain("purpose: 'maskable'");
+    expect(viteCfg).toContain("purpose: 'any'");
+    expect(viteCfg).toContain('globIgnores');
+  });
+
+  it('places PWA install prompt inside MainMenu/Settings (never covering gameplay HUD), detects iOS Safari Add to Home Screen tip, and renders localized SW update toast', async () => {
+    const storeModule = await import('../../../src/ui/store') as Record<string, unknown>;
+    const installPromptSignal = storeModule.installPromptSignal as { value: boolean };
+    const swUpdateAvailableSignal = storeModule.swUpdateAvailableSignal as { value: boolean } | undefined;
+    const isIosSafariStandaloneMissing = storeModule.isIosSafariInstallTipVisible as
+      | ((nav?: unknown) => boolean)
+      | undefined;
+
+    expect(swUpdateAvailableSignal).toBeDefined();
+    expect(typeof isIosSafariStandaloneMissing).toBe('function');
+
+    // Verify iOS Safari tip detection
+    expect(
+      isIosSafariStandaloneMissing!({
+        userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1',
+        standalone: false,
+      })
+    ).toBe(true);
+    expect(
+      isIosSafariStandaloneMissing!({
+        userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1',
+        standalone: true,
+      })
+    ).toBe(false);
+
+    // When installPromptSignal is true: visible on Title (MainMenu), NOT visible during gameplay ('game')
+    installPromptSignal.value = true;
+    screenSignal.value = 'title';
+    act(() => {
+      render(h(App, null), dom.root as unknown as Element);
+    });
+    expect(dom.root.querySelector('[data-testid="pwa-install-btn"]')).not.toBeNull();
+
+    screenSignal.value = 'game';
+    act(() => {
+      render(h(App, null), dom.root as unknown as Element);
+    });
+    expect(dom.root.querySelector('[data-testid="pwa-install-btn"]')).toBeNull();
+
+    // Also visible inside Settings
+    act(() => {
+      render(h(Settings, { isOpen: true, onClose: () => {} }), dom.root as unknown as Element);
+    });
+    expect(dom.root.querySelector('[data-testid="pwa-install-btn"]')).not.toBeNull();
+    installPromptSignal.value = false;
+
+    // When swUpdateAvailableSignal is true: renders localized SW update toast with reload CTA
+    swUpdateAvailableSignal!.value = true;
+    act(() => {
+      render(h(App, null), dom.root as unknown as Element);
+    });
+    const swToast = dom.root.querySelector('[data-testid="sw-update-toast"]');
+    const swReloadBtn = dom.root.querySelector('[data-testid="sw-update-reload-btn"]');
+    expect(swToast).not.toBeNull();
+    expect(swReloadBtn).not.toBeNull();
+    swUpdateAvailableSignal!.value = false;
   });
 });

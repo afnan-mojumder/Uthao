@@ -15,6 +15,7 @@ import { ModalPanel } from '../components';
 import {
   IconClose,
   IconGamepad,
+  IconPhone,
   IconSettings,
   IconSliders,
   IconVolume,
@@ -24,7 +25,10 @@ import { applyDocumentSettings, type UiScale } from '../settingsEffects';
 import {
   audioPreviewSeqSignal,
   audioPreviewSignal,
+  installPromptSignal,
   isGamepadRebindingSignal,
+  isIosSafariInstallTipVisible,
+  promptPwaInstall,
   saveSettings,
   settingsSignal,
   Z_LAYER,
@@ -652,6 +656,49 @@ export function Settings({
                     style={{ width: '18px', height: '18px', accentColor: '#38bdf8', cursor: 'pointer' }}
                   />
                 </label>
+
+                {installPromptSignal.value && (
+                  <button
+                    type="button"
+                    data-testid="pwa-install-btn"
+                    onClick={() => void promptPwaInstall()}
+                    style={{
+                      marginTop: '4px',
+                      padding: '10px 14px',
+                      borderRadius: '10px',
+                      border: '1px solid var(--uthao-green-border, rgba(34, 197, 94, 0.45))',
+                      background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.22), rgba(5, 150, 105, 0.16))',
+                      color: 'var(--uthao-green, #22C55E)',
+                      fontSize: '0.88rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                    }}
+                  >
+                    <IconPhone size={16} /> {t('ui.install_app')}
+                  </button>
+                )}
+
+                {!installPromptSignal.value && isIosSafariInstallTipVisible() && (
+                  <div
+                    data-testid="ios-install-tip"
+                    style={{
+                      marginTop: '4px',
+                      padding: '10px 12px',
+                      borderRadius: '10px',
+                      border: '1px solid rgba(56, 189, 248, 0.28)',
+                      background: 'rgba(15, 23, 42, 0.65)',
+                      color: '#cbd5e1',
+                      fontSize: '0.78rem',
+                      lineHeight: 1.45,
+                    }}
+                  >
+                    {t('ui.ios_install_tip')}
+                  </div>
+                )}
               </div>
             </div>
           )}

@@ -1,4 +1,4 @@
-import { signal } from '@preact/signals';
+import { effect, signal } from '@preact/signals';
 import type { InputBindings } from '../input/types';
 import { cloneDefaultBindings, loadBindings } from '../input/bindings';
 import { DEFAULT_VOLUMES } from '../audio/AudioManager';
@@ -333,6 +333,38 @@ export const loadingSignal = signal<LoadingState>({
   progress: 0,
 });
 export const contextLostSignal = signal<boolean>(false);
+export const runtimeCrashSignal = signal<string | null>(null);
+
+export function reportRuntimeCrash(error: unknown): void {
+  const msg = error instanceof Error ? error.message : String(error ?? 'Unknown error');
+  runtimeCrashSignal.value = msg;
+}
+
+export function clearRuntimeCrash(): void {
+  runtimeCrashSignal.value = null;
+}
+
+export function bindGlobalCrashHandlers(win?: Window): () => void {
+  const target = win ?? (typeof window !== 'undefined' ? window : undefined);
+  if (!target || typeof target.addEventListener !== 'function') return () => {};
+
+  const onError = (ev: ErrorEvent): void => {
+    const err = ev.error ?? ev.message;
+    if (err) reportRuntimeCrash(err);
+  };
+
+  const onUnhandledRejection = (ev: PromiseRejectionEvent): void => {
+    const reason = ev.reason;
+    if (reason) reportRuntimeCrash(reason);
+  };
+
+  target.addEventListener('error', onError);
+  target.addEventListener('unhandledrejection', onUnhandledRejection);
+  return () => {
+    target.removeEventListener('error', onError);
+    target.removeEventListener('unhandledrejection', onUnhandledRejection);
+  };
+}
 
 export interface GameSettings {
   language: 'bn' | 'en';
@@ -1649,7 +1681,7 @@ export function initPwaInstall(): void {
 export async function promptPwaInstall(): Promise<boolean> {
   if (!deferredInstallPrompt) return false;
   try {
-    deferredInstallPrompt.prompt();
+    await deferredInstallPrompt.prompt();
     const choice = await deferredInstallPrompt.userChoice;
     deferredInstallPrompt = null;
     installPromptSignal.value = false;
@@ -1659,6 +1691,178 @@ export async function promptPwaInstall(): Promise<boolean> {
     installPromptSignal.value = false;
     return false;
   }
+}
+
+/**
+ * Returns true on iOS/iPadOS Safari when running inside a regular browser tab
+ * (not standalone Home Screen mode and not an in-app WebView/CriOS/FxiOS),
+ * where `beforeinstallprompt` is unsupported and the user can install via
+ * Share -> Add to Home Screen.
+ */
+export function isIosSafariInstallTipVisible(
+  nav?: { userAgent?: string; standalone?: boolean; maxTouchPoints?: number },
+  win?: { matchMedia?: (q: string) => { matches: boolean } }
+): boolean {
+  const n =
+    nav ??
+    (typeof navigator !== 'undefined'
+      ? (navigator as unknown as { userAgent?: string; standalone?: boolean; maxTouchPoints?: number })
+      : undefined);
+  if (!n || typeof n.userAgent !== 'string') return false;
+  const ua = n.userAgent;
+  const isIosDevice =
+    /iPad|iPhone|iPod/i.test(ua) ||
+    (/Macintosh/i.test(ua) && (n.maxTouchPoints ?? 0) > 1);
+  if (!isIosDevice) return false;
+
+  // Exclude non-Safari iOS browsers and social in-app WebViews
+  if (/CriOS|FxiOS|EdgiOS|OPiOS|FBAN|FBAV|Instagram|Line|Messenger/i.test(ua)) return false;
+  if (!/Safari/i.test(ua)) return false;
+
+  if (n.standalone === true) return false;
+  const w = win ?? (typeof window !== 'undefined' ? window : undefined);
+  if (w && typeof w.matchMedia === 'function') {
+    try {
+      if (w.matchMedia('(display-mode: standalone)').matches) return false;
+    } catch {
+      // Ignore matchMedia errors
+    }
+  }
+  return true;
+}
+
+export const swUpdateAvailableSignal = signal<boolean>(false);
+let swReloadCallback: ((reloadPage?: boolean) => Promise<void>) | null = null;
+
+export function setSwUpdateAvailable(reloadFn?: (reloadPage?: boolean) => Promise<void>): void {
+  if (reloadFn) swReloadCallback = reloadFn;
+  swUpdateAvailableSignal.value = true;
+}
+
+export async function applySwUpdate(): Promise<void> {
+  swUpdateAvailableSignal.value = false;
+  if (swReloadCallback) {
+    try {
+      await swReloadCallback(true);
+      return;
+    } catch {
+      // Fallback to location.reload below
+    }
+  }
+  if (typeof window !== 'undefined' && window.location && typeof window.location.reload === 'function') {
+    window.location.reload();
+  }
+}
+
+export interface WakeLockSentinelLike {
+  readonly released?: boolean;
+  release: () => Promise<void>;
+  addEventListener?: (type: string, listener: () => void) => void;
+}
+
+export interface WakeLockNavigatorLike {
+  wakeLock?: {
+    request: (type: 'screen') => Promise<WakeLockSentinelLike>;
+  };
+}
+
+export interface WakeLockDocumentLike {
+  readonly hidden?: boolean;
+  readonly visibilityState?: string;
+  addEventListener?: (type: string, listener: () => void) => void;
+  removeEventListener?: (type: string, listener: () => void) => void;
+}
+
+/**
+ * Acquires `navigator.wakeLock?.request('screen')` while actively riding
+ * (`screenSignal.value === 'game' && !pausedSignal.value` and tab is visible),
+ * releases it when paused/in menus/hidden, and re-acquires on `visibilitychange`.
+ */
+export function bindScreenWakeLock(
+  doc?: WakeLockDocumentLike,
+  nav?: WakeLockNavigatorLike
+): () => void {
+  const targetDoc =
+    doc ?? (typeof document !== 'undefined' ? (document as unknown as WakeLockDocumentLike) : undefined);
+  const targetNav =
+    nav ?? (typeof navigator !== 'undefined' ? (navigator as unknown as WakeLockNavigatorLike) : undefined);
+
+  if (!targetNav?.wakeLock || typeof targetNav.wakeLock.request !== 'function') {
+    return () => {};
+  }
+
+  let sentinel: WakeLockSentinelLike | null = null;
+  let pending = false;
+  let disposed = false;
+
+  const isDocHidden = (): boolean => {
+    if (!targetDoc) return false;
+    if (typeof targetDoc.hidden === 'boolean') return targetDoc.hidden;
+    return targetDoc.visibilityState === 'hidden';
+  };
+
+  const shouldHoldLock = (): boolean =>
+    !disposed &&
+    screenSignal.value === 'game' &&
+    !pausedSignal.value &&
+    !isDocHidden();
+
+  const syncWakeLock = async (): Promise<void> => {
+    if (shouldHoldLock()) {
+      if (sentinel && !sentinel.released) return;
+      if (pending) return;
+      pending = true;
+      try {
+        const lock = await targetNav.wakeLock!.request('screen');
+        pending = false;
+        if (!shouldHoldLock()) {
+          await lock.release().catch(() => {});
+          return;
+        }
+        sentinel = lock;
+        lock.addEventListener?.('release', () => {
+          if (sentinel === lock) {
+            sentinel = null;
+          }
+        });
+      } catch {
+        pending = false;
+      }
+    } else if (sentinel) {
+      const current = sentinel;
+      sentinel = null;
+      try {
+        if (!current.released) {
+          await current.release();
+        }
+      } catch {
+        // Ignore release errors
+      }
+    }
+  };
+
+  const stopEffect = effect(() => {
+    void screenSignal.value;
+    void pausedSignal.value;
+    void syncWakeLock();
+  });
+
+  const onVisibilityChange = (): void => {
+    void syncWakeLock();
+  };
+
+  targetDoc?.addEventListener?.('visibilitychange', onVisibilityChange);
+
+  return () => {
+    disposed = true;
+    stopEffect();
+    targetDoc?.removeEventListener?.('visibilitychange', onVisibilityChange);
+    if (sentinel) {
+      const current = sentinel;
+      sentinel = null;
+      void current.release().catch(() => {});
+    }
+  };
 }
 
 export let onRefuelCallback: (() => void) | null = null;

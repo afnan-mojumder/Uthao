@@ -2,11 +2,17 @@ import type { JSX } from 'preact';
 import { useState } from 'preact/hooks';
 import { ModalFocusGuard } from '../focusTrap';
 import { t } from '../i18n';
-import { Z_LAYER } from '../store';
+import {
+  installPromptSignal,
+  isIosSafariInstallTipVisible,
+  promptPwaInstall,
+  Z_LAYER,
+} from '../store';
 import {
   IconClose,
   IconFlag,
   IconMotorcycle,
+  IconPhone,
   IconPlay,
   IconRoad,
   IconScroll,
@@ -343,6 +349,48 @@ export function MainMenu({
         >
           <IconScroll size={16} /> {t('menu.credits')}
         </button>
+
+        {installPromptSignal.value && (
+          <button
+            type="button"
+            data-testid="pwa-install-btn"
+            onClick={() => void promptPwaInstall()}
+            style={{
+              padding: '12px 16px',
+              borderRadius: '14px',
+              border: '1px solid var(--uthao-green-border, rgba(34, 197, 94, 0.45))',
+              background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.22), rgba(5, 150, 105, 0.16))',
+              color: 'var(--uthao-green, #22C55E)',
+              fontSize: '0.92rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+            }}
+          >
+            <IconPhone size={17} /> {t('ui.install_app')}
+          </button>
+        )}
+
+        {!installPromptSignal.value && isIosSafariInstallTipVisible() && (
+          <div
+            data-testid="ios-install-tip"
+            style={{
+              padding: '10px 14px',
+              borderRadius: '12px',
+              border: '1px solid rgba(56, 189, 248, 0.28)',
+              background: 'rgba(15, 23, 42, 0.72)',
+              color: '#cbd5e1',
+              fontSize: '0.78rem',
+              lineHeight: 1.45,
+              textAlign: 'center',
+            }}
+          >
+            {t('ui.ios_install_tip')}
+          </div>
+        )}
       </div>
 
       {/* Credits Modal */}
