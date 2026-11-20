@@ -95,8 +95,8 @@ describe('T4.3 Recurring Passengers & Direct Bookings', () => {
   it('relationship persists across days', () => {
     const gm = new GameManager({ seed: 42, mode: 'career', data: {} });
 
-    // Starting relationship
-    expect(gm.reputationSystem.getRelationship('char_nabila')).toBe(0);
+    // Starting relationship seeded from data/characters.json
+    expect(gm.reputationSystem.getRelationship('char_nabila')).toBe(10);
 
     // Complete ride / build relationship on Day 1
     gm.reputationSystem.setRelationship('char_nabila', 20);

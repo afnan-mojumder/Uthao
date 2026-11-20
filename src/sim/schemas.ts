@@ -251,6 +251,20 @@ export const EffectSchema = z.discriminatedUnion('type', [
     delta: z.number(),
   }),
   z.object({
+    type: z.literal('meter'),
+    meter: z.enum([
+      'riderIntegrity',
+      'publicReputation',
+      'platformStanding',
+      'criminalExposure',
+      'evidenceExposure',
+      'safetyRecord',
+    ]),
+    delta: z.number(),
+    reasonKey: z.string(),
+    subjectId: z.string().optional(),
+  }),
+  z.object({
     type: z.literal('flag'),
     key: z.string(),
     value: z.union([z.boolean(), z.number(), z.string()]),

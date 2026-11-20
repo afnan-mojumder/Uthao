@@ -577,9 +577,10 @@ describe('T3.7 Vertical-Slice Signature Encounters', () => {
       });
 
       const startMin = gm.clock.minutes;
+      const startMintu = gm.story.characterRelationships['char_mintu'] ?? 0;
       director.chooseOption(inst!.id, 'call_mintu', effectCtx);
       expect(gm.clock.minutes).toBeCloseTo(startMin + 25, 2);
-      expect(gm.story.characterRelationships['char_mintu']).toBe(2);
+      expect(gm.story.characterRelationships['char_mintu']).toBe(startMintu + 2);
     });
   });
 

@@ -26,7 +26,11 @@ import { receipt as buildReceipt, fuelUsed, type FuelOptions } from './economy/f
 import { bikeDefToSpec, getBikeDef } from './economy/bikes';
 import { checkPuncture } from './economy/maintenance';
 import type { TripReceipt, PassengerProfile } from '../core/types';
-import { startNegotiation, type NegotiationSession } from './negotiation/NegotiationSystem';
+import {
+  startNegotiation,
+  type NegotiationResult,
+  type NegotiationSession,
+} from './negotiation/NegotiationSystem';
 import { fairFare, isRushHourMinute } from './negotiation/fare';
 import { generateProfile } from './passenger/profiles';
 import { expectedBudget, openingOffer } from './passenger/PassengerAI';
@@ -177,8 +181,15 @@ export class GameSession {
       if (ev.outcome.kind !== 'accepted') return;
       const req = this.ride.getActiveRequest();
       if (!req || req.requestId !== ev.requestId) return;
+      const trustSubjectId = req.characterId ?? req.passengerId;
       if (ev.discount) {
-        this.gm.reputationSystem.changeLocalTrust(2);
+        this.gm.reputationSystem.applyMeter(
+          'publicReputation',
+          2,
+          'karma.negotiation_discount',
+          trustSubjectId
+        );
+        this.gm.reputationSystem.changePassengerTrust(trustSubjectId, 4);
         if (req.characterId) {
           this.gm.reputationSystem.changeRelationship(req.characterId, 3);
         }
@@ -188,6 +199,15 @@ export class GameSession {
       const fair = fairFare(req.estimatedDistance, req.estimatedDuration, req.surge);
       const over = ev.outcome.fare / Math.max(fair, 1) - 1;
       const h = this.gm.negotiationHistory;
+      if (over > BALANCE.NEGOTIATION.overchargeMargin) {
+        this.gm.reputationSystem.applyMeter(
+          'riderIntegrity',
+          -4,
+          'karma.overcharge',
+          trustSubjectId
+        );
+        this.gm.reputationSystem.changePassengerTrust(trustSubjectId, -5);
+      }
       this.gm.negotiationHistory = clamp(
         over > BALANCE.NEGOTIATION.overchargeMargin ? h - 0.15 : over <= 0.05 ? h + 0.05 : h,
         -1,
@@ -993,15 +1013,47 @@ export class GameSession {
     }
   }
 
-  /** Resets story/economy state and starts the opening tutorial. Replaces the
-   * inline reset previously in main.ts's onNewCareer dispatcher. */
+  /** Resets story/economy/ride state and starts the opening tutorial. */
   newCareer(): void {
     this.lastPunctureMin = -Infinity;
     this.offAppSeq = 0;
+    this.ride.resetCareer();
     this.gm.resetCareerState();
     this.syncBikeSpec();
     this.syncLocation();
     this.gm.bus.emit('state/restored', {});
+  }
+
+  /** Applies karma, passenger trust, relationship, and rating effects from a negotiation step. */
+  applyNegotiationResult(result: NegotiationResult): void {
+    const req = result.session.req;
+    const subjectId = req.characterId ?? req.passengerId;
+    if (result.karmaEffects) {
+      for (const eff of result.karmaEffects) {
+        this.gm.reputationSystem.applyMeter(
+          eff.meter,
+          eff.delta,
+          eff.reasonKey,
+          subjectId
+        );
+      }
+    }
+    if (result.trustDelta !== undefined && result.trustDelta !== 0) {
+      this.gm.reputationSystem.changePassengerTrust(subjectId, result.trustDelta);
+    }
+    if (
+      result.relationshipDelta !== undefined &&
+      result.relationshipDelta !== 0 &&
+      req.characterId
+    ) {
+      this.gm.reputationSystem.changeRelationship(
+        req.characterId,
+        result.relationshipDelta
+      );
+    }
+    if (result.ratingDelta !== undefined && result.ratingDelta !== 0) {
+      this.gm.reputationSystem.adjustRating(result.ratingDelta);
+    }
   }
 
   /** T8.2: settles the scripted tutorial ride through the same exactly-once path as a

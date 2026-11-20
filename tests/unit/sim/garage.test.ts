@@ -257,7 +257,8 @@ describe('P4.2 Kamal proximity, end-of-shift commute fuel, and live garageSignal
 
     gm.dispatch({ type: 'buyUpgrade', upgradeId: 'upgrade_luggage_carrier' });
     expect(garageSignal.value.ownedUpgrades).toContain('upgrade_luggage_carrier');
-    expect(garageSignal.value.cash).toBe(700);
+    // Seeded char_kamal=25 (>= 20) grants Kamal's 20% discount at his garage: 600 -> 480 (1300 - 480 = 820)
+    expect(garageSignal.value.cash).toBe(820);
 
     // Repair updates engineCondition
     gm.dispatch({ type: 'repair', item: 'engine' });

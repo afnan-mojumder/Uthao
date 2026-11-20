@@ -112,7 +112,13 @@
         "effects": [
           { "type": "time", "min": 4 },
           { "type": "mood", "delta": 0.15 },
-          { "type": "rating", "delta": 0.1 }
+          { "type": "rating", "delta": 0.1 },
+          {
+            "type": "meter",
+            "meter": "publicReputation",
+            "delta": 3,
+            "reasonKey": "karma.extra_stop_helpful"
+          }
         ]
       },
       {
@@ -151,7 +157,13 @@
           { "type": "time", "min": -3 },
           { "type": "money", "amount": 50, "kind": "tip" },
           { "type": "mood", "delta": 0.2 },
-          { "type": "localTrust", "delta": 2 }
+          { "type": "localTrust", "delta": 2 },
+          {
+            "type": "meter",
+            "meter": "safetyRecord",
+            "delta": -4,
+            "reasonKey": "karma.urgent_exam_speed"
+          }
         ]
       },
       {
@@ -166,7 +178,13 @@
         "labelKey": "encounter.urgent_exam.choice.refuse",
         "effects": [
           { "type": "mood", "delta": -0.15 },
-          { "type": "flag", "key": "pressuredSpeeding", "value": "refused" }
+          { "type": "flag", "key": "pressuredSpeeding", "value": "refused" },
+          {
+            "type": "meter",
+            "meter": "safetyRecord",
+            "delta": 2,
+            "reasonKey": "karma.safe_refusal"
+          }
         ]
       }
     ]
@@ -226,7 +244,19 @@
         "labelKey": "encounter.bus_block.choice.sidewalk",
         "effects": [
           { "type": "injury", "severity": 5 },
-          { "type": "mood", "delta": 0.1 }
+          { "type": "mood", "delta": 0.1 },
+          {
+            "type": "meter",
+            "meter": "safetyRecord",
+            "delta": -6,
+            "reasonKey": "karma.sidewalk_shortcut"
+          },
+          {
+            "type": "meter",
+            "meter": "publicReputation",
+            "delta": -3,
+            "reasonKey": "karma.sidewalk_shortcut"
+          }
         ]
       },
       {
@@ -234,7 +264,13 @@
         "labelKey": "encounter.bus_block.choice.wait",
         "effects": [
           { "type": "time", "min": 6 },
-          { "type": "mood", "delta": -0.05 }
+          { "type": "mood", "delta": -0.05 },
+          {
+            "type": "meter",
+            "meter": "safetyRecord",
+            "delta": 2,
+            "reasonKey": "karma.patient_wait"
+          }
         ]
       },
       {
@@ -274,7 +310,21 @@
           { "type": "time", "min": 5 },
           { "type": "mood", "delta": 0.2 },
           { "type": "rating", "delta": 0.2 },
-          { "type": "relationship", "characterId": "char_rahim", "delta": 5 }
+          { "type": "relationship", "characterId": "char_rahim", "delta": 5 },
+          {
+            "type": "meter",
+            "meter": "riderIntegrity",
+            "delta": 4,
+            "reasonKey": "karma.wait_errand_free",
+            "subjectId": "char_rahim"
+          },
+          {
+            "type": "meter",
+            "meter": "publicReputation",
+            "delta": 3,
+            "reasonKey": "karma.wait_errand_free",
+            "subjectId": "char_rahim"
+          }
         ]
       },
       {

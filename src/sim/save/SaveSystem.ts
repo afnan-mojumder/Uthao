@@ -111,6 +111,31 @@ export function serialize(gm: GameManager, slot: SaveSlot = 'auto'): SaveV1 {
           safetyRecord: { ...snap.reputation.safetyRecord },
           riskScore: snap.reputation.riskScore,
           promises: { ...snap.reputation.promises },
+          ...(snap.reputation.meters ? { meters: { ...snap.reputation.meters } } : {}),
+          ...(snap.reputation.karmaLog
+            ? { karmaLog: snap.reputation.karmaLog.map((e) => ({ ...e })) }
+            : {}),
+          ...(snap.reputation.passengerTrust
+            ? { passengerTrust: { ...snap.reputation.passengerTrust } }
+            : {}),
+          ...(snap.reputation.offAppStrikes !== undefined
+            ? { offAppStrikes: snap.reputation.offAppStrikes }
+            : {}),
+          ...(snap.reputation.suspendedUntilDay !== undefined
+            ? { suspendedUntilDay: snap.reputation.suspendedUntilDay }
+            : {}),
+          ...(snap.reputation.wasWarned !== undefined
+            ? { wasWarned: snap.reputation.wasWarned }
+            : {}),
+          ...(snap.reputation.wasSuspended !== undefined
+            ? { wasSuspended: snap.reputation.wasSuspended }
+            : {}),
+          ...(snap.reputation.ratingSuspensionCleared !== undefined
+            ? { ratingSuspensionCleared: snap.reputation.ratingSuspensionCleared }
+            : {}),
+          ...(snap.reputation.karmaSeq !== undefined
+            ? { karmaSeq: snap.reputation.karmaSeq }
+            : {}),
         }
       : {
           rating: 5.0,
@@ -190,6 +215,31 @@ export function deserialize(save: SaveV1, gameData?: GameData): GameManager {
       safetyRecord: { ...save.reputation.safetyRecord },
       riskScore: save.reputation.riskScore,
       promises: { ...save.reputation.promises },
+      ...(save.reputation.meters ? { meters: { ...save.reputation.meters } } : {}),
+      ...(save.reputation.karmaLog
+        ? { karmaLog: save.reputation.karmaLog.map((e) => ({ ...e })) }
+        : {}),
+      ...(save.reputation.passengerTrust
+        ? { passengerTrust: { ...save.reputation.passengerTrust } }
+        : {}),
+      ...(save.reputation.offAppStrikes !== undefined
+        ? { offAppStrikes: save.reputation.offAppStrikes }
+        : {}),
+      ...(save.reputation.suspendedUntilDay !== undefined
+        ? { suspendedUntilDay: save.reputation.suspendedUntilDay }
+        : {}),
+      ...(save.reputation.wasWarned !== undefined
+        ? { wasWarned: save.reputation.wasWarned }
+        : {}),
+      ...(save.reputation.wasSuspended !== undefined
+        ? { wasSuspended: save.reputation.wasSuspended }
+        : {}),
+      ...(save.reputation.ratingSuspensionCleared !== undefined
+        ? { ratingSuspensionCleared: save.reputation.ratingSuspensionCleared }
+        : {}),
+      ...(save.reputation.karmaSeq !== undefined
+        ? { karmaSeq: save.reputation.karmaSeq }
+        : {}),
     },
     roadEvents: save.roadEvents ? [...save.roadEvents] : [],
     ledger: save.ledger,

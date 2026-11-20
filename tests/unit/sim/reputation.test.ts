@@ -186,10 +186,10 @@ describe('ReputationSystem (T4.2)', () => {
     let normalCount = 0;
     let lowCount = 0;
 
-    // Simulate 300 game minutes
+    // Simulate 300 game minutes counting app requests (recurring direct calls bypass the app rating multiplier)
     for (let m = 480; m < 780; m++) {
-      normalCount += normalGen.tick(1, m, 'clear').length;
-      lowCount += lowGen.tick(1, m, 'clear').length;
+      normalCount += normalGen.tick(1, m, 'clear').filter((r) => r.bookingType === 'app').length;
+      lowCount += lowGen.tick(1, m, 'clear').filter((r) => r.bookingType === 'app').length;
     }
 
     expect(lowCount).toBeLessThan(normalCount);
@@ -450,5 +450,345 @@ describe('T7.5: effect bug fixes', () => {
     // Back-compat: no target at all still means 'bike'.
     applyEffect({ type: 'injury', severity: 5 }, ctx);
     expect(gm.economyManager.motorcycleCondition).toBe(startCondition - 15);
+  });
+});
+
+describe('P4.3: 8 bounded attributed karma meters, relationship seeding, single-writer & suspension expiry', () => {
+  it('initializes all 6 bounded meters at documented defaults, clamps to [0, 100], logs applied delta in 200-entry ring newest-first, and ignores non-finite/zero deltas', () => {
+    const bus = new EventBus<GameEvents>();
+    const karmaEvents: unknown[] = [];
+    bus.on('karma/changed', ({ event }) => karmaEvents.push(event));
+
+    const clock = { day: 2, minutes: 515 };
+    const rep = new ReputationSystem({ bus, clock });
+
+    expect(rep.getMeters()).toEqual({
+      riderIntegrity: 50,
+      publicReputation: 30,
+      platformStanding: 80,
+      criminalExposure: 0,
+      evidenceExposure: 0,
+      safetyRecord: 70,
+    });
+    expect(rep.getLocalTrust()).toBe(30);
+
+    // Clamps upper bound and logs applied = clampedNew - prev (not raw delta)
+    rep.applyMeter('evidenceExposure', 500, 'karma.test_upper', 'char_morshed');
+    expect(rep.getMeters().evidenceExposure).toBe(100);
+    const upperEv = rep.getKarmaLog(1)[0]!;
+    expect(upperEv.meter).toBe('evidenceExposure');
+    expect(upperEv.delta).toBe(500);
+    expect(upperEv.applied).toBe(100);
+    expect(upperEv.reasonKey).toBe('karma.test_upper');
+    expect(upperEv.subjectId).toBe('char_morshed');
+    expect(upperEv.day).toBe(2);
+    expect(upperEv.minute).toBe(515);
+    expect(karmaEvents).toHaveLength(1);
+
+    // Clamps lower bound and logs applied = -80
+    rep.applyMeter('platformStanding', -500, 'karma.test_lower');
+    expect(rep.getMeters().platformStanding).toBe(0);
+    expect(rep.getKarmaLog(1)[0]!.applied).toBe(-80);
+    expect(rep.getKarmaLog(1)[0]!.delta).toBe(-500);
+
+    // Non-finite and zero deltas do not corrupt or log
+    rep.applyMeter('riderIntegrity', Number.NaN, 'karma.nan');
+    rep.applyMeter('riderIntegrity', Number.POSITIVE_INFINITY, 'karma.inf');
+    rep.applyMeter('riderIntegrity', Number.NEGATIVE_INFINITY, 'karma.ninf');
+    rep.applyMeter('riderIntegrity', 0, 'karma.zero');
+    expect(rep.getMeters().riderIntegrity).toBe(50);
+    expect(rep.getKarmaLog()).toHaveLength(2);
+
+    // 200-entry ring buffer evicts oldest and preserves newest-first order
+    for (let i = 1; i <= 205; i++) {
+      rep.applyMeter('riderIntegrity', i % 2 === 0 ? 1 : -1, `karma.ring_${i}`);
+    }
+    const log = rep.getKarmaLog();
+    expect(log).toHaveLength(200);
+    expect(log[0]!.reasonKey).toBe('karma.ring_205');
+    expect(log[199]!.reasonKey).toBe('karma.ring_6');
+    expect(rep.getKarmaLog(3).map((e) => e.reasonKey)).toEqual([
+      'karma.ring_205',
+      'karma.ring_204',
+      'karma.ring_203',
+    ]);
+  });
+
+  it('collisions, infractions, and safe trips move safetyRecord through applyMeter', () => {
+    const bus = new EventBus<GameEvents>();
+    const rep = new ReputationSystem({ bus });
+
+    rep.startTrip({ requestId: 'req_safe_1' });
+    bus.emit('bike/nearMiss', { distanceM: 0.5, speedKmh: 30 });
+    expect(rep.getMeters().safetyRecord).toBe(69);
+    expect(rep.getKarmaLog(1)[0]!.reasonKey).toBe('karma.near_miss');
+
+    bus.emit('bike/collision', { severity: 'bump', relSpeedKmh: 12 });
+    expect(rep.getMeters().safetyRecord).toBe(64);
+    expect(rep.getKarmaLog(1)[0]!.reasonKey).toBe('karma.collision_bump');
+
+    bus.emit('bike/infraction', { kind: 'redLight', segmentId: 'seg_1' });
+    expect(rep.getMeters().safetyRecord).toBe(56);
+    expect(rep.getKarmaLog(1)[0]!.reasonKey).toBe('karma.infraction');
+
+    bus.emit('bike/collision', { severity: 'crash', relSpeedKmh: 45 });
+    expect(rep.getMeters().safetyRecord).toBe(41);
+    expect(rep.getKarmaLog(1)[0]!.reasonKey).toBe('karma.collision_crash');
+
+    // Clean trip raises safetyRecord via applyMeter
+    rep.startTrip({ requestId: 'req_safe_2' });
+    rep.completeActiveTrip();
+    expect(rep.getMeters().safetyRecord).toBeGreaterThan(41);
+    expect(rep.getKarmaLog(1)[0]!.reasonKey).toBe('karma.safe_trip');
+  });
+
+  it('tracks passengerTrust [0..100] with recurring character defaults and canonical passenger IDs', () => {
+    const rep = new ReputationSystem();
+    expect(rep.getPassengerTrust('p_random_unseen')).toBe(50);
+    expect(rep.getPassengerTrust('char_nabila')).toBe(70);
+    expect(rep.getPassengerTrust('pass_char_nabila')).toBe(70);
+
+    rep.changePassengerTrust('pass_char_nabila', -25);
+    expect(rep.getPassengerTrust('char_nabila')).toBe(45);
+    expect(rep.getPassengerTrust('pass_char_nabila')).toBe(45);
+
+    rep.changePassengerTrust('p_random_unseen', 200);
+    expect(rep.getPassengerTrust('p_random_unseen')).toBe(100);
+    rep.changePassengerTrust('p_random_unseen', -200);
+    expect(rep.getPassengerTrust('p_random_unseen')).toBe(0);
+  });
+
+  it('seeds story.characterRelationships on boot and resets cleanly on resetCareerState from data/characters.json', () => {
+    const gm = new GameManager({ seed: 77, mode: 'career', data: {} });
+    expect(gm.story.characterRelationships['char_ma']).toBe(80);
+    expect(gm.story.characterRelationships['char_mintu']).toBe(35);
+    expect(gm.story.characterRelationships['char_kamal']).toBe(25);
+    expect(gm.story.characterRelationships['char_nabila']).toBe(10);
+    expect(gm.story.characterRelationships['char_jamil']).toBe(0);
+
+    expect(gm.reputationSystem.getRelationship('char_ma')).toBe(80);
+    expect(gm.reputationSystem.getRelationship('char_mintu')).toBe(35);
+    expect(gm.reputationSystem.getRelationship('char_kamal')).toBe(25);
+
+    // Mutate state and verify resetCareerState restores defaults and clears karmaLog
+    gm.reputationSystem.changeRelationship('char_ma', -50);
+    gm.reputationSystem.applyMeter('criminalExposure', 40, 'karma.test');
+    gm.reputationSystem.changePassengerTrust('char_nabila', -40);
+    gm.resetCareerState();
+
+    expect(gm.story.characterRelationships['char_ma']).toBe(80);
+    expect(gm.reputationSystem.getRelationship('char_ma')).toBe(80);
+    expect(gm.reputationSystem.getMeters()).toEqual({
+      riderIntegrity: 50,
+      publicReputation: 30,
+      platformStanding: 80,
+      criminalExposure: 0,
+      evidenceExposure: 0,
+      safetyRecord: 70,
+    });
+    expect(gm.reputationSystem.getKarmaLog()).toHaveLength(0);
+    expect(gm.reputationSystem.getPassengerTrust('char_nabila')).toBe(70);
+  });
+
+  it('suspends app on low platformStanding (< 20) OR rating < 3.0 AND 3 off-app strikes, and expires cleanly after 2 days', () => {
+    // 1. Low platformStanding (< 20)
+    const gm1 = new GameManager({ seed: 11, mode: 'career', data: {} });
+    gm1.reputationSystem.applyMeter('platformStanding', -65, 'karma.complaint'); // 80 -> 15
+    expect(gm1.reputationSystem.getMeters().platformStanding).toBe(15);
+    expect(gm1.reputationSystem.isAppSuspended(1)).toBe(true);
+    expect(gm1.story.branchFlags['appSuspended']).toBe(true);
+    expect(gm1.reputationSystem.isAppSuspended(2)).toBe(true);
+
+    // Advance Day 1 -> Day 2 -> Day 3 via endShift + sleep
+    gm1.clock.minutes = 13 * 60;
+    gm1.dispatch({ type: 'endShift' });
+    gm1.dispatch({ type: 'sleep' });
+    expect(gm1.clock.day).toBe(2);
+    expect(gm1.reputationSystem.isAppSuspended(2)).toBe(true);
+    expect(gm1.story.branchFlags['appSuspended']).toBe(true);
+
+    gm1.clock.minutes = 13 * 60;
+    gm1.dispatch({ type: 'endShift' });
+    gm1.dispatch({ type: 'sleep' });
+    expect(gm1.clock.day).toBe(3);
+    expect(gm1.reputationSystem.isAppSuspended(3)).toBe(false);
+    expect(gm1.story.branchFlags['appSuspended']).toBe(false);
+    expect(gm1.reputationSystem.getMeters().platformStanding).toBeGreaterThanOrEqual(20);
+
+    // 2. Low rating (< 3.0)
+    const gm2 = new GameManager({ seed: 12, mode: 'career', data: {} });
+    for (let i = 0; i < 5; i++) gm2.reputationSystem.recordTripRating(2.0);
+    expect(gm2.reputationSystem.isAppSuspended(1)).toBe(true);
+    expect(gm2.story.branchFlags['appSuspended']).toBe(true);
+
+    gm2.clock.minutes = 13 * 60;
+    gm2.dispatch({ type: 'endShift' });
+    gm2.dispatch({ type: 'sleep' });
+    expect(gm2.reputationSystem.isAppSuspended(2)).toBe(true);
+
+    gm2.clock.minutes = 13 * 60;
+    gm2.dispatch({ type: 'endShift' });
+    gm2.dispatch({ type: 'sleep' });
+    expect(gm2.clock.day).toBe(3);
+    expect(gm2.reputationSystem.isAppSuspended(3)).toBe(false);
+    expect(gm2.story.branchFlags['appSuspended']).toBe(false);
+    // Completing a good ride on Day 3 does NOT immediately re-suspend
+    gm2.reputationSystem.recordTripRating(5.0);
+    expect(gm2.reputationSystem.isAppSuspended(3)).toBe(false);
+
+    // 3. 3 off-app strikes reset strike counter & clear flag after 2 days
+    const gm3 = new GameManager({ seed: 13, mode: 'career', data: {} });
+    const rideMgr = new RideManager({
+      roadNetwork: RoadNetwork.fromDistricts([
+        {
+          districtId: 'testloop',
+          name: { bn: 'টেস্ট', en: 'Test' },
+          nodes: [
+            { nodeId: 'A', x: 0, z: 0, kind: 'junction' },
+            { nodeId: 'B', x: 50, z: 0, kind: 'junction' },
+          ],
+          segments: [
+            {
+              segmentId: 'S1',
+              startNodeId: 'A',
+              endNodeId: 'B',
+              width: 8,
+              surfaceCondition: 1,
+              trafficDensity: 0.2,
+              speedLimit: 40,
+              turnRestrictions: [],
+              motorcycleAccessible: true,
+              pedestrianDensity: 0.1,
+              riskLevel: 0.1,
+              oneWay: false,
+              divided: false,
+              lanes: 2,
+              roadType: 'main',
+              floodSensitivity: 0,
+              pickupPractical: true,
+              district: 'testloop',
+              tags: [],
+            },
+          ],
+          pois: [],
+        },
+      ]),
+      bus: gm3.bus,
+      reputation: gm3.reputationSystem,
+      clock: gm3.clock,
+    });
+    rideMgr.addStrike(1);
+    rideMgr.addStrike(1);
+    const s3 = rideMgr.addStrike(1);
+    expect(s3.strikes).toBe(3);
+    expect(s3.suspended).toBe(true);
+    expect(rideMgr.isAppSuspended(1)).toBe(true);
+    expect(gm3.story.branchFlags['appSuspended']).toBe(true);
+
+    gm3.clock.minutes = 13 * 60;
+    gm3.dispatch({ type: 'endShift' });
+    gm3.dispatch({ type: 'sleep' });
+    expect(rideMgr.isAppSuspended(2)).toBe(true);
+
+    gm3.clock.minutes = 13 * 60;
+    gm3.dispatch({ type: 'endShift' });
+    gm3.dispatch({ type: 'sleep' });
+    expect(gm3.clock.day).toBe(3);
+    expect(rideMgr.isAppSuspended(3)).toBe(false);
+    expect(gm3.story.branchFlags['appSuspended']).toBe(false);
+    expect(rideMgr.offAppStrikes).toBe(0);
+    // Next strike starts fresh at 1 (no immediate re-suspension)
+    const nextStrike = rideMgr.addStrike(3);
+    expect(nextStrike.strikes).toBe(1);
+    expect(nextStrike.suspended).toBe(false);
+  });
+
+  it('snapshot and applySnapshot preserve meters, karmaLog, passengerTrust, promises, and characterRelationships', () => {
+    const gm = new GameManager({ seed: 91, mode: 'career', data: {} });
+    gm.reputationSystem.applyMeter('riderIntegrity', -18, 'karma.mislead_distance', 'char_nabila');
+    gm.reputationSystem.applyMeter('criminalExposure', 12, 'karma.phone_kept');
+    gm.reputationSystem.changePassengerTrust('char_nabila', -15);
+    gm.reputationSystem.changeRelationship('char_kamal', 15);
+    gm.reputationSystem.recordPromiseKept();
+
+    const snap = gm.snapshot();
+    const gm2 = new GameManager({ seed: 91, mode: 'career', data: {} });
+    gm2.applySnapshot(snap);
+
+    expect(gm2.reputationSystem.getMeters()).toEqual(gm.reputationSystem.getMeters());
+    expect(gm2.reputationSystem.getKarmaLog()).toEqual(gm.reputationSystem.getKarmaLog());
+    expect(gm2.reputationSystem.getPassengerTrust('char_nabila')).toBe(
+      gm.reputationSystem.getPassengerTrust('char_nabila')
+    );
+    expect(gm2.reputationSystem.getRelationship('char_kamal')).toBe(40);
+    expect(gm2.story.characterRelationships['char_kamal']).toBe(40);
+    expect(gm2.reputationSystem.getPromisesRecord()).toEqual({ kept: 1, broken: 0 });
+  });
+
+  it('blocks recurring regular requests when passengerTrust drops below 25', () => {
+    const rep = new ReputationSystem();
+    rep.setRelationship('char_nabila', 30); // passes relationship >= 15 gate
+    const network = RoadNetwork.fromDistricts([
+      {
+        districtId: 'testloop',
+        name: { bn: 'টেস্ট', en: 'Test' },
+        nodes: [
+          { nodeId: 'N1', x: 0, z: 0, kind: 'junction' },
+          { nodeId: 'N2', x: 100, z: 0, kind: 'junction' },
+        ],
+        segments: [
+          {
+            segmentId: 'S1',
+            startNodeId: 'N1',
+            endNodeId: 'N2',
+            width: 8,
+            surfaceCondition: 1,
+            trafficDensity: 0.2,
+            speedLimit: 40,
+            turnRestrictions: [],
+            motorcycleAccessible: true,
+            pedestrianDensity: 0.1,
+            riskLevel: 0.1,
+            oneWay: false,
+            divided: false,
+            lanes: 2,
+            roadType: 'main',
+            floodSensitivity: 0,
+            pickupPractical: true,
+            district: 'testloop',
+            tags: [],
+          },
+        ],
+        pois: [],
+      },
+    ]);
+    const gen = new RequestGenerator(network, new Rng(5), { reputationSystem: rep });
+
+    expect(gen.canEmitRecurringRequest('char_nabila')).toBe(true);
+    rep.setPassengerTrust('char_nabila', 24);
+    expect(gen.canEmitRecurringRequest('char_nabila')).toBe(false);
+    rep.setPassengerTrust('char_nabila', 25);
+    expect(gen.canEmitRecurringRequest('char_nabila')).toBe(true);
+  });
+
+  it('street and offApp rides do not drop app rating or suspend the app account', () => {
+    const bus = new EventBus<GameEvents>();
+    const rep = new ReputationSystem({ bus });
+
+    rep.startTrip({ requestId: 'req_street_late', bookingType: 'street', isUrgent: true });
+    rep.recordLateness(120);
+    rep.completeActiveTrip();
+
+    expect(rep.getAppRating()).toBe(5.0);
+    expect(rep.getRatingsHistory()).toHaveLength(0);
+    expect(rep.isAppSuspended(1)).toBe(false);
+
+    rep.startTrip({ requestId: 'req_offapp_bump', bookingType: 'offApp' });
+    rep.recordCollision('crash');
+    rep.completeActiveTrip();
+
+    expect(rep.getAppRating()).toBe(5.0);
+    expect(rep.isAppSuspended(1)).toBe(false);
+    expect(rep.getMeters().safetyRecord).toBe(57); // 70 + 2 (safe first ride) - 15 (crash)
   });
 });

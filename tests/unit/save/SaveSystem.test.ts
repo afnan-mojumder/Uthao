@@ -70,6 +70,9 @@ describe('SaveSystem (T4.9)', () => {
     gm.reputationSystem.addRiskScore(3);
     gm.reputationSystem.recordPromiseKept();
     gm.reputationSystem.recordPromiseKept();
+    gm.reputationSystem.applyMeter('riderIntegrity', -12, 'karma.test_save', 'char_nabila');
+    gm.reputationSystem.changePassengerTrust('char_nabila', -15);
+    gm.reputationSystem.addOffAppStrike(2);
 
     const originalSnapshot = gm.snapshot();
 
@@ -113,6 +116,10 @@ describe('SaveSystem (T4.9)', () => {
     expect(restoredSnapshot.reputation?.riskScore).toBe(originalSnapshot.reputation?.riskScore);
     expect(restoredSnapshot.reputation?.promises).toEqual(originalSnapshot.reputation?.promises);
     expect(restoredSnapshot.reputation?.safetyRecord).toEqual(originalSnapshot.reputation?.safetyRecord);
+    expect(restoredSnapshot.reputation?.meters).toEqual(originalSnapshot.reputation?.meters);
+    expect(restoredSnapshot.reputation?.karmaLog).toEqual(originalSnapshot.reputation?.karmaLog);
+    expect(restoredSnapshot.reputation?.passengerTrust).toEqual(originalSnapshot.reputation?.passengerTrust);
+    expect(restoredSnapshot.reputation?.offAppStrikes).toBe(originalSnapshot.reputation?.offAppStrikes);
   });
 
   it('v0 fixture migrates to current', () => {

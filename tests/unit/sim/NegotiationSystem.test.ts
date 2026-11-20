@@ -668,4 +668,130 @@ describe('NegotiationSystem (T2.3)', () => {
       expect(sawHigherReject).toBe(true);
     });
   });
+
+  describe('P4.3 misleadDistance & pressure exploitation actions', () => {
+    it('misleadDistance can raise a fare against low-knowledge passengers, drops riderIntegrity (more for vulnerable), and can trigger complaints', () => {
+      const commuter = mockProfile({ archetype: 'commuter', localKnowledge: 0.7, patience: 0.9 });
+      const traveler = mockProfile({ archetype: 'traveler', localKnowledge: 0.15, patience: 0.9 });
+      const urgent = mockProfile({ archetype: 'urgent', urgency: 0.9, localKnowledge: 0.3, patience: 0.8 });
+      const family = mockProfile({ archetype: 'family', localKnowledge: 0.4, patience: 0.8 });
+
+      const sCommuter = startNegotiation(mockRequest({ requestId: 'req_mis_comm' }), commuter, {
+        traffic: 0.3,
+        day: 1,
+        walkM: 0,
+        rng: new Rng(10),
+      });
+      const sTraveler = startNegotiation(mockRequest({ requestId: 'req_mis_trav' }), traveler, {
+        traffic: 0.3,
+        day: 1,
+        walkM: 0,
+        rng: new Rng(10),
+      });
+      const sUrgent = startNegotiation(mockRequest({ requestId: 'req_mis_urg' }), urgent, {
+        traffic: 0.3,
+        day: 1,
+        walkM: 0,
+        rng: new Rng(10),
+      });
+      const sFamily = startNegotiation(mockRequest({ requestId: 'req_mis_fam' }), family, {
+        traffic: 0.3,
+        day: 1,
+        walkM: 0,
+        rng: new Rng(10),
+      });
+
+      const resComm = respond(sCommuter, { kind: 'misleadDistance' });
+      const resTrav = respond(sTraveler, { kind: 'misleadDistance' });
+      const resUrg = respond(sUrgent, { kind: 'misleadDistance' });
+      const resFam = respond(sFamily, { kind: 'misleadDistance' });
+
+      const intDelta = (r: ReturnType<typeof respond>) =>
+        r.karmaEffects?.find((e) => e.meter === 'riderIntegrity')?.delta ?? 0;
+
+      expect(intDelta(resComm)).toBeLessThan(0);
+      expect(intDelta(resTrav)).toBeLessThan(intDelta(resComm));
+      expect(intDelta(resUrg)).toBeLessThan(intDelta(resComm));
+      expect(intDelta(resFam)).toBeLessThan(intDelta(resComm));
+
+      // Across seeds, misleadDistance produces both raised-fare accepts AND detected complaints/refusals
+      let acceptedRaised = 0;
+      let sawComplaint = false;
+      for (let i = 0; i < 120; i++) {
+        const sess = startNegotiation(
+          mockRequest({ requestId: `req_mis_sweep_${i}` }),
+          traveler,
+          { traffic: 0.3, day: 1, walkM: 0, rng: new Rng(i + 1) }
+        );
+        const r = respond(sess, { kind: 'misleadDistance' });
+        if (r.outcome?.kind === 'accepted' && r.outcome.fare > sess.currentPassengerOffer) {
+          acceptedRaised++;
+        }
+        if (r.complaint) {
+          sawComplaint = true;
+          expect(r.karmaEffects?.some((e) => e.meter === 'platformStanding' && e.delta < 0)).toBe(true);
+        }
+      }
+      expect(acceptedRaised).toBeGreaterThan(0);
+      expect(sawComplaint).toBe(true);
+    });
+
+    it('pressure drains patience, hits riderIntegrity harder on urgent/traveler/family, and applies through GameSession', () => {
+      const road = RoadNetwork.fromDistricts([testloopData as DistrictData]);
+      const gm = new GameManager({ seed: 21, mode: 'career', data: {} });
+      const session = new GameSession({ gm, road, autoRequests: false });
+
+      const commuter = mockProfile({ archetype: 'commuter', urgency: 0.4, patience: 0.9 });
+      const family = mockProfile({ archetype: 'family', urgency: 0.8, safetySensitivity: 0.8, patience: 0.8 });
+
+      const rComm = respond(
+        startNegotiation(mockRequest({ requestId: 'req_pres_c' }), commuter, {
+          traffic: 0.3,
+          day: 1,
+          walkM: 0,
+          rng: new Rng(5),
+        }),
+        { kind: 'pressure' }
+      );
+      const rFam = respond(
+        startNegotiation(mockRequest({ requestId: 'req_pres_f' }), family, {
+          traffic: 0.3,
+          day: 1,
+          walkM: 0,
+          rng: new Rng(5),
+        }),
+        { kind: 'pressure' }
+      );
+
+      const commHit = rComm.karmaEffects?.find((e) => e.meter === 'riderIntegrity')?.delta ?? 0;
+      const famHit = rFam.karmaEffects?.find((e) => e.meter === 'riderIntegrity')?.delta ?? 0;
+      expect(commHit).toBeLessThan(0);
+      expect(famHit).toBeLessThan(commHit);
+
+      // Apply through live GameSession onto ReputationSystem
+      const [a, b] = road.getAllNodes();
+      const nabilaProfile = generateProfile('urgent', new Rng(2), 'pass_char_nabila');
+      session.requests.setProfile(nabilaProfile);
+      session.ride.offer(
+        mockRequest({
+          requestId: 'req_pres_live',
+          passengerId: nabilaProfile.passengerId,
+          characterId: 'char_nabila',
+          pickupNodeId: a!.nodeId,
+          destinationNodeId: b!.nodeId,
+        })
+      );
+      session.ride.accept('req_pres_live');
+      const neg = session.beginNegotiation('req_pres_live')!;
+      const integrity0 = gm.reputationSystem.getMeters().riderIntegrity;
+      const trust0 = gm.reputationSystem.getPassengerTrust('char_nabila');
+
+      const liveRes = respond(neg, { kind: 'pressure' });
+      session.applyNegotiationResult(liveRes);
+
+      expect(gm.reputationSystem.getMeters().riderIntegrity).toBeLessThan(integrity0);
+      expect(gm.reputationSystem.getPassengerTrust('char_nabila')).toBeLessThan(trust0);
+      expect(gm.reputationSystem.getKarmaLog(1)[0]!.meter).toBe('riderIntegrity');
+    });
+  });
 });

@@ -1,4 +1,5 @@
 import type {
+  MeterId,
   PassengerProfile,
   RideRequest,
   ReasonCode,
@@ -35,7 +36,15 @@ export type NegotiationAction =
   | { kind: 'explainDetour'; extraMin: number }
   | { kind: 'refuseAlley'; walkM: number }
   | { kind: 'offApp'; amount: number }
+  | { kind: 'misleadDistance'; amount?: number }
+  | { kind: 'pressure'; amount?: number }
   | { kind: 'decline' };
+
+export interface NegotiationKarmaEffect {
+  meter: MeterId;
+  delta: number;
+  reasonKey: string;
+}
 
 export interface NegotiationSession {
   readonly req: RideRequest;
@@ -57,6 +66,9 @@ export interface NegotiationSession {
   readonly alleyRefused?: boolean;
   readonly actionSeq?: number;
   readonly discountApplied?: boolean;
+  readonly misleadUsed?: boolean;
+  readonly pressureUsed?: boolean;
+  readonly exploited?: boolean;
 }
 
 export interface NegotiationResult {
@@ -64,6 +76,11 @@ export interface NegotiationResult {
   passengerLine: string; /* i18n key */
   outcome?: NegotiationOutcome;
   topFactor: ReasonCode;
+  karmaEffects?: NegotiationKarmaEffect[];
+  trustDelta?: number;
+  relationshipDelta?: number;
+  ratingDelta?: number;
+  complaint?: boolean;
 }
 
 export function calculateMaxRounds(profile: PassengerProfile): number {
@@ -242,6 +259,9 @@ export function startNegotiation(
     alleyRefused: false,
     actionSeq: 0,
     discountApplied: false,
+    misleadUsed: false,
+    pressureUsed: false,
+    exploited: false,
   };
 }
 
@@ -572,6 +592,291 @@ export function respond(
         topFactor: 'WALK_TOO_FAR',
       };
     }
+  }
+
+  // 5b. Mislead about distance/route: unethical tactic against low-knowledge or vulnerable passengers.
+  if (action.kind === 'misleadDistance') {
+    const p = session.profile;
+    const isVulnerable =
+      p.archetype === 'urgent' || p.archetype === 'traveler' || p.archetype === 'family';
+    const integrityDelta = isVulnerable ? -18 : -10;
+    const nextRound = Math.min(session.maxRounds, session.round + 1);
+    const nextSeq = (session.actionSeq ?? 0) + 1;
+    const nextSalt = hashSeed(session.salt, 'misleadDistance', session.round);
+    const rng = new Rng(hashSeed(session.req.requestId, session.round, session.salt, 'mislead'));
+    const roll1 = rng.next();
+    const roll2 = rng.next();
+
+    const detectChance = clamp(
+      0.15 + p.localKnowledge * 0.65 + (session.misleadUsed ? 0.25 : 0),
+      0.1,
+      0.9
+    );
+
+    if (roll1 < detectChance) {
+      const nextPatience = Math.max(
+        0,
+        session.currentPatience -
+          BALANCE.NEGOTIATION.patienceDecayPerRound * (session.misleadUsed ? 1.25 : 0.85)
+      );
+      const complaint = roll1 < detectChance * 0.6 || (session.misleadUsed === true && roll2 < 0.7);
+      const karmaEffects: NegotiationKarmaEffect[] = [];
+      if (complaint) {
+        karmaEffects.push({
+          meter: 'platformStanding',
+          delta: -12,
+          reasonKey: 'karma.passenger_complaint',
+        });
+      }
+      karmaEffects.push({
+        meter: 'riderIntegrity',
+        delta: integrityDelta,
+        reasonKey: 'karma.mislead_distance',
+      });
+
+      const walkedOut = nextPatience <= 0 || session.round >= session.maxRounds;
+      return {
+        session: {
+          ...session,
+          misleadUsed: true,
+          exploited: true,
+          currentPatience: nextPatience,
+          round: nextRound,
+          actionSeq: nextSeq,
+          salt: nextSalt,
+          status: walkedOut ? 'walkedAway' : 'active',
+        },
+        passengerLine: complaint
+          ? 'dialogue.negotiation.mislead_detected'
+          : 'dialogue.negotiation.mislead_rejected',
+        outcome: walkedOut
+          ? { kind: 'walkedAway', reason: 'OUT_OF_PATIENCE' }
+          : { kind: 'rejected', reason: 'TOO_EXPENSIVE' },
+        topFactor: walkedOut ? 'OUT_OF_PATIENCE' : 'TOO_EXPENSIVE',
+        karmaEffects,
+        trustDelta: complaint ? -16 : -12,
+        relationshipDelta: complaint ? -10 : -6,
+        ratingDelta: complaint ? -0.3 : undefined,
+        complaint,
+      };
+    }
+
+    const bump = Math.max(10, Math.round((session.fairFare * 0.22) / 5) * 5);
+    const targetFare = clampCounterFare(
+      action.amount ?? Math.max(session.currentPassengerOffer + bump, session.fairFare + bump),
+      session.fairFare
+    );
+    const acceptChance = clamp(
+      0.65 + p.urgency * 0.25 - p.bargainingTendency * 0.2,
+      0.35,
+      0.9
+    );
+    const karmaEffects: NegotiationKarmaEffect[] = [
+      {
+        meter: 'riderIntegrity',
+        delta: integrityDelta,
+        reasonKey: 'karma.mislead_distance',
+      },
+    ];
+
+    if (roll2 < acceptChance) {
+      return {
+        session: {
+          ...session,
+          misleadUsed: true,
+          exploited: true,
+          currentRiderOffer: targetFare,
+          currentPassengerOffer: targetFare,
+          round: nextRound,
+          actionSeq: nextSeq,
+          salt: nextSalt,
+          status: 'accepted',
+        },
+        passengerLine: 'dialogue.negotiation.mislead_accepted',
+        outcome: { kind: 'accepted', fare: targetFare },
+        topFactor: 'URGENT',
+        karmaEffects,
+        trustDelta: -6,
+        relationshipDelta: -4,
+      };
+    }
+
+    const nextPatience = Math.max(
+      0,
+      session.currentPatience - BALANCE.NEGOTIATION.patienceDecayPerRound * 0.6
+    );
+    const raisedOffer = Math.min(
+      targetFare,
+      session.currentPassengerOffer + Math.max(5, Math.round((bump * 0.65) / 5) * 5)
+    );
+    const walkedOut = nextPatience <= 0;
+    return {
+      session: {
+        ...session,
+        misleadUsed: true,
+        exploited: true,
+        currentPassengerOffer: raisedOffer,
+        currentRiderOffer: targetFare,
+        currentPatience: nextPatience,
+        round: nextRound,
+        actionSeq: nextSeq,
+        salt: nextSalt,
+        status: walkedOut ? 'walkedAway' : 'active',
+      },
+      passengerLine: walkedOut
+        ? 'dialogue.negotiation.walked_away'
+        : 'dialogue.negotiation.mislead_countered',
+      outcome: walkedOut ? { kind: 'walkedAway', reason: 'OUT_OF_PATIENCE' } : undefined,
+      topFactor: walkedOut ? 'OUT_OF_PATIENCE' : 'TOO_EXPENSIVE',
+      karmaEffects,
+      trustDelta: -6,
+      relationshipDelta: -4,
+    };
+  }
+
+  // 5c. Pressure passenger: drains patience heavily, can force acceptance or trigger walkaway/complaint.
+  if (action.kind === 'pressure') {
+    const p = session.profile;
+    const isVulnerable =
+      p.archetype === 'urgent' || p.archetype === 'traveler' || p.archetype === 'family';
+    const integrityDelta = isVulnerable ? -14 : -7;
+    const nextRound = Math.min(session.maxRounds, session.round + 1);
+    const nextSeq = (session.actionSeq ?? 0) + 1;
+    const nextSalt = hashSeed(session.salt, 'pressure', session.round);
+    const nextPatience = Math.max(
+      0,
+      session.currentPatience -
+        BALANCE.NEGOTIATION.patienceDecayPerRound * (session.pressureUsed ? 1.55 : 1.25)
+    );
+    const rng = new Rng(hashSeed(session.req.requestId, session.round, session.salt, 'pressure'));
+    const roll1 = rng.next();
+    const roll2 = rng.next();
+
+    const caveChance = clamp(
+      0.35 + p.urgency * 0.4 - p.bargainingTendency * 0.25,
+      0.15,
+      0.85
+    );
+    const complaintChance = clamp(
+      0.15 + p.bargainingTendency * 0.25 + (session.pressureUsed ? 0.2 : 0),
+      0.1,
+      0.6
+    );
+    const targetFare = clampCounterFare(
+      action.amount ??
+        (session.currentRiderOffer ?? Math.max(session.currentPassengerOffer + 10, session.fairFare)),
+      session.fairFare
+    );
+    const trustDelta = isVulnerable ? -10 : -6;
+    const relationshipDelta = isVulnerable ? -8 : -4;
+
+    if (nextPatience <= 0 || (session.round >= session.maxRounds && roll1 >= caveChance)) {
+      const complaint = roll2 < complaintChance;
+      const karmaEffects: NegotiationKarmaEffect[] = [];
+      if (complaint) {
+        karmaEffects.push({
+          meter: 'platformStanding',
+          delta: -10,
+          reasonKey: 'karma.passenger_complaint',
+        });
+      }
+      karmaEffects.push({
+        meter: 'riderIntegrity',
+        delta: integrityDelta,
+        reasonKey: 'karma.pressure_passenger',
+      });
+      return {
+        session: {
+          ...session,
+          pressureUsed: true,
+          exploited: true,
+          currentPatience: nextPatience,
+          round: nextRound,
+          actionSeq: nextSeq,
+          salt: nextSalt,
+          status: 'walkedAway',
+        },
+        passengerLine: 'dialogue.negotiation.pressure_walked_away',
+        outcome: { kind: 'walkedAway', reason: 'OUT_OF_PATIENCE' },
+        topFactor: 'OUT_OF_PATIENCE',
+        karmaEffects,
+        trustDelta,
+        relationshipDelta,
+        ratingDelta: complaint ? -0.3 : undefined,
+        complaint,
+      };
+    }
+
+    if (roll1 < caveChance) {
+      return {
+        session: {
+          ...session,
+          pressureUsed: true,
+          exploited: true,
+          currentRiderOffer: targetFare,
+          currentPassengerOffer: targetFare,
+          currentPatience: nextPatience,
+          round: nextRound,
+          actionSeq: nextSeq,
+          salt: nextSalt,
+          status: 'accepted',
+        },
+        passengerLine: 'dialogue.negotiation.pressure_accepted',
+        outcome: { kind: 'accepted', fare: targetFare },
+        topFactor: 'URGENT',
+        karmaEffects: [
+          {
+            meter: 'riderIntegrity',
+            delta: integrityDelta,
+            reasonKey: 'karma.pressure_passenger',
+          },
+        ],
+        trustDelta,
+        relationshipDelta,
+      };
+    }
+
+    const complaint = roll2 < complaintChance * 0.5;
+    const karmaEffects: NegotiationKarmaEffect[] = [];
+    if (complaint) {
+      karmaEffects.push({
+        meter: 'platformStanding',
+        delta: -8,
+        reasonKey: 'karma.passenger_complaint',
+      });
+    }
+    karmaEffects.push({
+      meter: 'riderIntegrity',
+      delta: integrityDelta,
+      reasonKey: 'karma.pressure_passenger',
+    });
+
+    const nudgedOffer =
+      roll1 < 0.7
+        ? Math.min(targetFare, session.currentPassengerOffer + 5)
+        : session.currentPassengerOffer;
+
+    return {
+      session: {
+        ...session,
+        pressureUsed: true,
+        exploited: true,
+        currentPassengerOffer: nudgedOffer,
+        currentPatience: nextPatience,
+        round: nextRound,
+        actionSeq: nextSeq,
+        salt: nextSalt,
+        status: 'active',
+      },
+      passengerLine: 'dialogue.negotiation.pressure_rejected',
+      outcome: { kind: 'rejected', reason: 'TOO_EXPENSIVE' },
+      topFactor: 'TOO_EXPENSIVE',
+      karmaEffects,
+      trustDelta,
+      relationshipDelta,
+      ratingDelta: complaint ? -0.2 : undefined,
+      complaint,
+    };
   }
 
   // 6. Fare actions: counter, discount, offApp

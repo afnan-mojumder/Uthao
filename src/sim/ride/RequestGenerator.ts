@@ -138,8 +138,12 @@ export class RequestGenerator {
       return false;
     }
     // GDD §6 / T4.3: regular requests appear only after threshold (relationship >= 15)
+    // and while recurring passengerTrust remains >= 25.
     const rel = this.getRelationship(characterId);
     if (rel < 15) {
+      return false;
+    }
+    if (this.reputationSystem && this.reputationSystem.getPassengerTrust(characterId) < 25) {
       return false;
     }
     if (

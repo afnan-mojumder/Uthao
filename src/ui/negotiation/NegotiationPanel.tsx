@@ -111,6 +111,8 @@ export function NegotiationPanel({
         style={{
           width: '100%',
           maxWidth: '520px',
+          maxHeight: '90dvh',
+          overflowY: 'auto',
           background: 'rgba(15, 23, 42, 0.95)',
           border: '1px solid rgba(56, 189, 248, 0.3)',
           borderRadius: '24px',
@@ -523,12 +525,51 @@ export function NegotiationPanel({
             {t('negotiation.off_app', { fare: counterAmount })}
           </button>
 
-          {/* 8. Decline / Walk away */}
+          {/* 8. Mislead on distance (unethical fare inflation) */}
+          <button
+            type="button"
+            data-testid="mislead-distance-btn"
+            onClick={() => onAction({ kind: 'misleadDistance' })}
+            style={{
+              padding: '10px',
+              borderRadius: '10px',
+              background: 'rgba(249, 115, 22, 0.18)',
+              border: '1px solid rgba(249, 115, 22, 0.4)',
+              color: '#fb923c',
+              fontSize: '12px',
+              fontWeight: 700,
+              cursor: 'pointer',
+            }}
+          >
+            {t('negotiation.mislead_distance')}
+          </button>
+
+          {/* 9. Pressure passenger (drains patience & integrity) */}
+          <button
+            type="button"
+            data-testid="pressure-btn"
+            onClick={() => onAction({ kind: 'pressure' })}
+            style={{
+              padding: '10px',
+              borderRadius: '10px',
+              background: 'rgba(244, 63, 94, 0.18)',
+              border: '1px solid rgba(244, 63, 94, 0.4)',
+              color: '#fb7185',
+              fontSize: '12px',
+              fontWeight: 700,
+              cursor: 'pointer',
+            }}
+          >
+            {t('negotiation.pressure')}
+          </button>
+
+          {/* 10. Decline / Walk away */}
           <button
             type="button"
             data-testid="decline-btn"
             onClick={() => onAction({ kind: 'decline' })}
             style={{
+              gridColumn: '1 / -1',
               padding: '10px',
               borderRadius: '10px',
               background: 'rgba(239, 68, 68, 0.2)',

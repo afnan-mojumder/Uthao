@@ -237,6 +237,22 @@ export const BALANCE = {
     relationshipMin: -100,
     relationshipMax: 100,
   },
+  KARMA: {
+    min: 0,
+    max: 100,
+    logCapacity: 200,
+    defaultPassengerTrust: 50,
+    platformSuspensionStandingThreshold: 20,
+    platformReinstatementStanding: 25,
+    starts: {
+      riderIntegrity: 50,
+      publicReputation: 30,
+      platformStanding: 80,
+      criminalExposure: 0,
+      evidenceExposure: 0,
+      safetyRecord: 70,
+    },
+  },
   BOT: {
     shiftMinutes: 600,
     reckless: {

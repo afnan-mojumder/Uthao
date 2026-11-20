@@ -13,6 +13,8 @@ import {
 import type { StoryState, EndingId, DistrictId } from '../../core/types';
 import type { EffectContext } from '../events/effects';
 import { applyEffect } from '../events/effects';
+import { canonicalCharacterId } from '../passenger/PassengerAI';
+import type { ReputationSystem } from '../reputation/ReputationSystem';
 
 export interface MissionManagerOptions {
   bus: EventBus<GameEvents>;
@@ -20,6 +22,7 @@ export interface MissionManagerOptions {
   endings?: EndingDef[];
   storyState: StoryState;
   getEffectContext?: () => EffectContext;
+  reputationSystem?: ReputationSystem;
 }
 
 export class MissionManager {
@@ -28,6 +31,7 @@ export class MissionManager {
   readonly endings: Map<string, EndingDef> = new Map();
   readonly storyState: StoryState;
   private readonly getEffectContext?: () => EffectContext;
+  private readonly reputationSystem?: ReputationSystem;
 
   private activeMissionIds: Set<string> = new Set();
   private completedMissionIds: Set<string> = new Set();
@@ -38,6 +42,7 @@ export class MissionManager {
     this.bus = opts.bus;
     this.storyState = opts.storyState;
     this.getEffectContext = opts.getEffectContext;
+    this.reputationSystem = opts.reputationSystem;
 
     for (const m of opts.missions) {
       this.missions.set(m.id, m);
@@ -188,11 +193,10 @@ export class MissionManager {
     this.bus.on('reputation/changed', ({ delta }) => {
       if (delta.relationship) {
         const { characterId } = delta.relationship;
-        // T7.5: ReputationSystem is the sole writer of characterRelationships
-        // (registered on the bus before MissionManager, so its listener has
-        // already applied this delta by the time ours runs) — just read the
-        // now-current value instead of applying the delta a second time.
-        const current = this.storyState.characterRelationships[characterId] ?? 0;
+        // T7.5 / Ruling 6: ReputationSystem is the sole writer of characterRelationships.
+        const current = this.reputationSystem
+          ? this.reputationSystem.getRelationship(characterId)
+          : (this.storyState.characterRelationships[characterId] ?? 0);
 
         for (const missionId of this.activeMissionIds) {
           const def = this.missions.get(missionId);
@@ -403,11 +407,21 @@ export class MissionManager {
           this.storyState.branchFlags[eff.key] = eff.value;
           this.bus.emit('story/flag', { key: eff.key, value: eff.value });
         } else if (eff.type === 'relationship') {
-          const current = (this.storyState.characterRelationships[eff.characterId] ?? 0) + eff.delta;
-          this.storyState.characterRelationships[eff.characterId] = current;
+          const characterId = canonicalCharacterId(eff.characterId);
           this.bus.emit('reputation/changed', {
-            delta: { relationship: { characterId: eff.characterId, delta: eff.delta } },
+            delta: { relationship: { characterId, delta: eff.delta } },
           });
+        } else if (eff.type === 'localTrust') {
+          this.bus.emit('reputation/changed', {
+            delta: { localTrust: eff.delta },
+          });
+        } else if (eff.type === 'meter') {
+          this.reputationSystem?.applyMeter(
+            eff.meter,
+            eff.delta,
+            eff.reasonKey,
+            eff.subjectId
+          );
         }
       }
     }

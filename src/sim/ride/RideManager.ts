@@ -152,9 +152,35 @@ export class RideManager {
   private noticeKey: string | null = null;
   private noticeUntil = 0;
   currentRoute: Route | null = null;
-  offAppStrikes: number = 0;
-  appSuspendedUntilDay: number = 0;
+  private _offAppStrikes: number = 0;
+  private _appSuspendedUntilDay: number = 0;
   readonly directContacts: Set<string> = new Set();
+
+  get offAppStrikes(): number {
+    return this.reputation ? this.reputation.getOffAppStrikes() : this._offAppStrikes;
+  }
+
+  set offAppStrikes(strikes: number) {
+    if (this.reputation) {
+      this.reputation.setOffAppStrikes(strikes);
+    } else {
+      this._offAppStrikes = Math.max(0, strikes);
+    }
+  }
+
+  get appSuspendedUntilDay(): number {
+    return this.reputation
+      ? this.reputation.getAppSuspendedUntilDay()
+      : this._appSuspendedUntilDay;
+  }
+
+  set appSuspendedUntilDay(day: number) {
+    if (this.reputation) {
+      this.reputation.setAppSuspendedUntilDay(day);
+    } else {
+      this._appSuspendedUntilDay = Math.max(0, day);
+    }
+  }
   enableNegotiation: boolean = false;
   activeBikeId: BikeId = 'old100';
   hasEngineTune: boolean = false;
@@ -659,14 +685,20 @@ export class RideManager {
   }
 
   addStrike(currentDay: number): { strikes: number; suspended: boolean } {
-    this.offAppStrikes++;
-    const suspended = this.offAppStrikes >= BALANCE.OFF_APP.strikesToSuspend;
-    if (suspended) {
-      this.appSuspendedUntilDay = currentDay + BALANCE.OFF_APP.suspendDays;
-      this.bus.emit('story/flag', { key: 'appSuspended', value: true });
-      this.bus.emit('story/flag', { key: 'appSuspendedUntilDay', value: this.appSuspendedUntilDay });
+    if (this.reputation) {
+      return this.reputation.addOffAppStrike(currentDay);
     }
-    return { strikes: this.offAppStrikes, suspended };
+    this._offAppStrikes++;
+    const suspended = this._offAppStrikes >= BALANCE.OFF_APP.strikesToSuspend;
+    if (suspended) {
+      this._appSuspendedUntilDay = currentDay + BALANCE.OFF_APP.suspendDays;
+      this.bus.emit('story/flag', { key: 'appSuspended', value: true });
+      this.bus.emit('story/flag', {
+        key: 'appSuspendedUntilDay',
+        value: this._appSuspendedUntilDay,
+      });
+    }
+    return { strikes: this._offAppStrikes, suspended };
   }
 
   recordOffAppRide(
@@ -688,7 +720,30 @@ export class RideManager {
   }
 
   isAppSuspended(currentDay: number): boolean {
-    return currentDay < this.appSuspendedUntilDay;
+    if (this.reputation) {
+      return this.reputation.isAppSuspended(currentDay);
+    }
+    if (this._appSuspendedUntilDay > 0 && currentDay >= this._appSuspendedUntilDay) {
+      this._appSuspendedUntilDay = 0;
+      this._offAppStrikes = 0;
+      return false;
+    }
+    return this._appSuspendedUntilDay > 0 && currentDay < this._appSuspendedUntilDay;
+  }
+
+  resetCareer(): void {
+    if (this.activeRequest) {
+      this.cancel(this.activeRequest.requestId, 'system', 'new_career');
+    }
+    this.offeredRequests.clear();
+    this.offerDeadlines.clear();
+    this.pendingDispute = null;
+    this.currentRoute = null;
+    this.directContacts.clear();
+    this._offAppStrikes = 0;
+    this._appSuspendedUntilDay = 0;
+    this.noticeKey = null;
+    this.noticeUntil = 0;
   }
 
   cancel(
@@ -823,9 +878,9 @@ export class RideManager {
     if (choice === 'acceptPartial') {
       finalFare = dispute.partialFare;
       consequences.push('trip.consequence.disputeAcceptedPartial');
-      this.reputation?.changeLocalTrust(1);
+      this.reputation?.applyMeter('publicReputation', 1, 'karma.dispute_settled');
     } else if (choice === 'insistFull') {
-      const trust = this.reputation?.getLocalTrust() ?? 50;
+      const trust = this.reputation?.getMeters().publicReputation ?? 50;
       const winChance = clamp(0.35 + (trust - 50) * 0.005, 0.2, 0.8);
       const roll = new SeededRng(hashSeed(req.requestId, 'disputeInsist')).next();
       if (roll < winChance) {
@@ -835,7 +890,7 @@ export class RideManager {
         finalFare = 0;
         effectiveRating = Math.max(1, Math.round((dispute.rating - 1.0) * 100) / 100);
         consequences.push('trip.consequence.disputeEscalated');
-        this.reputation?.changeLocalTrust(-2);
+        this.reputation?.applyMeter('publicReputation', -2, 'karma.dispute_escalated');
       }
     } else {
       finalFare = dispute.partialFare;
@@ -925,6 +980,7 @@ export class RideManager {
           const ctx = this.resolveDialogueContext(this.activeRequest);
           this.reputation?.startTrip({
             requestId: this.activeRequest.requestId,
+            bookingType: this.activeRequest.bookingType,
             isCareful: ctx.archetype === 'careful',
             isUrgent:
               this.activeRequest.specialCircumstance === 'urgent' ||

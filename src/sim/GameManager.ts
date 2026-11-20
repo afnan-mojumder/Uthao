@@ -12,6 +12,8 @@ import { BALANCE } from '../config/balance';
 import type { Command, CommandResult } from '../core/commands';
 import type {
   DaySummary,
+  KarmaEvent,
+  MeterId,
   PlayerEconomy,
   RoadSegment,
   StoryState,
@@ -101,6 +103,15 @@ export interface SimSnapshot {
     safetyRecord: SafetyRecord;
     riskScore: number;
     promises: { kept: number; broken: number };
+    meters?: Partial<Record<MeterId, number>>;
+    karmaLog?: KarmaEvent[];
+    passengerTrust?: Record<string, number>;
+    offAppStrikes?: number;
+    suspendedUntilDay?: number;
+    wasWarned?: boolean;
+    wasSuspended?: boolean;
+    ratingSuspensionCleared?: boolean;
+    karmaSeq?: number;
   };
   roadEvents?: ActiveRoadEvent[];
   /** T8.2 (additive): paid-trip record, so a reload can never pay a trip twice. */
@@ -248,6 +259,7 @@ export class GameManager {
     this.economyManager = new EconomyManager(this.bus, this.economy);
     this.reputationSystem = new ReputationSystem({
       bus: this.bus,
+      clock: this.clock,
       initialRating: this.economy.reputation,
       initialLocalTrust: 30,
       initialRelationships: this.story.characterRelationships,
@@ -295,6 +307,7 @@ export class GameManager {
       missions: missionDefs,
       endings: endingDefs,
       storyState: this.story,
+      reputationSystem: this.reputationSystem,
       getEffectContext: () => ({
         gameManager: this,
         economyManager: this.economyManager,
@@ -323,8 +336,9 @@ export class GameManager {
     this.bus.on('mission/activated', ({ missionId }) => {
       if (missionId === CAREER_DECISION_MISSION) this.offerCareerDecision();
     });
-    // The campaign ends on its final flag, and the ending comes from the real state.
+    // Sync ReputationSystem / story flags onto story.branchFlags and trigger campaign completion.
     this.bus.on('story/flag', ({ key, value }) => {
+      this.story.branchFlags[key] = value;
       if (key === 'campaign_completed' && value === true) this.reachFinalEnding();
     });
 
@@ -354,7 +368,7 @@ export class GameManager {
     });
 
     this.todayStartRating = this.reputationSystem.getAppRating();
-    this.todayRelationshipsStart = { ...this.story.characterRelationships };
+    this.todayRelationshipsStart = this.reputationSystem.getAllRelationships();
   }
 
   private syncEconomy(): void {
@@ -365,7 +379,7 @@ export class GameManager {
     const currentRating = this.reputationSystem.getAppRating();
     const ratingDelta = Math.round((currentRating - this.todayStartRating) * 100) / 100;
     const relationshipsDelta: Record<string, number> = {};
-    for (const [charId, rel] of Object.entries(this.story.characterRelationships)) {
+    for (const [charId, rel] of Object.entries(this.reputationSystem.getAllRelationships())) {
       const start = this.todayRelationshipsStart[charId] ?? 0;
       if (rel !== start) {
         relationshipsDelta[charId] = rel - start;
@@ -549,7 +563,7 @@ export class GameManager {
       weather: this.weather,
       chapter: this.story.currentChapter,
       flags: this.story.branchFlags,
-      relationships: this.story.characterRelationships,
+      relationships: this.reputationSystem.getRelationshipsView(),
       cash: this.economyManager.cash,
       // The bike's real speed: an encounter card only shows once the bike is
       // stopped (EventDirector's speed gate), so a moving bike keeps its keys.
@@ -574,20 +588,20 @@ export class GameManager {
       economy: this.economyManager.getSnapshot(),
       story: this.story,
       rating: rep.getAppRating(),
-      localTrust: rep.getLocalTrust(),
+      localTrust: rep.getMeters().publicReputation,
       safetyRecord: rep.getSafetyRecord(),
       riskScore: rep.getRiskScore(),
       promises: rep.getPromisesRecord(),
       careerChoice: this.story.branchFlags.career_choice as CareerChoice | undefined,
       careerSavings: this.story.branchFlags.career_choice_savings as number | undefined,
-      appSuspended: this.story.branchFlags.appSuspended === true,
+      appSuspended: rep.isAppSuspended(this.clock.day) || this.story.branchFlags.appSuspended === true,
     };
   }
 
   /** Shows the player's standing and the career options when the decision mission starts. */
   private offerCareerDecision(): void {
     const result = evaluateEnding(this.endingContext());
-    const kamalRel = this.story.characterRelationships['char_kamal'] ?? 0;
+    const kamalRel = this.reputationSystem.getRelationship('char_kamal');
     const choices = getAvailableCareerChoices(this.economyManager.getSnapshot().savings, kamalRel);
     this.bus.emit('ending/reached', { endingId: result.endingId, result, choices });
   }
@@ -795,7 +809,7 @@ export class GameManager {
         this.todayLivingExpenses = null;
         this.todayCompletedRides = 0;
         this.todayStartRating = this.reputationSystem.getAppRating();
-        this.todayRelationshipsStart = { ...this.story.characterRelationships };
+        this.todayRelationshipsStart = this.reputationSystem.getAllRelationships();
         this.bus.emit('day/started', { day: this.clock.day });
         return { success: true };
       }
@@ -937,21 +951,14 @@ export class GameManager {
         currentChapter: this.story.currentChapter,
         completedMissions: [...this.story.completedMissions],
         activeMissions: [...this.story.activeMissions],
-        characterRelationships: { ...this.story.characterRelationships },
+        characterRelationships: this.reputationSystem.getAllRelationships(),
         promises: [...this.story.promises],
         branchFlags: { ...this.story.branchFlags },
         endingEligibility: { ...this.story.endingEligibility },
       },
       weather: this.weather,
       waypointNodeId: this.waypointNodeId,
-      reputation: {
-        rating: this.reputationSystem.getAppRating(),
-        ratingsHistory: this.reputationSystem.getRatingsHistory(),
-        localTrust: this.reputationSystem.getLocalTrust(),
-        safetyRecord: this.reputationSystem.getSafetyRecord(),
-        riskScore: this.reputationSystem.getRiskScore(),
-        promises: this.reputationSystem.getPromisesRecord(),
-      },
+      reputation: this.reputationSystem.snapshot(),
       roadEvents: this.roadEvents.getActiveEvents(),
       ledger: [...this.economyManager.getLedger()],
       settledRequests: this.economyManager.getSettledIds(),
@@ -974,12 +981,16 @@ export class GameManager {
     return null;
   }
 
-  /** Resets career state cleanly through owning managers without bypassing EconomyManager. */
+  /** Resets career state cleanly through owning managers without bypassing EconomyManager or ReputationSystem. */
   resetCareerState(): void {
     this.clock.day = 1;
     this.clock.minutes = 7 * 60;
     this.economyManager.resetCareer();
+    this.reputationSystem.resetCareer();
+    this.economyManager.reputation = this.reputationSystem.getAppRating();
     this.syncEconomy();
+    this.todayStartRating = this.reputationSystem.getAppRating();
+    this.todayRelationshipsStart = this.reputationSystem.getAllRelationships();
     this.requestSeq = 0;
     this.negotiationHistory = 0;
     this.shiftEnded = false;
@@ -989,9 +1000,18 @@ export class GameManager {
     this.rentDelayedByCommand = false;
     this.todayLivingExpenses = null;
     this.deliveryManager.reset();
+    this.story.currentChapter = 1;
+    this.story.promises = [];
     this.story.branchFlags = {};
     this.story.completedMissions = [];
     this.story.activeMissions = ['m1_first_ride'];
+    this.story.endingEligibility = {
+      independent_rider: false,
+      workshop_owner: false,
+      trusted_local: false,
+      fast_money: false,
+      fresh_start: false,
+    };
     this.missionManager.activateMission('m1_first_ride');
   }
 
@@ -1012,34 +1032,19 @@ export class GameManager {
     this.economyManager.restoreState(snap.economy);
     this.syncEconomy();
 
-    // Restore story
+    // Restore story (characterRelationships stays owned & mutated exclusively by ReputationSystem)
     this.story.currentChapter = snap.story.currentChapter;
     this.story.completedMissions = [...snap.story.completedMissions];
     this.story.activeMissions = [...snap.story.activeMissions];
-    // T7.5: mutate the existing object in place (don't reassign it) —
-    // ReputationSystem holds this exact object by reference as its own
-    // relationship store, so reassigning here would silently split them
-    // back into two stores.
-    for (const key of Object.keys(this.story.characterRelationships)) {
-      delete this.story.characterRelationships[key];
-    }
-    Object.assign(this.story.characterRelationships, snap.story.characterRelationships);
     this.story.promises = [...snap.story.promises];
     this.story.branchFlags = { ...snap.story.branchFlags };
     this.story.endingEligibility = { ...snap.story.endingEligibility };
 
-    // Restore reputation
-    if (snap.reputation) {
-      this.reputationSystem.restoreState({
-        rating: snap.reputation.rating,
-        ratingsHistory: snap.reputation.ratingsHistory ?? [],
-        localTrust: snap.reputation.localTrust,
-        safetyRecord: snap.reputation.safetyRecord,
-        riskScore: snap.reputation.riskScore,
-        promises: snap.reputation.promises,
-        relationships: this.story.characterRelationships,
-      });
-    }
+    // Restore reputation (meters, karmaLog, passengerTrust, promises, strikes, suspension, characterRelationships)
+    this.reputationSystem.applySnapshot({
+      ...(snap.reputation ?? {}),
+      relationships: snap.story.characterRelationships,
+    });
 
     this.economyManager.restoreLedger(snap.ledger ?? [], snap.settledRequests ?? []);
     this.requestSeq = snap.requestSeq ?? 0;

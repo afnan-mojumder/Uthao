@@ -1,7 +1,40 @@
 import type { EventBus, GameEvents } from '../../core/events';
-import type { BikeCollisionSeverity, SafetyRecord } from '../../core/types';
+import type {
+  BikeCollisionSeverity,
+  BookingType,
+  CharacterDef,
+  KarmaEvent,
+  MeterId,
+  SafetyRecord,
+} from '../../core/types';
 import { clamp } from '../../core/math';
 import { BALANCE } from '../../config/balance';
+import charactersRaw from '../../../data/characters.json';
+
+export type { MeterId, KarmaEvent };
+
+const CHARACTER_DEFS = charactersRaw as readonly CharacterDef[];
+
+function createDefaultMeters(): Record<MeterId, number> {
+  return { ...BALANCE.KARMA.starts };
+}
+
+function normalizePassengerTrustId(passengerId: string): string {
+  return passengerId.startsWith('pass_char_') ? passengerId.slice(5) : passengerId;
+}
+
+const VALID_METERS = new Set<MeterId>([
+  'riderIntegrity',
+  'publicReputation',
+  'platformStanding',
+  'criminalExposure',
+  'evidenceExposure',
+  'safetyRecord',
+]);
+
+function isMeterId(val: string): val is MeterId {
+  return VALID_METERS.has(val as MeterId);
+}
 
 export interface TripRatingParams {
   baseRating?: number;
@@ -66,6 +99,7 @@ export function computeTipChance(rating: number): number {
 
 export interface ActiveTripState {
   requestId: string;
+  bookingType: BookingType;
   isCareful: boolean;
   isUrgent: boolean;
   nearMisses: number;
@@ -75,12 +109,33 @@ export interface ActiveTripState {
   minutesLate: number;
 }
 
+export interface ReputationSnapshot {
+  rating: number;
+  ratingsHistory: number[];
+  localTrust: number;
+  safetyRecord: SafetyRecord;
+  riskScore: number;
+  promises: { kept: number; broken: number };
+  meters: Record<MeterId, number>;
+  karmaLog: KarmaEvent[];
+  passengerTrust: Record<string, number>;
+  offAppStrikes: number;
+  suspendedUntilDay: number;
+  wasWarned: boolean;
+  wasSuspended: boolean;
+  ratingSuspensionCleared: boolean;
+  karmaSeq: number;
+}
+
 export interface ReputationSystemOptions {
   bus?: EventBus<GameEvents>;
+  clock?: { day: number; minutes: number };
   initialRating?: number;
   initialRatingsHistory?: number[];
   initialLocalTrust?: number;
+  initialMeters?: Partial<Record<MeterId, number>>;
   initialRelationships?: Record<string, number>;
+  initialPassengerTrust?: Record<string, number>;
   initialSafetyRecord?: Partial<SafetyRecord>;
   initialRiskScore?: number;
   initialPromisesKept?: number;
@@ -89,18 +144,24 @@ export interface ReputationSystemOptions {
 }
 
 /**
- * ReputationSystem (T4.2)
- * Owns app rating (rolling 50), localTrust, per-character relationships,
- * safetyRecord, riskScore, and promises kept/broken.
+ * ReputationSystem (T4.2 + T13.1/P4.3)
+ * Sole writer for app rating (rolling 50), 6 bounded [0..100] karma meters,
+ * 200-entry karma ring buffer, per-passenger trust [0..100], per-character
+ * relationships [-100..100], safetyRecord, riskScore, off-app strikes/suspension,
+ * and promises kept/broken.
  */
 export class ReputationSystem {
   readonly bus?: EventBus<GameEvents>;
   readonly windowSize: number;
+  private readonly clock?: { day: number; minutes: number };
 
   private ratings: number[] = [];
   private defaultRating: number;
-  private localTrust: number;
+  private meters: Record<MeterId, number> = createDefaultMeters();
+  private karmaLog: KarmaEvent[] = [];
+  private karmaSeq: number = 0;
   private characterRelationships: Record<string, number> = {};
+  private passengerTrust: Record<string, number> = {};
   private safetyRecord: SafetyRecord = {
     nearMisses: 0,
     bumps: 0,
@@ -111,14 +172,18 @@ export class ReputationSystem {
   private promisesKept: number = 0;
   private promisesBroken: number = 0;
 
+  private offAppStrikes: number = 0;
+  private suspendedUntilDay: number = 0;
   private wasWarned: boolean = false;
   private wasSuspended: boolean = false;
+  private ratingSuspensionCleared: boolean = false;
 
   private activeTrip: ActiveTripState | null = null;
   private unsubscribeFns: Array<() => void> = [];
 
   constructor(opts: ReputationSystemOptions = {}) {
     this.bus = opts.bus;
+    this.clock = opts.clock;
     this.windowSize = opts.windowSize ?? BALANCE.RATING.rollingWindow;
     this.defaultRating = opts.initialRating ?? BALANCE.RATING.start;
 
@@ -128,24 +193,52 @@ export class ReputationSystem {
         .map((r) => clamp(r, 1.0, 5.0));
     }
 
-    this.localTrust = clamp(
-      opts.initialLocalTrust ?? BALANCE.TRUST.localTrustStart,
-      BALANCE.TRUST.localTrustMin,
-      BALANCE.TRUST.localTrustMax
-    );
+    if (opts.initialLocalTrust !== undefined) {
+      this.meters.publicReputation = clamp(
+        opts.initialLocalTrust,
+        BALANCE.KARMA.min,
+        BALANCE.KARMA.max
+      );
+    }
+
+    if (opts.initialMeters) {
+      for (const [k, v] of Object.entries(opts.initialMeters)) {
+        if (isMeterId(k) && typeof v === 'number' && Number.isFinite(v)) {
+          this.meters[k] = clamp(v, BALANCE.KARMA.min, BALANCE.KARMA.max);
+        }
+      }
+    }
 
     if (opts.initialRelationships) {
-      // T7.5: hold the SAME object the caller gave us (GameManager passes
-      // `story.characterRelationships`) instead of copying it, so this
-      // becomes the one shared store rather than a second one that can
-      // drift from it. Clamp its existing values in place.
+      // T7.5 / P4.3 Ruling 6: hold the caller's object (GameManager passes
+      // `story.characterRelationships`) so there is only a single store in memory
+      // and ReputationSystem is its sole writer.
       this.characterRelationships = opts.initialRelationships;
-      for (const charId of Object.keys(this.characterRelationships)) {
-        this.characterRelationships[charId] = clamp(
-          this.characterRelationships[charId] ?? 0,
-          BALANCE.TRUST.relationshipMin,
-          BALANCE.TRUST.relationshipMax
-        );
+      if (Object.keys(this.characterRelationships).length === 0) {
+        this.seedRelationshipDefaults();
+      } else {
+        for (const charId of Object.keys(this.characterRelationships)) {
+          this.characterRelationships[charId] = clamp(
+            this.characterRelationships[charId] ?? 0,
+            BALANCE.TRUST.relationshipMin,
+            BALANCE.TRUST.relationshipMax
+          );
+        }
+      }
+    } else {
+      this.seedRelationshipDefaults();
+    }
+
+    this.seedPassengerTrustDefaults();
+    if (opts.initialPassengerTrust) {
+      for (const [k, v] of Object.entries(opts.initialPassengerTrust)) {
+        if (typeof v === 'number' && Number.isFinite(v)) {
+          this.passengerTrust[normalizePassengerTrustId(k)] = clamp(
+            v,
+            BALANCE.KARMA.min,
+            BALANCE.KARMA.max
+          );
+        }
       }
     }
 
@@ -167,6 +260,32 @@ export class ReputationSystem {
     }
   }
 
+  private seedRelationshipDefaults(): void {
+    for (const k of Object.keys(this.characterRelationships)) {
+      delete this.characterRelationships[k];
+    }
+    for (const def of CHARACTER_DEFS) {
+      this.characterRelationships[def.id] = clamp(
+        def.initialRelationship ?? 0,
+        BALANCE.TRUST.relationshipMin,
+        BALANCE.TRUST.relationshipMax
+      );
+    }
+  }
+
+  private seedPassengerTrustDefaults(): void {
+    this.passengerTrust = {};
+    for (const def of CHARACTER_DEFS) {
+      if (typeof def.trustInRider === 'number' && Number.isFinite(def.trustInRider)) {
+        this.passengerTrust[def.id] = clamp(
+          Math.round(def.trustInRider * 100),
+          BALANCE.KARMA.min,
+          BALANCE.KARMA.max
+        );
+      }
+    }
+  }
+
   private setupEventListeners(bus: EventBus<GameEvents>): void {
     this.unsubscribeFns.push(
       bus.on('bike/nearMiss', () => {
@@ -183,6 +302,12 @@ export class ReputationSystem {
     this.unsubscribeFns.push(
       bus.on('bike/infraction', () => {
         this.recordInfraction();
+      })
+    );
+
+    this.unsubscribeFns.push(
+      bus.on('day/started', ({ day }) => {
+        this.checkSuspensionExpiry(day);
       })
     );
 
@@ -211,8 +336,24 @@ export class ReputationSystem {
 
     this.unsubscribeFns.push(
       bus.on('ride/completed', ({ receipt }) => {
+        const isNonAppTrip =
+          this.activeTrip !== null &&
+          this.activeTrip.requestId === receipt.requestId &&
+          (this.activeTrip.bookingType === 'street' ||
+            this.activeTrip.bookingType === 'offApp');
         if (receipt.rating !== null && receipt.rating !== undefined) {
-          this.recordTripRating(receipt.rating);
+          if (!isNonAppTrip) {
+            this.recordTripRating(receipt.rating);
+          }
+          if (
+            this.activeTrip &&
+            !this.activeTrip.crashed &&
+            this.activeTrip.bumps === 0 &&
+            this.activeTrip.nearMisses === 0 &&
+            this.meters.safetyRecord < BALANCE.KARMA.max
+          ) {
+            this.applyMeter('safetyRecord', 2, 'karma.safe_trip', receipt.requestId);
+          }
           this.activeTrip = null;
         } else if (this.activeTrip) {
           this.completeActiveTrip();
@@ -263,6 +404,9 @@ export class ReputationSystem {
     }
 
     const currentRating = this.getAppRating();
+    if (currentRating >= BALANCE.RATING.suspensionThreshold) {
+      this.ratingSuspensionCleared = false;
+    }
 
     // Check thresholds: below 3.5 -> warning, below 3.0 -> suspension
     if (currentRating < BALANCE.RATING.warningThreshold && !this.wasWarned) {
@@ -272,10 +416,11 @@ export class ReputationSystem {
 
     if (
       currentRating < BALANCE.RATING.suspensionThreshold &&
-      !this.wasSuspended
+      !this.wasSuspended &&
+      (!this.ratingSuspensionCleared || clamped < BALANCE.RATING.suspensionThreshold)
     ) {
-      this.wasSuspended = true;
-      this.bus?.emit('story/flag', { key: 'appSuspended', value: true });
+      this.ratingSuspensionCleared = false;
+      this.triggerSuspension(this.clock?.day ?? 1);
     }
 
     this.bus?.emit('reputation/changed', {
@@ -313,7 +458,7 @@ export class ReputationSystem {
     return this.getAppRating();
   }
 
-  // --- Demand Impact & Thresholds ---
+  // --- Demand Impact, Strikes & 2-Day App Suspension ---
 
   /**
    * Request rate multiplier:
@@ -330,32 +475,199 @@ export class ReputationSystem {
     return this.getAppRating() < BALANCE.RATING.warningThreshold || this.wasWarned;
   }
 
-  isAppSuspended(): boolean {
-    return (
-      this.getAppRating() < BALANCE.RATING.suspensionThreshold || this.wasSuspended
-    );
+  isAppSuspended(currentDay?: number): boolean {
+    const day = currentDay ?? this.clock?.day ?? 1;
+    if (this.wasSuspended) {
+      if (this.suspendedUntilDay > 0 && day >= this.suspendedUntilDay) {
+        return false;
+      }
+      return true;
+    }
+    const lowRatingActive =
+      !this.ratingSuspensionCleared &&
+      this.getAppRating() < BALANCE.RATING.suspensionThreshold;
+    const lowStanding =
+      this.meters.platformStanding < BALANCE.KARMA.platformSuspensionStandingThreshold;
+    return lowRatingActive || lowStanding;
   }
 
-  // --- Local Trust ---
+  getOffAppStrikes(): number {
+    return this.offAppStrikes;
+  }
 
+  setOffAppStrikes(strikes: number): void {
+    this.offAppStrikes = Math.max(0, strikes);
+  }
+
+  getAppSuspendedUntilDay(): number {
+    return this.suspendedUntilDay;
+  }
+
+  setAppSuspendedUntilDay(day: number): void {
+    this.suspendedUntilDay = Math.max(0, day);
+    if (this.suspendedUntilDay > (this.clock?.day ?? 0)) {
+      this.wasSuspended = true;
+    } else if (this.suspendedUntilDay === 0) {
+      this.wasSuspended = false;
+    }
+  }
+
+  triggerSuspension(currentDay: number = this.clock?.day ?? 1): void {
+    const untilDay = Math.max(this.suspendedUntilDay, currentDay + 2);
+    const newlySuspended = !this.wasSuspended || untilDay !== this.suspendedUntilDay;
+    this.wasSuspended = true;
+    this.suspendedUntilDay = untilDay;
+    if (newlySuspended) {
+      this.bus?.emit('story/flag', { key: 'appSuspended', value: true });
+      this.bus?.emit('story/flag', { key: 'appSuspendedUntilDay', value: untilDay });
+    }
+  }
+
+  addOffAppStrike(currentDay: number = this.clock?.day ?? 1): {
+    strikes: number;
+    suspended: boolean;
+  } {
+    this.offAppStrikes += 1;
+    const suspended = this.offAppStrikes >= 3;
+    if (suspended) {
+      this.triggerSuspension(currentDay);
+    }
+    return { strikes: this.offAppStrikes, suspended };
+  }
+
+  checkSuspensionExpiry(currentDay: number = this.clock?.day ?? 1): boolean {
+    if (!this.wasSuspended || this.suspendedUntilDay <= 0 || currentDay < this.suspendedUntilDay) {
+      return false;
+    }
+    this.wasSuspended = false;
+    this.suspendedUntilDay = 0;
+    this.offAppStrikes = 0;
+
+    if (this.meters.platformStanding < BALANCE.KARMA.platformSuspensionStandingThreshold) {
+      this.applyMeter(
+        'platformStanding',
+        BALANCE.KARMA.platformReinstatementStanding - this.meters.platformStanding,
+        'karma.suspension_reinstated'
+      );
+    }
+
+    if (this.getAppRating() < BALANCE.RATING.suspensionThreshold) {
+      this.ratingSuspensionCleared = true;
+    }
+
+    this.bus?.emit('story/flag', { key: 'appSuspended', value: false });
+    this.bus?.emit('story/flag', { key: 'appSuspendedUntilDay', value: 0 });
+    return true;
+  }
+
+  // --- 6 Bounded Karma Meters [0..100] & Attributed 200-Entry Ring Log ---
+
+  applyMeter(
+    meter: MeterId,
+    delta: number,
+    reasonKey: string,
+    subjectId?: string
+  ): KarmaEvent | null {
+    if (!Number.isFinite(delta) || delta === 0) {
+      return null;
+    }
+    const prev = this.meters[meter];
+    const next = clamp(prev + delta, BALANCE.KARMA.min, BALANCE.KARMA.max);
+    const applied = next - prev;
+    this.meters[meter] = next;
+
+    this.karmaSeq += 1;
+    const event: KarmaEvent = {
+      id: `karma_${this.karmaSeq}`,
+      day: this.clock?.day ?? 1,
+      minute: this.clock?.minutes ?? 0,
+      meter,
+      delta,
+      applied,
+      reasonKey,
+      ...(subjectId !== undefined ? { subjectId } : {}),
+    };
+
+    this.karmaLog.unshift(event);
+    if (this.karmaLog.length > BALANCE.KARMA.logCapacity) {
+      this.karmaLog.length = BALANCE.KARMA.logCapacity;
+    }
+
+    if (
+      meter === 'platformStanding' &&
+      next < BALANCE.KARMA.platformSuspensionStandingThreshold
+    ) {
+      this.triggerSuspension(this.clock?.day ?? 1);
+    }
+
+    this.bus?.emit('karma/changed', { event: { ...event } });
+    return event;
+  }
+
+  getMeter(meter: MeterId): number {
+    return this.meters[meter];
+  }
+
+  getMeters(): Record<MeterId, number> {
+    return { ...this.meters };
+  }
+
+  getKarmaLog(limit?: number): KarmaEvent[] {
+    const slice =
+      limit !== undefined
+        ? this.karmaLog.slice(0, Math.max(0, limit))
+        : this.karmaLog;
+    return slice.map((e) => ({ ...e }));
+  }
+
+  // --- Per-Passenger Trust [0..100] ---
+
+  getPassengerTrust(passengerId: string): number {
+    const key = normalizePassengerTrustId(passengerId);
+    return this.passengerTrust[key] ?? BALANCE.KARMA.defaultPassengerTrust;
+  }
+
+  setPassengerTrust(passengerId: string, val: number): void {
+    const key = normalizePassengerTrustId(passengerId);
+    this.passengerTrust[key] = clamp(val, BALANCE.KARMA.min, BALANCE.KARMA.max);
+  }
+
+  changePassengerTrust(passengerId: string, delta: number): number {
+    if (!Number.isFinite(delta) || delta === 0) {
+      return this.getPassengerTrust(passengerId);
+    }
+    const next = this.getPassengerTrust(passengerId) + delta;
+    this.setPassengerTrust(passengerId, next);
+    return this.getPassengerTrust(passengerId);
+  }
+
+  getAllPassengerTrust(): Record<string, number> {
+    return { ...this.passengerTrust };
+  }
+
+  // --- Local Trust (Deprecated alias for publicReputation until P8.1) ---
+
+  /** @deprecated Use `getMeters().publicReputation` instead (removed in P8.1). */
   getLocalTrust(): number {
-    return this.localTrust;
+    return this.meters.publicReputation;
   }
 
+  /** @deprecated Use `applyMeter('publicReputation', ...)` instead (removed in P8.1). */
   setLocalTrust(val: number): void {
-    this.localTrust = clamp(
-      val,
-      BALANCE.TRUST.localTrustMin,
-      BALANCE.TRUST.localTrustMax
-    );
+    const target = clamp(val, BALANCE.KARMA.min, BALANCE.KARMA.max);
+    const diff = target - this.meters.publicReputation;
+    if (diff !== 0) {
+      this.applyMeter('publicReputation', diff, 'karma.local_trust');
+    }
   }
 
-  changeLocalTrust(delta: number): number {
-    this.setLocalTrust(this.localTrust + delta);
-    return this.localTrust;
+  /** @deprecated Use `applyMeter('publicReputation', delta, reasonKey)` instead (removed in P8.1). */
+  changeLocalTrust(delta: number, reasonKey: string = 'karma.local_trust'): number {
+    this.applyMeter('publicReputation', delta, reasonKey);
+    return this.meters.publicReputation;
   }
 
-  // --- Character Relationships ---
+  // --- Character Relationships [-100..100] ---
 
   getRelationship(characterId: string): number {
     return this.characterRelationships[characterId] ?? 0;
@@ -379,6 +691,11 @@ export class ReputationSystem {
     return { ...this.characterRelationships };
   }
 
+  /** Zero-allocation read view for hot simulation ticks. */
+  getRelationshipsView(): Readonly<Record<string, number>> {
+    return this.characterRelationships;
+  }
+
   // --- Safety Record ---
 
   getSafetyRecord(): SafetyRecord {
@@ -390,6 +707,7 @@ export class ReputationSystem {
     if (this.activeTrip) {
       this.activeTrip.nearMisses++;
     }
+    this.applyMeter('safetyRecord', -1, 'karma.near_miss', this.activeTrip?.requestId);
   }
 
   recordCollision(severity: BikeCollisionSeverity): void {
@@ -398,16 +716,19 @@ export class ReputationSystem {
       if (this.activeTrip) {
         this.activeTrip.bumps++;
       }
+      this.applyMeter('safetyRecord', -5, 'karma.collision_bump', this.activeTrip?.requestId);
     } else if (severity === 'crash') {
       this.safetyRecord.crashes++;
       if (this.activeTrip) {
         this.activeTrip.crashed = true;
       }
+      this.applyMeter('safetyRecord', -15, 'karma.collision_crash', this.activeTrip?.requestId);
     }
   }
 
   recordInfraction(): void {
     this.safetyRecord.infractions++;
+    this.applyMeter('safetyRecord', -8, 'karma.infraction', this.activeTrip?.requestId);
   }
 
   // --- Risk Score ---
@@ -442,11 +763,13 @@ export class ReputationSystem {
 
   startTrip(params: {
     requestId: string;
+    bookingType?: BookingType;
     isCareful?: boolean;
     isUrgent?: boolean;
   }): void {
     this.activeTrip = {
       requestId: params.requestId,
+      bookingType: params.bookingType ?? 'app',
       isCareful: !!params.isCareful,
       isUrgent: !!params.isUrgent,
       nearMisses: 0,
@@ -481,13 +804,73 @@ export class ReputationSystem {
   }
 
   completeActiveTrip(): number {
+    const trip = this.activeTrip;
     const rating = this.getActiveTripRating();
-    this.recordTripRating(rating);
+    const isNonAppTrip =
+      trip !== null &&
+      (trip.bookingType === 'street' || trip.bookingType === 'offApp');
+    if (!isNonAppTrip) {
+      this.recordTripRating(rating);
+    }
     this.activeTrip = null;
+    if (
+      trip &&
+      !trip.crashed &&
+      trip.bumps === 0 &&
+      trip.nearMisses === 0 &&
+      this.meters.safetyRecord < BALANCE.KARMA.max
+    ) {
+      this.applyMeter('safetyRecord', 2, 'karma.safe_trip', trip.requestId);
+    }
     return rating;
   }
 
-  restoreState(opts: {
+  resetCareer(): void {
+    this.ratings = [];
+    this.defaultRating = BALANCE.RATING.start;
+    this.meters = createDefaultMeters();
+    this.karmaLog = [];
+    this.karmaSeq = 0;
+    this.seedRelationshipDefaults();
+    this.seedPassengerTrustDefaults();
+    this.safetyRecord = {
+      nearMisses: 0,
+      bumps: 0,
+      crashes: 0,
+      infractions: 0,
+    };
+    this.riskScore = 0;
+    this.promisesKept = 0;
+    this.promisesBroken = 0;
+    this.offAppStrikes = 0;
+    this.suspendedUntilDay = 0;
+    this.wasWarned = false;
+    this.wasSuspended = false;
+    this.ratingSuspensionCleared = false;
+    this.activeTrip = null;
+  }
+
+  snapshot(): ReputationSnapshot {
+    return {
+      rating: this.getAppRating(),
+      ratingsHistory: [...this.ratings],
+      localTrust: this.meters.publicReputation,
+      safetyRecord: { ...this.safetyRecord },
+      riskScore: this.riskScore,
+      promises: { kept: this.promisesKept, broken: this.promisesBroken },
+      meters: { ...this.meters },
+      karmaLog: this.karmaLog.map((e) => ({ ...e })),
+      passengerTrust: { ...this.passengerTrust },
+      offAppStrikes: this.offAppStrikes,
+      suspendedUntilDay: this.suspendedUntilDay,
+      wasWarned: this.wasWarned,
+      wasSuspended: this.wasSuspended,
+      ratingSuspensionCleared: this.ratingSuspensionCleared,
+      karmaSeq: this.karmaSeq,
+    };
+  }
+
+  applySnapshot(opts: {
     rating?: number;
     ratingsHistory?: number[];
     localTrust?: number;
@@ -495,12 +878,87 @@ export class ReputationSystem {
     safetyRecord?: Partial<SafetyRecord>;
     riskScore?: number;
     promises?: { kept?: number; broken?: number };
+    meters?: Partial<Record<MeterId, number>>;
+    karmaLog?: KarmaEvent[];
+    passengerTrust?: Record<string, number>;
+    offAppStrikes?: number;
+    suspendedUntilDay?: number;
+    wasWarned?: boolean;
+    wasSuspended?: boolean;
+    ratingSuspensionCleared?: boolean;
+    karmaSeq?: number;
   }): void {
     if (opts.rating !== undefined) this.defaultRating = opts.rating;
-    if (opts.ratingsHistory) this.ratings = [...opts.ratingsHistory];
-    if (opts.localTrust !== undefined) this.localTrust = opts.localTrust;
-    // T7.5: keep the reference (not a copy) — see constructor note above.
-    if (opts.relationships) this.characterRelationships = opts.relationships;
+    if (opts.ratingsHistory) {
+      this.ratings = opts.ratingsHistory
+        .slice(-this.windowSize)
+        .map((r) => clamp(r, 1.0, 5.0));
+    }
+
+    if (opts.meters) {
+      this.meters = createDefaultMeters();
+      for (const [k, v] of Object.entries(opts.meters)) {
+        if (isMeterId(k) && typeof v === 'number' && Number.isFinite(v)) {
+          this.meters[k] = clamp(v, BALANCE.KARMA.min, BALANCE.KARMA.max);
+        }
+      }
+    } else if (opts.localTrust !== undefined) {
+      this.meters.publicReputation = clamp(
+        opts.localTrust,
+        BALANCE.KARMA.min,
+        BALANCE.KARMA.max
+      );
+    }
+
+    if (opts.karmaLog) {
+      this.karmaLog = opts.karmaLog
+        .slice(0, BALANCE.KARMA.logCapacity)
+        .map((e) => ({ ...e }));
+    }
+    if (opts.karmaSeq !== undefined) {
+      this.karmaSeq = Math.max(0, opts.karmaSeq);
+    } else if (opts.karmaLog) {
+      this.karmaSeq = opts.karmaLog.length;
+    }
+
+    if (opts.passengerTrust) {
+      this.passengerTrust = {};
+      for (const [k, v] of Object.entries(opts.passengerTrust)) {
+        if (typeof v === 'number' && Number.isFinite(v)) {
+          this.passengerTrust[normalizePassengerTrustId(k)] = clamp(
+            v,
+            BALANCE.KARMA.min,
+            BALANCE.KARMA.max
+          );
+        }
+      }
+    } else {
+      this.seedPassengerTrustDefaults();
+    }
+
+    if (opts.relationships) {
+      if (opts.relationships !== this.characterRelationships) {
+        for (const k of Object.keys(this.characterRelationships)) {
+          delete this.characterRelationships[k];
+        }
+        for (const [k, v] of Object.entries(opts.relationships)) {
+          this.characterRelationships[k] = clamp(
+            v,
+            BALANCE.TRUST.relationshipMin,
+            BALANCE.TRUST.relationshipMax
+          );
+        }
+      } else {
+        for (const k of Object.keys(this.characterRelationships)) {
+          this.characterRelationships[k] = clamp(
+            this.characterRelationships[k] ?? 0,
+            BALANCE.TRUST.relationshipMin,
+            BALANCE.TRUST.relationshipMax
+          );
+        }
+      }
+    }
+
     if (opts.safetyRecord) {
       this.safetyRecord = {
         nearMisses: opts.safetyRecord.nearMisses ?? this.safetyRecord.nearMisses,
@@ -512,5 +970,20 @@ export class ReputationSystem {
     if (opts.riskScore !== undefined) this.riskScore = opts.riskScore;
     if (opts.promises?.kept !== undefined) this.promisesKept = opts.promises.kept;
     if (opts.promises?.broken !== undefined) this.promisesBroken = opts.promises.broken;
+    if (opts.offAppStrikes !== undefined) {
+      this.offAppStrikes = Math.max(0, opts.offAppStrikes);
+    }
+    if (opts.suspendedUntilDay !== undefined) {
+      this.suspendedUntilDay = Math.max(0, opts.suspendedUntilDay);
+    }
+    if (opts.wasWarned !== undefined) this.wasWarned = opts.wasWarned;
+    if (opts.wasSuspended !== undefined) this.wasSuspended = opts.wasSuspended;
+    if (opts.ratingSuspensionCleared !== undefined) {
+      this.ratingSuspensionCleared = opts.ratingSuspensionCleared;
+    }
+  }
+
+  restoreState(opts: Parameters<ReputationSystem['applySnapshot']>[0]): void {
+    this.applySnapshot(opts);
   }
 }

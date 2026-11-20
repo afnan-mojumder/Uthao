@@ -184,6 +184,16 @@ export function applyEffect(effect: Effect, ctx: EffectContext): void {
       }
       break;
     }
+
+    case 'meter': {
+      ctx.gameManager.reputationSystem.applyMeter(
+        effect.meter,
+        effect.delta,
+        effect.reasonKey,
+        effect.subjectId
+      );
+      break;
+    }
   }
 }
 

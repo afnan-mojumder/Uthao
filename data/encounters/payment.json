@@ -57,7 +57,14 @@
           { "type": "flag", "key": "helpedHospitalFree", "value": true },
           { "type": "flag", "key": "profit_lesson_done", "value": true },
           { "type": "relationship", "characterId": "char_bablu", "delta": 10 },
-          { "type": "localTrust", "delta": 5 }
+          { "type": "localTrust", "delta": 5 },
+          {
+            "type": "meter",
+            "meter": "riderIntegrity",
+            "delta": 6,
+            "reasonKey": "karma.vendor_discount_granted",
+            "subjectId": "char_bablu"
+          }
         ]
       },
       {
@@ -65,7 +72,14 @@
         "labelKey": "encounter.vendor_discount.choice.standard",
         "effects": [
           { "type": "mood", "delta": 0 },
-          { "type": "flag", "key": "profit_lesson_done", "value": true }
+          { "type": "flag", "key": "profit_lesson_done", "value": true },
+          {
+            "type": "meter",
+            "meter": "riderIntegrity",
+            "delta": -2,
+            "reasonKey": "karma.vendor_discount_refused",
+            "subjectId": "char_bablu"
+          }
         ]
       },
       {
@@ -75,7 +89,21 @@
           { "type": "money", "amount": -15, "kind": "fare" },
           { "type": "flag", "key": "profit_lesson_done", "value": true },
           { "type": "relationship", "characterId": "char_bablu", "delta": 5 },
-          { "type": "relationship", "characterId": "char_mintu", "delta": 3 }
+          { "type": "relationship", "characterId": "char_mintu", "delta": 3 },
+          {
+            "type": "meter",
+            "meter": "riderIntegrity",
+            "delta": 4,
+            "reasonKey": "karma.vendor_tea_favor",
+            "subjectId": "char_bablu"
+          },
+          {
+            "type": "meter",
+            "meter": "publicReputation",
+            "delta": 2,
+            "reasonKey": "karma.vendor_tea_favor",
+            "subjectId": "char_bablu"
+          }
         ]
       }
     ]
@@ -98,7 +126,19 @@
           { "type": "time", "min": 10 },
           { "type": "localTrust", "delta": 10 },
           { "type": "rating", "delta": 0.3 },
-          { "type": "money", "amount": 100, "kind": "tip" }
+          { "type": "money", "amount": 100, "kind": "tip" },
+          {
+            "type": "meter",
+            "meter": "riderIntegrity",
+            "delta": 8,
+            "reasonKey": "karma.phone_returned"
+          },
+          {
+            "type": "meter",
+            "meter": "platformStanding",
+            "delta": 4,
+            "reasonKey": "karma.phone_returned"
+          }
         ]
       },
       {
@@ -107,7 +147,14 @@
         "effects": [
           { "type": "time", "min": 5 },
           { "type": "relationship", "characterId": "char_morshed", "delta": 10 },
-          { "type": "localTrust", "delta": 8 }
+          { "type": "localTrust", "delta": 8 },
+          {
+            "type": "meter",
+            "meter": "riderIntegrity",
+            "delta": 6,
+            "reasonKey": "karma.phone_handed_police",
+            "subjectId": "char_morshed"
+          }
         ]
       },
       {
@@ -115,7 +162,31 @@
         "labelKey": "encounter.phone_left.choice.keep",
         "effects": [
           { "type": "flag", "key": "kept_lost_phone", "value": true },
-          { "type": "money", "amount": 1500, "kind": "tip" }
+          { "type": "money", "amount": 1500, "kind": "tip" },
+          {
+            "type": "meter",
+            "meter": "riderIntegrity",
+            "delta": -20,
+            "reasonKey": "karma.phone_kept"
+          },
+          {
+            "type": "meter",
+            "meter": "criminalExposure",
+            "delta": 15,
+            "reasonKey": "karma.phone_kept"
+          },
+          {
+            "type": "meter",
+            "meter": "evidenceExposure",
+            "delta": 12,
+            "reasonKey": "karma.phone_kept"
+          },
+          {
+            "type": "meter",
+            "meter": "platformStanding",
+            "delta": -8,
+            "reasonKey": "karma.phone_kept"
+          }
         ]
       }
     ]

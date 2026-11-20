@@ -193,4 +193,64 @@ describe('MissionManager (T4.7)', () => {
     // The old placeholder ended the career here; the real ending now comes from campaign_completed.
     expect(endingReached).toBeNull();
   });
+
+  it('Ruling 6: MissionManager does not directly mutate characterRelationships and never double-counts with ReputationSystem on bus', async () => {
+    const { ReputationSystem } = await import('../../../src/sim/reputation/ReputationSystem');
+    const localBus = new EventBus<GameEvents>();
+    const localStory: StoryState = {
+      currentChapter: 1,
+      completedMissions: [],
+      activeMissions: [],
+      characterRelationships: {},
+      promises: [],
+      branchFlags: {},
+      endingEligibility: {
+        independent_rider: false,
+        workshop_owner: false,
+        trusted_local: false,
+        fast_money: false,
+        fresh_start: false,
+      },
+    };
+    const rep = new ReputationSystem({ bus: localBus, initialRelationships: localStory.characterRelationships });
+    const nabila0 = rep.getRelationship('char_nabila');
+
+    const mgr = new MissionManager({
+      bus: localBus,
+      missions: allMissions,
+      endings: endingsData as EndingDef[],
+      storyState: localStory,
+      reputationSystem: rep,
+    });
+
+    // m1_first_ride grants +10 relationship to char_nabila
+    mgr.completeMission('m1_first_ride');
+    expect(rep.getRelationship('char_nabila')).toBe(nabila0 + 10);
+    expect(localStory.characterRelationships['char_nabila']).toBe(nabila0 + 10);
+
+    // Standalone MissionManager without ReputationSystem or getEffectContext does NOT bypass single-writer
+    const bareBus = new EventBus<GameEvents>();
+    const bareStory: StoryState = {
+      currentChapter: 1,
+      completedMissions: [],
+      activeMissions: [],
+      characterRelationships: {},
+      promises: [],
+      branchFlags: {},
+      endingEligibility: {
+        independent_rider: false,
+        workshop_owner: false,
+        trusted_local: false,
+        fast_money: false,
+        fresh_start: false,
+      },
+    };
+    const bareMgr = new MissionManager({
+      bus: bareBus,
+      missions: allMissions,
+      storyState: bareStory,
+    });
+    bareMgr.completeMission('m1_first_ride');
+    expect(bareStory.characterRelationships['char_nabila']).toBeUndefined();
+  });
 });

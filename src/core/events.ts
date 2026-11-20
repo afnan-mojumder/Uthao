@@ -8,6 +8,7 @@ import type {
   DeliveryJob,
   EncounterInstance,
   EndingId,
+  KarmaEvent,
   NegotiationOutcome,
   ReputationDelta,
   RideRequest,
@@ -61,6 +62,7 @@ export interface GameEvents extends Record<string, unknown> {
   'negotiation/result': { requestId: string; outcome: NegotiationOutcome; discount?: boolean };
   'economy/transaction': { tx: Transaction };
   'reputation/changed': { delta: ReputationDelta };
+  'karma/changed': { event: KarmaEvent };
   'encounter/started': { instance: EncounterInstance };
   // encounterId is the definition id (e.g. enc_traffic_checkpoint); missions match on it.
   'encounter/resolved': { instanceId: string; choiceId: string; encounterId?: string };

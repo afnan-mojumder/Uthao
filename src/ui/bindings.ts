@@ -79,7 +79,15 @@ export function bindUi(session: GameSession, saveSystem?: SaveSystem): () => voi
   };
 
   const syncGarage = () => syncGarageState(gm);
+  const syncContacts = () => {
+    if (!gm?.reputationSystem) return;
+    phoneSignal.value = {
+      ...phoneSignal.value,
+      relationships: gm.reputationSystem.getAllRelationships(),
+    };
+  };
   if (gm?.economyManager) syncGarage();
+  if (gm?.reputationSystem) syncContacts();
   if (gm?.deliveryManager) syncDeliveries();
   syncPauseEndShift();
 
@@ -99,7 +107,18 @@ export function bindUi(session: GameSession, saveSystem?: SaveSystem): () => voi
     unsubscribers.push(gm.bus.on('economy/transaction', syncGarage));
     unsubscribers.push(gm.bus.on('bike/swapped', syncGarage));
     unsubscribers.push(gm.bus.on('upgrade/purchased', syncGarage));
-    unsubscribers.push(gm.bus.on('reputation/changed', syncGarage));
+    unsubscribers.push(
+      gm.bus.on('reputation/changed', () => {
+        syncGarage();
+        syncContacts();
+      })
+    );
+    unsubscribers.push(
+      gm.bus.on('karma/changed', () => {
+        syncGarage();
+        syncContacts();
+      })
+    );
     unsubscribers.push(gm.bus.on('player/kamalProximity', syncGarage));
     unsubscribers.push(gm.bus.on('bike/wearChanged', syncGarage));
     unsubscribers.push(gm.bus.on('clock/hour', syncPauseEndShift));
@@ -113,6 +132,7 @@ export function bindUi(session: GameSession, saveSystem?: SaveSystem): () => voi
     unsubscribers.push(
       gm.bus.on('day/started', () => {
         syncGarage();
+        syncContacts();
         syncDeliveries();
         syncPauseEndShift();
       })
@@ -120,6 +140,7 @@ export function bindUi(session: GameSession, saveSystem?: SaveSystem): () => voi
     unsubscribers.push(
       gm.bus.on('state/restored', () => {
         syncGarage();
+        syncContacts();
         syncDeliveries();
         syncPauseEndShift();
       })
@@ -183,6 +204,7 @@ export function bindUi(session: GameSession, saveSystem?: SaveSystem): () => voi
         ? { kind: 'refuseAlley' as const, walkM: alley.walkM }
         : action;
     const result = respond(current, effectiveAction);
+    session.applyNegotiationResult?.(result);
     let next = result.session;
     const accepted = result.outcome?.kind === 'accepted';
     // A successful pickupAdjust only raises the walked distance; it does not end the

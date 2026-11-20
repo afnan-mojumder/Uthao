@@ -194,6 +194,8 @@ describe('T4.5 Remaining Signature Situations', () => {
         const startCash = economyManager.cash;
         const startDayMinutes = gm.clock.minutes;
         const startCondition = economyManager.motorcycleCondition;
+        const startRelationships = gm.reputationSystem.getAllRelationships();
+        const startMeters = gm.reputationSystem.getMeters();
 
         // A choice may set several flags, so every emitted flag is kept.
         const flagsEmitted: { key: string; value: unknown }[] = [];
@@ -228,8 +230,18 @@ describe('T4.5 Remaining Signature Situations', () => {
               expect(flagsEmitted).toContainEqual({ key: eff.key, value: eff.value });
               break;
             case 'relationship':
-              expect(gm.story.characterRelationships[eff.characterId]).toBe(eff.delta);
+              expect(gm.story.characterRelationships[eff.characterId]).toBe(
+                (startRelationships[eff.characterId] ?? 0) + eff.delta
+              );
               break;
+            case 'meter': {
+              const after = gm.reputationSystem.getMeters()[eff.meter];
+              expect(after).toBeGreaterThanOrEqual(0);
+              expect(after).toBeLessThanOrEqual(100);
+              if (eff.delta > 0) expect(after).toBeGreaterThanOrEqual(startMeters[eff.meter]);
+              if (eff.delta < 0) expect(after).toBeLessThanOrEqual(startMeters[eff.meter]);
+              break;
+            }
             case 'route':
               if (eff.action === 'avoid') {
                 expect(avoidSegments.has(eff.ref)).toBe(true);
@@ -289,16 +301,44 @@ describe('T4.5 Remaining Signature Situations', () => {
     const repSpy = vi.fn();
     bus.on('reputation/changed', repSpy);
 
+    const integrity0 = gm.reputationSystem.getMeters().riderIntegrity;
+
     // Return choice
     const returnChoice = enc.choices.find((c) => c.id === 'return')!;
     applyEffects(returnChoice.effects, effectCtx);
     expect(economyManager.cash).toBe(1100); // 1000 + 100 reward
     expect(repSpy).toHaveBeenCalledWith({ delta: { localTrust: 10 } });
+    expect(gm.reputationSystem.getMeters().riderIntegrity).toBeGreaterThan(integrity0);
 
-    // Keep choice
+    // Keep choice: adds cash but hurts riderIntegrity and raises criminalExposure & evidenceExposure
+    const integrityBeforeKeep = gm.reputationSystem.getMeters().riderIntegrity;
+    const criminalBeforeKeep = gm.reputationSystem.getMeters().criminalExposure;
+    const evidenceBeforeKeep = gm.reputationSystem.getMeters().evidenceExposure;
     const keepChoice = enc.choices.find((c) => c.id === 'keep')!;
     applyEffects(keepChoice.effects, effectCtx);
     expect(gm.story.branchFlags['kept_lost_phone']).toBe(true);
     expect(economyManager.cash).toBe(2600); // 1100 + 1500
+    expect(gm.reputationSystem.getMeters().riderIntegrity).toBeLessThan(integrityBeforeKeep - 10);
+    expect(gm.reputationSystem.getMeters().criminalExposure).toBeGreaterThan(criminalBeforeKeep);
+    expect(gm.reputationSystem.getMeters().evidenceExposure).toBeGreaterThan(evidenceBeforeKeep);
+    expect(gm.reputationSystem.getKarmaLog().some((e) => e.reasonKey === 'karma.phone_kept')).toBe(true);
+  });
+
+  it('vendor discount choices model genuine karma/cost trade-offs and meter effect updates KarmaLog', () => {
+    const vendor = allEncounters.find((e) => e.id === 'enc_vendor_discount')!;
+    expect(vendor).toBeDefined();
+
+    const { gm, economyManager, effectCtx } = createTestSetup([vendor]);
+    const integrity0 = gm.reputationSystem.getMeters().riderIntegrity;
+    const public0 = gm.reputationSystem.getMeters().publicReputation;
+    const bablu0 = gm.reputationSystem.getRelationship('char_bablu');
+
+    const grant = vendor.choices.find((c) => c.id === 'grant')!;
+    applyEffects(grant.effects, effectCtx);
+    expect(economyManager.cash).toBe(980); // costs money upfront
+    expect(gm.reputationSystem.getMeters().riderIntegrity).toBeGreaterThan(integrity0);
+    expect(gm.reputationSystem.getMeters().publicReputation).toBeGreaterThan(public0);
+    expect(gm.reputationSystem.getRelationship('char_bablu')).toBeGreaterThan(bablu0);
+    expect(gm.reputationSystem.getKarmaLog().some((e) => e.meter === 'riderIntegrity')).toBe(true);
   });
 });

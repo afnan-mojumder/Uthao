@@ -1,4 +1,12 @@
-import type { Transaction, WeatherKind, SafetyRecord, PlayerEconomy, StoryState } from '../../core/types';
+import type {
+  Transaction,
+  WeatherKind,
+  SafetyRecord,
+  PlayerEconomy,
+  StoryState,
+  MeterId,
+  KarmaEvent,
+} from '../../core/types';
 import type { DeliverySnapshot } from '../delivery/DeliveryManager';
 import type { ActiveRoadEvent } from '../world/RoadEvents';
 
@@ -27,6 +35,15 @@ export interface SaveV1 {
     safetyRecord: SafetyRecord;
     riskScore: number;
     promises: { kept: number; broken: number };
+    meters?: Partial<Record<MeterId, number>>;
+    karmaLog?: KarmaEvent[];
+    passengerTrust?: Record<string, number>;
+    offAppStrikes?: number;
+    suspendedUntilDay?: number;
+    wasWarned?: boolean;
+    wasSuspended?: boolean;
+    ratingSuspensionCleared?: boolean;
+    karmaSeq?: number;
   };
   bike: {
     condition: number;

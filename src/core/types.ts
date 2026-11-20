@@ -353,6 +353,25 @@ export interface DaySummary {
   debt?: number;
 }
 
+export type MeterId =
+  | 'riderIntegrity'
+  | 'publicReputation'
+  | 'platformStanding'
+  | 'criminalExposure'
+  | 'evidenceExposure'
+  | 'safetyRecord';
+
+export interface KarmaEvent {
+  id: string;
+  day: number;
+  minute: number;
+  meter: MeterId;
+  delta: number;
+  applied: number;
+  reasonKey: string;
+  subjectId?: string;
+}
+
 export interface SafetyRecord {
   nearMisses: number;
   bumps: number;

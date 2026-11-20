@@ -11,7 +11,7 @@ test('a new career starts with no debt and default relationships', async ({ page
   await page.evaluate(() => {
     const gm = (window as unknown as { __uthao: { gm: { economyManager: { debt: number }; story: { characterRelationships: Record<string, number> } } } }).__uthao.gm;
     gm.economyManager.debt = 5000;
-    gm.story.characterRelationships['char_ma'] = 80;
+    gm.story.characterRelationships['char_ma'] = -25;
   });
 
   // Act
@@ -24,5 +24,5 @@ test('a new career starts with no debt and default relationships', async ({ page
     return { debt: gm.economyManager.debt, ma: gm.story.characterRelationships['char_ma'] };
   });
   expect(state.debt).toBe(0);
-  expect(state.ma).not.toBe(80);
+  expect(state.ma).toBe(80);
 });
