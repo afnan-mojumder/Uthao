@@ -1,8 +1,10 @@
-import type { JSX } from 'preact';
+import type { JSX, Ref } from 'preact';
+import { useEffect, useRef } from 'preact/hooks';
 import { passengerHintKey } from './passengerHint';
 import { t } from '../i18n';
 import {
   hudSignal,
+  minimapCanvasSignal,
   settingsSignal,
   onRefuelCallback,
   onFuelRescueCallback,
@@ -114,7 +116,13 @@ function FuelActions({ state }: { state: HudState }): JSX.Element | null {
   );
 }
 
-export function HudView({ state }: { state: HudState }): JSX.Element {
+export function HudView({
+  state,
+  minimapHostRef,
+}: {
+  state: HudState;
+  minimapHostRef?: Ref<HTMLDivElement>;
+}): JSX.Element {
   const fuelPct = Math.max(0, Math.min(100, Math.round((state.fuelL / (state.fuelMaxL || 8)) * 100)));
   const isLowFuel = fuelPct <= 20;
 
@@ -292,6 +300,8 @@ export function HudView({ state }: { state: HudState }): JSX.Element {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           <div
             id="minimap-container"
+            data-testid="hud-minimap-host"
+            ref={minimapHostRef}
             style={{
               width: '160px',
               height: '160px',
@@ -702,6 +712,23 @@ export function HudView({ state }: { state: HudState }): JSX.Element {
 }
 
 /** Reactive HUD panel mounted inside the single `<App />` Preact root. */
-export function Hud(): JSX.Element {
-  return <HudView state={hudSignal.value} />;
+export function Hud({ minimapCanvas }: { minimapCanvas?: HTMLCanvasElement | null } = {}): JSX.Element {
+  const state = hudSignal.value;
+  const minimapHostRef = useRef<HTMLDivElement | null>(null);
+  const canvasToMount = minimapCanvas ?? minimapCanvasSignal.value;
+
+  useEffect(() => {
+    const host = minimapHostRef.current;
+    if (!host || !canvasToMount) return;
+    if (canvasToMount.parentNode !== host) {
+      host.appendChild(canvasToMount);
+    }
+    return () => {
+      if (canvasToMount.parentNode === host) {
+        host.removeChild(canvasToMount);
+      }
+    };
+  }, [canvasToMount, state.isFirstPerson]);
+
+  return <HudView state={state} minimapHostRef={minimapHostRef} />;
 }

@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import type { VNode } from 'preact';
+import { render, h, type VNode } from 'preact';
+import { act } from 'preact/test-utils';
 import { Hud, HudView, type HudState } from '../../../src/ui/hud/Hud';
 import { ChoiceCardView } from '../../../src/ui/choice/ChoiceCard';
 import {
@@ -24,7 +25,7 @@ describe('T2.8 & T4.10 Rider HUD and Mobile Polish', () => {
     };
   });
 
-  it('initializes hudSignal with default state and renders Hud from signal', () => {
+  it('initializes hudSignal with default state', () => {
     const state = hudSignal.value;
 
     expect(state.speedKmh).toBe(0);
@@ -35,9 +36,6 @@ describe('T2.8 & T4.10 Rider HUD and Mobile Polish', () => {
     expect(state.shiftClock).toBe('07:30');
     expect(state.rating).toBe(5.0);
     expect(state.isFirstPerson).toBe(false);
-
-    const vnode = Hud();
-    expect(vnode).not.toBeNull();
   });
 
   it('updates hudSignal with speed, fuel, earnings, and navigation instructions and skips identical updates', () => {
@@ -159,6 +157,10 @@ describe('T2.8 & T4.10 Rider HUD and Mobile Polish', () => {
 });
 
 describe('T8.3 fuel recovery affordances', () => {
+  beforeEach(() => {
+    resetHudState();
+  });
+
   const base: HudState = {
     speedKmh: 0, fuelL: 4, fuelMaxL: 8, objectiveText: '', todayNetEarnings: 0,
     shiftClock: '08:00', shiftDay: 1, rating: 5,
@@ -253,5 +255,218 @@ describe('T8.3 fuel recovery affordances', () => {
     expect(hudSignal.value.dialogueSubtitle?.text).toBe('Test subtitle line');
 
     unbind();
+  });
+
+  it('P6.1: detects shiftDay changes even when shiftClock is identical', () => {
+    expect(hudSignal.value.shiftDay).toBe(1);
+    expect(updateHudState({ shiftDay: 2, shiftClock: '07:30' }, 1016)).toBe(true);
+    expect(hudSignal.value.shiftDay).toBe(2);
+    expect(hudSignal.value.shiftClock).toBe('07:30');
+  });
+
+  it('P6.1: applies priority lifecycle updates immediately inside the 50ms telemetry throttle window', () => {
+    expect(updateHudState({ speedKmh: 25 }, 1000)).toBe(true);
+
+    // Within 50ms window: priority fields must never be dropped
+    expect(updateHudState({ objectiveText: 'Drop off at Fulgate' }, 1010)).toBe(true);
+    expect(hudSignal.value.objectiveText).toBe('Drop off at Fulgate');
+
+    expect(updateHudState({ nextTurn: { direction: 'uturn', text: 'Take U-turn' } }, 1020)).toBe(true);
+    expect(hudSignal.value.nextTurn?.direction).toBe('uturn');
+
+    expect(updateHudState({ passengerStatus: { status: 'OnTrip', name: 'Nabila' } }, 1030)).toBe(true);
+    expect(hudSignal.value.passengerStatus?.status).toBe('OnTrip');
+
+    expect(updateHudState({ roadEventAlert: { title: 'Waterlogging', kind: 'waterlogging' } }, 1040)).toBe(true);
+    expect(hudSignal.value.roadEventAlert?.kind).toBe('waterlogging');
+  });
+
+  it('P6.1: throttles high-frequency numeric telemetry within 50ms and resets timer in resetHudState()', () => {
+    expect(updateHudState({ speedKmh: 10 }, 1000)).toBe(true);
+    expect(hudSignal.value.speedKmh).toBe(10);
+
+    // 20ms later with only numeric telemetry change -> throttled
+    expect(updateHudState({ speedKmh: 18 }, 1020)).toBe(false);
+    expect(hudSignal.value.speedKmh).toBe(10);
+
+    // 55ms after last push -> allowed
+    expect(updateHudState({ speedKmh: 22 }, 1055)).toBe(true);
+    expect(hudSignal.value.speedKmh).toBe(22);
+
+    // resetHudState() resets the throttle timer so a numeric update at 1060ms (only 5ms later) succeeds
+    resetHudState();
+    expect(updateHudState({ speedKmh: 12 }, 1060)).toBe(true);
+    expect(hudSignal.value.speedKmh).toBe(12);
+  });
+
+  it('P6.1: reattaches minimap canvas inside [data-testid="hud-minimap-host"] across 3rd -> 1st -> 3rd camera toggles', () => {
+    class MiniText {
+      nodeType = 3;
+      nodeName = '#text';
+      parentNode: MiniEl | null = null;
+      data: string;
+      constructor(t: string) {
+        this.data = t;
+      }
+      get nextSibling(): MiniText | MiniEl | null {
+        if (!this.parentNode) return null;
+        const i = this.parentNode.childNodes.indexOf(this);
+        return i >= 0 && i + 1 < this.parentNode.childNodes.length ? this.parentNode.childNodes[i + 1]! : null;
+      }
+      remove(): void {
+        this.parentNode?.removeChild(this);
+      }
+    }
+    class MiniEl {
+      nodeType = 1;
+      tagName: string;
+      nodeName: string;
+      parentNode: MiniEl | null = null;
+      childNodes: Array<MiniEl | MiniText> = [];
+      attributes = new Map<string, string>();
+      style: Record<string, string> = {};
+      constructor(tag: string) {
+        this.tagName = tag.toUpperCase();
+        this.nodeName = this.tagName;
+      }
+      get firstChild(): MiniEl | MiniText | null {
+        return this.childNodes[0] ?? null;
+      }
+      get nextSibling(): MiniEl | MiniText | null {
+        if (!this.parentNode) return null;
+        const i = this.parentNode.childNodes.indexOf(this);
+        return i >= 0 && i + 1 < this.parentNode.childNodes.length ? this.parentNode.childNodes[i + 1]! : null;
+      }
+      get isConnected(): boolean {
+        if (this === body) return true;
+        let cur: MiniEl | null = this.parentNode;
+        while (cur) {
+          if (cur === body) return true;
+          cur = cur.parentNode;
+        }
+        return false;
+      }
+      set id(v: string) {
+        this.attributes.set('id', v);
+      }
+      get id() {
+        return this.attributes.get('id') ?? '';
+      }
+      setAttribute(k: string, v: string) {
+        this.attributes.set(k, String(v));
+      }
+      getAttribute(k: string) {
+        return this.attributes.get(k) ?? null;
+      }
+      removeAttribute(k: string) {
+        this.attributes.delete(k);
+      }
+      appendChild<T extends MiniEl | MiniText>(n: T): T {
+        return this.insertBefore(n, null);
+      }
+      insertBefore<T extends MiniEl | MiniText>(n: T, ref: MiniEl | MiniText | null): T {
+        if (n.parentNode) n.parentNode.removeChild(n);
+        n.parentNode = this;
+        if (!ref) this.childNodes.push(n);
+        else {
+          const idx = this.childNodes.indexOf(ref);
+          if (idx >= 0) this.childNodes.splice(idx, 0, n);
+          else this.childNodes.push(n);
+        }
+        return n;
+      }
+      removeChild<T extends MiniEl | MiniText>(n: T): T {
+        const idx = this.childNodes.indexOf(n);
+        if (idx >= 0) {
+          this.childNodes.splice(idx, 1);
+          n.parentNode = null;
+        }
+        return n;
+      }
+      remove() {
+        this.parentNode?.removeChild(this);
+      }
+      addEventListener() {}
+      removeEventListener() {}
+      contains(node: MiniEl | MiniText | null): boolean {
+        let cur: MiniEl | MiniText | null = node;
+        while (cur) {
+          if (cur === this) return true;
+          cur = cur.parentNode;
+        }
+        return false;
+      }
+      querySelector(sel: string): MiniEl | null {
+        const match = /^\[data-testid="([^"]+)"\]$/.exec(sel);
+        for (const c of this.childNodes) {
+          if (c instanceof MiniEl) {
+            if (match && c.getAttribute('data-testid') === match[1]) return c;
+            const found = c.querySelector(sel);
+            if (found) return found;
+          }
+        }
+        return null;
+      }
+    }
+
+    const body = new MiniEl('body');
+    const root = new MiniEl('div');
+    body.appendChild(root);
+    const fakeCanvas = new MiniEl('canvas');
+    fakeCanvas.id = 'minimap-canvas';
+
+    const prevDoc = globalThis.document;
+    globalThis.document = {
+      body,
+      createElement: (tag: string) => new MiniEl(tag),
+      createElementNS: (_ns: string, tag: string) => new MiniEl(tag),
+      createTextNode: (t: string) => new MiniText(t),
+    } as unknown as Document;
+
+    try {
+      act(() => {
+        updateHudState({ isFirstPerson: false });
+        render(
+          h(Hud, { minimapCanvas: fakeCanvas as unknown as HTMLCanvasElement }),
+          root as unknown as Element
+        );
+      });
+
+      const host1 = root.querySelector('[data-testid="hud-minimap-host"]');
+      expect(host1).not.toBeNull();
+      expect(fakeCanvas.isConnected).toBe(true);
+      expect(host1?.contains(fakeCanvas)).toBe(true);
+
+      // Toggle to firstPerson
+      act(() => {
+        updateHudState({ isFirstPerson: true });
+        render(
+          h(Hud, { minimapCanvas: fakeCanvas as unknown as HTMLCanvasElement }),
+          root as unknown as Element
+        );
+      });
+
+      expect(root.querySelector('[data-testid="hud-first-person"]')).not.toBeNull();
+      expect(fakeCanvas.isConnected).toBe(false);
+
+      // Toggle back to thirdPerson -> minimapCanvas MUST reattach into the new host
+      act(() => {
+        updateHudState({ isFirstPerson: false });
+        render(
+          h(Hud, { minimapCanvas: fakeCanvas as unknown as HTMLCanvasElement }),
+          root as unknown as Element
+        );
+      });
+
+      const host2 = root.querySelector('[data-testid="hud-minimap-host"]');
+      expect(host2).not.toBeNull();
+      expect(fakeCanvas.isConnected).toBe(true);
+      expect(host2?.contains(fakeCanvas)).toBe(true);
+    } finally {
+      act(() => {
+        render(null, root as unknown as Element);
+      });
+      globalThis.document = prevDoc;
+    }
   });
 });

@@ -211,6 +211,14 @@ export class RoadEventManager {
     return Array.from(this.activeEvents.values());
   }
 
+  /** Zero-allocation lookup of the first active road event for HUD display. */
+  getFirstActiveEvent(): ActiveRoadEvent | undefined {
+    for (const event of this.activeEvents.values()) {
+      if (event.active) return event;
+    }
+    return undefined;
+  }
+
   /**
    * Gets active events for a specific segment.
    */

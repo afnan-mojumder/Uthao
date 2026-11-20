@@ -27,7 +27,11 @@ import {
   loadingSignal,
   initPwaInstall,
   negotiationSignal,
+  hudSignal,
+  minimapCanvasSignal,
   updateHudState,
+  getHudResetCount,
+  HUD_THROTTLE_MS,
   dialogueSubtitleSignal,
   tickPhoneOffers,
   tutorialSignal,
@@ -38,6 +42,7 @@ import {
   settingsSignal,
   setActiveSaveSystem,
   type GameSettings,
+  type HudState,
 } from './ui/store';
 import { getCharacter } from './sim/passenger/PassengerAI';
 import { setLanguage } from './ui/i18n';
@@ -376,6 +381,9 @@ if (typeof document !== 'undefined') {
 }
 
 const minimap = typeof document !== 'undefined' ? new Minimap(roadNetwork) : undefined;
+if (minimap) {
+  minimapCanvasSignal.value = minimap.canvas;
+}
 const autopilot = new AutopilotController(roadNetwork);
 const trafficManager = session.traffic;
 const inputManager = new InputManager();
@@ -460,10 +468,208 @@ let lastTime = typeof performance !== 'undefined' ? performance.now() : 0;
 let roamNodeIndex = 0;
 let cameraHeld = false;
 let lastBikeBrake = 0;
-let lastHudSyncMs = 0;
-let lastHudFirstPerson = false;
-let lastHudScreen = screenSignal.value;
-const HUD_SYNC_INTERVAL_MS = 50;
+
+// Pre-allocated scratch & primitive diff cache for zero-alloc steady-state syncHud()
+const hudPatchScratch: Partial<HudState> = {};
+let lastHudPushMs = -Infinity;
+let lastMissionPollMs = -Infinity;
+let lastHudLang = '';
+let lastObjKey = '';
+let lastPlaceKey = '';
+let cachedObjectiveText = '';
+let lastNavKind = '';
+let lastNavTextKey = '';
+let lastNavDistM = -1;
+let lastActiveReqId = '';
+let lastPassengerView = '';
+let lastRoadEventId = '';
+let lastMissionCount = -1;
+let lastHudResetCount = getHudResetCount();
+
+function syncHud(
+  now: number,
+  simStepped: boolean,
+  activeReq: ReturnType<typeof rideManager.getActiveRequest>,
+  view: ReturnType<typeof deriveRideView>
+): void {
+  const curResetCount = getHudResetCount();
+  if (curResetCount !== lastHudResetCount) {
+    lastHudResetCount = curResetCount;
+    lastHudPushMs = -Infinity;
+    lastMissionPollMs = -Infinity;
+    lastHudLang = '';
+    lastObjKey = '';
+    lastPlaceKey = '';
+    cachedObjectiveText = '';
+    lastNavKind = '';
+    lastNavTextKey = '';
+    lastNavDistM = -1;
+    lastActiveReqId = '';
+    lastPassengerView = '';
+    lastRoadEventId = '';
+    lastMissionCount = -1;
+  }
+
+  const cur = hudSignal.value;
+  const lang = settingsSignal.value.language;
+  const langChanged = lang !== lastHudLang;
+  const isFirstPerson = renderer ? renderer.cameraRig.mode === 'firstPerson' : false;
+
+  const placeKey = typeof view.objectiveVars.place === 'string' ? view.objectiveVars.place : '';
+  const objChanged = langChanged || view.objectiveKey !== lastObjKey || placeKey !== lastPlaceKey;
+  if (objChanged) {
+    lastObjKey = view.objectiveKey;
+    lastPlaceKey = placeKey;
+    cachedObjectiveText = t(view.objectiveKey, { place: placeKey ? t(placeKey) : '' });
+  }
+
+  const navKind = view.instruction ? view.instruction.kind : '';
+  const navTextKey = view.instruction ? view.instruction.textKey : '';
+  const navDistM = view.instruction ? Math.round(view.instruction.distanceM) : -1;
+  const navChanged =
+    langChanged ||
+    navKind !== lastNavKind ||
+    navTextKey !== lastNavTextKey ||
+    navDistM !== lastNavDistM;
+
+  const reqId = activeReq ? activeReq.requestId : '';
+  const paxChanged = langChanged || reqId !== lastActiveReqId || view.passenger !== lastPassengerView;
+
+  const activeRoadEv = gm.roadEvents.getFirstActiveEvent();
+  const roadEvId = activeRoadEv ? activeRoadEv.id : '';
+  const roadEvChanged = langChanged || roadEvId !== lastRoadEventId;
+
+  const activeMissionCount = gm.story.activeMissions.length;
+  const shouldPollMissions =
+    lastHudPushMs === -Infinity ||
+    langChanged ||
+    activeMissionCount !== lastMissionCount ||
+    (simStepped && now - lastMissionPollMs >= 100);
+
+  const fare = activeReq?.initialFare;
+  const etaMinutes = activeReq ? activeReq.estimatedDuration : undefined;
+  const nearStation = session.nearFuelStation();
+  const chargeSpot =
+    gm.economyManager.phoneBattery < BALANCE.PHONE.lowBatteryPct
+      ? session.nearChargeSpot('home')
+        ? 'home'
+        : session.nearChargeSpot('teaStall')
+          ? 'teaStall'
+          : null
+      : null;
+  const todayNetEarnings = gm.economy.dailyRevenue - gm.economy.dailyExpenses;
+  const shiftClock = gm.clock.hhmm();
+  const shiftDay = gm.clock.day;
+  const rating = gm.reputationSystem.getAppRating();
+  const subtitle = dialogueSubtitleSignal.value;
+
+  const priorityChanged =
+    lastHudPushMs === -Infinity ||
+    isFirstPerson !== cur.isFirstPerson ||
+    cachedObjectiveText !== cur.objectiveText ||
+    navChanged ||
+    paxChanged ||
+    roadEvChanged ||
+    shouldPollMissions ||
+    fare !== cur.fare ||
+    etaMinutes !== cur.etaMinutes ||
+    nearStation !== cur.nearStation ||
+    chargeSpot !== cur.chargeSpot ||
+    Math.round(todayNetEarnings) !== Math.round(cur.todayNetEarnings) ||
+    shiftClock !== cur.shiftClock ||
+    shiftDay !== cur.shiftDay ||
+    Math.round(rating * 100) !== Math.round(cur.rating * 100) ||
+    subtitle !== cur.dialogueSubtitle;
+
+  const currentSpeedKmh = Math.abs(session.bike.speed) * 3.6;
+  const fuelL = gm.economyManager.fuelLevel;
+  const fuelMaxL = gm.economyManager.maxFuelL();
+  const conditionPct = gm.economyManager.motorcycleCondition;
+
+  const telemetryChanged =
+    Math.round(currentSpeedKmh) !== Math.round(cur.speedKmh) ||
+    Math.round(fuelL * 10) !== Math.round(cur.fuelL * 10) ||
+    (fuelL === 0) !== (cur.fuelL === 0) ||
+    fuelMaxL !== cur.fuelMaxL ||
+    Math.round(conditionPct) !== Math.round(cur.conditionPct ?? 100);
+
+  if (!priorityChanged && !telemetryChanged) return;
+  if (!priorityChanged && now - lastHudPushMs < HUD_THROTTLE_MS) return;
+
+  lastHudLang = lang;
+
+  let nextTurn = cur.nextTurn ?? null;
+  if (navChanged) {
+    lastNavKind = navKind;
+    lastNavTextKey = navTextKey;
+    lastNavDistM = navDistM;
+    nextTurn = view.instruction
+      ? { direction: navKind, text: t(navTextKey, { dist: navDistM }) }
+      : null;
+  }
+
+  let passengerStatus = cur.passengerStatus;
+  if (paxChanged) {
+    lastActiveReqId = reqId;
+    lastPassengerView = view.passenger;
+    if (activeReq) {
+      const activeProfile = session.requests.getProfile(activeReq.passengerId);
+      const activeChar = activeReq.characterId ? getCharacter(activeReq.characterId) : undefined;
+      const passengerNameKey = activeProfile?.nameKey ?? activeChar?.nameKey;
+      passengerStatus = {
+        status: view.passenger,
+        name: passengerNameKey ? t(passengerNameKey) : 'Passenger',
+      };
+    } else {
+      passengerStatus = undefined;
+    }
+  }
+
+  let roadEventAlert = cur.roadEventAlert ?? null;
+  if (roadEvChanged) {
+    lastRoadEventId = roadEvId;
+    roadEventAlert = activeRoadEv
+      ? { title: activeRoadEv.title?.[lang] ?? activeRoadEv.kind, kind: activeRoadEv.kind }
+      : null;
+  }
+
+  let activeMission = cur.activeMission ?? null;
+  let activeSideMissions = cur.activeSideMissions;
+  if (shouldPollMissions) {
+    lastMissionPollMs = now;
+    lastMissionCount = activeMissionCount;
+    const hudMissions = gm.missionManager.getHudMissions((poiId) =>
+      session.getNearestMissionTarget(poiId)
+    );
+    activeMission = hudMissions.main;
+    activeSideMissions = hudMissions.side;
+  }
+
+  hudPatchScratch.speedKmh = currentSpeedKmh;
+  hudPatchScratch.objectiveText = cachedObjectiveText;
+  hudPatchScratch.activeMission = activeMission;
+  hudPatchScratch.activeSideMissions = activeSideMissions;
+  hudPatchScratch.roadEventAlert = roadEventAlert;
+  hudPatchScratch.dialogueSubtitle = subtitle;
+  hudPatchScratch.fare = fare;
+  hudPatchScratch.fuelL = fuelL;
+  hudPatchScratch.fuelMaxL = fuelMaxL;
+  hudPatchScratch.nearStation = nearStation;
+  hudPatchScratch.conditionPct = conditionPct;
+  hudPatchScratch.todayNetEarnings = todayNetEarnings;
+  hudPatchScratch.shiftClock = shiftClock;
+  hudPatchScratch.shiftDay = shiftDay;
+  hudPatchScratch.rating = rating;
+  hudPatchScratch.isFirstPerson = isFirstPerson;
+  hudPatchScratch.nextTurn = nextTurn;
+  hudPatchScratch.chargeSpot = chargeSpot;
+  hudPatchScratch.passengerStatus = passengerStatus;
+  hudPatchScratch.etaMinutes = etaMinutes;
+
+  if (updateHudState(hudPatchScratch, now)) {
+    lastHudPushMs = now;
+  }
+}
 
 function frame(now: number) {
   const dt = (now - lastTime) / 1000;
@@ -597,12 +803,6 @@ function frame(now: number) {
   if (curScreen !== 'title') {
     // Update Minimap
     if (minimap) {
-      if (!minimap.canvas.isConnected && typeof document !== 'undefined') {
-        const container = document.getElementById('minimap-container');
-        if (container) {
-          container.appendChild(minimap.canvas);
-        }
-      }
       const pNodePos = view.pickupVisible ? pNode : null;
       const dNodePos = view.dropoffVisible ? dNode : null;
       minimap.update(
@@ -612,85 +812,7 @@ function frame(now: number) {
       );
     }
 
-    // Throttled + diffed HUD sync (avoids 60fps allocations when unchanged or on title)
-    const isFirstPerson = renderer ? renderer.cameraRig.mode === 'firstPerson' : false;
-    const forceHudSync =
-      lastHudSyncMs === 0 ||
-      isFirstPerson !== lastHudFirstPerson ||
-      curScreen !== lastHudScreen;
-
-    if (forceHudSync || now - lastHudSyncMs >= HUD_SYNC_INTERVAL_MS) {
-      lastHudSyncMs = now;
-      lastHudFirstPerson = isFirstPerson;
-      lastHudScreen = curScreen;
-
-      const placeKey = String(view.objectiveVars.place ?? '');
-      const objective = t(view.objectiveKey, { place: placeKey ? t(placeKey) : '' });
-      const fare = activeReq?.initialFare;
-
-      // Speed is signed (negative when reversing); the dial shows the magnitude.
-      const currentSpeedKmh = Math.abs(session.bike.speed) * 3.6;
-      const fuelL = gm.economyManager.fuelLevel;
-      const fuelMaxL = gm.economyManager.maxFuelL();
-      const todayNetEarnings = gm.economy.dailyRevenue - gm.economy.dailyExpenses;
-      const shiftClock = gm.clock.hhmm();
-      const shiftDay = gm.clock.day;
-      const rating = gm.reputationSystem.getAppRating();
-
-      const hudMissions = gm.missionManager.getHudMissions((poiId) =>
-        session.getNearestMissionTarget(poiId)
-      );
-
-      const activeRoadEv = gm.roadEvents.getActiveEvents().find((e) => e.active);
-      const roadEventAlert = activeRoadEv
-        ? {
-            title: activeRoadEv.title?.[settingsSignal.value.language] ?? activeRoadEv.kind,
-            kind: activeRoadEv.kind,
-          }
-        : null;
-
-      const activeProfile = activeReq ? session.requests.getProfile(activeReq.passengerId) : undefined;
-      const activeChar = activeReq?.characterId ? getCharacter(activeReq.characterId) : undefined;
-      const passengerNameKey = activeProfile?.nameKey ?? activeChar?.nameKey;
-      const passengerName = passengerNameKey ? t(passengerNameKey) : 'Passenger';
-
-      updateHudState({
-        speedKmh: currentSpeedKmh,
-        objectiveText: objective,
-        activeMission: hudMissions.main,
-        activeSideMissions: hudMissions.side,
-        roadEventAlert,
-        dialogueSubtitle: dialogueSubtitleSignal.value,
-        fare,
-        fuelL,
-        fuelMaxL,
-        nearStation: session.nearFuelStation(),
-        conditionPct: gm.economyManager.motorcycleCondition,
-        todayNetEarnings,
-        shiftClock,
-        shiftDay,
-        rating,
-        isFirstPerson,
-        nextTurn: view.instruction
-          ? { direction: view.instruction.kind, text: t(view.instruction.textKey, { dist: Math.round(view.instruction.distanceM) }) }
-          : null,
-        chargeSpot:
-          gm.economyManager.phoneBattery < BALANCE.PHONE.lowBatteryPct
-            ? session.nearChargeSpot('home')
-              ? 'home'
-              : session.nearChargeSpot('teaStall')
-                ? 'teaStall'
-                : null
-            : null,
-        passengerStatus: activeReq
-          ? {
-              status: view.passenger,
-              name: passengerName,
-            }
-          : undefined,
-        etaMinutes: activeReq ? activeReq.estimatedDuration : undefined,
-      });
-    }
+    syncHud(now, steps > 0, activeReq, view);
 
     if (curScreen === 'map') {
       const prevMapPos = mapPlayerPosSignal.value;
@@ -698,8 +820,6 @@ function frame(now: number) {
         mapPlayerPosSignal.value = { x: session.bike.x, z: session.bike.z };
       }
     }
-  } else {
-    lastHudScreen = curScreen;
   }
 
   if (typeof requestAnimationFrame !== 'undefined') {

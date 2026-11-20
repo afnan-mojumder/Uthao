@@ -337,7 +337,16 @@ export const DEFAULT_HUD_STATE: HudState = {
   fare: undefined,
 };
 
+export const HUD_THROTTLE_MS = 50;
+let lastHudSyncMs = -Infinity;
+let hudResetCount = 0;
+
+export function getHudResetCount(): number {
+  return hudResetCount;
+}
+
 export const hudSignal = signal<HudState>({ ...DEFAULT_HUD_STATE });
+export const minimapCanvasSignal = signal<HTMLCanvasElement | null>(null);
 
 function sameHudTurn(a: HudNavigationTurn | null | undefined, b: HudNavigationTurn | null | undefined): boolean {
   if (a === b) return true;
@@ -387,24 +396,19 @@ function sameRoadAlert(
   return a.title === b.title && a.kind === b.kind;
 }
 
-/** Updates `hudSignal` only when at least one visible field differs from current state. */
-export function updateHudState(patch: Partial<HudState>): boolean {
+/** Updates `hudSignal` when state differs, applying priority lifecycle changes immediately and throttling numeric telemetry at 50ms. */
+export function updateHudState(patch: Partial<HudState>, nowMs?: number): boolean {
   const cur = hudSignal.value;
   const nextFuelL = patch.fuelL !== undefined ? patch.fuelL : cur.fuelL;
   const nextFuelMax = patch.fuelMaxL !== undefined ? patch.fuelMaxL : cur.fuelMaxL;
   const nextFuelPct = patch.fuel !== undefined ? patch.fuel : (nextFuelL / (nextFuelMax || 8)) * 100;
 
-  const changed =
-    (patch.speedKmh !== undefined && Math.round(patch.speedKmh) !== Math.round(cur.speedKmh)) ||
+  const priorityChanged =
     (patch.gear !== undefined && patch.gear !== cur.gear) ||
-    (patch.fuelL !== undefined &&
-      (Math.round(patch.fuelL * 10) !== Math.round(cur.fuelL * 10) ||
-        (patch.fuelL === 0) !== (cur.fuelL === 0))) ||
     (patch.fuelMaxL !== undefined && patch.fuelMaxL !== cur.fuelMaxL) ||
     (patch.isFirstPerson !== undefined && patch.isFirstPerson !== cur.isFirstPerson) ||
     (patch.nearStation !== undefined && patch.nearStation !== cur.nearStation) ||
     (patch.chargeSpot !== undefined && patch.chargeSpot !== cur.chargeSpot) ||
-    (patch.conditionPct !== undefined && Math.round(patch.conditionPct) !== Math.round(cur.conditionPct ?? 100)) ||
     (patch.objectiveText !== undefined && patch.objectiveText !== cur.objectiveText) ||
     (patch.destinationName !== undefined && patch.destinationName !== cur.destinationName) ||
     ('etaMinutes' in patch && patch.etaMinutes !== cur.etaMinutes) ||
@@ -421,7 +425,22 @@ export function updateHudState(patch: Partial<HudState>): boolean {
     ('roadEventAlert' in patch && !sameRoadAlert(patch.roadEventAlert, cur.roadEventAlert)) ||
     ('passengerStatus' in patch && !sameHudPassenger(patch.passengerStatus, cur.passengerStatus));
 
-  if (!changed) return false;
+  const telemetryChanged =
+    (patch.speedKmh !== undefined && Math.round(patch.speedKmh) !== Math.round(cur.speedKmh)) ||
+    (patch.fuelL !== undefined &&
+      (Math.round(patch.fuelL * 10) !== Math.round(cur.fuelL * 10) ||
+        (patch.fuelL === 0) !== (cur.fuelL === 0))) ||
+    (patch.conditionPct !== undefined && Math.round(patch.conditionPct) !== Math.round(cur.conditionPct ?? 100));
+
+  if (!priorityChanged && !telemetryChanged) return false;
+
+  if (!priorityChanged && nowMs !== undefined && nowMs - lastHudSyncMs < HUD_THROTTLE_MS) {
+    return false;
+  }
+
+  if (nowMs !== undefined) {
+    lastHudSyncMs = nowMs;
+  }
 
   hudSignal.value = {
     ...cur,
@@ -432,6 +451,8 @@ export function updateHudState(patch: Partial<HudState>): boolean {
 }
 
 export function resetHudState(): void {
+  lastHudSyncMs = -Infinity;
+  hudResetCount++;
   hudSignal.value = { ...DEFAULT_HUD_STATE };
 }
 
