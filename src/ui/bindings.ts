@@ -204,7 +204,7 @@ export function bindUi(session: GameSession, saveSystem?: SaveSystem): () => voi
       karmaLog: repSnap.karmaLog,
       day: gm.clock.day,
       appWarned: repSnap.wasWarned,
-      appSuspended: repSnap.suspendedUntilDay > 0 && gm.clock.day <= repSnap.suspendedUntilDay,
+      appSuspended: gm.reputationSystem.isAppSuspended(gm.clock.day),
       appSuspendedUntilDay: repSnap.suspendedUntilDay,
       promises: repSnap.promises,
     };

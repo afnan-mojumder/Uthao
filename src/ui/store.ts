@@ -1,6 +1,6 @@
 import { signal } from '@preact/signals';
 import type { InputBindings } from '../input/types';
-import { cloneDefaultBindings } from '../input/bindings';
+import { cloneDefaultBindings, loadBindings } from '../input/bindings';
 import { DEFAULT_VOLUMES } from '../audio/AudioManager';
 import type { AudioSettings } from '../audio/bindAudio';
 import { BALANCE } from '../config/balance';
@@ -372,6 +372,7 @@ export const SETTINGS_STORAGE_KEY = 'uthao_user_settings';
 let memorySettings: GameSettings | null = null;
 
 export function loadSettings(): GameSettings {
+  const liveControls = loadBindings();
   if (typeof localStorage !== 'undefined') {
     try {
       const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
@@ -381,13 +382,16 @@ export function loadSettings(): GameSettings {
           ...DEFAULT_SETTINGS,
           ...parsed,
           uiScale: normalizeUiScale(parsed.uiScale),
+          controls: liveControls,
         };
       }
     } catch {
       // fallback
     }
   }
-  return memorySettings ? { ...memorySettings } : { ...DEFAULT_SETTINGS };
+  return memorySettings
+    ? { ...memorySettings, controls: memorySettings.controls ?? liveControls }
+    : { ...DEFAULT_SETTINGS, controls: liveControls };
 }
 
 /** Mutes or unmutes all game sound and keeps the choice. */

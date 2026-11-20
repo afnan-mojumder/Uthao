@@ -40,19 +40,36 @@ const KNOWN_FLAG_KEYS = new Set([
   'ch5_calls_done',
   'ch5_completed',
   'ch6_decision_made',
+  'campaign_completed',
+  'appWarned',
   'appSuspended',
+  'rentDelayedOnce',
+  'rentEvictionWarning',
   'career_choice',
   'career_choice_savings',
+  'joinedScheme',
+  'cooperatedPolice',
+  'contestedPoliceStop',
+  'bribedPolice',
+  'bribeRejected',
+  'fledPolice',
+  'fledAccident',
+  'helpedHospitalFree',
+  'kept_lost_phone',
+  'm4_police_decision_made',
+  'm5_package_delivered',
+  'm5_promise_kept',
+  'ma_payment_missed',
+  'protectedPassenger',
+  'tookRahimShortcut',
+  'escapedRobbery',
+  'robberyComply',
+  'monsoon_survived',
+  'puran_para_mastered',
 ]);
 
-function formatDecisionLabel(flagKey: string, value: boolean | number | string): string {
-  if (KNOWN_FLAG_KEYS.has(flagKey)) {
-    return t(`journal.flag_label.${flagKey}`);
-  }
-  const clean = flagKey.replace(/[_-]+/g, ' ');
-  return typeof value === 'string' && value.length > 0 && value !== 'true'
-    ? `${clean}: ${value}`
-    : clean;
+function formatDecisionLabel(flagKey: string): string {
+  return t(`journal.flag_label.${flagKey}`);
 }
 
 function formatPromiseLabel(promise: StoryPromise): string {
@@ -89,7 +106,9 @@ export function Journal({
   const unlockedDistricts = MissionManager.getUnlockedDistrictsForChapter(chapter).filter(
     (d) => d !== 'testloop'
   );
-  const activeFlags = Object.entries(story.branchFlags).filter(([, val]) => Boolean(val));
+  const activeFlags = Object.entries(story.branchFlags).filter(
+    ([flagKey, val]) => KNOWN_FLAG_KEYS.has(flagKey) && Boolean(val)
+  );
   const pendingPromises = story.promises.filter((p) => !p.fulfilled);
   const unlockedContacts = CHARACTERS.filter((c) => {
     const rel = relationships[c.id] ?? c.initialRelationship;
@@ -479,7 +498,7 @@ export function Journal({
                 <div style={{ fontSize: '13px', color: '#94A3B8' }}>{t('journal.no_decisions')}</div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  {activeFlags.slice(-8).reverse().map(([flagKey, val]) => (
+                  {activeFlags.slice(-8).reverse().map(([flagKey]) => (
                     <div
                       key={flagKey}
                       style={{
@@ -491,7 +510,7 @@ export function Journal({
                       }}
                     >
                       <IconCheck size={14} color="#38BDF8" />
-                      <span>{formatDecisionLabel(flagKey, val)}</span>
+                      <span>{formatDecisionLabel(flagKey)}</span>
                     </div>
                   ))}
                 </div>

@@ -172,13 +172,15 @@ test.describe('P6.3 UiSheet, KarmaPanel, Journal & Hotkeys E2E', () => {
     await expect(teaFilter).toBeVisible();
     await teaFilter.click();
 
-    // Clicking bottom-right corner of the map canvas selects a non-Mirpara (distant) node, not nodes[0]
+    // Clicking the southern Motinagar/Puran Para region of the map selects a southern district (not Mirpara / nodes[0])
     const canvas = page.locator('#map-canvas');
     const box = await canvas.boundingBox();
     expect(box).not.toBeNull();
-    await canvas.click({ position: { x: box!.width * 0.72, y: box!.height * 0.75 } });
+    await canvas.click({ position: { x: box!.width * 0.5, y: box!.height * 0.78 } });
 
     const selectionCard = page.getByTestId('map-selection-card');
     await expect(selectionCard).toBeVisible({ timeout: 5000 });
+    await expect(selectionCard).toContainText(/Motinagar|Puran Para|মতি|পুরান/);
+    await expect(selectionCard).not.toContainText(/Mirpara|মিরপাড়া/);
   });
 });

@@ -446,7 +446,6 @@ export function App(): JSX.Element {
         <KarmaPanel
           isOpen={true}
           data={karmaDataSignal.value}
-          relationships={phoneSignal.value.relationships}
           onClose={() => {
             karmaPanelSignal.value = false;
           }}
@@ -456,7 +455,7 @@ export function App(): JSX.Element {
       {uiSheetSignal.value && (
         <UiSheet
           isOpen={true}
-          controls={settingsSignal.value.controls}
+          controls={settingsSignal.value.controls ?? loadBindings()}
           tiltControls={settingsSignal.value.tiltControls}
           onOpenMap={() => {
             uiSheetSignal.value = false;
@@ -480,6 +479,7 @@ export function App(): JSX.Element {
           }}
           onOpenPause={() => {
             uiSheetSignal.value = false;
+            pausedSignal.value = true;
             screenSignal.value = 'pause';
           }}
           onOpenSettings={() => {

@@ -11,6 +11,7 @@ import {
   journalDataSignal,
   settingsSignal,
   DEFAULT_SETTINGS,
+  loadSettings,
   exitToTitle,
 } from '../../../src/ui/store';
 import { bindUi } from '../../../src/ui/bindings';
@@ -21,7 +22,7 @@ import { SaveSystem, MemoryStorageAdapter } from '../../../src/sim/save/SaveSyst
 import { CHARACTERS } from '../../../src/sim/passenger/PassengerAI';
 import { setLanguage } from '../../../src/ui/i18n';
 import { uiModalOpen } from '../../../src/ui/gamepadNav';
-import { cloneDefaultBindings } from '../../../src/input/bindings';
+import { cloneDefaultBindings, saveBindings } from '../../../src/input/bindings';
 import type { DistrictData } from '../../../src/sim/schemas';
 import testloopData from '../../../data/districts/testloop.json';
 
@@ -251,7 +252,6 @@ describe('P6.3 KarmaPanel, UiSheet, Journal & Bindings', () => {
         h(KarmaPanel, {
           isOpen: true,
           onClose: vi.fn(),
-          relationships: { char_nabila: 25 },
           data: {
             meters: {
               riderIntegrity: 62,
@@ -424,6 +424,8 @@ describe('P6.3 KarmaPanel, UiSheet, Journal & Bindings', () => {
     });
     gm.story.branchFlags.ch1_completed = true;
     gm.story.branchFlags.ch2_regulars_known = true;
+    gm.story.branchFlags.tutorial_bike_started = true;
+    gm.story.branchFlags.lastInfractionKind = 'speeding';
     gm.reputationSystem.changeRelationship('char_nabila', 20);
     const snap = gm.snapshot();
 
@@ -457,6 +459,8 @@ describe('P6.3 KarmaPanel, UiSheet, Journal & Bindings', () => {
       const oppsSec = root.querySelector('[data-testid="journal-opportunities-section"]');
       expect(promisesSec?.textContent).toBeTruthy();
       expect(decisionsSec?.textContent).toBeTruthy();
+      expect(decisionsSec?.textContent?.toLowerCase()).not.toContain('tutorial bike started');
+      expect(decisionsSec?.textContent?.toLowerCase()).not.toContain('lastinfractionkind');
       expect(oppsSec?.textContent).toBeTruthy();
       expect(oppsSec?.textContent?.toLowerCase()).not.toContain('testloop');
     });
@@ -476,5 +480,39 @@ describe('P6.3 KarmaPanel, UiSheet, Journal & Bindings', () => {
     expect(karmaPanelSignal.value).toBe(false);
     expect(uiSheetSignal.value).toBe(false);
     expect(journalSignal.value).toBe(false);
+  });
+
+  it('loadSettings reads live saveBindings controls and syncKarma tracks isAppSuspended expiry cleanly', () => {
+    const prevLS = (globalThis as Record<string, unknown>).localStorage;
+    const store = new Map<string, string>();
+    (globalThis as Record<string, unknown>).localStorage = {
+      getItem: (k: string) => store.get(k) ?? null,
+      setItem: (k: string, v: string) => {
+        store.set(k, String(v));
+      },
+      removeItem: (k: string) => {
+        store.delete(k);
+      },
+    };
+    try {
+      const custom = cloneDefaultBindings();
+      custom.keyboard.horn = ['KeyB'];
+      saveBindings(custom);
+      const loadedSettings = loadSettings();
+      expect(loadedSettings.controls?.keyboard.horn).toEqual(['KeyB']);
+    } finally {
+      (globalThis as Record<string, unknown>).localStorage = prevLS;
+    }
+
+    // Minor 3: suspension expired when clock.day === suspendedUntilDay (day >= suspendedUntilDay)
+    const { gm, session, saveSystem } = makeTestSession();
+    gm.reputationSystem.applySnapshot({ wasSuspended: true, suspendedUntilDay: 3, rating: 4.5 });
+    gm.clock.day = 3;
+    const cleanup = bindUi(session, saveSystem);
+    try {
+      expect(karmaDataSignal.value?.appSuspended).toBe(false);
+    } finally {
+      cleanup();
+    }
   });
 });

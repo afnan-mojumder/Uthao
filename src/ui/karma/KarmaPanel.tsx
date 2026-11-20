@@ -8,7 +8,6 @@ import { Z_LAYER, type KarmaPanelData } from '../store';
 export interface KarmaPanelProps {
   isOpen?: boolean;
   data: KarmaPanelData | null;
-  relationships?: Record<string, number>;
   onClose: () => void;
   zIndex?: number;
 }

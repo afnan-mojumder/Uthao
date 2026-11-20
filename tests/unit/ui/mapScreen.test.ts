@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, h } from 'preact';
+import { act } from 'preact/test-utils';
 import worldDataJson from '../../../data/world.json';
 import mirparaJson from '../../../data/districts/mirpara.json';
 import fulgateJson from '../../../data/districts/fulgate.json';
@@ -417,5 +418,141 @@ describe('P6.3 MapScreen 7-District World Model & Hit Testing', () => {
       );
       expect(root.querySelectorAll('[data-testid="map-prototype-badge"]').length).toBe(0);
     });
+  });
+
+  it('preserves positive non-inverted projection and accurate closest-node hit testing on HiDPI (dpr = 2) mobile viewports', () => {
+    const net = RoadNetwork.fromWorld(WORLD, ALL_DISTRICTS);
+    const model = buildMapModel({
+      roadNetwork: net,
+      worldData: WORLD,
+    });
+    const northNode = model.nodes.find((n) => n.districtId === 'mirpara')!;
+    const southNode = model.nodes.find((n) => n.districtId === 'puranpara')!;
+    const eastNode = model.nodes.find((n) => n.districtId === 'gulbari')!;
+
+    for (const vp of [
+      { width: 915, height: 296 },
+      { width: 667, height: 259 },
+    ]) {
+      const pNorth1x = worldToMap(northNode.x, northNode.z, model.bounds, vp.width, vp.height, {
+        dpr: 1,
+      });
+      const pNorth = worldToMap(northNode.x, northNode.z, model.bounds, vp.width, vp.height, {
+        dpr: 2,
+      });
+      const pSouth = worldToMap(southNode.x, southNode.z, model.bounds, vp.width, vp.height, {
+        dpr: 2,
+      });
+      const pEast = worldToMap(eastNode.x, eastNode.z, model.bounds, vp.width, vp.height, {
+        dpr: 2,
+      });
+
+      expect(pNorth.x).toBeCloseTo(pNorth1x.x, 5);
+      expect(pNorth.y).toBeCloseTo(pNorth1x.y, 5);
+      expect(pNorth.y).toBeGreaterThanOrEqual(84);
+      expect(pSouth.y).toBeGreaterThan(pNorth.y);
+      expect(pSouth.y).toBeLessThanOrEqual(vp.height);
+      expect(pEast.x).toBeGreaterThan(pNorth.x);
+      expect(pEast.x - pNorth.x).toBeGreaterThan(30);
+
+      const hit = hitTestMapCanvas(
+        pSouth.x,
+        pSouth.y,
+        model,
+        [],
+        vp.width,
+        vp.height,
+        { dpr: 2 }
+      );
+      expect(hit.kind).toBe('node');
+      if (hit.kind === 'node') {
+        expect(hit.node.nodeId).toBe(southNode.nodeId);
+      }
+    }
+  });
+
+  it('clears stale selectedPoi when switching filter away from its kind and redraws on window resize', async () => {
+    const net = RoadNetwork.fromWorld(WORLD, ALL_DISTRICTS);
+    const fuelPoi = net.getPois().find((p) => p.kind === 'fuel')!;
+    let resizeHandler: (() => void) | undefined;
+    let drawCount = 0;
+
+    const prevDoc = (globalThis as Record<string, unknown>).document;
+    const prevWin = (globalThis as Record<string, unknown>).window;
+    const getCtxSpy = vi.spyOn(FakeElement.prototype, 'getContext').mockImplementation(() => {
+      drawCount++;
+      const noop = () => {};
+      return {
+        clearRect: noop,
+        fillRect: noop,
+        strokeRect: noop,
+        beginPath: noop,
+        moveTo: noop,
+        lineTo: noop,
+        closePath: noop,
+        arc: noop,
+        fill: noop,
+        stroke: noop,
+        save: noop,
+        restore: noop,
+        setLineDash: noop,
+        fillText: noop,
+      };
+    });
+    (globalThis as Record<string, unknown>).document = {
+      createElement: (tag: string) => new FakeElement(tag),
+      createElementNS: (_ns: string, tag: string) => new FakeElement(tag),
+      createTextNode: (txt: string) => new FakeText(txt),
+    };
+    (globalThis as Record<string, unknown>).window = {
+      devicePixelRatio: 2,
+      addEventListener: (ev: string, fn: () => void) => {
+        if (ev === 'resize') resizeHandler = fn;
+      },
+      removeEventListener: () => {},
+    };
+    const root = new FakeElement('div');
+    try {
+      await act(() => {
+        render(
+          h(MapScreen, {
+            isOpen: true,
+            roadNetwork: net,
+            worldData: WORLD,
+            onClose: vi.fn(),
+          }),
+          root as unknown as Element
+        );
+      });
+
+      expect(root.querySelector('[data-testid="map-canvas"]')).not.toBeNull();
+      expect(typeof resizeHandler).toBe('function');
+      expect(drawCount).toBe(1);
+      await act(() => {
+        root.querySelector(`[data-testid="map-poi-${fuelPoi.id}"]`)?.click();
+      });
+      expect(root.querySelector('[data-testid="map-poi-card"]')).not.toBeNull();
+
+      // Switch to Tea filter -> stale fuel POI selection clears
+      await act(() => {
+        root.querySelector('[data-testid="map-filter-tea"]')?.click();
+      });
+      expect(root.querySelector('[data-testid="map-poi-card"]')).toBeNull();
+      expect(root.querySelector('[data-testid="map-selection-card"]')).toBeNull();
+
+      // Window resize triggers redraw while MapScreen is open
+      const beforeResizeDraws = drawCount;
+      await act(() => {
+        resizeHandler?.();
+      });
+      expect(drawCount).toBeGreaterThan(beforeResizeDraws);
+    } finally {
+      await act(() => {
+        render(null, root as unknown as Element);
+      });
+      getCtxSpy.mockRestore();
+      (globalThis as Record<string, unknown>).document = prevDoc;
+      (globalThis as Record<string, unknown>).window = prevWin;
+    }
   });
 });

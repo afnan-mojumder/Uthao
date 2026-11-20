@@ -186,7 +186,7 @@ export function worldToMap(
   }
 
   const dpr = opts.dpr ?? 1;
-  const { scale, offsetX, offsetZ } = mapLayout(width, height, dpr, bounds, zoom);
+  const { scale, offsetX, offsetZ } = mapLayout(width * dpr, height * dpr, dpr, bounds, zoom);
   return {
     x: (x * scale + offsetX) / dpr,
     y: (z * scale + offsetZ) / dpr,
@@ -463,6 +463,7 @@ export function MapScreen({
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(waypointNodeId);
   const [filter, setFilter] = useState<'all' | 'fuel' | 'garage' | 'tea'>('all');
   const [zoom, setZoom] = useState<number>(1.0);
+  const [viewportTick, setViewportTick] = useState<number>(0);
   const [loadedDistricts, setLoadedDistricts] = useState<DistrictData[] | null>(
     districtsProp ?? null
   );
@@ -470,6 +471,21 @@ export function MapScreen({
   useEffect(() => {
     setSelectedNodeId(waypointNodeId);
   }, [waypointNodeId]);
+
+  useEffect(() => {
+    if (!isOpen || typeof window === 'undefined' || typeof window.addEventListener !== 'function') {
+      return;
+    }
+    const handleResize = () => {
+      setViewportTick((n) => n + 1);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => {
+      if (typeof window !== 'undefined' && typeof window.removeEventListener === 'function') {
+        window.removeEventListener('resize', handleResize);
+      }
+    };
+  }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen || roadNetworkProp || districtData || districtsProp) return;
@@ -538,7 +554,13 @@ export function MapScreen({
     ctx.fillStyle = '#0F172A';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    const { scale, offsetX, offsetZ } = mapLayout(width, height, dpr, model.bounds, zoom);
+    const { scale, offsetX, offsetZ } = mapLayout(
+      canvas.width,
+      canvas.height,
+      dpr,
+      model.bounds,
+      zoom
+    );
     const toScreen = (x: number, z: number) => ({
       x: x * scale + offsetX,
       y: z * scale + offsetZ,
@@ -802,12 +824,30 @@ export function MapScreen({
     effectiveDropoffNodeId,
     filter,
     zoom,
+    viewportTick,
     colorblindRoute,
     displayedPois,
     model,
   ]);
 
   if (!isOpen) return null;
+
+  const applyFilter = (next: 'all' | 'fuel' | 'garage' | 'tea') => {
+    setFilter(next);
+    if (selectedPoi) {
+      const stillVisible =
+        next === 'all' ||
+        (next === 'fuel' && selectedPoi.kind === 'fuel') ||
+        (next === 'garage' && selectedPoi.kind === 'garage') ||
+        (next === 'tea' && selectedPoi.kind === 'teaStall');
+      if (!stillVisible) {
+        setSelectedPoi(null);
+        if (selectedNodeId === selectedPoi.nodeId) {
+          setSelectedNodeId(null);
+        }
+      }
+    }
+  };
 
   const handleCanvasClick = (e: MouseEvent) => {
     const canvas = canvasRef.current;
@@ -908,7 +948,7 @@ export function MapScreen({
             type="button"
             data-testid="map-filter-all"
             aria-pressed={filter === 'all'}
-            onClick={() => setFilter('all')}
+            onClick={() => applyFilter('all')}
             style={{
               padding: '5px 10px',
               borderRadius: '16px',
@@ -926,7 +966,7 @@ export function MapScreen({
             type="button"
             data-testid="map-filter-fuel"
             aria-pressed={filter === 'fuel'}
-            onClick={() => setFilter('fuel')}
+            onClick={() => applyFilter('fuel')}
             style={{
               padding: '5px 10px',
               borderRadius: '16px',
@@ -948,7 +988,7 @@ export function MapScreen({
             type="button"
             data-testid="map-filter-garage"
             aria-pressed={filter === 'garage'}
-            onClick={() => setFilter('garage')}
+            onClick={() => applyFilter('garage')}
             style={{
               padding: '5px 10px',
               borderRadius: '16px',
@@ -970,7 +1010,7 @@ export function MapScreen({
             type="button"
             data-testid="map-filter-tea"
             aria-pressed={filter === 'tea'}
-            onClick={() => setFilter('tea')}
+            onClick={() => applyFilter('tea')}
             style={{
               padding: '5px 10px',
               borderRadius: '16px',
