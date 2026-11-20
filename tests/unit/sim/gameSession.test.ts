@@ -582,3 +582,318 @@ describe('P2.1 bike.y flyover elevation tracking', () => {
     expect(Math.min(...postDeckYs)).toBeGreaterThanOrEqual(5.5);
   });
 });
+
+describe('P4.4 Live EncounterContext in GameSession & day-rollover accident reset', () => {
+  function makeLiveEncounterDistrict(): DistrictData {
+    return {
+      districtId: 'mirpara',
+      name: { bn: 'মিরপাড়া', en: 'Mirpara' },
+      nodes: [
+        { nodeId: 'n_main_a', x: 0, z: 0, kind: 'junction' },
+        { nodeId: 'n_main_b', x: 200, z: 0, kind: 'junction' },
+        { nodeId: 'n_mkt', x: 400, z: 0, kind: 'junction' },
+        { nodeId: 'n_alley', x: 600, z: 0, kind: 'junction' },
+        { nodeId: 'n_dest', x: 800, z: 0, kind: 'junction' },
+      ],
+      segments: [
+        {
+          segmentId: 'seg_main',
+          startNodeId: 'n_main_a',
+          endNodeId: 'n_main_b',
+          width: 10,
+          surfaceCondition: 1,
+          trafficDensity: 0.3,
+          speedLimit: 40,
+          turnRestrictions: [],
+          motorcycleAccessible: true,
+          pedestrianDensity: 0.2,
+          riskLevel: 0.1,
+          oneWay: false,
+          divided: false,
+          lanes: 2,
+          roadType: 'main',
+          floodSensitivity: 0.1,
+          pickupPractical: true,
+          district: 'mirpara',
+          tags: ['arterial'],
+        },
+        {
+          segmentId: 'seg_market',
+          startNodeId: 'n_main_b',
+          endNodeId: 'n_mkt',
+          width: 6,
+          surfaceCondition: 0.8,
+          trafficDensity: 0.5,
+          speedLimit: 30,
+          turnRestrictions: [],
+          motorcycleAccessible: true,
+          pedestrianDensity: 0.5,
+          riskLevel: 0.2,
+          oneWay: false,
+          divided: false,
+          lanes: 1,
+          roadType: 'market',
+          floodSensitivity: 0.4,
+          pickupPractical: true,
+          district: 'mirpara',
+          tags: ['market'],
+        },
+        {
+          segmentId: 'seg_alley',
+          startNodeId: 'n_mkt',
+          endNodeId: 'n_alley',
+          width: 4,
+          surfaceCondition: 0.7,
+          trafficDensity: 0.1,
+          speedLimit: 20,
+          turnRestrictions: [],
+          motorcycleAccessible: true,
+          pedestrianDensity: 0.2,
+          riskLevel: 0.8,
+          oneWay: false,
+          divided: false,
+          lanes: 1,
+          roadType: 'alley',
+          floodSensitivity: 0.5,
+          pickupPractical: true,
+          district: 'mirpara',
+          tags: ['alley'],
+        },
+        {
+          segmentId: 'seg_dest',
+          startNodeId: 'n_alley',
+          endNodeId: 'n_dest',
+          width: 8,
+          surfaceCondition: 0.9,
+          trafficDensity: 0.2,
+          speedLimit: 35,
+          turnRestrictions: [],
+          motorcycleAccessible: true,
+          pedestrianDensity: 0.2,
+          riskLevel: 0.1,
+          oneWay: false,
+          divided: false,
+          lanes: 2,
+          roadType: 'residential',
+          floodSensitivity: 0.2,
+          pickupPractical: true,
+          district: 'mirpara',
+          tags: [],
+        },
+      ],
+      pois: [],
+      lots: [],
+    };
+  }
+
+  function advanceOneGameMinute(session: GameSession): void {
+    const steps = Math.ceil(1 / MINUTES_PER_STEP) + 1;
+    for (let i = 0; i < steps; i++) {
+      session.step(NEUTRAL_INPUT, SIM_DT);
+    }
+  }
+
+  it('triggers all 7 formerly-dead encounters from real GameSession context', () => {
+    const road = RoadNetwork.fromDistricts([makeLiveEncounterDistrict()]);
+
+    const triggerSingle = (
+      encounterId: string,
+      setup: (s: GameSession) => void,
+      advanceSimSeconds = 4
+    ) => {
+      const gm = new GameManager({ seed: 17, mode: 'career', data: {} });
+      // Isolate only the target encounter (filtering default definitions) so weighted peers don't mask it
+      const targetDef = gm.eventDirector.definitions.find((d) => d.id === encounterId);
+      expect(targetDef, `Definition ${encounterId} must exist`).toBeDefined();
+      const isolatedGm = new GameManager({
+        seed: 17,
+        mode: 'career',
+        data: { encounters: [targetDef!] },
+      });
+      isolatedGm.eventDirector.enabled = true;
+      const s = new GameSession({ gm: isolatedGm, road, autoRequests: false, negotiation: false });
+
+      const fired: string[] = [];
+      isolatedGm.bus.on('encounter/started', ({ instance }) => fired.push(instance.encounterId));
+
+      setup(s);
+
+      const ticks = Math.ceil(advanceSimSeconds / SIM_DT);
+      for (let i = 0; i < ticks && fired.length === 0; i++) {
+        s.step(NEUTRAL_INPUT, SIM_DT);
+      }
+      expect(fired, `Expected ${encounterId} to trigger from live GameSession`).toContain(encounterId);
+    };
+
+    // 1. enc_police_signal_stop (roaming, main roadType, hours [8, 22])
+    triggerSingle('enc_police_signal_stop', (s) => {
+      s.gm.clock.minutes = 10 * 60;
+      s.bike.x = 100;
+      s.bike.z = 0;
+      s.bike.speed = 0;
+    });
+
+    // 2. enc_market_detour (onTrip, market tag, passengerLocalKnowledgeMin: 0.5)
+    triggerSingle('enc_market_detour', (s) => {
+      s.gm.clock.minutes = 11 * 60;
+      const sample = s.requests.sampleRequest(s.gm.clock.minutes, 'clear', 'app')!;
+      const profile = s.requests.getProfile(sample.request.passengerId)!;
+      profile.localKnowledge = 0.8;
+      sample.request.pickupNodeId = 'n_main_a';
+      sample.request.destinationNodeId = 'n_dest';
+      s.ride.offer(sample.request);
+      s.ride.accept(sample.request.requestId);
+      // Place at pickup to board passenger, then move to market segment (> 60m from n_dest)
+      s.bike.x = 0;
+      s.bike.z = 0;
+      s.bike.speed = 0;
+      s.step(NEUTRAL_INPUT, SIM_DT);
+      s.bike.x = 300;
+      s.bike.z = 0;
+      s.bike.speed = 0;
+    });
+
+    // 3. enc_alley_enter (atPickup, alley roadType)
+    triggerSingle('enc_alley_enter', (s) => {
+      s.gm.clock.minutes = 11 * 60;
+      const sample = s.requests.sampleRequest(s.gm.clock.minutes, 'clear', 'app')!;
+      sample.request.pickupNodeId = 'n_alley';
+      sample.request.destinationNodeId = 'n_main_a';
+      s.ride.offer(sample.request);
+      s.ride.accept(sample.request.requestId);
+      // Within 60m of n_alley (x=600), sitting on seg_alley (x=560)
+      s.bike.x = 560;
+      s.bike.z = 0;
+      s.bike.speed = 0;
+    });
+
+    // 4. enc_no_change (dropOff, passengerPaymentReliabilityMax: 0.6)
+    triggerSingle('enc_no_change', (s) => {
+      s.gm.clock.minutes = 11 * 60;
+      const sample = s.requests.sampleRequest(s.gm.clock.minutes, 'clear', 'app')!;
+      const profile = s.requests.getProfile(sample.request.passengerId)!;
+      profile.paymentReliability = 0.4;
+      sample.request.pickupNodeId = 'n_main_a';
+      sample.request.destinationNodeId = 'n_dest';
+      s.ride.offer(sample.request);
+      s.ride.accept(sample.request.requestId);
+      s.bike.x = 0;
+      s.bike.z = 0;
+      s.bike.speed = 0;
+      s.step(NEUTRAL_INPUT, SIM_DT); // board
+      // Within 60m of n_dest (x=800), > 8m so not Completing yet
+      s.bike.x = 760;
+      s.bike.z = 0;
+      s.bike.speed = 0;
+    });
+
+    // 5. enc_suspicious_pickup (atPickup, alley roadType)
+    triggerSingle('enc_suspicious_pickup', (s) => {
+      s.gm.clock.minutes = 11 * 60;
+      const sample = s.requests.sampleRequest(s.gm.clock.minutes, 'clear', 'app')!;
+      sample.request.pickupNodeId = 'n_alley';
+      sample.request.destinationNodeId = 'n_main_a';
+      s.ride.offer(sample.request);
+      s.ride.accept(sample.request.requestId);
+      s.bike.x = 560;
+      s.bike.z = 0;
+      s.bike.speed = 0;
+    });
+
+    // 6. enc_dark_alley_blockage (onTrip, alley roadType, hours [20, 5], respects >= 10s cue window)
+    triggerSingle(
+      'enc_dark_alley_blockage',
+      (s) => {
+        s.gm.clock.minutes = 21 * 60;
+        const sample = s.requests.sampleRequest(s.gm.clock.minutes, 'clear', 'app')!;
+        sample.request.pickupNodeId = 'n_main_a';
+        sample.request.destinationNodeId = 'n_dest';
+        s.ride.offer(sample.request);
+        s.ride.accept(sample.request.requestId);
+        s.bike.x = 0;
+        s.bike.z = 0;
+        s.bike.speed = 0;
+        s.step(NEUTRAL_INPUT, SIM_DT); // board
+        // Move to seg_alley (x=500, > 60m from n_dest=800)
+        s.bike.x = 500;
+        s.bike.z = 0;
+        s.bike.speed = 0;
+      },
+      16
+    );
+
+    // 7. enc_puncture (real GameSession puncture roll triggers enc_puncture)
+    const gm7 = new GameManager({ seed: 17, mode: 'career', data: {} });
+    gm7.eventDirector.enabled = true;
+    const s7 = new GameSession({ gm: gm7, road, autoRequests: false });
+    const punctureRng = (s7 as unknown as { punctureRng: Rng }).punctureRng;
+    const chanceSpy = vi.spyOn(punctureRng, 'chance').mockReturnValue(true);
+    const fired7: string[] = [];
+    gm7.bus.on('encounter/started', ({ instance }) => fired7.push(instance.encounterId));
+    s7.bike.x = 50;
+    s7.bike.z = 0;
+    s7.bike.speed = 10;
+    advanceOneGameMinute(s7);
+    expect(fired7).toContain('enc_puncture');
+    chanceSpy.mockRestore();
+  });
+
+  it('resets lastAccidentEncounterMin on day/started while keeping lastPunctureMin monotonic', () => {
+    const s = makeSession({ seed: 11, autoRequests: false });
+    s.spawnAtHome();
+    s.gm.eventDirector.enabled = true;
+    s.gm.economyManager.fuelLevel = s.gm.economyManager.maxFuelL();
+
+    const started: string[] = [];
+    s.gm.bus.on('encounter/started', ({ instance }) => started.push(instance.encounterId));
+
+    // Day 1 late evening accident at 22:30 (1350 min)
+    s.gm.clock.day = 1;
+    s.gm.clock.minutes = 22 * 60 + 30;
+    s.gm.bus.emit('bike/collision', { severity: 'crash', relSpeedKmh: 35, otherKind: 'traffic' });
+    expect(started).toEqual(['enc_accident_aftermath']);
+
+    // Resolve accident encounter
+    s.gm.dispatch({
+      type: 'chooseEncounterOption',
+      instanceId: s.gm.eventDirector.activeEncounter!.id,
+      choiceId: 'apologize_and_continue',
+    });
+
+    // End shift and sleep -> Day 2 at 07:00 (420 min < 1350 + 60 if not reset!)
+    expect(s.gm.dispatch({ type: 'endShift' }).success).toBe(true);
+    expect(s.gm.dispatch({ type: 'sleep' }).success).toBe(true);
+    expect(s.gm.clock.day).toBe(2);
+    expect(s.gm.clock.minutes).toBe(7 * 60);
+
+    // Accident on Day 2 morning must NOT be suppressed by Day 1's 22:30 lastAccidentEncounterMin
+    s.gm.bus.emit('bike/collision', { severity: 'crash', relSpeedKmh: 35, otherKind: 'traffic' });
+    expect(started).toEqual(['enc_accident_aftermath', 'enc_accident_aftermath']);
+
+    // Verify lastPunctureMin stays monotonic across midnight (e.g. 23:30 Day 1 -> 00:30 Day 2 is 60 min < 180 min)
+    s.gm.dispatch({
+      type: 'chooseEncounterOption',
+      instanceId: s.gm.eventDirector.activeEncounter!.id,
+      choiceId: 'apologize_and_continue',
+    });
+    const punctureRng = (s as unknown as { punctureRng: Rng }).punctureRng;
+    const chanceSpy = vi.spyOn(punctureRng, 'chance').mockReturnValue(true);
+    let punctures = 0;
+    s.gm.bus.on('bike/puncture', () => punctures++);
+
+    s.gm.clock.day = 2;
+    s.gm.clock.minutes = 23 * 60 + 30;
+    s.bike.speed = 15;
+    s.step({ throttle: 1, brake: 0, steer: 0 }, SIM_DT);
+    expect(punctures).toBe(1);
+
+    // Advance clock directly across midnight without day/started (60 min later -> still < 180 min monotonic)
+    s.gm.clock.day = 3;
+    s.gm.clock.minutes = 30;
+    s.bike.speed = 15;
+    s.step({ throttle: 1, brake: 0, steer: 0 }, SIM_DT);
+    expect(punctures).toBe(1);
+
+    chanceSpy.mockRestore();
+  });
+});

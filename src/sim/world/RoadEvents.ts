@@ -52,17 +52,22 @@ export interface RoadEventManagerOptions {
 
 export class RoadEventManager {
   private readonly bus?: EventBus<GameEvents>;
-  private readonly network?: RoadNetwork;
+  private network?: RoadNetwork;
   private readonly rng: Rng;
   private nextEventSeq = 0;
 
   private activeEvents: Map<string, ActiveRoadEvent> = new Map();
   private scheduledEvents: ScheduledRoadEvent[] = [];
+  private readonly expiredIdsScratch: string[] = [];
 
   constructor(opts: RoadEventManagerOptions = {}) {
     this.bus = opts.bus;
     this.network = opts.network;
     this.rng = new Rng(opts.seed ?? 54321);
+  }
+
+  setNetwork(network: RoadNetwork): void {
+    this.network = network;
   }
 
   /**
@@ -124,6 +129,12 @@ export class RoadEventManager {
 
   clearEvents(): void {
     this.activeEvents.clear();
+  }
+
+  reset(): void {
+    this.activeEvents.clear();
+    this.scheduledEvents.length = 0;
+    this.nextEventSeq = 0;
   }
 
   /**
@@ -257,13 +268,14 @@ export class RoadEventManager {
   }
 
   /**
-   * Advances active and scheduled road events by dtMinutes.
+   * Advances active and scheduled road events by dtMinutes without per-frame heap allocations.
    */
   tick(dtMinutes: number, currentMinute?: number): void {
     // 1. Check scheduled events if currentMinute is provided
     if (currentMinute !== undefined && this.scheduledEvents.length > 0) {
-      const remainingScheduled: ScheduledRoadEvent[] = [];
-      for (const sched of this.scheduledEvents) {
+      let writeIdx = 0;
+      for (let i = 0; i < this.scheduledEvents.length; i++) {
+        const sched = this.scheduledEvents[i]!;
         const isTime =
           currentMinute >= sched.startMinute &&
           currentMinute < sched.startMinute + sched.durationMinutes;
@@ -284,24 +296,34 @@ export class RoadEventManager {
             title: sched.title,
           });
         } else if (currentMinute < sched.startMinute) {
-          remainingScheduled.push(sched);
+          this.scheduledEvents[writeIdx++] = sched;
         }
       }
-      this.scheduledEvents = remainingScheduled;
+      this.scheduledEvents.length = writeIdx;
     }
 
     // 2. Decrement remaining minutes on active events
-    const toRemove: string[] = [];
-    for (const [id, event] of this.activeEvents.entries()) {
+    if (this.activeEvents.size === 0) return;
+    this.expiredIdsScratch.length = 0;
+    for (const event of this.activeEvents.values()) {
       event.remainingMinutes -= dtMinutes;
       if (event.remainingMinutes <= 0) {
-        toRemove.push(id);
+        this.expiredIdsScratch.push(event.id);
       }
     }
 
-    for (const id of toRemove) {
-      this.removeEvent(id);
+    for (let i = 0; i < this.expiredIdsScratch.length; i++) {
+      this.removeEvent(this.expiredIdsScratch[i]!);
     }
+  }
+
+  private hasEventOnSegment(segmentId: string): boolean {
+    for (const event of this.activeEvents.values()) {
+      if (event.active && event.segmentId === segmentId) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
@@ -332,17 +354,33 @@ export class RoadEventManager {
     let eligibleSegments: RoadSegment[];
 
     if (kind === 'market_congestion' || kind === 'eid_rush') {
-      eligibleSegments = segments.filter((s) => s.roadType === 'market');
-      if (eligibleSegments.length === 0) eligibleSegments = segments;
+      eligibleSegments = segments.filter((s) => s.roadType === 'market' && !this.hasEventOnSegment(s.segmentId));
+      if (eligibleSegments.length === 0) {
+        eligibleSegments = segments.filter((s) => !this.hasEventOnSegment(s.segmentId));
+      }
     } else if (kind === 'waterlogging') {
       eligibleSegments = segments.filter(
-        (s) => s.roadType === 'alley' || s.roadType === 'service' || s.roadType === 'market'
+        (s) =>
+          (s.roadType === 'alley' || s.roadType === 'service' || s.roadType === 'market') &&
+          !this.hasEventOnSegment(s.segmentId)
       );
-      if (eligibleSegments.length === 0) eligibleSegments = segments;
+      if (eligibleSegments.length === 0) {
+        eligibleSegments = segments.filter((s) => !this.hasEventOnSegment(s.segmentId));
+      }
     } else if (kind === 'diversion' || kind === 'closure' || kind === 'vip_protocol') {
-      eligibleSegments = segments.filter((s) => !s.divided || s.lanes <= 2);
-      if (eligibleSegments.length === 0) eligibleSegments = segments;
+      eligibleSegments = segments.filter(
+        (s) =>
+          !s.tags.includes('arterial') &&
+          (!s.divided || s.lanes <= 2) &&
+          !this.hasEventOnSegment(s.segmentId)
+      );
+      if (eligibleSegments.length === 0) {
+        eligibleSegments = segments.filter((s) => !this.hasEventOnSegment(s.segmentId));
+      }
     } else {
+      eligibleSegments = segments.filter((s) => !this.hasEventOnSegment(s.segmentId));
+    }
+    if (eligibleSegments.length === 0) {
       eligibleSegments = segments;
     }
 
@@ -431,6 +469,20 @@ export class RoadEventManager {
           en: 'Temporary Road Closure',
         };
         break;
+    }
+
+    // Never isolate nodes or block the only motorcycle route with a full closure
+    if (closesSegment && this.network) {
+      const bypass = this.network.route(seg.startNodeId, seg.endNodeId, {
+        mode: 'motorcycle',
+        roadEvents: this,
+        avoid: [seg.segmentId],
+      });
+      if (!bypass) {
+        closesSegment = false;
+        speedCapKmh = speedCapKmh ?? 12;
+        congestionMultiplier = congestionMultiplier ?? 2.0;
+      }
     }
 
     return this.addEvent({

@@ -504,6 +504,33 @@ if (fs.existsSync(encountersDir)) {
             console.error(`Encounter ${enc.id} in ${filePath}: lineKey '${enc.lineKey}' missing in bn dialogue`);
             process.exit(1);
           }
+          if (enc.cueKey) {
+            if (typeof dicts.en[enc.cueKey] === 'undefined') {
+              console.error(`Encounter ${enc.id} in ${filePath}: cueKey '${enc.cueKey}' missing in en dialogue`);
+              process.exit(1);
+            }
+            if (typeof dicts.bn[enc.cueKey] === 'undefined') {
+              console.error(`Encounter ${enc.id} in ${filePath}: cueKey '${enc.cueKey}' missing in bn dialogue`);
+              process.exit(1);
+            }
+          }
+          const checkEffectKeys = (effects, choiceId) => {
+            for (const eff of effects ?? []) {
+              if (eff.type === 'outcome') {
+                for (const entry of eff.table ?? []) {
+                  if (typeof dicts.en[entry.lineKey] === 'undefined') {
+                    console.error(`Encounter ${enc.id} choice ${choiceId}: outcome lineKey '${entry.lineKey}' missing in en dialogue`);
+                    process.exit(1);
+                  }
+                  if (typeof dicts.bn[entry.lineKey] === 'undefined') {
+                    console.error(`Encounter ${enc.id} choice ${choiceId}: outcome lineKey '${entry.lineKey}' missing in bn dialogue`);
+                    process.exit(1);
+                  }
+                  checkEffectKeys(entry.effects, choiceId);
+                }
+              }
+            }
+          };
           for (const choice of enc.choices) {
             if (typeof dicts.en[choice.labelKey] === 'undefined') {
               console.error(`Encounter ${enc.id} choice ${choice.id} in ${filePath}: labelKey '${choice.labelKey}' missing in en dialogue`);
@@ -513,6 +540,17 @@ if (fs.existsSync(encountersDir)) {
               console.error(`Encounter ${enc.id} choice ${choice.id} in ${filePath}: labelKey '${choice.labelKey}' missing in bn dialogue`);
               process.exit(1);
             }
+            if (choice.riskKey) {
+              if (typeof dicts.en[choice.riskKey] === 'undefined') {
+                console.error(`Encounter ${enc.id} choice ${choice.id} in ${filePath}: riskKey '${choice.riskKey}' missing in en dialogue`);
+                process.exit(1);
+              }
+              if (typeof dicts.bn[choice.riskKey] === 'undefined') {
+                console.error(`Encounter ${enc.id} choice ${choice.id} in ${filePath}: riskKey '${choice.riskKey}' missing in bn dialogue`);
+                process.exit(1);
+              }
+            }
+            checkEffectKeys(choice.effects, choice.id);
           }
         }
       } catch (err) {

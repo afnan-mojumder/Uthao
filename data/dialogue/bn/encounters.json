@@ -68,6 +68,14 @@
   "encounter.police_stop.choice.explain": "ভদ্রভাবে পরিস্থিতি বুঝিয়ে নিজের পরিষ্কার রেকর্ড দেখান",
   "encounter.police_stop.choice.offer_bribe": "ঝামেলা এড়াতে চুপচাপ ১৫০ টাকা 'চা-পানি' দিতে চান",
   "encounter.police_stop.choice.flee": "থ্রটল ঘুরিয়ে ভিড়ের ফাঁক গলে পালানোর চেষ্টা করুন",
+  "encounter.police_stop.risk.bribe": "ঝুঁকিপূর্ণ: বেশিরভাগ অফিসার ঘুষ নেন না এবং জরিমানা আরও বাড়তে পারে",
+  "encounter.police_stop.risk.flee": "উচ্চ ঝুঁকি: পালানোর চেষ্টা করলে পুলিশি নজরদারি বাড়বে",
+  "encounter.police_stop.outcome.bribe_accepted": "অফিসার চুপচাপ টাকাটা পকেটে রেখে কোনো রসিদ ছাড়াই আপনাকে যেতে দিলেন।",
+  "encounter.police_stop.outcome.bribe_rejected": "সার্জেন্ট কড়া ধমক দিয়ে ঘুষ ফিরিয়ে দিলেন এবং পুরো ৪০০ টাকার মামলা কেটে দিলেন!",
+
+  "encounter.crime.dark_alley.cue": "সামনের অন্ধকার গলিতে কয়েকজনকে জটলা করতে দেখা যাচ্ছে—এখনও ঘুরে ফেরার সুযোগ আছে।",
+  "encounter.crime.robbery_attempt.cue": "সামনের অন্ধকার ফুটপাত থেকে দুইজন রাস্তায় নেমে বাইক থামানোর ইশারা করছে।",
+  "encounter.crime.risk.flee": "উচ্চ ঝুঁকি: সরু গলি বা দুর্বল টায়ারে পালানো ব্যর্থ হতে পারে",
 
   "encounter.accident.title": "জোরে ধাক্কা লেগেছে! বাইক সামলে ওঠার আগেই আশপাশে লোকজন জমে যাচ্ছে।",
   "encounter.accident.choice.settle": "সবার খোঁজ নিন এবং ক্ষতিপূরণ ও চিকিৎসার জন্য ৩০০ টাকা দিন",

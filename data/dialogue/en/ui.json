@@ -318,5 +318,8 @@
   "delivery.accepted_status": "Accepted (Head to Pickup)",
   "delivery.payout": "Payout: ৳{amount}",
   "delivery.expired": "Parcel pickup window expired!",
-  "delivery.blocked_active_ride": "Finish your current passenger ride before accepting a parcel."
+  "delivery.blocked_active_ride": "Finish your current passenger ride before accepting a parcel.",
+  "ui.continue": "Continue",
+  "encounter.kind.official": "Official",
+  "encounter.kind.illicit": "Illicit"
 }

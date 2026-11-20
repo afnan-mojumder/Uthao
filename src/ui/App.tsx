@@ -49,6 +49,7 @@ import {
   mapPlayerPosSignal,
   journalDataSignal,
   choiceSignal,
+  encounterCueSignal,
   Z_LAYER,
 } from './store';
 import { RotateOverlay } from './overlays/RotateOverlay';
@@ -302,6 +303,29 @@ export function App(): JSX.Element {
           }}
         >
           {t(deliveryNoticeSignal.value.messageKey, deliveryNoticeSignal.value.vars)}
+        </div>
+      )}
+
+      {encounterCueSignal.value.cueKey !== null && (
+        <div
+          data-testid="encounter-cue-banner"
+          role="status"
+          style={{
+            position: 'absolute',
+            top: '32%',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            pointerEvents: 'none',
+            zIndex: Z_LAYER.TOAST,
+            padding: '8px 16px',
+            borderRadius: '10px',
+            background: 'rgba(127, 29, 29, 0.9)',
+            border: '1px solid rgba(248, 113, 113, 0.5)',
+            color: '#fef2f2',
+            fontWeight: 700,
+          }}
+        >
+          {t(encounterCueSignal.value.cueKey)}
         </div>
       )}
 

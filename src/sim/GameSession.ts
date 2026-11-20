@@ -5,7 +5,8 @@ import { TrafficManager, VEHICLE_CONFIGS } from './traffic/TrafficManager';
 import type { RoadNetwork } from './road/RoadNetwork';
 import type { SegmentElevationHit } from './road/spatial';
 import { encounterPhaseFor, type RidePhaseInput } from './events/phase';
-import type { EncounterPhase } from './events/conditions';
+import type { EncounterContext, EncounterPhase } from './events/conditions';
+import { getCharacter } from './passenger/PassengerAI';
 import type { PhysicsWorld, DynamicObb, StaticBoxHandle } from '../physics/PhysicsWorld';
 import { MotorcycleController } from '../physics/MotorcycleController';
 import {
@@ -25,7 +26,7 @@ import { clamp } from '../core/math';
 import { receipt as buildReceipt, fuelUsed, type FuelOptions } from './economy/fuel';
 import { bikeDefToSpec, getBikeDef } from './economy/bikes';
 import { checkPuncture } from './economy/maintenance';
-import type { TripReceipt, PassengerProfile } from '../core/types';
+import type { TripReceipt, PassengerProfile, RoadSegment, RideRequest } from '../core/types';
 import {
   startNegotiation,
   type NegotiationResult,
@@ -115,6 +116,30 @@ export class GameSession {
   };
   private lastAccidentEncounterMin = -Infinity;
   private lastPunctureMin = -Infinity;
+  private lastStepSegment: RoadSegment | null = null;
+  private readonly encounterPassengerScratch = {
+    id: '',
+    trust: 50,
+    mood: 1.0,
+    localKnowledge: 0.5,
+    paymentReliability: 1.0,
+    archetype: 'commuter',
+  };
+  private readonly encounterCtxScratch: EncounterContext = {
+    phase: 'roaming',
+    minute: 420,
+    day: 1,
+    weather: 'clear',
+    chapter: 1,
+    flags: {},
+    relationships: {},
+    cash: 600,
+    speedKmh: 0,
+    bikeCondition: 80,
+    segment: null,
+    activeRequest: null,
+    passenger: null,
+  };
   private offAppSeq = 0;
   private lastSpeedBumpSegId: string | null = null;
   private hasGoodTires = false;
@@ -174,7 +199,7 @@ export class GameSession {
     });
     // T7.5: lets effect handlers (e.g. `endTrip`) reach the live ride state.
     this.gm.rideManager = this.ride;
-    this.gm.setRoadSegments(this.road.getAllSegments());
+    this.gm.setRoadNetwork(this.road);
     this.ride.enableNegotiation = opts.negotiation ?? true;
     // H: an agreed fare well above fair adds an overcharge mark, a fair one or explicit discount rebuilds goodwill.
     this.gm.bus.on('negotiation/result', (ev) => {
@@ -306,9 +331,13 @@ export class GameSession {
         this.gm.deliveryManager.generateOffer(this.road, this.deliveryRng, this.gm.clock.day);
       }
     });
-    this.gm.bus.on('day/started', () => this.spawnAtHome());
+    this.gm.bus.on('day/started', () => {
+      this.lastAccidentEncounterMin = -Infinity;
+      this.spawnAtHome();
+    });
     this.gm.bus.on('state/restored', () => {
       this.lastPunctureMin = -Infinity;
+      this.lastAccidentEncounterMin = -Infinity;
       this.syncBikeSpec();
       this.syncLocation();
     });
@@ -568,7 +597,8 @@ export class GameSession {
       this.lastPunctureMin = nowMin;
       this.gm.bus.emit('bike/puncture', {});
       if (this.gm.eventDirector.enabled && this.gm.eventDirector.activeEncounter === null) {
-        this.gm.eventDirector.forceStart('enc_puncture', this.gm.bus);
+        const ctx = this.buildEncounterContext(this.lastStepSegment, this.ride.getActiveRequest());
+        this.gm.eventDirector.forceStart('enc_puncture', this.gm.bus, ctx);
       }
     }
   }
@@ -708,7 +738,8 @@ export class GameSession {
       this.gm.clock.minutes - this.lastAccidentEncounterMin >= 60
     ) {
       this.lastAccidentEncounterMin = this.gm.clock.minutes;
-      this.gm.eventDirector.forceStart('enc_accident_aftermath', this.gm.bus);
+      const ctx = this.buildEncounterContext(this.lastStepSegment, this.ride.getActiveRequest());
+      this.gm.eventDirector.forceStart('enc_accident_aftermath', this.gm.bus, ctx);
     }
   }
 
@@ -854,14 +885,46 @@ export class GameSession {
     return encounterPhaseFor(s);
   }
 
+  private buildEncounterContext(
+    segment: RoadSegment | null,
+    activeReq: RideRequest | null
+  ): EncounterContext {
+    const ctx = this.encounterCtxScratch;
+    ctx.phase = this.currentEncounterPhase();
+    ctx.minute = this.gm.clock.minutes;
+    ctx.day = this.gm.clock.day;
+    ctx.weather = this.gm.weather;
+    ctx.chapter = this.gm.story.currentChapter;
+    ctx.flags = this.gm.story.branchFlags;
+    ctx.relationships = this.gm.reputationSystem.getRelationshipsView();
+    ctx.cash = this.gm.economyManager.cash;
+    ctx.speedKmh = Math.abs(this.bike.speed) * 3.6;
+    ctx.bikeCondition = this.gm.economyManager.motorcycleCondition;
+    ctx.segment = segment;
+    ctx.activeRequest = activeReq;
+    if (activeReq) {
+      const p = this.encounterPassengerScratch;
+      const profile = this.requests.getProfile(activeReq.passengerId);
+      const charDef = activeReq.characterId ? getCharacter(activeReq.characterId) : undefined;
+      const trustSubjectId = activeReq.characterId ?? activeReq.passengerId;
+      p.id = trustSubjectId;
+      p.trust = this.gm.reputationSystem.getPassengerTrust(trustSubjectId);
+      p.mood = this.ride.getPassengerMood();
+      p.localKnowledge = profile?.localKnowledge ?? charDef?.localKnowledge ?? 0.5;
+      p.paymentReliability = profile?.paymentReliability ?? charDef?.paymentReliability ?? 1.0;
+      p.archetype = profile?.archetype ?? charDef?.archetype ?? 'commuter';
+      ctx.passenger = p;
+    } else {
+      ctx.passenger = null;
+    }
+    return ctx;
+  }
+
   /** Advances clock/weather/encounters, bike physics, traffic and ride state
    * by one tick, then (when enabled) offers any newly generated requests. */
   step(input: BikeInput, dt: number = SIM_DT): void {
     this.syncLocation();
-    this.gm.tick(dt, this.bike.speed * 3.6, this.currentEncounterPhase());
-
     const activeReq = this.ride.getActiveRequest();
-
     const segHit = this.road.segmentAtElevation(
       this.bike.x,
       this.bike.z,
@@ -870,6 +933,11 @@ export class GameSession {
       this.segElevScratch
     );
     const segment = segHit.segment;
+    this.lastStepSegment = segment;
+
+    const phase = this.currentEncounterPhase();
+    this.gm.tick(dt, Math.abs(this.bike.speed) * 3.6, phase, false);
+    this.gm.evaluateEncounters(this.buildEncounterContext(segment, activeReq));
     this.env.wet = this.gm.weatherSystem.isRoadWet();
     this.env.surface = segment ? this.gm.weatherSystem.getSurfaceModifier(segment) : 1.0;
     this.envFlooded = segment ? this.gm.weatherSystem.isFlooded(segment.segmentId) : false;
@@ -1016,6 +1084,8 @@ export class GameSession {
   /** Resets story/economy/ride state and starts the opening tutorial. */
   newCareer(): void {
     this.lastPunctureMin = -Infinity;
+    this.lastAccidentEncounterMin = -Infinity;
+    this.lastStepSegment = null;
     this.offAppSeq = 0;
     this.ride.resetCareer();
     this.gm.resetCareerState();

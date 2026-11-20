@@ -424,6 +424,8 @@ export class TrafficManager {
     this.deleteIdsScratch.length = 0;
     this.spawnAgentsScratch.length = 0;
     let near200Count = 0;
+    let furthestFarId: string | null = null;
+    let furthestFarDist = 300;
     for (const agent of this.agents.values()) {
       const d = distance2d(camera.x, camera.z, agent.x, agent.z);
       if (d > DESPAWN_DIST_M) {
@@ -432,11 +434,20 @@ export class TrafficManager {
         this.spawnAgentsScratch.push(agent);
         if (d <= 200) {
           near200Count++;
+        } else if (d > furthestFarDist) {
+          furthestFarDist = d;
+          furthestFarId = agent.id;
         }
       }
     }
     for (let i = 0; i < this.deleteIdsScratch.length; i++) {
       this.agents.delete(this.deleteIdsScratch[i]!);
+    }
+
+    const desiredInner = Math.min(20, Math.ceil(targetCount * 0.45));
+    // Rebalance distant (>300m) agents into the local <=200m ring if local traffic thins out
+    if (this.agents.size >= targetCount && near200Count < desiredInner && furthestFarId !== null) {
+      this.agents.delete(furthestFarId);
     }
 
     if (this.agents.size >= targetCount || this.allLanes.length === 0) return;
@@ -449,8 +460,6 @@ export class TrafficManager {
     }
 
     if (this.localLanesScratch.length === 0) return;
-
-    const desiredInner = Math.min(20, Math.ceil(targetCount * 0.45));
 
     let attempts = 0;
     while (this.agents.size < targetCount && attempts < 80) {
@@ -1068,10 +1077,11 @@ export class TrafficManager {
         }
       }
 
-      // Speed limit including active road event speed caps
+      // Speed limit including active road event speed caps and congestion
       const speedCapKmh = this.roadEvents?.getSpeedCap(lane.segmentId);
       const speedCapMs = speedCapKmh !== undefined ? speedCapKmh / 3.6 : Infinity;
-      const effectiveLaneSpeedLimit = Math.min(lane.speedLimitMs, speedCapMs);
+      const congMult = this.roadEvents?.getCongestionMultiplier(lane.segmentId) ?? 1.0;
+      const effectiveLaneSpeedLimit = Math.min(lane.speedLimitMs, speedCapMs) / Math.max(1.0, Math.sqrt(congMult));
       let baseDesired = Math.min(
         VEHICLE_CONFIGS[agent.kind].desiredSpeedMs,
         effectiveLaneSpeedLimit

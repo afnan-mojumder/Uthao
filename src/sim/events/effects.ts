@@ -3,9 +3,11 @@ import type { GameManager } from '../GameManager';
 import type { EconomyManager } from '../economy/EconomyManager';
 import type { RideManager } from '../ride/RideManager';
 import type { EventBus, GameEvents } from '../../core/events';
+import type { Rng } from '../../core/rng';
 import { clamp } from '../../core/math';
 import { TIME_SCALE } from '../../config/constants';
 import { canonicalCharacterId } from '../passenger/PassengerAI';
+import { evaluateCondition, type EncounterContext } from './conditions';
 
 export interface EffectContext {
   gameManager: GameManager;
@@ -19,6 +21,34 @@ export interface EffectContext {
     mood: number;
   } | null;
   spawnSpecialRequest?: (templateId: string) => void;
+  encounterContext?: EncounterContext;
+  rng?: Rng;
+  outcomeLineKey?: string;
+}
+
+function resolveEncounterContext(ctx: EffectContext): EncounterContext {
+  if (ctx.encounterContext) return ctx.encounterContext;
+  const gm = ctx.gameManager;
+  return {
+    phase: 'roaming',
+    minute: gm.clock.minutes,
+    day: gm.clock.day,
+    weather: gm.weather,
+    chapter: gm.story.currentChapter,
+    flags: gm.story.branchFlags,
+    relationships: gm.reputationSystem.getRelationshipsView(),
+    cash: ctx.economyManager.cash,
+    speedKmh: 0,
+    bikeCondition: ctx.economyManager.motorcycleCondition,
+    activeRequest: ctx.rideManager?.getActiveRequest() ?? null,
+    passenger: ctx.activePassenger
+      ? {
+          id: ctx.rideManager?.getActiveRequest()?.passengerId ?? 'active',
+          trust: ctx.activePassenger.trust,
+          mood: ctx.activePassenger.mood,
+        }
+      : null,
+  };
 }
 
 export function applyEffect(effect: Effect, ctx: EffectContext): void {
@@ -52,12 +82,20 @@ export function applyEffect(effect: Effect, ctx: EffectContext): void {
       if (ctx.activePassenger) {
         ctx.activePassenger.mood = clamp(ctx.activePassenger.mood + effect.delta, 0, 1);
       }
+      ctx.rideManager?.adjustPassengerMood?.(effect.delta);
       break;
     }
 
     case 'trust': {
       if (ctx.activePassenger) {
         ctx.activePassenger.trust = clamp(ctx.activePassenger.trust + effect.delta, 0, 100);
+      }
+      const req = ctx.rideManager?.getActiveRequest?.();
+      if (req) {
+        ctx.gameManager.reputationSystem.changePassengerTrust(
+          req.characterId ?? req.passengerId,
+          effect.delta
+        );
       }
       break;
     }
@@ -192,6 +230,39 @@ export function applyEffect(effect: Effect, ctx: EffectContext): void {
         effect.reasonKey,
         effect.subjectId
       );
+      break;
+    }
+
+    case 'outcome': {
+      const encCtx = resolveEncounterContext(ctx);
+      let totalWeight = 0;
+      const eligible = [];
+      for (let i = 0; i < effect.table.length; i++) {
+        const entry = effect.table[i]!;
+        if (entry.requires && !evaluateCondition(entry.requires, encCtx)) {
+          continue;
+        }
+        if (entry.weight > 0) {
+          eligible.push(entry);
+          totalWeight += entry.weight;
+        }
+      }
+      if (eligible.length === 0 || totalWeight <= 0) break;
+
+      const rng = ctx.rng ?? ctx.gameManager.rng;
+      const roll = rng.next() * totalWeight;
+      let sum = 0;
+      let selected = eligible[0]!;
+      for (let i = 0; i < eligible.length; i++) {
+        const entry = eligible[i]!;
+        sum += entry.weight;
+        if (roll < sum) {
+          selected = entry;
+          break;
+        }
+      }
+      ctx.outcomeLineKey = selected.lineKey;
+      applyEffects(selected.effects, ctx);
       break;
     }
   }

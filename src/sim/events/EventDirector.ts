@@ -6,6 +6,7 @@ import type { EffectContext } from './effects';
 import { applyEffects } from './effects';
 import { Rng } from '../../core/rng';
 import type { EventBus, GameEvents } from '../../core/events';
+import { TIME_SCALE } from '../../config/constants';
 import {
   type CrimeOutcome,
   type FleeResult,
@@ -16,11 +17,23 @@ import {
   resolveRobbery,
 } from './flee';
 
+/** Severe encounters show a readable cue for at least 10 seconds of sim time before firing. */
+export const CUE_LEAD_SIM_SECONDS = 10;
+export const CUE_LEAD_GAME_MINUTES = (CUE_LEAD_SIM_SECONDS * TIME_SCALE) / 60;
+
+export interface PendingEncounterCue {
+  encounterId: string;
+  cueKey: string;
+  startedAtMinute: number;
+  fireAtMinute: number;
+}
+
 export interface EventDirectorOptions {
   definitions?: EncounterDef[];
   seed?: number;
   pauseOnDecisions?: boolean;
   globalCooldownMin?: number;
+  contextProvider?: () => EncounterContext;
 }
 
 export class EventDirector {
@@ -33,19 +46,30 @@ export class EventDirector {
 
   activeEncounter: EncounterInstance | null = null;
   activeEncounterDef: EncounterDef | null = null;
+  pendingCue: PendingEncounterCue | null = null;
 
   private cooldowns: Map<string, number> = new Map();
   private firedToday: Set<string> = new Set();
   private lastEvaluationMinute: number = -1;
+  private hasEvaluatedOnce: boolean = false;
   private currentPhase: EncounterPhase = 'roaming';
   private readonly globalCooldownMin: number;
   private nextGlobalEncounterMinute: number = 0;
+  private lastContext?: EncounterContext;
+  private contextProvider?: () => EncounterContext;
+  private readonly eligibleScratch: EncounterDef[] = [];
+  private readonly validChoicesScratch: EncounterChoiceDef[] = [];
 
   constructor(opts: EventDirectorOptions = {}) {
     this.definitions = opts.definitions ?? [];
     this.rng = new Rng(opts.seed ?? 42);
     this.pauseOnDecisions = opts.pauseOnDecisions ?? true;
     this.globalCooldownMin = opts.globalCooldownMin ?? 0;
+    this.contextProvider = opts.contextProvider;
+  }
+
+  setContextProvider(provider: (() => EncounterContext) | undefined): void {
+    this.contextProvider = provider;
   }
 
   setPauseOnDecisions(val: boolean): void {
@@ -54,6 +78,86 @@ export class EventDirector {
 
   resetDaily(): void {
     this.firedToday.clear();
+    this.cooldowns.clear();
+    this.nextGlobalEncounterMinute = 0;
+    this.lastEvaluationMinute = -1;
+    this.pendingCue = null;
+  }
+
+  resetCareer(): void {
+    this.resetDaily();
+    this.activeEncounter = null;
+    this.activeEncounterDef = null;
+    this.hasEvaluatedOnce = false;
+    this.currentPhase = 'roaming';
+    this.lastContext = undefined;
+  }
+
+  private collectValidChoices(
+    def: EncounterDef,
+    ctx: EncounterContext
+  ): EncounterChoiceDef[] {
+    this.validChoicesScratch.length = 0;
+    for (let i = 0; i < def.choices.length; i++) {
+      const choice = def.choices[i]!;
+      if (!choice.requires || evaluateCondition(choice.requires, ctx)) {
+        this.validChoicesScratch.push(choice);
+      }
+    }
+    return this.validChoicesScratch;
+  }
+
+  private buildChoiceMeta(c: EncounterChoiceDef): EncounterChoice {
+    const choice: EncounterChoice = {
+      id: c.id,
+      labelKey: c.labelKey,
+      isMission: c.effects.some((e) => e.type === 'startMission'),
+    };
+    if (c.riskKey !== undefined) choice.riskKey = c.riskKey;
+    if (c.costHint !== undefined) choice.costHint = c.costHint;
+    if (c.kind !== undefined) choice.kind = c.kind;
+    return choice;
+  }
+
+  private activateEncounter(
+    def: EncounterDef,
+    choices: readonly EncounterChoiceDef[],
+    ctx: EncounterContext | undefined,
+    bus: EventBus<GameEvents> | undefined,
+    markCooldown: boolean
+  ): EncounterInstance {
+    if (markCooldown && ctx) {
+      if (this.globalCooldownMin > 0) {
+        this.nextGlobalEncounterMinute = ctx.minute + this.globalCooldownMin;
+      }
+      this.cooldowns.set(def.id, ctx.minute + def.cooldownMin);
+      if (def.oncePerDay) {
+        this.firedToday.add(def.id);
+      }
+    }
+
+    const instanceChoices: EncounterChoice[] = [];
+    for (let i = 0; i < choices.length; i++) {
+      instanceChoices.push(this.buildChoiceMeta(choices[i]!));
+    }
+
+    const minTag = ctx ? `_${Math.floor(ctx.minute)}` : '';
+    const instance: EncounterInstance = {
+      id: `inst_${def.id}${minTag}_${this.rng.int(1000, 9999)}`,
+      encounterId: def.id,
+      lineKey: def.lineKey,
+      ...(def.cueKey ? { cueKey: def.cueKey } : {}),
+      choices: instanceChoices,
+    };
+
+    this.activeEncounter = instance;
+    this.activeEncounterDef = def;
+
+    if (bus) {
+      bus.emit('encounter/started', { instance });
+    }
+
+    return instance;
   }
 
   /**
@@ -63,6 +167,45 @@ export class EventDirector {
     ctx: EncounterContext,
     bus?: EventBus<GameEvents>
   ): EncounterInstance | null {
+    this.lastContext = ctx;
+
+    // Max 1 active encounter at a time
+    if (this.activeEncounter !== null) {
+      return null;
+    }
+
+    // Check pending severe-event cue window first (allows counterplay before firing)
+    if (this.pendingCue !== null) {
+      let cueDef: EncounterDef | undefined;
+      for (let i = 0; i < this.definitions.length; i++) {
+        if (this.definitions[i]!.id === this.pendingCue.encounterId) {
+          cueDef = this.definitions[i]!;
+          break;
+        }
+      }
+      if (
+        !cueDef ||
+        !evaluateCondition(cueDef.trigger, ctx) ||
+        this.collectValidChoices(cueDef, ctx).length === 0
+      ) {
+        // Player avoided the severe encounter via counterplay or context changed
+        this.pendingCue = null;
+      } else if (ctx.minute >= this.pendingCue.fireAtMinute) {
+        if (!this.pauseOnDecisions && ctx.speedKmh >= 10) {
+          return null;
+        }
+        const choices = this.collectValidChoices(cueDef, ctx);
+        this.pendingCue = null;
+        this.lastEvaluationMinute = ctx.minute;
+        this.currentPhase = ctx.phase;
+        return this.activateEncounter(cueDef, choices, ctx, bus, true);
+      } else {
+        this.lastEvaluationMinute = ctx.minute;
+        this.currentPhase = ctx.phase;
+        return null;
+      }
+    }
+
     const isMinuteTick =
       Math.floor(ctx.minute) !== Math.floor(this.lastEvaluationMinute);
     const isPhaseChange = ctx.phase !== this.currentPhase;
@@ -71,18 +214,16 @@ export class EventDirector {
       return null;
     }
 
-    if (this.globalCooldownMin > 0 && !this.pauseOnDecisions && this.lastEvaluationMinute < 0) {
-      // Avoid firing a random encounter on the very first frame of a live session.
-      this.nextGlobalEncounterMinute = ctx.minute + 3;
+    if (!this.hasEvaluatedOnce) {
+      this.hasEvaluatedOnce = true;
+      if (this.globalCooldownMin > 0 && !this.pauseOnDecisions) {
+        // Avoid firing a random encounter on the very first frame of a live session.
+        this.nextGlobalEncounterMinute = ctx.minute + 3;
+      }
     }
 
     this.lastEvaluationMinute = ctx.minute;
     this.currentPhase = ctx.phase;
-
-    // Max 1 active encounter at a time
-    if (this.activeEncounter !== null) {
-      return null;
-    }
 
     if (this.globalCooldownMin > 0 && ctx.minute < this.nextGlobalEncounterMinute) {
       return null;
@@ -93,9 +234,11 @@ export class EventDirector {
       return null;
     }
 
-    // Filter eligible encounters
-    const eligible: EncounterDef[] = [];
-    for (const def of this.definitions) {
+    // Filter eligible encounters without allocating
+    this.eligibleScratch.length = 0;
+    let totalWeight = 0;
+    for (let i = 0; i < this.definitions.length; i++) {
+      const def = this.definitions[i]!;
       // Cooldown check
       const readyAt = this.cooldowns.get(def.id) ?? 0;
       if (readyAt > ctx.minute) {
@@ -112,20 +255,26 @@ export class EventDirector {
         continue;
       }
 
-      eligible.push(def);
+      // Ensure at least one choice passes `requires` so we never softlock
+      if (this.collectValidChoices(def, ctx).length === 0) {
+        continue;
+      }
+
+      this.eligibleScratch.push(def);
+      totalWeight += def.weight;
     }
 
-    if (eligible.length === 0) {
+    if (this.eligibleScratch.length === 0 || totalWeight <= 0) {
       return null;
     }
 
     // Seeded weighted selection
-    const totalWeight = eligible.reduce((acc, e) => acc + e.weight, 0);
     const roll = this.rng.next() * totalWeight;
     let sum = 0;
-    let selected: EncounterDef = eligible[0]!;
+    let selected: EncounterDef = this.eligibleScratch[0]!;
 
-    for (const def of eligible) {
+    for (let i = 0; i < this.eligibleScratch.length; i++) {
+      const def = this.eligibleScratch[i]!;
       sum += def.weight;
       if (roll < sum) {
         selected = def;
@@ -133,55 +282,39 @@ export class EventDirector {
       }
     }
 
-    // Mark cooldown and daily tracking
-    if (this.globalCooldownMin > 0) {
-      this.nextGlobalEncounterMinute = ctx.minute + this.globalCooldownMin;
-    }
-    this.cooldowns.set(selected.id, ctx.minute + selected.cooldownMin);
-    if (selected.oncePerDay) {
-      this.firedToday.add(selected.id);
-    }
-
-    // Filter available choices by requires condition
-    const validChoices: EncounterChoiceDef[] = [];
-    for (const choice of selected.choices) {
-      if (!choice.requires || evaluateCondition(choice.requires, ctx)) {
-        validChoices.push(choice);
+    // Severe encounters with cueKey emit a readable warning >= 10s before firing
+    if (selected.cueKey) {
+      const fireAtMinute = ctx.minute + CUE_LEAD_GAME_MINUTES;
+      this.pendingCue = {
+        encounterId: selected.id,
+        cueKey: selected.cueKey,
+        startedAtMinute: ctx.minute,
+        fireAtMinute,
+      };
+      if (bus) {
+        bus.emit('encounter/cue', {
+          encounterId: selected.id,
+          cueKey: selected.cueKey,
+          fireAtMinute,
+        });
       }
+      return null;
     }
 
-    // Fallback if no choice meets requires: include all choices
-    const finalChoices = validChoices.length > 0 ? validChoices : selected.choices;
-
-    const instanceChoices: EncounterChoice[] = finalChoices.map((c) => ({
-      id: c.id,
-      labelKey: c.labelKey,
-      isMission: c.effects.some((e) => e.type === 'startMission'),
-    }));
-
-    const instance: EncounterInstance = {
-      id: `inst_${selected.id}_${Math.floor(ctx.minute)}_${this.rng.int(1000, 9999)}`,
-      encounterId: selected.id,
-      lineKey: selected.lineKey,
-      choices: instanceChoices,
-    };
-
-    this.activeEncounter = instance;
-    this.activeEncounterDef = selected;
-
-    if (bus) {
-      bus.emit('encounter/started', { instance });
-    }
-
-    return instance;
+    const choices = this.collectValidChoices(selected, ctx);
+    return this.activateEncounter(selected, choices, ctx, bus, true);
   }
 
   /**
-   * T7.1 debug hook: force-starts a specific encounter definition by id,
-   * bypassing trigger/cooldown eligibility. Used by the debug API so tests
-   * and designers can summon a known encounter deterministically.
+   * T7.1 debug hook & direct hazard trigger: force-starts a specific encounter
+   * definition by id, filtering `choice.requires` against `ctx` (or the live
+   * context provider). Returns null safely if all choices fail `requires`.
    */
-  forceStart(encounterId: string, bus?: EventBus<GameEvents>): EncounterInstance | null {
+  forceStart(
+    encounterId: string,
+    bus?: EventBus<GameEvents>,
+    ctx?: EncounterContext
+  ): EncounterInstance | null {
     if (this.activeEncounter !== null) {
       return null;
     }
@@ -190,27 +323,18 @@ export class EventDirector {
       return null;
     }
 
-    const instanceChoices: EncounterChoice[] = def.choices.map((c) => ({
-      id: c.id,
-      labelKey: c.labelKey,
-      isMission: c.effects.some((e) => e.type === 'startMission'),
-    }));
-
-    const instance: EncounterInstance = {
-      id: `inst_${def.id}_${this.rng.int(1000, 9999)}`,
-      encounterId: def.id,
-      lineKey: def.lineKey,
-      choices: instanceChoices,
-    };
-
-    this.activeEncounter = instance;
-    this.activeEncounterDef = def;
-
-    if (bus) {
-      bus.emit('encounter/started', { instance });
+    const filterCtx = ctx ?? this.lastContext ?? this.contextProvider?.();
+    if (filterCtx) {
+      const validChoices = this.collectValidChoices(def, filterCtx);
+      if (validChoices.length === 0) {
+        return null;
+      }
+      this.pendingCue = null;
+      return this.activateEncounter(def, validChoices, filterCtx, bus, false);
     }
 
-    return instance;
+    this.pendingCue = null;
+    return this.activateEncounter(def, def.choices, undefined, bus, false);
   }
 
   /**
@@ -230,10 +354,19 @@ export class EventDirector {
       return false;
     }
 
+    // Only choices actually offered on this instance may be selected
+    if (!this.activeEncounter.choices.some((c) => c.id === choiceId)) {
+      return false;
+    }
+
     const choice = def.choices.find((c) => c.id === choiceId);
     if (!choice) {
       return false;
     }
+
+    ctx.rng = ctx.rng ?? this.rng;
+    ctx.encounterContext = ctx.encounterContext ?? this.lastContext ?? this.contextProvider?.();
+    ctx.outcomeLineKey = undefined;
 
     // Apply effects to owning systems
     applyEffects(choice.effects, ctx);
@@ -243,6 +376,7 @@ export class EventDirector {
       instanceId,
       choiceId,
       encounterId: def.id,
+      ...(ctx.outcomeLineKey ? { outcomeLineKey: ctx.outcomeLineKey } : {}),
     });
 
     this.activeEncounter = null;

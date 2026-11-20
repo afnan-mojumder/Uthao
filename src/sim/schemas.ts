@@ -219,7 +219,7 @@ export const ConditionSchema = z.object({
 
 export type Condition = z.infer<typeof ConditionSchema>;
 
-export const EffectSchema = z.discriminatedUnion('type', [
+export const BaseEffectSchema = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('money'),
     amount: z.number(),
@@ -299,13 +299,45 @@ export const EffectSchema = z.discriminatedUnion('type', [
   }),
 ]);
 
-export type Effect = z.infer<typeof EffectSchema>;
+export type BaseEffect = z.infer<typeof BaseEffectSchema>;
+
+export interface OutcomeEntry {
+  weight: number;
+  requires?: Condition;
+  lineKey: string;
+  effects: Effect[];
+}
+
+export type Effect =
+  | BaseEffect
+  | {
+      type: 'outcome';
+      table: OutcomeEntry[];
+    };
+
+export const OutcomeEntrySchema: z.ZodType<OutcomeEntry> = z.object({
+  weight: z.number().positive(),
+  requires: ConditionSchema.optional(),
+  lineKey: z.string(),
+  effects: z.array(z.lazy(() => EffectSchema)),
+});
+
+export const EffectSchema: z.ZodType<Effect> = z.union([
+  BaseEffectSchema,
+  z.object({
+    type: z.literal('outcome'),
+    table: z.array(OutcomeEntrySchema).min(1),
+  }),
+]);
 
 export const EncounterChoiceDefSchema = z.object({
   id: z.string(),
   labelKey: z.string(),
   requires: ConditionSchema.optional(),
   effects: z.array(EffectSchema),
+  riskKey: z.string().optional(),
+  costHint: z.number().optional(),
+  kind: z.enum(['official', 'illicit', 'neutral']).optional(),
 });
 
 export type EncounterChoiceDef = z.infer<typeof EncounterChoiceDefSchema>;
@@ -331,6 +363,7 @@ export const EncounterDefSchema = z.object({
   cooldownMin: z.number().nonnegative(),
   oncePerDay: z.boolean().optional(),
   lineKey: z.string(),
+  cueKey: z.string().optional(),
   choices: z.array(EncounterChoiceDefSchema).min(1),
 });
 

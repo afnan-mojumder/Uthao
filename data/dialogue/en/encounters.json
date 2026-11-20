@@ -68,6 +68,14 @@
   "encounter.police_stop.choice.explain": "Explain politely and show your clean riding record",
   "encounter.police_stop.choice.offer_bribe": "Quietly offer ৳150 'tea money' to settle it fast",
   "encounter.police_stop.choice.flee": "Rev the throttle and weave away into traffic",
+  "encounter.police_stop.risk.bribe": "Risky: most officers refuse bribes and may double the penalty",
+  "encounter.police_stop.risk.flee": "High risk: fleeing escalates police scrutiny",
+  "encounter.police_stop.outcome.bribe_accepted": "The officer pockets the cash quietly and waves you on without a receipt.",
+  "encounter.police_stop.outcome.bribe_rejected": "The sergeant snaps back, refuses the bribe, and writes you a full ৳400 citation!",
+
+  "encounter.crime.dark_alley.cue": "Voices and silhouettes gather ahead in the unlit alley—you can still turn back.",
+  "encounter.crime.robbery_attempt.cue": "Two figures step off the dark curb ahead, signaling bikes to slow down.",
+  "encounter.crime.risk.flee": "High risk: narrow alleys or worn tires can make escaping fail",
 
   "encounter.accident.title": "Heavy impact! Crowd gathers around as you steady the bike and check for injuries.",
   "encounter.accident.choice.settle": "Check everyone is okay and pay ৳300 for damages & medical aid",

@@ -444,4 +444,286 @@ describe('EventDirector and Encounter Framework (T3.6)', () => {
     const inst = director.evaluate(ctxSlow);
     expect(inst).not.toBeNull();
   });
+
+  it('resetDaily() clears cooldowns and nextGlobalEncounterMinute for Day 2 rollover', () => {
+    const lateEnc: EncounterDef = {
+      id: 'enc_late_night',
+      category: 'world',
+      trigger: { phase: 'roaming' },
+      weight: 10,
+      cooldownMin: 180,
+      oncePerDay: false,
+      lineKey: 'encounter.late.title',
+      choices: [{ id: 'ok', labelKey: 'encounter.late.ok', effects: [] }],
+    };
+
+    const director = new EventDirector({
+      definitions: [lateEnc],
+      seed: 42,
+      globalCooldownMin: 30,
+    });
+
+    const day1LateCtx: EncounterContext = {
+      phase: 'roaming',
+      minute: 22 * 60 + 50, // 1370 -> cooldown until 1550, global until 1400
+      day: 1,
+      weather: 'clear',
+      chapter: 1,
+      flags: {},
+      relationships: {},
+      cash: 500,
+      speedKmh: 0,
+      bikeCondition: 100,
+    };
+
+    const inst1 = director.evaluate(day1LateCtx);
+    expect(inst1).not.toBeNull();
+
+    const gm = new GameManager({ seed: 42, mode: 'career', data: { encounters: [] } });
+    director.chooseOption(inst1!.id, 'ok', {
+      gameManager: gm,
+      economyManager: gm.economyManager,
+      eventBus: gm.bus,
+    });
+
+    // Day 2 morning (minute 425) after resetDaily(): cooldowns and global cooldown must be cleared
+    director.resetDaily();
+    const day2MorningCtx: EncounterContext = {
+      ...day1LateCtx,
+      day: 2,
+      minute: 7 * 60 + 5, // 425 < 1550 and < 1400
+    };
+    const inst2 = director.evaluate(day2MorningCtx);
+    expect(inst2).not.toBeNull();
+    expect(inst2?.encounterId).toBe('enc_late_night');
+  });
+
+  it('forceStart() filters choice.requires and prevents unaffordable choices or empty-choice softlocks', () => {
+    const director = new EventDirector({
+      definitions: [
+        choiceFilteredEncounter,
+        {
+          id: 'enc_all_expensive',
+          category: 'bike',
+          trigger: { phase: 'roaming' },
+          weight: 10,
+          cooldownMin: 10,
+          lineKey: 'encounter.expensive.title',
+          choices: [
+            {
+              id: 'pay_300',
+              labelKey: 'encounter.expensive.pay',
+              requires: { minCash: 300 },
+              effects: [{ type: 'money', amount: -300, kind: 'repair' }],
+            },
+          ],
+        },
+      ],
+      seed: 42,
+    });
+
+    const brokeCtx: EncounterContext = {
+      phase: 'roaming',
+      minute: 50,
+      day: 1,
+      weather: 'clear',
+      chapter: 1,
+      flags: {},
+      relationships: {},
+      cash: 50,
+      speedKmh: 0,
+      bikeCondition: 100,
+    };
+
+    // Never offers minCash: 300 when broke
+    const inst = (director.forceStart as (id: string, b?: EventBus<GameEvents>, c?: EncounterContext) => ReturnType<EventDirector['forceStart']>)(
+      'enc_test_choice_requires',
+      undefined,
+      brokeCtx
+    );
+    expect(inst).not.toBeNull();
+    expect(inst?.choices.map((c) => c.id)).toEqual(['opt_free_wait']);
+
+    // Edge case: all choices fail requires -> safely returns null without softlocking activeEncounter
+    const gm = new GameManager({ seed: 42, mode: 'career', data: { encounters: [] } });
+    gm.economyManager.cash = 0;
+    const directorAllExpensive = new EventDirector({
+      definitions: [director.definitions[1]!],
+      seed: 42,
+    });
+    const blocked = (directorAllExpensive.forceStart as (id: string, b?: EventBus<GameEvents>, c?: EncounterContext) => ReturnType<EventDirector['forceStart']>)(
+      'enc_all_expensive',
+      gm.bus,
+      brokeCtx
+    );
+    expect(blocked).toBeNull();
+    expect(directorAllExpensive.activeEncounter).toBeNull();
+    expect(directorAllExpensive.evaluate(brokeCtx)).toBeNull();
+  });
+
+  it('severe events emit cueKey >= 10s of sim time before firing and can be avoided via counterplay', () => {
+    const bus = new EventBus<GameEvents>();
+    const cues: Array<{ encounterId: string; cueKey: string }> = [];
+    const started: string[] = [];
+    (bus as unknown as { on: (k: string, fn: (p: { encounterId: string; cueKey: string }) => void) => void }).on(
+      'encounter/cue',
+      (p) => cues.push(p)
+    );
+    bus.on('encounter/started', ({ instance }) => started.push(instance.encounterId));
+
+    const severeEnc = {
+      id: 'enc_severe_alley',
+      category: 'crime' as const,
+      trigger: { phase: 'onTrip' as const, roadType: ['alley'] },
+      weight: 10,
+      cooldownMin: 60,
+      lineKey: 'encounter.severe.title',
+      cueKey: 'encounter.severe.cue',
+      choices: [
+        { id: 'comply', labelKey: 'encounter.severe.comply', effects: [] },
+      ],
+    } as EncounterDef;
+
+    const director = new EventDirector({
+      definitions: [severeEnc],
+      seed: 42,
+    });
+
+    const alleySeg = {
+      segmentId: 'seg_alley',
+      startNodeId: 'a',
+      endNodeId: 'b',
+      width: 4,
+      surfaceCondition: 0.7,
+      trafficDensity: 0.1,
+      speedLimit: 20,
+      turnRestrictions: [],
+      motorcycleAccessible: true,
+      pedestrianDensity: 0.2,
+      riskLevel: 0.8,
+      oneWay: false,
+      divided: false,
+      lanes: 1,
+      roadType: 'alley' as const,
+      floodSensitivity: 0.5,
+      pickupPractical: true,
+      district: 'mirpara' as const,
+      tags: ['alley'],
+    };
+
+    const alleyCtx: EncounterContext = {
+      phase: 'onTrip',
+      minute: 1200,
+      day: 1,
+      weather: 'clear',
+      chapter: 1,
+      flags: {},
+      relationships: {},
+      cash: 500,
+      speedKmh: 0,
+      bikeCondition: 100,
+      segment: alleySeg,
+    };
+
+    // Initial tick emits cueKey, does NOT fire immediately
+    expect(director.evaluate(alleyCtx, bus)).toBeNull();
+    expect(cues).toHaveLength(1);
+    expect(cues[0]?.cueKey).toBe('encounter.severe.cue');
+    expect(started).toHaveLength(0);
+
+    // < 10s of sim time (TIME_SCALE = 80 -> 10s = 13.333 game minutes): still waiting
+    expect(director.evaluate({ ...alleyCtx, minute: 1210 }, bus)).toBeNull();
+    expect(started).toHaveLength(0);
+
+    // >= 10s of sim time (minute 1214 -> +14 game min = 10.5s sim time): fires!
+    const inst = director.evaluate({ ...alleyCtx, minute: 1214 }, bus);
+    expect(inst?.encounterId).toBe('enc_severe_alley');
+    expect(started).toEqual(['enc_severe_alley']);
+
+    // Counterplay: leaving the alley before 10s cancels the pending cue
+    const director2 = new EventDirector({ definitions: [severeEnc], seed: 42 });
+    const bus2 = new EventBus<GameEvents>();
+    const cues2: unknown[] = [];
+    const started2: string[] = [];
+    (bus2 as unknown as { on: (k: string, fn: (p: unknown) => void) => void }).on('encounter/cue', (p) =>
+      cues2.push(p)
+    );
+    bus2.on('encounter/started', ({ instance }) => started2.push(instance.encounterId));
+    expect(director2.evaluate(alleyCtx, bus2)).toBeNull();
+    expect(cues2).toHaveLength(1);
+    const mainCtx: EncounterContext = {
+      ...alleyCtx,
+      minute: 1215,
+      segment: { ...alleySeg, roadType: 'main', tags: [] },
+    };
+    expect(director2.evaluate(mainCtx, bus2)).toBeNull();
+    expect(started2).toHaveLength(0);
+  });
+
+  it('evaluates seeded outcome tables, respects entry.requires, and emits outcomeLineKey', () => {
+    const outcomeEnc = {
+      id: 'enc_outcome_test',
+      category: 'route' as const,
+      trigger: { phase: 'roaming' as const },
+      weight: 10,
+      cooldownMin: 10,
+      lineKey: 'encounter.outcome.title',
+      choices: [
+        {
+          id: 'gamble',
+          labelKey: 'encounter.outcome.gamble',
+          riskKey: 'encounter.outcome.risk',
+          costHint: 150,
+          kind: 'illicit' as const,
+          effects: [
+            {
+              type: 'outcome' as const,
+              table: [
+                {
+                  weight: 50,
+                  requires: { minCash: 500 },
+                  lineKey: 'encounter.outcome.rich_win',
+                  effects: [{ type: 'money' as const, amount: 100, kind: 'event' as const }],
+                },
+                {
+                  weight: 50,
+                  lineKey: 'encounter.outcome.accepted',
+                  effects: [{ type: 'money' as const, amount: -150, kind: 'bribe' as const }],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    } as EncounterDef;
+
+    const gm1 = new GameManager({ seed: 99, mode: 'career', data: { encounters: [outcomeEnc] } });
+    gm1.economyManager.cash = 200; // < 500 so rich_win entry is filtered out by requires!
+    const resolvedEvents: Array<{ outcomeLineKey?: string }> = [];
+    gm1.bus.on('encounter/resolved', (ev) => resolvedEvents.push(ev as { outcomeLineKey?: string }));
+
+    // First evaluation arms the 3-min initial grace on GameManager; evaluate again after 3 min
+    const baseOutcomeCtx: EncounterContext = {
+      phase: 'roaming',
+      minute: 95,
+      day: 1,
+      weather: 'clear',
+      chapter: 1,
+      flags: {},
+      relationships: {},
+      cash: 200,
+      speedKmh: 0,
+      bikeCondition: 100,
+    };
+    expect(gm1.eventDirector.evaluate(baseOutcomeCtx, gm1.bus)).toBeNull();
+    const inst = gm1.eventDirector.evaluate({ ...baseOutcomeCtx, minute: 100 }, gm1.bus);
+    expect(inst).not.toBeNull();
+    expect((inst!.choices[0] as { kind?: string }).kind).toBe('illicit');
+    expect((inst!.choices[0] as { costHint?: number }).costHint).toBe(150);
+    expect((inst!.choices[0] as { riskKey?: string }).riskKey).toBe('encounter.outcome.risk');
+
+    gm1.dispatch({ type: 'chooseEncounterOption', instanceId: inst!.id, choiceId: 'gamble' });
+    expect(gm1.economyManager.cash).toBe(50);
+    expect(resolvedEvents[0]?.outcomeLineKey).toBe('encounter.outcome.accepted');
+  });
 });

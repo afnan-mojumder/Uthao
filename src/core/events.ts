@@ -63,9 +63,19 @@ export interface GameEvents extends Record<string, unknown> {
   'economy/transaction': { tx: Transaction };
   'reputation/changed': { delta: ReputationDelta };
   'karma/changed': { event: KarmaEvent };
+  'encounter/cue': {
+    encounterId: string;
+    cueKey: string;
+    fireAtMinute: number;
+  };
   'encounter/started': { instance: EncounterInstance };
   // encounterId is the definition id (e.g. enc_traffic_checkpoint); missions match on it.
-  'encounter/resolved': { instanceId: string; choiceId: string; encounterId?: string };
+  'encounter/resolved': {
+    instanceId: string;
+    choiceId: string;
+    encounterId?: string;
+    outcomeLineKey?: string;
+  };
   'mission/objectiveUpdated': {
     missionId: string;
     objectiveId: string;

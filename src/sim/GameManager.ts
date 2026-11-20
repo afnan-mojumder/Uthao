@@ -26,6 +26,7 @@ import type { EncounterDef } from './schemas';
 import type { EncounterContext, EncounterPhase } from './events/conditions';
 import type { EffectContext } from './events/effects';
 import type { RideManager } from './ride/RideManager';
+import type { RoadNetwork } from './road/RoadNetwork';
 import routeEncounters from '../../data/encounters/route.json';
 import pickupEncounters from '../../data/encounters/pickup.json';
 import paymentEncounters from '../../data/encounters/payment.json';
@@ -162,9 +163,29 @@ export class GameManager {
   recoverBikeHandler?: () => boolean;
   /** Optional road segments registered by GameSession for monsoon flood accumulation. */
   private roadSegments?: readonly RoadSegment[];
+  private readonly encounterCtxScratch: EncounterContext = {
+    phase: 'roaming',
+    minute: 420,
+    day: 1,
+    weather: 'clear',
+    chapter: 1,
+    flags: {},
+    relationships: {},
+    cash: 600,
+    speedKmh: 0,
+    bikeCondition: 80,
+    segment: null,
+    activeRequest: null,
+    passenger: null,
+  };
 
   setRoadSegments(segments: readonly RoadSegment[]): void {
     this.roadSegments = segments;
+  }
+
+  setRoadNetwork(network: RoadNetwork): void {
+    this.roadSegments = network.getSegments();
+    this.roadEvents.setNetwork(network);
   }
 
   paused: boolean = false;
@@ -255,7 +276,12 @@ export class GameManager {
     this.bus = new EventBus<GameEvents>();
     this.rng = new Rng(this.seed);
     this.clock = new GameClock(1, 7 * 60);
-    this.weatherSystem = new WeatherSystem({ initialWeather: this.weather });
+    this.weatherSystem = new WeatherSystem({
+      initialWeather: this.weather,
+      seed: this.seed,
+      bus: this.bus,
+      dynamic: true,
+    });
     this.economyManager = new EconomyManager(this.bus, this.economy);
     this.reputationSystem = new ReputationSystem({
       bus: this.bus,
@@ -278,6 +304,7 @@ export class GameManager {
       // world keeps running behind it, so the driving keys stay live.
       pauseOnDecisions: false,
       globalCooldownMin: 12,
+      contextProvider: () => this.buildDefaultEncounterContext('roaming', 0),
     });
 
     const allCampaignMissions = [
@@ -324,6 +351,8 @@ export class GameManager {
 
     this.bus.on('day/started', () => {
       this.eventDirector.resetDaily();
+      this.weatherSystem.onDayStarted(this.clock.day, this.story.currentChapter);
+      this.weather = this.weatherSystem.weather;
     });
 
     this.bus.on('ending/reached', ({ endingId }) => {
@@ -510,7 +539,13 @@ export class GameManager {
     const currHour = Math.floor(this.clock.minutes / 60);
 
     const dtMinutes = (dt * TIME_SCALE) / 60;
-    this.weatherSystem.update(dtMinutes, this.roadSegments);
+    this.weatherSystem.update(
+      dtMinutes,
+      this.roadSegments,
+      this.clock.day,
+      this.clock.minutes,
+      this.story.currentChapter
+    );
     this.weather = this.weatherSystem.weather;
     this.roadEvents.tick(dtMinutes, this.clock.minutes);
 
@@ -546,7 +581,51 @@ export class GameManager {
     }
   }
 
-  tick(dt: number = SIM_DT, speedKmh: number = 0, phase: EncounterPhase = 'roaming'): void {
+  private buildDefaultEncounterContext(
+    phase: EncounterPhase,
+    speedKmh: number
+  ): EncounterContext {
+    const ctx = this.encounterCtxScratch;
+    ctx.phase = phase;
+    ctx.minute = this.clock.minutes;
+    ctx.day = this.clock.day;
+    ctx.weather = this.weather;
+    ctx.chapter = this.story.currentChapter;
+    ctx.flags = this.story.branchFlags;
+    ctx.relationships = this.reputationSystem.getRelationshipsView();
+    ctx.cash = this.economyManager.cash;
+    ctx.speedKmh = speedKmh;
+    ctx.bikeCondition = this.economyManager.motorcycleCondition;
+    ctx.segment = null;
+    ctx.activeRequest = this.rideManager?.getActiveRequest?.() ?? null;
+    ctx.passenger = null;
+    return ctx;
+  }
+
+  evaluateEncounters(ctx: EncounterContext): void {
+    if (this.paused) {
+      return;
+    }
+    // Never start an encounter during Completing or while resolving a fare dispute
+    if (this.rideManager?.getTripState?.() === 'Completing') {
+      return;
+    }
+    // T7.1: ambient (roaming) encounters are suppressed while disabled (main
+    // menu, tutorial, or `?encounters=0`) or while resolving a fare dispute.
+    if (this.eventDirector.enabled && !this.rideManager?.getPendingDispute?.()) {
+      const encounter = this.eventDirector.evaluate(ctx, this.bus);
+      if (encounter && this.eventDirector.pauseOnDecisions) {
+        this.paused = true;
+      }
+    }
+  }
+
+  tick(
+    dt: number = SIM_DT,
+    speedKmh: number = 0,
+    phase: EncounterPhase = 'roaming',
+    runEncounters: boolean = true
+  ): void {
     if (this.paused) {
       return;
     }
@@ -555,28 +634,8 @@ export class GameManager {
 
     this.advanceTime(dt);
 
-    // Evaluate encounters (once per game minute or on phase change)
-    const ctx: EncounterContext = {
-      phase,
-      minute: this.clock.minutes,
-      day: this.clock.day,
-      weather: this.weather,
-      chapter: this.story.currentChapter,
-      flags: this.story.branchFlags,
-      relationships: this.reputationSystem.getRelationshipsView(),
-      cash: this.economyManager.cash,
-      // The bike's real speed: an encounter card only shows once the bike is
-      // stopped (EventDirector's speed gate), so a moving bike keeps its keys.
-      speedKmh,
-      bikeCondition: this.economyManager.motorcycleCondition,
-    };
-    // T7.1: ambient (roaming) encounters are suppressed while disabled (main
-    // menu, tutorial, or `?encounters=0`) or while resolving a fare dispute.
-    if (this.eventDirector.enabled && !this.rideManager?.getPendingDispute?.()) {
-      const encounter = this.eventDirector.evaluate(ctx, this.bus);
-      if (encounter && this.eventDirector.pauseOnDecisions) {
-        this.paused = true;
-      }
+    if (runEncounters) {
+      this.evaluateEncounters(this.buildDefaultEncounterContext(phase, speedKmh));
     }
   }
 
@@ -1000,6 +1059,10 @@ export class GameManager {
     this.rentDelayedByCommand = false;
     this.todayLivingExpenses = null;
     this.deliveryManager.reset();
+    this.eventDirector.resetCareer();
+    this.weatherSystem.reset('clear');
+    this.weather = 'clear';
+    this.roadEvents.reset();
     this.story.currentChapter = 1;
     this.story.promises = [];
     this.story.branchFlags = {};
@@ -1021,8 +1084,9 @@ export class GameManager {
     this.clock.day = snap.clock.day;
     this.clock.minutes = snap.clock.minutes;
     this.weather = snap.weather;
-    this.weatherSystem.setWeather(snap.weather);
+    this.weatherSystem.restoreWeather(snap.weather);
     this.waypointNodeId = snap.waypointNodeId;
+    this.eventDirector.resetCareer();
 
     if (rngState !== undefined) {
       this.rng.setState(rngState);

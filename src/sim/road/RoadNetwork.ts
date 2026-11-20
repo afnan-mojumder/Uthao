@@ -123,6 +123,10 @@ export class RoadNetwork {
     return this.segments;
   }
 
+  getSegments(): RoadSegment[] {
+    return this.segments;
+  }
+
   getNodesMap(): Map<string, RoadNode> {
     return this.graph.getNodesMap();
   }

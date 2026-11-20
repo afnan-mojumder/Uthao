@@ -318,5 +318,8 @@
   "delivery.accepted_status": "গৃহীত (পিকআপে যান)",
   "delivery.payout": "পারিশ্রমিক: ৳{amount}",
   "delivery.expired": "পার্সেল পিকআপের সময়সীমা শেষ হয়েছে!",
-  "delivery.blocked_active_ride": "পার্সেল নেওয়ার আগে চলমান রাইডটি শেষ করুন।"
+  "delivery.blocked_active_ride": "পার্সেল নেওয়ার আগে চলমান রাইডটি শেষ করুন।",
+  "ui.continue": "এগিয়ে যান",
+  "encounter.kind.official": "আইনি",
+  "encounter.kind.illicit": "অবৈধ"
 }

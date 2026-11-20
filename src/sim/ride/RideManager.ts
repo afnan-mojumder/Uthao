@@ -263,6 +263,12 @@ export class RideManager {
     return this.passengerMood;
   }
 
+  /** Adjusts the live passenger mood within [0, 1]. */
+  adjustPassengerMood(delta: number): void {
+    if (!Number.isFinite(delta) || delta === 0 || !this.activeRequest) return;
+    this.passengerMood = clamp(this.passengerMood + delta, 0, 1);
+  }
+
   /** A short-lived objective key explaining why the last ride ended (e.g. no route). */
   getNoticeKey(): string | null {
     return this.noticeKey !== null && this.simTimeSec < this.noticeUntil ? this.noticeKey : null;

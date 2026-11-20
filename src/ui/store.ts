@@ -43,6 +43,9 @@ export interface ChoiceOption {
   text: string;
   vars?: Record<string, string | number>;
   isMission?: boolean;
+  riskKey?: string;
+  costHint?: number;
+  kind?: 'official' | 'illicit' | 'neutral';
 }
 
 export interface ChoiceState {
@@ -51,6 +54,13 @@ export interface ChoiceState {
   promptVars?: Record<string, string | number>;
   options: ChoiceOption[];
   instanceId?: string;
+  outcomeLineKey?: string;
+}
+
+export interface EncounterCueState {
+  cueKey: string | null;
+  encounterId?: string;
+  seq: number;
 }
 
 export interface PhoneState {
@@ -292,7 +302,25 @@ export const choiceSignal = signal<ChoiceState>({
   active: false,
   prompt: '',
   options: [],
+  outcomeLineKey: undefined,
 });
+
+export const encounterCueSignal = signal<EncounterCueState>({
+  cueKey: null,
+  encounterId: undefined,
+  seq: 0,
+});
+
+export function dismissChoiceOutcome(): void {
+  choiceSignal.value = {
+    active: false,
+    prompt: '',
+    promptVars: undefined,
+    options: [],
+    instanceId: undefined,
+    outcomeLineKey: undefined,
+  };
+}
 
 export interface EndingUiState {
   active: boolean;
@@ -336,6 +364,7 @@ if (typeof window !== 'undefined') {
     rotateOverlaySignal,
     tripSummarySignal,
     journalSignal,
+    encounterCueSignal,
   };
 }
 
@@ -423,7 +452,14 @@ export function exitToTitle(): void {
   dayEndSignal.value = { active: false, summary: null };
   endingSignal.value = { active: false, result: null, choices: undefined };
   tripSummarySignal.value = null;
-  choiceSignal.value = { active: false, prompt: '', options: [], instanceId: undefined };
+  choiceSignal.value = {
+    active: false,
+    prompt: '',
+    options: [],
+    instanceId: undefined,
+    outcomeLineKey: undefined,
+  };
+  encounterCueSignal.value = { cueKey: null, encounterId: undefined, seq: encounterCueSignal.value.seq };
   saveSlotsSignal.value = { ...saveSlotsSignal.value, isOpen: false };
   screenSignal.value = 'title';
 }
@@ -627,8 +663,10 @@ export const deliveryNoticeSignal = signal<DeliveryNoticeState>({
 /** How long an impact banner stays up before it clears itself. */
 const IMPACT_BANNER_MS = 1200;
 const DELIVERY_NOTICE_MS = 2800;
+const ENCOUNTER_CUE_MS = 10000;
 let impactClearTimer: ReturnType<typeof setTimeout> | undefined;
 let deliveryNoticeClearTimer: ReturnType<typeof setTimeout> | undefined;
+let encounterCueClearTimer: ReturnType<typeof setTimeout> | undefined;
 
 export function showDeliveryNotice(
   messageKey: string,
@@ -708,7 +746,12 @@ function resetTransientUiState(): void {
     clearTimeout(deliveryNoticeClearTimer);
     deliveryNoticeClearTimer = undefined;
   }
+  if (encounterCueClearTimer !== undefined) {
+    clearTimeout(encounterCueClearTimer);
+    encounterCueClearTimer = undefined;
+  }
   deliveryNoticeSignal.value = { messageKey: null, vars: undefined, seq: deliveryNoticeSignal.value.seq };
+  encounterCueSignal.value = { cueKey: null, encounterId: undefined, seq: encounterCueSignal.value.seq };
   inActiveTrip = false;
   activeOfferQueue = [];
   heldRequest = null;
@@ -898,7 +941,26 @@ export function bindEventBusToStore(bus: EventBus<GameEvents>): () => void {
   });
   unsubscribers.push(unsubNegResult);
 
+  const unsubEncounterCue = bus.on('encounter/cue', (ev) => {
+    encounterCueSignal.value = {
+      cueKey: ev.cueKey,
+      encounterId: ev.encounterId,
+      seq: encounterCueSignal.value.seq + 1,
+    };
+    if (encounterCueClearTimer !== undefined) clearTimeout(encounterCueClearTimer);
+    encounterCueClearTimer = setTimeout(() => {
+      encounterCueSignal.value = { ...encounterCueSignal.value, cueKey: null, encounterId: undefined };
+      encounterCueClearTimer = undefined;
+    }, ENCOUNTER_CUE_MS);
+  });
+  unsubscribers.push(unsubEncounterCue);
+
   const unsubEncounterStart = bus.on('encounter/started', (ev) => {
+    if (encounterCueClearTimer !== undefined) {
+      clearTimeout(encounterCueClearTimer);
+      encounterCueClearTimer = undefined;
+    }
+    encounterCueSignal.value = { ...encounterCueSignal.value, cueKey: null, encounterId: undefined };
     choiceSignal.value = {
       active: true,
       prompt: ev.instance.lineKey,
@@ -906,19 +968,27 @@ export function bindEventBusToStore(bus: EventBus<GameEvents>): () => void {
         id: c.id,
         text: c.labelKey,
         isMission: c.isMission,
+        riskKey: c.riskKey,
+        costHint: c.costHint,
+        kind: c.kind,
       })),
       instanceId: ev.instance.id,
+      outcomeLineKey: undefined,
     };
   });
   unsubscribers.push(unsubEncounterStart);
 
-  const unsubEncounterEnd = bus.on('encounter/resolved', () => {
-    choiceSignal.value = {
-      active: false,
-      prompt: '',
-      options: [],
-      instanceId: undefined,
-    };
+  const unsubEncounterEnd = bus.on('encounter/resolved', (ev) => {
+    if (ev.outcomeLineKey) {
+      choiceSignal.value = {
+        ...choiceSignal.value,
+        active: true,
+        outcomeLineKey: ev.outcomeLineKey,
+        options: [],
+      };
+    } else {
+      dismissChoiceOutcome();
+    }
   });
   unsubscribers.push(unsubEncounterEnd);
 
@@ -1039,6 +1109,11 @@ export function bindEventBusToStore(bus: EventBus<GameEvents>): () => void {
   unsubscribers.push(unsubDayEnded);
 
   const unsubDayStarted = bus.on('day/started', () => {
+    if (encounterCueClearTimer !== undefined) {
+      clearTimeout(encounterCueClearTimer);
+      encounterCueClearTimer = undefined;
+    }
+    encounterCueSignal.value = { ...encounterCueSignal.value, cueKey: null, encounterId: undefined };
     dayEndSignal.value = {
       active: false,
       summary: null,

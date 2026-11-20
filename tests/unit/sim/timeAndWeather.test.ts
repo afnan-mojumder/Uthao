@@ -4,12 +4,18 @@ import { TimeOfDay } from '../../../src/sim/world/TimeOfDay';
 import { WeatherSystem } from '../../../src/sim/world/WeatherSystem';
 import { WeatherFx } from '../../../src/render/WeatherFx';
 import { RoadNetwork } from '../../../src/sim/road/RoadNetwork';
+import { GameManager } from '../../../src/sim/GameManager';
+import { GameSession } from '../../../src/sim/GameSession';
+import { EventBus, type GameEvents } from '../../../src/core/events';
+import { TIME_SCALE } from '../../../src/core/clock';
 import {
   createDefaultBikeSpec,
   createDefaultBikeState,
   stepBike,
 } from '../../../src/physics/bikeModel';
 import type { RoadSegment, RoadNode } from '../../../src/core/types';
+import type { DistrictData } from '../../../src/sim/schemas';
+import mirparaData from '../../../data/districts/mirpara.json';
 
 describe('T3.5 Time of Day & Weather', () => {
   describe('TimeOfDay', () => {
@@ -476,5 +482,99 @@ describe('P2.5 TimeOfDay smooth cosine ramps, sky dome & WeatherFx rain/streetli
     expect(fx.getSkyHorizonColor().getHex()).toBe(nightExpected.skyHorizonColor);
 
     fx.dispose();
+  });
+});
+
+describe('P4.4 Dynamic monsoon WeatherSystem transitions and live flood wiring', () => {
+  it('guarantees monsoon rain episodes in Chapter 3+ while keeping sunny/cloudy days common in Chapters 1-2', () => {
+    const bus = new EventBus<GameEvents>();
+    const changes: Array<{ from: string; to: string }> = [];
+    bus.on('world/weatherChanged', (ev) => changes.push(ev));
+
+    // Chapter 1-2 across 20 seed/day combinations: sunny/cloudy-only days are common (>= 50%)
+    let dryDaysCh1 = 0;
+    for (let day = 1; day <= 20; day++) {
+      const ws = new (WeatherSystem as unknown as new (opts: Record<string, unknown>) => WeatherSystem)({
+        initialWeather: 'clear',
+        seed: 100 + day,
+        bus,
+        dynamic: true,
+      });
+      let sawRain = false;
+      for (let m = 7 * 60; m <= 23 * 60; m += 15) {
+        (ws.update as (dt: number, segs?: unknown, day?: number, min?: number, ch?: number) => void)(
+          15,
+          undefined,
+          day,
+          m,
+          1
+        );
+        if (ws.weather === 'lightRain' || ws.weather === 'heavyRain') {
+          sawRain = true;
+        }
+      }
+      if (!sawRain) dryDaysCh1++;
+    }
+    expect(dryDaysCh1).toBeGreaterThanOrEqual(10);
+
+    // Chapter 3+: EVERY day has a guaranteed rain/monsoon episode and emits world/weatherChanged
+    changes.length = 0;
+    for (let day = 1; day <= 12; day++) {
+      const ws = new (WeatherSystem as unknown as new (opts: Record<string, unknown>) => WeatherSystem)({
+        initialWeather: 'clear',
+        seed: 500 + day,
+        bus,
+        dynamic: true,
+      });
+      let sawHeavyRain = false;
+      for (let m = 7 * 60; m <= 23 * 60; m += 15) {
+        (ws.update as (dt: number, segs?: unknown, day?: number, min?: number, ch?: number) => void)(
+          15,
+          undefined,
+          day,
+          m,
+          3
+        );
+        if (ws.weather === 'heavyRain') {
+          sawHeavyRain = true;
+        }
+      }
+      expect(sawHeavyRain).toBe(true);
+    }
+    expect(changes.length).toBeGreaterThan(0);
+  });
+
+  it('GameSession passes road.getSegments() to WeatherSystem so live segment flood levels accumulate during monsoon rain', () => {
+    const road = RoadNetwork.fromDistricts([mirparaData as DistrictData]);
+    const gm = new GameManager({ seed: 42, mode: 'career', data: {} });
+    gm.story.currentChapter = 3;
+    const session = new GameSession({ gm, road, autoRequests: false });
+
+    const weatherEvents: Array<{ from: string; to: string }> = [];
+    gm.bus.on('world/weatherChanged', (ev) => weatherEvents.push(ev));
+
+    // Step across the Chapter 3 shift (15 game hours: 07:00..22:00) at 1 game minute per step
+    let maxFloodSeen = 0;
+    let sawRain = false;
+    const sensitiveSeg = road
+      .getAllSegments()
+      .find((s) => s.floodSensitivity >= 0.6)!;
+    expect(sensitiveSeg).toBeDefined();
+
+    const stepGameMinutes = 1;
+    const dtPerStep = (stepGameMinutes * 60) / TIME_SCALE;
+    const totalSteps = 15 * 60;
+    for (let i = 0; i < totalSteps; i++) {
+      session.step({ throttle: 0, brake: 0, steer: 0 }, dtPerStep);
+      if (gm.weather === 'heavyRain' || gm.weather === 'lightRain') {
+        sawRain = true;
+      }
+      maxFloodSeen = Math.max(maxFloodSeen, gm.weatherSystem.getFloodLevel(sensitiveSeg.segmentId));
+      if (gm.shiftEnded) break;
+    }
+
+    expect(sawRain).toBe(true);
+    expect(weatherEvents.length).toBeGreaterThan(0);
+    expect(maxFloodSeen).toBeGreaterThanOrEqual(0.5);
   });
 });

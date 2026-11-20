@@ -393,12 +393,16 @@ export interface EncounterChoice {
   id: string;
   labelKey: string;
   isMission?: boolean;
+  riskKey?: string;
+  costHint?: number;
+  kind?: 'official' | 'illicit' | 'neutral';
 }
 
 export interface EncounterInstance {
   id: string;
   encounterId: string;
   lineKey: string;
+  cueKey?: string;
   choices: EncounterChoice[];
 }
 
