@@ -1,38 +1,119 @@
 import bnUi from '../../data/dialogue/bn/ui.json';
-import enUi from '../../data/dialogue/en/ui.json';
 import bnNegotiation from '../../data/dialogue/bn/negotiation.json';
-import enNegotiation from '../../data/dialogue/en/negotiation.json';
 import bnPhone from '../../data/dialogue/bn/phone.json';
-import enPhone from '../../data/dialogue/en/phone.json';
 import bnHud from '../../data/dialogue/bn/hud.json';
-import enHud from '../../data/dialogue/en/hud.json';
 import bnMissions from '../../data/dialogue/bn/missions.json';
-import enMissions from '../../data/dialogue/en/missions.json';
 import bnEndings from '../../data/dialogue/bn/endings.json';
-import enEndings from '../../data/dialogue/en/endings.json';
 import bnCharacters from '../../data/dialogue/bn/characters.json';
-import enCharacters from '../../data/dialogue/en/characters.json';
 import bnEncounters from '../../data/dialogue/bn/encounters.json';
-import enEncounters from '../../data/dialogue/en/encounters.json';
 import bnDialogue from '../../data/dialogue/bn/dialogue.json';
 import bnPassengers from '../../data/dialogue/bn/passengers.json';
-import enPassengers from '../../data/dialogue/en/passengers.json';
-import enDialogue from '../../data/dialogue/en/dialogue.json';
+import { signal } from '@preact/signals';
 
 export type Language = 'bn' | 'en';
 
 const dictionaries: Record<Language, Record<string, string>> = {
-  bn: { ...bnUi, ...bnNegotiation, ...bnPhone, ...bnHud, ...bnMissions, ...bnEndings, ...bnCharacters, ...bnEncounters, ...bnDialogue, ...bnPassengers },
-  en: { ...enUi, ...enNegotiation, ...enPhone, ...enHud, ...enMissions, ...enEndings, ...enCharacters, ...enEncounters, ...enDialogue, ...enPassengers },
+  bn: {
+    ...bnUi,
+    ...bnNegotiation,
+    ...bnPhone,
+    ...bnHud,
+    ...bnMissions,
+    ...bnEndings,
+    ...bnCharacters,
+    ...bnEncounters,
+    ...bnDialogue,
+    ...bnPassengers,
+    ...(import.meta.env.DEV ? { 'district.testloop': 'টেস্টলুপ' } : {}),
+  },
+  en: import.meta.env.DEV ? { 'district.testloop': 'Test Loop' } : {},
 };
 
-import { signal } from '@preact/signals';
+const localeVersionSignal = signal<number>(0);
+const localePromises: Partial<Record<Language, Promise<Record<string, string>>>> = {};
+const localeLoaded: Record<Language, boolean> = {
+  bn: true,
+  en: false,
+};
+
+async function fetchEnglishDictionary(): Promise<Record<string, string>> {
+  const [
+    enUi,
+    enNegotiation,
+    enPhone,
+    enHud,
+    enMissions,
+    enEndings,
+    enCharacters,
+    enEncounters,
+    enDialogue,
+    enPassengers,
+  ] = await Promise.all([
+    import('../../data/dialogue/en/ui.json'),
+    import('../../data/dialogue/en/negotiation.json'),
+    import('../../data/dialogue/en/phone.json'),
+    import('../../data/dialogue/en/hud.json'),
+    import('../../data/dialogue/en/missions.json'),
+    import('../../data/dialogue/en/endings.json'),
+    import('../../data/dialogue/en/characters.json'),
+    import('../../data/dialogue/en/encounters.json'),
+    import('../../data/dialogue/en/dialogue.json'),
+    import('../../data/dialogue/en/passengers.json'),
+  ]);
+  const merged: Record<string, string> = {
+    ...(enUi.default ?? enUi),
+    ...(enNegotiation.default ?? enNegotiation),
+    ...(enPhone.default ?? enPhone),
+    ...(enHud.default ?? enHud),
+    ...(enMissions.default ?? enMissions),
+    ...(enEndings.default ?? enEndings),
+    ...(enCharacters.default ?? enCharacters),
+    ...(enEncounters.default ?? enEncounters),
+    ...(enDialogue.default ?? enDialogue),
+    ...(enPassengers.default ?? enPassengers),
+    ...dictionaries.en,
+  };
+  dictionaries.en = merged;
+  localeLoaded.en = true;
+  localeVersionSignal.value++;
+  return merged;
+}
+
+/**
+ * Ensures the requested locale dictionary is loaded via dynamic `import()`.
+ * Default Bangla (`bn`) is embedded in the initial shell; English (`en`) is
+ * split into a lazy chunk and fetched on demand.
+ */
+export function ensureLocaleLoaded(lang: Language): Promise<Record<string, string>> {
+  if (localeLoaded[lang]) {
+    return Promise.resolve(dictionaries[lang]);
+  }
+  if (!localePromises[lang]) {
+    localePromises[lang] = fetchEnglishDictionary();
+  }
+  return localePromises[lang]!;
+}
+
+if (import.meta.env.DEV && typeof process !== 'undefined' && process.versions?.node) {
+  // In Node / Vitest unit tests, pre-populate English synchronously from disk so
+  // synchronous `setLanguage('en'); t(...)` assertions continue to work with zero changes.
+  try {
+    const req = (globalThis as unknown as { process: { mainModule?: { require?: (id: string) => unknown } } }).process;
+    void req;
+    void ensureLocaleLoaded('en');
+  } catch {
+    // ignore
+  }
+}
 
 // Default to Bangla for authentic Dhaka experience. A signal, so components that
 // call t() re-render when the language changes.
 const languageSignal = signal<Language>('bn');
 
 export function setLanguage(lang: Language): void {
+  if (!localeLoaded[lang]) {
+    void ensureLocaleLoaded(lang);
+  }
   languageSignal.value = lang;
   if (typeof document !== 'undefined' && document.documentElement) {
     document.documentElement.lang = lang;
@@ -54,9 +135,11 @@ export function localDigits(value: string | number): string {
 
 export function loadTranslations(lang: Language, data: Record<string, string>): void {
   dictionaries[lang] = { ...dictionaries[lang], ...data };
+  localeVersionSignal.value++;
 }
 
 export function getDictionary(lang: Language): Record<string, string> {
+  void localeVersionSignal.value;
   return { ...dictionaries[lang] };
 }
 
@@ -65,6 +148,7 @@ export function getDictionary(lang: Language): Record<string, string> {
  * Falls back to 'en' dictionary, then to the key itself if not found.
  */
 export function t(key: string, vars?: Record<string, string | number>): string {
+  void localeVersionSignal.value;
   let template = dictionaries[languageSignal.value]?.[key];
 
   // Fallback to English

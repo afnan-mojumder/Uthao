@@ -1,7 +1,6 @@
 import type { JSX } from 'preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import bnDialogue from '../../../data/dialogue/bn/negotiation.json';
-import enDialogue from '../../../data/dialogue/en/negotiation.json';
 import type {
   NegotiationAction,
   NegotiationResult,
@@ -16,7 +15,7 @@ import {
   IconShield,
   IconWarning,
 } from '../components/icons';
-import { getDictionary, getLanguage, localDigits, t } from '../i18n';
+import { ensureLocaleLoaded, getDictionary, getLanguage, localDigits, t } from '../i18n';
 
 export interface NegotiationPanelProps {
   active: boolean;
@@ -172,11 +171,12 @@ export function NegotiationPanelView({
   const primaryLine = t(rawKey, vars);
   const otherLang = currentLang === 'bn' ? 'en' : 'bn';
   const otherDict = getDictionary(otherLang);
+  if (otherLang === 'en' && !otherDict[rawKey]) {
+    void ensureLocaleLoaded('en');
+  }
   const subtitleTemplate =
     otherDict[rawKey] ??
-    (currentLang === 'bn'
-      ? (enDialogue as Record<string, string>)[rawKey]
-      : (bnDialogue as Record<string, string>)[rawKey]) ??
+    (currentLang === 'en' ? (bnDialogue as Record<string, string>)[rawKey] : undefined) ??
     '';
   const subtitleLine = subtitleTemplate.replace(
     /\{(\w+)\}/g,

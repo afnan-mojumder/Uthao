@@ -1,8 +1,7 @@
-import type { RoadNetwork } from '../road/RoadNetwork';
+import { getRoadWidth, type RoadNetwork } from '../road/RoadNetwork';
 import type { RoadSegment, RoadNode } from '../../core/types';
 import { Rng } from '../../core/rng';
 import { distance2d, clamp } from '../../core/math';
-import { getRoadWidth } from '../../render/roadMesh';
 import { BALANCE } from '../../config/balance';
 import type { CameraViewInfo } from './TrafficManager';
 

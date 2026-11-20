@@ -318,7 +318,7 @@ export class ReputationSystem {
       bus.on('reputation/changed', ({ delta }) => {
         if (delta === this.selfEmittedDelta) return;
         if (delta.localTrust !== undefined) {
-          this.changeLocalTrust(delta.localTrust);
+          this.applyMeter('publicReputation', delta.localTrust, 'karma.local_trust');
         }
         if (delta.relationship) {
           const prev = this.suppressRelationshipEmit;
@@ -677,28 +677,6 @@ export class ReputationSystem {
 
   getAllPassengerTrust(): Record<string, number> {
     return { ...this.passengerTrust };
-  }
-
-  // --- Local Trust (Deprecated alias for publicReputation until P8.1) ---
-
-  /** @deprecated Use `getMeters().publicReputation` instead (removed in P8.1). */
-  getLocalTrust(): number {
-    return this.meters.publicReputation;
-  }
-
-  /** @deprecated Use `applyMeter('publicReputation', ...)` instead (removed in P8.1). */
-  setLocalTrust(val: number): void {
-    const target = clamp(val, BALANCE.KARMA.min, BALANCE.KARMA.max);
-    const diff = target - this.meters.publicReputation;
-    if (diff !== 0) {
-      this.applyMeter('publicReputation', diff, 'karma.local_trust');
-    }
-  }
-
-  /** @deprecated Use `applyMeter('publicReputation', delta, reasonKey)` instead (removed in P8.1). */
-  changeLocalTrust(delta: number, reasonKey: string = 'karma.local_trust'): number {
-    this.applyMeter('publicReputation', delta, reasonKey);
-    return this.meters.publicReputation;
   }
 
   // --- Character Relationships [-100..100] ---

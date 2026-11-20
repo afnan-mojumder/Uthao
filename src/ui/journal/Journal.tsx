@@ -104,7 +104,7 @@ export function Journal({
   const ownedUpgrades = ownedUpgradesProp;
 
   const unlockedDistricts = MissionManager.getUnlockedDistrictsForChapter(chapter).filter(
-    (d) => d !== 'testloop'
+    (d) => !import.meta.env.DEV || d !== 'testloop'
   );
   const activeFlags = Object.entries(story.branchFlags).filter(
     ([flagKey, val]) => KNOWN_FLAG_KEYS.has(flagKey) && Boolean(val)

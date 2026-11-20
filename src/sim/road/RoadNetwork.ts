@@ -13,6 +13,28 @@ import { nearestNode, segmentAt, segmentAtElevation, type SegmentElevationHit } 
 
 export { isPickupSegment };
 
+export function getRoadWidth(segment: RoadSegment): number {
+  if (typeof segment.width === 'number' && segment.width > 0) {
+    return segment.width;
+  }
+  if (segment.divided) return 14.0;
+  switch (segment.roadType) {
+    case 'flyover':
+      return 12.0;
+    case 'main':
+      return 10.0;
+    case 'residential':
+    case 'service':
+      return 8.0;
+    case 'market':
+      return 6.0;
+    case 'alley':
+      return 4.0;
+    default:
+      return 7.0;
+  }
+}
+
 export class RoadNetwork {
   private nodes: RoadNode[] = [];
   private segments: RoadSegment[] = [];

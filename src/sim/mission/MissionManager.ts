@@ -562,16 +562,26 @@ export class MissionManager {
     if (ch === 5) {
       return ['mirpara', 'fulgate', 'motinagar', 'dhanbagh', 'puranpara', 'gulbari', 'mohakhal'];
     }
-    return [
-      'mirpara',
-      'fulgate',
-      'motinagar',
-      'dhanbagh',
-      'puranpara',
-      'gulbari',
-      'mohakhal',
-      'testloop',
-    ];
+    return import.meta.env.DEV
+      ? [
+          'mirpara',
+          'fulgate',
+          'motinagar',
+          'dhanbagh',
+          'puranpara',
+          'gulbari',
+          'mohakhal',
+          'testloop',
+        ]
+      : [
+          'mirpara',
+          'fulgate',
+          'motinagar',
+          'dhanbagh',
+          'puranpara',
+          'gulbari',
+          'mohakhal',
+        ];
   }
 
   getUnlockedDistricts(chapter?: number): DistrictId[] {

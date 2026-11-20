@@ -529,7 +529,7 @@ describe('NegotiationSystem (T2.3)', () => {
       const road = RoadNetwork.fromDistricts([testloopData as DistrictData]);
       const gm = new GameManager({ seed: 7, mode: 'career', data: {} });
       const s = new GameSession({ gm, road, autoRequests: false });
-      const trust0 = s.gm.reputationSystem.getLocalTrust();
+      const trust0 = s.gm.reputationSystem.getMeters().publicReputation;
       const rel0 = s.gm.reputationSystem.getRelationship('char_nabila');
       const nabilaProfile = generateProfile('bargainer', new Rng(1), 'pass_char_nabila');
       s.requests.setProfile(nabilaProfile);
@@ -546,7 +546,7 @@ describe('NegotiationSystem (T2.3)', () => {
       s.ride.accept('req_disc_session');
       const neg = s.beginNegotiation('req_disc_session')!;
       s.ride.agreeFare(Math.max(50, neg.fairFare - 10), { discount: true });
-      expect(s.gm.reputationSystem.getLocalTrust()).toBeGreaterThan(trust0);
+      expect(s.gm.reputationSystem.getMeters().publicReputation).toBeGreaterThan(trust0);
       expect(s.gm.reputationSystem.getRelationship('char_nabila')).toBeGreaterThan(rel0);
     });
 

@@ -305,7 +305,7 @@ export const tutorialSignal = signal<TutorialState>({
 });
 
 function initialScreen(): ScreenId {
-  if (typeof window === 'undefined') return 'title';
+  if (!import.meta.env.DEV || typeof window === 'undefined') return 'title';
   try {
     return new URLSearchParams(window.location.search).get('debug') === '1' ? 'game' : 'title';
   } catch {
@@ -677,7 +677,7 @@ export const saveSlotsSignal = signal<SaveSlotsState>({
   mode: 'save',
 });
 
-if (typeof window !== 'undefined') {
+if (import.meta.env.DEV && typeof window !== 'undefined') {
   (window as unknown as { __uthaoUi?: unknown }).__uthaoUi = {
     garageSignal,
     garageTabSignal,

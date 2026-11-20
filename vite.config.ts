@@ -55,12 +55,24 @@ export default defineConfig({
   ],
   build: {
     chunkSizeWarningLimit: 700,
+    modulePreload: {
+      resolveDependencies(_filename, deps) {
+        return deps.filter((dep) => !dep.includes('vendor-three'));
+      },
+    },
     rolldownOptions: {
       output: {
         manualChunks(id) {
           if (id.includes('node_modules/three')) return 'vendor-three';
           if (id.includes('node_modules/preact') || id.includes('node_modules/@preact')) return 'vendor-preact';
-          if (id.includes('/data/districts/') || id.includes('/data/world.json')) return 'game-world-data';
+          if (id.includes('/data/dialogue/en/')) return 'locale-en';
+          const districtMatch = /\/data\/districts\/([a-z0-9_]+)\.json$/i.exec(id);
+          if (districtMatch && districtMatch[1] !== 'mirpara') {
+            return `district-${districtMatch[1]}`;
+          }
+          if (id.includes('/data/districts/mirpara.json') || id.includes('/data/world.json')) {
+            return 'game-world-data';
+          }
         },
       },
     },

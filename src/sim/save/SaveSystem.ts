@@ -75,7 +75,7 @@ export function createDefaultStorageAdapter(): StorageAdapter {
     if (typeof localStorage === 'undefined') {
       return new MemoryStorageAdapter();
     }
-    const testKey = '__uthao_storage_test__';
+    const testKey = 'uthao_storage_test';
     localStorage.setItem(testKey, '1');
     localStorage.removeItem(testKey);
     return new LocalStorageAdapter();

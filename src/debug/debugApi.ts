@@ -84,15 +84,7 @@ export function initDebugApi(
   gm: GameManager,
   opts?: DebugApiOptions | Renderer
 ): void {
-  const isDev =
-    (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') ||
-    (typeof import.meta !== 'undefined' && Boolean(import.meta.env?.DEV));
-  const hasDebugParam =
-    typeof window !== 'undefined' &&
-    window.location !== undefined &&
-    window.location.search.includes('debug=1');
-
-  if (!isDev && !hasDebugParam) {
+  if (!import.meta.env.DEV) {
     return;
   }
 

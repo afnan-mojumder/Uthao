@@ -11,16 +11,28 @@ export const RoadNodeSchema = z.object({
   tags: z.array(z.string()).optional(),
 });
 
-export const DistrictIdSchema = z.enum([
-  'mirpara',
-  'fulgate',
-  'dhanbagh',
-  'mohakhal',
-  'gulbari',
-  'puranpara',
-  'motinagar',
-  'testloop',
-]);
+export const DistrictIdSchema = z.enum(
+  import.meta.env?.DEV !== false
+    ? [
+        'mirpara',
+        'fulgate',
+        'dhanbagh',
+        'mohakhal',
+        'gulbari',
+        'puranpara',
+        'motinagar',
+        'testloop',
+      ]
+    : [
+        'mirpara',
+        'fulgate',
+        'dhanbagh',
+        'mohakhal',
+        'gulbari',
+        'puranpara',
+        'motinagar',
+      ]
+);
 
 export const RoadSegmentSchema = z.object({
   segmentId: z.string(),

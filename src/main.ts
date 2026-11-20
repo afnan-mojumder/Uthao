@@ -4,19 +4,14 @@ import { uiModalOpen, watchOverlayFocus } from './ui/gamepadNav';
 import { AudioManager } from './audio/AudioManager';
 import { getBikeDef } from './sim/economy/bikes';
 import { bindAudio } from './audio/bindAudio';
-
-/** Set once at boot in the bindings below; the frame loop drives it. */
-let audio: AudioManager;
-let engineThrottle = 0;
 import { GameManager } from './sim/GameManager';
 import { GameSession } from './sim/GameSession';
 import { PhysicsWorld } from './physics/PhysicsWorld';
-import { Renderer } from './render/Renderer';
-import { initDebugApi, spawnTestRequest } from './debug/debugApi';
 import { SIM_DT, MAX_FRAME_DT, MAX_SIM_STEPS_PER_FRAME } from './config/constants';
 import type { BikeInput } from './physics/bikeModel';
 import { RoadNetwork } from './sim/road/RoadNetwork';
-import { AutopilotController } from './debug/autopilot';
+import type { AutopilotController } from './debug/autopilot';
+import type { Renderer } from './render/Renderer';
 import { InputManager } from './input';
 import { loadBindings } from './input/bindings';
 import { App } from './ui/App';
@@ -43,6 +38,7 @@ import {
   audioPreviewSeqSignal,
   phoneSignal,
   setActiveSaveSystem,
+  mapWorldSignal,
   type GameSettings,
 } from './ui/store';
 import {
@@ -52,8 +48,7 @@ import {
   type HudSyncInput,
 } from './ui/hud/hudSync';
 import { getCharacter } from './sim/passenger/PassengerAI';
-import { setLanguage } from './ui/i18n';
-import { setDefaultSignLanguage } from './render/signage';
+import { ensureLocaleLoaded, setLanguage, t } from './ui/i18n';
 import { consumeFreshCareer, resolveCareerSeed } from './ui/freshCareer';
 import { applyDocumentSettings, routeColorFor } from './ui/settingsEffects';
 import { remainingRouteEtaMin } from './sim/road/navigation';
@@ -61,42 +56,21 @@ import { bindUi, syncMapLiveFromSession } from './ui/bindings';
 import { SaveSystem } from './sim/save/SaveSystem';
 import { Minimap } from './render/minimap';
 import { deriveRideView, nearestPlaceKey } from './sim/ride/rideView';
-import { t } from './ui/i18n';
 import { BALANCE } from './config/balance';
 import type { DistrictData, WorldData } from './sim/schemas';
 import { resolveQualityLevel, type QualityLevel } from './render/quality';
 import type { DistrictId } from './core/types';
-import testloopData from '../data/districts/testloop.json';
 import mirparaData from '../data/districts/mirpara.json';
-import fulgateData from '../data/districts/fulgate.json';
-import dhanbaghData from '../data/districts/dhanbagh.json';
-import mohakhalData from '../data/districts/mohakhal.json';
-import gulbariData from '../data/districts/gulbari.json';
-import puranparaData from '../data/districts/puranpara.json';
-import motinagarData from '../data/districts/motinagar.json';
 import worldDataJson from '../data/world.json';
-import { initMapViewer } from './debug/mapViewer';
+import { loadAllDistricts } from './ui/map/worldAccessor';
+
+/** Set once at boot in the bindings below; the frame loop drives it. */
+let audio: AudioManager;
+let engineThrottle = 0;
 
 const allDistrictsMap: Record<string, DistrictData> = {
   mirpara: mirparaData as DistrictData,
-  fulgate: fulgateData as DistrictData,
-  dhanbagh: dhanbaghData as DistrictData,
-  mohakhal: mohakhalData as DistrictData,
-  gulbari: gulbariData as DistrictData,
-  puranpara: puranparaData as DistrictData,
-  motinagar: motinagarData as DistrictData,
-  testloop: testloopData as DistrictData,
 };
-
-const allDistrictsList: DistrictData[] = [
-  mirparaData as DistrictData,
-  fulgateData as DistrictData,
-  dhanbaghData as DistrictData,
-  mohakhalData as DistrictData,
-  gulbariData as DistrictData,
-  puranparaData as DistrictData,
-  motinagarData as DistrictData,
-];
 
 console.log('Uthao booting...');
 
@@ -113,10 +87,10 @@ function hasWebGL2Support(): boolean {
 
 export let saveSystem: SaveSystem | undefined;
 const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
-const isMapTool = urlParams?.get('tool') === 'map';
-// T7.1: `?encounters=0` permanently disables ambient encounters (used by debug/test URLs
+const isMapTool = import.meta.env.DEV && urlParams?.get('tool') === 'map';
+// T7.1: `?encounters=0` permanently disables ambient encounters in DEV (used by debug/test URLs
 // that drive the sim directly and don't want a roaming encounter card in the way).
-const encountersDisabledByUrl = urlParams?.get('encounters') === '0';
+const encountersDisabledByUrl = import.meta.env.DEV && urlParams?.get('encounters') === '0';
 
 let uiMounted = false;
 
@@ -140,9 +114,27 @@ function setLoadingStage(stageKey: string, progress: number): void {
   };
 }
 
-if (isMapTool) {
-  const districtChoice = urlParams?.get('district') === 'testloop' ? testloopData : mirparaData;
-  initMapViewer({ district: districtChoice as DistrictData });
+if (import.meta.env.DEV && isMapTool) {
+  void (async () => {
+    const [{ initMapViewer }, districts] = await Promise.all([
+      import('./debug/mapViewer'),
+      loadAllDistricts(),
+    ]);
+    for (const d of districts) {
+      allDistrictsMap[d.districtId] = d;
+    }
+    let testloopJson: DistrictData | undefined;
+    if (urlParams?.get('district') === 'testloop') {
+      const mod = await import('../data/districts/testloop.json');
+      testloopJson = (mod.default ?? mod) as DistrictData;
+    }
+    const wantDistrict = urlParams?.get('district');
+    const districtChoice =
+      wantDistrict === 'testloop' && testloopJson
+        ? testloopJson
+        : (wantDistrict && allDistrictsMap[wantDistrict]) || (mirparaData as DistrictData);
+    initMapViewer({ district: districtChoice });
+  })();
 } else {
   // PhysicsWorld initializes before boot constructs GameSession and loads
   // the renderer's colliders so the first frame has full collision coverage.
@@ -160,8 +152,9 @@ if (isMapTool) {
 }
 
 async function bootGame(): Promise<void> {
-  // The saved language and document settings (including prefers-reduced-motion default) apply before the first render.
+  // Ensure the active language dictionary is loaded and applied before the first render.
   setLanguage(settingsSignal.value.language);
+  await ensureLocaleLoaded(settingsSignal.value.language);
   applyDocumentSettings(settingsSignal.value);
 
   setLoadingStage('loading.boot', 0);
@@ -176,9 +169,24 @@ async function bootGame(): Promise<void> {
     return;
   }
 
-  const districtParam = urlParams?.get('district');
+  // Dynamically load non-Mirpara districts so they live in separate lazy chunks
+  const allDistrictsList = await loadAllDistricts();
+  for (const d of allDistrictsList) {
+    allDistrictsMap[d.districtId] = d;
+  }
+  mapWorldSignal.value = worldDataJson as WorldData;
+
+  const districtParam = import.meta.env.DEV ? urlParams?.get('district') : null;
+  if (import.meta.env.DEV && districtParam === 'testloop' && !allDistrictsMap.testloop) {
+    const mod = await import('../data/districts/testloop.json');
+    allDistrictsMap.testloop = (mod.default ?? mod) as DistrictData;
+  }
+
   const isSingleDistrict = Boolean(
-    districtParam && districtParam !== 'world' && allDistrictsMap[districtParam]
+    import.meta.env.DEV &&
+      districtParam &&
+      districtParam !== 'world' &&
+      allDistrictsMap[districtParam]
   );
   const activeDistrict: DistrictData = isSingleDistrict
     ? allDistrictsMap[districtParam!]!
@@ -226,9 +234,8 @@ async function bootGame(): Promise<void> {
   setLoadingStage('loading.physics', 25);
   const physics = await PhysicsWorld.create();
 
-  // T7.2: single-district debug/test URLs (e.g. `?district=testloop`) get one
-  // deterministic ride instead of the real RequestGenerator, so e2e specs stay
-  // stable. The real game (world mode) drives rides from RequestGenerator only.
+  // T7.2: single-district debug/test URLs (in DEV) get one deterministic ride
+  // instead of the real RequestGenerator, so e2e specs stay stable.
   const session = new GameSession({
     gm,
     road: roadNetwork,
@@ -241,10 +248,12 @@ async function bootGame(): Promise<void> {
   // CityBuilder initializes around the actual player spawn position.
   session.spawnAtHome();
 
-  const canvas = typeof document !== 'undefined'
-    ? (document.getElementById('game-canvas') as HTMLCanvasElement)
-    : null;
+  const canvas =
+    typeof document !== 'undefined'
+      ? (document.getElementById('game-canvas') as HTMLCanvasElement)
+      : null;
   let renderer: Renderer | undefined;
+  let setDefaultSignLanguageFn: ((lang: 'bn' | 'en') => void) | undefined;
   const urlQualityParam = urlParams?.get('quality');
   const hasValidUrlQuality = Boolean(
     urlQualityParam === 'low' || urlQualityParam === 'medium' || urlQualityParam === 'high'
@@ -271,8 +280,13 @@ async function bootGame(): Promise<void> {
 
   if (canvas) {
     setLoadingStage('loading.world', 55);
+    const [{ Renderer: RendererClass }, { setDefaultSignLanguage }] = await Promise.all([
+      import('./render/Renderer'),
+      import('./render/signage'),
+    ]);
+    setDefaultSignLanguageFn = setDefaultSignLanguage;
     setDefaultSignLanguage(settingsSignal.value.language);
-    renderer = Renderer.init(canvas, qualityChoice);
+    renderer = RendererClass.init(canvas, qualityChoice);
     if (hasValidUrlQuality) {
       renderer.setAdaptiveQualityEnabled(false);
     }
@@ -338,16 +352,16 @@ async function bootGame(): Promise<void> {
         renderer?.dispose();
         physics.clearAllColliders();
         setLanguage(s.language);
-        setDefaultSignLanguage(s.language);
+        setDefaultSignLanguageFn?.(s.language);
 
-        const nextRenderer = Renderer.init(canvas, restoredQuality);
+        const nextRenderer = RendererClass.init(canvas, restoredQuality);
         renderer = nextRenderer;
         if (hasValidUrlQuality) {
           nextRenderer.setAdaptiveQualityEnabled(false);
         }
         nextRenderer.cameraRig.setReduceMotion(s.reduceMotion);
         nextRenderer.cameraRig.setMode(prevCamMode);
-        if (typeof window !== 'undefined' && window.__uthao) {
+        if (import.meta.env.DEV && typeof window !== 'undefined' && window.__uthao) {
           window.__uthao.renderer = nextRenderer;
         }
 
@@ -370,445 +384,452 @@ async function bootGame(): Promise<void> {
     });
   }
 
-// T4.9 SaveSystem and tab visibility lifecycle handling
-setLoadingStage('loading.session', 85);
-const activeSaveSystem = new SaveSystem();
-saveSystem = activeSaveSystem;
-setActiveSaveSystem(activeSaveSystem);
-bootCleanups.push(
-  activeSaveSystem.bindAutosave(
-    gm,
-    typeof document !== 'undefined' ? document : undefined,
-    // On the title screen the game is blank: never save it over the real career.
-    () => screenSignal.value !== 'title'
-  )
-);
-
-if (typeof document !== 'undefined') {
-  const onVisibilityChange = () => {
-    if (document.hidden) {
-      gm.dispatch({ type: 'pause' });
-      pausedSignal.value = true;
-    }
-  };
-  document.addEventListener('visibilitychange', onVisibilityChange);
-  bootCleanups.push(() => document.removeEventListener('visibilitychange', onVisibilityChange));
-}
-
-const minimap = typeof document !== 'undefined' ? new Minimap(roadNetwork) : undefined;
-if (minimap) {
-  minimapCanvasSignal.value = minimap.canvas;
-  bootCleanups.push(() => {
-    minimapCanvasSignal.value = null;
-  });
-}
-const autopilot = new AutopilotController(roadNetwork);
-const trafficManager = session.traffic;
-const inputManager = new InputManager({
-  isModalOpen: () => gm.paused || screenSignal.value !== 'game' || uiModalOpen(settingsOpenSignal.value),
-});
-bootCleanups.push(() => inputManager.detach());
-
-initDebugApi(gm, {
-  renderer,
-  autopilot,
-  rideManager,
-  requests: session.requests,
-  trafficManager,
-});
-
-// T7.4: every UI dispatcher slot (request accept/decline, negotiation,
-// menu, save/load, tutorial, garage, bike, ending, phone contacts) is bound
-// here in one place instead of scattered across this file.
-bootCleanups.push(bindUi(session, activeSaveSystem));
-
-// Settings take effect as soon as they are saved, and the saved language is
-// applied on boot. Cancel reverts the language preview (Settings.tsx).
-const applySettings = (s: GameSettings) => {
-  applyDocumentSettings(s);
-  renderer?.cameraRig.setReduceMotion(s.reduceMotion);
-  setDefaultSignLanguage(s.language); // storefront signs, for districts loaded from now on
-  minimap?.setRouteColor(routeColorFor(s));
-  gm.eventDirector.pauseOnDecisions = s.pauseOnDecisions;
-  const baseBindings = s.controls ?? loadBindings();
-  inputManager.setBindings({ ...baseBindings, tiltEnabled: s.tiltControls });
-};
-bootCleanups.push(settingsSignal.subscribe(applySettings));
-
-// T8.1: negotiation now happens before pickup, as soon as the rider accepts.
-bootCleanups.push(
-  gm.bus.on('negotiation/started', (ev) => {
-    const negotiation = session.beginNegotiation(ev.requestId);
-    if (negotiation) {
-      negotiationSignal.value = {
-        active: true,
-        session: negotiation,
-        lastResult: null,
-        mood: rideManager.getPassengerMood(),
-        pickup: session.pickupChoice(),
-        alley: session.alleyChoice(),
-        destinationKey: nearestPlaceKey(rideManager, negotiation.req.destinationNodeId ?? ''),
-      };
-    }
-  })
-);
-
-if (typeof window !== 'undefined') {
-  const onPageHide = () => {
-    for (const cleanup of bootCleanups) cleanup();
-    bootCleanups.length = 0;
-  };
-  window.addEventListener('pagehide', onPageHide, { once: true });
-}
-
-// T7.2: single-district debug/test boots get one deterministic ride (the old
-// hardcoded sample ride) since `autoRequests` is off for them; the real game
-// (world mode) is offered real rides by RequestGenerator via GameSession.step.
-if (isSingleDistrict) {
-  spawnTestRequest(rideManager, 120);
-}
-
-// T7.3: confirm bike spawn is clear of newly loaded static colliders and snap camera
-// directly to initial spawn pose (no 180m swoop on the first frame).
-session.spawnAtHome();
-
-// A new career requested from the menu before this reload: start it on this fresh game.
-if (consumeFreshCareer()) {
-  session.newCareer(bootSeed);
-  syncBikeAppearance(renderer);
-  tutorialSignal.value = {
-    active: true,
-    step: 'alarm',
-    agreedFare: 100,
-    cash: gm.economy.cash,
-    fuelL: gm.economyManager.fuelLevel,
-    conditionPct: gm.economyManager.motorcycleCondition,
-    rentTarget: BALANCE.LIVING.familyPaymentDay3,
-    receipt: null,
-  };
-  screenSignal.value = 'game';
-}
-
-renderer?.snapBikeState(session.bike);
-
-// All systems, scene, SaveSystem, debug API, and UI callbacks are now bound;
-// hide <Loading /> so <MainMenu /> (or the active game screen) can accept input.
-loadingSignal.value = { active: false, stageKey: 'loading.ready', progress: 100 };
-
-let lastTime = typeof performance !== 'undefined' ? performance.now() : 0;
-let roamNodeIndex = 0;
-let cameraHeld = false;
-let lastBikeBrake = 0;
-let lastSimBattery = Math.round(gm.economyManager.phoneBattery);
-
-// Pre-allocated scratch & cache for zero-alloc steady-state syncHud()
-const hudCache = createHudCache();
-const getNearestMissionTargetFn = (poiId: string) => session.getNearestMissionTarget(poiId);
-const pollHudMissionsFn = () => gm.missionManager.getHudMissions(getNearestMissionTargetFn);
-const hudInputScratch: HudSyncInput = {
-  now: 0,
-  simStepped: false,
-  isFirstPerson: false,
-  districtId: '',
-  canRecoverBike: true,
-  gear: 1,
-  objectiveKey: '',
-  placeKey: '',
-  navKind: '',
-  navTextKey: '',
-  navDistM: -1,
-  reqId: '',
-  passengerStatus: 'None',
-  passengerNameKey: undefined,
-  passengerCharacterId: undefined,
-  passengerArchetype: undefined,
-  passengerMood: undefined,
-  roadEventId: '',
-  roadEventKind: '',
-  roadEventTitles: undefined,
-  activeMissionCount: 0,
-  pollMissions: pollHudMissionsFn,
-  fare: undefined,
-  etaMinutes: undefined,
-  nearStation: false,
-  chargeSpot: null,
-  todayNetEarnings: 0,
-  shiftClock: '07:30',
-  shiftDay: 1,
-  rating: 5.0,
-  dialogueSubtitle: null,
-  speedKmh: 0,
-  fuelL: 6.0,
-  fuelMaxL: 8.0,
-  conditionPct: 100,
-};
-
-function syncHud(
-  now: number,
-  simStepped: boolean,
-  activeReq: ReturnType<typeof rideManager.getActiveRequest>,
-  view: ReturnType<typeof deriveRideView>
-): void {
-  const activeRoadEv = gm.roadEvents.getFirstActiveEvent();
-  let passengerNameKey: string | undefined;
-  let passengerCharacterId: string | undefined;
-  let passengerArchetype: string | undefined;
-  if (activeReq) {
-    const activeProfile = session.requests.getProfile(activeReq.passengerId);
-    const activeChar = activeReq.characterId ? getCharacter(activeReq.characterId) : undefined;
-    passengerNameKey = activeReq.passengerNameKey ?? activeProfile?.nameKey ?? activeChar?.nameKey;
-    passengerCharacterId = activeReq.characterId ?? activeProfile?.characterId;
-    passengerArchetype = activeProfile?.archetype ?? activeChar?.archetype;
-  }
-
-  const districtId = roadNetwork.getNodeDistrict(gm.playerNodeId) ?? activeDistrict.districtId;
-  const routeEta = activeReq
-    ? remainingRouteEtaMin(
-        rideManager.currentRoute,
-        { x: session.bike.x, z: session.bike.z },
-        roadNetwork.getNodesMap()
-      )
-    : undefined;
-
-  hudInputScratch.now = now;
-  hudInputScratch.simStepped = simStepped;
-  hudInputScratch.isFirstPerson = renderer ? renderer.cameraRig.mode === 'firstPerson' : false;
-  hudInputScratch.districtId = districtId;
-  hudInputScratch.canRecoverBike = !tutorialSignal.value.active;
-  hudInputScratch.gear = session.bike.gear;
-  hudInputScratch.objectiveKey = view.objectiveKey;
-  hudInputScratch.placeKey = typeof view.objectiveVars.place === 'string' ? view.objectiveVars.place : '';
-  hudInputScratch.navKind = view.instruction ? view.instruction.kind : '';
-  hudInputScratch.navTextKey = view.instruction ? view.instruction.textKey : '';
-  hudInputScratch.navDistM = view.instruction ? Math.round(view.instruction.distanceM) : -1;
-  hudInputScratch.reqId = activeReq ? activeReq.requestId : '';
-  hudInputScratch.passengerStatus = view.passenger;
-  hudInputScratch.passengerNameKey = passengerNameKey;
-  hudInputScratch.passengerCharacterId = passengerCharacterId;
-  hudInputScratch.passengerArchetype = passengerArchetype;
-  hudInputScratch.passengerMood = activeReq ? rideManager.getPassengerMood() : undefined;
-  hudInputScratch.roadEventId = activeRoadEv ? activeRoadEv.id : '';
-  hudInputScratch.roadEventKind = activeRoadEv ? activeRoadEv.kind : '';
-  hudInputScratch.roadEventTitles = activeRoadEv?.title;
-  hudInputScratch.activeMissionCount = gm.story.activeMissions.length;
-  hudInputScratch.fare = activeReq?.initialFare;
-  hudInputScratch.etaMinutes = resolveHudEtaMinutes(
-    Boolean(activeReq),
-    routeEta,
-    activeReq?.estimatedDuration
+  // T4.9 SaveSystem and tab visibility lifecycle handling
+  setLoadingStage('loading.session', 85);
+  const activeSaveSystem = new SaveSystem();
+  saveSystem = activeSaveSystem;
+  setActiveSaveSystem(activeSaveSystem);
+  bootCleanups.push(
+    activeSaveSystem.bindAutosave(
+      gm,
+      typeof document !== 'undefined' ? document : undefined,
+      // On the title screen the game is blank: never save it over the real career.
+      () => screenSignal.value !== 'title'
+    )
   );
-  hudInputScratch.nearStation = session.nearFuelStation();
-  hudInputScratch.chargeSpot =
-    gm.economyManager.phoneBattery < BALANCE.PHONE.lowBatteryPct
-      ? session.nearChargeSpot('home')
-        ? 'home'
-        : session.nearChargeSpot('teaStall')
-          ? 'teaStall'
-          : null
-      : null;
-  hudInputScratch.todayNetEarnings = gm.economy.dailyRevenue - gm.economy.dailyExpenses;
-  hudInputScratch.shiftClock = gm.clock.hhmm();
-  hudInputScratch.shiftDay = gm.clock.day;
-  hudInputScratch.rating = gm.reputationSystem.getAppRating();
-  hudInputScratch.dialogueSubtitle = dialogueSubtitleSignal.value;
-  hudInputScratch.speedKmh = Math.abs(session.bike.speed) * 3.6;
-  hudInputScratch.fuelL = gm.economyManager.fuelLevel;
-  hudInputScratch.fuelMaxL = gm.economyManager.maxFuelL();
-  hudInputScratch.conditionPct = gm.economyManager.motorcycleCondition;
 
-  const simBattery = Math.round(gm.economyManager.phoneBattery);
-  if (simBattery !== lastSimBattery) {
-    lastSimBattery = simBattery;
-    phoneSignal.value = { ...phoneSignal.value, phoneBattery: simBattery };
-  }
-
-  syncHudWithCache(hudCache, hudInputScratch);
-}
-
-function frame(now: number) {
-  const dt = (now - lastTime) / 1000;
-  lastTime = now;
-
-  // T7.1: the sim only runs while the real game screen is active, and ambient
-  // encounters are additionally suppressed during the opening tutorial or when
-  // disabled via URL — otherwise a roaming encounter can fire behind the main
-  // menu and softlock boot.
-  const inGame = screenSignal.value === 'game';
-  gm.eventDirector.enabled = inGame && !tutorialSignal.value.active && !encountersDisabledByUrl;
-
-  // Frame-rate decoupling: convert the variable rAF dt into a whole number of
-  // fixed SIM_DT ticks, same clamp/cap as GameManager.runFrame. The clock tick
-  // itself happens once per step inside session.step(), not here.
-  let steps = 0;
-  if (inGame && !gm.paused) {
-    gm.accumulator += Math.min(dt, MAX_FRAME_DT);
-    while (gm.accumulator >= SIM_DT && steps < MAX_SIM_STEPS_PER_FRAME) {
-      gm.accumulator -= SIM_DT;
-      steps++;
-    }
-    if (gm.accumulator > SIM_DT * MAX_SIM_STEPS_PER_FRAME) {
-      gm.accumulator = 0;
-    }
-  }
-
-  for (let s = 0; s < steps; s++) {
-    inputManager.update(SIM_DT);
-    const touchThrottle = inputManager.isTouchThrottleActive();
-    const touchBrake = inputManager.isTouchBrakeActive();
-    const touchSteer = inputManager.getTouchSteer();
-    const prevTouchVis = touchFeedbackSignal.value;
-    if (
-      touchThrottle !== prevTouchVis.throttle ||
-      touchBrake !== prevTouchVis.brake ||
-      Math.abs(touchSteer - prevTouchVis.steer) > 0.02
-    ) {
-      touchFeedbackSignal.value = {
-        ...prevTouchVis,
-        throttle: touchThrottle,
-        brake: touchBrake,
-        steer: touchSteer,
-      };
-    }
-    const activeReq = rideManager.getActiveRequest();
-    const driveView = deriveRideView(rideManager);
-
-    // Autopilot or inputManager
-    let input: BikeInput;
-
-    if (autopilot.isEnabled()) {
-      if (activeReq) {
-        if (driveView.navTargetNodeId) {
-          autopilot.setDestination(session.bike.x, session.bike.z, driveView.navTargetNodeId);
-        }
-      } else if (activeDistrict.nodes.length > 0 && autopilot.isFinished()) {
-        roamNodeIndex = (roamNodeIndex + 1) % activeDistrict.nodes.length;
-        const nextNode = activeDistrict.nodes[roamNodeIndex];
-        if (nextNode) {
-          autopilot.setDestination(session.bike.x, session.bike.z, nextNode.nodeId);
-        }
+  if (typeof document !== 'undefined') {
+    const onVisibilityChange = () => {
+      if (document.hidden) {
+        gm.dispatch({ type: 'pause' });
+        pausedSignal.value = true;
       }
-      input = autopilot.step(session.bike);
-    } else {
-      const state = inputManager.read();
-      input = {
-        throttle: state.throttle,
-        brake: state.brake,
-        steer: state.steer,
-      };
-    }
-
-    // Horn (traffic reaction to the player, not part of the bike/traffic/ride
-    // step itself, so it stays here alongside the rest of the input glue).
-    const rawInput = inputManager.read();
-    // Camera key (C) or gamepad Select toggles on press, not while held.
-    if (rawInput.camera && !cameraHeld) renderer?.cameraRig.toggleMode();
-    cameraHeld = rawInput.camera;
-    if (rawInput.horn) {
-      trafficManager.triggerHorn({ x: session.bike.x, z: session.bike.z });
-    }
-
-    session.step(input, SIM_DT);
-    if (s >= steps - 2) {
-      renderer?.setBikeState(session.bike);
-    }
-    engineThrottle = input.throttle;
-    if (input.brake > 0.35 && lastBikeBrake <= 0.35 && Math.abs(session.bike.speed) > 3.0) {
-      audio.playBrake(input.brake);
-    }
-    lastBikeBrake = input.brake;
-    if (rawInput.horn) audio.startHorn();
-    else audio.stopHorn();
-  }
-
-  if (steps > 0) {
-    tickPhoneOffers(steps * SIM_DT);
-  }
-
-  if (!inGame || gm.paused) {
-    lastBikeBrake = 0;
-  }
-
-  // Engine and ambience follow the bike; menus and pause are silent.
-  const playing = inGame && !pausedSignal.value;
-  audio.setEnginePitch(getBikeDef(gm.economyManager.currentBikeId).audioPitch);
-  audio.updateEngine(
-    session.bike.speed,
-    engineThrottle,
-    playing,
-    session.bike.gear,
-    session.bike.rpmNorm
-  );
-  audio.setAmbience(0.5, gm.weather, playing);
-  if (!playing) audio.stopHorn();
-
-  const activeReq = rideManager.getActiveRequest();
-  // T8.1: the one place HUD, minimap and markers read ride state from.
-  const view = deriveRideView(rideManager);
-  const pNode = activeReq ? roadNetwork.getNode(activeReq.pickupNodeId) : undefined;
-  const dNode = activeReq ? roadNetwork.getNode(activeReq.destinationNodeId) : undefined;
-
-  if (renderer) {
-    if (pNode) renderer.markers.setPickup(pNode.x, pNode.z, view.pickupVisible);
-    else renderer.markers.setPickup(0, 0, false);
-    if (dNode) renderer.markers.setDropoff(dNode.x, dNode.z, view.dropoffVisible);
-    else renderer.markers.setDropoff(0, 0, false);
-    renderer.setPassengerVisible(view.dropoffVisible);
-
-    renderer.updatePeople(
-      trafficManager.pedestrians.getPedestrians(),
-      trafficManager.getAgents(),
-      now / 1000
-    );
-
-    renderer.setBrakeLight(lastBikeBrake > 0.05);
-    renderer.syncFloodedSegments(gm.weatherSystem, roadNetwork);
-    const alpha = gm.accumulator / SIM_DT;
-    renderer.render(gm.snapshot(), alpha, trafficManager.signals);
-  }
-
-  // T7.4: Journal reads a live snapshot; only built while it's actually open.
-  if (journalSignal.value) {
-    journalDataSignal.value = {
-      snapshot: gm.snapshot(),
-      activeMissions: gm.story.activeMissions
-        .map((id) => gm.missionManager.missions.get(id))
-        .filter((m): m is NonNullable<typeof m> => Boolean(m)),
-      getObjectiveStates: (missionId) => gm.missionManager.getObjectiveStates(missionId),
-      ownedUpgrades: [...gm.economyManager.ownedUpgrades],
     };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    bootCleanups.push(() => document.removeEventListener('visibilitychange', onVisibilityChange));
   }
 
-  const curScreen = screenSignal.value;
-  if (curScreen !== 'title') {
-    // Update Minimap
-    if (minimap) {
-      const pNodePos = view.pickupVisible ? pNode : null;
-      const dNodePos = view.dropoffVisible ? dNode : null;
-      minimap.update(
-        { x: session.bike.x, z: session.bike.z, heading: session.bike.heading },
-        rideManager.currentRoute,
-        { pickup: pNodePos ?? null, dropoff: dNodePos ?? null }
-      );
+  const minimap = typeof document !== 'undefined' ? new Minimap(roadNetwork) : undefined;
+  if (minimap) {
+    minimapCanvasSignal.value = minimap.canvas;
+    bootCleanups.push(() => {
+      minimapCanvasSignal.value = null;
+    });
+  }
+
+  const trafficManager = session.traffic;
+  const inputManager = new InputManager({
+    isModalOpen: () =>
+      gm.paused || screenSignal.value !== 'game' || uiModalOpen(settingsOpenSignal.value),
+  });
+  bootCleanups.push(() => inputManager.detach());
+
+  let autopilot: AutopilotController | undefined;
+  if (import.meta.env.DEV) {
+    const [{ AutopilotController: AutopilotClass }, { initDebugApi, spawnTestRequest }] =
+      await Promise.all([import('./debug/autopilot'), import('./debug/debugApi')]);
+    autopilot = new AutopilotClass(roadNetwork);
+    initDebugApi(gm, {
+      renderer,
+      autopilot,
+      rideManager,
+      requests: session.requests,
+      trafficManager,
+    });
+    if (isSingleDistrict) {
+      spawnTestRequest(rideManager, 120);
+    }
+  }
+
+  // T7.4: every UI dispatcher slot (request accept/decline, negotiation,
+  // menu, save/load, tutorial, garage, bike, ending, phone contacts) is bound
+  // here in one place instead of scattered across this file.
+  bootCleanups.push(bindUi(session, activeSaveSystem));
+
+  // Settings take effect as soon as they are saved, and the saved language is
+  // applied on boot. Cancel reverts the language preview (Settings.tsx).
+  const applySettings = (s: GameSettings) => {
+    applyDocumentSettings(s);
+    renderer?.cameraRig.setReduceMotion(s.reduceMotion);
+    setDefaultSignLanguageFn?.(s.language);
+    minimap?.setRouteColor(routeColorFor(s));
+    gm.eventDirector.pauseOnDecisions = s.pauseOnDecisions;
+    const baseBindings = s.controls ?? loadBindings();
+    inputManager.setBindings({ ...baseBindings, tiltEnabled: s.tiltControls });
+  };
+  bootCleanups.push(settingsSignal.subscribe(applySettings));
+
+  // T8.1: negotiation now happens before pickup, as soon as the rider accepts.
+  bootCleanups.push(
+    gm.bus.on('negotiation/started', (ev) => {
+      const negotiation = session.beginNegotiation(ev.requestId);
+      if (negotiation) {
+        negotiationSignal.value = {
+          active: true,
+          session: negotiation,
+          lastResult: null,
+          mood: rideManager.getPassengerMood(),
+          pickup: session.pickupChoice(),
+          alley: session.alleyChoice(),
+          destinationKey: nearestPlaceKey(rideManager, negotiation.req.destinationNodeId ?? ''),
+        };
+      }
+    })
+  );
+
+  if (typeof window !== 'undefined') {
+    const onPageHide = () => {
+      for (const cleanup of bootCleanups) cleanup();
+      bootCleanups.length = 0;
+    };
+    window.addEventListener('pagehide', onPageHide, { once: true });
+  }
+
+  // T7.3: confirm bike spawn is clear of newly loaded static colliders and snap camera
+  // directly to initial spawn pose (no 180m swoop on the first frame).
+  session.spawnAtHome();
+
+  // A new career requested from the menu before this reload: start it on this fresh game.
+  if (consumeFreshCareer()) {
+    session.newCareer(bootSeed);
+    syncBikeAppearance(renderer);
+    tutorialSignal.value = {
+      active: true,
+      step: 'alarm',
+      agreedFare: 100,
+      cash: gm.economy.cash,
+      fuelL: gm.economyManager.fuelLevel,
+      conditionPct: gm.economyManager.motorcycleCondition,
+      rentTarget: BALANCE.LIVING.familyPaymentDay3,
+      receipt: null,
+    };
+    screenSignal.value = 'game';
+  }
+
+  renderer?.snapBikeState(session.bike);
+
+  // All systems, scene, SaveSystem, debug API, and UI callbacks are now bound;
+  // hide <Loading /> so <MainMenu /> (or the active game screen) can accept input.
+  loadingSignal.value = { active: false, stageKey: 'loading.ready', progress: 100 };
+
+  let lastTime = typeof performance !== 'undefined' ? performance.now() : 0;
+  let roamNodeIndex = 0;
+  let cameraHeld = false;
+  let lastBikeBrake = 0;
+  let lastSimBattery = Math.round(gm.economyManager.phoneBattery);
+
+  // Pre-allocated scratch & cache for zero-alloc steady-state syncHud()
+  const hudCache = createHudCache();
+  const getNearestMissionTargetFn = (poiId: string) => session.getNearestMissionTarget(poiId);
+  const pollHudMissionsFn = () => gm.missionManager.getHudMissions(getNearestMissionTargetFn);
+  const hudInputScratch: HudSyncInput = {
+    now: 0,
+    simStepped: false,
+    isFirstPerson: false,
+    districtId: '',
+    canRecoverBike: true,
+    gear: 1,
+    objectiveKey: '',
+    placeKey: '',
+    navKind: '',
+    navTextKey: '',
+    navDistM: -1,
+    reqId: '',
+    passengerStatus: 'None',
+    passengerNameKey: undefined,
+    passengerCharacterId: undefined,
+    passengerArchetype: undefined,
+    passengerMood: undefined,
+    roadEventId: '',
+    roadEventKind: '',
+    roadEventTitles: undefined,
+    activeMissionCount: 0,
+    pollMissions: pollHudMissionsFn,
+    fare: undefined,
+    etaMinutes: undefined,
+    nearStation: false,
+    chargeSpot: null,
+    todayNetEarnings: 0,
+    shiftClock: '07:30',
+    shiftDay: 1,
+    rating: 5.0,
+    dialogueSubtitle: null,
+    speedKmh: 0,
+    fuelL: 6.0,
+    fuelMaxL: 8.0,
+    conditionPct: 100,
+  };
+
+  function syncHud(
+    now: number,
+    simStepped: boolean,
+    activeReq: ReturnType<typeof rideManager.getActiveRequest>,
+    view: ReturnType<typeof deriveRideView>
+  ): void {
+    const activeRoadEv = gm.roadEvents.getFirstActiveEvent();
+    let passengerNameKey: string | undefined;
+    let passengerCharacterId: string | undefined;
+    let passengerArchetype: string | undefined;
+    if (activeReq) {
+      const activeProfile = session.requests.getProfile(activeReq.passengerId);
+      const activeChar = activeReq.characterId ? getCharacter(activeReq.characterId) : undefined;
+      passengerNameKey =
+        activeReq.passengerNameKey ?? activeProfile?.nameKey ?? activeChar?.nameKey;
+      passengerCharacterId = activeReq.characterId ?? activeProfile?.characterId;
+      passengerArchetype = activeProfile?.archetype ?? activeChar?.archetype;
     }
 
-    syncHud(now, steps > 0, activeReq, view);
+    const districtId = roadNetwork.getNodeDistrict(gm.playerNodeId) ?? activeDistrict.districtId;
+    const routeEta = activeReq
+      ? remainingRouteEtaMin(
+          rideManager.currentRoute,
+          { x: session.bike.x, z: session.bike.z },
+          roadNetwork.getNodesMap()
+        )
+      : undefined;
 
-    if (curScreen === 'map') {
-      const prevMapPos = mapPlayerPosSignal.value;
-      if (Math.abs(prevMapPos.x - session.bike.x) > 0.25 || Math.abs(prevMapPos.z - session.bike.z) > 0.25) {
-        mapPlayerPosSignal.value = { x: session.bike.x, z: session.bike.z };
+    hudInputScratch.now = now;
+    hudInputScratch.simStepped = simStepped;
+    hudInputScratch.isFirstPerson = renderer ? renderer.cameraRig.mode === 'firstPerson' : false;
+    hudInputScratch.districtId = districtId;
+    hudInputScratch.canRecoverBike = !tutorialSignal.value.active;
+    hudInputScratch.gear = session.bike.gear;
+    hudInputScratch.objectiveKey = view.objectiveKey;
+    hudInputScratch.placeKey =
+      typeof view.objectiveVars.place === 'string' ? view.objectiveVars.place : '';
+    hudInputScratch.navKind = view.instruction ? view.instruction.kind : '';
+    hudInputScratch.navTextKey = view.instruction ? view.instruction.textKey : '';
+    hudInputScratch.navDistM = view.instruction ? Math.round(view.instruction.distanceM) : -1;
+    hudInputScratch.reqId = activeReq ? activeReq.requestId : '';
+    hudInputScratch.passengerStatus = view.passenger;
+    hudInputScratch.passengerNameKey = passengerNameKey;
+    hudInputScratch.passengerCharacterId = passengerCharacterId;
+    hudInputScratch.passengerArchetype = passengerArchetype;
+    hudInputScratch.passengerMood = activeReq ? rideManager.getPassengerMood() : undefined;
+    hudInputScratch.roadEventId = activeRoadEv ? activeRoadEv.id : '';
+    hudInputScratch.roadEventKind = activeRoadEv ? activeRoadEv.kind : '';
+    hudInputScratch.roadEventTitles = activeRoadEv?.title;
+    hudInputScratch.activeMissionCount = gm.story.activeMissions.length;
+    hudInputScratch.fare = activeReq?.initialFare;
+    hudInputScratch.etaMinutes = resolveHudEtaMinutes(
+      Boolean(activeReq),
+      routeEta,
+      activeReq?.estimatedDuration
+    );
+    hudInputScratch.nearStation = session.nearFuelStation();
+    hudInputScratch.chargeSpot =
+      gm.economyManager.phoneBattery < BALANCE.PHONE.lowBatteryPct
+        ? session.nearChargeSpot('home')
+          ? 'home'
+          : session.nearChargeSpot('teaStall')
+            ? 'teaStall'
+            : null
+        : null;
+    hudInputScratch.todayNetEarnings = gm.economy.dailyRevenue - gm.economy.dailyExpenses;
+    hudInputScratch.shiftClock = gm.clock.hhmm();
+    hudInputScratch.shiftDay = gm.clock.day;
+    hudInputScratch.rating = gm.reputationSystem.getAppRating();
+    hudInputScratch.dialogueSubtitle = dialogueSubtitleSignal.value;
+    hudInputScratch.speedKmh = Math.abs(session.bike.speed) * 3.6;
+    hudInputScratch.fuelL = gm.economyManager.fuelLevel;
+    hudInputScratch.fuelMaxL = gm.economyManager.maxFuelL();
+    hudInputScratch.conditionPct = gm.economyManager.motorcycleCondition;
+
+    const simBattery = Math.round(gm.economyManager.phoneBattery);
+    if (simBattery !== lastSimBattery) {
+      lastSimBattery = simBattery;
+      phoneSignal.value = { ...phoneSignal.value, phoneBattery: simBattery };
+    }
+
+    syncHudWithCache(hudCache, hudInputScratch);
+  }
+
+  function frame(now: number) {
+    const dt = (now - lastTime) / 1000;
+    lastTime = now;
+
+    // T7.1: the sim only runs while the real game screen is active, and ambient
+    // encounters are additionally suppressed during the opening tutorial or when
+    // disabled via URL — otherwise a roaming encounter can fire behind the main
+    // menu and softlock boot.
+    const inGame = screenSignal.value === 'game';
+    gm.eventDirector.enabled = inGame && !tutorialSignal.value.active && !encountersDisabledByUrl;
+
+    // Frame-rate decoupling: convert the variable rAF dt into a whole number of
+    // fixed SIM_DT ticks, same clamp/cap as GameManager.runFrame. The clock tick
+    // itself happens once per step inside session.step(), not here.
+    let steps = 0;
+    if (inGame && !gm.paused) {
+      gm.accumulator += Math.min(dt, MAX_FRAME_DT);
+      while (gm.accumulator >= SIM_DT && steps < MAX_SIM_STEPS_PER_FRAME) {
+        gm.accumulator -= SIM_DT;
+        steps++;
       }
-      syncMapLiveFromSession(session);
+      if (gm.accumulator > SIM_DT * MAX_SIM_STEPS_PER_FRAME) {
+        gm.accumulator = 0;
+      }
+    }
+
+    for (let s = 0; s < steps; s++) {
+      inputManager.update(SIM_DT);
+      const touchThrottle = inputManager.isTouchThrottleActive();
+      const touchBrake = inputManager.isTouchBrakeActive();
+      const touchSteer = inputManager.getTouchSteer();
+      const prevTouchVis = touchFeedbackSignal.value;
+      if (
+        touchThrottle !== prevTouchVis.throttle ||
+        touchBrake !== prevTouchVis.brake ||
+        Math.abs(touchSteer - prevTouchVis.steer) > 0.02
+      ) {
+        touchFeedbackSignal.value = {
+          ...prevTouchVis,
+          throttle: touchThrottle,
+          brake: touchBrake,
+          steer: touchSteer,
+        };
+      }
+      const activeReq = rideManager.getActiveRequest();
+      const driveView = deriveRideView(rideManager);
+
+      // Autopilot (DEV-only) or inputManager
+      let input: BikeInput;
+
+      if (import.meta.env.DEV && autopilot?.isEnabled()) {
+        if (activeReq) {
+          if (driveView.navTargetNodeId) {
+            autopilot.setDestination(session.bike.x, session.bike.z, driveView.navTargetNodeId);
+          }
+        } else if (activeDistrict.nodes.length > 0 && autopilot.isFinished()) {
+          roamNodeIndex = (roamNodeIndex + 1) % activeDistrict.nodes.length;
+          const nextNode = activeDistrict.nodes[roamNodeIndex];
+          if (nextNode) {
+            autopilot.setDestination(session.bike.x, session.bike.z, nextNode.nodeId);
+          }
+        }
+        input = autopilot.step(session.bike);
+      } else {
+        const state = inputManager.read();
+        input = {
+          throttle: state.throttle,
+          brake: state.brake,
+          steer: state.steer,
+        };
+      }
+
+      // Horn (traffic reaction to the player, not part of the bike/traffic/ride
+      // step itself, so it stays here alongside the rest of the input glue).
+      const rawInput = inputManager.read();
+      // Camera key (C) or gamepad Select toggles on press, not while held.
+      if (rawInput.camera && !cameraHeld) renderer?.cameraRig.toggleMode();
+      cameraHeld = rawInput.camera;
+      if (rawInput.horn) {
+        trafficManager.triggerHorn({ x: session.bike.x, z: session.bike.z });
+      }
+
+      session.step(input, SIM_DT);
+      if (s >= steps - 2) {
+        renderer?.setBikeState(session.bike);
+      }
+      engineThrottle = input.throttle;
+      if (input.brake > 0.35 && lastBikeBrake <= 0.35 && Math.abs(session.bike.speed) > 3.0) {
+        audio.playBrake(input.brake);
+      }
+      lastBikeBrake = input.brake;
+      if (rawInput.horn) audio.startHorn();
+      else audio.stopHorn();
+    }
+
+    if (steps > 0) {
+      tickPhoneOffers(steps * SIM_DT);
+    }
+
+    if (!inGame || gm.paused) {
+      lastBikeBrake = 0;
+    }
+
+    // Engine and ambience follow the bike; menus and pause are silent.
+    const playing = inGame && !pausedSignal.value;
+    audio.setEnginePitch(getBikeDef(gm.economyManager.currentBikeId).audioPitch);
+    audio.updateEngine(
+      session.bike.speed,
+      engineThrottle,
+      playing,
+      session.bike.gear,
+      session.bike.rpmNorm
+    );
+    audio.setAmbience(0.5, gm.weather, playing);
+    if (!playing) audio.stopHorn();
+
+    const activeReq = rideManager.getActiveRequest();
+    // T8.1: the one place HUD, minimap and markers read ride state from.
+    const view = deriveRideView(rideManager);
+    const pNode = activeReq ? roadNetwork.getNode(activeReq.pickupNodeId) : undefined;
+    const dNode = activeReq ? roadNetwork.getNode(activeReq.destinationNodeId) : undefined;
+
+    if (renderer) {
+      if (pNode) renderer.markers.setPickup(pNode.x, pNode.z, view.pickupVisible);
+      else renderer.markers.setPickup(0, 0, false);
+      if (dNode) renderer.markers.setDropoff(dNode.x, dNode.z, view.dropoffVisible);
+      else renderer.markers.setDropoff(0, 0, false);
+      renderer.setPassengerVisible(view.dropoffVisible);
+
+      renderer.updatePeople(
+        trafficManager.pedestrians.getPedestrians(),
+        trafficManager.getAgents(),
+        now / 1000
+      );
+
+      renderer.setBrakeLight(lastBikeBrake > 0.05);
+      renderer.syncFloodedSegments(gm.weatherSystem, roadNetwork);
+      const alpha = gm.accumulator / SIM_DT;
+      renderer.render(gm.snapshot(), alpha, trafficManager.signals);
+    }
+
+    // T7.4: Journal reads a live snapshot; only built while it's actually open.
+    if (journalSignal.value) {
+      journalDataSignal.value = {
+        snapshot: gm.snapshot(),
+        activeMissions: gm.story.activeMissions
+          .map((id) => gm.missionManager.missions.get(id))
+          .filter((m): m is NonNullable<typeof m> => Boolean(m)),
+        getObjectiveStates: (missionId) => gm.missionManager.getObjectiveStates(missionId),
+        ownedUpgrades: [...gm.economyManager.ownedUpgrades],
+      };
+    }
+
+    const curScreen = screenSignal.value;
+    if (curScreen !== 'title') {
+      // Update Minimap
+      if (minimap) {
+        const pNodePos = view.pickupVisible ? pNode : null;
+        const dNodePos = view.dropoffVisible ? dNode : null;
+        minimap.update(
+          { x: session.bike.x, z: session.bike.z, heading: session.bike.heading },
+          rideManager.currentRoute,
+          { pickup: pNodePos ?? null, dropoff: dNodePos ?? null }
+        );
+      }
+
+      syncHud(now, steps > 0, activeReq, view);
+
+      if (curScreen === 'map') {
+        const prevMapPos = mapPlayerPosSignal.value;
+        if (
+          Math.abs(prevMapPos.x - session.bike.x) > 0.25 ||
+          Math.abs(prevMapPos.z - session.bike.z) > 0.25
+        ) {
+          mapPlayerPosSignal.value = { x: session.bike.x, z: session.bike.z };
+        }
+        syncMapLiveFromSession(session);
+      }
+    }
+
+    if (typeof requestAnimationFrame !== 'undefined') {
+      requestAnimationFrame(frame);
     }
   }
 
   if (typeof requestAnimationFrame !== 'undefined') {
     requestAnimationFrame(frame);
   }
-}
-
-
-if (typeof requestAnimationFrame !== 'undefined') {
-  requestAnimationFrame(frame);
-}
 }

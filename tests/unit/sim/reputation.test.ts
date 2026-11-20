@@ -225,18 +225,18 @@ describe('ReputationSystem (T4.2)', () => {
     expect(computeTripRating({ bumps: 10 })).toBe(1.0);
   });
 
-  it('localTrust clamping and mutations', () => {
+  it('publicReputation clamping and mutations', () => {
     const rep = new ReputationSystem();
-    expect(rep.getLocalTrust()).toBe(30);
+    expect(rep.getMeters().publicReputation).toBe(30);
 
-    rep.changeLocalTrust(20);
-    expect(rep.getLocalTrust()).toBe(50);
+    rep.applyMeter('publicReputation', 20, 'karma.local_trust');
+    expect(rep.getMeters().publicReputation).toBe(50);
 
-    rep.changeLocalTrust(100);
-    expect(rep.getLocalTrust()).toBe(100); // capped at 100
+    rep.applyMeter('publicReputation', 100, 'karma.local_trust');
+    expect(rep.getMeters().publicReputation).toBe(100); // capped at 100
 
-    rep.changeLocalTrust(-150);
-    expect(rep.getLocalTrust()).toBe(0); // floored at 0
+    rep.applyMeter('publicReputation', -150, 'karma.local_trust');
+    expect(rep.getMeters().publicReputation).toBe(0); // floored at 0
   });
 
   it('character relationships clamping and mutations', () => {
@@ -315,7 +315,7 @@ describe('ReputationSystem (T4.2)', () => {
       },
     });
 
-    expect(rep.getLocalTrust()).toBe(45); // 30 + 15
+    expect(rep.getMeters().publicReputation).toBe(45); // 30 + 15
     expect(rep.getRelationship('nabila')).toBe(10);
     expect(rep.getRiskScore()).toBe(2);
     expect(rep.getPromisesRecord()).toEqual({ kept: 1, broken: 1 });
@@ -470,7 +470,6 @@ describe('P4.3: 8 bounded attributed karma meters, relationship seeding, single-
       evidenceExposure: 0,
       safetyRecord: 70,
     });
-    expect(rep.getLocalTrust()).toBe(30);
 
     // Clamps upper bound and logs applied = clampedNew - prev (not raw delta)
     rep.applyMeter('evidenceExposure', 500, 'karma.test_upper', 'char_morshed');

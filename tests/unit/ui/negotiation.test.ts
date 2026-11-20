@@ -225,14 +225,14 @@ describe('T2.4 Negotiation Store & Logic', () => {
     const neg = session.beginNegotiation('req_over_disc')!;
     negotiationSignal.value = { active: true, session: neg, lastResult: null };
 
-    const trust0 = gm.reputationSystem.getLocalTrust();
+    const trust0 = gm.reputationSystem.getMeters().publicReputation;
     const rel0 = gm.reputationSystem.getRelationship('char_nabila');
 
     // Dispatch a discount action at an overcharged fare (> fairFare)
     const overFair = neg.fairFare + 20;
     onNegotiationActionCallback?.({ kind: 'discount', amount: overFair });
 
-    expect(gm.reputationSystem.getLocalTrust()).toBe(trust0);
+    expect(gm.reputationSystem.getMeters().publicReputation).toBe(trust0);
     expect(gm.reputationSystem.getRelationship('char_nabila')).toBe(rel0);
 
     unbind();

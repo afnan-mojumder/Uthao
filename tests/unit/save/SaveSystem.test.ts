@@ -63,7 +63,7 @@ describe('SaveSystem (T4.9)', () => {
 
     gm.reputationSystem.recordTripRating(4.8);
     gm.reputationSystem.recordTripRating(4.6);
-    gm.reputationSystem.setLocalTrust(65);
+    gm.reputationSystem.applyMeter('publicReputation', 35, 'karma.local_trust');
     gm.reputationSystem.recordNearMiss();
     gm.reputationSystem.recordCollision('bump');
     gm.reputationSystem.recordInfraction();
@@ -385,7 +385,7 @@ describe('SaveSystem (T4.9)', () => {
     liveGm.economyManager.rentMissedCount = 1;
     liveGm.economyManager.refuel(1, 130, 4, 840);
     liveGm.reputationSystem.addOffAppStrike(4);
-    liveGm.reputationSystem.setLocalTrust(68);
+    liveGm.reputationSystem.applyMeter('publicReputation', 38, 'karma.local_trust');
     liveGm.reputationSystem.applyMeter('riderIntegrity', -10, 'karma.test', 'char_kamal');
     liveGm.reputationSystem.changePassengerTrust('char_nabila', -8);
 
