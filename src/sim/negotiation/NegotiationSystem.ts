@@ -709,7 +709,7 @@ export function respond(
       targetFare,
       session.currentPassengerOffer + Math.max(5, Math.round((bump * 0.65) / 5) * 5)
     );
-    const walkedOut = nextPatience <= 0;
+    const walkedOut = nextPatience <= 0 || session.round >= session.maxRounds;
     return {
       session: {
         ...session,

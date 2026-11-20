@@ -791,4 +791,105 @@ describe('P4.3: 8 bounded attributed karma meters, relationship seeding, single-
     expect(rep.isAppSuspended(1)).toBe(false);
     expect(rep.getMeters().safetyRecord).toBe(57); // 70 + 2 (safe first ride) - 15 (crash)
   });
+
+  it('adjustRating dropping below 3.0 triggers a 2-day suspension that expires cleanly on day + 2', () => {
+    const gm = new GameManager({ seed: 101, mode: 'career', data: {} });
+    gm.reputationSystem.recordTripRating(3.1);
+    expect(gm.reputationSystem.isAppSuspended(1)).toBe(false);
+
+    // Complaint penalty nudges rating from 3.1 to 2.8 (< 3.0)
+    gm.reputationSystem.adjustRating(-0.3);
+    expect(gm.reputationSystem.getAppRating()).toBe(2.8);
+    expect(gm.reputationSystem.isAppSuspended(1)).toBe(true);
+    expect(gm.story.branchFlags['appSuspended']).toBe(true);
+    expect(gm.reputationSystem.getAppSuspendedUntilDay()).toBe(3);
+
+    // Advances cleanly to Day 3 and expires
+    gm.clock.minutes = 13 * 60;
+    gm.dispatch({ type: 'endShift' });
+    gm.dispatch({ type: 'sleep' });
+    expect(gm.reputationSystem.isAppSuspended(2)).toBe(true);
+
+    gm.clock.minutes = 13 * 60;
+    gm.dispatch({ type: 'endShift' });
+    gm.dispatch({ type: 'sleep' });
+    expect(gm.clock.day).toBe(3);
+    expect(gm.reputationSystem.isAppSuspended(3)).toBe(false);
+    expect(gm.story.branchFlags['appSuspended']).toBe(false);
+
+    // Positive nudge below 3.0 does not immediately re-suspend, while a new negative penalty does
+    gm.reputationSystem.adjustRating(0.1);
+    expect(gm.reputationSystem.isAppSuspended(3)).toBe(false);
+    gm.reputationSystem.adjustRating(-0.2);
+    expect(gm.reputationSystem.isAppSuspended(3)).toBe(true);
+  });
+
+  it('applySnapshot resets dirty prior state when P4.3 fields are omitted and keeps seeded relationships on {}', () => {
+    const gm = new GameManager({ seed: 102, mode: 'career', data: {} });
+
+    // Dirty every P4.3 field on prior career
+    gm.reputationSystem.applyMeter('riderIntegrity', -40, 'karma.dirty');
+    gm.reputationSystem.applyMeter('criminalExposure', 65, 'karma.dirty');
+    gm.reputationSystem.applyMeter('platformStanding', -70, 'karma.dirty'); // suspends app
+    gm.reputationSystem.addOffAppStrike(1);
+    gm.reputationSystem.addOffAppStrike(1);
+    gm.reputationSystem.changePassengerTrust('char_nabila', -50);
+    gm.reputationSystem.setRelationship('char_ma', -25);
+    gm.reputationSystem.recordPromiseKept();
+
+    expect(gm.reputationSystem.getKarmaLog().length).toBeGreaterThan(0);
+    expect(gm.reputationSystem.getOffAppStrikes()).toBe(2);
+    expect(gm.reputationSystem.isAppSuspended(1)).toBe(true);
+
+    // Restore minimal/legacy snapshot missing new P4.3 fields and passing empty {} relationships
+    const legacySnap = gm.snapshot();
+    legacySnap.reputation = {
+      rating: 4.5,
+      localTrust: 42,
+      safetyRecord: { nearMisses: 1, bumps: 0, crashes: 0, infractions: 0 },
+      riskScore: 3,
+      promises: { kept: 0, broken: 0 },
+    };
+    legacySnap.story.characterRelationships = {};
+
+    gm.applySnapshot(legacySnap);
+
+    // Omitted P4.3 fields must NOT bleed through from prior state
+    expect(gm.reputationSystem.getMeters()).toEqual({
+      riderIntegrity: 50,
+      publicReputation: 42,
+      platformStanding: 80,
+      criminalExposure: 0,
+      evidenceExposure: 0,
+      safetyRecord: 70,
+    });
+    expect(gm.reputationSystem.getKarmaLog()).toHaveLength(0);
+    expect(gm.reputationSystem.getOffAppStrikes()).toBe(0);
+    expect(gm.reputationSystem.getAppSuspendedUntilDay()).toBe(0);
+    expect(gm.reputationSystem.isAppSuspended(1)).toBe(false);
+    expect(gm.reputationSystem.isAppWarned()).toBe(false);
+    expect(gm.reputationSystem.getPassengerTrust('char_nabila')).toBe(70);
+    expect(gm.reputationSystem.getPromisesRecord()).toEqual({ kept: 0, broken: 0 });
+    expect(gm.economy.reputation).toBe(4.5);
+
+    // Legacy empty {} relationships preserve canonical seeded defaults
+    expect(gm.reputationSystem.getRelationship('char_ma')).toBe(80);
+    expect(gm.reputationSystem.getRelationship('char_mintu')).toBe(35);
+    expect(gm.reputationSystem.getRelationship('char_kamal')).toBe(25);
+    expect(gm.story.characterRelationships['char_ma']).toBe(80);
+  });
+
+  it('setPassengerTrust and setRelationship ignore non-finite values', () => {
+    const rep = new ReputationSystem();
+    const nabilaTrust0 = rep.getPassengerTrust('char_nabila');
+    const maRel0 = rep.getRelationship('char_ma');
+
+    rep.setPassengerTrust('char_nabila', Number.NaN);
+    rep.setPassengerTrust('char_nabila', Number.POSITIVE_INFINITY);
+    rep.setRelationship('char_ma', Number.NaN);
+    rep.setRelationship('char_ma', Number.NEGATIVE_INFINITY);
+
+    expect(rep.getPassengerTrust('char_nabila')).toBe(nabilaTrust0);
+    expect(rep.getRelationship('char_ma')).toBe(maRel0);
+  });
 });

@@ -548,7 +548,7 @@ export function NegotiationPanel({
           <button
             type="button"
             data-testid="pressure-btn"
-            onClick={() => onAction({ kind: 'pressure' })}
+            onClick={() => onAction({ kind: 'pressure', amount: counterAmount })}
             style={{
               padding: '10px',
               borderRadius: '10px',

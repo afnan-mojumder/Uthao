@@ -1045,6 +1045,10 @@ export class GameManager {
       ...(snap.reputation ?? {}),
       relationships: snap.story.characterRelationships,
     });
+    this.economy.reputation = this.reputationSystem.getAppRating();
+    this.economyManager.reputation = this.economy.reputation;
+    this.todayStartRating = this.reputationSystem.getAppRating();
+    this.todayRelationshipsStart = this.reputationSystem.getAllRelationships();
 
     this.economyManager.restoreLedger(snap.ledger ?? [], snap.settledRequests ?? []);
     this.requestSeq = snap.requestSeq ?? 0;

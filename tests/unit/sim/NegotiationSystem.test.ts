@@ -793,5 +793,32 @@ describe('NegotiationSystem (T2.3)', () => {
       expect(gm.reputationSystem.getPassengerTrust('char_nabila')).toBeLessThan(trust0);
       expect(gm.reputationSystem.getKarmaLog(1)[0]!.meter).toBe('riderIntegrity');
     });
+
+    it('misleadDistance walks away on non-acceptance once round reaches maxRounds even with patience remaining', () => {
+      const patientTraveler = mockProfile({
+        archetype: 'traveler',
+        localKnowledge: 0.05,
+        urgency: 0.1,
+        bargainingTendency: 0.95,
+        patience: 0.95,
+      });
+
+      let sawMaxRoundWalkout = false;
+      for (let i = 0; i < 60; i++) {
+        const base = startNegotiation(
+          mockRequest({ requestId: `req_mis_maxr_${i}` }),
+          patientTraveler,
+          { traffic: 0.2, day: 1, walkM: 0, rng: new Rng(i + 200) }
+        );
+        const atLastRound = { ...base, round: base.maxRounds, currentPatience: 0.9 };
+        const res = respond(atLastRound, { kind: 'misleadDistance' });
+        if (res.passengerLine !== 'dialogue.negotiation.mislead_accepted') {
+          expect(res.session.status).toBe('walkedAway');
+          expect(res.outcome?.kind).toBe('walkedAway');
+          sawMaxRoundWalkout = true;
+        }
+      }
+      expect(sawMaxRoundWalkout).toBe(true);
+    });
   });
 });

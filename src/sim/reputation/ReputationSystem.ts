@@ -396,14 +396,10 @@ export class ReputationSystem {
     return [...this.ratings];
   }
 
-  recordTripRating(rating: number): number {
-    const clamped = clamp(rating, 1.0, 5.0);
-    this.ratings.push(clamped);
-    if (this.ratings.length > this.windowSize) {
-      this.ratings.shift();
-    }
-
-    const currentRating = this.getAppRating();
+  private evaluateRatingThresholds(
+    currentRating: number,
+    isNegativeSample: boolean
+  ): void {
     if (currentRating >= BALANCE.RATING.suspensionThreshold) {
       this.ratingSuspensionCleared = false;
     }
@@ -417,11 +413,28 @@ export class ReputationSystem {
     if (
       currentRating < BALANCE.RATING.suspensionThreshold &&
       !this.wasSuspended &&
-      (!this.ratingSuspensionCleared || clamped < BALANCE.RATING.suspensionThreshold)
+      (!this.ratingSuspensionCleared || isNegativeSample)
     ) {
       this.ratingSuspensionCleared = false;
       this.triggerSuspension(this.clock?.day ?? 1);
     }
+  }
+
+  recordTripRating(rating: number): number {
+    if (!Number.isFinite(rating)) {
+      return this.getAppRating();
+    }
+    const clamped = clamp(rating, 1.0, 5.0);
+    this.ratings.push(clamped);
+    if (this.ratings.length > this.windowSize) {
+      this.ratings.shift();
+    }
+
+    const currentRating = this.getAppRating();
+    this.evaluateRatingThresholds(
+      currentRating,
+      clamped < BALANCE.RATING.suspensionThreshold
+    );
 
     this.bus?.emit('reputation/changed', {
       delta: {
@@ -448,14 +461,19 @@ export class ReputationSystem {
    * new history entry, so the nudge isn't diluted by the rolling average.
    */
   adjustRating(delta: number): number {
+    if (!Number.isFinite(delta)) {
+      return this.getAppRating();
+    }
     const target = clamp(this.getAppRating() + delta, 1.0, 5.0);
     if (this.ratings.length === 0) {
       this.defaultRating = target;
     } else {
       this.ratings[this.ratings.length - 1] = target;
     }
+    const currentRating = this.getAppRating();
+    this.evaluateRatingThresholds(currentRating, delta < 0);
     this.bus?.emit('reputation/changed', { delta: { rating: target } });
-    return this.getAppRating();
+    return currentRating;
   }
 
   // --- Demand Impact, Strikes & 2-Day App Suspension ---
@@ -628,6 +646,7 @@ export class ReputationSystem {
   }
 
   setPassengerTrust(passengerId: string, val: number): void {
+    if (!Number.isFinite(val)) return;
     const key = normalizePassengerTrustId(passengerId);
     this.passengerTrust[key] = clamp(val, BALANCE.KARMA.min, BALANCE.KARMA.max);
   }
@@ -674,6 +693,7 @@ export class ReputationSystem {
   }
 
   setRelationship(characterId: string, val: number): void {
+    if (!Number.isFinite(val)) return;
     this.characterRelationships[characterId] = clamp(
       val,
       BALANCE.TRUST.relationshipMin,
@@ -888,21 +908,25 @@ export class ReputationSystem {
     ratingSuspensionCleared?: boolean;
     karmaSeq?: number;
   }): void {
-    if (opts.rating !== undefined) this.defaultRating = opts.rating;
-    if (opts.ratingsHistory) {
-      this.ratings = opts.ratingsHistory
-        .slice(-this.windowSize)
-        .map((r) => clamp(r, 1.0, 5.0));
-    }
+    this.defaultRating =
+      opts.rating !== undefined && Number.isFinite(opts.rating)
+        ? clamp(opts.rating, 1.0, 5.0)
+        : BALANCE.RATING.start;
+    this.ratings = opts.ratingsHistory
+      ? opts.ratingsHistory
+          .slice(-this.windowSize)
+          .filter((r) => typeof r === 'number' && Number.isFinite(r))
+          .map((r) => clamp(r, 1.0, 5.0))
+      : [];
 
+    this.meters = createDefaultMeters();
     if (opts.meters) {
-      this.meters = createDefaultMeters();
       for (const [k, v] of Object.entries(opts.meters)) {
         if (isMeterId(k) && typeof v === 'number' && Number.isFinite(v)) {
           this.meters[k] = clamp(v, BALANCE.KARMA.min, BALANCE.KARMA.max);
         }
       }
-    } else if (opts.localTrust !== undefined) {
+    } else if (opts.localTrust !== undefined && Number.isFinite(opts.localTrust)) {
       this.meters.publicReputation = clamp(
         opts.localTrust,
         BALANCE.KARMA.min,
@@ -910,19 +934,16 @@ export class ReputationSystem {
       );
     }
 
-    if (opts.karmaLog) {
-      this.karmaLog = opts.karmaLog
-        .slice(0, BALANCE.KARMA.logCapacity)
-        .map((e) => ({ ...e }));
-    }
-    if (opts.karmaSeq !== undefined) {
-      this.karmaSeq = Math.max(0, opts.karmaSeq);
-    } else if (opts.karmaLog) {
-      this.karmaSeq = opts.karmaLog.length;
-    }
+    this.karmaLog = opts.karmaLog
+      ? opts.karmaLog.slice(0, BALANCE.KARMA.logCapacity).map((e) => ({ ...e }))
+      : [];
+    this.karmaSeq =
+      opts.karmaSeq !== undefined && Number.isFinite(opts.karmaSeq)
+        ? Math.max(0, opts.karmaSeq)
+        : this.karmaLog.length;
 
+    this.seedPassengerTrustDefaults();
     if (opts.passengerTrust) {
-      this.passengerTrust = {};
       for (const [k, v] of Object.entries(opts.passengerTrust)) {
         if (typeof v === 'number' && Number.isFinite(v)) {
           this.passengerTrust[normalizePassengerTrustId(k)] = clamp(
@@ -932,26 +953,18 @@ export class ReputationSystem {
           );
         }
       }
-    } else {
-      this.seedPassengerTrustDefaults();
     }
 
-    if (opts.relationships) {
-      if (opts.relationships !== this.characterRelationships) {
-        for (const k of Object.keys(this.characterRelationships)) {
-          delete this.characterRelationships[k];
-        }
-        for (const [k, v] of Object.entries(opts.relationships)) {
+    const incomingRels =
+      opts.relationships && opts.relationships === this.characterRelationships
+        ? { ...opts.relationships }
+        : opts.relationships;
+    this.seedRelationshipDefaults();
+    if (incomingRels) {
+      for (const [k, v] of Object.entries(incomingRels)) {
+        if (typeof v === 'number' && Number.isFinite(v)) {
           this.characterRelationships[k] = clamp(
             v,
-            BALANCE.TRUST.relationshipMin,
-            BALANCE.TRUST.relationshipMax
-          );
-        }
-      } else {
-        for (const k of Object.keys(this.characterRelationships)) {
-          this.characterRelationships[k] = clamp(
-            this.characterRelationships[k] ?? 0,
             BALANCE.TRUST.relationshipMin,
             BALANCE.TRUST.relationshipMax
           );
@@ -959,28 +972,21 @@ export class ReputationSystem {
       }
     }
 
-    if (opts.safetyRecord) {
-      this.safetyRecord = {
-        nearMisses: opts.safetyRecord.nearMisses ?? this.safetyRecord.nearMisses,
-        bumps: opts.safetyRecord.bumps ?? this.safetyRecord.bumps,
-        crashes: opts.safetyRecord.crashes ?? this.safetyRecord.crashes,
-        infractions: opts.safetyRecord.infractions ?? this.safetyRecord.infractions,
-      };
-    }
-    if (opts.riskScore !== undefined) this.riskScore = opts.riskScore;
-    if (opts.promises?.kept !== undefined) this.promisesKept = opts.promises.kept;
-    if (opts.promises?.broken !== undefined) this.promisesBroken = opts.promises.broken;
-    if (opts.offAppStrikes !== undefined) {
-      this.offAppStrikes = Math.max(0, opts.offAppStrikes);
-    }
-    if (opts.suspendedUntilDay !== undefined) {
-      this.suspendedUntilDay = Math.max(0, opts.suspendedUntilDay);
-    }
-    if (opts.wasWarned !== undefined) this.wasWarned = opts.wasWarned;
-    if (opts.wasSuspended !== undefined) this.wasSuspended = opts.wasSuspended;
-    if (opts.ratingSuspensionCleared !== undefined) {
-      this.ratingSuspensionCleared = opts.ratingSuspensionCleared;
-    }
+    this.safetyRecord = {
+      nearMisses: opts.safetyRecord?.nearMisses ?? 0,
+      bumps: opts.safetyRecord?.bumps ?? 0,
+      crashes: opts.safetyRecord?.crashes ?? 0,
+      infractions: opts.safetyRecord?.infractions ?? 0,
+    };
+    this.riskScore = Math.max(0, opts.riskScore ?? 0);
+    this.promisesKept = Math.max(0, opts.promises?.kept ?? 0);
+    this.promisesBroken = Math.max(0, opts.promises?.broken ?? 0);
+    this.offAppStrikes = Math.max(0, opts.offAppStrikes ?? 0);
+    this.suspendedUntilDay = Math.max(0, opts.suspendedUntilDay ?? 0);
+    this.wasWarned = opts.wasWarned ?? false;
+    this.wasSuspended = opts.wasSuspended ?? false;
+    this.ratingSuspensionCleared = opts.ratingSuspensionCleared ?? false;
+    this.activeTrip = null;
   }
 
   restoreState(opts: Parameters<ReputationSystem['applySnapshot']>[0]): void {
