@@ -125,8 +125,8 @@ export class PhysicsWorld {
 
   private constructor() {}
 
-  static async create(): Promise<PhysicsWorld> {
-    return new PhysicsWorld();
+  static create(): Promise<PhysicsWorld> {
+    return Promise.resolve(new PhysicsWorld());
   }
 
   addStaticBox(

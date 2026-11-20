@@ -339,8 +339,7 @@ export class GameManager {
       seed: this.seed,
     });
 
-    const encounterDefs =
-      (this.data?.encounters as EncounterDef[] | undefined) ?? DEFAULT_ENCOUNTERS;
+    const encounterDefs = this.data?.encounters ?? DEFAULT_ENCOUNTERS;
     this.eventDirector = new EventDirector({
       definitions: encounterDefs,
       seed: this.seed,
@@ -361,7 +360,7 @@ export class GameManager {
       this.story.activeMissions = [];
     }
     const endingDefs =
-      (this.data.endings as EndingDef[] | undefined) ?? (endingsData as EndingDef[]);
+      (this.data.endings as EndingDef[] | undefined) ?? endingsData;
 
     this.missionManager = new MissionManager({
       bus: this.bus,
@@ -391,7 +390,7 @@ export class GameManager {
 
     this.bus.on('ending/reached', ({ endingId }) => {
       if (endingId in this.story.endingEligibility) {
-        this.story.endingEligibility[endingId as keyof typeof this.story.endingEligibility] = true;
+        this.story.endingEligibility[endingId] = true;
       }
     });
 

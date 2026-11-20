@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('Performance check (T3.3)', () => {
+test.describe('Performance check (T3.3) @dev-only', () => {
   test('low quality autopilot 30s budget check', async ({ page }, testInfo) => {
     test.setTimeout(60000);
 

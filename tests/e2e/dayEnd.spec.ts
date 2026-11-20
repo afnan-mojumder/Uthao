@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test('T4.1 Day end lifecycle e2e: end shift, assert breakdown, sleep to start next day', async ({
+test('T4.1 Day end lifecycle e2e: end shift, assert breakdown, sleep to start next day @dev-only', async ({
   page,
 }) => {
   test.setTimeout(120000);

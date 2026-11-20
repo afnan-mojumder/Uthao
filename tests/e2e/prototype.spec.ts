@@ -5,7 +5,7 @@ import { test, expect } from '@playwright/test';
 // -> summary reconciles with the ledger -> continue returns the rider to finding a fare.
 // Runs on every project in playwright.config.ts (desktop-chrome and pixel7).
 
-test('prototype: accept, negotiate, ride, encounter, drop off, reconcile, continue', async ({ page }) => {
+test('prototype: accept, negotiate, ride, encounter, drop off, reconcile, continue @dev-only', async ({ page }) => {
   test.setTimeout(120000);
 
   await page.goto('/?debug=1&district=testloop&encounters=0');

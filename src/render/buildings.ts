@@ -79,7 +79,7 @@ export class BuildingBuilder {
     canonicalPackMaterials?: Map<string, THREE.Material>
   ) {
     this.signageAtlas = signageAtlas;
-    this.canonicalPackMaterials = canonicalPackMaterials ?? new Map();
+    this.canonicalPackMaterials = canonicalPackMaterials ?? new Map<string, THREE.Material>();
 
     const facadeTex = getFacadeTexture();
     this.facadeMat = sharedMat(

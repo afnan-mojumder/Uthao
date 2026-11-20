@@ -76,8 +76,6 @@ const allDistrictsMap: Record<string, DistrictData> = {
   mirpara: mirparaData as DistrictData,
 };
 
-console.log('Uthao booting...');
-
 // 1. WebGL2 capability check
 function hasWebGL2Support(): boolean {
   if (typeof document === 'undefined') return true;
@@ -155,10 +153,14 @@ if (import.meta.env.DEV && isMapTool) {
 } else {
   // PhysicsWorld initializes before boot constructs GameSession and loads
   // the renderer's colliders so the first frame has full collision coverage.
-  void bootGame().catch((err) => {
-    console.error('Uthao boot failed:', err);
+  void bootGame().catch((err: unknown) => {
     mountUiApp();
-    const message = err instanceof Error ? err.message : String(err);
+    const message =
+      err instanceof Error
+        ? err.message
+        : typeof err === 'string'
+          ? err
+          : 'Unknown error';
     loadingSignal.value = {
       active: typeof document !== 'undefined',
       stageKey: 'loading.error',

@@ -73,7 +73,7 @@ function buildMergedVertexPartMesh(
     part.geo.dispose();
     geos.push(g);
   }
-  const merged = mergeGeometries(geos, false)!;
+  const merged = mergeGeometries(geos, false);
   for (const g of geos) g.dispose();
   const mat = new THREE.MeshStandardMaterial({
     color: 0xffffff,
@@ -406,11 +406,13 @@ export class MotorcycleMesh {
     const mats = new Set<THREE.Material>();
     this.root.traverse((obj) => {
       if (obj instanceof THREE.Mesh) {
-        if (obj.geometry) geos.add(obj.geometry);
-        if (Array.isArray(obj.material)) {
-          for (const m of obj.material) mats.add(m);
-        } else if (obj.material) {
-          mats.add(obj.material);
+        const geo = obj.geometry as THREE.BufferGeometry | undefined;
+        const mat = obj.material as THREE.Material | THREE.Material[] | undefined;
+        if (geo) geos.add(geo);
+        if (Array.isArray(mat)) {
+          for (const m of mat) mats.add(m);
+        } else if (mat) {
+          mats.add(mat);
         }
       }
     });
@@ -916,7 +918,9 @@ export function buildMultiMaterialPrototype(root: THREE.Object3D): {
 
   root.traverse((child) => {
     if (!(child instanceof THREE.Mesh) || !child.geometry) return;
-    const rawMat = Array.isArray(child.material) ? child.material[0] : child.material;
+    const childMat = child.material as THREE.Material | THREE.Material[];
+    const childGeo = child.geometry as THREE.BufferGeometry;
+    const rawMat = Array.isArray(childMat) ? childMat[0] : childMat;
     if (!rawMat) return;
     const std = rawMat as THREE.MeshStandardMaterial;
     const hex = std.color ? std.color.getHex() : 0xffffff;
@@ -935,12 +939,12 @@ export function buildMultiMaterialPrototype(root: THREE.Object3D): {
         buckets.set(key, bucket);
         matOrder.push(key);
       }
-      const geo = normalizeGeometryToNonIndexed(child.geometry);
+      const geo = normalizeGeometryToNonIndexed(childGeo);
       applyVertexColor(geo, 0xffffff);
       geo.applyMatrix4(child.matrixWorld);
       bucket.geos.push(geo);
     } else {
-      const geo = normalizeGeometryToNonIndexed(child.geometry);
+      const geo = normalizeGeometryToNonIndexed(childGeo);
       applyVertexColor(geo, hex);
       geo.applyMatrix4(child.matrixWorld);
       detailGeos.push(geo);

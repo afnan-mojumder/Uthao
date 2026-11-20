@@ -1,19 +1,25 @@
 import { defineConfig, devices } from '@playwright/test';
 
+const isPreview = process.env.PLAYWRIGHT_PREVIEW === '1';
+const baseURL = isPreview ? 'http://localhost:4173' : 'http://localhost:5173';
+const webServerCommand = isPreview
+  ? 'npx vite preview --port 4173 --strictPort'
+  : 'npm run dev';
+
 export default defineConfig({
   testDir: './tests/e2e',
   timeout: 30000,
   use: {
-    baseURL: 'http://localhost:5173',
+    baseURL,
     trace: 'on-first-retry',
     launchOptions: {
       args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
     },
   },
   webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:5173',
-    reuseExistingServer: !process.env.CI,
+    command: webServerCommand,
+    url: baseURL,
+    reuseExistingServer: !process.env.CI && !isPreview,
   },
   projects: [
     {

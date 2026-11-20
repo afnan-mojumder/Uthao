@@ -852,7 +852,7 @@ export function HudView({
           <button
             type="button"
             data-testid="hud-btn-fullscreen"
-            onClick={handleToggleFullscreenAndLock}
+            onClick={() => void handleToggleFullscreenAndLock()}
             style={{
               pointerEvents: 'auto',
               background: 'var(--surface-panel, rgba(15, 23, 42, 0.9))',

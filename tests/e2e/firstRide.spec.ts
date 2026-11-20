@@ -3,29 +3,20 @@ import { test, expect } from '@playwright/test';
 test.describe('T3.8 Opening Sequence First Ride E2E', () => {
   test('first ride tutorial completes via autopilot + scripted choices', async ({ page }) => {
     test.setTimeout(60000);
-    await page.goto('/?debug=1&district=testloop&encounters=0');
+    await page.goto('/');
     await page.waitForSelector('#game-canvas');
-    await expect(page.locator('#hud')).toBeVisible();
-
-    // 1. Switch to Title screen and click "New Career"
-    await page.evaluate(() => {
-      const ui = (window as unknown as { __uthaoUi?: { screenSignal: { value: string } } }).__uthaoUi;
-      if (ui) {
-        ui.screenSignal.value = 'title';
-      }
-    });
 
     const mainMenu = page.locator('[data-testid="main-menu"]');
-    await expect(mainMenu).toBeVisible({ timeout: 5000 });
+    await expect(mainMenu).toBeVisible({ timeout: 30000 });
 
     const newCareerBtn = page.locator('[data-testid="menu-btn-new-career"]');
     await expect(newCareerBtn).toBeVisible();
     await newCareerBtn.click();
-    await expect(mainMenu).not.toBeVisible({ timeout: 5000 });
+    await expect(mainMenu).not.toBeVisible({ timeout: 10000 });
 
     // 2. Alarm Step
     const alarmBtn = page.locator('[data-testid="tutorial-btn-alarm"]');
-    await expect(alarmBtn).toBeVisible({ timeout: 5000 });
+    await expect(alarmBtn).toBeVisible({ timeout: 15000 });
     await alarmBtn.click();
 
     // 3. Ma's Reminder Step (1,200 Tk due on Day 3)
@@ -81,17 +72,12 @@ test.describe('T3.8 Opening Sequence First Ride E2E', () => {
 
   test('Skip Tutorial button dismisses tutorial cleanly and unlocks gameplay', async ({ page }) => {
     test.setTimeout(60000);
-    await page.goto('/?debug=1&district=testloop&encounters=0');
+    await page.goto('/');
     await page.waitForSelector('#game-canvas');
-    await expect(page.locator('#hud')).toBeVisible();
-
-    await page.evaluate(() => {
-      const ui = (window as unknown as { __uthaoUi?: { screenSignal: { value: string } } }).__uthaoUi;
-      if (ui) ui.screenSignal.value = 'title';
-    });
+    await expect(page.getByTestId('main-menu')).toBeVisible({ timeout: 30000 });
 
     await page.getByTestId('menu-btn-new-career').click();
-    await expect(page.getByTestId('tutorial-overlay')).toBeVisible({ timeout: 5000 });
+    await expect(page.getByTestId('tutorial-overlay')).toBeVisible({ timeout: 15000 });
 
     const skipBtn = page.getByTestId('tutorial-btn-skip');
     await expect(skipBtn).toBeVisible();

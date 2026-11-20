@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test('ride completes via autopilot', async ({ page }) => {
+test('ride completes via autopilot @dev-only', async ({ page }) => {
   // Generous: this runs in parallel with the other specs, which slows autopilot.
   test.setTimeout(120000);
 

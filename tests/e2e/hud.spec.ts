@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test('T2.8 Rider HUD & Minimap e2e verification', async ({ page }) => {
+test('T2.8 Rider HUD & Minimap e2e verification @dev-only', async ({ page }) => {
   await page.goto('/?debug=1&district=testloop');
   await page.waitForSelector('#game-canvas');
 

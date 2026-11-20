@@ -5,20 +5,11 @@ test.describe('T3.10 Menus, Settings, Pause and Dhaka Map E2E', () => {
     page,
   }) => {
     test.setTimeout(60000);
-    await page.goto('/?debug=1&district=testloop&encounters=0');
+    await page.goto('/');
     await page.waitForSelector('#game-canvas');
-    await expect(page.locator('#hud')).toBeVisible();
-
-    // Switch to Title screen
-    await page.evaluate(() => {
-      const ui = (window as unknown as { __uthaoUi?: { screenSignal: { value: string } } }).__uthaoUi;
-      if (ui) {
-        ui.screenSignal.value = 'title';
-      }
-    });
 
     const mainMenu = page.locator('[data-testid="main-menu"]');
-    await expect(mainMenu).toBeVisible({ timeout: 5000 });
+    await expect(mainMenu).toBeVisible({ timeout: 30000 });
 
     const menuTitle = page.locator('[data-testid="main-menu-title"]');
     await expect(menuTitle).toBeVisible();
@@ -81,27 +72,21 @@ test.describe('T3.10 Menus, Settings, Pause and Dhaka Map E2E', () => {
     await newCareerBtn.click();
 
     // Main menu closes and game is active
-    await expect(mainMenu).not.toBeVisible({ timeout: 5000 });
+    await expect(mainMenu).not.toBeVisible({ timeout: 10000 });
   });
 
   test('pause and map screen: pause ride, open map, inspect POIs, set waypoint, and resume', async ({
     page,
   }) => {
     test.setTimeout(60000);
-    await page.goto('/?debug=1&district=testloop&encounters=0');
+    await page.goto('/');
     await page.waitForSelector('#game-canvas');
-    await expect(page.locator('#hud')).toBeVisible();
+    await expect(page.getByTestId('main-menu')).toBeVisible({ timeout: 30000 });
+    await page.getByTestId('menu-btn-endless').click();
+    await expect(page.locator('#hud')).toBeVisible({ timeout: 15000 });
 
-    // Trigger pause screen
-    await page.evaluate(() => {
-      const ui = (window as unknown as {
-        __uthaoUi?: { screenSignal: { value: string }; pausedSignal: { value: boolean } };
-      }).__uthaoUi;
-      if (ui) {
-        ui.screenSignal.value = 'pause';
-        ui.pausedSignal.value = true;
-      }
-    });
+    // Trigger pause screen via Escape
+    await page.keyboard.press('Escape');
 
     const pauseMenu = page.locator('[data-testid="pause-menu"]');
     await expect(pauseMenu).toBeVisible({ timeout: 5000 });
@@ -138,7 +123,7 @@ test.describe('T3.10 Menus, Settings, Pause and Dhaka Map E2E', () => {
     }
   });
 
-  test('webgl unsupported message overlay test', async ({ page }) => {
+  test('webgl unsupported message overlay test @dev-only', async ({ page }) => {
     test.setTimeout(60000);
     await page.goto('/?debug=1&district=testloop&encounters=0');
     await page.waitForSelector('#game-canvas');
@@ -170,7 +155,7 @@ test.describe('T3.10 Menus, Settings, Pause and Dhaka Map E2E', () => {
     await expect(unsupportedOverlay).not.toBeVisible({ timeout: 5000 });
   });
 
-  test('modals (SaveSlots, Ending, Journal) close via real pointer clicks and system overlays layer on top', async ({
+  test('modals (SaveSlots, Ending, Journal) close via real pointer clicks and system overlays layer on top @dev-only', async ({
     page,
   }) => {
     test.setTimeout(60000);
@@ -270,7 +255,7 @@ test.describe('T3.10 Menus, Settings, Pause and Dhaka Map E2E', () => {
     await expect(endingScreen).not.toBeVisible({ timeout: 5000 });
   });
 
-  test('Pause opens Garage, Journal, and Recover Bike, and DayEnd renders Share Scorecard', async ({
+  test('Pause opens Garage, Journal, and Recover Bike, and DayEnd renders Share Scorecard @dev-only', async ({
     page,
   }) => {
     test.setTimeout(60000);
@@ -343,15 +328,19 @@ test.describe('T3.10 Menus, Settings, Pause and Dhaka Map E2E', () => {
     await page.keyboard.press('KeyJ');
     await expect(page.getByRole('button', { name: /✕/ })).toHaveCount(0);
 
-    const mutedBefore = await page.evaluate(() => {
-      const ui = (window as unknown as { __uthaoUi?: { settingsSignal: { value: { muted: boolean } } } }).__uthaoUi;
-      return ui?.settingsSignal.value.muted ?? false;
-    });
+    const readStoredMuted = () =>
+      page.evaluate(() => {
+        try {
+          const raw = localStorage.getItem('uthao_user_settings');
+          return raw ? Boolean(JSON.parse(raw).muted) : false;
+        } catch {
+          return false;
+        }
+      });
+
+    const mutedBefore = await readStoredMuted();
     await page.keyboard.press('KeyN');
-    const mutedAfter = await page.evaluate(() => {
-      const ui = (window as unknown as { __uthaoUi?: { settingsSignal: { value: { muted: boolean } } } }).__uthaoUi;
-      return ui?.settingsSignal.value.muted ?? false;
-    });
+    const mutedAfter = await readStoredMuted();
     expect(mutedAfter).toBe(mutedBefore);
 
     // Open Settings, preview English, press Escape -> language reverts to Bangla
@@ -365,9 +354,8 @@ test.describe('T3.10 Menus, Settings, Pause and Dhaka Map E2E', () => {
     await expect(page.getByTestId('menu-btn-new-career')).not.toContainText('New Career');
 
     // Also verify G/J/N are blocked when a modal is open in 'game' mode, and work while driving
-    await page.goto('/?debug=1&district=testloop&encounters=0');
-    await page.waitForSelector('#game-canvas');
-    await expect(page.locator('#hud')).toBeVisible();
+    await page.getByTestId('menu-btn-endless').click();
+    await expect(page.locator('#hud')).toBeVisible({ timeout: 15000 });
 
     await page.keyboard.press('Escape');
     await expect(page.getByTestId('pause-menu')).toBeVisible();
@@ -377,15 +365,9 @@ test.describe('T3.10 Menus, Settings, Pause and Dhaka Map E2E', () => {
     await page.keyboard.press('KeyJ');
     await expect(page.getByRole('button', { name: /✕/ })).toHaveCount(0);
 
-    const mutedInPauseBefore = await page.evaluate(() => {
-      const ui = (window as unknown as { __uthaoUi?: { settingsSignal: { value: { muted: boolean } } } }).__uthaoUi;
-      return ui?.settingsSignal.value.muted ?? false;
-    });
+    const mutedInPauseBefore = await readStoredMuted();
     await page.keyboard.press('KeyN');
-    const mutedInPauseAfter = await page.evaluate(() => {
-      const ui = (window as unknown as { __uthaoUi?: { settingsSignal: { value: { muted: boolean } } } }).__uthaoUi;
-      return ui?.settingsSignal.value.muted ?? false;
-    });
+    const mutedInPauseAfter = await readStoredMuted();
     expect(mutedInPauseAfter).toBe(mutedInPauseBefore);
 
     // Resume to game: now G toggles Garage open & closed
@@ -397,7 +379,7 @@ test.describe('T3.10 Menus, Settings, Pause and Dhaka Map E2E', () => {
     await expect(page.getByTestId('garage-screen')).toHaveCount(0);
   });
 
-  test('system overlays block G/J/M/N/Tab/Escape in game and behind open panels', async ({ page }) => {
+  test('system overlays block G/J/M/N/Tab/Escape in game and behind open panels @dev-only', async ({ page }) => {
     test.setTimeout(60000);
     await page.goto('/?debug=1&district=testloop&encounters=0');
     await page.waitForSelector('#game-canvas');
@@ -478,7 +460,153 @@ test.describe('T3.10 Menus, Settings, Pause and Dhaka Map E2E', () => {
     await expect(page.getByTestId('garage-screen')).toHaveCount(0);
   });
 
-  test('Escape does not open Pause underneath Ending, DayEnd, TripSummary, ChoiceCard, or NegotiationPanel', async ({
+  test('pure-player preview flow: manual driving, SaveSlots save/load, Continue reload, DayEnd + Ending Share Scorecard, and offline SW readiness', async ({
+    page,
+  }) => {
+    test.setTimeout(90000);
+    const errors: string[] = [];
+    page.on('pageerror', (e) => errors.push(e.message));
+
+    await page.goto('/');
+    await expect(page.getByTestId('main-menu')).toBeVisible({ timeout: 30000 });
+
+    // 1. Start Quick Ride (Endless mode) and manually drive with KeyW / ArrowUp
+    await page.getByTestId('menu-btn-endless').click();
+    await expect(page.locator('#hud')).toBeVisible({ timeout: 15000 });
+
+    await page.keyboard.down('KeyW');
+    await expect
+      .poll(
+        async () => {
+          const text = (await page.locator('#hud-speed').textContent()) ?? '0';
+          const western = text.replace(/[০-৯]/g, (d) => String('০১২৩৪৫৬৭৮৯'.indexOf(d)));
+          return Number(western) || 0;
+        },
+        { timeout: 15000 }
+      )
+      .toBeGreaterThan(0);
+    await page.keyboard.up('KeyW');
+
+    // 2. Open Pause -> SaveSlots -> save to slot1 -> Exit to Main Menu -> Continue reload
+    await page.keyboard.press('Escape');
+    await expect(page.getByTestId('pause-menu')).toBeVisible({ timeout: 5000 });
+    await page.getByTestId('pause-btn-save').click();
+    await expect(page.getByTestId('save-slots-modal')).toBeVisible({ timeout: 5000 });
+    await page.getByTestId('btn-action-save-slot1').click();
+    await expect(page.getByTestId('save-slots-modal')).toHaveCount(0);
+
+    await page.getByTestId('pause-btn-exit').click();
+    await expect(page.getByTestId('main-menu')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByTestId('menu-btn-continue')).toBeVisible();
+
+    // Reload page and click Continue
+    await page.reload();
+    await expect(page.getByTestId('main-menu')).toBeVisible({ timeout: 30000 });
+    await page.getByTestId('menu-btn-continue').click();
+    await expect(page.locator('#hud')).toBeVisible({ timeout: 15000 });
+
+    // 3. Seed an end-of-shift v1 save in localStorage (exercises 1->2 migration + DayEnd Share Scorecard)
+    await page.evaluate(() => {
+      const slot1Raw = localStorage.getItem('uthao.save.slot1');
+      if (slot1Raw) {
+        const base = JSON.parse(slot1Raw);
+        localStorage.setItem(
+          'uthao.save.slot2',
+          JSON.stringify({
+            ...base,
+            slot: 'slot2',
+            timestamp: Date.now() + 5000,
+            clock: { day: 2, minutes: 1380 },
+            shiftEnded: true,
+          })
+        );
+      }
+    });
+    await page.keyboard.press('Escape');
+    await page.getByTestId('pause-btn-load').click();
+    await page.getByTestId('btn-action-load-slot2').click();
+    const dayEnd = page.getByTestId('day-end-screen');
+    await expect(dayEnd).toBeVisible({ timeout: 10000 });
+    await expect(dayEnd.getByTestId('share-scorecard-canvas')).toBeVisible();
+    await dayEnd.getByTestId('share-scorecard-btn').click();
+    await expect(dayEnd.getByTestId('share-status')).toBeVisible();
+    await dayEnd.getByTestId('day-end-sleep-btn').click();
+    await expect(dayEnd).toHaveCount(0);
+
+    // 4. Seed a Chapter 6 decision save in slot3 (exercises Ending modal + Share Scorecard without debug hooks)
+    await page.evaluate(() => {
+      const slot1Raw = localStorage.getItem('uthao.save.slot1');
+      if (slot1Raw) {
+        const base = JSON.parse(slot1Raw);
+        localStorage.setItem(
+          'uthao.save.slot3',
+          JSON.stringify({
+            ...base,
+            slot: 'slot3',
+            timestamp: Date.now() + 10000,
+            mode: 'career',
+            clock: { day: 20, minutes: 900 },
+            shiftEnded: false,
+            economy: {
+              ...base.economy,
+              cash: 4500,
+              savings: 22000,
+            },
+            story: {
+              ...base.story,
+              currentChapter: 6,
+              activeMissions: ['m6_decision'],
+              completedMissions: [
+                'm1_first_ride',
+                'm1_cover_week',
+                'm2_cross_city',
+                'm3_disruption',
+                'm4_home_safe',
+                'm5_linked_jobs',
+              ],
+              branchFlags: {},
+            },
+            missions: {
+              ...base.missions,
+              activeMissions: ['m6_decision'],
+              completedMissions: [
+                'm1_first_ride',
+                'm1_cover_week',
+                'm2_cross_city',
+                'm3_disruption',
+                'm4_home_safe',
+                'm5_linked_jobs',
+              ],
+              currentDay: 20,
+            },
+          })
+        );
+      }
+    });
+    await page.keyboard.press('Escape');
+    await page.getByTestId('pause-btn-load').click();
+    await page.getByTestId('btn-action-load-slot3').click();
+
+    const endingScreen = page.getByTestId('ending-screen');
+    await expect(endingScreen).toBeVisible({ timeout: 10000 });
+    await expect(endingScreen.getByTestId('share-scorecard-canvas')).toBeVisible();
+    await endingScreen.getByTestId('share-scorecard-btn').click();
+    await expect(endingScreen.getByTestId('share-status')).toBeVisible();
+    await endingScreen.getByRole('button', { name: /Close|বন্ধ/ }).click();
+    await expect(endingScreen).toHaveCount(0);
+
+    // 5. Verify Service Worker / PWA manifest and cache readiness
+    const swReady = await page.evaluate(async () => {
+      const hasSwApi = 'serviceWorker' in navigator;
+      const manifestLink = document.querySelector('link[rel="manifest"]')?.getAttribute('href');
+      return { hasSwApi, hasManifest: Boolean(manifestLink) };
+    });
+    expect(swReady.hasSwApi).toBe(true);
+    expect(swReady.hasManifest).toBe(true);
+    expect(errors).toEqual([]);
+  });
+
+  test('Escape does not open Pause underneath Ending, DayEnd, TripSummary, ChoiceCard, or NegotiationPanel @dev-only', async ({
     page,
   }) => {
     test.setTimeout(60000);

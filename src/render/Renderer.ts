@@ -444,7 +444,7 @@ export class Renderer {
     const nodeMap = new Map<string, RoadNode>();
     const districtSegments: RoadSegment[] = [];
     for (const dRef of world.districts) {
-      const dist = districtProvider(dRef.districtId as DistrictId);
+      const dist = districtProvider(dRef.districtId);
       if (!dist) continue;
       for (const node of dist.nodes) nodeMap.set(node.nodeId, node);
       districtSegments.push(...dist.segments);

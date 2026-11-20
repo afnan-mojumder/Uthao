@@ -344,11 +344,13 @@ export class CameraRig {
     const mats = new Set<THREE.Material>();
     this.handlebarGroup.traverse((child) => {
       if (child instanceof THREE.Mesh) {
-        if (child.geometry) geos.add(child.geometry);
-        if (Array.isArray(child.material)) {
-          for (const m of child.material) mats.add(m);
-        } else if (child.material) {
-          mats.add(child.material);
+        const geo = child.geometry as THREE.BufferGeometry | undefined;
+        const mat = child.material as THREE.Material | THREE.Material[] | undefined;
+        if (geo) geos.add(geo);
+        if (Array.isArray(mat)) {
+          for (const m of mat) mats.add(m);
+        } else if (mat) {
+          mats.add(mat);
         }
       }
     });

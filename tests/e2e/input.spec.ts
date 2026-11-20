@@ -85,33 +85,26 @@ test.describe('keyboard focus and escape', () => {
 
 test.describe('camera key', () => {
   test('C toggles chase and first-person camera on each press', async ({ page }) => {
-    // Arrange: debug boot starts directly in the game world
-    await page.goto('/?debug=1&encounters=0');
-    await page.waitForFunction(() => (window as unknown as { __uthao?: unknown }).__uthao !== undefined);
-    const mode = () =>
-      page.evaluate(
-        () =>
-          (window as unknown as { __uthao: { renderer: { cameraRig: { mode: string } } } }).__uthao.renderer
-            .cameraRig.mode
-      );
-    const before = await mode();
+    test.setTimeout(60000);
+    await page.goto('/');
+    await expect(page.getByTestId('main-menu')).toBeVisible({ timeout: 30000 });
+    await page.getByTestId('menu-btn-endless').click();
+    await expect(page.locator('#hud')).toBeVisible({ timeout: 15000 });
+    await expect(page.getByTestId('hud')).toBeVisible();
+    await expect(page.getByTestId('hud-first-person')).toHaveCount(0);
 
     // Act: hold each press for a human-length tap (the sim samples input per frame)
     const tap = async () => {
       await page.keyboard.down('KeyC');
-      await page.waitForTimeout(120);
+      await page.waitForTimeout(140);
       await page.keyboard.up('KeyC');
       await page.waitForTimeout(150);
     };
     await tap();
-    const afterFirst = await mode();
+    await expect(page.getByTestId('hud-first-person')).toBeVisible({ timeout: 5000 });
     await tap();
-    const afterSecond = await mode();
-
-    // Assert
-    expect(before).toBe('chase');
-    expect(afterFirst).toBe('firstPerson');
-    expect(afterSecond).toBe('chase');
+    await expect(page.getByTestId('hud')).toBeVisible({ timeout: 5000 });
+    await expect(page.getByTestId('hud-first-person')).toHaveCount(0);
   });
 });
 
@@ -165,7 +158,7 @@ test.describe('gamepad only', () => {
     await expect(page.getByTestId('main-menu')).toHaveCount(0);
   });
 
-  test('B on a dialogue card chooses its second option', async ({ page }) => {
+  test('B on a dialogue card chooses its second option @dev-only', async ({ page }) => {
     // Arrange
     await page.addInitScript(GAMEPAD_SHIM);
     await page.goto('/?debug=1&encounters=0');
@@ -187,10 +180,13 @@ test.describe('gamepad only', () => {
 
 test.describe('gamepad map', () => {
   test('RB opens the map and A on a focused point of interest selects it', async ({ page }) => {
+    test.setTimeout(60000);
     // Arrange
     await page.addInitScript(GAMEPAD_SHIM);
-    await page.goto('/?debug=1&encounters=0');
-    await page.waitForFunction(() => (window as unknown as { __uthao?: unknown }).__uthao !== undefined);
+    await page.goto('/');
+    await expect(page.getByTestId('main-menu')).toBeVisible({ timeout: 30000 });
+    await page.getByTestId('menu-btn-endless').click();
+    await expect(page.locator('#hud')).toBeVisible({ timeout: 15000 });
     await expect(page.getByTestId('map-screen')).toHaveCount(0);
 
     // Act: RB opens the map
@@ -233,7 +229,7 @@ test.describe('gamepad map', () => {
 });
 
 test.describe('human steering direction', () => {
-  test('KeyA turns screen-left and KeyD turns screen-right in chase camera', async ({ page }) => {
+  test('KeyA turns screen-left and KeyD turns screen-right in chase camera @dev-only', async ({ page }) => {
     test.setTimeout(60000);
     const driveAndMeasure = async (steerKey: 'KeyA' | 'KeyD') => {
       await page.goto('/?debug=1&district=testloop&encounters=0');
@@ -332,7 +328,7 @@ test.describe('human steering direction', () => {
   });
 });
 
-test.describe('mobile landscape touch ergonomics (P6.4)', () => {
+test.describe('mobile landscape touch ergonomics (P6.4) @dev-only', () => {
   test('TouchActions pads and 8-button strip have >=44px targets and zero HUD overlap at 915x412 and 667x375', async ({
     page,
   }, testInfo) => {

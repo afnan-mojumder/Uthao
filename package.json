@@ -1,14 +1,14 @@
 {
   "name": "uthao",
   "private": true,
-  "version": "2.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
     "verify-bundle": "node scripts/verify-prod-bundle.mjs",
     "preview": "vite preview",
-    "check": "tsc --noEmit && eslint . && vitest run && node scripts/validate-data.mjs",
+    "check": "tsc --noEmit && tsc --noEmit -p tsconfig.node.json && eslint . && vitest run && node scripts/validate-data.mjs",
     "test": "vitest run",
     "e2e": "playwright test",
     "balance": "vitest run tests/balance",

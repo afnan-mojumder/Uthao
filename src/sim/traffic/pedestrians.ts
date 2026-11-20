@@ -782,12 +782,15 @@ export class PedestrianManager {
       return true;
     }
     if (vehicles) {
-      if (Array.isArray(vehicles)) {
-        for (let i = 0; i < vehicles.length; i++) {
-          if (this.isApproaching(px, pz, vehicles[i]!, timeNeededS, hazardWindowS)) return true;
+      const isReadonlyArray = (
+        col: ReadonlyMap<string, VehicleView> | readonly VehicleView[]
+      ): col is readonly VehicleView[] => Array.isArray(col);
+      if (isReadonlyArray(vehicles)) {
+        for (const v of vehicles) {
+          if (this.isApproaching(px, pz, v, timeNeededS, hazardWindowS)) return true;
         }
       } else {
-        for (const v of (vehicles as ReadonlyMap<string, VehicleView>).values()) {
+        for (const v of vehicles.values()) {
           if (this.isApproaching(px, pz, v, timeNeededS, hazardWindowS)) return true;
         }
       }

@@ -185,14 +185,14 @@ export function stepBike(
     newRpmNorm = clamp(0.15 + (Math.abs(newSpeed) / REVERSE_MAX_MS) * 0.2, 0.15, 1.0);
   } else {
     const ratio = clamp(newSpeed / spec.vmax, 0, 1);
-    while (newGear < 5 && ratio >= GEAR_UPSHIFT_RATIOS[newGear]!) {
+    while (newGear < 5 && ratio >= GEAR_UPSHIFT_RATIOS[newGear]) {
       newGear = (newGear + 1) as 1 | 2 | 3 | 4 | 5;
     }
-    while (newGear > 1 && ratio < GEAR_DOWNSHIFT_RATIOS[newGear]!) {
+    while (newGear > 1 && ratio < GEAR_DOWNSHIFT_RATIOS[newGear]) {
       newGear = (newGear - 1) as 1 | 2 | 3 | 4 | 5;
     }
-    const minR = GEAR_MIN_RATIOS[newGear]!;
-    const maxR = GEAR_MAX_RATIOS[newGear]!;
+    const minR = GEAR_MIN_RATIOS[newGear];
+    const maxR = GEAR_MAX_RATIOS[newGear];
     const band = clamp((ratio - minR) / (maxR - minR), 0, 1);
     newRpmNorm = clamp(0.15 + band * 0.8 + cleanThrottle * 0.05, 0.15, 1.0);
   }

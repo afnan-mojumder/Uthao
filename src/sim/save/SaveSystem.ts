@@ -432,10 +432,11 @@ export class SaveSystem {
 
     let parsed: Record<string, unknown>;
     try {
-      parsed = JSON.parse(raw);
-      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      const rawParsed: unknown = JSON.parse(raw);
+      if (!rawParsed || typeof rawParsed !== 'object' || Array.isArray(rawParsed)) {
         throw new Error('Save content is not an object');
       }
+      parsed = rawParsed as Record<string, unknown>;
     } catch (err) {
       const corruptKey = this.quarantineCorrupt(slot, raw);
       return {

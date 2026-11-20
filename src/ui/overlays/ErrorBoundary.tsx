@@ -127,6 +127,13 @@ export function triggerSaveDataDownload(): string {
   return json;
 }
 
+function formatCrashMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (typeof error === 'string') return error;
+  if (typeof error === 'number' || typeof error === 'boolean') return String(error);
+  return 'Unknown error';
+}
+
 export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   override state: ErrorBoundaryState = {
     renderError: null,
@@ -134,13 +141,11 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   };
 
   static override getDerivedStateFromError(error: unknown): Partial<ErrorBoundaryState> {
-    const msg = error instanceof Error ? error.message : String(error ?? 'Unknown error');
-    return { renderError: msg };
+    return { renderError: formatCrashMessage(error) };
   }
 
   override componentDidCatch(error: unknown): void {
-    const msg = error instanceof Error ? error.message : String(error ?? 'Unknown error');
-    this.setState({ renderError: msg });
+    this.setState({ renderError: formatCrashMessage(error) });
   }
 
   private handleExport = (): void => {

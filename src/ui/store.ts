@@ -48,7 +48,7 @@ export interface HudPassengerInfo {
 }
 
 export interface HudNavigationTurn {
-  direction: 'left' | 'right' | 'straight' | 'uturn' | string;
+  direction: 'left' | 'right' | 'straight' | 'uturn' | (string & {});
   text: string;
 }
 
@@ -336,7 +336,14 @@ export const contextLostSignal = signal<boolean>(false);
 export const runtimeCrashSignal = signal<string | null>(null);
 
 export function reportRuntimeCrash(error: unknown): void {
-  const msg = error instanceof Error ? error.message : String(error ?? 'Unknown error');
+  const msg =
+    error instanceof Error
+      ? error.message
+      : typeof error === 'string'
+        ? error
+        : typeof error === 'number' || typeof error === 'boolean'
+          ? String(error)
+          : 'Unknown error';
   runtimeCrashSignal.value = msg;
 }
 
@@ -349,12 +356,12 @@ export function bindGlobalCrashHandlers(win?: Window): () => void {
   if (!target || typeof target.addEventListener !== 'function') return () => {};
 
   const onError = (ev: ErrorEvent): void => {
-    const err = ev.error ?? ev.message;
+    const err: unknown = (ev.error as unknown) ?? ev.message;
     if (err) reportRuntimeCrash(err);
   };
 
   const onUnhandledRejection = (ev: PromiseRejectionEvent): void => {
-    const reason = ev.reason;
+    const reason: unknown = ev.reason;
     if (reason) reportRuntimeCrash(reason);
   };
 
@@ -1703,11 +1710,8 @@ export function isIosSafariInstallTipVisible(
   nav?: { userAgent?: string; standalone?: boolean; maxTouchPoints?: number },
   win?: { matchMedia?: (q: string) => { matches: boolean } }
 ): boolean {
-  const n =
-    nav ??
-    (typeof navigator !== 'undefined'
-      ? (navigator as unknown as { userAgent?: string; standalone?: boolean; maxTouchPoints?: number })
-      : undefined);
+  const n: { userAgent?: string; standalone?: boolean; maxTouchPoints?: number } | undefined =
+    nav ?? (typeof navigator !== 'undefined' ? navigator : undefined);
   if (!n || typeof n.userAgent !== 'string') return false;
   const ua = n.userAgent;
   const isIosDevice =
@@ -1782,10 +1786,10 @@ export function bindScreenWakeLock(
   doc?: WakeLockDocumentLike,
   nav?: WakeLockNavigatorLike
 ): () => void {
-  const targetDoc =
-    doc ?? (typeof document !== 'undefined' ? (document as unknown as WakeLockDocumentLike) : undefined);
-  const targetNav =
-    nav ?? (typeof navigator !== 'undefined' ? (navigator as unknown as WakeLockNavigatorLike) : undefined);
+  const targetDoc: WakeLockDocumentLike | undefined =
+    doc ?? (typeof document !== 'undefined' ? document : undefined);
+  const targetNav: WakeLockNavigatorLike | undefined =
+    nav ?? (typeof navigator !== 'undefined' ? navigator : undefined);
 
   if (!targetNav?.wakeLock || typeof targetNav.wakeLock.request !== 'function') {
     return () => {};

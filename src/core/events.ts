@@ -149,7 +149,7 @@ export class EventBus<M extends Record<string, unknown>> {
     if (!this.listeners[key]) {
       this.listeners[key] = new Set();
     }
-    this.listeners[key]!.add(fn as (payload: unknown) => void);
+    this.listeners[key].add(fn);
     return () => this.off(key, fn);
   }
 
@@ -157,7 +157,7 @@ export class EventBus<M extends Record<string, unknown>> {
     key: K,
     fn: (payload: M[K]) => void
   ): void {
-    this.listeners[key]?.delete(fn as (payload: unknown) => void);
+    this.listeners[key]?.delete(fn);
   }
 
   emit<K extends keyof M & string>(key: K, payload: M[K]): void {
@@ -166,8 +166,8 @@ export class EventBus<M extends Record<string, unknown>> {
     for (const fn of Array.from(set)) {
       try {
         fn(payload);
-      } catch (err) {
-        console.error(`Error in event listener for ${key}:`, err);
+      } catch {
+        // Isolate subscriber errors so remaining listeners still receive the event
       }
     }
   }

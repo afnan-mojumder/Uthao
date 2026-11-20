@@ -88,13 +88,19 @@ export function ensureLocaleLoaded(lang: Language): Promise<Record<string, strin
   if (localeLoaded[lang]) {
     return Promise.resolve(dictionaries[lang]);
   }
-  if (!localePromises[lang]) {
-    localePromises[lang] = fetchEnglishDictionary();
+  const existing = localePromises[lang];
+  if (existing) {
+    return existing;
   }
-  return localePromises[lang]!;
+  const promise = fetchEnglishDictionary();
+  localePromises[lang] = promise;
+  return promise;
 }
 
-if (import.meta.env.DEV && typeof process !== 'undefined' && process.versions?.node) {
+const isNodeEnv = Boolean(
+  (globalThis as { process?: { versions?: { node?: string } } }).process?.versions?.node
+);
+if (import.meta.env.DEV && isNodeEnv) {
   // In Node / Vitest unit tests, pre-populate English from disk so
   // synchronous `setLanguage('en'); t(...)` assertions continue to work with zero changes.
   void ensureLocaleLoaded('en');
@@ -164,7 +170,8 @@ export function t(key: string, vars?: Record<string, string | number>): string {
   }
 
   // Replace {varName}
-  return template.replace(/\{(\w+)\}/g, (match, varName) => {
-    return vars[varName] !== undefined ? String(vars[varName]) : match;
+  return template.replace(/\{(\w+)\}/g, (match, varName: string) => {
+    const val = vars[varName];
+    return val !== undefined ? String(val) : match;
   });
 }

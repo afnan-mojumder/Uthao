@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test('T4.4 Garage and Bike Upgrades e2e: condition gauges, repair actions, tab switching, and exit', async ({
+test('T4.4 Garage and Bike Upgrades e2e: condition gauges, repair actions, tab switching, and exit @dev-only', async ({
   page,
 }) => {
   test.setTimeout(60000);

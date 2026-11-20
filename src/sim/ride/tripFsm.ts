@@ -1,4 +1,4 @@
-import type { Fsm } from '../../core/fsm';
+import { isProduction, type Fsm } from '../../core/fsm';
 import type {
   PassengerState,
   PassengerStatus,
@@ -90,7 +90,7 @@ export function createTripFsm(): Fsm<TripState, TripEvent> {
     send(event) {
       const next = target(event);
       if (next === undefined) {
-        if (typeof process !== 'undefined' && process.env?.NODE_ENV === 'production') return state;
+        if (isProduction()) return state;
         throw new Error(`Illegal trip transition: cannot handle '${event}' in state '${state}'`);
       }
       if (next === 'EmergencyInterrupted') interruptedFrom = state;

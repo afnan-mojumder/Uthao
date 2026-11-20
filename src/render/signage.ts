@@ -121,7 +121,6 @@ export class SignageAtlas {
     if (
       typeof document === 'undefined' ||
       !document.fonts ||
-      !document.fonts.ready ||
       !this.canvas
     ) {
       return Promise.resolve();
@@ -130,6 +129,9 @@ export class SignageAtlas {
     try {
       if (typeof document.fonts.load === 'function') {
         void document.fonts.load(`bold 32px ${SIGN_FONT_FAMILY}`).catch(() => {});
+      }
+      if (!('ready' in document.fonts)) {
+        return Promise.resolve();
       }
       return document.fonts.ready
         .then(() => {

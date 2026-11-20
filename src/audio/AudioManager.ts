@@ -139,14 +139,16 @@ export class AudioManager {
     }
 
     if (this.audioContext.state === 'suspended' || (this.audioContext.state as string) === 'interrupted') {
-      const p = this.audioContext.resume?.();
-      if (p && typeof p.then === 'function') {
-        p.then(() => {
-          if (this.audioContext?.state === 'running') {
-            this.isUnlocked = true;
-            this.removeUnlockListeners();
-          }
-        }).catch(() => {});
+      const p: unknown = this.audioContext.resume?.();
+      if (p !== null && typeof p === 'object' && 'then' in p && typeof (p as Promise<void>).then === 'function') {
+        (p as Promise<void>)
+          .then(() => {
+            if (this.audioContext?.state === 'running') {
+              this.isUnlocked = true;
+              this.removeUnlockListeners();
+            }
+          })
+          .catch(() => {});
       }
       if ((this.audioContext.state as string) === 'running') {
         this.isUnlocked = true;

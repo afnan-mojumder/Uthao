@@ -147,7 +147,7 @@ export class CityBuilder {
     this.allWorldSegments = [];
 
     for (const dRef of world.districts) {
-      const dId = dRef.districtId as DistrictId;
+      const dId = dRef.districtId;
       const district = districtProvider(dId);
       if (district) {
         const sil = createDistrictSilhouette(district);
@@ -194,8 +194,9 @@ export class CityBuilder {
     for (const col of roadResult.colliders) {
       this.colliders.push(col);
       this.connectorColliders.push(col);
-      if (col instanceof THREE.Mesh && col.geometry) {
-        protectedGeos.add(col.geometry);
+      if (col instanceof THREE.Mesh) {
+        const geo = col.geometry as THREE.BufferGeometry | undefined;
+        if (geo) protectedGeos.add(geo);
       }
     }
 
@@ -767,8 +768,9 @@ export class CityBuilder {
       // 0. Merge static road meshes once per district & material; batch buildings & props into quadrant BatchedMeshes.
       const protectedGeos = new Set<THREE.BufferGeometry>();
       for (const col of task.roadColliders) {
-        if (col instanceof THREE.Mesh && col.geometry) {
-          protectedGeos.add(col.geometry);
+        if (col instanceof THREE.Mesh) {
+          const geo = col.geometry as THREE.BufferGeometry | undefined;
+          if (geo) protectedGeos.add(geo);
         }
       }
 
@@ -1057,12 +1059,14 @@ export class CityBuilder {
       const lineObj = entry.obj;
       if (!(lineObj instanceof THREE.LineSegments)) continue;
       lineObj.updateMatrixWorld(true);
-      const posAttr = lineObj.geometry.getAttribute('position');
+      const lineGeo = lineObj.geometry as THREE.BufferGeometry;
+      const posAttr = lineGeo.getAttribute('position');
       if (!posAttr) continue;
 
       const cx = perChunk ? Math.floor((entry.x - 1e-3) / chunkSize) : 0;
       const cz = perChunk ? Math.floor((entry.z - 1e-3) / chunkSize) : 0;
-      const mat = Array.isArray(lineObj.material) ? lineObj.material[0]! : lineObj.material;
+      const lineMat = lineObj.material as THREE.Material | THREE.Material[];
+      const mat = Array.isArray(lineMat) ? lineMat[0]! : lineMat;
       const key = `${cx},${cz}|${mat.uuid}`;
       let bucket = buckets.get(key);
       if (!bucket) {
@@ -1080,8 +1084,8 @@ export class CityBuilder {
         v.fromBufferAttribute(posAttr, i).applyMatrix4(lineObj.matrixWorld);
         bucket.verts.push(v.x, v.y, v.z);
       }
-      if (!lineObj.geometry.userData?.shared) {
-        lineObj.geometry.dispose();
+      if (!lineGeo.userData?.shared) {
+        lineGeo.dispose();
       }
     }
 
@@ -1129,9 +1133,10 @@ export class CityBuilder {
 
       entry.obj.traverse((child) => {
         if (!(child instanceof THREE.Mesh)) return;
-        const mat = child.material;
+        const mat = child.material as THREE.Material | THREE.Material[];
+        const geo = child.geometry as THREE.BufferGeometry;
         if (Array.isArray(mat)) {
-          const worldClone = new THREE.Mesh(child.geometry, child.material);
+          const worldClone = new THREE.Mesh(geo, mat);
           worldClone.name = child.name;
           worldClone.castShadow = child.castShadow;
           worldClone.receiveShadow = child.receiveShadow;
@@ -1144,7 +1149,6 @@ export class CityBuilder {
           result.push({ obj: worldClone, x: entry.x, z: entry.z });
           return;
         }
-        const geo = child.geometry;
         if (!geo.getAttribute('position')) return;
 
         const key = `${cx},${cz}|${mat.uuid}|${child.castShadow ? 1 : 0}|${child.receiveShadow ? 1 : 0}`;
@@ -1264,9 +1268,10 @@ export class CityBuilder {
 
       entry.obj.traverse((child) => {
         if (!(child instanceof THREE.Mesh)) return;
-        const mat = child.material;
+        const mat = child.material as THREE.Material | THREE.Material[];
+        const geo = child.geometry as THREE.BufferGeometry;
         if (Array.isArray(mat)) {
-          const worldClone = new THREE.Mesh(child.geometry, child.material);
+          const worldClone = new THREE.Mesh(geo, mat);
           worldClone.name = child.name;
           worldClone.castShadow = child.castShadow;
           worldClone.receiveShadow = child.receiveShadow;
@@ -1280,7 +1285,6 @@ export class CityBuilder {
           result.push({ obj: worldClone, x: entry.x, z: entry.z });
           return;
         }
-        const geo = child.geometry;
         if (!geo.getAttribute('position')) return;
 
         const key = `${cx},${cz}|${mat.uuid}|${child.castShadow ? 1 : 0}|${child.receiveShadow ? 1 : 0}`;

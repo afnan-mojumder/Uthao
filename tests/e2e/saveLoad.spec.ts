@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('P5.2 Save v2 & Bulletproof Resume', () => {
+test.describe('P5.2 Save v2 & Bulletproof Resume @dev-only', () => {
   test('saves and loads slot1 cleanly via Pause -> SaveSlots with full SaveV2 state', async ({
     page,
   }) => {

@@ -329,7 +329,7 @@ export function SaveSlots({
                       type="button"
                       data-testid={`btn-delete-${id}`}
                       aria-label={t('save.delete_slot')}
-                      onClick={(e) => handleDelete(e as unknown as MouseEvent, id)}
+                      onClick={(e) => handleDelete(e, id)}
                       style={{
                         padding: '10px',
                         borderRadius: '10px',

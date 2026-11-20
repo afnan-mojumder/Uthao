@@ -59,6 +59,9 @@ export async function loadAllDistricts(): Promise<DistrictData[]> {
   return inflightLoad;
 }
 
-if (import.meta.env.DEV && typeof process !== 'undefined' && process.versions?.node) {
+const isNodeEnv = Boolean(
+  (globalThis as { process?: { versions?: { node?: string } } }).process?.versions?.node
+);
+if (import.meta.env.DEV && isNodeEnv) {
   void loadAllDistricts();
 }

@@ -4,8 +4,9 @@ export interface Fsm<S extends string, E extends string> {
   can(event: E): boolean;
 }
 
-function isProduction(): boolean {
-  if (typeof process !== 'undefined' && process.env?.NODE_ENV === 'production') {
+export function isProduction(): boolean {
+  const proc = (globalThis as { process?: { env?: { NODE_ENV?: string } } }).process;
+  if (proc?.env?.NODE_ENV === 'production') {
     return true;
   }
   const meta = import.meta as unknown as { env?: { PROD?: boolean } };

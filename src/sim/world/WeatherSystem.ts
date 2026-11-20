@@ -321,14 +321,8 @@ export class WeatherSystem {
     }
 
     if (segments) {
-      if (Array.isArray(segments)) {
-        for (let i = 0; i < segments.length; i++) {
-          this.updateSegmentFlood(segments[i]!, dtMinutes, accumulation);
-        }
-      } else {
-        for (const seg of segments) {
-          this.updateSegmentFlood(seg, dtMinutes, accumulation);
-        }
+      for (const seg of segments) {
+        this.updateSegmentFlood(seg, dtMinutes, accumulation);
       }
     } else if (this.weather !== 'heavyRain' && this.weather !== 'lightRain') {
       for (const [id, current] of this.segmentFloodLevels.entries()) {

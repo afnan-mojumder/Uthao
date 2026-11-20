@@ -30,7 +30,7 @@ test.describe('T7.1 Real-game boot gate smoke test', () => {
     await expect(page.locator('#hud')).toBeVisible();
   });
 
-  test('debug-started encounter can be answered', async ({ page }) => {
+  test('debug-started encounter can be answered @dev-only', async ({ page }) => {
     await page.goto('/?debug=1&encounters=0');
     await page.waitForFunction(() => (window as unknown as { __uthao?: unknown }).__uthao !== undefined);
 
@@ -51,7 +51,7 @@ test.describe('T7.1 Real-game boot gate smoke test', () => {
   });
 });
 
-test.describe('T7.3 real physics, road spawn and camera collision', () => {
+test.describe('T7.3 real physics, road spawn and camera collision @dev-only', () => {
   test('bike mesh is in frame and the camera stays outside colliders near a wall', async (
     { page },
     testInfo

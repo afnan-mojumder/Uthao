@@ -3,12 +3,8 @@ import { test, expect } from '@playwright/test';
 test.describe('Settings keeps keyboard focus (audit: focus leaked behind Settings)', () => {
   test('the screen behind Settings is inert, and closing Settings returns focus to its opener', async ({ page }) => {
     test.setTimeout(60000);
-    await page.goto('/?debug=1&district=testloop&encounters=0');
+    await page.goto('/');
     await page.waitForSelector('#game-canvas');
-    await page.evaluate(() => {
-      const ui = (window as unknown as { __uthaoUi?: { screenSignal: { value: string } } }).__uthaoUi;
-      if (ui) ui.screenSignal.value = 'title';
-    });
     await expect(page.locator('[data-testid="main-menu"]')).toBeVisible({ timeout: 30000 });
     const settingsBtn = page.locator('[data-testid="menu-btn-settings"]');
     await expect(settingsBtn).toBeVisible();
@@ -46,7 +42,7 @@ test.describe('Settings keeps keyboard focus (audit: focus leaked behind Setting
       .toBe(0);
   });
 
-  test('all 13 modals set role="dialog" + aria-modal="true", trap Tab focus, and clean up inert on close (including stacked Pause -> Settings/SaveSlots)', async ({
+  test('all 13 modals set role="dialog" + aria-modal="true", trap Tab focus, and clean up inert on close (including stacked Pause -> Settings/SaveSlots) @dev-only', async ({
     page,
   }) => {
     test.setTimeout(90000);
@@ -239,7 +235,7 @@ test.describe('Settings keeps keyboard focus (audit: focus leaked behind Setting
     await assertNoInertLeaked();
   });
 
-  test('Contacts are keyboard-activatable <button>s, tabs have ARIA roles, and sliders/zoom controls have localized aria-labels', async ({
+  test('Contacts are keyboard-activatable <button>s, tabs have ARIA roles, and sliders/zoom controls have localized aria-labels @dev-only', async ({
     page,
   }) => {
     test.setTimeout(60000);

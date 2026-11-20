@@ -184,7 +184,7 @@ export function loadBindings(storage?: Storage): InputBindings {
     if (!s) return cloneDefaultBindings();
     const raw = s.getItem(SETTINGS_STORAGE_KEY);
     if (!raw) return cloneDefaultBindings();
-    const parsed = JSON.parse(raw);
+    const parsed = JSON.parse(raw) as Partial<InputBindings>;
     return {
       keyboard: { ...cloneDefaultBindings().keyboard, ...parsed.keyboard },
       gamepad: { ...cloneDefaultBindings().gamepad, ...parsed.gamepad },

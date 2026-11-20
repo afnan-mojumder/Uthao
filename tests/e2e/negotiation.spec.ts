@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test('negotiation flow: debug-spawn a bargainer, counter twice, accept, assert the fare on the receipt', async ({
+test('negotiation flow: debug-spawn a bargainer, counter twice, accept, assert the fare on the receipt @dev-only', async ({
   page,
 }) => {
   test.setTimeout(120000);

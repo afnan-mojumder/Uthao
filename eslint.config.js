@@ -6,7 +6,16 @@ export default tsPlugin.config(
   js.configs.recommended,
   ...tsPlugin.configs.recommended,
   {
-    ignores: ['dist/**', 'node_modules/**', 'assets-src/**', 'test-results/**', 'playwright-report/**', '.remember/**', '.claude/**'],
+    ignores: [
+      'dist/**',
+      'node_modules/**',
+      'assets-src/**',
+      'test-results/**',
+      'playwright-report/**',
+      '.remember/**',
+      '.claude/**',
+      '.superpowers/**',
+    ],
   },
   {
     files: ['scripts/**', '*.config.{js,ts,mjs}'],
@@ -22,6 +31,46 @@ export default tsPlugin.config(
       globals: {
         ...globals.browser,
       },
+    },
+  },
+  ...tsPlugin.configs.recommendedTypeChecked.map((cfg) => ({
+    ...cfg,
+    files: ['src/**/*.ts', 'src/**/*.tsx'],
+  })),
+  {
+    files: ['src/**/*.ts', 'src/**/*.tsx'],
+    languageOptions: {
+      parserOptions: {
+        project: './tsconfig.json',
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+    rules: {
+      'no-console': 'error',
+    },
+  },
+  {
+    files: ['src/debug/**/*.ts', 'src/debug/**/*.tsx'],
+    rules: {
+      'no-console': 'off',
+    },
+  },
+  {
+    files: ['src/main.ts', 'src/ui/**/*.ts', 'src/ui/**/*.tsx'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['./debug/*', '../debug/*', '../../debug/*', '*/debug/*'],
+              allowTypeImports: true,
+              message:
+                'Production boundary: src/main.ts and src/ui/** must not statically import runtime values from src/debug/** (use dynamic import() behind import.meta.env.DEV or import type).',
+            },
+          ],
+        },
+      ],
     },
   },
   {

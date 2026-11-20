@@ -50,7 +50,7 @@ export interface MapTransformOptions {
 
 export interface MapNodePoint {
   nodeId: string;
-  districtId: DistrictId | string;
+  districtId: DistrictId | (string & {});
   x: number;
   z: number;
   isConnector: boolean;

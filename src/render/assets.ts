@@ -75,10 +75,13 @@ function disposeMaterial(
 ): void {
   if (disposedMats.has(mat)) return;
   disposedMats.add(mat);
-  for (const val of Object.values(mat)) {
-    if (val instanceof THREE.Texture && !disposedTextures.has(val)) {
-      disposedTextures.add(val);
-      val.dispose();
+  for (const val of Object.values(mat) as unknown[]) {
+    if (val instanceof THREE.Texture) {
+      const tex = val as THREE.Texture;
+      if (!disposedTextures.has(tex)) {
+        disposedTextures.add(tex);
+        tex.dispose();
+      }
     }
   }
   mat.dispose();
@@ -92,12 +95,14 @@ function disposeObject3D(
 ): void {
   obj.traverse((child) => {
     if (child instanceof THREE.Mesh) {
-      if (child.geometry && !disposedGeos.has(child.geometry)) {
-        disposedGeos.add(child.geometry);
-        child.geometry.dispose();
+      const geo = child.geometry as THREE.BufferGeometry | undefined;
+      if (geo && !disposedGeos.has(geo)) {
+        disposedGeos.add(geo);
+        geo.dispose();
       }
-      if (child.material) {
-        const mats = Array.isArray(child.material) ? child.material : [child.material];
+      const matProp = child.material as THREE.Material | THREE.Material[] | undefined;
+      if (matProp) {
+        const mats = Array.isArray(matProp) ? matProp : [matProp];
         for (const mat of mats) {
           if (mat) {
             disposeMaterial(mat, disposedMats, disposedTextures);
@@ -227,10 +232,8 @@ export class AssetManager {
     this.initPromise = (async () => {
       const loader = new GLTFLoader();
       try {
-        if (MeshoptDecoder.supported && MeshoptDecoder.ready) {
-          await MeshoptDecoder.ready;
-        }
         if (MeshoptDecoder.supported) {
+          await MeshoptDecoder.ready;
           loader.setMeshoptDecoder(MeshoptDecoder);
         }
       } catch {
@@ -350,15 +353,9 @@ export class AssetManager {
               this.prototypes.set(id, proto);
             }
             return normalized;
-          } catch (err) {
+          } catch {
             if (this.generation !== startGen) {
               return this.createProceduralFallback(id, lod);
-            }
-            if (typeof window !== 'undefined') {
-              console.warn(
-                `[AssetManager] Failed to load '${id}' (${entry.url}); using procedural fallback:`,
-                err
-              );
             }
           }
         }
@@ -441,7 +438,7 @@ export class AssetManager {
     const meshes: THREE.Mesh[] = [];
     root.traverse((child) => {
       if (child instanceof THREE.Mesh && child.geometry) {
-        meshes.push(child);
+        meshes.push(child as THREE.Mesh<THREE.BufferGeometry, THREE.Material | THREE.Material[]>);
       }
     });
 

@@ -512,7 +512,11 @@ export function migrateSave(raw: Record<string, unknown>): SaveV2 {
   ) {
     ver = current.version;
   } else {
-    throw new Error(`Unsupported save version: ${String(current.version)}`);
+    const verLabel =
+      typeof current.version === 'string' || typeof current.version === 'number'
+        ? String(current.version)
+        : typeof current.version;
+    throw new Error(`Unsupported save version: ${verLabel}`);
   }
 
   while (ver < CURRENT_SAVE_VERSION) {
@@ -525,5 +529,5 @@ export function migrateSave(raw: Record<string, unknown>): SaveV2 {
     ver = (migrated as { version: number }).version;
   }
 
-  return SaveV2Schema.parse(current) as SaveV2;
+  return SaveV2Schema.parse(current);
 }

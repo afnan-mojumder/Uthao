@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import path from 'node:path';
 import fs from 'node:fs';
 
-test('screenshot chase cam and fps probe', async ({ page }, testInfo) => {
+test('screenshot chase cam and fps probe @dev-only', async ({ page }, testInfo) => {
   await page.goto('/?debug=1');
   await page.waitForSelector('#game-canvas');
   await page.waitForTimeout(600); // Allow several frames to render

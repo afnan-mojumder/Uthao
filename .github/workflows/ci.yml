@@ -17,4 +17,12 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run check
+      - run: npm run balance
       - run: npm run build
+      - run: node scripts/verify-prod-bundle.mjs
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Run Playwright E2E (Dev Suite — Desktop + Pixel 7)
+        run: npx playwright test
+      - name: Run Playwright E2E (Production Preview dist/ — Desktop + Pixel 7)
+        run: PLAYWRIGHT_PREVIEW=1 npx playwright test --grep-invert @dev-only

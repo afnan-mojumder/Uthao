@@ -40,7 +40,7 @@ export function districtsToLoad(
   for (const d of world.districts) {
     const dist = distanceToDistrictBounds(d.bounds, pos);
     if (dist <= loadRadius) {
-      toLoad.push(d.districtId as DistrictId);
+      toLoad.push(d.districtId);
     }
   }
   return toLoad;
@@ -57,7 +57,7 @@ export function districtsToUnload(
   unloadRadius = 700
 ): DistrictId[] {
   const toUnload: DistrictId[] = [];
-  const districtMap = new Map(world.districts.map((d) => [d.districtId as DistrictId, d]));
+  const districtMap = new Map(world.districts.map((d) => [d.districtId, d]));
 
   for (const id of loadedDistricts) {
     const d = districtMap.get(id);
@@ -85,9 +85,10 @@ export function disposeHierarchy(obj: THREE.Object3D): void {
       child.dispose();
     } else if (child instanceof THREE.InstancedMesh) {
       child.dispose();
-      if (child.geometry && !child.geometry.userData?.shared && !disposedGeos.has(child.geometry)) {
-        disposedGeos.add(child.geometry);
-        child.geometry.dispose();
+      const instGeo = child.geometry as THREE.BufferGeometry | undefined;
+      if (instGeo && !instGeo.userData?.shared && !disposedGeos.has(instGeo)) {
+        disposedGeos.add(instGeo);
+        instGeo.dispose();
       }
     } else {
       const geo = (child as { geometry?: THREE.BufferGeometry }).geometry;
@@ -103,10 +104,13 @@ export function disposeHierarchy(obj: THREE.Object3D): void {
       for (const m of mats) {
         if (!m || m.userData?.shared || disposedMats.has(m)) continue;
         disposedMats.add(m);
-        for (const val of Object.values(m)) {
-          if (val instanceof THREE.Texture && !val.userData?.shared && !disposedTexs.has(val)) {
-            disposedTexs.add(val);
-            val.dispose();
+        for (const val of Object.values(m) as unknown[]) {
+          if (val instanceof THREE.Texture) {
+            const tex = val as THREE.Texture;
+            if (!tex.userData?.shared && !disposedTexs.has(tex)) {
+              disposedTexs.add(tex);
+              tex.dispose();
+            }
           }
         }
         m.dispose();

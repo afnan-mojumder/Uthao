@@ -17,7 +17,7 @@ test('page loads, canvas visible, no console errors', async ({ page }) => {
   expect(errors).toEqual([]);
 });
 
-test('pauses on hidden', async ({ page }) => {
+test('pauses on hidden @dev-only', async ({ page }) => {
   await page.goto('/?district=testloop');
   await page.waitForFunction(() => (window as unknown as { __uthao?: unknown }).__uthao !== undefined);
 
@@ -34,10 +34,11 @@ test('pauses on hidden', async ({ page }) => {
 });
 
 test('autosaves on hidden', async ({ page }) => {
-  // A career under way (debug boot starts in the game). On the title screen a
-  // hidden tab must not save, see saveIntegrity.test.ts.
-  await page.goto('/?debug=1&district=testloop');
-  await page.waitForFunction(() => (window as unknown as { __uthao?: unknown }).__uthao !== undefined);
+  // A career under way. On the title screen a hidden tab must not save, see saveIntegrity.test.ts.
+  await page.goto('/');
+  await expect(page.getByTestId('main-menu')).toBeVisible({ timeout: 30000 });
+  await page.getByTestId('menu-btn-endless').click();
+  await expect(page.locator('#hud')).toBeVisible({ timeout: 15000 });
 
   // Clear previous storage
   await page.evaluate(() => {
@@ -51,7 +52,8 @@ test('autosaves on hidden', async ({ page }) => {
     document.dispatchEvent(new Event('visibilitychange'));
   });
 
-  // Verify that uthao.save.auto was stored in localStorage
+  // Verify that uthao.save.auto was stored in localStorage and pause indicator appeared
+  await expect(page.getByTestId('pause-indicator')).toBeVisible({ timeout: 5000 });
   const savedData = await page.evaluate(() => {
     return localStorage.getItem('uthao.save.auto');
   });

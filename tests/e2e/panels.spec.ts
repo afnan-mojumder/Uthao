@@ -1,8 +1,10 @@
 import { test, expect } from '@playwright/test';
 
-async function openWorldDebug(page: import('@playwright/test').Page): Promise<void> {
-  await page.goto('/?debug=1&encounters=0');
+async function openWorldPurePlayer(page: import('@playwright/test').Page): Promise<void> {
+  await page.goto('/');
   await page.waitForSelector('#game-canvas', { timeout: 30000 });
+  await expect(page.getByTestId('main-menu')).toBeVisible({ timeout: 30000 });
+  await page.getByTestId('menu-btn-endless').click();
   await expect(page.locator('#hud')).toBeVisible({ timeout: 15000 });
 }
 
@@ -11,7 +13,7 @@ test.describe('P6.3 UiSheet, KarmaPanel, Journal & Hotkeys E2E', () => {
     page,
   }) => {
     test.setTimeout(60000);
-    await openWorldDebug(page);
+    await openWorldPurePlayer(page);
 
     // 1. UiSheet ('KeyU')
     await page.keyboard.press('KeyU');
@@ -47,9 +49,11 @@ test.describe('P6.3 UiSheet, KarmaPanel, Journal & Hotkeys E2E', () => {
     await expect(page.locator('#hud')).toBeVisible();
   });
 
-  test('typing "ujk" inside negotiation custom-counter-input opens no panel', async ({ page }) => {
+  test('typing "ujk" inside negotiation custom-counter-input opens no panel @dev-only', async ({ page }) => {
     test.setTimeout(60000);
-    await openWorldDebug(page);
+    await page.goto('/?debug=1&encounters=0');
+    await page.waitForSelector('#game-canvas', { timeout: 30000 });
+    await expect(page.locator('#hud')).toBeVisible({ timeout: 15000 });
 
     await page.evaluate(() => {
       const ui = (
@@ -120,11 +124,13 @@ test.describe('P6.3 UiSheet, KarmaPanel, Journal & Hotkeys E2E', () => {
     await expect(page.getByTestId('karma-panel')).not.toBeVisible();
   });
 
-  test('Karma panel reveals criminalExposure and evidenceExposure only when > 0 and logs attributed events', async ({
+  test('Karma panel reveals criminalExposure and evidenceExposure only when > 0 and logs attributed events @dev-only', async ({
     page,
   }) => {
     test.setTimeout(60000);
-    await openWorldDebug(page);
+    await page.goto('/?debug=1&encounters=0');
+    await page.waitForSelector('#game-canvas', { timeout: 30000 });
+    await expect(page.locator('#hud')).toBeVisible({ timeout: 15000 });
 
     // Before exposure: both exposure meters stay hidden
     await page.keyboard.press('KeyK');
@@ -153,7 +159,7 @@ test.describe('P6.3 UiSheet, KarmaPanel, Journal & Hotkeys E2E', () => {
     page,
   }) => {
     test.setTimeout(60000);
-    await openWorldDebug(page);
+    await openWorldPurePlayer(page);
 
     await page.keyboard.press('KeyM');
     const mapScreen = page.getByTestId('map-screen');

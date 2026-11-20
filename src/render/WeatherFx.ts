@@ -360,7 +360,7 @@ export class WeatherFx {
 
       const dummy = new THREE.Object3D();
       for (let i = 0; i < this.lampCount; i++) {
-        dummy.position.set(coords[i * 3]!, coords[i * 3 + 1]!, coords[i * 3 + 2]!);
+        dummy.position.set(coords[i * 3]!, coords[i * 3 + 1]!, coords[i * 3 + 2]);
         dummy.rotation.set(0, rots[i]!, 0);
         dummy.updateMatrix();
         mesh.setMatrixAt(i, dummy.matrix);
