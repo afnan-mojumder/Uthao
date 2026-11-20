@@ -271,7 +271,8 @@
     "trigger": {
       "phase": "roaming",
       "chapter": [4, 6],
-      "flags": { "crime_v1_resolved": true }
+      "flags": { "crime_v1_resolved": true },
+      "notFlags": { "m4_police_decision_made": true }
     },
     "weight": 12,
     "cooldownMin": 9999,

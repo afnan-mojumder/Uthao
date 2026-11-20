@@ -205,6 +205,16 @@ describe('Campaign Chapters 2–6, Side Missions, and Endless Mode (T5.4)', () =
     }
     expect(gm.missionManager.isMissionActive('m6_decision')).toBe(false);
     expect(endings).toEqual([]);
+
+    // Switching an active career into Endless mode clears activeMissionIds & objectiveStates
+    const gmCareer = new GameManager({ seed: 43, mode: 'career', data: {} });
+    expect(gmCareer.missionManager.isMissionActive('m1_first_ride')).toBe(true);
+    expect(gmCareer.missionManager.getObjectiveStates('m1_first_ride').length).toBeGreaterThan(0);
+    gmCareer.enterEndlessMode();
+    expect(gmCareer.mode).toBe('endless');
+    expect(gmCareer.story.currentChapter).toBe(6);
+    expect(gmCareer.missionManager.isMissionActive('m1_first_ride')).toBe(false);
+    expect(gmCareer.missionManager.getObjectiveStates('m1_first_ride')).toEqual([]);
   });
 
   it('walks all 6 chapters (ch1-ch6) through live GameSession and reaches Day 20 finale without softlocks', () => {

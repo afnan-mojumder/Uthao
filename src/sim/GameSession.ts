@@ -1194,13 +1194,13 @@ export class GameSession {
       if (
         !this.gm.shiftEnded &&
         !this.ride.getActiveRequest() &&
-        this.ride.getOfferedRequests().length === 0 &&
+        !this.ride.hasOfferedRequests() &&
         this.missionRideOfferCooldownSec <= 0
       ) {
-        const pendingChars = this.gm.missionManager.getPendingRideWithCharacterIds();
-        if (pendingChars.length > 0) {
+        const pendingChar = this.gm.missionManager.getFirstPendingRideWithCharacterId();
+        if (pendingChar !== null) {
           this.missionRideOfferCooldownSec = 5;
-          this.offerMissionRideWith(pendingChars[0]!);
+          this.offerMissionRideWith(pendingChar);
         }
       }
 

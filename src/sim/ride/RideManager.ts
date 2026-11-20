@@ -275,6 +275,10 @@ export class RideManager {
     return this.noticeKey !== null && this.simTimeSec < this.noticeUntil ? this.noticeKey : null;
   }
 
+  hasOfferedRequests(): boolean {
+    return this.offeredRequests.size > 0;
+  }
+
   getOfferedRequests(): RideRequest[] {
     return Array.from(this.offeredRequests.values());
   }

@@ -210,6 +210,7 @@ export class GameManager {
   /** Whether the player has already manually used their one delayRent allowance. */
   rentDelayedByCommand = false;
   private todayLivingExpenses: DaySummary['livingExpenses'] | null = null;
+  private pendingM4PoliceDecision: boolean = false;
   private readonly kamalProxScratch = { atKamalBhai: false };
   homeNodeId: string = 'res_n2_0';
   playerNodeId: string = 'res_n2_0';
@@ -372,15 +373,17 @@ export class GameManager {
         this.offerCareerDecision();
       } else if (
         missionId === 'm4_home_safe' &&
-        !this.story.branchFlags['m4_police_decision_made'] &&
-        this.eventDirector.enabled &&
-        this.eventDirector.activeEncounter === null
+        !this.story.branchFlags['m4_police_decision_made']
       ) {
-        this.eventDirector.forceStart(
-          'enc_m4_police_decision',
-          this.bus,
-          this.buildDefaultEncounterContext('roaming', 0)
-        );
+        const started =
+          this.eventDirector.enabled && this.eventDirector.activeEncounter === null
+            ? this.eventDirector.forceStart(
+                'enc_m4_police_decision',
+                this.bus,
+                this.buildDefaultEncounterContext('roaming', 0)
+              )
+            : null;
+        this.pendingM4PoliceDecision = started === null;
       }
     });
     // Sync ReputationSystem / story flags onto story.branchFlags and trigger campaign completion.
@@ -548,6 +551,8 @@ export class GameManager {
    * (main menu or post-ending) behaves the same as a fresh endless boot. */
   enterEndlessMode(): void {
     this.mode = 'endless';
+    this.pendingM4PoliceDecision = false;
+    this.missionManager.resetCareer();
     this.missionManager.missions.clear();
     this.story.activeMissions = [];
     this.story.currentChapter = 6;
@@ -637,6 +642,23 @@ export class GameManager {
     // T7.1: ambient (roaming) encounters are suppressed while disabled (main
     // menu, tutorial, or `?encounters=0`) or while resolving a fare dispute.
     if (this.eventDirector.enabled && !this.rideManager?.getPendingDispute?.()) {
+      if (this.pendingM4PoliceDecision) {
+        if (
+          this.story.branchFlags['m4_police_decision_made'] ||
+          !this.missionManager.isMissionActive('m4_home_safe')
+        ) {
+          this.pendingM4PoliceDecision = false;
+        } else if (ctx.phase === 'roaming' && this.eventDirector.activeEncounter === null) {
+          const decisionEnc = this.eventDirector.forceStart('enc_m4_police_decision', this.bus, ctx);
+          if (decisionEnc) {
+            this.pendingM4PoliceDecision = false;
+            if (this.eventDirector.pauseOnDecisions) {
+              this.paused = true;
+            }
+            return;
+          }
+        }
+      }
       const encounter = this.eventDirector.evaluate(ctx, this.bus);
       if (encounter && this.eventDirector.pauseOnDecisions) {
         this.paused = true;
@@ -1092,6 +1114,7 @@ export class GameManager {
     this.todayRentAutoFlagged = false;
     this.rentDelayedByCommand = false;
     this.todayLivingExpenses = null;
+    this.pendingM4PoliceDecision = false;
     this.deliveryManager.reset();
     this.eventDirector.resetCareer();
     this.weatherSystem.reset('clear');
@@ -1131,6 +1154,17 @@ export class GameManager {
     this.economyManager.restoreState(snap.economy);
     this.syncEconomy();
 
+    // Restore reputation BEFORE MissionManager so retro-checked relationship objectives
+    // read the saved relationships rather than fresh boot defaults.
+    this.reputationSystem.applySnapshot({
+      ...(snap.reputation ?? {}),
+      relationships: snap.story.characterRelationships,
+    });
+    this.economy.reputation = this.reputationSystem.getAppRating();
+    this.economyManager.reputation = this.economy.reputation;
+    this.todayStartRating = this.reputationSystem.getAppRating();
+    this.todayRelationshipsStart = this.reputationSystem.getAllRelationships();
+
     // Restore story (characterRelationships stays owned & mutated exclusively by ReputationSystem)
     this.story.currentChapter = snap.story.currentChapter;
     this.story.completedMissions = [...snap.story.completedMissions];
@@ -1140,16 +1174,10 @@ export class GameManager {
     this.story.endingEligibility = { ...snap.story.endingEligibility };
     this.missionManager.syncFromStoryState();
     this.missionManager.applySnapshot(snap.missions);
-
-    // Restore reputation (meters, karmaLog, passengerTrust, promises, strikes, suspension, characterRelationships)
-    this.reputationSystem.applySnapshot({
-      ...(snap.reputation ?? {}),
-      relationships: snap.story.characterRelationships,
-    });
-    this.economy.reputation = this.reputationSystem.getAppRating();
-    this.economyManager.reputation = this.economy.reputation;
-    this.todayStartRating = this.reputationSystem.getAppRating();
-    this.todayRelationshipsStart = this.reputationSystem.getAllRelationships();
+    this.pendingM4PoliceDecision = Boolean(
+      this.missionManager.isMissionActive('m4_home_safe') &&
+        !this.story.branchFlags['m4_police_decision_made']
+    );
 
     this.economyManager.restoreLedger(snap.ledger ?? [], snap.settledRequests ?? []);
     this.requestSeq = snap.requestSeq ?? 0;

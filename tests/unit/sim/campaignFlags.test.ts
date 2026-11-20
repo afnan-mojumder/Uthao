@@ -103,6 +103,85 @@ describe('campaign objectives completed through real encounter choices', () => {
     expect(gm.story.currentChapter).toBe(5);
   });
 
+  it('Chapter 4: enc_m4_police_decision never re-triggers on Day 13+ after resolution', () => {
+    const gm = newGame([]);
+    gm.story.currentChapter = 4;
+    gm.clock.day = 12;
+    gm.story.branchFlags['puran_para_mastered'] = true;
+    gm.story.branchFlags['crime_v1_resolved'] = true;
+    gm.missionManager.activateMission('m4_home_safe');
+
+    const inst = gm.eventDirector.activeEncounter;
+    expect(inst?.encounterId).toBe('enc_m4_police_decision');
+    expect(
+      gm.dispatch({ type: 'chooseEncounterOption', instanceId: inst!.id, choiceId: 'cooperate' })
+        .success
+    ).toBe(true);
+    expect(gm.story.branchFlags['m4_police_decision_made']).toBe(true);
+
+    // Advance across Days 13..20 and evaluate roaming encounters; enc_m4_police_decision must never fire again
+    for (let day = 13; day <= 20; day++) {
+      gm.clock.day = day;
+      gm.bus.emit('day/started', { day });
+      for (let m = 480; m <= 1200; m += 30) {
+        const triggered = gm.eventDirector.evaluate(
+          {
+            phase: 'roaming',
+            minute: m,
+            day,
+            weather: 'clear',
+            chapter: day >= 17 ? 6 : 5,
+            flags: gm.story.branchFlags,
+            relationships: gm.reputationSystem.getRelationshipsView(),
+            cash: 1000,
+            speedKmh: 0,
+            bikeCondition: 90,
+          },
+          gm.bus
+        );
+        expect(triggered?.encounterId).not.toBe('enc_m4_police_decision');
+        if (gm.eventDirector.activeEncounter) {
+          gm.eventDirector.activeEncounter = null;
+          gm.eventDirector.activeEncounterDef = null;
+        }
+      }
+    }
+  });
+
+  it('Chapter 4: completing m4_wrong_pickup inside enc_police_checkpoint still surfaces enc_m4_police_decision on roaming eval', () => {
+    const gm = newGame([]);
+    gm.story.currentChapter = 4;
+    gm.clock.day = 12;
+    gm.story.branchFlags['puran_para_mastered'] = true;
+    gm.missionManager.activateMission('m4_wrong_pickup');
+
+    // First resolve wrong_pickup_pin so only enc_police_checkpoint remains on m4_wrong_pickup
+    resolve(gm, 'enc_wrong_pickup_pin', 'walk');
+    expect(gm.missionManager.isMissionActive('m4_wrong_pickup')).toBe(true);
+
+    // Resolving enc_police_checkpoint completes m4_wrong_pickup and unlocks m4_home_safe MID-chooseOption
+    resolve(gm, 'enc_police_checkpoint', 'explain_rush');
+    expect(gm.missionManager.isMissionCompleted('m4_wrong_pickup')).toBe(true);
+    expect(gm.missionManager.isMissionActive('m4_home_safe')).toBe(true);
+    // Must not have collided mid-chooseOption (activeEncounter is null after chooseOption finishes)
+    expect(gm.eventDirector.activeEncounter).toBeNull();
+
+    // Next roaming evaluation cleanly surfaces enc_m4_police_decision
+    gm.evaluateEncounters({
+      phase: 'roaming',
+      minute: 600,
+      day: 12,
+      weather: 'clear',
+      chapter: 4,
+      flags: gm.story.branchFlags,
+      relationships: gm.reputationSystem.getRelationshipsView(),
+      cash: 1000,
+      speedKmh: 0,
+      bikeCondition: 90,
+    });
+    expect(gm.eventDirector.activeEncounter?.encounterId).toBe('enc_m4_police_decision');
+  });
+
   it('the career decision flag is set when the player commits to a career', () => {
     const gm = newGame(['m6_decision']);
 

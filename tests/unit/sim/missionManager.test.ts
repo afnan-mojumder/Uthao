@@ -317,6 +317,53 @@ describe('MissionManager (T4.7)', () => {
     expect(payObjFull?.completed).toBe(true);
   });
 
+  it('changeRelationship completing m2_regular_faces still awards downstream localTrust (+15) reward', async () => {
+    const { GameManager } = await import('../../../src/sim/GameManager');
+    const gm = new GameManager({ seed: 21, mode: 'career', data: {} });
+    gm.story.currentChapter = 2;
+    gm.clock.day = 5;
+    expect(gm.missionManager.activateMission('m2_regular_faces')).toBe(true);
+
+    const trustBefore = gm.reputationSystem.getMeters().publicReputation;
+    // char_tanvir starts at 5; +10 reaches min 10 and completes m2_regular_faces (+15 localTrust)
+    gm.reputationSystem.changeRelationship('char_tanvir', 10);
+
+    expect(gm.missionManager.isMissionCompleted('m2_regular_faces')).toBe(true);
+    expect(gm.reputationSystem.getMeters().publicReputation).toBe(trustBefore + 15);
+  });
+
+  it('applySnapshot restores ReputationSystem before MissionManager so low char_kamal does not auto-complete m6_kamal_offer', async () => {
+    const { GameManager } = await import('../../../src/sim/GameManager');
+    const { serialize, deserialize } = await import('../../../src/sim/save/SaveSystem');
+
+    const gm = new GameManager({ seed: 22, mode: 'career', data: {} });
+    gm.story.currentChapter = 6;
+    gm.clock.day = 17;
+    gm.story.completedMissions.push('m5_linked_jobs');
+    gm.reputationSystem.setRelationship('char_kamal', 5); // < 15 threshold
+    gm.missionManager.syncFromStoryState();
+    expect(gm.missionManager.activateMission('m6_kamal_offer')).toBe(true);
+    expect(gm.missionManager.isMissionCompleted('m6_kamal_offer')).toBe(false);
+
+    const save = serialize(gm);
+    const restored = deserialize(save);
+    expect(restored.reputationSystem.getRelationship('char_kamal')).toBe(5);
+    expect(restored.missionManager.isMissionActive('m6_kamal_offer')).toBe(true);
+    expect(restored.missionManager.isMissionCompleted('m6_kamal_offer')).toBe(false);
+
+    // Also verify high char_kamal (>= 30) is preserved for m6_decision career choices
+    const gmHigh = new GameManager({ seed: 23, mode: 'career', data: {} });
+    gmHigh.story.currentChapter = 6;
+    gmHigh.clock.day = 20;
+    gmHigh.economyManager.savings = 30000;
+    gmHigh.economy.savings = 30000;
+    gmHigh.reputationSystem.setRelationship('char_kamal', 35);
+    const restoredHigh = deserialize(serialize(gmHigh));
+    expect(restoredHigh.reputationSystem.getRelationship('char_kamal')).toBe(35);
+    restoredHigh.missionManager.activateMission('m6_decision');
+    expect(restoredHigh.dispatch({ type: 'selectCareerChoice', choice: 'workshop' }).success).toBe(true);
+  });
+
   it('no mission definition requires an upgrade', () => {
     for (const m of allMissions) {
       for (const obj of m.objectives) {

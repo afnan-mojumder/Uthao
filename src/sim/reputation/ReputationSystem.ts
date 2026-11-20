@@ -5,6 +5,7 @@ import type {
   CharacterDef,
   KarmaEvent,
   MeterId,
+  ReputationDelta,
   SafetyRecord,
 } from '../../core/types';
 import { clamp } from '../../core/math';
@@ -179,7 +180,8 @@ export class ReputationSystem {
   private ratingSuspensionCleared: boolean = false;
 
   private activeTrip: ActiveTripState | null = null;
-  private handlingBusEvent: boolean = false;
+  private selfEmittedDelta: ReputationDelta | null = null;
+  private suppressRelationshipEmit: boolean = false;
   private unsubscribeFns: Array<() => void> = [];
 
   constructor(opts: ReputationSystemOptions = {}) {
@@ -314,29 +316,30 @@ export class ReputationSystem {
 
     this.unsubscribeFns.push(
       bus.on('reputation/changed', ({ delta }) => {
-        if (this.handlingBusEvent) return;
-        this.handlingBusEvent = true;
-        try {
-          if (delta.localTrust !== undefined) {
-            this.changeLocalTrust(delta.localTrust);
-          }
-          if (delta.relationship) {
+        if (delta === this.selfEmittedDelta) return;
+        if (delta.localTrust !== undefined) {
+          this.changeLocalTrust(delta.localTrust);
+        }
+        if (delta.relationship) {
+          const prev = this.suppressRelationshipEmit;
+          this.suppressRelationshipEmit = true;
+          try {
             this.changeRelationship(
               delta.relationship.characterId,
               delta.relationship.delta
             );
+          } finally {
+            this.suppressRelationshipEmit = prev;
           }
-          if (delta.riskScore !== undefined) {
-            this.addRiskScore(delta.riskScore);
-          }
-          if (delta.promisesKept !== undefined) {
-            this.promisesKept += delta.promisesKept;
-          }
-          if (delta.promisesBroken !== undefined) {
-            this.promisesBroken += delta.promisesBroken;
-          }
-        } finally {
-          this.handlingBusEvent = false;
+        }
+        if (delta.riskScore !== undefined) {
+          this.addRiskScore(delta.riskScore);
+        }
+        if (delta.promisesKept !== undefined) {
+          this.promisesKept += delta.promisesKept;
+        }
+        if (delta.promisesBroken !== undefined) {
+          this.promisesBroken += delta.promisesBroken;
         }
       })
     );
@@ -716,14 +719,14 @@ export class ReputationSystem {
   changeRelationship(characterId: string, delta: number): number {
     const next = (this.characterRelationships[characterId] ?? 0) + delta;
     this.setRelationship(characterId, next);
-    if (this.bus && !this.handlingBusEvent && delta !== 0) {
-      this.handlingBusEvent = true;
+    if (this.bus && !this.suppressRelationshipEmit && delta !== 0) {
+      const deltaObj: ReputationDelta = { relationship: { characterId, delta } };
+      const prevDelta = this.selfEmittedDelta;
+      this.selfEmittedDelta = deltaObj;
       try {
-        this.bus.emit('reputation/changed', {
-          delta: { relationship: { characterId, delta } },
-        });
+        this.bus.emit('reputation/changed', { delta: deltaObj });
       } finally {
-        this.handlingBusEvent = false;
+        this.selfEmittedDelta = prevDelta;
       }
     }
     return this.getRelationship(characterId);

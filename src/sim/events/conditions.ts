@@ -72,6 +72,14 @@ export function evaluateCondition(
     }
   }
 
+  if (cond.notFlags) {
+    for (const [k, expectedAbsent] of Object.entries(cond.notFlags)) {
+      if (expectedAbsent ? Boolean(ctx.flags[k]) : ctx.flags[k] === false) {
+        return false;
+      }
+    }
+  }
+
   if (cond.minRelationship) {
     for (const [charId, minVal] of Object.entries(cond.minRelationship)) {
       const current = ctx.relationships[charId] ?? 0;

@@ -199,6 +199,7 @@ export const ConditionSchema = z.object({
   flags: z
     .record(z.string(), z.union([z.boolean(), z.number(), z.string()]))
     .optional(),
+  notFlags: z.record(z.string(), z.boolean()).optional(),
   minRelationship: z.record(z.string(), z.number()).optional(),
   minTrust: z.number().optional(),
   maxTrust: z.number().optional(),

@@ -578,6 +578,23 @@ export class MissionManager {
     return this.completedMissionIds.has(id);
   }
 
+  /** Allocation-free lookup for the first incomplete `rideWith` characterId on active missions. */
+  getFirstPendingRideWithCharacterId(): string | null {
+    for (const missionId of this.activeMissionIds) {
+      const def = this.missions.get(missionId);
+      const objMap = this.objectiveStates.get(missionId);
+      if (!def || !objMap) continue;
+      for (const obj of def.objectives) {
+        if (obj.type !== 'rideWith') continue;
+        const state = objMap.get(obj.id);
+        if (state && !state.completed) {
+          return obj.characterId;
+        }
+      }
+    }
+    return null;
+  }
+
   /** Returns characterIds required by incomplete `rideWith` objectives on active missions. */
   getPendingRideWithCharacterIds(): string[] {
     const result: string[] = [];
