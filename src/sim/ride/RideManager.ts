@@ -4,13 +4,18 @@ import {
   legacyStatusOf,
   type TripEvent,
 } from './tripFsm';
+import { nearestPlaceKey } from './rideView';
 import type { RoadNetwork } from '../road/RoadNetwork';
 import type { EventBus, GameEvents } from '../../core/events';
 import type {
+  ArchetypeId,
+  BookingType,
+  PassengerProfile,
   RideRequest,
   BikeId,
   RoadSegment,
   TripOutcome,
+  TripReceipt,
   TripState,
   WeatherKind,
 } from '../../core/types';
@@ -50,6 +55,22 @@ export function settledFare(fare: number, disputed: boolean): number {
   return disputed ? Math.round(fare * BALANCE.DISPUTE.fareKept) : fare;
 }
 
+export type DisputeResolutionKind = 'acceptPartial' | 'insistFull' | 'reportSupport';
+
+export interface PendingDispute {
+  requestId: string;
+  fare: number;
+  partialFare: number;
+  paidFare: number;
+  bookingType: BookingType;
+  fuelLiters: number;
+  rating: number;
+  day: number;
+  minute: number;
+  consequences: string[];
+  unpaid: boolean;
+}
+
 export interface RideManagerOptions {
   roadNetwork: RoadNetwork;
   bus: EventBus<GameEvents>;
@@ -60,6 +81,8 @@ export interface RideManagerOptions {
   paymentReliabilityOf?: (req: RideRequest) => number | undefined;
   /** T8.6: the passenger's archetype, for dispute behaviour (unreliable passengers may contest). */
   archetypeOf?: (req: RideRequest) => string | undefined;
+  /** Live profile lookup for character/archetype dialogue and careful-passenger traits. */
+  profileOf?: (req: RideRequest) => PassengerProfile | undefined;
   /** T8.2: when present, a finished trip is paid through `economy.settleTrip`.
    * Without it (bare unit tests) the receipt is computed but nothing is paid. */
   economy?: EconomyManager;
@@ -92,17 +115,23 @@ export interface RideManagerOptions {
 }
 
 export class RideManager {
+  private static readonly MAX_OFFER_QUEUE = 3;
+  private static readonly OFFER_TIMEOUT_SEC = 15;
+
   readonly roadNetwork: RoadNetwork;
   readonly bus: EventBus<GameEvents>;
 
   private offeredRequests: Map<string, RideRequest> = new Map();
+  private offerDeadlines: Map<string, number> = new Map();
   private activeRequest: RideRequest | null = null;
+  private pendingDispute: PendingDispute | null = null;
   private readonly trip: Fsm<TripState, TripEvent> = createTripFsm();
   private outcome: TripOutcome | null = null;
   private interruptedFrom: TripState | null = null;
   private readonly rng?: Rng;
   private readonly paymentReliabilityOf?: (req: RideRequest) => number | undefined;
   private readonly archetypeOf?: (req: RideRequest) => string | undefined;
+  private readonly profileOf?: (req: RideRequest) => PassengerProfile | undefined;
   private readonly economy?: EconomyManager;
   private readonly reputation?: ReputationSystem;
   private readonly clock?: { day: number; minutes: number };
@@ -138,6 +167,7 @@ export class RideManager {
     this.rng = opts.rng;
     this.paymentReliabilityOf = opts.paymentReliabilityOf;
     this.archetypeOf = opts.archetypeOf;
+    this.profileOf = opts.profileOf;
     this.economy = opts.economy;
     this.reputation = opts.reputation;
     this.clock = opts.clock;
@@ -216,6 +246,70 @@ export class RideManager {
     return Array.from(this.offeredRequests.values());
   }
 
+  getOfferTimeoutRemaining(requestId: string): number {
+    const deadline = this.offerDeadlines.get(requestId);
+    if (deadline === undefined) return 0;
+    return Math.max(0, deadline - this.simTimeSec);
+  }
+
+  getPendingDispute(): PendingDispute | null {
+    return this.pendingDispute ? { ...this.pendingDispute } : null;
+  }
+
+  private resolveDialogueContext(req: RideRequest): {
+    archetype: ArchetypeId;
+    relationshipLevel: number;
+    speaker: string;
+    destination: string;
+  } {
+    const profile = this.profileOf?.(req);
+    const charDef = req.characterId ? getCharacter(req.characterId) : undefined;
+    const archetype: ArchetypeId =
+      profile?.archetype ??
+      (this.archetypeOf?.(req) as ArchetypeId | undefined) ??
+      charDef?.archetype ??
+      'commuter';
+    const relationshipLevel = req.characterId
+      ? (this.reputation?.getRelationship(req.characterId) ?? charDef?.initialRelationship ?? 10)
+      : (charDef?.initialRelationship ?? 10);
+    const speaker = profile?.nameKey ?? charDef?.nameKey ?? req.passengerId;
+    const destination = req.destinationNodeId
+      ? nearestPlaceKey(this, req.destinationNodeId) || req.destinationNodeId
+      : 'destination';
+    return { archetype, relationshipLevel, speaker, destination };
+  }
+
+  private emitRideDialogue(
+    req: RideRequest,
+    phase: 'greeting' | 'small_talk' | 'drop_off'
+  ): void {
+    const ctx = this.resolveDialogueContext(req);
+    const query = {
+      archetype: ctx.archetype,
+      characterId: req.characterId,
+      relationshipLevel: ctx.relationshipLevel,
+      vars: {
+        destination: ctx.destination,
+        fare: req.initialFare,
+      },
+      rng: new SeededRng(hashSeed(req.requestId, phase)),
+    };
+    const selected =
+      phase === 'greeting'
+        ? defaultDialogueManager.getGreeting(query)
+        : phase === 'small_talk'
+          ? defaultDialogueManager.getSmallTalk(query)
+          : defaultDialogueManager.getDropOff(query);
+    if (!selected) return;
+    this.bus.emit('passenger/dialogue', {
+      requestId: req.requestId,
+      key: selected.key,
+      text: selected.text,
+      phase,
+      speaker: ctx.speaker,
+    });
+  }
+
   private go(event: TripEvent): void {
     const from = this.trip.state;
     const to = this.trip.send(event);
@@ -240,6 +334,7 @@ export class RideManager {
   /** Drops the active request, route and per-ride counters. */
   private clearActive(): void {
     this.activeRequest = null;
+    this.pendingDispute = null;
     this.currentRoute = null;
     this.interruptedFrom = null;
     this.rideElapsedSec = 0;
@@ -276,7 +371,21 @@ export class RideManager {
   }
 
   offer(request: RideRequest): void {
+    if (!this.offeredRequests.has(request.requestId)) {
+      while (this.offeredRequests.size >= RideManager.MAX_OFFER_QUEUE) {
+        const oldestId = this.offeredRequests.keys().next().value;
+        if (!oldestId) break;
+        this.offeredRequests.delete(oldestId);
+        this.offerDeadlines.delete(oldestId);
+        this.bus.emit('ride/cancelled', {
+          requestId: oldestId,
+          by: 'system',
+          reason: 'queueFull',
+        });
+      }
+    }
     this.offeredRequests.set(request.requestId, { ...request });
+    this.offerDeadlines.set(request.requestId, this.simTimeSec + RideManager.OFFER_TIMEOUT_SEC);
     this.settleToIdle();
     this.bus.emit('ride/requested', { request });
   }
@@ -299,6 +408,7 @@ export class RideManager {
     if (!req || this.trip.state !== 'RequestAvailable') return false;
 
     this.offeredRequests.delete(requestId);
+    this.offerDeadlines.delete(requestId);
     this.activeRequest = { ...req };
     this.go('open');
     this.passengerMood = 1;
@@ -310,7 +420,6 @@ export class RideManager {
     this.currentRoute = from
       ? this.roadNetwork.route(from, req.pickupNodeId, motoOpts)
       : this.roadNetwork.route(req.pickupNodeId, req.destinationNodeId, motoOpts);
-    this.bus.emit('ride/accepted', { requestId });
     if (this.enableNegotiation) {
       this.bus.emit('negotiation/started', { requestId, initialFare: req.initialFare });
     }
@@ -321,15 +430,18 @@ export class RideManager {
     if (!this.activeRequest || this.trip.state !== 'Negotiating') return;
     this.activeRequest.initialFare = fare;
     this.go('agree');
+    this.bus.emit('ride/accepted', { requestId: this.activeRequest.requestId });
   }
 
   /** T8.1: the player and passenger agreed a fare; the rider now heads to pickup. */
-  agreeFare(fare: number): void {
+  agreeFare(fare: number, meta?: { discount?: boolean }): void {
     if (!this.activeRequest || this.trip.state !== 'Negotiating') return;
+    const requestId = this.activeRequest.requestId;
     this.doAgree(fare);
     this.bus.emit('negotiation/result', {
-      requestId: this.activeRequest.requestId,
+      requestId,
       outcome: { kind: 'accepted', fare },
+      ...(meta?.discount ? { discount: true } : {}),
     });
   }
 
@@ -461,6 +573,91 @@ export class RideManager {
     return true;
   }
 
+  private isAlleyOnlyNode(nodeId: string): boolean {
+    let touchesAlley = false;
+    let touchesNonAlley = false;
+    for (const seg of this.roadNetwork.getAllSegments()) {
+      if (seg.startNodeId !== nodeId && seg.endNodeId !== nodeId) continue;
+      if (seg.roadType === 'alley' || seg.tags.includes('alley')) {
+        touchesAlley = true;
+      } else if (seg.motorcycleAccessible) {
+        touchesNonAlley = true;
+      }
+    }
+    return touchesAlley && !touchesNonAlley;
+  }
+
+  /** Finds a nearby non-alley entrance when the pickup or destination sits inside an alley. */
+  alleyEntranceOption(
+    req: Pick<RideRequest, 'pickupNodeId' | 'destinationNodeId'>
+  ): { nodeId: string; walkM: number; target: 'pickup' | 'destination' } | null {
+    const motoOpts = this.routeOpts('motorcycle');
+    const walkOpts = this.routeOpts('walk');
+    const candidates: Array<{ target: 'destination' | 'pickup'; targetNodeId: string }> = [
+      { target: 'destination', targetNodeId: req.destinationNodeId },
+      { target: 'pickup', targetNodeId: req.pickupNodeId },
+    ];
+    for (const { target, targetNodeId } of candidates) {
+      if (!this.isAlleyOnlyNode(targetNodeId)) continue;
+      let best: { nodeId: string; walkM: number; target: 'pickup' | 'destination' } | null = null;
+      for (const node of this.roadNetwork.getAllNodes()) {
+        if (node.nodeId === targetNodeId || this.isAlleyOnlyNode(node.nodeId)) continue;
+        if (!this.roadNetwork.isPickupNode(node.nodeId)) continue;
+        const walkRoute =
+          target === 'destination'
+            ? this.roadNetwork.route(node.nodeId, targetNodeId, walkOpts)
+            : this.roadNetwork.route(targetNodeId, node.nodeId, walkOpts);
+        if (!walkRoute || walkRoute.lengthM > BALANCE.TRIP.maxRelocateWalkM) continue;
+        const tripOk =
+          target === 'destination'
+            ? this.roadNetwork.route(req.pickupNodeId, node.nodeId, motoOpts)
+            : this.roadNetwork.route(node.nodeId, req.destinationNodeId, motoOpts);
+        if (!tripOk) continue;
+        if (!best || walkRoute.lengthM < best.walkM) {
+          best = { nodeId: node.nodeId, walkM: Math.round(walkRoute.lengthM), target };
+        }
+      }
+      if (best) return best;
+    }
+    return null;
+  }
+
+  /** Moves an alley pickup or drop-off point out to the nearest non-alley entrance. */
+  relocateAlley(
+    nodeId: string,
+    walkM: number,
+    target: 'pickup' | 'destination'
+  ): boolean {
+    if (this.isAlleyOnlyNode(nodeId)) return false;
+    if (target === 'pickup') {
+      return this.relocatePickup(nodeId, walkM);
+    }
+    const req = this.activeRequest;
+    const s = this.trip.state;
+    if (!req || (s !== 'Negotiating' && s !== 'Accepted' && s !== 'EnRouteToPickup')) {
+      return false;
+    }
+    if (!this.roadNetwork.getNode(nodeId) || !this.roadNetwork.isPickupNode(nodeId)) return false;
+    const walkRoute = this.roadNetwork.route(nodeId, req.destinationNodeId, this.routeOpts('walk'));
+    if (!walkRoute) return false;
+    const trueWalkM = walkRoute.lengthM;
+    if (!(walkM >= 0) || Math.abs(walkM - trueWalkM) > 5 || trueWalkM > BALANCE.TRIP.maxRelocateWalkM) {
+      return false;
+    }
+    const trip = this.roadNetwork.route(req.pickupNodeId, nodeId, this.routeOpts('motorcycle'));
+    if (!trip) return false;
+    req.destinationNodeId = nodeId;
+    req.estimatedDistance = trip.virtualKm;
+    req.estimatedDuration = trip.etaMin;
+    if (s === 'Negotiating') req.initialFare = fairFare(trip.virtualKm, trip.etaMin, req.surge);
+    this.passengerMood = clamp(
+      this.passengerMood - trueWalkM * BALANCE.TRIP.walkMoodLossPerM,
+      0,
+      1
+    );
+    return true;
+  }
+
   addStrike(currentDay: number): { strikes: number; suspended: boolean } {
     this.offAppStrikes++;
     const suspended = this.offAppStrikes >= BALANCE.OFF_APP.strikesToSuspend;
@@ -513,6 +710,7 @@ export class RideManager {
       }
       this.clearActive();
     } else if (this.offeredRequests.delete(requestId)) {
+      this.offerDeadlines.delete(requestId);
       if (this.trip.state === 'RequestAvailable' && this.offeredRequests.size === 0) {
         this.go(by === 'rider' ? 'decline' : 'withdraw');
       }
@@ -538,6 +736,137 @@ export class RideManager {
     return (1 - reliability) * BALANCE.TRIP.noShowMaxChance;
   }
 
+  private expireStaleOffers(): void {
+    if (this.offerDeadlines.size === 0) return;
+    for (const [id, deadline] of Array.from(this.offerDeadlines.entries())) {
+      if (this.simTimeSec < deadline) continue;
+      this.offerDeadlines.delete(id);
+      if (this.offeredRequests.delete(id)) {
+        this.bus.emit('ride/cancelled', { requestId: id, by: 'system', reason: 'expired' });
+      }
+    }
+    if (this.trip.state === 'RequestAvailable' && this.offeredRequests.size === 0) {
+      this.go('withdraw');
+    }
+  }
+
+  private finalizeTrip(params: {
+    req: RideRequest;
+    fare: number;
+    tip: number;
+    bonus?: number;
+    rating: number;
+    fuelLiters: number;
+    day: number;
+    minute: number;
+    consequences: string[];
+  }): TripReceipt | null {
+    const tripReceipt = this.economy
+      ? this.economy.settleTrip({
+          requestId: params.req.requestId,
+          fare: params.fare,
+          tip: params.tip,
+          bonus: params.bonus ?? 0,
+          bookingType: params.req.bookingType,
+          fuelLiters: params.fuelLiters,
+          otherCosts: 0,
+          penalties: 0,
+          compensation: 0,
+          durationMin: params.req.estimatedDuration,
+          distanceKm: params.req.estimatedDistance,
+          rating: params.rating,
+          day: params.day,
+          minute: params.minute,
+          consequences: params.consequences,
+        })
+      : receipt({
+          requestId: params.req.requestId,
+          fare: params.fare,
+          tip: params.tip,
+          bonus: params.bonus ?? 0,
+          bookingType: params.req.bookingType,
+          durationMin: params.req.estimatedDuration,
+          distanceKm: params.req.estimatedDistance,
+          rating: params.rating,
+          fuelLiters: params.fuelLiters,
+          consequences: params.consequences,
+        });
+
+    this.emitRideDialogue(params.req, 'drop_off');
+
+    // null: already settled (e.g. the tutorial settled it); never pay or announce twice.
+    if (tripReceipt) {
+      this.bus.emit('ride/completed', {
+        requestId: params.req.requestId,
+        receipt: tripReceipt,
+      });
+    }
+
+    this.go('settle'); // enters 'Completed'
+    this.clearActive();
+    this.settleToIdle();
+    return tripReceipt;
+  }
+
+  /** Completes an interactive fare dispute while paused in `Completing`. */
+  resolveDispute(choice: DisputeResolutionKind): TripReceipt | null {
+    const dispute = this.pendingDispute;
+    const req = this.activeRequest;
+    if (!dispute || !req || this.trip.state !== 'Completing') return null;
+    this.pendingDispute = null;
+
+    let finalFare: number;
+    let bonus = 0;
+    let effectiveRating = dispute.rating;
+    const consequences = [...dispute.consequences];
+
+    if (choice === 'acceptPartial') {
+      finalFare = dispute.partialFare;
+      consequences.push('trip.consequence.disputeAcceptedPartial');
+      this.reputation?.changeLocalTrust(1);
+    } else if (choice === 'insistFull') {
+      const trust = this.reputation?.getLocalTrust() ?? 50;
+      const winChance = clamp(0.35 + (trust - 50) * 0.005, 0.2, 0.8);
+      const roll = new SeededRng(hashSeed(req.requestId, 'disputeInsist')).next();
+      if (roll < winChance) {
+        finalFare = dispute.fare;
+        consequences.push('trip.consequence.disputeRecoveredFull');
+      } else {
+        finalFare = 0;
+        effectiveRating = Math.max(1, Math.round((dispute.rating - 1.0) * 100) / 100);
+        consequences.push('trip.consequence.disputeEscalated');
+        this.reputation?.changeLocalTrust(-2);
+      }
+    } else {
+      finalFare = dispute.partialFare;
+      bonus =
+        dispute.bookingType === 'app'
+          ? Math.max(0, dispute.fare - dispute.partialFare)
+          : Math.round((dispute.fare - dispute.partialFare) * 0.5);
+      consequences.push('trip.consequence.disputeReported');
+    }
+
+    const tripReceipt = this.finalizeTrip({
+      req,
+      fare: finalFare,
+      tip: 0,
+      bonus,
+      rating: effectiveRating,
+      fuelLiters: dispute.fuelLiters,
+      day: dispute.day,
+      minute: dispute.minute,
+      consequences,
+    });
+
+    this.bus.emit('ride/disputeResolved', {
+      requestId: req.requestId,
+      choice,
+      fare: finalFare,
+    });
+
+    return tripReceipt;
+  }
+
   update(
     bikePose: { x: number; z: number; speed: number; heading?: number },
     dt: number
@@ -548,6 +877,7 @@ export class RideManager {
     this.pose.heading = bikePose.heading ?? this.pose.heading;
     this.lastSpeed = bikePose.speed;
     this.hasPose = true;
+    this.expireStaleOffers();
     this.settleToIdle();
     if (!this.activeRequest) {
       return;
@@ -592,10 +922,16 @@ export class RideManager {
             this.routeOpts('motorcycle')
           );
           this.offRouteSince = -1;
+          const ctx = this.resolveDialogueContext(this.activeRequest);
           this.reputation?.startTrip({
             requestId: this.activeRequest.requestId,
-            isUrgent: this.activeRequest.specialCircumstance === 'urgent',
+            isCareful: ctx.archetype === 'careful',
+            isUrgent:
+              this.activeRequest.specialCircumstance === 'urgent' ||
+              ctx.archetype === 'urgent' ||
+              this.activeRequest.requestedArrivalTime !== null,
           });
+          this.emitRideDialogue(this.activeRequest, 'greeting');
           this.bus.emit('ride/started', {
             requestId: this.activeRequest.requestId,
           });
@@ -605,25 +941,7 @@ export class RideManager {
       this.rideElapsedSec += dt;
       if (!this.smallTalkTriggered && this.rideElapsedSec >= 4.0) {
         this.smallTalkTriggered = true;
-        const charDef = this.activeRequest.characterId ? getCharacter(this.activeRequest.characterId) : undefined;
-        const dialogue = defaultDialogueManager.getSmallTalk({
-          archetype: charDef?.archetype ?? 'commuter',
-          characterId: this.activeRequest.characterId,
-          relationshipLevel: charDef?.initialRelationship ?? 10,
-          vars: {
-            destination: this.activeRequest.destinationNodeId ?? 'destination',
-            fare: this.activeRequest.initialFare,
-          },
-        });
-        if (dialogue) {
-          this.bus.emit('passenger/dialogue', {
-            requestId: this.activeRequest.requestId,
-            key: dialogue.key,
-            text: dialogue.text,
-            phase: 'small_talk',
-            speaker: charDef?.nameKey ?? this.activeRequest.passengerId,
-          });
-        }
+        this.emitRideDialogue(this.activeRequest, 'small_talk');
       }
       const destNode = this.roadNetwork.getNode(
         this.activeRequest.destinationNodeId
@@ -644,6 +962,12 @@ export class RideManager {
           this.go('arriveDestination'); // enters 'Completing'
           this.currentRoute = null;
 
+          if (req.requestedArrivalTime !== null && this.clock) {
+            let lateMin = this.clock.minutes - req.requestedArrivalTime;
+            if (lateMin < -720) lateMin += 1440;
+            if (lateMin > 0) this.reputation?.recordLateness(lateMin);
+          }
+
           const rating = this.reputation?.getActiveTripRating() ?? 5;
           const spec = { model: this.activeBikeId, engineTune: this.hasEngineTune };
           const fuelLiters = this.tripFuelLiters?.() ?? fuelUsed(req.estimatedDistance, 0, spec);
@@ -655,77 +979,54 @@ export class RideManager {
                 new SeededRng(hashSeed(req.requestId, 'offAppPay')).next()
               )
             : null;
-          // T8.6: an unreliable passenger may contest the ride; it settles as Disputed.
+          // T8.6: an unreliable passenger may contest the ride; pauses interactively in Completing.
           const archetype = this.archetypeOf?.(req);
           const disputed = archetype !== undefined && isDisputed(
             archetype,
             this.paymentReliabilityOf?.(req) ?? 1,
             new SeededRng(hashSeed(req.requestId, 'dispute')).next()
           );
-          if (disputed) this.outcome = 'disputed';
           const paidFare = offApp ? offApp.paid : req.initialFare;
-          const tripReceipt = this.economy
-            ? this.economy.settleTrip({
-                requestId: req.requestId,
-                fare: settledFare(paidFare, disputed),
-                tip: disputed || offApp?.unpaid ? 0 : tipAmountFor(req.requestId, paidFare, rating),
-                bonus: 0,
-                bookingType: req.bookingType,
-                fuelLiters,
-                otherCosts: 0,
-                penalties: 0,
-                compensation: 0,
-                durationMin: req.estimatedDuration,
-                distanceKm: req.estimatedDistance,
-                rating,
-                day: this.clock?.day ?? 1,
-                minute: this.clock?.minutes ?? 0,
-                consequences: [
-                  ...(offApp?.unpaid ? ['trip.consequence.offAppUnpaid'] : []),
-                  ...(disputed ? ['trip.consequence.disputed'] : []),
-                ],
-              })
-            : receipt({
-                requestId: req.requestId,
-                fare: req.initialFare,
-                bookingType: req.bookingType,
-                durationMin: req.estimatedDuration,
-                distanceKm: req.estimatedDistance,
-                rating,
-                fuelLiters,
-              });
+          const baseConsequences = [
+            ...(offApp?.unpaid ? ['trip.consequence.offAppUnpaid'] : []),
+            ...(disputed ? ['trip.consequence.disputed'] : []),
+          ];
 
-          const charDef = this.activeRequest.characterId ? getCharacter(this.activeRequest.characterId) : undefined;
-          const dropOffDialogue = defaultDialogueManager.getDropOff({
-            archetype: charDef?.archetype ?? 'commuter',
-            characterId: this.activeRequest.characterId,
-            relationshipLevel: charDef?.initialRelationship ?? 10,
-            vars: {
-              fare: this.activeRequest.initialFare,
-              destination: this.activeRequest.destinationNodeId ?? 'destination',
-            },
-          });
-          if (dropOffDialogue) {
-            this.bus.emit('passenger/dialogue', {
-              requestId: this.activeRequest.requestId,
-              key: dropOffDialogue.key,
-              text: dropOffDialogue.text,
-              phase: 'drop_off',
-              speaker: charDef?.nameKey ?? this.activeRequest.passengerId,
-            });
-          }
-
-          // null: already settled (e.g. the tutorial settled it); never pay or announce twice.
-          if (tripReceipt) {
-            this.bus.emit('ride/completed', {
+          if (disputed) {
+            this.outcome = 'disputed';
+            const partialFare = settledFare(paidFare, true);
+            this.pendingDispute = {
               requestId: req.requestId,
-              receipt: tripReceipt,
+              fare: paidFare,
+              partialFare,
+              paidFare,
+              bookingType: req.bookingType,
+              fuelLiters,
+              rating,
+              day: this.clock?.day ?? 1,
+              minute: this.clock?.minutes ?? 0,
+              consequences: baseConsequences,
+              unpaid: Boolean(offApp?.unpaid),
+            };
+            this.bus.emit('ride/disputed', {
+              requestId: req.requestId,
+              fare: paidFare,
+              partialFare,
+              bookingType: req.bookingType,
             });
+            return;
           }
 
-          this.go('settle'); // enters 'Completed'
-          this.clearActive();
-          this.settleToIdle();
+          this.finalizeTrip({
+            req,
+            fare: paidFare,
+            tip: offApp?.unpaid ? 0 : tipAmountFor(req.requestId, paidFare, rating),
+            rating,
+            fuelLiters,
+            day: this.clock?.day ?? 1,
+            minute: this.clock?.minutes ?? 0,
+            consequences: baseConsequences,
+          });
         }
       }
     }

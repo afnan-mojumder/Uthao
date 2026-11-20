@@ -98,10 +98,18 @@ export class DialogueManager {
     const chosen = pool[rng.int(0, pool.length - 1)];
     if (!chosen) return null;
 
+    const resolvedVars = ctx.vars ? { ...ctx.vars } : undefined;
+    if (resolvedVars && typeof resolvedVars.destination === 'string') {
+      const translatedDest = t(resolvedVars.destination);
+      if (translatedDest !== resolvedVars.destination) {
+        resolvedVars.destination = translatedDest;
+      }
+    }
+
     return {
       lineDef: chosen,
       key: chosen.key,
-      text: t(chosen.key, ctx.vars),
+      text: t(chosen.key, resolvedVars),
     };
   }
 

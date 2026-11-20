@@ -80,9 +80,9 @@ export function receipt(ride: RideReceiptOptions): TripReceipt {
   const fare = Math.max(0, Math.round(ride.fare));
   const tip = Math.max(0, Math.round(ride.tip ?? 0));
 
-  // Off-app and direct rides have 0% commission
+  // Off-app, direct, and street hail rides have 0% commission
   const commissionRate =
-    ride.bookingType === 'offApp' || ride.bookingType === 'direct'
+    ride.bookingType === 'offApp' || ride.bookingType === 'direct' || ride.bookingType === 'street'
       ? 0
       : BALANCE.COMMISSION_APP;
   const commission = Math.round(fare * commissionRate);

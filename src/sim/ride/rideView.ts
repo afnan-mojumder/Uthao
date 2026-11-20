@@ -120,7 +120,7 @@ export function deriveRideView(ride: RideManager): RideView {
       v.dropoffVisible = true;
       break;
     case 'Completing':
-      v.objectiveKey = 'objective.completing';
+      v.objectiveKey = ride.getOutcome() === 'disputed' ? 'objective.dispute' : 'objective.completing';
       break;
     default:
       v.objectiveKey = 'objective.idle_find_ride';

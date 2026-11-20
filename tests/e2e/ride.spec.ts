@@ -29,10 +29,11 @@ test('ride completes via autopilot', async ({ page }) => {
     { timeout: 50000 }
   );
 
-  // Objective should update to drop off
+  // Objective should update to drop off and live passenger dialogue subtitle should appear
   // The drop-off names a place, never the raw road node id (audit T9.22).
   await expect(page.locator('#hud-objective')).toHaveText(/যাত্রী নামিয়ে দিন/);
   await expect(page.locator('#hud-objective')).not.toContainText('N2');
+  await expect(page.locator('[data-testid="hud-dialogue-subtitle"]')).toBeVisible({ timeout: 5000 });
 
   // Wait for ride/completed
   await page.waitForFunction(

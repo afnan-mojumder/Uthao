@@ -2,7 +2,13 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import type { VNode } from 'preact';
 import { Hud, HudView, type HudState } from '../../../src/ui/hud/Hud';
 import { ChoiceCardView } from '../../../src/ui/choice/ChoiceCard';
-import { choiceSignal } from '../../../src/ui/store';
+import {
+  choiceSignal,
+  dialogueSubtitleSignal,
+  hudSignal,
+  bindEventBusToStore,
+} from '../../../src/ui/store';
+import { EventBus, type GameEvents } from '../../../src/core/events';
 import { t, setLanguage } from '../../../src/ui/i18n';
 
 describe('T2.8 & T4.10 Rider HUD and Mobile Polish', () => {
@@ -222,5 +228,25 @@ describe('T8.3 fuel recovery affordances', () => {
       })
     );
     expect(first).toContain('↶');
+  });
+
+  it('P4.1 subscribes HUD subtitle signal to passenger/dialogue events', () => {
+    const bus = new EventBus<GameEvents>();
+    const unbind = bindEventBusToStore(bus);
+
+    bus.emit('passenger/dialogue', {
+      requestId: 'req_sub_1',
+      key: 'dialogue.pool.commuter.small_talk.01',
+      text: 'Test subtitle line',
+      phase: 'small_talk',
+      speaker: 'character.tanvir.name',
+    });
+
+    expect(dialogueSubtitleSignal.value).not.toBeNull();
+    expect(dialogueSubtitleSignal.value?.text).toBe('Test subtitle line');
+    expect(dialogueSubtitleSignal.value?.speaker).toBe('character.tanvir.name');
+    expect(hudSignal.value.dialogueSubtitle?.text).toBe('Test subtitle line');
+
+    unbind();
   });
 });

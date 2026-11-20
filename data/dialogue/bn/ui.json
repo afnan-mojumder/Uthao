@@ -294,5 +294,14 @@
   "tutorial.nego.agreed_label": "চূড়ান্ত ভাড়া: ৳{fare}",
   "tutorial.nego.start_ride": "ক্যাম্পাস গেটে যাত্রা শুরু",
   "ui.mission_badge": "মিশন",
-  "hud.road_event": "রাস্তার সতর্কতা"
+  "hud.road_event": "রাস্তার সতর্কতা",
+  "encounter.dispute.title": "ভাড়া নিয়ে বিতর্ক",
+  "encounter.dispute.body": "যাত্রী ৳{fare} ভাড়ায় আপত্তি তুলে ৳{partial} দিতে চাইছেন।",
+  "encounter.dispute.choice.accept_partial": "৳{partial} মেনে নিন",
+  "encounter.dispute.choice.insist_full": "পুরো ৳{fare} দাবি করুন",
+  "encounter.dispute.choice.report_support": "উঠাও সাপোর্টে রিপোর্ট করুন",
+  "trip.consequence.disputeAcceptedPartial": "আংশিক ভাড়া মেনে নিয়ে বিতর্ক নিষ্পত্তি হয়েছে",
+  "trip.consequence.disputeRecoveredFull": "যাত্রী পুরো ভাড়া দিতে রাজি হয়েছেন",
+  "trip.consequence.disputeEscalated": "বিতর্ক বাড়ায় যাত্রী পুরো ভাড়া দিতে অস্বীকার করেছেন",
+  "trip.consequence.disputeReported": "বিতর্কটি প্ল্যাটফর্ম সাপোর্টে রিপোর্ট করা হয়েছে"
 }

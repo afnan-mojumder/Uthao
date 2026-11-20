@@ -1,10 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   phoneSignal,
+  bindEventBusToStore,
+  tickPhoneOffers,
   setRequestDispatchers,
   onAcceptRequestCallback,
   onDeclineRequestCallback,
 } from '../../../src/ui/store';
+import { EventBus, type GameEvents } from '../../../src/core/events';
 import { t, setLanguage } from '../../../src/ui/i18n';
 import type { RideRequest } from '../../../src/core/types';
 
@@ -117,5 +120,35 @@ describe('T2.4 Phone Store & Logic', () => {
 
     expect(phoneSignal.value.relationships?.['char_nabila']).toBe(25);
     expect(phoneSignal.value.relationships?.['char_mintu']).toBe(35);
+  });
+
+  it('P4.1 caps phone offer queue at max 3 and ticks timeoutRemaining live until expiry', () => {
+    const bus = new EventBus<GameEvents>();
+    const unbind = bindEventBusToStore(bus);
+
+    for (let i = 1; i <= 4; i++) {
+      bus.emit('ride/requested', {
+        request: { ...mockReq, requestId: `req_q_${i}` },
+      });
+    }
+
+    expect(phoneSignal.value.requestQueue?.map((r) => r.requestId)).toEqual([
+      'req_q_2',
+      'req_q_3',
+      'req_q_4',
+    ]);
+    expect(phoneSignal.value.incomingRequest?.requestId).toBe('req_q_2');
+    expect(phoneSignal.value.timeoutRemaining).toBe(15);
+
+    // Tick 5 seconds -> timeoutRemaining drops to 10
+    tickPhoneOffers(5);
+    expect(phoneSignal.value.timeoutRemaining).toBeCloseTo(10, 4);
+
+    // Tick 10.5 seconds -> req_q_2 expires, req_q_3 promotes (or all queued offers expire if all aged out)
+    tickPhoneOffers(10.5);
+    expect(phoneSignal.value.incomingRequest).toBeNull();
+    expect(phoneSignal.value.requestQueue).toEqual([]);
+
+    unbind();
   });
 });

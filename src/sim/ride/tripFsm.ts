@@ -101,7 +101,7 @@ export function createTripFsm(): Fsm<TripState, TripEvent> {
 }
 
 export function passengerStatusOf(s: TripState, outcome?: TripOutcome): PassengerStatus {
-  if (outcome === 'disputed' && (s === 'Completed' || s === 'Cancelled')) return 'Disputed';
+  if (outcome === 'disputed' && (s === 'Completing' || s === 'Completed' || s === 'Cancelled')) return 'Disputed';
   switch (s) {
     case 'Idle':
       return 'RequestCreated';

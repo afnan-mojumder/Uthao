@@ -108,6 +108,7 @@ export class GameSession {
   };
   private lastAccidentEncounterMin = -Infinity;
   private lastPunctureMin = -Infinity;
+  private offAppSeq = 0;
   private lastSpeedBumpSegId: string | null = null;
   private hasGoodTires = false;
   private envFlooded = false;
@@ -162,16 +163,25 @@ export class GameSession {
       paymentReliabilityOf: (req) =>
         this.requests.getProfile(req.passengerId)?.paymentReliability,
       archetypeOf: (req) => this.requests.getProfile(req.passengerId)?.archetype,
+      profileOf: (req) => this.requests.getProfile(req.passengerId),
     });
     // T7.5: lets effect handlers (e.g. `endTrip`) reach the live ride state.
     this.gm.rideManager = this.ride;
     this.gm.setRoadSegments(this.road.getAllSegments());
     this.ride.enableNegotiation = opts.negotiation ?? true;
-    // H: an agreed fare well above fair adds an overcharge mark, a fair one slowly rebuilds goodwill.
+    // H: an agreed fare well above fair adds an overcharge mark, a fair one or explicit discount rebuilds goodwill.
     this.gm.bus.on('negotiation/result', (ev) => {
       if (ev.outcome.kind !== 'accepted') return;
       const req = this.ride.getActiveRequest();
       if (!req || req.requestId !== ev.requestId) return;
+      if (ev.discount) {
+        this.gm.reputationSystem.changeLocalTrust(2);
+        if (req.characterId) {
+          this.gm.reputationSystem.changeRelationship(req.characterId, 3);
+        }
+        this.gm.negotiationHistory = clamp(this.gm.negotiationHistory + 0.05, -1, 1);
+        return;
+      }
       const fair = fairFare(req.estimatedDistance, req.estimatedDuration, req.surge);
       const over = ev.outcome.fare / Math.max(fair, 1) - 1;
       const h = this.gm.negotiationHistory;
@@ -293,11 +303,23 @@ export class GameSession {
       this.requests.getProfile(req.passengerId) ??
       generateProfile('commuter', this.gm.rng.fork(`profile:${req.passengerId}`), req.passengerId);
     const rain = this.gm.weather === 'lightRain' || this.gm.weather === 'heavyRain';
+    const tripRoute = this.road.route(req.pickupNodeId, req.destinationNodeId, {
+      mode: 'motorcycle',
+      roadEvents: this.gm.roadEvents,
+      weather: this.gm.weather,
+      minute: this.gm.clock.minutes,
+    });
+    const hasDetour =
+      (this.ride.currentRoute?.uTurns ?? 0) > 0 ||
+      (tripRoute?.uTurns ?? 0) > 0 ||
+      this.gm.roadEvents.getClosedSegmentIds().length > 0 ||
+      this.gm.weather === 'heavyRain';
     return startNegotiation(req, profile, {
       traffic: Math.min(1, (isRushHourMinute(this.gm.clock.minutes) ? 0.7 : 0.3) + (rain ? 0.15 : 0)),
       walkM: 0,
       day: this.gm.clock.day,
       history: this.gm.negotiationHistory,
+      hasDetour,
       rng: this.gm.rng.fork(`negotiation:${requestId}`),
     });
   }
@@ -308,6 +330,13 @@ export class GameSession {
     const req = this.ride.getActiveRequest();
     if (!req || this.ride.getTripState() !== 'Negotiating') return null;
     return this.ride.pickupOptions(req, { x: this.bike.x, z: this.bike.z })?.crossPoint ?? null;
+  }
+
+  /** Non-alley entrance option when the pickup or destination sits inside an alley. */
+  alleyChoice(): { nodeId: string; walkM: number; target: 'pickup' | 'destination' } | null {
+    const req = this.ride.getActiveRequest();
+    if (!req || this.ride.getTripState() !== 'Negotiating') return null;
+    return this.ride.alleyEntranceOption(req);
   }
 
   /** T8.5: after `relocatePickup` re-priced the ride, bring the live negotiation's fare
@@ -332,7 +361,11 @@ export class GameSession {
     const req = this.ride.getActiveRequest();
     if (!req) return;
     req.bookingType = 'offApp';
-    this.ride.recordOffAppRide(req.passengerId, this.gm.clock.day, this.gm.rng.fork('offApp'));
+    this.ride.recordOffAppRide(
+      req.passengerId,
+      this.gm.clock.day,
+      this.gm.rng.fork(`offApp:${++this.offAppSeq}`)
+    );
   }
 
   /** True when the bike is within `PHONE.chargeRangeM` of home or a tea stall. */
@@ -898,6 +931,7 @@ export class GameSession {
    * inline reset previously in main.ts's onNewCareer dispatcher. */
   newCareer(): void {
     this.lastPunctureMin = -Infinity;
+    this.offAppSeq = 0;
     this.gm.clock.day = 1;
     this.gm.clock.minutes = 7 * 60;
     this.gm.economy.cash = 600;

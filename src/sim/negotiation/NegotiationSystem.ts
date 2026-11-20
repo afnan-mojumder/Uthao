@@ -23,6 +23,8 @@ export interface NegotiationContext {
   rng: Rng;
   /** H: interaction history -1..1; negative = the rider overcharged this passenger before. */
   history?: number;
+  /** True when the route actually contains a detour, U-turn, road event, or heavy weather disruption. */
+  hasDetour?: boolean;
 }
 
 export type NegotiationAction =
@@ -49,8 +51,12 @@ export interface NegotiationSession {
   readonly status: 'active' | 'accepted' | 'walkedAway';
   readonly walkM: number;
   readonly detourExtraMin: number;
-  /** Per-negotiation salt taken from `ctx.rng` so decisions differ by seed but replay identically. */
+  /** Per-negotiation salt taken from `ctx.rng` (and salted per non-fare action) so decisions differ by seed and step. */
   readonly salt: number;
+  readonly detourExplained?: boolean;
+  readonly alleyRefused?: boolean;
+  readonly actionSeq?: number;
+  readonly discountApplied?: boolean;
 }
 
 export interface NegotiationResult {
@@ -103,6 +109,7 @@ interface FactorContributions {
   contribWalk: number;
   contribHistory: number;
   detourBoost: number;
+  z: number;
   pAccept: number;
   topFactor: ReasonCode;
 }
@@ -200,6 +207,7 @@ export function evaluateFactors(
     contribWalk,
     contribHistory,
     detourBoost,
+    z,
     pAccept,
     topFactor,
   };
@@ -230,6 +238,10 @@ export function startNegotiation(
     walkM: ctx.walkM,
     detourExtraMin: 0,
     salt: ctx.rng.getState(),
+    detourExplained: false,
+    alleyRefused: false,
+    actionSeq: 0,
+    discountApplied: false,
   };
 }
 
@@ -289,22 +301,83 @@ export function respond(
     };
   }
 
-  // 3. Explain detour
+  // 3. Explain detour: usable at most once when actual congestion or detour exists, advancing round & patience.
   if (action.kind === 'explainDetour') {
+    const hasCongestionOrDetour = session.ctx.hasDetour === true || session.ctx.traffic >= 0.5;
+    const canExplain = !session.detourExplained && hasCongestionOrDetour;
+    const nextRound = session.round + 1;
+    const nextSeq = (session.actionSeq ?? 0) + 1;
+    const nextSalt = hashSeed(session.salt, 'explainDetour', session.round);
+
+    if (canExplain) {
+      const nextPatience = Math.max(
+        0,
+        session.currentPatience - BALANCE.NEGOTIATION.patienceDecayPerRound * 0.5
+      );
+      if (nextPatience <= 0) {
+        return {
+          session: {
+            ...session,
+            detourExplained: true,
+            detourExtraMin: Math.min(MAX_DETOUR_EXTRA_MIN, session.detourExtraMin + Math.max(0, action.extraMin)),
+            currentPatience: nextPatience,
+            round: nextRound,
+            actionSeq: nextSeq,
+            salt: nextSalt,
+            status: 'walkedAway',
+          },
+          passengerLine: 'dialogue.negotiation.walked_away',
+          outcome: { kind: 'walkedAway', reason: 'OUT_OF_PATIENCE' },
+          topFactor: 'OUT_OF_PATIENCE',
+        };
+      }
+      const updatedSession: NegotiationSession = {
+        ...session,
+        detourExplained: true,
+        detourExtraMin: Math.min(MAX_DETOUR_EXTRA_MIN, session.detourExtraMin + Math.max(0, action.extraMin)),
+        currentPatience: nextPatience,
+        round: nextRound,
+        actionSeq: nextSeq,
+        salt: nextSalt,
+      };
+      return {
+        session: updatedSession,
+        passengerLine: 'dialogue.negotiation.detour_explained',
+        topFactor: 'URGENT',
+      };
+    }
+
+    // Invalid (no real congestion/detour) or repeated click: no boost, costs full patience & advances round
     const nextPatience = Math.max(
       0,
-      session.currentPatience - BALANCE.NEGOTIATION.patienceDecayPerRound * 0.25
+      session.currentPatience - BALANCE.NEGOTIATION.patienceDecayPerRound
     );
-    const updatedSession: NegotiationSession = {
-      ...session,
-      // Capped so repeated explanations cannot push acceptance to certainty (see detourBoost).
-      detourExtraMin: Math.min(MAX_DETOUR_EXTRA_MIN, session.detourExtraMin + action.extraMin),
-      currentPatience: nextPatience,
-    };
+    if (session.round >= session.maxRounds || nextPatience <= 0) {
+      return {
+        session: {
+          ...session,
+          currentPatience: nextPatience,
+          round: nextRound,
+          actionSeq: nextSeq,
+          salt: nextSalt,
+          status: 'walkedAway',
+        },
+        passengerLine: 'dialogue.negotiation.walked_away',
+        outcome: { kind: 'walkedAway', reason: 'OUT_OF_PATIENCE' },
+        topFactor: 'OUT_OF_PATIENCE',
+      };
+    }
     return {
-      session: updatedSession,
-      passengerLine: 'dialogue.negotiation.detour_explained',
-      topFactor: 'URGENT',
+      session: {
+        ...session,
+        currentPatience: nextPatience,
+        round: nextRound,
+        actionSeq: nextSeq,
+        salt: nextSalt,
+      },
+      passengerLine: 'dialogue.negotiation.detour_rejected',
+      outcome: { kind: 'rejected', reason: 'BAD_TRAFFIC' },
+      topFactor: 'BAD_TRAFFIC',
     };
   }
 
@@ -331,12 +404,33 @@ export function respond(
       0,
       session.currentPatience - BALANCE.NEGOTIATION.patienceDecayPerRound * 0.5
     );
+    const nextRound = session.round + 1;
+    const nextSeq = (session.actionSeq ?? 0) + 1;
+    const nextSalt = hashSeed(session.salt, 'pickupAdjust', session.round);
 
     if (accepted) {
+      if (nextPatience <= 0) {
+        return {
+          session: {
+            ...session,
+            currentPatience: nextPatience,
+            round: nextRound,
+            actionSeq: nextSeq,
+            salt: nextSalt,
+            status: 'walkedAway',
+          },
+          passengerLine: 'dialogue.negotiation.walked_away',
+          outcome: { kind: 'walkedAway', reason: 'OUT_OF_PATIENCE' },
+          topFactor: 'OUT_OF_PATIENCE',
+        };
+      }
       const updatedSession: NegotiationSession = {
         ...session,
         walkM: session.walkM + action.walkM,
         currentPatience: nextPatience,
+        round: nextRound,
+        actionSeq: nextSeq,
+        salt: nextSalt,
       };
       return {
         session: updatedSession,
@@ -344,9 +438,27 @@ export function respond(
         topFactor: 'URGENT',
       };
     } else {
+      if (session.round >= session.maxRounds || nextPatience <= 0) {
+        return {
+          session: {
+            ...session,
+            currentPatience: nextPatience,
+            round: nextRound,
+            actionSeq: nextSeq,
+            salt: nextSalt,
+            status: 'walkedAway',
+          },
+          passengerLine: 'dialogue.negotiation.walked_away',
+          outcome: { kind: 'walkedAway', reason: 'WALK_TOO_FAR' },
+          topFactor: 'WALK_TOO_FAR',
+        };
+      }
       const updatedSession: NegotiationSession = {
         ...session,
         currentPatience: nextPatience,
+        round: nextRound,
+        actionSeq: nextSeq,
+        salt: nextSalt,
       };
       return {
         session: updatedSession,
@@ -359,6 +471,44 @@ export function respond(
 
   // 5. Refuse alley
   if (action.kind === 'refuseAlley') {
+    const nextPatience = Math.max(
+      0,
+      session.currentPatience - BALANCE.NEGOTIATION.patienceDecayPerRound * 0.5
+    );
+    const nextRound = session.round + 1;
+    const nextSeq = (session.actionSeq ?? 0) + 1;
+    const nextSalt = hashSeed(session.salt, 'refuseAlley', session.round);
+
+    if (session.alleyRefused) {
+      if (session.round >= session.maxRounds || nextPatience <= 0) {
+        return {
+          session: {
+            ...session,
+            currentPatience: nextPatience,
+            round: nextRound,
+            actionSeq: nextSeq,
+            salt: nextSalt,
+            status: 'walkedAway',
+          },
+          passengerLine: 'dialogue.negotiation.walked_away',
+          outcome: { kind: 'walkedAway', reason: 'WALK_TOO_FAR' },
+          topFactor: 'WALK_TOO_FAR',
+        };
+      }
+      return {
+        session: {
+          ...session,
+          currentPatience: nextPatience,
+          round: nextRound,
+          actionSeq: nextSeq,
+          salt: nextSalt,
+        },
+        passengerLine: 'dialogue.negotiation.refuse_alley_rejected',
+        outcome: { kind: 'rejected', reason: 'WALK_TOO_FAR' },
+        topFactor: 'WALK_TOO_FAR',
+      };
+    }
+
     const walkPenalty = calculateWalkPenalty(
       action.walkM,
       session.profile,
@@ -374,16 +524,15 @@ export function respond(
     const rng = new Rng(decisionSeed);
     const accepted = rng.next() < pAcceptAlley;
 
-    const nextPatience = Math.max(
-      0,
-      session.currentPatience - BALANCE.NEGOTIATION.patienceDecayPerRound * 0.5
-    );
-
-    if (accepted) {
+    if (accepted && nextPatience > 0) {
       const updatedSession: NegotiationSession = {
         ...session,
+        alleyRefused: true,
         walkM: session.walkM + action.walkM,
         currentPatience: nextPatience,
+        round: nextRound,
+        actionSeq: nextSeq,
+        salt: nextSalt,
       };
       return {
         session: updatedSession,
@@ -391,9 +540,29 @@ export function respond(
         topFactor: 'WALK_TOO_FAR',
       };
     } else {
+      if (session.round >= session.maxRounds || nextPatience <= 0) {
+        return {
+          session: {
+            ...session,
+            alleyRefused: true,
+            currentPatience: nextPatience,
+            round: nextRound,
+            actionSeq: nextSeq,
+            salt: nextSalt,
+            status: 'walkedAway',
+          },
+          passengerLine: 'dialogue.negotiation.walked_away',
+          outcome: { kind: 'walkedAway', reason: 'WALK_TOO_FAR' },
+          topFactor: 'WALK_TOO_FAR',
+        };
+      }
       const updatedSession: NegotiationSession = {
         ...session,
+        alleyRefused: true,
         currentPatience: nextPatience,
+        round: nextRound,
+        actionSeq: nextSeq,
+        salt: nextSalt,
       };
       return {
         session: updatedSession,
@@ -415,22 +584,63 @@ export function respond(
   const F = clampCounterFare(rawAmount, session.fairFare);
   const factors = evaluateFactors(session, F);
 
-  // Decision roll seeded by hash(requestId, round)
+  let effectivePAccept = factors.pAccept;
+  let effectiveTopFactor = factors.topFactor;
+  let nextProfile = session.profile;
+  let discountApplied = session.discountApplied ?? false;
+
+  if (action.kind === 'offApp') {
+    const p = session.profile;
+    const archPenalty =
+      p.archetype === 'careful' || p.archetype === 'family' || p.archetype === 'office'
+        ? 0.35
+        : p.archetype === 'regular'
+          ? -0.2
+          : 0;
+    const hesitation = clamp(
+      0.45 +
+        p.safetySensitivity * 1.0 -
+        p.trustInRider * 0.5 -
+        Math.max(0, p.relationshipLevel) * 0.008 +
+        archPenalty,
+      0.15,
+      1.8
+    );
+    effectivePAccept = 1 / (1 + Math.exp(-(factors.z - hesitation)));
+    if (F <= session.expectedBudget) {
+      effectiveTopFactor = 'TRUSTS_YOU';
+    }
+  } else if (action.kind === 'discount' && F <= session.fairFare) {
+    const discountRatio = clamp((session.fairFare - F) / Math.max(session.fairFare, 1), 0.02, 0.4);
+    const discountBoost = 0.5 + discountRatio * 4.0;
+    effectivePAccept = 1 / (1 + Math.exp(-(factors.z + discountBoost)));
+    if (!discountApplied) {
+      nextProfile = {
+        ...session.profile,
+        trustInRider: clamp(session.profile.trustInRider + 0.08, 0, 1),
+      };
+      discountApplied = true;
+    }
+  }
+
+  // Decision roll seeded by hash(requestId, round, salt)
   const decisionSeed = hashSeed(session.req.requestId, session.round, session.salt);
   const decisionRng = new Rng(decisionSeed);
-  const accepted = decisionRng.next() < factors.pAccept;
+  const accepted = decisionRng.next() < effectivePAccept;
 
   if (accepted) {
     const updatedSession: NegotiationSession = {
       ...session,
+      profile: nextProfile,
+      discountApplied,
       currentRiderOffer: F,
       currentPassengerOffer: F,
       status: 'accepted',
     };
     let line = defaultDialogueManager.getAccept({
-        archetype: session.profile.archetype,
-        characterId: session.profile.characterId,
-        relationshipLevel: session.profile.relationshipLevel,
+        archetype: nextProfile.archetype,
+        characterId: nextProfile.characterId,
+        relationshipLevel: nextProfile.relationshipLevel,
         rng: new Rng(hashSeed(session.req.requestId, session.round, 'dialogue')),
         vars: { fare: F },
       })?.key ?? 'dialogue.negotiation.counter_accepted';
@@ -443,7 +653,7 @@ export function respond(
       session: updatedSession,
       passengerLine: line,
       outcome: { kind: 'accepted', fare: F },
-      topFactor: factors.topFactor,
+      topFactor: effectiveTopFactor,
     };
   }
 
@@ -457,9 +667,11 @@ export function respond(
   // Check if rounds exhausted
   if (session.round >= session.maxRounds || nextPatience <= 0) {
     const walkAwayReason: ReasonCode =
-      factors.topFactor === 'FAIR_PRICE' ? 'OUT_OF_PATIENCE' : factors.topFactor;
+      effectiveTopFactor === 'FAIR_PRICE' ? 'OUT_OF_PATIENCE' : effectiveTopFactor;
     const updatedSession: NegotiationSession = {
       ...session,
+      profile: nextProfile,
+      discountApplied,
       currentRiderOffer: F,
       currentPatience: nextPatience,
       round: nextRound,
@@ -468,9 +680,9 @@ export function respond(
     return {
       session: updatedSession,
       passengerLine: defaultDialogueManager.getReject({
-        archetype: session.profile.archetype,
-        characterId: session.profile.characterId,
-        relationshipLevel: session.profile.relationshipLevel,
+        archetype: nextProfile.archetype,
+        characterId: nextProfile.characterId,
+        relationshipLevel: nextProfile.relationshipLevel,
         rng: new Rng(hashSeed(session.req.requestId, session.round, 'dialogue')),
       })?.key ?? 'dialogue.negotiation.walked_away',
       outcome: { kind: 'walkedAway', reason: walkAwayReason },
@@ -494,21 +706,30 @@ export function respond(
   if (nextPassengerOffer >= F) {
     const updatedSession: NegotiationSession = {
       ...session,
+      profile: nextProfile,
+      discountApplied,
       currentRiderOffer: F,
       currentPassengerOffer: F,
       status: 'accepted',
     };
     return {
       session: updatedSession,
-      passengerLine: 'dialogue.negotiation.counter_accepted',
+      passengerLine:
+        action.kind === 'offApp'
+          ? 'dialogue.negotiation.off_app_accepted'
+          : action.kind === 'discount'
+            ? 'dialogue.negotiation.discount_accepted'
+            : 'dialogue.negotiation.counter_accepted',
       outcome: { kind: 'accepted', fare: F },
-      topFactor: factors.topFactor,
+      topFactor: effectiveTopFactor,
     };
   }
 
   // Normal counter-rejection
   const updatedSession: NegotiationSession = {
     ...session,
+    profile: nextProfile,
+    discountApplied,
     currentRiderOffer: F,
     currentPassengerOffer: nextPassengerOffer,
     currentPatience: nextPatience,
@@ -516,16 +737,21 @@ export function respond(
     status: 'active',
   };
 
+  const rejectLine =
+    action.kind === 'offApp'
+      ? 'dialogue.negotiation.off_app_rejected'
+      : defaultDialogueManager.getCounter({
+          archetype: nextProfile.archetype,
+          characterId: nextProfile.characterId,
+          relationshipLevel: nextProfile.relationshipLevel,
+          rng: new Rng(hashSeed(session.req.requestId, session.round, 'dialogue')),
+          vars: { fare: F, counter: nextPassengerOffer },
+        })?.key ?? 'dialogue.negotiation.counter_rejected';
+
   return {
     session: updatedSession,
-    passengerLine: defaultDialogueManager.getCounter({
-      archetype: session.profile.archetype,
-      characterId: session.profile.characterId,
-      relationshipLevel: session.profile.relationshipLevel,
-      rng: new Rng(hashSeed(session.req.requestId, session.round, 'dialogue')),
-      vars: { fare: F, counter: nextPassengerOffer },
-    })?.key ?? 'dialogue.negotiation.counter_rejected',
-    outcome: { kind: 'rejected', reason: factors.topFactor },
-    topFactor: factors.topFactor,
+    passengerLine: rejectLine,
+    outcome: { kind: 'rejected', reason: effectiveTopFactor },
+    topFactor: effectiveTopFactor,
   };
 }

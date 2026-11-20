@@ -66,7 +66,7 @@ export function ChoiceCardView({
             lineHeight: 1.4,
           }}
         >
-          {t(choice.prompt)}
+          {t(choice.prompt, choice.promptVars)}
         </h3>
       </div>
 
@@ -107,7 +107,7 @@ export function ChoiceCardView({
               (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255, 255, 255, 0.1)';
             }}
           >
-            <span>{t(opt.text)}</span>
+            <span>{t(opt.text, opt.vars)}</span>
             <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               {opt.isMission && (
                 <span

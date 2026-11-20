@@ -21,6 +21,7 @@
   "objective.go_to_pickup": "{place}-এর কাছে যাত্রী তুলুন",
   "objective.drop_off": "{place}-এর কাছে যাত্রী নামিয়ে দিন",
   "objective.completing": "ট্রিপ শেষ হচ্ছে...",
+  "objective.dispute": "যাত্রীর সাথে ভাড়ার বিতর্ক মিটমাট করুন",
   "objective.emergency": "আগে জরুরি অবস্থা সামলান",
   "objective.no_show": "যাত্রী আসেননি, নতুন রাইড খুঁজুন",
   "objective.cancelled": "রাইড বাতিল হয়েছে, নতুন রাইড খুঁজুন",

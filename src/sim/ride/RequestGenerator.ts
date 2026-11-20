@@ -348,6 +348,12 @@ export class RequestGenerator {
     if (this.eligibleNodeIds.length < 2) {
       return null;
     }
+    if ((bookingType === 'direct' || bookingType === 'app') && this.getPhoneBattery() <= 0) {
+      return null;
+    }
+    if (bookingType === 'app' && this.appSuspendedProvider?.()) {
+      return null;
+    }
 
     let charDef: CharacterDef | undefined;
     if (forcedCharacterId) {

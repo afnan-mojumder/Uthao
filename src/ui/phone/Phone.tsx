@@ -18,6 +18,7 @@ export interface PhoneProps {
   isOpen: boolean;
   onClose: () => void;
   incomingRequest?: RideRequest | null;
+  requestQueue?: RideRequest[];
   timeoutRemaining?: number;
   tripHistory?: TripHistoryItem[];
   navigationTurn?: { direction: string; text: string } | null;
@@ -33,6 +34,7 @@ export function Phone({
   isOpen,
   onClose,
   incomingRequest,
+  requestQueue = [],
   timeoutRemaining = 15,
   tripHistory = [],
   navigationTurn,
@@ -206,7 +208,7 @@ export function Phone({
                   fontWeight: 800,
                 }}
               >
-                1
+                {requestQueue.length > 0 ? requestQueue.length : 1}
               </span>
             )}
           </button>

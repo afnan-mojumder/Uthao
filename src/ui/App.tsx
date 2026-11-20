@@ -312,6 +312,7 @@ export function App(): JSX.Element {
               phoneSignal.value = { ...phoneSignal.value, open: false };
             }}
             incomingRequest={phoneSignal.value.incomingRequest}
+            requestQueue={phoneSignal.value.requestQueue}
             timeoutRemaining={phoneSignal.value.timeoutRemaining}
             tripHistory={phoneSignal.value.tripHistory}
             navigationTurn={phoneSignal.value.navigationTurn}
@@ -342,6 +343,7 @@ export function App(): JSX.Element {
             lastResult={negotiationSignal.value.lastResult}
             mood={negotiationSignal.value.mood}
             pickup={negotiationSignal.value.pickup}
+            alley={negotiationSignal.value.alley}
             destinationKey={negotiationSignal.value.destinationKey}
             onAction={(action) => onNegotiationActionCallback?.(action)}
             onClose={() => {

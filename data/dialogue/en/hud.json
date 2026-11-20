@@ -21,6 +21,7 @@
   "objective.go_to_pickup": "Pick up passenger near {place}",
   "objective.drop_off": "Drop off passenger near {place}",
   "objective.completing": "Finishing the trip...",
+  "objective.dispute": "Resolve the fare dispute with the passenger",
   "objective.emergency": "Deal with the emergency first",
   "objective.no_show": "Passenger didn't show, look for a new ride",
   "objective.cancelled": "Ride cancelled, look for a new ride",

@@ -1,10 +1,15 @@
 import { describe, it, expect } from 'vitest';
 import { EventBus, type GameEvents } from '../../../src/core/events';
 import type { RoadNode, RoadSegment, RideRequest } from '../../../src/core/types';
+import type { DistrictData } from '../../../src/sim/schemas';
 import { RoutingGraph, pickupOptions } from '../../../src/sim/road/routing';
 import { RoadNetwork } from '../../../src/sim/road/RoadNetwork';
 import { RideManager } from '../../../src/sim/ride/RideManager';
+import { GameManager } from '../../../src/sim/GameManager';
+import { GameSession } from '../../../src/sim/GameSession';
 import { receipt } from '../../../src/sim/economy/fuel';
+import { SIM_DT } from '../../../src/config/constants';
+import testloopData from '../../../data/districts/testloop.json';
 
 describe('Detours, Crossings, and Off-App (T2.5)', () => {
   it('cross point only at crossing nodes', () => {
@@ -490,5 +495,188 @@ describe('Detours, Crossings, and Off-App (T2.5)', () => {
     expect(opts).not.toBeNull();
     // Neither X_bad (not a pickup node) nor X_disconnected (no walk path from P) should be offered!
     expect(opts?.crossPoint).toBeUndefined();
+  });
+});
+
+describe('P4.1 street commission, off-app RNG independence & alley relocation', () => {
+  it('street hails take 0% commission even when phone is dead or app is suspended', () => {
+    const streetReceipt = receipt({
+      requestId: 'req_street_test',
+      fare: 200,
+      distanceKm: 4,
+      durationMin: 12,
+      bookingType: 'street',
+    });
+    expect(streetReceipt.commission).toBe(0);
+    expect(streetReceipt.net).toBe(streetReceipt.fare - streetReceipt.fuelCost);
+
+    const road = RoadNetwork.fromDistricts([testloopData as DistrictData]);
+    const gm = new GameManager({ seed: 13, mode: 'career', data: {} });
+    const session = new GameSession({ gm, road, autoRequests: false, negotiation: false });
+    gm.economyManager.phoneBattery = 0;
+    gm.economy.phoneBattery = 0;
+    session.ride.appSuspendedUntilDay = 99;
+
+    const nodes = road.getAllNodes();
+    const pickup = nodes[0]!;
+    const dest = nodes[1]!;
+    const cash0 = gm.economyManager.cash;
+    const req: RideRequest = {
+      requestId: 'req_street_dead_phone',
+      passengerId: 'p_street',
+      pickupNodeId: pickup.nodeId,
+      destinationNodeId: dest.nodeId,
+      initialFare: 150,
+      estimatedDistance: 0.5,
+      estimatedDuration: 3,
+      requestedArrivalTime: null,
+      bookingType: 'street',
+      status: 'WaitingForPickup',
+      surge: 1,
+    };
+
+    let completedCommission = -1;
+    gm.bus.on('ride/completed', (e) => {
+      completedCommission = e.receipt.commission;
+    });
+
+    session.ride.offer(req);
+    expect(session.ride.accept(req.requestId)).toBe(true);
+    session.bike.x = pickup.x;
+    session.bike.z = pickup.z;
+    session.bike.speed = 0;
+    session.step({ throttle: 0, brake: 0, steer: 0 }, SIM_DT);
+    session.bike.x = dest.x;
+    session.bike.z = dest.z;
+    session.bike.speed = 0;
+    session.step({ throttle: 0, brake: 0, steer: 0 }, SIM_DT);
+
+    expect(completedCommission).toBe(0);
+    expect(gm.economyManager.ledgerFor(req.requestId).some((t) => t.kind === 'commission')).toBe(false);
+    expect(gm.economyManager.cash).toBeGreaterThanOrEqual(cash0 + 150);
+  });
+
+  it('sequential off-app rides within the same hour roll independent detection RNGs', () => {
+    const road = RoadNetwork.fromDistricts([testloopData as DistrictData]);
+    // Search for a seed whose plain `gm.rng.fork('offApp')` would have triggered strike 1 immediately
+    let hittingSeed = -1;
+    for (let s = 1; s < 500; s++) {
+      const gmProbe = new GameManager({ seed: s, mode: 'career', data: {} });
+      if (gmProbe.rng.fork('offApp').chance(0.03)) {
+        hittingSeed = s;
+        break;
+      }
+    }
+    expect(hittingSeed).toBeGreaterThan(0);
+
+    // Also test a broad run of sequential markOffApp calls within the same hour:
+    // with independent per-roll forks, not all rolls are identical (if roll 1 detects, rolls 1..30 don't ALL detect).
+    const nodes = road.getAllNodes();
+    const gm = new GameManager({ seed: hittingSeed, mode: 'career', data: {} });
+    const session = new GameSession({ gm, road, autoRequests: false, negotiation: false });
+    let detectedCount = 0;
+    const prevStrikes = { n: 0 };
+
+    for (let i = 0; i < 30; i++) {
+      const req: RideRequest = {
+        requestId: `req_off_${i}`,
+        passengerId: `p_off_${i}`,
+        pickupNodeId: nodes[0]!.nodeId,
+        destinationNodeId: nodes[1]!.nodeId,
+        initialFare: 100,
+        estimatedDistance: 0.5,
+        estimatedDuration: 3,
+        requestedArrivalTime: null,
+        bookingType: 'app',
+        status: 'WaitingForPickup',
+        surge: 1,
+      };
+      session.ride.offer(req);
+      session.ride.accept(req.requestId);
+      session.markOffApp();
+      if (session.ride.offAppStrikes > prevStrikes.n) {
+        detectedCount++;
+        prevStrikes.n = session.ride.offAppStrikes;
+      }
+      session.ride.cancel(req.requestId, 'rider', 'test');
+    }
+
+    // With 30 independent 3% rolls, we should not hit 30/30 or 0/30 regardless of seed;
+    // specifically with independent forks, sequential calls never repeat the exact same roll 30 times.
+    expect(detectedCount).toBeLessThan(10);
+  });
+
+  it('alleyChoice and relocateAlley move an alley destination to the alley entrance and reprice', () => {
+    const mkSeg = (
+      segmentId: string,
+      startNodeId: string,
+      endNodeId: string,
+      extra: Partial<RoadSegment> = {}
+    ): RoadSegment => ({
+      segmentId,
+      startNodeId,
+      endNodeId,
+      width: 8,
+      surfaceCondition: 1,
+      trafficDensity: 0.2,
+      speedLimit: 40,
+      turnRestrictions: [],
+      motorcycleAccessible: true,
+      pedestrianDensity: 0.2,
+      riskLevel: 0.1,
+      oneWay: false,
+      divided: false,
+      lanes: 2,
+      roadType: 'residential',
+      floodSensitivity: 0,
+      pickupPractical: true,
+      district: 'testloop',
+      tags: [],
+      ...extra,
+    });
+
+    const alleyDistrict: DistrictData = {
+      districtId: 'testloop',
+      name: { bn: 'টেস্ট', en: 'Test' },
+      nodes: [
+        { nodeId: 'M1', x: 0, z: 0, kind: 'junction' },
+        { nodeId: 'M2', x: 100, z: 0, kind: 'junction' },
+        { nodeId: 'A1', x: 140, z: 0, kind: 'junction' },
+      ],
+      segments: [
+        mkSeg('S_main', 'M1', 'M2', { roadType: 'main' }),
+        mkSeg('S_alley', 'M2', 'A1', { roadType: 'alley', width: 3.5, speedLimit: 15, tags: ['alley'] }),
+      ],
+      pois: [],
+    };
+    const road = RoadNetwork.fromDistricts([alleyDistrict]);
+    const gm = new GameManager({ seed: 42, mode: 'career', data: {} });
+    const session = new GameSession({ gm, road, autoRequests: false, negotiation: true });
+
+    const req: RideRequest = {
+      requestId: 'req_alley_1',
+      passengerId: 'p_alley',
+      pickupNodeId: 'M1',
+      destinationNodeId: 'A1',
+      initialFare: 80,
+      estimatedDistance: 0.42,
+      estimatedDuration: 2,
+      requestedArrivalTime: null,
+      bookingType: 'app',
+      status: 'WaitingForPickup',
+      surge: 1,
+    };
+
+    session.ride.offer(req);
+    session.ride.accept(req.requestId);
+    const alley = session.alleyChoice();
+    expect(alley).not.toBeNull();
+    expect(alley?.nodeId).toBe('M2');
+    expect(alley?.target).toBe('destination');
+    expect(alley?.walkM).toBeGreaterThan(0);
+
+    const moved = session.ride.relocateAlley(alley!.nodeId, alley!.walkM, alley!.target);
+    expect(moved).toBe(true);
+    expect(session.ride.getActiveRequest()?.destinationNodeId).toBe('M2');
   });
 });

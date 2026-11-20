@@ -38,6 +38,16 @@ export function bindUi(session: GameSession, saveSystem?: SaveSystem): void {
   const rideManager = session.ride;
 
   setChoiceDispatcher((choiceId, instanceId) => {
+    if (instanceId.startsWith('dispute:')) {
+      if (
+        choiceId === 'acceptPartial' ||
+        choiceId === 'insistFull' ||
+        choiceId === 'reportSupport'
+      ) {
+        rideManager.resolveDispute(choiceId);
+      }
+      return;
+    }
     gm.dispatch({ type: 'chooseEncounterOption', choiceId, instanceId });
   });
 
@@ -63,18 +73,26 @@ export function bindUi(session: GameSession, saveSystem?: SaveSystem): void {
     // Only the live negotiation for the ride that is still active may act.
     if (!current || current.status !== 'active') return;
     if (rideManager.getActiveRequest()?.requestId !== current.req.requestId) return;
-    // Relocation uses the sim's measured option, never numbers the panel sent.
+    // Relocation and alley refusal use the sim's measured option, never numbers the panel sent.
     const choice = action.kind === 'pickupAdjust' ? session.pickupChoice() : null;
     if (action.kind === 'pickupAdjust' && !choice) return;
-    const result = respond(
-      current,
-      choice ? { kind: 'pickupAdjust', walkM: choice.walkM, savesMin: choice.savesMin } : action
-    );
+    const alley = action.kind === 'refuseAlley' ? (session.alleyChoice?.() ?? null) : null;
+    if (action.kind === 'refuseAlley' && !alley) return;
+
+    const effectiveAction = choice
+      ? { kind: 'pickupAdjust' as const, walkM: choice.walkM, savesMin: choice.savesMin }
+      : alley
+        ? { kind: 'refuseAlley' as const, walkM: alley.walkM }
+        : action;
+    const result = respond(current, effectiveAction);
     let next = result.session;
     const accepted = result.outcome?.kind === 'accepted';
     // A successful pickupAdjust only raises the walked distance; it does not end the
     // negotiation and carries no outcome, so it must be detected from the session.
-    const relocated = result.outcome === undefined && result.session.walkM > current.walkM;
+    const relocated =
+      action.kind === 'pickupAdjust' &&
+      result.outcome === undefined &&
+      result.session.walkM > current.walkM;
     if (choice && relocated) {
       if (rideManager.relocatePickup(choice.nodeId, choice.walkM)) {
         next = session.repriceNegotiation(result.session);
@@ -83,16 +101,32 @@ export function bindUi(session: GameSession, saveSystem?: SaveSystem): void {
         next = { ...current, currentPatience: result.session.currentPatience };
       }
     }
+    const alleyMoved =
+      action.kind === 'refuseAlley' &&
+      result.outcome === undefined &&
+      Boolean(result.session.alleyRefused);
+    if (alley && alleyMoved) {
+      if (rideManager.relocateAlley?.(alley.nodeId, alley.walkM, alley.target)) {
+        next = session.repriceNegotiation(result.session);
+      } else {
+        next = { ...current, currentPatience: result.session.currentPatience, alleyRefused: false };
+      }
+    }
     negotiationSignal.value = {
       active: next.status === 'active',
       session: next,
       lastResult: result,
       mood: rideManager.getPassengerMood(),
       pickup: next.status === 'active' ? session.pickupChoice() : null,
+      alley: next.status === 'active' && !next.alleyRefused ? (session.alleyChoice?.() ?? null) : null,
+      destinationKey: negotiationSignal.value.destinationKey,
     };
     if (accepted && result.outcome?.kind === 'accepted') {
       if (action.kind === 'offApp') session.markOffApp();
-      rideManager.agreeFare(result.outcome.fare);
+      rideManager.agreeFare(
+        result.outcome.fare,
+        action.kind === 'discount' ? { discount: true } : undefined
+      );
     } else if (result.outcome?.kind === 'walkedAway') {
       // The rider declining ends in Declined; the passenger losing patience ends in Cancelled.
       if (action.kind === 'decline') {

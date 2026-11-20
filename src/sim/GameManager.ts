@@ -410,8 +410,8 @@ export class GameManager {
       bikeCondition: this.economyManager.motorcycleCondition,
     };
     // T7.1: ambient (roaming) encounters are suppressed while disabled (main
-    // menu, tutorial, or `?encounters=0`) so they can't softlock the boot flow.
-    if (this.eventDirector.enabled) {
+    // menu, tutorial, or `?encounters=0`) or while resolving a fare dispute.
+    if (this.eventDirector.enabled && !this.rideManager?.getPendingDispute?.()) {
       const encounter = this.eventDirector.evaluate(ctx, this.bus);
       if (encounter && this.eventDirector.pauseOnDecisions) {
         this.paused = true;

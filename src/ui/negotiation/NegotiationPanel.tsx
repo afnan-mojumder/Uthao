@@ -17,6 +17,8 @@ export interface NegotiationPanelProps {
   mood?: number;
   /** A relocation the sim can really perform right now (null: none, no button). */
   pickup?: { nodeId: string; walkM: number; savesMin: number } | null;
+  /** A non-alley entrance the passenger could meet/leave at (null: none, no button). */
+  alley?: { nodeId: string; walkM: number; target: 'pickup' | 'destination' } | null;
   /** Name key of the destination's place. */
   destinationKey?: string;
   onAction: (action: NegotiationAction) => void;
@@ -29,6 +31,7 @@ export function NegotiationPanel({
   lastResult,
   mood = 1,
   pickup = null,
+  alley = null,
   destinationKey,
   onAction,
 }: NegotiationPanelProps): JSX.Element | null {
@@ -444,24 +447,54 @@ export function NegotiationPanel({
             </button>
           )}
 
-          {/* 6. Explain detour */}
-          <button
-            type="button"
-            data-testid="explain-detour-btn"
-            onClick={() => onAction({ kind: 'explainDetour', extraMin: 8 })}
-            style={{
-              padding: '10px',
-              borderRadius: '10px',
-              background: 'rgba(30, 41, 59, 0.8)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              color: '#f8fafc',
-              fontSize: '12px',
-              fontWeight: 600,
-              cursor: 'pointer',
-            }}
-          >
-            {t('negotiation.explain_detour', { min: 8 })}
-          </button>
+          {/* 5. Refuse deep alley entry when destination/pickup lies inside an alley */}
+          {alley && !session.alleyRefused && (
+            <button
+              type="button"
+              data-testid="refuse-alley-btn"
+              onClick={() => onAction({ kind: 'refuseAlley', walkM: alley.walkM })}
+              style={{
+                padding: '10px',
+                borderRadius: '10px',
+                background: 'rgba(30, 41, 59, 0.8)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                color: '#f8fafc',
+                fontSize: '12px',
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              {t('negotiation.refuse_alley')}
+            </button>
+          )}
+
+          {/* 6. Explain detour (usable once when actual detour or heavy congestion exists) */}
+          {(() => {
+            const canExplainDetour =
+              !session.detourExplained &&
+              (session.ctx.hasDetour === true || session.ctx.traffic >= 0.5);
+            return (
+              <button
+                type="button"
+                data-testid="explain-detour-btn"
+                disabled={!canExplainDetour}
+                onClick={() => onAction({ kind: 'explainDetour', extraMin: 8 })}
+                style={{
+                  padding: '10px',
+                  borderRadius: '10px',
+                  background: canExplainDetour ? 'rgba(30, 41, 59, 0.8)' : 'rgba(30, 41, 59, 0.35)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  color: canExplainDetour ? '#f8fafc' : '#64748b',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  cursor: canExplainDetour ? 'pointer' : 'not-allowed',
+                  opacity: canExplainDetour ? 1 : 0.65,
+                }}
+              >
+                {t('negotiation.explain_detour', { min: 8 })}
+              </button>
+            );
+          })()}
 
           {/* 7. Off-app direct ride */}
           <button

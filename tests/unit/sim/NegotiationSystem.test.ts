@@ -399,4 +399,155 @@ describe('NegotiationSystem (T2.3)', () => {
       expect(s.gm.negotiationHistory).toBeGreaterThanOrEqual(h);
     });
   });
+
+  describe('P4.1 negotiation exploits, RNG salting, off-app hesitation & discount trust', () => {
+    it('explainDetour only works once when actual congestion/detour exists and advances round & patience', () => {
+      const profile = mockProfile({ archetype: 'commuter', patience: 0.7 });
+      const req = mockRequest();
+
+      // 1. Without congestion (traffic < 0.5) and without hasDetour, explainDetour gives zero boost and advances round
+      const calm = startNegotiation(req, profile, {
+        traffic: 0.2,
+        day: 1,
+        walkM: 0,
+        rng: new Rng(42),
+      });
+      const calmRes = respond(calm, { kind: 'explainDetour', extraMin: 8 });
+      expect(calmRes.session.detourExtraMin).toBe(0);
+      expect(calmRes.session.round).toBe(calm.round + 1);
+      expect(calmRes.session.currentPatience).toBeLessThan(calm.currentPatience);
+
+      // 2. With congestion (traffic >= 0.5) or hasDetour: true, explainDetour works ONCE and advances round & patience
+      const congested = startNegotiation(req, profile, {
+        traffic: 0.65,
+        day: 1,
+        walkM: 0,
+        rng: new Rng(42),
+      });
+      const first = respond(congested, { kind: 'explainDetour', extraMin: 8 });
+      expect(first.session.detourExtraMin).toBe(8);
+      expect(first.session.round).toBe(2);
+      expect(first.session.currentPatience).toBeLessThan(congested.currentPatience);
+
+      // Clicking explainDetour a second time does NOT stack boost and keeps advancing round/patience until walkAway
+      const second = respond(first.session, { kind: 'explainDetour', extraMin: 8 });
+      expect(second.session.detourExtraMin).toBe(8);
+      expect(second.session.round).toBe(3);
+      expect(second.session.currentPatience).toBeLessThan(first.session.currentPatience);
+
+      const third = respond(second.session, { kind: 'explainDetour', extraMin: 8 });
+      expect(third.session.detourExtraMin).toBe(8);
+      expect(third.outcome?.kind).toBe('walkedAway');
+    });
+
+    it('pickupAdjust advances/salts RNG across sequential attempts instead of repeating the same roll', () => {
+      const profile = mockProfile({ patience: 0.9, trustInRider: 0.4, urgency: 0.3 });
+      const req = mockRequest({ requestId: 'req_salt_pickup' });
+      const s0 = startNegotiation(req, profile, {
+        traffic: 0.3,
+        day: 1,
+        walkM: 0,
+        rng: new Rng(17),
+      });
+      const r1 = respond(s0, { kind: 'pickupAdjust', walkM: 60, savesMin: 3 });
+      expect(r1.session.round).toBeGreaterThan(s0.round);
+      expect(r1.session.salt).not.toBe(s0.salt);
+
+      // Repeated refuseAlley also salts RNG and advances round once
+      const rAlley = respond(s0, { kind: 'refuseAlley', walkM: 40 });
+      expect(rAlley.session.round).toBeGreaterThan(s0.round);
+      expect(rAlley.session.salt).not.toBe(s0.salt);
+    });
+
+    it('offApp has passenger hesitation (careful/safety-sensitive passengers accept less often than counter)', () => {
+      const careful = mockProfile({
+        archetype: 'careful',
+        safetySensitivity: 0.95,
+        trustInRider: 0.3,
+        patience: 0.8,
+      });
+      let counterAccepts = 0;
+      let offAppAccepts = 0;
+      let sawOffAppRejectLine = false;
+
+      for (let i = 0; i < 400; i++) {
+        const req = mockRequest({ requestId: `req_off_hes_${i}` });
+        const s = startNegotiation(req, careful, {
+          traffic: 0.3,
+          day: 1,
+          walkM: 0,
+          rng: new Rng(i + 1),
+        });
+        const fare = s.fairFare;
+        const cRes = respond(s, { kind: 'counter', amount: fare });
+        if (cRes.outcome?.kind === 'accepted') counterAccepts++;
+
+        const oRes = respond(s, { kind: 'offApp', amount: fare });
+        if (oRes.outcome?.kind === 'accepted') offAppAccepts++;
+        if (oRes.passengerLine === 'dialogue.negotiation.off_app_rejected') {
+          sawOffAppRejectLine = true;
+        }
+      }
+
+      expect(offAppAccepts).toBeLessThan(counterAccepts);
+      expect(sawOffAppRejectLine).toBe(true);
+    });
+
+    it('discount gives higher acceptance and trust bonus when below fairFare', () => {
+      const profile = mockProfile({
+        archetype: 'bargainer',
+        budget: 0.65,
+        trustInRider: 0.3,
+        patience: 0.8,
+        bargainingTendency: 0.9,
+      });
+      let counterAccepts = 0;
+      let discountAccepts = 0;
+
+      for (let i = 0; i < 300; i++) {
+        const req = mockRequest({ requestId: `req_disc_${i}`, estimatedDistance: 5.0, estimatedDuration: 15 });
+        const s = startNegotiation(req, profile, {
+          traffic: 0.55,
+          day: 1,
+          walkM: 0,
+          rng: new Rng(i + 100),
+        });
+        const fare = Math.max(BALANCE.FARE.minFare, Math.round((s.fairFare * 0.9) / 5) * 5);
+        const cRes = respond(s, { kind: 'counter', amount: fare });
+        if (cRes.outcome?.kind === 'accepted') counterAccepts++;
+
+        const dRes = respond(s, { kind: 'discount', amount: fare });
+        if (dRes.outcome?.kind === 'accepted') {
+          discountAccepts++;
+          expect(dRes.session.profile.trustInRider).toBeGreaterThan(profile.trustInRider);
+        }
+      }
+
+      expect(discountAccepts).toBeGreaterThan(counterAccepts);
+
+      // Accepting a discounted ride in GameSession rewards localTrust & character relationship
+      const road = RoadNetwork.fromDistricts([testloopData as DistrictData]);
+      const gm = new GameManager({ seed: 7, mode: 'career', data: {} });
+      const s = new GameSession({ gm, road, autoRequests: false });
+      const trust0 = s.gm.reputationSystem.getLocalTrust();
+      const rel0 = s.gm.reputationSystem.getRelationship('char_nabila');
+      const nabilaProfile = generateProfile('bargainer', new Rng(1), 'pass_char_nabila');
+      s.requests.setProfile(nabilaProfile);
+      const [a, b] = s.road.getAllNodes();
+      s.ride.offer(
+        mockRequest({
+          requestId: 'req_disc_session',
+          passengerId: nabilaProfile.passengerId,
+          characterId: 'char_nabila',
+          pickupNodeId: a!.nodeId,
+          destinationNodeId: b!.nodeId,
+        })
+      );
+      s.ride.accept('req_disc_session');
+      const neg = s.beginNegotiation('req_disc_session')!;
+      s.ride.agreeFare(Math.max(50, neg.fairFare - 10), { discount: true });
+      expect(s.gm.reputationSystem.getLocalTrust()).toBeGreaterThan(trust0);
+      expect(s.gm.reputationSystem.getRelationship('char_nabila')).toBeGreaterThan(rel0);
+    });
+  });
 });

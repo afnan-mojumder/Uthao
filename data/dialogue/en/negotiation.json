@@ -7,6 +7,7 @@
   "dialogue.negotiation.pickup_adjust_accepted": "Okay, I'll walk across to the other side.",
   "dialogue.negotiation.pickup_adjust_rejected": "No brother, I can't walk over there.",
   "dialogue.negotiation.detour_explained": "Ah, there's bad traffic that way. Understood.",
+  "dialogue.negotiation.detour_rejected": "No brother, traffic looks clear—stop trying to hike the fare.",
   "dialogue.negotiation.refuse_alley_accepted": "Fine, drop me off at the alley entrance.",
   "dialogue.negotiation.refuse_alley_rejected": "No brother, you must take me inside the alley.",
   "dialogue.negotiation.off_app_accepted": "Sure, off-app is fine. Let's go.",

@@ -294,5 +294,14 @@
   "tutorial.nego.agreed_label": "Negotiation Outcome: Agreed Fare ৳{fare}",
   "tutorial.nego.start_ride": "Begin Ride to Campus Gate",
   "ui.mission_badge": "Mission",
-  "hud.road_event": "Road Alert"
+  "hud.road_event": "Road Alert",
+  "encounter.dispute.title": "Fare Dispute",
+  "encounter.dispute.body": "The passenger contests the ৳{fare} fare and offers ৳{partial} instead.",
+  "encounter.dispute.choice.accept_partial": "Accept ৳{partial}",
+  "encounter.dispute.choice.insist_full": "Insist on full ৳{fare}",
+  "encounter.dispute.choice.report_support": "Report to Uthao support",
+  "trip.consequence.disputeAcceptedPartial": "Settled dispute by accepting partial fare",
+  "trip.consequence.disputeRecoveredFull": "Passenger agreed to pay the full fare",
+  "trip.consequence.disputeEscalated": "Passenger refused after dispute escalated",
+  "trip.consequence.disputeReported": "Reported dispute to platform support"
 }

@@ -7,6 +7,7 @@
   "dialogue.negotiation.pickup_adjust_accepted": "আচ্ছা ঠিক আছে, আমি ওপারে হেঁটে আসছি।",
   "dialogue.negotiation.pickup_adjust_rejected": "না ভাই, ওপারে হেঁটে যাওয়া সম্ভব না।",
   "dialogue.negotiation.detour_explained": "ওহ, ওই রাস্তায় অনেক জ্যাম তাহলে। বুঝলাম।",
+  "dialogue.negotiation.detour_rejected": "না ভাই, রাস্তায় তো জ্যাম নেই—অযথা ভাড়া বাড়াবেন না।",
   "dialogue.negotiation.refuse_alley_accepted": "আচ্ছা ঠিক আছে, গলির মুখে নামিয়ে দিলেই হবে।",
   "dialogue.negotiation.refuse_alley_rejected": "না ভাই, আমার গলির ভেতরেই যেতে হবে।",
   "dialogue.negotiation.off_app_accepted": "সমস্যা নেই, অ্যাপ ছাড়াই চলেন।",

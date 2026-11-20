@@ -23,22 +23,31 @@ export const Z_LAYER = {
   SYSTEM_OVERLAY: 900,
 } as const;
 
+export interface DialogueSubtitleState {
+  text: string;
+  speaker?: string;
+  phase?: string;
+}
+
 export interface HudState {
   speedKmh: number;
   objectiveText: string;
   gear: number;
   fuel: number;
+  dialogueSubtitle?: DialogueSubtitleState | null;
 }
 
 export interface ChoiceOption {
   id: string | number;
   text: string;
+  vars?: Record<string, string | number>;
   isMission?: boolean;
 }
 
 export interface ChoiceState {
   active: boolean;
   prompt: string;
+  promptVars?: Record<string, string | number>;
   options: ChoiceOption[];
   instanceId?: string;
 }
@@ -47,6 +56,7 @@ export interface PhoneState {
   open: boolean;
   unreadCount: number;
   incomingRequest: RideRequest | null;
+  requestQueue?: RideRequest[];
   timeoutRemaining: number;
   tripHistory: TripHistoryItem[];
   navigationTurn: { direction: string; text: string } | null;
@@ -61,6 +71,8 @@ export interface NegotiationUiState {
   mood?: number;
   /** A real relocation the sim can do now; the panel shows the button only when set. */
   pickup?: { nodeId: string; walkM: number; savesMin: number } | null;
+  /** A non-alley entrance option when pickup or destination sits inside an alley. */
+  alley?: { nodeId: string; walkM: number; target: 'pickup' | 'destination' } | null;
   /** Name key of the destination's place (never the raw road node id). */
   destinationKey?: string;
 }
@@ -246,12 +258,16 @@ export const hudSignal = signal<HudState>({
   objectiveText: '',
   gear: 1,
   fuel: 100,
+  dialogueSubtitle: null,
 });
+
+export const dialogueSubtitleSignal = signal<DialogueSubtitleState | null>(null);
 
 export const phoneSignal = signal<PhoneState>({
   open: false,
   unreadCount: 0,
   incomingRequest: null,
+  requestQueue: [],
   timeoutRemaining: 15,
   tripHistory: [],
   navigationTurn: null,
@@ -303,6 +319,7 @@ if (typeof window !== 'undefined') {
     pausedSignal,
     settingsSignal,
     hudSignal,
+    dialogueSubtitleSignal,
     phoneSignal,
     dayEndSignal,
     negotiationSignal,
@@ -372,7 +389,17 @@ export function setHasSaveCallback(fn: () => boolean): void {
 export function exitToTitle(): void {
   tutorialSignal.value = { active: false, step: 'idle' };
   pausedSignal.value = false;
-  phoneSignal.value = { ...phoneSignal.value, open: false };
+  activeOfferQueue = [];
+  phoneSignal.value = {
+    ...phoneSignal.value,
+    open: false,
+    incomingRequest: null,
+    requestQueue: [],
+    unreadCount: 0,
+    timeoutRemaining: 15,
+  };
+  dialogueSubtitleSignal.value = null;
+  hudSignal.value = { ...hudSignal.value, dialogueSubtitle: null };
   negotiationSignal.value = { active: false, session: null, lastResult: null };
   garageSignal.value = { ...garageSignal.value, open: false };
   journalSignal.value = false;
@@ -504,9 +531,38 @@ function showImpact(kind: NonNullable<ImpactState['kind']>): void {
   }, IMPACT_BANNER_MS);
 }
 
+const MAX_PHONE_OFFER_QUEUE = 3;
+const PHONE_OFFER_TIMEOUT_SEC = 15;
+let activeOfferQueue: Array<{ request: RideRequest; timeoutRemaining: number }> = [];
+
+function syncPhoneOfferState(showHead: boolean): void {
+  const head = activeOfferQueue[0];
+  phoneSignal.value = {
+    ...phoneSignal.value,
+    incomingRequest: showHead && head ? head.request : null,
+    requestQueue: activeOfferQueue.map((e) => e.request),
+    timeoutRemaining: head ? head.timeoutRemaining : 0,
+    unreadCount: showHead ? activeOfferQueue.length : 0,
+  };
+}
+
+/** Ticks down all queued phone offers and expires timed-out requests cleanly. */
+export function tickPhoneOffers(dtSec: number): void {
+  if (dtSec <= 0 || activeOfferQueue.length === 0) return;
+  for (const entry of activeOfferQueue) {
+    entry.timeoutRemaining -= dtSec;
+  }
+  activeOfferQueue = activeOfferQueue.filter((e) => e.timeoutRemaining > 0);
+  syncPhoneOfferState(true);
+}
+
+const DIALOGUE_SUBTITLE_MS = 5000;
+let dialogueClearTimer: ReturnType<typeof setTimeout> | undefined;
+
 export function bindEventBusToStore(bus: EventBus<GameEvents>): () => void {
   const unsubscribers: Array<() => void> = [];
 
+  activeOfferQueue = [];
   // A request that arrives under an open story card is held and shown once the
   // card closes, so it never covers the card or starts its timer unseen.
   let heldRequest: RideRequest | null = null;
@@ -514,6 +570,20 @@ export function bindEventBusToStore(bus: EventBus<GameEvents>): () => void {
   // Audit H-4: wobble and crash feedback reaches the rider, not just the event bus.
   unsubscribers.push(bus.on('bike/collision', (ev) => showImpact(ev.severity)));
   unsubscribers.push(bus.on('bike/wobble', () => showImpact('wobble')));
+
+  const enqueuePhoneOffer = (request: RideRequest): void => {
+    const existing = activeOfferQueue.find((e) => e.request.requestId === request.requestId);
+    if (existing) {
+      existing.request = request;
+      existing.timeoutRemaining = PHONE_OFFER_TIMEOUT_SEC;
+    } else {
+      activeOfferQueue.push({ request, timeoutRemaining: PHONE_OFFER_TIMEOUT_SEC });
+      while (activeOfferQueue.length > MAX_PHONE_OFFER_QUEUE) {
+        activeOfferQueue.shift();
+      }
+    }
+    syncPhoneOfferState(true);
+  };
 
   const unsubRideRequested = bus.on('ride/requested', (ev) => {
     if (choiceSignal.value.active) {
@@ -524,12 +594,7 @@ export function bindEventBusToStore(bus: EventBus<GameEvents>): () => void {
       };
       return;
     }
-    phoneSignal.value = {
-      ...phoneSignal.value,
-      incomingRequest: ev.request,
-      unreadCount: phoneSignal.value.unreadCount + 1,
-      timeoutRemaining: 15,
-    };
+    enqueuePhoneOffer(ev.request);
   });
   unsubscribers.push(unsubRideRequested);
 
@@ -537,22 +602,102 @@ export function bindEventBusToStore(bus: EventBus<GameEvents>): () => void {
     if (choice.active || heldRequest === null) return;
     const request = heldRequest;
     heldRequest = null;
-    phoneSignal.value = {
-      ...phoneSignal.value,
-      incomingRequest: request,
-      timeoutRemaining: 15,
-    };
+    enqueuePhoneOffer(request);
   });
   unsubscribers.push(unsubChoiceClosed);
 
-  const unsubRideAccepted = bus.on('ride/accepted', () => {
+  const unsubRideAccepted = bus.on('ride/accepted', (ev) => {
+    activeOfferQueue = activeOfferQueue.filter((e) => e.request.requestId !== ev.requestId);
     phoneSignal.value = {
       ...phoneSignal.value,
       incomingRequest: null,
+      requestQueue: activeOfferQueue.map((e) => e.request),
       unreadCount: 0,
     };
   });
   unsubscribers.push(unsubRideAccepted);
+
+  const unsubRideCancelled = bus.on('ride/cancelled', (ev) => {
+    const prevLen = activeOfferQueue.length;
+    activeOfferQueue = activeOfferQueue.filter((e) => e.request.requestId !== ev.requestId);
+    if (prevLen !== activeOfferQueue.length || phoneSignal.value.incomingRequest?.requestId === ev.requestId) {
+      syncPhoneOfferState(true);
+    }
+  });
+  unsubscribers.push(unsubRideCancelled);
+
+  const unsubTripState = bus.on('trip/state', (ev) => {
+    if (ev.to === 'Negotiating') {
+      phoneSignal.value = {
+        ...phoneSignal.value,
+        incomingRequest: null,
+        unreadCount: 0,
+      };
+    } else if (ev.to === 'RequestAvailable' && activeOfferQueue.length > 0 && !choiceSignal.value.active) {
+      syncPhoneOfferState(true);
+    }
+  });
+  unsubscribers.push(unsubTripState);
+
+  const unsubPassengerDialogue = bus.on('passenger/dialogue', (ev) => {
+    const subtitle: DialogueSubtitleState = {
+      text: ev.text,
+      speaker: ev.speaker,
+      phase: ev.phase,
+    };
+    dialogueSubtitleSignal.value = subtitle;
+    hudSignal.value = {
+      ...hudSignal.value,
+      dialogueSubtitle: subtitle,
+    };
+    if (dialogueClearTimer !== undefined) clearTimeout(dialogueClearTimer);
+    dialogueClearTimer = setTimeout(() => {
+      dialogueSubtitleSignal.value = null;
+      hudSignal.value = { ...hudSignal.value, dialogueSubtitle: null };
+      dialogueClearTimer = undefined;
+    }, DIALOGUE_SUBTITLE_MS);
+  });
+  unsubscribers.push(unsubPassengerDialogue);
+
+  const unsubRideDisputed = bus.on('ride/disputed', (ev) => {
+    choiceSignal.value = {
+      active: true,
+      prompt: 'encounter.dispute.body',
+      promptVars: { fare: ev.fare, partial: ev.partialFare },
+      options: [
+        {
+          id: 'acceptPartial',
+          text: 'encounter.dispute.choice.accept_partial',
+          vars: { fare: ev.fare, partial: ev.partialFare },
+        },
+        {
+          id: 'insistFull',
+          text: 'encounter.dispute.choice.insist_full',
+          vars: { fare: ev.fare, partial: ev.partialFare },
+        },
+        {
+          id: 'reportSupport',
+          text: 'encounter.dispute.choice.report_support',
+          vars: { fare: ev.fare, partial: ev.partialFare },
+        },
+      ],
+      instanceId: `dispute:${ev.requestId}`,
+    };
+  });
+  unsubscribers.push(unsubRideDisputed);
+
+  const unsubRideDisputeResolved = bus.on('ride/disputeResolved', () => {
+    if (choiceSignal.value.instanceId?.startsWith('dispute:')) {
+      choiceSignal.value = {
+        active: false,
+        prompt: '',
+        promptVars: undefined,
+        options: [],
+        instanceId: undefined,
+      };
+    }
+  });
+  unsubscribers.push(unsubRideDisputeResolved);
 
   const unsubComplete = bus.on('ride/completed', (ev) => {
     const newHistoryItem: TripHistoryItem = {
@@ -654,6 +799,11 @@ export function bindEventBusToStore(bus: EventBus<GameEvents>): () => void {
   unsubscribers.push(unsubEnding);
 
   return () => {
+    if (dialogueClearTimer !== undefined) {
+      clearTimeout(dialogueClearTimer);
+      dialogueClearTimer = undefined;
+    }
+    activeOfferQueue = [];
     for (const unsub of unsubscribers) {
       unsub();
     }

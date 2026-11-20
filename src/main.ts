@@ -28,6 +28,8 @@ import {
   initPwaInstall,
   negotiationSignal,
   hudSignal,
+  dialogueSubtitleSignal,
+  tickPhoneOffers,
   tutorialSignal,
   screenSignal,
   journalSignal,
@@ -36,6 +38,7 @@ import {
   settingsSignal,
   type GameSettings,
 } from './ui/store';
+import { getCharacter } from './sim/passenger/PassengerAI';
 import { setLanguage } from './ui/i18n';
 import { setDefaultSignLanguage } from './render/signage';
 import { consumeFreshCareer } from './ui/freshCareer';
@@ -386,6 +389,7 @@ gm.bus.on('negotiation/started', (ev) => {
       lastResult: null,
       mood: rideManager.getPassengerMood(),
       pickup: session.pickupChoice(),
+      alley: session.alleyChoice(),
       destinationKey: nearestPlaceKey(rideManager, negotiation.req.destinationNodeId ?? ''),
     };
   }
@@ -495,6 +499,10 @@ function frame(now: number) {
     lastBikeBrake = input.brake;
     if (rawInput.horn) audio.startHorn();
     else audio.stopHorn();
+  }
+
+  if (steps > 0) {
+    tickPhoneOffers(steps * SIM_DT);
   }
 
   if (!inGame || gm.paused) {
@@ -614,11 +622,17 @@ function frame(now: number) {
         }
       : null;
 
+    const activeProfile = activeReq ? session.requests.getProfile(activeReq.passengerId) : undefined;
+    const activeChar = activeReq?.characterId ? getCharacter(activeReq.characterId) : undefined;
+    const passengerNameKey = activeProfile?.nameKey ?? activeChar?.nameKey;
+    const passengerName = passengerNameKey ? t(passengerNameKey) : 'Passenger';
+
     hud.update({
       speedKmh: currentSpeedKmh,
       objectiveText: objective,
       activeMission: activeMissionHud,
       roadEventAlert,
+      dialogueSubtitle: dialogueSubtitleSignal.value,
       fare,
       fuelL,
       fuelMaxL,
@@ -643,7 +657,7 @@ function frame(now: number) {
       passengerStatus: activeReq
         ? {
             status: view.passenger,
-            name: 'Passenger',
+            name: passengerName,
           }
         : undefined,
       etaMinutes: activeReq ? activeReq.estimatedDuration : undefined,

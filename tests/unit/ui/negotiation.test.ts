@@ -1,9 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   negotiationSignal,
+  choiceSignal,
+  bindEventBusToStore,
   setNegotiationActionDispatcher,
   onNegotiationActionCallback,
 } from '../../../src/ui/store';
+import { EventBus, type GameEvents } from '../../../src/core/events';
 import { t, setLanguage } from '../../../src/ui/i18n';
 import type { NegotiationSession, NegotiationAction } from '../../../src/sim/negotiation/NegotiationSystem';
 import { Rng } from '../../../src/core/rng';
@@ -115,5 +118,30 @@ describe('T2.4 Negotiation Store & Logic', () => {
     expect(t('negotiation.title')).toBe('Fare Negotiation');
     expect(t('negotiation.counter', { fare: 120 })).toBe('Counter ৳120');
     expect(t('negotiation.patience')).toBe('Patience');
+  });
+
+  it('P4.1 opens ChoiceCard on ride/disputed and closes on ride/disputeResolved', () => {
+    const bus = new EventBus<GameEvents>();
+    const unbind = bindEventBusToStore(bus);
+
+    bus.emit('ride/disputed', {
+      requestId: 'req_disp_ui',
+      fare: 120,
+      partialFare: 60,
+      bookingType: 'app',
+    });
+
+    expect(choiceSignal.value.active).toBe(true);
+    expect(choiceSignal.value.instanceId).toBe('dispute:req_disp_ui');
+    expect(choiceSignal.value.options.length).toBeGreaterThanOrEqual(2);
+
+    bus.emit('ride/disputeResolved', {
+      requestId: 'req_disp_ui',
+      choice: 'acceptPartial',
+      fare: 60,
+    });
+
+    expect(choiceSignal.value.active).toBe(false);
+    unbind();
   });
 });

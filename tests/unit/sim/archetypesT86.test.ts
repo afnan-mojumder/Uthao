@@ -1,9 +1,15 @@
 import { describe, it, expect } from 'vitest';
 import { generateProfile, getArchetypeDefinition } from '../../../src/sim/passenger/profiles';
-import { Rng } from '../../../src/core/rng';
-import type { ArchetypeId } from '../../../src/core/types';
+import { Rng, hashSeed } from '../../../src/core/rng';
+import type { ArchetypeId, RideRequest } from '../../../src/core/types';
 import { BALANCE } from '../../../src/config/balance';
 import { offAppPayout, offAppNonPayChance, disputeChance, isDisputed } from '../../../src/sim/economy/offApp';
+import { GameManager } from '../../../src/sim/GameManager';
+import { GameSession } from '../../../src/sim/GameSession';
+import { RoadNetwork } from '../../../src/sim/road/RoadNetwork';
+import type { DistrictData } from '../../../src/sim/schemas';
+import { SIM_DT } from '../../../src/config/constants';
+import testloopData from '../../../data/districts/testloop.json';
 import enDialogue from '../../../data/dialogue/en/dialogue.json';
 import bnDialogue from '../../../data/dialogue/bn/dialogue.json';
 
@@ -80,5 +86,63 @@ describe('T8.6 unreliable passengers dispute', () => {
     expect(isDisputed('unreliable', 0.3, chance / 2)).toBe(true);
     expect(isDisputed('unreliable', 0.3, 0.999)).toBe(false);
     expect(isDisputed('commuter', 0.3, 0)).toBe(false);
+  });
+
+  it('P4.1 interactive dispute resolution waits in Completing until player resolves it', () => {
+    const road = RoadNetwork.fromDistricts([testloopData as DistrictData]);
+    const [pickup, dest] = [road.getAllNodes()[0]!, road.getAllNodes()[1]!];
+    // Find a requestId whose seeded dispute roll triggers dispute for paymentReliability 0.35
+    let disputedReqId = '';
+    for (let i = 1; i < 200; i++) {
+      const id = `req_disp_${i}`;
+      if (isDisputed('unreliable', 0.35, new Rng(hashSeed(id, 'dispute')).next())) {
+        disputedReqId = id;
+        break;
+      }
+    }
+    expect(disputedReqId).not.toBe('');
+
+    const gm = new GameManager({ seed: 55, mode: 'career', data: {} });
+    const session = new GameSession({ gm, road, autoRequests: false, negotiation: false });
+    const profile = { ...generateProfile('unreliable', new Rng(3), 'p_unrel'), paymentReliability: 0.35 };
+    session.requests.setProfile(profile);
+
+    const disputedEvents: Array<{ requestId: string; fare: number; partialFare: number }> = [];
+    const completedEvents: Array<{ requestId: string; fare: number }> = [];
+    gm.bus.on('ride/disputed', (e) => disputedEvents.push(e));
+    gm.bus.on('ride/completed', (e) => completedEvents.push({ requestId: e.requestId, fare: e.receipt.fare }));
+
+    const req: RideRequest = {
+      requestId: disputedReqId,
+      passengerId: profile.passengerId,
+      pickupNodeId: pickup.nodeId,
+      destinationNodeId: dest.nodeId,
+      initialFare: 120,
+      estimatedDistance: 0.5,
+      estimatedDuration: 3,
+      requestedArrivalTime: null,
+      bookingType: 'app',
+      status: 'WaitingForPickup',
+      surge: 1,
+    };
+
+    session.ride.offer(req);
+    session.ride.accept(req.requestId);
+    session.ride.update({ x: pickup.x, z: pickup.z, speed: 0 }, SIM_DT);
+    session.ride.update({ x: dest.x, z: dest.z, speed: 0 }, SIM_DT);
+
+    // Must wait interactively in Completing (not auto-settled yet)
+    expect(session.ride.getTripState()).toBe('Completing');
+    expect(session.ride.getPendingDispute()).not.toBeNull();
+    expect(disputedEvents).toHaveLength(1);
+    expect(completedEvents).toHaveLength(0);
+
+    // Resolve interactively with 'acceptPartial'
+    const receipt = session.ride.resolveDispute('acceptPartial');
+    expect(receipt).not.toBeNull();
+    expect(receipt!.fare).toBe(Math.round(120 * BALANCE.DISPUTE.fareKept));
+    expect(completedEvents).toHaveLength(1);
+    expect(session.ride.getTripState()).toBe('Idle');
+    expect(session.ride.getPendingDispute()).toBeNull();
   });
 });

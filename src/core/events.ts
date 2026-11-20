@@ -3,6 +3,7 @@ import type {
   BikeCollisionSeverity,
   BikeId,
   BikeInfractionKind,
+  BookingType,
   DaySummary,
   DeliveryJob,
   EncounterInstance,
@@ -26,6 +27,17 @@ export interface GameEvents extends Record<string, unknown> {
   'ride/arrivedPickup': { requestId: string };
   'ride/started': { requestId: string };
   'ride/completed': { requestId: string; receipt: TripReceipt };
+  'ride/disputed': {
+    requestId: string;
+    fare: number;
+    partialFare: number;
+    bookingType: BookingType;
+  };
+  'ride/disputeResolved': {
+    requestId: string;
+    choice: 'acceptPartial' | 'insistFull' | 'reportSupport';
+    fare: number;
+  };
   'passenger/dialogue': {
     requestId?: string;
     key: string;
@@ -46,7 +58,7 @@ export interface GameEvents extends Record<string, unknown> {
     offer: number;
     response: string;
   };
-  'negotiation/result': { requestId: string; outcome: NegotiationOutcome };
+  'negotiation/result': { requestId: string; outcome: NegotiationOutcome; discount?: boolean };
   'economy/transaction': { tx: Transaction };
   'reputation/changed': { delta: ReputationDelta };
   'encounter/started': { instance: EncounterInstance };

@@ -219,6 +219,14 @@ export class ReputationSystem {
         }
       })
     );
+
+    this.unsubscribeFns.push(
+      bus.on('ride/cancelled', ({ requestId }) => {
+        if (this.activeTrip && (!requestId || this.activeTrip.requestId === requestId)) {
+          this.activeTrip = null;
+        }
+      })
+    );
   }
 
   destroy(): void {

@@ -61,8 +61,8 @@ export class Rng {
     return this.next() < p;
   }
 
-  fork(label: string): Rng {
-    const derived = hashSeed(this.s, label);
+  fork(label: string, ...parts: (string | number)[]): Rng {
+    const derived = hashSeed(this.s, label, ...parts);
     return new Rng(derived);
   }
 }
