@@ -3,14 +3,17 @@ import {
   smartProStrategy,
   trustFocusedStrategy,
   recklessStrategy,
+  alwaysMaxCounterStrategy,
+  exploiterStrategy,
+  briberStrategy,
   runHeadlessCampaign,
   createBalanceNetwork,
 } from '../../src/sim/bot/strategies';
 
-describe('Ending Reachability Balance (T6.2 / GDD §12)', () => {
+describe('Ending Reachability Balance (T6.2 / T11.3 / GDD §12)', () => {
   const network = createBalanceNetwork();
 
-  it('shows all 5 endings reached by their bot policies', () => {
+  it('shows all 5 endings reached by real-simulation bot policies', () => {
     // 1. Independent Rider reached by smartPro with bike career choice
     const independentRes = runHeadlessCampaign(smartProStrategy, network, 42, 20, {
       careerChoice: 'bike',
@@ -21,11 +24,22 @@ describe('Ending Reachability Balance (T6.2 / GDD §12)', () => {
     const trustedRes = runHeadlessCampaign(trustFocusedStrategy, network, 42, 20);
     expect(trustedRes.endingId).toBe('trusted_local');
 
-    // 3. Fast Money reached by reckless / quick scheme policy
-    const fastMoneyRes = runHeadlessCampaign(recklessStrategy, network, 42, 20, {
-      joinedScheme: true,
-    });
-    expect(fastMoneyRes.endingId).toBe('fast_money');
+    // 3. Fast Money reached via real illicit karma or joinedScheme
+    let fastMoneyReached = false;
+    for (let seed = 1; seed <= 30; seed++) {
+      const res = runHeadlessCampaign(briberStrategy, network, seed, 20);
+      if (res.endingId === 'fast_money') {
+        fastMoneyReached = true;
+        break;
+      }
+    }
+    if (!fastMoneyReached) {
+      const schemeRes = runHeadlessCampaign(recklessStrategy, network, 42, 20, {
+        joinedScheme: true,
+      });
+      fastMoneyReached = schemeRes.endingId === 'fast_money';
+    }
+    expect(fastMoneyReached).toBe(true);
 
     // 4. Workshop Owner reached by diligent saver choosing workshop apprenticeship
     const workshopRes = runHeadlessCampaign(smartProStrategy, network, 42, 20, {
@@ -33,22 +47,19 @@ describe('Ending Reachability Balance (T6.2 / GDD §12)', () => {
     });
     expect(workshopRes.endingId).toBe('workshop_owner');
 
-    // 5. Fresh Start reached when suspended or debt accumulated
-    // Seed 14 with offAppHeavy incurs multiple suspensions or we evaluate Fresh Start
+    // 5. Fresh Start reached naturally when uncompetitive/suspended/indebted
     let freshStartReached = false;
-    for (let seed = 1; seed <= 30; seed++) {
-      const res = runHeadlessCampaign(recklessStrategy, network, seed, 20);
-      if (res.endingId === 'fresh_start') {
-        freshStartReached = true;
-        break;
+    for (const strat of [alwaysMaxCounterStrategy, exploiterStrategy, recklessStrategy]) {
+      for (let seed = 1; seed <= 10; seed++) {
+        const res = runHeadlessCampaign(strat, network, seed, 20);
+        if (res.endingId === 'fresh_start') {
+          freshStartReached = true;
+          break;
+        }
       }
+      if (freshStartReached) break;
     }
-    // If not reached naturally in first 30 seeds, verify fresh_start fallback/suspended rule
-    if (!freshStartReached) {
-      const freshRes = runHeadlessCampaign(recklessStrategy, network, 1, 20);
-      // Even if reckless has ending, test that a policy with suspended state reaches fresh_start
-      expect(['fresh_start', 'fast_money', 'independent_rider']).toContain(freshRes.endingId);
-    }
+    expect(freshStartReached).toBe(true);
   });
 
   it('verifies distinct policy outcomes across all 5 endings', () => {
@@ -66,9 +77,13 @@ describe('Ending Reachability Balance (T6.2 / GDD §12)', () => {
     const r4 = runHeadlessCampaign(smartProStrategy, network, 10, 20, { careerChoice: 'workshop' });
     endingsSeen.add(r4.endingId);
 
+    const r5 = runHeadlessCampaign(alwaysMaxCounterStrategy, network, 10, 20);
+    endingsSeen.add(r5.endingId);
+
     expect(endingsSeen.has('independent_rider')).toBe(true);
     expect(endingsSeen.has('trusted_local')).toBe(true);
     expect(endingsSeen.has('fast_money')).toBe(true);
     expect(endingsSeen.has('workshop_owner')).toBe(true);
+    expect(endingsSeen.has('fresh_start')).toBe(true);
   });
 });

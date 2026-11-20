@@ -17,6 +17,7 @@ import {
   isWithinPreferredTimes,
 } from '../passenger/PassengerAI';
 import { fairFare, surgeAt } from '../negotiation/fare';
+import { isRushHourMinute, TIME_SCALE } from '../../core/clock';
 import type { ReputationSystem } from '../reputation/ReputationSystem';
 
 // POIs where passengers gather (T8.4 demand zones).
@@ -24,12 +25,7 @@ const DEMAND_POI_KINDS: string[] = ['busStop', 'market', 'officeGate', 'school',
 
 export function getTimeOfDayDemandMultiplier(minute: number): number {
   const m = ((minute % 1440) + 1440) % 1440;
-  // Morning rush: 08:00 - 10:30 (480 - 630) -> 2.5
-  if (m >= 480 && m <= 630) {
-    return 2.5;
-  }
-  // Evening rush: 17:00 - 20:30 (1020 - 1230) -> 2.5
-  if (m >= 1020 && m <= 1230) {
+  if (isRushHourMinute(m)) {
     return 2.5;
   }
   // Midday: 11:00 - 16:00 (660 - 960) -> 1.0
@@ -233,7 +229,7 @@ export class RequestGenerator {
     }
 
     // Rush hour distribution
-    if ((m >= 480 && m <= 630) || (m >= 1020 && m <= 1230)) {
+    if (isRushHourMinute(m)) {
       if (roll < 0.45) return 'commuter';
       if (roll < 0.65) return 'bargainer';
       if (roll < 0.8) return 'regular';
@@ -313,10 +309,13 @@ export class RequestGenerator {
           special = 'urgent';
         }
 
+        const tripGameMin = ((r.lengthM / 10.5 + 8) * TIME_SCALE) / 60;
         const requestedArrivalTime =
           profile.urgency > 0.6
             ? Math.round(
-                currentMinute + r.etaMin * (1.1 - profile.urgency * 0.2)
+                currentMinute +
+                  tripGameMin * (1.5 - profile.urgency * 0.2) +
+                  35
               )
             : null;
 
@@ -427,10 +426,13 @@ export class RequestGenerator {
           special = 'urgent';
         }
 
+        const tripGameMin = ((r.lengthM / 10.5 + 8) * TIME_SCALE) / 60;
         const requestedArrivalTime =
           profile.urgency > 0.6
             ? Math.round(
-                currentMinute + r.etaMin * (1.1 - profile.urgency * 0.2)
+                currentMinute +
+                  tripGameMin * (1.5 - profile.urgency * 0.2) +
+                  35
               )
             : null;
 

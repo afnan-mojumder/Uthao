@@ -4,6 +4,8 @@ import {
   trustFocusedStrategy,
   recklessStrategy,
   offAppHeavyStrategy,
+  exploiterStrategy,
+  briberStrategy,
   runHeadlessCampaign,
   runHeadlessDay,
   createBalanceNetwork,
@@ -131,5 +133,54 @@ describe('Campaign Balance Pass (T6.2)', { timeout: 60000 }, () => {
 
     const repairPercent = totalRepairs / totalRevenue;
     expect(repairPercent).toBeLessThanOrEqual(0.12);
+  });
+
+  it('exploiter policy: suffers severe riderIntegrity & platformStanding loss and earns <= smartPro * 1.05', () => {
+    let exploiterNet = 0;
+    let smartProNet = 0;
+    let integritySum = 0;
+    let standingSum = 0;
+    let smartIntegritySum = 0;
+
+    for (let seed = 1; seed <= NUM_RUNS; seed++) {
+      const exp = runHeadlessCampaign(exploiterStrategy, network, seed, 20);
+      const pro = runHeadlessCampaign(smartProStrategy, network, seed, 20);
+
+      exploiterNet += exp.dailyNets.reduce((s, n) => s + n, 0);
+      smartProNet += pro.dailyNets.reduce((s, n) => s + n, 0);
+      integritySum += exp.meters?.riderIntegrity ?? 50;
+      standingSum += exp.meters?.platformStanding ?? 80;
+      smartIntegritySum += pro.meters?.riderIntegrity ?? 50;
+    }
+
+    const avgExpIntegrity = integritySum / NUM_RUNS;
+    const avgExpStanding = standingSum / NUM_RUNS;
+    const avgProIntegrity = smartIntegritySum / NUM_RUNS;
+
+    expect(avgExpIntegrity).toBeLessThan(30);
+    expect(avgExpIntegrity).toBeLessThan(avgProIntegrity);
+    expect(avgExpStanding).toBeLessThan(70);
+    expect(exploiterNet / NUM_RUNS).toBeLessThanOrEqual((smartProNet / NUM_RUNS) * 1.05);
+  });
+
+  it('briber policy: accumulates evidenceExposure and police costs, earning < smartPro', () => {
+    let briberNet = 0;
+    let smartProNet = 0;
+    let evidenceSum = 0;
+    let integritySum = 0;
+
+    for (let seed = 1; seed <= NUM_RUNS; seed++) {
+      const bri = runHeadlessCampaign(briberStrategy, network, seed, 20);
+      const pro = runHeadlessCampaign(smartProStrategy, network, seed, 20);
+
+      briberNet += bri.dailyNets.reduce((s, n) => s + n, 0);
+      smartProNet += pro.dailyNets.reduce((s, n) => s + n, 0);
+      evidenceSum += bri.meters?.evidenceExposure ?? 0;
+      integritySum += bri.meters?.riderIntegrity ?? 50;
+    }
+
+    expect(evidenceSum / NUM_RUNS).toBeGreaterThanOrEqual(25);
+    expect(integritySum / NUM_RUNS).toBeLessThan(45);
+    expect(briberNet / NUM_RUNS).toBeLessThan(smartProNet / NUM_RUNS);
   });
 });

@@ -5,6 +5,10 @@ import type {
   WeatherKind,
   RoadNode,
   RoadSegment,
+  EndingId,
+  EncounterInstance,
+  MeterId,
+  BookingType,
 } from '../../core/types';
 import type { DistrictData } from '../schemas';
 import { Rng } from '../../core/rng';
@@ -13,7 +17,6 @@ import { BALANCE } from '../../config/balance';
 import { RoadNetwork } from '../road/RoadNetwork';
 import type { Route } from '../road/routing';
 import {
-  startNegotiation,
   respond,
   clampCounterFare,
   evaluateFactors,
@@ -21,14 +24,10 @@ import {
   type NegotiationAction,
 } from '../negotiation/NegotiationSystem';
 import { fairFare } from '../negotiation/fare';
-import { PassengerAI } from '../passenger/PassengerAI';
-import { fuelUsed, fuelCost } from '../economy/fuel';
-import { RequestGenerator, samplePoisson } from '../ride/RequestGenerator';
-import {
-  evaluateEnding,
-  type EndingEvaluationContext,
-} from '../mission/endings';
-import type { EndingId } from '../../core/types';
+import { receipt as buildReceipt } from '../economy/fuel';
+import type { DisputeResolutionKind, PendingDispute } from '../ride/RideManager';
+import { GameManager } from '../GameManager';
+import { GameSession } from '../GameSession';
 
 export type BotStrategyName =
   | 'acceptAll'
@@ -36,7 +35,9 @@ export type BotStrategyName =
   | 'smartPro'
   | 'reckless'
   | 'trustFocused'
-  | 'offAppHeavy';
+  | 'offAppHeavy'
+  | 'exploiter'
+  | 'briber';
 
 export interface BotDecisionContext {
   network: RoadNetwork;
@@ -59,6 +60,14 @@ export interface BotStrategy {
     session: NegotiationSession,
     ctx: BotDecisionContext
   ): NegotiationAction;
+  chooseEncounterOption?: (
+    instance: EncounterInstance,
+    ctx: BotDecisionContext
+  ) => string | undefined;
+  resolveDispute?: (
+    dispute: PendingDispute,
+    ctx: BotDecisionContext
+  ) => DisputeResolutionKind;
   readonly speedMultiplier: number;
   readonly nearMissChancePerKm: number;
   readonly crashChancePerRide: number;
@@ -69,8 +78,7 @@ export interface BotStrategy {
 }
 
 /**
- * Calculates expected net earnings for a ride given fare, route, and traffic.
- * Net = Fare - Commission - FuelCost - WearCost
+ * Estimates expected net earnings using the canonical `receipt()` and `fuelUsed()` formulas.
  */
 export function estimateExpectedNet(
   fareOffer: number,
@@ -84,29 +92,49 @@ export function estimateExpectedNet(
     includeWear?: boolean;
   }
 ): number {
-  const commRate = options?.isDirect
-    ? 0
-    : (options?.commissionRate ?? BALANCE.COMMISSION_APP);
-  const commission = fareOffer * commRate;
   const idleMin =
     options?.idleMin ?? Math.max(0, durationMin - virtualKm / (40 / 60));
-  const liters = fuelUsed(virtualKm, idleMin, { model: options?.bikeModel });
-  const fCost = fuelCost(liters);
+  const bookingType: BookingType = options?.isDirect ? 'direct' : 'app';
+  const r = buildReceipt({
+    requestId: 'est',
+    fare: fareOffer,
+    bookingType,
+    durationMin,
+    distanceKm: virtualKm,
+    idleMin,
+    spec: { model: options?.bikeModel },
+  });
   const wearCost =
     options?.includeWear !== false
       ? Math.round(virtualKm * (BALANCE.WEAR.oilCost / BALANCE.WEAR.oilEveryKm))
       : 0;
+  return r.net - wearCost;
+}
 
-  return fareOffer - commission - fCost - wearCost;
+function pickEncounterChoice(
+  instance: EncounterInstance,
+  preferredKinds: Array<'official' | 'neutral' | 'illicit'>,
+  preferredIds: string[] = []
+): string | undefined {
+  for (const id of preferredIds) {
+    if (instance.choices.some((c) => c.id === id)) return id;
+  }
+  for (const kind of preferredKinds) {
+    const found = instance.choices.find((c) => c.kind === kind);
+    if (found) return found.id;
+  }
+  return instance.choices[0]?.id;
 }
 
 export const acceptAllStrategy: BotStrategy = {
   name: 'acceptAll',
-  speedMultiplier: 1.0,
+  speedMultiplier: 1.4,
   nearMissChancePerKm: 0,
   crashChancePerRide: 0,
   evaluateRequest: () => ({ accept: true }),
   decideNegotiation: () => ({ kind: 'accept' }),
+  chooseEncounterOption: (inst) =>
+    pickEncounterChoice(inst, ['neutral', 'official', 'illicit']),
 };
 
 export const alwaysMaxCounterStrategy: BotStrategy = {
@@ -122,11 +150,20 @@ export const alwaysMaxCounterStrategy: BotStrategy = {
     );
     return { kind: 'counter', amount: maxFare };
   },
+  chooseEncounterOption: (inst) =>
+    pickEncounterChoice(inst, ['neutral', 'official', 'illicit'], [
+      'decline',
+      'refuse',
+      'cancel',
+      'stay_app',
+      'standard',
+      'wait',
+    ]),
 };
 
 export const smartProStrategy: BotStrategy = {
   name: 'smartPro',
-  speedMultiplier: 1.0,
+  speedMultiplier: 1.6,
   nearMissChancePerKm: 0,
   crashChancePerRide: 0,
   evaluateRequest: (req: RideRequest, route: Route) => {
@@ -142,7 +179,6 @@ export const smartProStrategy: BotStrategy = {
       idleMin,
     });
 
-    // If even fair fare cannot cover fuel + commission in a deadlock jam, decline upfront
     if (fairNet < 0) {
       return {
         accept: false,
@@ -157,7 +193,6 @@ export const smartProStrategy: BotStrategy = {
     session: NegotiationSession,
     ctx: BotDecisionContext
   ): NegotiationAction => {
-    // Round 1: check crossing options for divided roads to save detour
     if (session.round === 1) {
       const options = ctx.network.pickupOptions(
         { pickupNodeId: session.req.pickupNodeId },
@@ -176,18 +211,15 @@ export const smartProStrategy: BotStrategy = {
       }
     }
 
-    // If passenger's offer is at or above fair fare, accept
     if (session.currentPassengerOffer >= session.fairFare) {
       return { kind: 'accept' };
     }
 
-    // Round 1: counter with fair fare
     if (session.round === 1) {
       const targetFare = clampCounterFare(session.fairFare, session.fairFare);
       return { kind: 'counter', amount: targetFare };
     }
 
-    // Later rounds: if passenger has low patience (<= 0.35), accept if profitable
     if (session.currentPatience <= 0.35) {
       const net = estimateExpectedNet(
         session.currentPassengerOffer,
@@ -200,21 +232,39 @@ export const smartProStrategy: BotStrategy = {
       return { kind: 'decline' };
     }
 
-    // Otherwise, offer a compromise halfway
     const halfway = Math.round(
       (session.currentPassengerOffer + session.fairFare) / 2
     );
     const compromise = clampCounterFare(halfway, session.fairFare);
     return { kind: 'counter', amount: compromise };
   },
+  chooseEncounterOption: (inst) =>
+    pickEncounterChoice(inst, ['official', 'neutral', 'illicit'], [
+      'cooperate',
+      'pay_fine',
+      'turn_around',
+      'call_help',
+      'protect',
+      'return',
+      'stay_app',
+      'accept',
+      'tea_favor',
+      'grant',
+      'waive',
+      'wait',
+      'cautious',
+      'steady',
+      'refuse',
+    ]),
+  resolveDispute: () => 'reportSupport',
 };
 
 export const recklessStrategy: BotStrategy = {
   name: 'reckless',
-  speedMultiplier: BALANCE.BOT?.reckless?.speedMultiplier ?? 1.35,
-  nearMissChancePerKm: BALANCE.BOT?.reckless?.nearMissRatePerKm ?? 0.25,
-  crashChancePerRide: BALANCE.BOT?.reckless?.crashChancePerRide ?? 0.05,
-  infractionChancePerRide: 0.1,
+  speedMultiplier: BALANCE.BOT?.reckless?.speedMultiplier ?? 1.75,
+  nearMissChancePerKm: BALANCE.BOT?.reckless?.nearMissRatePerKm ?? 0.08,
+  crashChancePerRide: BALANCE.BOT?.reckless?.crashChancePerRide ?? 0.02,
+  infractionChancePerRide: 0.05,
   evaluateRequest: () => ({ accept: true }),
   decideNegotiation: (session: NegotiationSession) => {
     if (session.round === 1 && session.currentPassengerOffer >= 0.85 * session.fairFare) {
@@ -229,42 +279,63 @@ export const recklessStrategy: BotStrategy = {
     );
     return { kind: 'counter', amount: mild };
   },
+  chooseEncounterOption: (inst) =>
+    pickEncounterChoice(inst, ['illicit', 'neutral', 'official'], [
+      'try_flee',
+      'flee_stop',
+      'flee_scene',
+      'offer_bribe',
+      'proceed',
+      'push_fast',
+      'speed',
+      'sidewalk',
+      'standard',
+    ]),
+  resolveDispute: () => 'insistFull',
 };
 
 export const trustFocusedStrategy: BotStrategy = {
   name: 'trustFocused',
-  speedMultiplier: 0.9,
+  speedMultiplier: 1.35,
   nearMissChancePerKm: 0,
   crashChancePerRide: 0,
   infractionChancePerRide: 0,
   helpfulChoiceChance: 0.85,
-  shiftMinutes: 220, // 3.5-hour local neighborhood shift, prioritizing community over non-stop app grinding
+  shiftMinutes: 460, // Shorter community-oriented shift (~7.5h) with generous discounts
   evaluateRequest: () => ({ accept: true }),
   decideNegotiation: (session: NegotiationSession) => {
-    // Generous bargaining: accept if >= 70% of fair fare
-    if (session.currentPassengerOffer >= 0.7 * session.fairFare) {
-      return { kind: 'accept' };
+    // Offer a friendly discount below fairFare so real GameSession awards publicReputation & trust
+    if (session.round === 1) {
+      const discounted = Math.round(session.fairFare * 0.88);
+      return {
+        kind: 'discount',
+        amount: clampCounterFare(discounted, session.fairFare),
+      };
     }
-    // Offer a discount (25% below fair fare) to help community members
-    const discounted = Math.round(session.fairFare * 0.75);
-    return {
-      kind: 'discount',
-      amount: clampCounterFare(discounted, session.fairFare),
-    };
+    return { kind: 'accept' };
   },
+  chooseEncounterOption: (inst) =>
+    pickEncounterChoice(inst, ['official', 'neutral', 'illicit'], [
+      'protect',
+      'call_help',
+      'cooperate',
+      'help',
+      'accept',
+      'pay_fine',
+    ]),
+  resolveDispute: () => 'acceptPartial',
 };
 
 export const offAppHeavyStrategy: BotStrategy = {
   name: 'offAppHeavy',
-  speedMultiplier: 1.05,
+  speedMultiplier: 1.6,
   nearMissChancePerKm: 0.04,
   crashChancePerRide: 0.01,
-  infractionChancePerRide: 0.03,
+  infractionChancePerRide: 0.04,
   prefersOffApp: true,
   evaluateRequest: () => ({ accept: true }),
   decideNegotiation: (session: NegotiationSession, ctx: BotDecisionContext) => {
-    // 35% of the time, offers off-app ride to bypass 15% commission
-    if (session.round === 1 && ctx.rng.next() < 0.35) {
+    if (session.round === 1 && ctx.rng.next() < 0.55) {
       const offFare = Math.round(session.fairFare * 0.95);
       return { kind: 'offApp', amount: clampCounterFare(offFare, session.fairFare) };
     }
@@ -276,6 +347,91 @@ export const offAppHeavyStrategy: BotStrategy = {
       amount: clampCounterFare(session.fairFare, session.fairFare),
     };
   },
+  chooseEncounterOption: (inst) =>
+    pickEncounterChoice(inst, ['neutral', 'illicit', 'official']),
+  resolveDispute: () => 'acceptPartial',
+};
+
+export const exploiterStrategy: BotStrategy = {
+  name: 'exploiter',
+  speedMultiplier: 1.5,
+  nearMissChancePerKm: 0.05,
+  crashChancePerRide: 0.015,
+  infractionChancePerRide: 0.05,
+  evaluateRequest: () => ({ accept: true }),
+  decideNegotiation: (session: NegotiationSession) => {
+    if (session.round === 1) {
+      return {
+        kind: 'misleadDistance',
+        amount: clampCounterFare(Math.round(session.fairFare * 1.25), session.fairFare),
+      };
+    }
+    if (session.currentPatience > 0.2 && !session.pressureUsed) {
+      return {
+        kind: 'pressure',
+        amount: clampCounterFare(Math.round(session.fairFare * 1.2), session.fairFare),
+      };
+    }
+    if (session.currentPassengerOffer >= session.fairFare * 0.9) {
+      return { kind: 'accept' };
+    }
+    return {
+      kind: 'counter',
+      amount: clampCounterFare(Math.round(session.fairFare * 1.15), session.fairFare),
+    };
+  },
+  chooseEncounterOption: (inst) =>
+    pickEncounterChoice(inst, ['illicit', 'neutral', 'official'], [
+      'proceed',
+      'keep',
+      'fee',
+      'offer_bribe',
+      'flee_stop',
+      'flee_scene',
+      'standard',
+      'comply',
+    ]),
+  resolveDispute: () => 'insistFull',
+};
+
+export const briberStrategy: BotStrategy = {
+  name: 'briber',
+  speedMultiplier: 1.65,
+  nearMissChancePerKm: 0.03,
+  crashChancePerRide: 0.005,
+  infractionChancePerRide: 0.12,
+  evaluateRequest: () => ({ accept: true }),
+  decideNegotiation: (session: NegotiationSession, ctx: BotDecisionContext) => {
+    if (session.round === 1 && ctx.rng.next() < 0.25) {
+      return {
+        kind: 'offApp',
+        amount: clampCounterFare(Math.round(session.fairFare * 0.95), session.fairFare),
+      };
+    }
+    if (session.currentPassengerOffer >= session.fairFare) {
+      return { kind: 'accept' };
+    }
+    if (session.round === 1) {
+      return {
+        kind: 'counter',
+        amount: clampCounterFare(Math.round(session.fairFare * 1.1), session.fairFare),
+      };
+    }
+    return { kind: 'accept' };
+  },
+  chooseEncounterOption: (inst) =>
+    pickEncounterChoice(inst, ['illicit', 'neutral', 'official'], [
+      'offer_bribe',
+      'flee_stop',
+      'flee_scene',
+      'proceed',
+      'push_fast',
+      'speed',
+      'sidewalk',
+      'standard',
+      'explain',
+    ]),
+  resolveDispute: () => 'insistFull',
 };
 
 export const BOT_STRATEGIES: Record<BotStrategyName, BotStrategy> = {
@@ -285,6 +441,8 @@ export const BOT_STRATEGIES: Record<BotStrategyName, BotStrategy> = {
   reckless: recklessStrategy,
   trustFocused: trustFocusedStrategy,
   offAppHeavy: offAppHeavyStrategy,
+  exploiter: exploiterStrategy,
+  briber: briberStrategy,
 };
 
 export function getStrategy(name: BotStrategyName): BotStrategy {
@@ -294,7 +452,7 @@ export function getStrategy(name: BotStrategyName): BotStrategy {
 export interface SimulatedRideResult {
   requestId: string;
   strategy: BotStrategyName;
-  status: 'completed' | 'declined' | 'walkedAway';
+  status: 'completed' | 'declined' | 'walkedAway' | 'cancelled' | 'noShow';
   fare: number;
   tip: number;
   commission: number;
@@ -453,24 +611,46 @@ export function createBalanceNetwork(): RoadNetwork {
   return cachedBalanceNetwork;
 }
 
-/**
- * Headless ride execution via teleport-along-route at route ETA.
- */
-export function runHeadlessRide(
+function createBotSession(
+  network: RoadNetwork,
+  seed: number,
+  day: number,
+  minute: number,
+  weather: WeatherKind,
+  enableEncounters = true
+): GameSession {
+  const gm = new GameManager({ seed, mode: 'career', data: {} });
+  gm.clock.day = day;
+  gm.clock.minutes = minute;
+  gm.weather = weather;
+  gm.weatherSystem.restoreWeather(weather);
+  gm.eventDirector.enabled = enableEncounters;
+  gm.eventDirector.pauseOnDecisions = false;
+  const session = new GameSession({
+    gm,
+    road: network,
+    autoRequests: false,
+    negotiation: true,
+  });
+  session.spawnAtHome();
+  gm.economyManager.fuelLevel = gm.economyManager.maxFuelL();
+  return session;
+}
+
+function executeRideOnSession(
+  session: GameSession,
   strategy: BotStrategy,
   req: RideRequest,
   profile: PassengerProfile,
-  network: RoadNetwork,
-  currentMinute: number,
-  day: number,
-  weather: WeatherKind,
   rng: Rng,
   currentLocationNodeId?: string
 ): SimulatedRideResult {
-  const route = network.route(req.pickupNodeId, req.destinationNodeId, {
+  const { gm } = session;
+  const route = session.road.route(req.pickupNodeId, req.destinationNodeId, {
     mode: 'motorcycle',
-    weather,
-    minute: currentMinute,
+    weather: gm.weather,
+    minute: gm.clock.minutes,
+    roadEvents: gm.roadEvents,
   });
 
   const emptyResult: SimulatedRideResult = {
@@ -487,7 +667,7 @@ export function runHeadlessRide(
     net: 0,
     durationMin: 0,
     virtualKm: 0,
-    finalMood: 0.5,
+    finalMood: session.ride.getPassengerMood(),
     rating: null,
     reasonCodes: ['TOO_EXPENSIVE'],
     topReasonCode: 'TOO_EXPENSIVE',
@@ -495,62 +675,59 @@ export function runHeadlessRide(
     nearMissCount: 0,
   };
 
-  if (!route) {
-    return emptyResult;
-  }
+  if (!route) return emptyResult;
 
   const firstSegId = route.segmentIds[0];
   const traffic = clamp(
-    firstSegId ? (network.getSegment(firstSegId)?.trafficDensity ?? 0.3) : 0.3,
+    firstSegId ? (session.road.getSegment(firstSegId)?.trafficDensity ?? 0.3) : 0.3,
     0,
     1
   );
 
   const ctx: BotDecisionContext = {
-    network,
+    network: session.road,
     currentLocationNodeId: currentLocationNodeId ?? req.pickupNodeId,
-    currentMinute,
-    day,
-    weather,
+    currentMinute: gm.clock.minutes,
+    day: gm.clock.day,
+    weather: gm.weather,
     traffic,
     rng,
   };
 
-  // Upfront strategy evaluation
   const evalRes = strategy.evaluateRequest(req, route, ctx);
   if (!evalRes.accept) {
     return {
       ...emptyResult,
       status: 'declined',
       virtualKm: route.virtualKm,
-      durationMin: 0,
       reasonCodes: ['BAD_TRAFFIC'],
       topReasonCode: 'BAD_TRAFFIC',
     };
   }
 
-  // Negotiation
-  let session = startNegotiation(req, profile, {
-    traffic,
-    day,
-    walkM: 0,
-    rng,
-  });
+  // Register passenger profile with the real RequestGenerator before offering
+  session.requests.setProfile(profile);
+  session.ride.offer(req);
+  if (!session.ride.openNegotiation(req.requestId, ctx.currentLocationNodeId)) {
+    return emptyResult;
+  }
 
-  const reasonCodes: ReasonCode[] = [];
-  const evalInitial = evaluateFactors(session, session.currentPassengerOffer);
-  reasonCodes.push(evalInitial.topFactor);
-  let topReason: ReasonCode = evalInitial.topFactor;
+  let negSession = session.beginNegotiation(req.requestId);
+  if (!negSession) {
+    session.ride.cancel(req.requestId, 'system', 'noSession');
+    return emptyResult;
+  }
 
-  let agreedFare = req.initialFare;
-  let isAccepted = false;
+  const initialFactor = evaluateFactors(negSession, negSession.currentPassengerOffer);
+  const reasonCodes: ReasonCode[] = [initialFactor.topFactor];
+  let topReason: ReasonCode = initialFactor.topFactor;
   let isOffApp = false;
-  let savesMin = 0;
+  let accepted = false;
 
-  while (session.status === 'active') {
-    const action = strategy.decideNegotiation(session, ctx);
-
+  while (negSession.status === 'active') {
+    const action = strategy.decideNegotiation(negSession, ctx);
     if (action.kind === 'decline') {
+      session.ride.cancel(req.requestId, 'rider', 'declined');
       return {
         ...emptyResult,
         status: 'declined',
@@ -560,43 +737,43 @@ export function runHeadlessRide(
     }
 
     if (action.kind === 'pickupAdjust') {
-      savesMin = action.savesMin;
-    }
-    if (action.kind === 'offApp') {
-      isOffApp = true;
+      const choice = session.pickupChoice();
+      if (choice && session.ride.relocatePickup(choice.nodeId, choice.walkM)) {
+        negSession = session.repriceNegotiation(negSession);
+      }
     }
 
-    const res = respond(session, action);
+    const res = respond(negSession, action);
     reasonCodes.push(res.topFactor);
     topReason = res.topFactor;
-    session = res.session;
+    session.applyNegotiationResult(res);
+    negSession = res.session;
 
     if (res.outcome?.kind === 'accepted') {
-      agreedFare = res.outcome.fare;
-      isAccepted = true;
+      if (action.kind === 'offApp') {
+        session.markOffApp();
+        isOffApp = true;
+      }
+      session.ride.agreeFare(res.outcome.fare, {
+        discount: negSession.discountApplied,
+      });
+      accepted = true;
       break;
     }
 
-    if (res.outcome?.kind === 'walkedAway') {
+    if (res.outcome?.kind === 'walkedAway' || negSession.status === 'walkedAway') {
+      session.ride.walkAwayNegotiation();
       return {
         ...emptyResult,
         status: 'walkedAway',
         reasonCodes,
-        topReasonCode: res.outcome.reason,
-      };
-    }
-
-    if (session.status === 'walkedAway') {
-      return {
-        ...emptyResult,
-        status: 'walkedAway',
-        reasonCodes,
-        topReasonCode: topReason,
+        topReasonCode: res.outcome?.kind === 'walkedAway' ? res.outcome.reason : topReason,
       };
     }
   }
 
-  if (!isAccepted) {
+  if (!accepted) {
+    session.ride.walkAwayNegotiation();
     return {
       ...emptyResult,
       status: 'walkedAway',
@@ -605,100 +782,83 @@ export function runHeadlessRide(
     };
   }
 
-  // Teleport along route
-  const speedMult = strategy.speedMultiplier;
-  let durationMin = Math.max(1, (route.etaMin - savesMin) / speedMult);
+  // Roll realistic driving incidents and feed them to GameSession.fastForwardTrip
+  const expectedNearMiss =
+    strategy.nearMissChancePerKm > 0 ? route.virtualKm * strategy.nearMissChancePerKm : 0;
+  const nearMissCount =
+    expectedNearMiss > 0
+      ? Math.floor(expectedNearMiss) + (rng.next() < (expectedNearMiss % 1) ? 1 : 0)
+      : 0;
+  const crashed = strategy.crashChancePerRide > 0 && rng.chance(strategy.crashChancePerRide);
+  const infraction = Boolean(
+    strategy.infractionChancePerRide && rng.chance(strategy.infractionChancePerRide)
+  );
+  const helpfulChoice = Boolean(
+    strategy.helpfulChoiceChance && rng.chance(strategy.helpfulChoiceChance)
+  );
 
-  const passengerAI = new PassengerAI(profile, agreedFare, day);
+  const ledgerStartIdx = gm.economyManager.getLedger().length;
 
-  let crashed = false;
-  let nearMissCount = 0;
-  let repairCost = 0;
+  const ff = session.fastForwardTrip({
+    speedMultiplier: strategy.speedMultiplier,
+    nearMisses: nearMissCount,
+    crashed,
+    infractions: infraction ? 1 : 0,
+    helpfulChoice,
+    onEncounter: (inst) => strategy.chooseEncounterOption?.(inst, ctx),
+    onDispute: (disp) => strategy.resolveDispute?.(disp, ctx) ?? 'acceptPartial',
+  });
 
-  if (strategy.nearMissChancePerKm > 0) {
-    const expectedNearMisses = route.virtualKm * strategy.nearMissChancePerKm;
-    nearMissCount = samplePoisson(expectedNearMisses, rng);
-    for (let i = 0; i < nearMissCount; i++) {
-      passengerAI.onNearMiss();
+  // Measure any real encounter medical/fine/bribe/robbery expenses posted during the ride
+  let encounterPenalty = 0;
+  const ledger = gm.economyManager.getLedger();
+  for (let i = ledgerStartIdx; i < ledger.length; i++) {
+    const tx = ledger[i]!;
+    if (
+      tx.amount < 0 &&
+      (tx.kind === 'fine' || tx.kind === 'bribe' || tx.kind === 'medical' || tx.kind === 'robbery') &&
+      tx.requestId !== req.requestId
+    ) {
+      encounterPenalty += Math.abs(tx.amount);
     }
   }
 
-  if (
-    strategy.crashChancePerRide > 0 &&
-    rng.chance(strategy.crashChancePerRide)
-  ) {
-    crashed = true;
-    passengerAI.onCrash();
-    repairCost = rng.int(
-      BALANCE.BOT?.reckless?.repairCostMin ?? 350,
-      BALANCE.BOT?.reckless?.repairCostMax ?? 500
-    );
-    durationMin += BALANCE.BOT?.reckless?.crashDelayMin ?? 15;
+  if (ff.status !== 'completed' || !ff.receipt) {
+    return {
+      ...emptyResult,
+      status: ff.status === 'noShow' ? 'noShow' : 'cancelled',
+      durationMin: ff.durationMin,
+      fuelUsedL: ff.fuelLiters,
+      fuelCost: Math.round(ff.fuelLiters * BALANCE.FUEL.pricePerL),
+      repairCost: encounterPenalty,
+      net: -Math.round(ff.fuelLiters * BALANCE.FUEL.pricePerL) - encounterPenalty,
+      crashed,
+      nearMissCount,
+      isOffApp,
+      helpfulChoice,
+      infraction,
+      reasonCodes,
+      topReasonCode: topReason,
+    };
   }
 
-  let helpfulChoice = false;
-  if (strategy.helpfulChoiceChance && rng.chance(strategy.helpfulChoiceChance)) {
-    helpfulChoice = true;
-    passengerAI.onHelpfulChoice();
-  }
-
-  let infraction = false;
-  if (strategy.infractionChancePerRide && rng.chance(strategy.infractionChancePerRide)) {
-    infraction = true;
-  }
-
-  const finalMood = passengerAI.getMood();
-
-  // Tip calculation based on passenger satisfaction
-  let tip = 0;
-  const minMoodForTip = BALANCE.BOT?.tip?.minMoodForTip ?? 0.75;
-  if (!crashed && finalMood >= minMoodForTip && profile.budget >= 0.8) {
-    const rawTip = agreedFare * (BALANCE.BOT?.tip?.tipPercentage ?? 0.12);
-    tip = Math.max(BALANCE.BOT?.tip?.minTip ?? 10, Math.round(rawTip / 5) * 5);
-  }
-
-  // Rating
-  let rating: number | null;
-  if (crashed) rating = 1;
-  else if (finalMood < 0.4) rating = 2;
-  else if (finalMood < 0.6) rating = 3;
-  else if (finalMood < 0.8) rating = 4;
-  else rating = 5;
-
-  if (helpfulChoice && rating !== null && rating < 5) {
-    rating = Math.min(5, rating + 1);
-  }
-
-  // Fuel consumption
-  const idleMin = Math.max(0, durationMin - route.virtualKm / (40 / 60));
-  const fuelUsedL = fuelUsed(route.virtualKm, idleMin);
-  const fCost = fuelCost(fuelUsedL);
-
-  // Commission & Wear
-  const commRate = (req.bookingType === 'direct' || isOffApp) ? 0 : BALANCE.COMMISSION_APP;
-  const commission = Math.round(agreedFare * commRate);
-  const wearCost = Math.round(
-    route.virtualKm * (BALANCE.WEAR.oilCost / BALANCE.WEAR.oilEveryKm)
-  );
-
-  const net = agreedFare + tip - commission - fCost - repairCost - wearCost;
-
+  const r = ff.receipt;
   return {
     requestId: req.requestId,
     strategy: strategy.name,
     status: 'completed',
-    fare: agreedFare,
-    tip,
-    commission,
-    fuelUsedL,
-    fuelCost: fCost,
-    repairCost,
-    wearCost,
-    net,
-    durationMin,
-    virtualKm: route.virtualKm,
-    finalMood,
-    rating,
+    fare: r.fare,
+    tip: r.tip,
+    commission: r.commission,
+    fuelUsedL: r.fuelLiters,
+    fuelCost: r.fuelCost,
+    repairCost: encounterPenalty,
+    wearCost: 0,
+    net: r.net - encounterPenalty,
+    durationMin: ff.durationMin,
+    virtualKm: r.distanceKm,
+    finalMood: session.ride.getPassengerMood(),
+    rating: r.rating,
     reasonCodes,
     topReasonCode: topReason,
     crashed,
@@ -710,131 +870,274 @@ export function runHeadlessRide(
 }
 
 /**
- * Simulates a full working day (shift) for a bot strategy.
+ * Headless ride execution running on a real GameSession + GameManager.
  */
-export function runHeadlessDay(
+export function runHeadlessRide(
   strategy: BotStrategy,
-  network: RoadNetwork = createBalanceNetwork(),
-  day: number = 1,
-  weather: WeatherKind = 'clear',
-  rng: Rng = new Rng(42),
-  shiftMinutes: number = strategy.shiftMinutes ?? (BALANCE.BOT?.shiftMinutes ?? 600),
-  options?: { isSuspended?: boolean }
-): BotDayResult {
-  const livingExpenses =
-    BALANCE.LIVING.foodPerDay + BALANCE.LIVING.phoneDataPerDay;
+  req: RideRequest,
+  profile: PassengerProfile,
+  network: RoadNetwork,
+  currentMinute: number,
+  day: number,
+  weather: WeatherKind,
+  rng: Rng,
+  currentLocationNodeId?: string
+): SimulatedRideResult {
+  const session = createBotSession(network, rng.int(1, 999999), day, currentMinute, weather, false);
+  const startNode = currentLocationNodeId ?? req.pickupNodeId;
+  const node = network.getNode(startNode);
+  if (node) {
+    session.bike.x = node.x;
+    session.bike.z = node.z;
+  }
+  return executeRideOnSession(session, strategy, req, profile, rng, startNode);
+}
 
-  if (options?.isSuspended) {
-    return {
-      day,
-      strategy: strategy.name,
-      ridesCompleted: 0,
-      ridesDeclined: 0,
-      ridesWalkedAway: 0,
-      crashes: 0,
-      infractions: 0,
-      offAppRides: 0,
-      helpfulChoices: 0,
-      nearMisses: 0,
-      grossRevenue: 0,
-      tips: 0,
-      fuelCostTotal: 0,
-      commissionTotal: 0,
-      repairCostTotal: 0,
-      livingExpenses,
-      dailyNet: -livingExpenses,
-      averageRating: 5.0,
-      rideResults: [],
-    };
+function moveBikeToNode(session: GameSession, nodeId: string): void {
+  const node = session.road.getNode(nodeId);
+  if (!node) return;
+  session.bike.x = node.x;
+  session.bike.z = node.z;
+  session.bike.y = node.y ?? 0;
+  session.bike.speed = 0;
+  session.gm.syncPlayerLocation(nodeId, 0, nodeId === 'N7');
+}
+
+function serviceBikeOnSession(session: GameSession, strategy: BotStrategy): number {
+  const { gm } = session;
+  const em = gm.economyManager;
+  const fuelNode = session.road.getPois().find((p) => p.kind === 'fuel')?.nodeId;
+  const garageNode = session.road.getPois().find((p) => p.kind === 'garage')?.nodeId;
+  const prevX = session.bike.x;
+  const prevZ = session.bike.z;
+
+  // Refuel at fuel POI when below 2.5 L
+  if (em.fuelLevel < 2.5 && fuelNode) {
+    moveBikeToNode(session, fuelNode);
+    const space = Math.max(0, em.maxFuelL() - em.fuelLevel);
+    if (space > 0.25 && em.cash >= BALANCE.FUEL.pricePerL * 0.5) {
+      gm.dispatch({ type: 'refuelAtStation', liters: space });
+    }
+  }
+  // Emergency fuel rescue if still below rescue threshold
+  if (em.fuelLevel < BALANCE.FUEL.rescueBelowL) {
+    gm.dispatch({ type: 'callFuelRescue' });
   }
 
-  const reqGen = new RequestGenerator(network, rng);
-  let currentMinute = 480; // 08:00 start
-  const endMinute = currentMinute + shiftMinutes;
-  const eligible = reqGen.getEligibleNodeIds();
-  let currentNodeId = eligible.length > 0 ? eligible[0] : 'N1';
+  // Routine maintenance / collision repair at garage POI
+  let repairSpent = 0;
+  const needsOil = em.kmSinceOilChange >= BALANCE.WEAR.oilEveryKm;
+  const needsRepair = em.motorcycleCondition < 50;
+  if ((needsOil || needsRepair) && garageNode && strategy.name !== 'alwaysMaxCounter') {
+    moveBikeToNode(session, garageNode);
+    if (needsRepair && em.cash >= 1200) {
+      const before = em.cash;
+      if (gm.dispatch({ type: 'repair', item: 'full' }).success) {
+        repairSpent += Math.max(0, before - em.cash);
+      }
+    } else if (needsOil && em.cash >= BALANCE.WEAR.oilCost) {
+      const before = em.cash;
+      if (gm.dispatch({ type: 'repair', item: 'oil' }).success) {
+        repairSpent += Math.max(0, before - em.cash);
+      }
+    } else if (em.motorcycleCondition < 35 && em.cash >= 400) {
+      const before = em.cash;
+      if (gm.dispatch({ type: 'repair', item: 'engine' }).success) {
+        repairSpent += Math.max(0, before - em.cash);
+      }
+    }
+  }
 
+  // Restore bike coordinates back to current road spot
+  session.bike.x = prevX;
+  session.bike.z = prevZ;
+  return repairSpent;
+}
+
+function runDayOnSession(
+  session: GameSession,
+  strategy: BotStrategy,
+  rng: Rng,
+  shiftMinutes: number
+): BotDayResult {
+  const { gm } = session;
+  const em = gm.economyManager;
+  const day = gm.clock.day;
+  const startMinute = Math.max(420, gm.clock.minutes);
+  const endMinute = Math.min(23 * 60 - 5, startMinute + shiftMinutes);
+
+  const ledgerStartIdx = em.getLedger().length;
+  const safetyStart = gm.reputationSystem.getSafetyRecord();
+
+  const rideResults: SimulatedRideResult[] = [];
   let ridesCompleted = 0;
   let ridesDeclined = 0;
   let ridesWalkedAway = 0;
-  let crashes = 0;
-  let infractions = 0;
   let offAppRides = 0;
   let helpfulChoices = 0;
-  let nearMisses = 0;
-  let grossRevenue = 0;
-  let tips = 0;
-  let fuelCostTotal = 0;
-  let commissionTotal = 0;
-  let repairCostTotal = 0;
-  const ratings: number[] = [];
-  const rideResults: SimulatedRideResult[] = [];
+  let fuelCostFromLedger = 0;
 
-  while (currentMinute < endMinute) {
-    // Inter-arrival time between ride offers (4 - 9 minutes)
-    const waitMin = rng.range(4, 9);
-    currentMinute += waitMin;
-    if (currentMinute >= endMinute) break;
+  // Ensure phone is charged and tank is topped up cleanly at start of shift when affordable
+  em.phoneBattery = 100;
+  serviceBikeOnSession(session, strategy);
 
-    const sampled = reqGen.sampleRequest(
-      currentMinute,
-      weather,
-      'app',
+  const eligible = session.requests.getEligibleNodeIds();
+  if (eligible.length > 0 && !session.road.nearestNode(session.bike.x, session.bike.z)) {
+    moveBikeToNode(session, eligible[0]!);
+  }
+
+  while (gm.clock.minutes < endMinute && !gm.shiftEnded) {
+    serviceBikeOnSession(session, strategy);
+
+    const suspended = session.ride.isAppSuspended(day);
+    // If app is suspended, only offAppHeavy / briber attempt street hails; others lose app work
+    if (suspended && !strategy.prefersOffApp && strategy.name !== 'briber') {
+      session.fastForwardTrip({ idleMin: 30 });
+      continue;
+    }
+
+    const waitMin = rng.range(3, 7);
+    if (gm.clock.minutes + waitMin >= endMinute) break;
+    session.fastForwardTrip({
+      idleMin: waitMin,
+      onEncounter: (inst) =>
+        strategy.chooseEncounterOption?.(inst, {
+          network: session.road,
+          currentLocationNodeId: gm.playerNodeId,
+          currentMinute: gm.clock.minutes,
+          day,
+          weather: gm.weather,
+          traffic: 0.3,
+          rng,
+        }),
+    });
+    if (gm.shiftEnded || gm.clock.minutes >= endMinute) break;
+
+    const currentNodeId =
+      session.road.nearestNode(session.bike.x, session.bike.z)?.nodeId ??
+      eligible[0] ??
+      'N1';
+
+    const bookingType: BookingType = suspended ? 'street' : 'app';
+    const sampled = session.requests.sampleRequest(
+      gm.clock.minutes,
+      gm.weather,
+      bookingType,
       currentNodeId
     );
     if (!sampled) continue;
 
-    const ride = runHeadlessRide(
+    // Keep phone topped up at teaStall/home if low during long shifts
+    if (em.phoneBattery < 25) {
+      em.phoneBattery = 100;
+    }
+
+    const ride = executeRideOnSession(
+      session,
       strategy,
       sampled.request,
       sampled.profile,
-      network,
-      currentMinute,
-      day,
-      weather,
       rng,
       currentNodeId
     );
-
     rideResults.push(ride);
 
     if (ride.status === 'completed') {
       ridesCompleted++;
-      grossRevenue += ride.fare;
-      tips += ride.tip;
-      commissionTotal += ride.commission;
-      fuelCostTotal += ride.fuelCost;
-      repairCostTotal += ride.repairCost;
-      if (ride.crashed) crashes++;
-      if (ride.infraction) infractions++;
       if (ride.isOffApp) offAppRides++;
       if (ride.helpfulChoice) helpfulChoices++;
-      nearMisses += ride.nearMissCount;
-      if (ride.rating !== null) ratings.push(ride.rating);
-
-      currentMinute += ride.durationMin;
-      currentNodeId = sampled.request.destinationNodeId;
     } else if (ride.status === 'declined') {
       ridesDeclined++;
-      currentMinute += 2; // small decision delay
+      session.fastForwardTrip({ idleMin: 2 });
     } else {
       ridesWalkedAway++;
-      currentMinute += 3; // negotiation time lost
+      session.fastForwardTrip({ idleMin: 3 });
     }
   }
 
-  const dailyNet =
-    grossRevenue +
-    tips -
-    commissionTotal -
-    fuelCostTotal -
-    repairCostTotal -
-    livingExpenses;
+  // Finalize shift through real GameManager
+  let summaryLiving = BALANCE.LIVING.foodPerDay + BALANCE.LIVING.phoneDataPerDay;
+  if (!gm.shiftEnded) {
+    if (gm.clock.minutes < 11 * 60) {
+      moveBikeToNode(session, gm.homeNodeId);
+    }
+    const endCmd = gm.clock.minutes >= 12 * 60 ? 'endShift' : 'endShiftEarly';
+    const res = gm.dispatch({ type: endCmd });
+    if (!res.success && !gm.shiftEnded) {
+      gm.clock.minutes = 23 * 60;
+      gm.dispatch({ type: 'endShift' });
+    }
+  }
 
-  const averageRating =
-    ratings.length > 0
-      ? ratings.reduce((sum, r) => sum + r, 0) / ratings.length
-      : 5.0;
+  // Tally exact day totals from the real EconomyManager ledger
+  let grossRevenue = 0;
+  let tips = 0;
+  let commissionTotal = 0;
+  let repairAndFines = 0;
+  let livingExpenses = 0;
+
+  const ledger = em.getLedger();
+  for (let i = ledgerStartIdx; i < ledger.length; i++) {
+    const tx = ledger[i]!;
+    if (tx.kind === 'fare' || tx.kind === 'bonus' || tx.kind === 'event' || tx.kind === 'reward') {
+      if (tx.amount > 0) {
+        grossRevenue += tx.amount;
+      } else if (tx.kind === 'fare' && tx.amount < 0) {
+        grossRevenue = Math.max(0, grossRevenue + tx.amount);
+      }
+    } else if (tx.kind === 'tip') {
+      if (tx.amount > 0) tips += tx.amount;
+    } else if (tx.kind === 'commission') {
+      commissionTotal += Math.abs(tx.amount);
+    } else if (tx.kind === 'fuel') {
+      fuelCostFromLedger += Math.abs(tx.amount);
+    } else if (
+      tx.kind === 'fine' ||
+      tx.kind === 'bribe' ||
+      tx.kind === 'medical' ||
+      tx.kind === 'robbery' ||
+      tx.kind === 'maintenance' ||
+      tx.kind === 'repair'
+    ) {
+      if (tx.amount < 0) repairAndFines += Math.abs(tx.amount);
+    } else if (
+      tx.kind === 'food' ||
+      tx.kind === 'phoneData' ||
+      tx.kind === 'rent' ||
+      tx.kind === 'family'
+    ) {
+      if (tx.amount < 0) livingExpenses += Math.abs(tx.amount);
+    }
+  }
+  if (livingExpenses > 0) {
+    summaryLiving = livingExpenses;
+  }
+
+  // Sweep cash buffer (> 600) to repay debt and build bank savings via real commands
+  if (em.debt > 0 && em.cash > 600) {
+    const pay = Math.min(em.debt, em.cash - 600);
+    if (pay > 0) gm.dispatch({ type: 'repayDebt', amount: pay });
+  }
+  if (em.debt > 0 && em.savings > 0) {
+    const cover = Math.min(em.debt, em.savings);
+    if (cover > 0) {
+      gm.dispatch({ type: 'withdrawSavings', amount: cover });
+      gm.dispatch({ type: 'repayDebt', amount: cover });
+    }
+  }
+  if (em.cash > 600) {
+    gm.dispatch({ type: 'depositSavings', amount: Math.floor(em.cash - 600) });
+  }
+
+  const safetyEnd = gm.reputationSystem.getSafetyRecord();
+  const crashes = Math.max(0, safetyEnd.crashes - safetyStart.crashes);
+  const infractions = Math.max(0, safetyEnd.infractions - safetyStart.infractions);
+  const nearMisses = Math.max(0, safetyEnd.nearMisses - safetyStart.nearMisses);
+
+  const rideFuelTotal = rideResults.reduce((s, r) => s + r.fuelCost, 0);
+  const fuelDisplay = fuelCostFromLedger > 0 ? fuelCostFromLedger : rideFuelTotal;
+  const dailyNet =
+    grossRevenue + tips - commissionTotal - fuelDisplay - repairAndFines - summaryLiving;
 
   return {
     day,
@@ -849,14 +1152,40 @@ export function runHeadlessDay(
     nearMisses,
     grossRevenue,
     tips,
-    fuelCostTotal,
+    fuelCostTotal: fuelDisplay,
     commissionTotal,
-    repairCostTotal,
-    livingExpenses,
+    repairCostTotal: repairAndFines,
+    livingExpenses: summaryLiving,
     dailyNet,
-    averageRating,
+    averageRating: gm.reputationSystem.getAppRating(),
     rideResults,
   };
+}
+
+/**
+ * Simulates a full working day (shift) for a bot strategy on a real GameSession.
+ */
+export function runHeadlessDay(
+  strategy: BotStrategy,
+  network: RoadNetwork = createBalanceNetwork(),
+  day: number = 1,
+  weather: WeatherKind = 'clear',
+  rng: Rng = new Rng(42),
+  shiftMinutes: number = strategy.shiftMinutes ?? (BALANCE.BOT?.shiftMinutes ?? 900),
+  options?: { isSuspended?: boolean }
+): BotDayResult {
+  const session = createBotSession(
+    network,
+    rng.int(1, 999999),
+    day,
+    7 * 60,
+    weather,
+    true
+  );
+  if (options?.isSuspended) {
+    session.gm.reputationSystem.triggerSuspension(day);
+  }
+  return runDayOnSession(session, strategy, rng, shiftMinutes);
 }
 
 export interface BotCampaignOptions {
@@ -891,6 +1220,7 @@ export interface BotCampaignResult {
   suspensionsCount: number;
   wasSuspended: boolean;
   endingId: EndingId;
+  meters?: Record<MeterId, number>;
 }
 
 export function runHeadlessCampaign(
@@ -901,11 +1231,15 @@ export function runHeadlessCampaign(
   options?: BotCampaignOptions
 ): BotCampaignResult {
   const rng = new Rng(seed);
-  let cash = BALANCE.LIVING.startCash;
-  let savings = 0;
-  let debt = 0;
-  let localTrust = BALANCE.TRUST.localTrustStart;
-  const ratingsHistory: number[] = [];
+  const session = createBotSession(network, seed, 1, 7 * 60, 'clear', true);
+  const { gm } = session;
+
+  if (options?.joinedScheme) {
+    gm.bus.emit('story/flag', { key: 'joinedScheme', value: true });
+  }
+  if (options?.kamalRelationship !== undefined) {
+    gm.reputationSystem.setRelationship('char_kamal', options.kamalRelationship);
+  }
 
   let totalCompletedRides = 0;
   let totalGrossRevenue = 0;
@@ -915,196 +1249,60 @@ export function runHeadlessCampaign(
   let totalRepairCost = 0;
   let totalLivingExpenses = 0;
   let totalRentPaid = 0;
-  let totalCrashes = 0;
-  let totalNearMisses = 0;
-  let totalInfractions = 0;
   let offAppTripsCount = 0;
-  let offAppStrikes = 0;
   let suspensionsCount = 0;
-  let suspendedDaysRemaining = 0;
   let wasSuspended = false;
-  let riskScore = 0;
-  let kmSinceOilChange = 15;
   const dailyNets: number[] = [];
 
+  const shiftMin = strategy.shiftMinutes ?? (BALANCE.BOT?.shiftMinutes ?? 900);
+
   for (let day = 1; day <= daysCount; day++) {
-    const wRoll = rng.next();
-    const weather: WeatherKind =
-      wRoll < 0.6 ? 'clear' : wRoll < 0.85 ? 'lightRain' : 'heavyRain';
+    const wasSuspToday = session.ride.isAppSuspended(day);
+    const dayRes = runDayOnSession(session, strategy, rng, shiftMin);
+    const isSuspEnd =
+      session.ride.isAppSuspended(day) || gm.story.branchFlags['appSuspended'] === true;
 
-    const isSuspended = suspendedDaysRemaining > 0;
-    if (suspendedDaysRemaining > 0) {
-      suspendedDaysRemaining--;
+    if (!wasSuspToday && isSuspEnd) {
+      suspensionsCount++;
     }
-
-    const dayRes = runHeadlessDay(
-      strategy,
-      network,
-      day,
-      weather,
-      rng,
-      strategy.shiftMinutes,
-      { isSuspended }
-    );
+    if (isSuspEnd) {
+      wasSuspended = true;
+    }
 
     totalCompletedRides += dayRes.ridesCompleted;
     totalGrossRevenue += dayRes.grossRevenue;
     totalTips += dayRes.tips;
     totalFuelCost += dayRes.fuelCostTotal;
     totalCommission += dayRes.commissionTotal;
-    totalCrashes += dayRes.crashes;
-    totalNearMisses += dayRes.nearMisses;
-    totalInfractions += dayRes.infractions;
-
-    // Routine wear & maintenance
-    let routineMaintenanceCost = 0;
-    for (const r of dayRes.rideResults) {
-      if (r.status === 'completed') {
-        kmSinceOilChange += r.virtualKm;
-        if (r.isOffApp) {
-          offAppTripsCount++;
-          riskScore += 1;
-          if (rng.chance(BALANCE.OFF_APP.policyDetectChance)) {
-            offAppStrikes++;
-            if (offAppStrikes >= BALANCE.OFF_APP.strikesToSuspend) {
-              suspensionsCount++;
-              wasSuspended = true;
-              suspendedDaysRemaining = BALANCE.OFF_APP.suspendDays;
-              offAppStrikes = 0;
-            }
-          }
-        }
-        if (r.helpfulChoice) {
-          localTrust = Math.min(100, localTrust + 0.45);
-        } else if (!r.crashed && r.rating !== null && r.rating >= 4.5) {
-          localTrust = Math.min(
-            100,
-            localTrust + (strategy.name === 'trustFocused' ? 0.35 : 0.08)
-          );
-        }
-        if (r.crashed) {
-          localTrust = Math.max(0, localTrust - 3);
-        }
-        if (r.rating !== null) {
-          ratingsHistory.push(r.rating);
-        }
-      }
+    totalRepairCost += dayRes.repairCostTotal;
+    if (BALANCE.LIVING.rentDueDays.includes(day)) {
+      totalRentPaid += BALANCE.LIVING.rentAmount;
+      totalLivingExpenses += Math.max(0, dayRes.livingExpenses - BALANCE.LIVING.rentAmount);
+    } else {
+      totalLivingExpenses += dayRes.livingExpenses;
     }
+    offAppTripsCount += dayRes.offAppRides;
+    dailyNets.push(dayRes.dailyNet);
 
-    if (kmSinceOilChange >= BALANCE.WEAR.oilEveryKm) {
-      const oilChanges = Math.floor(kmSinceOilChange / BALANCE.WEAR.oilEveryKm);
-      routineMaintenanceCost = oilChanges * BALANCE.WEAR.oilCost;
-      kmSinceOilChange %= BALANCE.WEAR.oilEveryKm;
-    }
-
-    const dayTotalRepair = dayRes.repairCostTotal + routineMaintenanceCost;
-    totalRepairCost += dayTotalRepair;
-
-    // Daily living expenses & rent
-    const food = BALANCE.LIVING.foodPerDay;
-    const phoneData = BALANCE.LIVING.phoneDataPerDay;
-    const family = day === 3 ? BALANCE.LIVING.familyPaymentDay3 : 0;
-    const rent = BALANCE.LIVING.rentDueDays.includes(day)
-      ? BALANCE.LIVING.rentAmount
-      : 0;
-    totalRentPaid += rent;
-    totalLivingExpenses += food + phoneData + family;
-
-    const dayNet =
-      dayRes.grossRevenue +
-      dayRes.tips -
-      dayRes.commissionTotal -
-      dayRes.fuelCostTotal -
-      dayTotalRepair -
-      food -
-      phoneData -
-      family -
-      rent;
-
-    dailyNets.push(dayNet);
-    cash += dayNet;
-
-    // Daily sweep between cash buffer and savings
-    if (cash > 600) {
-      if (debt > 0) {
-        const payDebt = Math.min(debt, cash - 600);
-        debt -= payDebt;
-        cash -= payDebt;
-      }
-      const toSavings = cash - 600;
-      savings += toSavings;
-      cash = 600;
-    } else if (cash < 0) {
-      const needed = -cash;
-      const fromSavings = Math.min(savings, needed);
-      savings -= fromSavings;
-      cash += fromSavings;
-      if (cash < 0) {
-        debt += -cash;
-        cash = 0;
-      }
+    if (day < daysCount) {
+      gm.dispatch({ type: 'sleep' });
     }
   }
 
-  const rollingRatings = ratingsHistory.slice(-50);
-  const finalRating =
-    rollingRatings.length > 0
-      ? rollingRatings.reduce((sum, r) => sum + r, 0) / rollingRatings.length
-      : 5.0;
+  // Trigger final career choice & ending through real GameManager
+  if (options?.careerChoice && gm.mode === 'career') {
+    gm.missionManager.activateMission('m6_decision');
+    const chosen = gm.dispatch({ type: 'selectCareerChoice', choice: options.careerChoice });
+    if (!chosen.success) {
+      gm.dispatch({ type: 'selectCareerChoice', choice: 'continue' });
+    }
+  }
+  const endingResult = gm.evaluateCurrentEnding();
 
-  const kamalRel =
-    options?.kamalRelationship ??
-    (strategy.name === 'trustFocused' || options?.careerChoice === 'workshop'
-      ? 35
-      : 20);
-
-  const endingCtx: EndingEvaluationContext = {
-    day: daysCount,
-    economy: {
-      cash,
-      savings,
-      debt,
-      dailyRevenue: 0,
-      dailyExpenses: 0,
-      fuelLevel: 4.0,
-      motorcycleCondition: 80,
-      appBalance: 0,
-      reputation: finalRating,
-      phoneBattery: 80,
-    },
-    story: {
-      currentChapter: 6,
-      completedMissions: ['m1_first_ride'],
-      activeMissions: [],
-      characterRelationships: { char_kamal: kamalRel, char_ma: 30 },
-      promises: [],
-      branchFlags: {
-        appSuspended: wasSuspended,
-        joinedScheme: options?.joinedScheme === true,
-      },
-      endingEligibility: {
-        independent_rider: false,
-        workshop_owner: false,
-        trusted_local: false,
-        fast_money: false,
-        fresh_start: false,
-      },
-    },
-    rating: finalRating,
-    localTrust: Math.round(localTrust),
-    safetyRecord: {
-      nearMisses: totalNearMisses,
-      bumps: 0,
-      crashes: totalCrashes,
-      infractions: totalInfractions,
-    },
-    riskScore,
-    promises: { kept: 5, broken: 0 },
-    careerChoice: options?.careerChoice,
-    appSuspended: suspendedDaysRemaining > 0,
-  };
-
-  const endingResult = evaluateEnding(endingCtx);
+  const em = gm.economyManager;
+  const rep = gm.reputationSystem;
+  const safety = rep.getSafetyRecord();
+  const meters = rep.getMeters();
 
   return {
     strategy: strategy.name,
@@ -1118,25 +1316,26 @@ export function runHeadlessCampaign(
     totalRepairCost,
     totalLivingExpenses,
     totalRentPaid,
-    totalCrashes,
-    totalNearMisses,
-    totalInfractions,
+    totalCrashes: safety.crashes,
+    totalNearMisses: safety.nearMisses,
+    totalInfractions: safety.infractions,
     dailyNets,
-    finalCash: cash,
-    finalSavings: savings,
-    finalDebt: debt,
-    finalRating,
-    finalLocalTrust: Math.round(localTrust),
-    finalRiskScore: riskScore,
+    finalCash: em.cash,
+    finalSavings: em.savings,
+    finalDebt: em.debt,
+    finalRating: rep.getAppRating(),
+    finalLocalTrust: Math.round(meters.publicReputation),
+    finalRiskScore: rep.getRiskScore(),
     offAppTripsCount,
     suspensionsCount,
-    wasSuspended,
+    wasSuspended: wasSuspended || gm.story.branchFlags['appSuspended'] === true,
     endingId: endingResult.endingId,
+    meters,
   };
 }
 
 /**
- * Simulates a batch of completed rides for a given strategy.
+ * Simulates a batch of completed rides for a given strategy on real GameSession instances.
  */
 export function simulateRides(
   strategy: BotStrategy,
@@ -1145,17 +1344,24 @@ export function simulateRides(
   seed: number = 42
 ): SimulatedRideResult[] {
   const rng = new Rng(seed);
-  const reqGen = new RequestGenerator(network, rng);
+  const session = createBotSession(network, seed, 1, 8 * 60, 'clear', false);
   const results: SimulatedRideResult[] = [];
-  let currentMinute: number;
-  let day = 1;
-
   let attempts = 0;
-  while (results.length < targetCount && attempts < targetCount * 15) {
+  while (results.length < targetCount && attempts < targetCount * 20) {
     attempts++;
-    // Cycle across day time (morning rush, midday, evening rush, late night)
-    currentMinute = (480 + attempts * 19) % 1440;
-    if (attempts % 30 === 0) day++;
+    const currentMinute = 480 + ((attempts * 19) % 720);
+    if (session.gm.shiftEnded) {
+      session.gm.dispatch({ type: 'sleep' });
+      session.gm.economyManager.cash = Math.max(session.gm.economyManager.cash, 1000);
+    }
+    if (attempts % 30 === 0 && !session.gm.shiftEnded) {
+      session.gm.clock.minutes = 23 * 60;
+      session.gm.dispatch({ type: 'endShift' });
+      session.gm.dispatch({ type: 'sleep' });
+      session.gm.economyManager.cash = Math.max(session.gm.economyManager.cash, 1000);
+    }
+    session.gm.clock.minutes = currentMinute;
+    session.gm.economyManager.phoneBattery = 100;
 
     const weatherRoll = rng.next();
     const weather: WeatherKind =
@@ -1164,19 +1370,26 @@ export function simulateRides(
         : weatherRoll < 0.85
         ? 'lightRain'
         : 'heavyRain';
+    session.gm.weather = weather;
+    session.gm.weatherSystem.restoreWeather(weather);
+    session.gm.economyManager.fuelLevel = session.gm.economyManager.maxFuelL();
 
-    const sampled = reqGen.sampleRequest(currentMinute, weather);
+    const sampled = session.requests.sampleRequest(currentMinute, weather);
     if (!sampled) continue;
 
-    const ride = runHeadlessRide(
+    const node = network.getNode(sampled.request.pickupNodeId);
+    if (node) {
+      session.bike.x = node.x;
+      session.bike.z = node.z;
+    }
+
+    const ride = executeRideOnSession(
+      session,
       strategy,
       sampled.request,
       sampled.profile,
-      network,
-      currentMinute,
-      day,
-      weather,
-      rng
+      rng,
+      sampled.request.pickupNodeId
     );
 
     if (ride.status === 'completed') {

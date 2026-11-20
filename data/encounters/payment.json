@@ -116,7 +116,7 @@
     },
     "weight": 8,
     "cooldownMin": 120,
-    "oncePerDay": false,
+    "oncePerDay": true,
     "lineKey": "encounter.phone_left.title",
     "choices": [
       {

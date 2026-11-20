@@ -54,16 +54,18 @@ export function getAvailableCareerChoices(
   savings: number,
   kamalRelationship: number = 0
 ): CareerChoiceOption[] {
+  const workshopCost = BALANCE.GOALS.workshopDeposit;
+  const bikeCost = BALANCE.GOALS.betterBike;
   return [
     {
       id: 'workshop',
       titleKey: 'choice_workshop_title',
       descKey: 'choice_workshop_desc',
-      cost: 25000,
-      available: savings >= 25000 && kamalRelationship >= 30,
+      cost: workshopCost,
+      available: savings >= workshopCost && kamalRelationship >= 30,
       disabledReason:
-        savings < 25000
-          ? 'Requires ৳25,000 workshop deposit'
+        savings < workshopCost
+          ? `Requires ৳${workshopCost.toLocaleString('en-US')} workshop deposit`
           : kamalRelationship < 30
           ? 'Requires Kamal bhai relationship ≥ 30'
           : undefined,
@@ -72,9 +74,12 @@ export function getAvailableCareerChoices(
       id: 'bike',
       titleKey: 'choice_bike_title',
       descKey: 'choice_bike_desc',
-      cost: 15000,
-      available: savings >= 15000,
-      disabledReason: savings < 15000 ? 'Requires ৳15,000 for used 125cc bike' : undefined,
+      cost: bikeCost,
+      available: savings >= bikeCost,
+      disabledReason:
+        savings < bikeCost
+          ? `Requires ৳${bikeCost.toLocaleString('en-US')} for used 125cc bike`
+          : undefined,
     },
     {
       id: 'continue',
@@ -123,11 +128,14 @@ export function evaluateEnding(ctx: EndingEvaluationContext): EndingResult {
     story.branchFlags['appSuspended'] === true ||
     platformStanding < BALANCE.KARMA.platformSuspensionStandingThreshold;
 
+  const workshopCost = BALANCE.GOALS.workshopDeposit;
+  const bikeCost = BALANCE.GOALS.betterBike;
+
   const highCriminalHustle =
     (criminalExposure >= 40 || evidenceExposure >= 40) &&
     riderIntegrity < 40 &&
     publicReputation < 70 &&
-    (decisionSavings >= 15000 || economy.cash >= 15000);
+    (decisionSavings >= bikeCost || economy.cash >= bikeCost);
 
   let endingId: EndingId;
 
@@ -137,7 +145,7 @@ export function evaluateEnding(ctx: EndingEvaluationContext): EndingResult {
     economy.debt >= 5000 ||
     rating < 3.5 ||
     safetyMeter <= 20 ||
-    (evidenceExposure >= 80 && riderIntegrity < 30 && decisionSavings < 15000)
+    (evidenceExposure >= 80 && riderIntegrity < 30 && decisionSavings < bikeCost)
   ) {
     endingId = 'fresh_start';
   }
@@ -149,13 +157,13 @@ export function evaluateEnding(ctx: EndingEvaluationContext): EndingResult {
   ) {
     endingId = 'fast_money';
   }
-  // 3. Workshop Owner: choice workshop AND savings >= 25000 AND relationship.kamal >= 30.
+  // 3. Workshop Owner: choice workshop AND savings >= workshopDeposit AND relationship.kamal >= 30.
   // The choice is paid for first, so savings are judged as they were before it.
-  else if (ctx.careerChoice === 'workshop' && decisionSavings >= 25000 && kamalRel >= 30) {
+  else if (ctx.careerChoice === 'workshop' && decisionSavings >= workshopCost && kamalRel >= 30) {
     endingId = 'workshop_owner';
   }
-  // 4. Independent Rider: choice bike AND savings >= 15000
-  else if (ctx.careerChoice === 'bike' && decisionSavings >= 15000) {
+  // 4. Independent Rider: choice bike AND savings >= betterBike
+  else if (ctx.careerChoice === 'bike' && decisionSavings >= bikeCost) {
     endingId = 'independent_rider';
   }
   // 5. Trusted Local: publicReputation >= 70 AND rating >= 4.6 AND intact riderIntegrity (accessible with low savings!)

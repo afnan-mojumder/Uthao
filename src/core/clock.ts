@@ -1,6 +1,16 @@
 import { TIME_SCALE } from '../config/constants';
+import { BALANCE } from '../config/balance';
 
 export { TIME_SCALE };
+
+export function isRushHourMinute(minute: number): boolean {
+  const m = ((minute % 1440) + 1440) % 1440;
+  const r = BALANCE.RUSH_HOUR;
+  return (
+    (m >= r.morningStartMin && m <= r.morningEndMin) ||
+    (m >= r.eveningStartMin && m <= r.eveningEndMin)
+  );
+}
 
 export class GameClock {
   day: number;
@@ -12,7 +22,7 @@ export class GameClock {
   }
 
   advance(realDt: number): void {
-    // 1 real second = 20 game seconds = (20 / 60) game minutes
+    // 1 real second = TIME_SCALE game seconds = (TIME_SCALE / 60) game minutes
     this.minutes += (realDt * TIME_SCALE) / 60;
   }
 
@@ -29,11 +39,6 @@ export class GameClock {
   }
 
   isRushHour(): boolean {
-    const minOfDay = this.minutes % 1440;
-    // Morning rush: 07:30 - 10:00 (450 - 600 min)
-    // Evening rush: 17:00 - 20:00 (1020 - 1200 min)
-    const morningRush = minOfDay >= 7 * 60 + 30 && minOfDay <= 10 * 60;
-    const eveningRush = minOfDay >= 17 * 60 && minOfDay <= 20 * 60;
-    return morningRush || eveningRush;
+    return isRushHourMinute(this.minutes);
   }
 }

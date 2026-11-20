@@ -1,5 +1,6 @@
 import { GameManager, type GameData, type SimSnapshot } from '../GameManager';
 import { BALANCE } from '../../config/balance';
+import { isRushHourMinute } from '../../core/clock';
 import type { MeterId } from '../../core/types';
 import {
   type AnySave,
@@ -244,9 +245,7 @@ export function deserialize(save: AnySave, gameData?: GameData): GameManager {
       hhmm: `${String(Math.floor(validated.clock.minutes / 60)).padStart(2, '0')}:${String(
         validated.clock.minutes % 60
       ).padStart(2, '0')}`,
-      isRushHour:
-        (validated.clock.minutes >= 8 * 60 && validated.clock.minutes <= 11 * 60) ||
-        (validated.clock.minutes >= 17 * 60 && validated.clock.minutes <= 20 * 60),
+      isRushHour: isRushHourMinute(validated.clock.minutes),
     },
     economy: { ...validated.economy },
     story: {

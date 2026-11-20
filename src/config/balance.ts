@@ -1,8 +1,8 @@
 export const BALANCE = {
   FARE: {
-    base: 25,
+    base: 65,
     perKm: 20,
-    perMin: 1.5,
+    perMin: 0.5,
     minFare: 50,
     roundTo: 5,
     maxCounterMultiple: 5,
@@ -14,10 +14,16 @@ export const BALANCE = {
     lateNight: 1.2,
     cap: 1.6,
   },
+  RUSH_HOUR: {
+    morningStartMin: 8 * 60, // 08:00 (480)
+    morningEndMin: 10 * 60 + 30, // 10:30 (630)
+    eveningStartMin: 17 * 60, // 17:00 (1020)
+    eveningEndMin: 20 * 60 + 30, // 20:30 (1230)
+  },
   COMMISSION_APP: 0.15,
   OFF_APP: {
     commission: 0,
-    policyDetectChance: 0.03,
+    policyDetectChance: 0.05,
     // ponytail: T8.6 placeholder, non-payment chance = (1 - paymentReliability) * nonPayFactor, capped.
     nonPayFactor: 1.5,
     nonPayMaxChance: 0.5,
@@ -70,10 +76,10 @@ export const BALANCE = {
     rescue: { liters: 1.0, cost: 100, waitMin: 20 }, // cost lands as debt when cash is short
   },
   WEAR: {
-    conditionPerKm: 0.4,
+    conditionPerKm: 0.28,
     perfPenaltyBelow: 40,
-    oilEveryKm: 60,
-    oilCost: 350,
+    oilEveryKm: 90,
+    oilCost: 300,
     // T8.3 breakdowns: warn first, only risk a stall once warned.
     warnBelow: 35,
     breakdownBelow: 25,
@@ -188,13 +194,12 @@ export const BALANCE = {
     },
   },
   UPGRADES: {
-    tires: 3000,
-    brakes: 2500, // -20% stopping distance
-    ledLight: 1500,
-    engineTune: 4000,
-    luggageCarrier: 1200,
-    phone: 6000,
-    toolkit: 2000,
+    tires: 1200,
+    brakes: 1500, // -20% stopping distance
+    ledLight: 500,
+    engineTune: 800,
+    luggageCarrier: 600,
+    phone: 350,
   },
   BIKES: {
     used125: 20000,
@@ -202,7 +207,7 @@ export const BALANCE = {
   },
   GOALS: {
     workshopDeposit: 25000,
-    betterBike: 20000,
+    betterBike: 15000,
   },
   RATING: {
     start: 5.0,
@@ -221,10 +226,10 @@ export const BALANCE = {
   TIP: {
     baseChance: 0.1,
     ratingSlope: 0.3,
-    minAmount: 10,
-    maxAmount: 40,
+    minAmount: 15,
+    maxAmount: 55,
     /** Tip size as a share of the fare, clamped to min/max. */
-    fareShare: 0.1,
+    fareShare: 0.15,
   },
   DISPUTE: {
     /** Share of the fare the platform settles when the passenger disputes the ride. */
@@ -254,11 +259,11 @@ export const BALANCE = {
     },
   },
   BOT: {
-    shiftMinutes: 600,
+    shiftMinutes: 900,
     reckless: {
       speedMultiplier: 1.35,
-      nearMissRatePerKm: 0.25,
-      crashChancePerRide: 0.05,
+      nearMissRatePerKm: 0.08,
+      crashChancePerRide: 0.02,
       repairCostMin: 350,
       repairCostMax: 500,
       crashDelayMin: 15,

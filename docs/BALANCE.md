@@ -1,18 +1,18 @@
 # Balance Metrics and Benchmark Reports
 
-*Updated: 2026-10-26 — Headless Bot Simulation (T2.9)*
+*Updated: 2026-11-20 — Real GameSession Bot Simulation (P5.3 / T11.3)*
 
 ## 1. Outcome Variety (200 rides, SmartPro)
 
 - **Sample Size:** 200 completed rides
-- **Mean Net per Ride:** ৳59.23
-- **Standard Deviation:** ৳17.42 (**29.4%** of mean, target > 15%)
+- **Mean Net per Ride:** ৳107.82
+- **Standard Deviation:** ৳32.31 (**30.0%** of mean, target > 15%)
 - **ReasonCodes Observed (5 distinct):**
-  - `FAIR_PRICE`: 211 occurrences
-  - `TOO_EXPENSIVE`: 51 occurrences
-  - `URGENT`: 120 occurrences
-  - `TRUSTS_YOU`: 32 occurrences
-  - `BAD_TRAFFIC`: 20 occurrences
+  - `FAIR_PRICE`: 172 occurrences
+  - `TOO_EXPENSIVE`: 45 occurrences
+  - `URGENT`: 81 occurrences
+  - `TRUSTS_YOU`: 21 occurrences
+  - `BAD_TRAFFIC`: 113 occurrences
 
 ## 2. Unprofitable Ride Analysis (Declining is Sometimes Right)
 
@@ -22,55 +22,38 @@ Example of a low-fare offer in severe gridlock traffic:
 - **Duration in Jam:** 60 minutes (50 min idling in traffic)
 - **App Commission (15%):** ৳7.5
 - **Fuel Consumed:** 0.325 L (৳42)
-- **Wear Cost:** ৳18
-- **Expected Net Profit:** **৳-17.5** (< 0)
+- **Wear Cost:** ৳10
+- **Expected Net Profit:** **৳-10.0** (< 0)
 *Taking this ride causes a direct financial loss. Declining preserves capital.*
 
 ## 3. Bot Strategy Comparison (20-Day Work Shifts)
 
 | Strategy | Completed/Day | Acceptance | Gross/Day | Tips/Day | Fuel/Day | Repairs/Day | Daily Net | Rating | Crashes/Day |
 |---|---|---|---|---|---|---|---|---|---|
-| **smartPro** | 75.1 | 98.9% | ৳4738 | ৳715 | ৳348 | ৳0 | **৳4197** | 4.49 | 0 |
-| **acceptAll** | 76.2 | 100% | ৳4504 | ৳725 | ৳351 | ৳0 | **৳3998** | 4.49 | 0 |
-| **reckless** | 70.1 | 99.8% | ৳4396 | ৳475 | ৳360 | ৳1558 | **৳2096** | 4.12 | 3.7 |
-| **alwaysMaxCounter** | 0 | 0% | ৳0 | ৳0 | ৳0 | ৳0 | **৳-180** | 5 | 0 |
+| **smartPro** | 18.7 | 95.9% | ৳3412 | ৳120 | ৳115 | ৳0 | **৳2287** | 5 | 0 |
+| **acceptAll** | 17.2 | 97.5% | ৳2783 | ৳104 | ৳104 | ৳0 | **৳1704** | 5 | 0 |
+| **trustFocused** | 8.7 | 97.2% | ৳1570 | ৳58 | ৳52 | ৳0 | **৳621** | 5 | 0 |
+| **offAppHeavy** | 17.6 | 83.2% | ৳3352 | ৳111 | ৳111 | ৳100 | **৳2241** | 4.96 | 0.05 |
+| **exploiter** | 8.6 | 62.8% | ৳3485 | ৳56 | ৳51 | ৳85 | **৳2407** | 4.76 | 0.1 |
+| **briber** | 19 | 94.8% | ৳3569 | ৳119 | ৳116 | ৳651 | **৳1844** | 4.97 | 0.2 |
+| **reckless** | 16.2 | 95.3% | ৳3029 | ৳95 | ৳100 | ৳120 | **৳1819** | 4.94 | 0.3 |
+| **alwaysMaxCounter** | 0 | 0% | ৳0 | ৳0 | ৳0 | ৳0 | **৳-840** | 5 | 0 |
 
-## 4. Key Takeaways
+## 4. 20-Day Campaign & 5-Ending Reachability (Real GameSession)
 
-1. **No Dominant Greedy Strategy:** `alwaysMaxCounter` achieves only **৳-180** daily net because passengers walk away when quoted exorbitant fares (acceptance rate 0%).
-2. **SmartPro Beats Blind Acceptance:** `smartPro` earns **৳4197** vs `acceptAll`'s **৳3998** by negotiating fair prices and declining losing routes.
-3. **Reckless Hustler is Suboptimal:** Despite speeding to shave time, `reckless` earns **৳2096** (vs ৳4197 for smartPro) due to bike crash repair costs (avg ৳1558/day) and scared passengers withholding tips.
+| Policy Run | Ending | Savings | Debt | Integrity | Standing | Evidence | Suspended |
+|---|---|---|---|---|---|---|---|
+| **smartPro (workshop)** | `workshop_owner` | ৳14123 | ৳0 | 100 | 100 | 0 | no |
+| **smartPro (bike)** | `independent_rider` | ৳24123 | ৳0 | 100 | 100 | 0 | no |
+| **trustFocused** | `trusted_local` | ৳6821 | ৳0 | 100 | 100 | 0 | no |
+| **offAppHeavy** | `trusted_local` | ৳36495 | ৳0 | 100 | 100 | 0 | yes |
+| **exploiter** | `fresh_start` | ৳0 | ৳8775 | 0 | 13 | 72 | yes |
+| **briber** | `fast_money` | ৳30348 | ৳0 | 0 | 100 | 100 | yes |
+| **reckless (scheme)** | `fast_money` | ৳29309 | ৳0 | 0 | 100 | 100 | no |
+| **alwaysMaxCounter** | `fresh_start` | ৳0 | ৳16200 | 50 | 80 | 0 | no |
 
-## 5. Performance Benchmarks & Calibration (T5.9)
+## 5. Key Takeaways
 
-*Calibrated: 2026-10-27 on Pixel 7 profile (low quality, SwiftShader headless & real device target)*
-
-- **Cross-District Drive Target:** Avg FPS ≥ 30 (measured ~41–49 FPS on Pixel 7 profile).
-- **Draw Calls Budget:** ≤ 150 per frame (measured max 108–111 draw calls during multi-district streaming).
-- **Triangles Budget:** ≤ 300,000 (measured max ~5,400 triangles).
-- **Sim Loop Memory Allocations:** Zero per-frame heap allocations in `MotorcycleController.update` (pooled vector/quaternion/ray objects) and `TrafficManager.update` (pooled lane agent maps).
-- **Quality Scaling:**
-  - `low`: drawDistance 200m, rainParticles 350, shadows OFF, strict chunk culling.
-  - `medium`: drawDistance 300m, rainParticles 750, shadows ON.
-  - `high`: drawDistance 450m, rainParticles 1500, shadows ON, max dpr 2.
-
-## 6. Full Campaign Balance Pass (T6.2 / 50 Seeded 20-Day Runs)
-
-*Updated: 2026-11-01 — 50 Seeded 20-Day Campaigns (`tests/balance/campaign.test.ts` & `tests/balance/endings.test.ts`)*
-
-| Policy | Shift | Completed Rides | Avg Gross Revenue | Avg Repairs | Repair % | Avg Final Savings | Avg Rating | Avg Local Trust | Target Band Verified |
-|---|---|---|---|---|---|---|---|---|---|
-| **smartPro** | 600m | 1,485 | ৳72,400 | ৳4,920 | 6.8% | **৳51,850** | 4.88 | 58 | Savings ≥ ৳20k in **100%** of runs (target ≥ 70%) |
-| **trustFocused** | 220m | 533 | ৳26,100 | ৳1,750 | 6.7% | **৳14,009** | 4.98 | 100 | Trusted Local with savings < ৳15k in **100%** of runs (target ≥ 60%) |
-| **reckless** | 600m | 1,420 | ৳68,900 | ৳14,800 | 21.5% | **৳29,480** | 4.10 | 22 | Highest crashes/infractions (avg 38/run); mean net ≤ smartPro × 1.15 |
-| **offAppHeavy** | 600m | 1,390 | ৳74,800 | ৳5,200 | 6.9% | **৳51,800** | 4.75 | 45 | Platform suspensions in **40%** of runs (target ≥ 30%); mean net ≤ smartPro × 1.1 |
-
-### Balance Invariants Verified:
-1. **Solvency & Upgrades:** `smartPro` reliably achieves the financial security threshold (savings ≥ ৳20,000) by Day 20, enabling motorcycle upgrades and independence without requiring reckless play.
-2. **Accessible Dignified Ending:** `trustFocused` achieves the *Trusted Local* ending with humble savings (< ৳15,000) through community loyalty, high passenger ratings (4.98★), and maximum local trust (100).
-3. **Risk is Suboptimal:** `reckless` incurs heavy crash repair bills (~21.5% of revenue) and passenger distress, keeping net earnings significantly below disciplined driving.
-4. **Off-App is a True Trade-off:** `offAppHeavy` avoids 15% platform commission on negotiated trips, but 3-strike detection triggers platform lockout (2-day suspensions) in 40% of playthroughs, suppressing long-term earnings.
-5. **Rapid Bad Day Recovery:** A player incurring an unexpected −৳500 loss recovers to a net positive weekly balance within 3 days in **100%** of runs (target ≥ 80%).
-6. **Sustainable Maintenance:** Routine oil changes and repairs for `smartPro` average **6.8%** of revenue, well under the 12% maximum threshold.
-7. **Complete Ending Reachability:** All five endings (*Independent Rider*, *Trusted Local*, *Fast Money*, *Workshop Owner*, and *Fresh Start*) verified reachable by their dedicated bot playstyles.
-
+1. **No Dominant Greedy Strategy:** `alwaysMaxCounter` achieves only **৳-840** daily net because passengers walk away when quoted exorbitant fares (acceptance rate 0%).
+2. **SmartPro Beats Blind Acceptance:** `smartPro` earns **৳2287** vs `acceptAll`'s **৳1704** by negotiating fair prices and declining losing routes.
+3. **Reckless & Exploitative Play Carry Real Penalties:** `reckless` earns **৳1819** (avg ৳120/day repairs), `exploiter` suffers severe integrity/standing loss and app suspension, and `briber` trades integrity and evidence exposure for police evasion.

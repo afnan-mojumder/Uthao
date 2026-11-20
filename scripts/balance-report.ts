@@ -7,7 +7,12 @@ import {
   alwaysMaxCounterStrategy,
   smartProStrategy,
   recklessStrategy,
+  trustFocusedStrategy,
+  offAppHeavyStrategy,
+  exploiterStrategy,
+  briberStrategy,
   createBalanceNetwork,
+  runHeadlessCampaign,
   runHeadlessDay,
   simulateRides,
   estimateExpectedNet,
@@ -139,16 +144,33 @@ export function generateBalanceReport(): string {
   const strategies = [
     smartProStrategy,
     acceptAllStrategy,
+    trustFocusedStrategy,
+    offAppHeavyStrategy,
+    exploiterStrategy,
+    briberStrategy,
     recklessStrategy,
     alwaysMaxCounterStrategy,
   ];
 
   const results = strategies.map((s) => benchmarkStrategy(s, days));
 
+  // 4. Campaign & 5-Ending Reachability Benchmarks (seed 42 / seed 1 for fast_money)
+  const campaignRuns = [
+    { label: 'smartPro (workshop)', res: runHeadlessCampaign(smartProStrategy, network, 42, days, { careerChoice: 'workshop' }) },
+    { label: 'smartPro (bike)', res: runHeadlessCampaign(smartProStrategy, network, 42, days, { careerChoice: 'bike' }) },
+    { label: 'trustFocused', res: runHeadlessCampaign(trustFocusedStrategy, network, 42, days) },
+    { label: 'offAppHeavy', res: runHeadlessCampaign(offAppHeavyStrategy, network, 42, days) },
+    { label: 'exploiter', res: runHeadlessCampaign(exploiterStrategy, network, 42, days) },
+    { label: 'briber', res: runHeadlessCampaign(briberStrategy, network, 1, days) },
+    { label: 'reckless (scheme)', res: runHeadlessCampaign(recklessStrategy, network, 10, days, { joinedScheme: true }) },
+    { label: 'alwaysMaxCounter', res: runHeadlessCampaign(alwaysMaxCounterStrategy, network, 42, days) },
+  ];
+
   // Build markdown document
   const dateStr = new Date().toISOString().split('T')[0];
+  const unprofitWear = Math.round(unprofitKm * (BALANCE.WEAR.oilCost / BALANCE.WEAR.oilEveryKm));
   let md = `# Balance Metrics and Benchmark Reports\n\n`;
-  md += `*Updated: ${dateStr} — Headless Bot Simulation (T2.9)*\n\n`;
+  md += `*Updated: ${dateStr} — Real GameSession Bot Simulation (P5.3 / T11.3)*\n\n`;
 
   md += `## 1. Outcome Variety (200 rides, SmartPro)\n\n`;
   md += `- **Sample Size:** 200 completed rides\n`;
@@ -169,7 +191,7 @@ export function generateBalanceReport(): string {
   md += `- **Duration in Jam:** ${unprofitDuration} minutes (${unprofitIdle} min idling in traffic)\n`;
   md += `- **App Commission (15%):** ৳${(unprofitFare * BALANCE.COMMISSION_APP).toFixed(1)}\n`;
   md += `- **Fuel Consumed:** 0.325 L (৳42)\n`;
-  md += `- **Wear Cost:** ৳18\n`;
+  md += `- **Wear Cost:** ৳${unprofitWear}\n`;
   md += `- **Expected Net Profit:** **৳${unprofitNet.toFixed(1)}** (< 0)\n`;
   md += `*Taking this ride causes a direct financial loss. Declining preserves capital.*\n\n`;
 
@@ -182,10 +204,19 @@ export function generateBalanceReport(): string {
   }
   md += `\n`;
 
-  md += `## 4. Key Takeaways\n\n`;
+  md += `## 4. 20-Day Campaign & 5-Ending Reachability (Real GameSession)\n\n`;
+  md += `| Policy Run | Ending | Savings | Debt | Integrity | Standing | Evidence | Suspended |\n`;
+  md += `|---|---|---|---|---|---|---|---|\n`;
+  for (const { label, res } of campaignRuns) {
+    const m = res.meters;
+    md += `| **${label}** | \`${res.endingId}\` | ৳${res.finalSavings} | ৳${res.finalDebt} | ${m?.riderIntegrity ?? '-'} | ${m?.platformStanding ?? '-'} | ${m?.evidenceExposure ?? '-'} | ${res.wasSuspended ? 'yes' : 'no'} |\n`;
+  }
+  md += `\n`;
+
+  md += `## 5. Key Takeaways\n\n`;
   md += `1. **No Dominant Greedy Strategy:** \`alwaysMaxCounter\` achieves only **৳${results.find((r) => r.name === 'alwaysMaxCounter')?.avgDailyNet}** daily net because passengers walk away when quoted exorbitant fares (acceptance rate ${results.find((r) => r.name === 'alwaysMaxCounter')?.acceptanceRatePct}%).\n`;
   md += `2. **SmartPro Beats Blind Acceptance:** \`smartPro\` earns **৳${results.find((r) => r.name === 'smartPro')?.avgDailyNet}** vs \`acceptAll\`'s **৳${results.find((r) => r.name === 'acceptAll')?.avgDailyNet}** by negotiating fair prices and declining losing routes.\n`;
-  md += `3. **Reckless Hustler is Suboptimal:** Despite speeding to shave time, \`reckless\` earns **৳${results.find((r) => r.name === 'reckless')?.avgDailyNet}** (vs ৳${results.find((r) => r.name === 'smartPro')?.avgDailyNet} for smartPro) due to bike crash repair costs (avg ৳${results.find((r) => r.name === 'reckless')?.avgRepairCost}/day) and scared passengers withholding tips.\n`;
+  md += `3. **Reckless & Exploitative Play Carry Real Penalties:** \`reckless\` earns **৳${results.find((r) => r.name === 'reckless')?.avgDailyNet}** (avg ৳${results.find((r) => r.name === 'reckless')?.avgRepairCost}/day repairs), \`exploiter\` suffers severe integrity/standing loss and app suspension, and \`briber\` trades integrity and evidence exposure for police evasion.\n`;
 
   return md;
 }

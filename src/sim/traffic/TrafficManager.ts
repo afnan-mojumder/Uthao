@@ -4,6 +4,7 @@ import { stepCarFollowing, getIdmParams, type CarFollowingResult } from './idm';
 import { SignalController } from './signals';
 import { PedestrianManager } from './pedestrians';
 import { Rng } from '../../core/rng';
+import { isRushHourMinute } from '../../core/clock';
 import { distance2d, angleDiff, clamp } from '../../core/math';
 import { BALANCE } from '../../config/balance';
 import type { RoadType } from '../../core/types';
@@ -99,12 +100,7 @@ export interface CameraViewInfo {
 
 export function getTimeOfDayTrafficMultiplier(minute: number): number {
   const m = ((minute % 1440) + 1440) % 1440;
-  // Morning rush: 08:00 - 10:30 (480 - 630) -> 2.5
-  if (m >= 480 && m <= 630) {
-    return 2.5;
-  }
-  // Evening rush: 17:00 - 20:30 (1020 - 1230) -> 2.5
-  if (m >= 1020 && m <= 1230) {
+  if (isRushHourMinute(m)) {
     return 2.5;
   }
   // Midday: 11:00 - 16:00 (660 - 960) -> 1.0

@@ -1,5 +1,5 @@
 import { GameManager } from './GameManager';
-import { RideManager } from './ride/RideManager';
+import { RideManager, type DisputeResolutionKind, type PendingDispute } from './ride/RideManager';
 import { RequestGenerator } from './ride/RequestGenerator';
 import { TrafficManager, VEHICLE_CONFIGS } from './traffic/TrafficManager';
 import type { RoadNetwork } from './road/RoadNetwork';
@@ -28,7 +28,14 @@ import { clamp } from '../core/math';
 import { receipt as buildReceipt, fuelUsed, type FuelOptions } from './economy/fuel';
 import { bikeDefToSpec, getBikeDef } from './economy/bikes';
 import { checkPuncture } from './economy/maintenance';
-import type { TripReceipt, PassengerProfile, RoadSegment, RideRequest, BikeInfractionKind } from '../core/types';
+import type {
+  TripReceipt,
+  PassengerProfile,
+  RoadSegment,
+  RideRequest,
+  BikeInfractionKind,
+  EncounterInstance,
+} from '../core/types';
 import {
   startNegotiation,
   type NegotiationResult,
@@ -48,6 +55,27 @@ const TRAFFIC_NEAR_MISS_MARGIN_M = 1.5;
 const TRAFFIC_NEAR_MISS_MIN_SPEED_MS = 20 / 3.6;
 const TRAFFIC_NEAR_MISS_COOLDOWN_S = 1.0;
 const DYNAMIC_TRAFFIC_RANGE_SQ = 80 * 80;
+
+export interface FastForwardTripOptions {
+  idleMin?: number;
+  speedMultiplier?: number;
+  nearMisses?: number;
+  bumps?: number;
+  crashed?: boolean;
+  infractions?: number;
+  helpfulChoice?: boolean;
+  onEncounter?: (instance: EncounterInstance) => string | undefined;
+  onDispute?: (dispute: PendingDispute) => DisputeResolutionKind;
+}
+
+export interface FastForwardTripResult {
+  status: 'completed' | 'noShow' | 'cancelled' | 'disputed' | 'idle';
+  receipt: TripReceipt | null;
+  durationMin: number;
+  fuelLiters: number;
+  distanceKm: number;
+  encountersResolved: number;
+}
 
 export interface GameSessionOptions {
   gm: GameManager;
@@ -1396,10 +1424,443 @@ export class GameSession {
     this.gm.enterEndlessMode();
   }
 
-  /** T11.3: fast-forwards idle time (e.g. waiting for a request) without a
-   * full per-frame render loop. Not yet implemented. */
-  fastForwardTrip(opts: { idleMin?: number } = {}): void {
-    // ponytail: stub only, this is T11.3's job — do not invent the behavior here.
-    void opts;
+  private resolveEncounterIfAny(
+    onEncounter?: (instance: EncounterInstance) => string | undefined
+  ): number {
+    let resolved = 0;
+    while (this.gm.eventDirector.activeEncounter && onEncounter) {
+      const inst = this.gm.eventDirector.activeEncounter;
+      const picked = onEncounter(inst) ?? inst.choices[0]?.id;
+      if (!picked) break;
+      const ok = this.gm.dispatch({
+        type: 'chooseEncounterOption',
+        instanceId: inst.id,
+        choiceId: picked,
+      }).success;
+      if (!ok) break;
+      resolved++;
+    }
+    return resolved;
+  }
+
+  private advanceMacroMinutes(
+    gameMinutes: number,
+    phase: EncounterPhase,
+    speedKmh: number,
+    onEncounter?: (instance: EncounterInstance) => string | undefined
+  ): number {
+    let left = Math.max(0, gameMinutes);
+    let resolved = 0;
+    while (left > 1e-6 && !this.gm.shiftEnded) {
+      const chunkMin = Math.min(1, left);
+      const chunkDt = (chunkMin * 60) / TIME_SCALE;
+      this.gm.ticks++;
+      this.gm.tick(chunkDt, speedKmh, phase, false);
+      this.gm.evaluateEncounters(
+        this.buildEncounterContext(this.lastStepSegment, this.ride.getActiveRequest())
+      );
+      resolved += this.resolveEncounterIfAny(onEncounter);
+      left -= chunkMin;
+    }
+    return resolved;
+  }
+
+  private traverseMacroLeg(
+    fromNodeId: string,
+    toNodeId: string,
+    hasPassenger: boolean,
+    speedMultiplier: number,
+    extraIdleMin: number,
+    onEncounter?: (instance: EncounterInstance) => string | undefined
+  ): { distanceKm: number; encountersResolved: number } {
+    const em = this.gm.economyManager;
+    let totalKm = 0;
+    let encountersResolved = 0;
+
+    const targetNode = this.road.getNode(toNodeId);
+    const activeRoute = this.ride.currentRoute;
+    const useActive =
+      activeRoute &&
+      activeRoute.nodeIds.length > 0 &&
+      activeRoute.nodeIds[activeRoute.nodeIds.length - 1] === toNodeId;
+    const route = useActive
+      ? activeRoute
+      : this.road.route(fromNodeId, toNodeId, {
+          mode: 'motorcycle',
+          weather: this.gm.weather,
+          minute: this.gm.clock.minutes,
+          roadEvents: this.gm.roadEvents,
+          isFlooded: (s) => this.gm.weatherSystem.isFlooded(s.segmentId),
+          getFloodLevel: (id) => this.gm.weatherSystem.getFloodLevel(id),
+        });
+
+    this.env.hasPassenger = hasPassenger;
+    this.env.wet = this.gm.weatherSystem.isRoadWet();
+
+    const stepAlongSegment = (
+      x0: number,
+      z0: number,
+      y0: number,
+      x1: number,
+      z1: number,
+      y1: number,
+      seg: RoadSegment | null,
+      isLaunch: boolean
+    ): void => {
+      const dx = x1 - x0;
+      const dz = z1 - z0;
+      const segLenM = Math.hypot(dx, dz);
+      if (segLenM <= 1e-6) return;
+      const heading = Math.atan2(dx, dz);
+      this.lastStepSegment = seg;
+
+      const surface = seg ? this.gm.weatherSystem.getSurfaceModifier(seg) : 1.0;
+      const flooded = seg ? this.gm.weatherSystem.isFlooded(seg.segmentId) : false;
+      const floodCap =
+        seg && this.gm.weatherSystem.isSegmentFloodCapped(seg)
+          ? this.gm.weatherSystem.getSpeedCap(seg) / 3.6
+          : Infinity;
+      this.env.surface = surface;
+      this.envFlooded = flooded;
+      this.env.conditionPct = em.motorcycleCondition;
+      this.env.fuelEmpty = em.fuelLevel <= 0;
+
+      const condVmaxMult =
+        em.motorcycleCondition < this.bikeSpec.conditionPenaltyThreshold
+          ? BALANCE.WEAR.wornVmaxMult
+          : 1.0;
+      const effectiveVmax = this.bikeSpec.vmax * condVmaxMult;
+      const baseCruise = Math.min(11.3 * speedMultiplier, effectiveVmax, floodCap);
+      const cruiseMs = em.fuelLevel <= 0 ? BALANCE.FUEL.pushSpeedMs : Math.max(1.0, baseCruise);
+      const segRealSec = segLenM / cruiseMs;
+      const maxChunkS = 60 / TIME_SCALE;
+      const numChunks = Math.max(1, Math.ceil(segRealSec / maxChunkS));
+      const chunkDt = segRealSec / numChunks;
+      const chunkDistM = segLenM / numChunks;
+
+      for (let c = 0; c < numChunks; c++) {
+        const frac = (c + 1) / numChunks;
+        this.bike.x = x0 + dx * frac;
+        this.bike.z = z0 + dz * frac;
+        this.bike.y = y0 + (y1 - y0) * frac;
+        this.bike.heading = heading;
+        this.bike.speed = cruiseMs;
+        this.pose.x = this.bike.x;
+        this.pose.y = this.bike.y;
+        this.pose.z = this.bike.z;
+        this.pose.heading = heading;
+        this.pose.speed = cruiseMs;
+
+        this.syncLocation();
+        this.checkMissionPois();
+        const phase: EncounterPhase = hasPassenger ? 'onTrip' : 'atPickup';
+        this.gm.tick(chunkDt, cruiseMs * 3.6, phase, false);
+        this.gm.evaluateEncounters(this.buildEncounterContext(seg, this.ride.getActiveRequest()));
+        encountersResolved += this.resolveEncounterIfAny(onEncounter);
+
+        const km = (chunkDistM * DISTANCE_SCALE) / 1000;
+        totalKm += km;
+        em.applyWear(km);
+        this.rollBreakdown(km);
+        if (this.stallSec > 0) {
+          const stallMin = (this.stallSec * TIME_SCALE) / 60;
+          this.stallSec = 0;
+          encountersResolved += this.advanceMacroMinutes(stallMin, phase, 0, onEncounter);
+        }
+        this.rollPuncture(km);
+        encountersResolved += this.resolveEncounterIfAny(onEncounter);
+
+        if (em.fuelLevel > 0) {
+          const o = this.fuelOpts;
+          o.model = this.ride.activeBikeId;
+          o.engineTune = this.ride.hasEngineTune;
+          o.loadKg = hasPassenger ? BALANCE.FUEL.passengerKg : 0;
+          o.roughness = 1 - clamp(surface, 0, 1);
+          o.throttleStress = isLaunch && c === 0 ? 0.45 : 0.12;
+          o.conditionPct = em.motorcycleCondition;
+          const liters = Math.min(em.fuelLevel, fuelUsed(km, 0, o));
+          em.consumeFuel(liters);
+          this.tripFuelLiters += liters;
+        }
+
+        if (!this.ride.getActiveRequest()) break;
+      }
+    };
+
+    const hadTravel =
+      (route && route.nodeIds.length >= 2 && route.lengthM > 1) ||
+      (targetNode !== undefined &&
+        Math.hypot(targetNode.x - this.bike.x, targetNode.z - this.bike.z) > 8.0);
+
+    if (route && route.nodeIds.length >= 2) {
+      for (let i = 0; i < route.nodeIds.length - 1; i++) {
+        if (!this.ride.getActiveRequest()) break;
+        const n1 = this.road.getNode(route.nodeIds[i]!);
+        const n2 = this.road.getNode(route.nodeIds[i + 1]!);
+        const segId = route.segmentIds[i];
+        const seg = segId ? (this.road.getSegment(segId) ?? null) : null;
+        if (!n1 || !n2) continue;
+        const startX = i === 0 ? this.bike.x : n1.x;
+        const startZ = i === 0 ? this.bike.z : n1.z;
+        const startY = i === 0 ? this.bike.y : (n1.y ?? 0);
+        stepAlongSegment(startX, startZ, startY, n2.x, n2.z, n2.y ?? 0, seg, i === 0);
+      }
+    } else if (targetNode && hadTravel) {
+      stepAlongSegment(
+        this.bike.x,
+        this.bike.z,
+        this.bike.y,
+        targetNode.x,
+        targetNode.z,
+        targetNode.y ?? 0,
+        this.lastStepSegment,
+        true
+      );
+    }
+
+    // Account for autopilot launch + final approach deceleration overhead + idle time
+    const approachRealSec = hadTravel ? 5.8 / Math.max(0.5, speedMultiplier) : 0;
+    const approachIdleMin = hadTravel ? (0.5 * TIME_SCALE) / 60 / Math.max(0.5, speedMultiplier) : 0;
+    const totalIdleMin = Math.max(0, extraIdleMin) + approachIdleMin;
+    const approachGameMin = (approachRealSec * TIME_SCALE) / 60 + Math.max(0, extraIdleMin);
+
+    if (approachGameMin > 0 && this.ride.getActiveRequest()) {
+      this.bike.speed = 0;
+      this.pose.speed = 0;
+      const phase: EncounterPhase = hasPassenger ? 'onTrip' : 'atPickup';
+      encountersResolved += this.advanceMacroMinutes(approachGameMin, phase, 0, onEncounter);
+      if (totalIdleMin > 0 && em.fuelLevel > 0) {
+        const o = this.fuelOpts;
+        o.model = this.ride.activeBikeId;
+        o.engineTune = this.ride.hasEngineTune;
+        o.loadKg = hasPassenger ? BALANCE.FUEL.passengerKg : 0;
+        o.roughness = 0;
+        o.throttleStress = 0;
+        o.conditionPct = em.motorcycleCondition;
+        const idleLiters = Math.min(em.fuelLevel, fuelUsed(0, totalIdleMin, o));
+        em.consumeFuel(idleLiters);
+        this.tripFuelLiters += idleLiters;
+      }
+    }
+
+    return { distanceKm: totalKm, encountersResolved };
+  }
+
+  /**
+   * T11.3: fast-forwards an active trip (or idle wait) through the real
+   * TripFsm/RideManager, EconomyManager, ReputationSystem, EventDirector,
+   * and MissionManager without per-frame 60 Hz physics steps.
+   */
+  fastForwardTrip(opts: FastForwardTripOptions = {}): FastForwardTripResult {
+    const startDay = this.gm.clock.day;
+    const startMin = this.gm.clock.minutes;
+    const startFuel = this.gm.economyManager.fuelLevel;
+    const speedMultiplier = Math.max(0.25, opts.speedMultiplier ?? 1.0);
+    let encountersResolved = 0;
+    let totalDistanceKm = 0;
+
+    let completedReceipt: TripReceipt | null = null;
+    let cancelledReason: string | null = null;
+    const unsubComp = this.gm.bus.on('ride/completed', (ev) => {
+      completedReceipt = ev.receipt;
+    });
+    const unsubCanc = this.gm.bus.on('ride/cancelled', (ev) => {
+      if (this.tripReqId && ev.requestId === this.tripReqId) {
+        cancelledReason = ev.reason;
+      }
+    });
+
+    try {
+      const activeReq = this.ride.getActiveRequest();
+      if (!activeReq) {
+        const idleMin = opts.idleMin ?? 0;
+        if (idleMin > 0) {
+          let left = idleMin;
+          while (left > 1e-6 && !this.gm.shiftEnded) {
+            const chunk = Math.min(1, left);
+            encountersResolved += this.advanceMacroMinutes(chunk, 'roaming', 0, opts.onEncounter);
+            if (this.autoRequests && !this.ride.getActiveRequest() && !this.gm.shiftEnded) {
+              const eventDemandMult = this.gm.roadEvents.getDemandMultiplier();
+              const newReqs = this.requests.tick(
+                chunk,
+                this.gm.clock.minutes,
+                this.gm.weather,
+                this.pose,
+                this.requests.getRequestRateMultiplier() * eventDemandMult
+              );
+              for (const req of newReqs) {
+                this.ride.offer(req);
+              }
+            }
+            left -= chunk;
+          }
+        }
+        return {
+          status: 'idle',
+          receipt: null,
+          durationMin: (this.gm.clock.day - startDay) * 1440 + this.gm.clock.minutes - startMin,
+          fuelLiters: Math.max(0, startFuel - this.gm.economyManager.fuelLevel),
+          distanceKm: 0,
+          encountersResolved,
+        };
+      }
+
+      if (this.tripReqId !== activeReq.requestId) {
+        this.tripReqId = activeReq.requestId;
+        this.beginTripFuel();
+      }
+
+      this.pose.x = this.bike.x;
+      this.pose.y = this.bike.y;
+      this.pose.z = this.bike.z;
+      this.pose.heading = this.bike.heading;
+      this.pose.speed = 0;
+
+      if (this.ride.getTripState() === 'Accepted') {
+        this.ride.update(this.pose, SIM_DT);
+      }
+
+      // Leg 1: EnRouteToPickup -> Pickup arrival
+      if (this.ride.getTripState() === 'EnRouteToPickup') {
+        const fromNodeId =
+          this.road.nearestNode(this.bike.x, this.bike.z)?.nodeId ?? activeReq.pickupNodeId;
+        const leg1 = this.traverseMacroLeg(
+          fromNodeId,
+          activeReq.pickupNodeId,
+          false,
+          speedMultiplier,
+          0,
+          opts.onEncounter
+        );
+        totalDistanceKm += leg1.distanceKm;
+        encountersResolved += leg1.encountersResolved;
+
+        const pickupNode = this.road.getNode(activeReq.pickupNodeId);
+        if (pickupNode && this.ride.getActiveRequest()) {
+          this.bike.x = pickupNode.x;
+          this.bike.z = pickupNode.z;
+          this.bike.y = pickupNode.y ?? this.bike.y;
+          this.bike.speed = 0;
+          this.pose.x = this.bike.x;
+          this.pose.y = this.bike.y;
+          this.pose.z = this.bike.z;
+          this.pose.speed = 0;
+          this.syncLocation();
+          this.ride.update(this.pose, SIM_DT);
+          if (this.ride.getActiveRequest()) {
+            this.gm.evaluateEncounters(
+              this.buildEncounterContext(this.lastStepSegment, this.ride.getActiveRequest())
+            );
+            encountersResolved += this.resolveEncounterIfAny(opts.onEncounter);
+          }
+        }
+      }
+
+      // Leg 2: EnRouteToDestination -> Destination arrival & settlement
+      if (this.ride.getTripState() === 'EnRouteToDestination') {
+        const nmCount = Math.max(0, Math.floor(opts.nearMisses ?? 0));
+        for (let i = 0; i < nmCount; i++) {
+          this.gm.bus.emit('bike/nearMiss', { distanceM: 0.8, speedKmh: 45 });
+        }
+        const bumpCount = Math.max(0, Math.floor(opts.bumps ?? 0));
+        for (let i = 0; i < bumpCount; i++) {
+          this.gm.bus.emit('bike/collision', {
+            severity: 'bump',
+            relSpeedKmh: 15,
+            otherKind: 'traffic',
+            otherParty: true,
+            bikeSpeedKmh: 25,
+            otherSpeedKmh: 10,
+          });
+        }
+        const infCount = Math.max(0, Math.floor(opts.infractions ?? 0));
+        for (let i = 0; i < infCount; i++) {
+          this.gm.bus.emit('bike/infraction', {
+            kind: 'speeding',
+            segmentId: this.lastStepSegment?.segmentId ?? 'seg_1',
+          });
+        }
+        if (opts.helpfulChoice) {
+          this.gm.reputationSystem.recordHelpfulChoice();
+        }
+
+        const leg2 = this.traverseMacroLeg(
+          activeReq.pickupNodeId,
+          activeReq.destinationNodeId,
+          true,
+          speedMultiplier,
+          opts.idleMin ?? 0,
+          opts.onEncounter
+        );
+        totalDistanceKm += leg2.distanceKm;
+        encountersResolved += leg2.encountersResolved;
+
+        if (opts.crashed && this.ride.getActiveRequest()) {
+          this.gm.bus.emit('bike/collision', {
+            severity: 'crash',
+            relSpeedKmh: 35,
+            otherKind: 'traffic',
+            otherParty: true,
+            bikeSpeedKmh: 45,
+            otherSpeedKmh: 20,
+          });
+          encountersResolved += this.resolveEncounterIfAny(opts.onEncounter);
+        }
+
+        const destNode = this.road.getNode(activeReq.destinationNodeId);
+        if (destNode && this.ride.getActiveRequest() && this.ride.getTripState() === 'EnRouteToDestination') {
+          this.bike.x = destNode.x;
+          this.bike.z = destNode.z;
+          this.bike.y = destNode.y ?? this.bike.y;
+          this.bike.speed = 0;
+          this.pose.x = this.bike.x;
+          this.pose.y = this.bike.y;
+          this.pose.z = this.bike.z;
+          this.pose.speed = 0;
+          this.syncLocation();
+          this.ride.update(this.pose, 4.5);
+
+          const pendingDispute = this.ride.getPendingDispute();
+          if (pendingDispute && opts.onDispute) {
+            const choice = opts.onDispute(pendingDispute);
+            this.ride.resolveDispute(choice);
+          }
+        }
+      }
+
+      // Allow roaming encounters triggered by flags (e.g. policeViolation) to fire at drop-off stop
+      if (!this.ride.getActiveRequest() && opts.onEncounter && !this.gm.shiftEnded) {
+        this.bike.speed = 0;
+        this.pose.speed = 0;
+        encountersResolved += this.advanceMacroMinutes(1, 'roaming', 0, opts.onEncounter);
+      }
+
+      const durationMin =
+        (this.gm.clock.day - startDay) * 1440 + this.gm.clock.minutes - startMin;
+      const fuelLiters = Math.max(0, startFuel - this.gm.economyManager.fuelLevel);
+
+      let status: FastForwardTripResult['status'] = 'completed';
+      if (completedReceipt) {
+        status = 'completed';
+      } else if (this.ride.getPendingDispute()) {
+        status = 'disputed';
+      } else if (cancelledReason === 'noShow') {
+        status = 'noShow';
+      } else if (cancelledReason !== null) {
+        status = 'cancelled';
+      }
+
+      return {
+        status,
+        receipt: completedReceipt,
+        durationMin,
+        fuelLiters,
+        distanceKm: totalDistanceKm,
+        encountersResolved,
+      };
+    } finally {
+      unsubComp();
+      unsubCanc();
+    }
   }
 }

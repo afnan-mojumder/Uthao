@@ -1,5 +1,8 @@
 import { BALANCE } from '../../config/balance';
+import { isRushHourMinute } from '../../core/clock';
 import type { WeatherKind } from '../../core/types';
+
+export { isRushHourMinute };
 
 export function fairFare(
   virtualKm: number,
@@ -13,13 +16,6 @@ export function fairFare(
 
   const rounded = Math.round(raw / cfg.roundTo) * cfg.roundTo;
   return Math.max(cfg.minFare, rounded);
-}
-
-export function isRushHourMinute(minute: number): boolean {
-  const m = ((minute % 1440) + 1440) % 1440;
-  // Morning rush: 08:00 - 10:30 (480 - 630)
-  // Evening rush: 17:00 - 20:30 (1020 - 1230)
-  return (m >= 480 && m <= 630) || (m >= 1020 && m <= 1230);
 }
 
 export function isLateNightMinute(minute: number): boolean {

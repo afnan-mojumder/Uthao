@@ -1,6 +1,7 @@
 import type { RoadNode, RoadSegment, WeatherKind } from '../../core/types';
 import { distance2d, angleDiff, clamp } from '../../core/math';
 import { DISTANCE_SCALE } from '../../config/constants';
+import { isRushHourMinute } from '../../core/clock';
 
 export interface RouteOptions {
   mode: 'motorcycle' | 'walk';
@@ -307,10 +308,7 @@ export class RoutingGraph {
               ? 0.9
               : 1.0;
           const min = opts.minute ?? 720;
-          const minOfDay = min % 1440;
-          const isRush =
-            (minOfDay >= 450 && minOfDay <= 600) ||
-            (minOfDay >= 1020 && minOfDay <= 1200);
+          const isRush = isRushHourMinute(min);
           const eventCong = opts.roadEvents?.getCongestionMultiplier?.(seg.segmentId) ?? 1;
           const congestion =
             (isRush ? 1 + seg.trafficDensity * 0.5 : 1 + seg.trafficDensity * 0.2) * eventCong;

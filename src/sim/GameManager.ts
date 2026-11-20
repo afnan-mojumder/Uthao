@@ -48,6 +48,7 @@ import {
   getAvailableCareerChoices,
   type CareerChoice,
   type EndingEvaluationContext,
+  type EndingResult,
 } from './mission/endings';
 import type { MissionDef, EndingDef } from './schemas';
 import ch1Missions from '../../data/missions/ch1.json';
@@ -745,6 +746,11 @@ export class GameManager {
     if (this.mode === 'endless') return;
     const result = evaluateEnding(this.endingContext());
     this.bus.emit('ending/reached', { endingId: result.endingId, result });
+  }
+
+  /** Evaluates the current campaign ending directly from live GameManager state. */
+  evaluateCurrentEnding(): EndingResult {
+    return evaluateEnding(this.endingContext());
   }
 
   /** A passenger has agreed to a trip and it is not yet settled: its money must
