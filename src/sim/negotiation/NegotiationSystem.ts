@@ -690,38 +690,39 @@ export function respond(
     };
   }
 
-  // Passenger counter-offer
+  // Passenger counter-offer (off-app refusals keep the standing offer unchanged)
   const cur = session.currentPassengerOffer;
-  const diff = Math.max(0, F - cur);
-  const step = 0.3 + 0.4 * (1 - session.profile.bargainingTendency);
-  const rawNext = cur + diff * step;
-  const cap = session.expectedBudget * (1 + 0.3 * session.profile.urgency);
-  const boundedNext = Math.min(rawNext, cap);
-  let nextPassengerOffer =
-    Math.round(boundedNext / BALANCE.FARE.roundTo) * BALANCE.FARE.roundTo;
-  nextPassengerOffer = Math.max(cur, nextPassengerOffer);
-  nextPassengerOffer = Math.min(F, nextPassengerOffer);
+  let nextPassengerOffer = cur;
+  if (action.kind !== 'offApp') {
+    const diff = Math.max(0, F - cur);
+    const step = 0.3 + 0.4 * (1 - session.profile.bargainingTendency);
+    const rawNext = cur + diff * step;
+    const cap = session.expectedBudget * (1 + 0.3 * session.profile.urgency);
+    const boundedNext = Math.min(rawNext, cap);
+    nextPassengerOffer = Math.round(boundedNext / BALANCE.FARE.roundTo) * BALANCE.FARE.roundTo;
+    nextPassengerOffer = Math.max(cur, nextPassengerOffer);
+    nextPassengerOffer = Math.min(F, nextPassengerOffer);
 
-  // If passenger's counter matches or exceeds rider's ask, deal is accepted
-  // (skip price-match auto-accept when a rejected off-app proposal hesitated on safety/trust)
-  if (action.kind !== 'offApp' && nextPassengerOffer >= F) {
-    const updatedSession: NegotiationSession = {
-      ...session,
-      profile: nextProfile,
-      discountApplied,
-      currentRiderOffer: F,
-      currentPassengerOffer: F,
-      status: 'accepted',
-    };
-    return {
-      session: updatedSession,
-      passengerLine:
-        action.kind === 'discount' && F <= session.fairFare
-          ? 'dialogue.negotiation.discount_accepted'
-          : 'dialogue.negotiation.counter_accepted',
-      outcome: { kind: 'accepted', fare: F },
-      topFactor: acceptedTopFactor,
-    };
+    // If passenger's counter matches or exceeds rider's ask, deal is accepted
+    if (nextPassengerOffer >= F) {
+      const updatedSession: NegotiationSession = {
+        ...session,
+        profile: nextProfile,
+        discountApplied,
+        currentRiderOffer: F,
+        currentPassengerOffer: F,
+        status: 'accepted',
+      };
+      return {
+        session: updatedSession,
+        passengerLine:
+          action.kind === 'discount' && F <= session.fairFare
+            ? 'dialogue.negotiation.discount_accepted'
+            : 'dialogue.negotiation.counter_accepted',
+        outcome: { kind: 'accepted', fare: F },
+        topFactor: acceptedTopFactor,
+      };
+    }
   }
 
   // Normal counter-rejection

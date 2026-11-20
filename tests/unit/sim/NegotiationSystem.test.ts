@@ -619,5 +619,53 @@ describe('NegotiationSystem (T2.3)', () => {
       expect(walkSess.status).toBe('walkedAway');
       expect(walkSess.round).toBeLessThanOrEqual(walkSess.maxRounds);
     });
+
+    it('preserves currentPassengerOffer unchanged when offApp is rejected below or above standing offer', () => {
+      const careful = mockProfile({
+        archetype: 'careful',
+        safetySensitivity: 0.95,
+        trustInRider: 0.1,
+        patience: 0.9,
+        bargainingTendency: 0.2,
+        urgency: 0.5,
+      });
+
+      let sawLowerReject = false;
+      let sawHigherReject = false;
+
+      for (let i = 0; i < 200; i++) {
+        const s = startNegotiation(
+          mockRequest({ requestId: `req_off_preserve_${i}`, estimatedDistance: 4.0, estimatedDuration: 15 }),
+          careful,
+          { traffic: 0.5, day: 1, walkM: 0, rng: new Rng(i + 1000) }
+        );
+        const cur = s.currentPassengerOffer;
+
+        const lowerOffer = Math.max(BALANCE.FARE.minFare, cur - 15);
+        if (lowerOffer < cur) {
+          const lowRes = respond(s, { kind: 'offApp', amount: lowerOffer });
+          if (lowRes.outcome?.kind === 'rejected') {
+            sawLowerReject = true;
+            expect(lowRes.session.status).toBe('active');
+            expect(lowRes.session.currentPassengerOffer).toBe(cur);
+            expect(lowRes.passengerLine).toBe('dialogue.negotiation.off_app_rejected');
+          }
+        }
+
+        const higherOffer = Math.min(s.expectedBudget * 2, cur + 30);
+        if (higherOffer > cur) {
+          const highRes = respond(s, { kind: 'offApp', amount: higherOffer });
+          if (highRes.outcome?.kind === 'rejected') {
+            sawHigherReject = true;
+            expect(highRes.session.status).toBe('active');
+            expect(highRes.session.currentPassengerOffer).toBe(cur);
+            expect(highRes.passengerLine).toBe('dialogue.negotiation.off_app_rejected');
+          }
+        }
+      }
+
+      expect(sawLowerReject).toBe(true);
+      expect(sawHigherReject).toBe(true);
+    });
   });
 });
