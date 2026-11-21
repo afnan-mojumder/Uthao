@@ -353,7 +353,14 @@ export class AssetManager {
               this.prototypes.set(id, proto);
             }
             return normalized;
-          } catch {
+          } catch (err) {
+            if (import.meta.env?.DEV) {
+              // eslint-disable-next-line no-console
+              console.warn(
+                `[AssetManager] failed to load "${id}" (${entry.url}), using procedural fallback:`,
+                err
+              );
+            }
             if (this.generation !== startGen) {
               return this.createProceduralFallback(id, lod);
             }

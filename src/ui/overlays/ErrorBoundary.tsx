@@ -3,6 +3,7 @@ import { t } from '../i18n';
 import {
   activeSaveSystemSignal,
   clearRuntimeCrash,
+  formatErrorMessage,
   reportRuntimeCrash,
   runtimeCrashSignal,
   Z_LAYER,
@@ -127,13 +128,6 @@ export function triggerSaveDataDownload(): string {
   return json;
 }
 
-function formatCrashMessage(error: unknown): string {
-  if (error instanceof Error) return error.message;
-  if (typeof error === 'string') return error;
-  if (typeof error === 'number' || typeof error === 'boolean') return String(error);
-  return 'Unknown error';
-}
-
 export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   override state: ErrorBoundaryState = {
     renderError: null,
@@ -141,11 +135,11 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   };
 
   static override getDerivedStateFromError(error: unknown): Partial<ErrorBoundaryState> {
-    return { renderError: formatCrashMessage(error) };
+    return { renderError: formatErrorMessage(error) };
   }
 
   override componentDidCatch(error: unknown): void {
-    this.setState({ renderError: formatCrashMessage(error) });
+    this.setState({ renderError: formatErrorMessage(error) });
   }
 
   private handleExport = (): void => {

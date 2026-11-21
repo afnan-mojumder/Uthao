@@ -166,7 +166,11 @@ export class EventBus<M extends Record<string, unknown>> {
     for (const fn of Array.from(set)) {
       try {
         fn(payload);
-      } catch {
+      } catch (err) {
+        if (import.meta.env?.DEV) {
+          // eslint-disable-next-line no-console
+          console.error(`[EventBus] listener error for "${key}":`, err);
+        }
         // Isolate subscriber errors so remaining listeners still receive the event
       }
     }

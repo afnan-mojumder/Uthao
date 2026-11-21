@@ -20,6 +20,7 @@ import {
   bindEventBusToStore,
   bindGlobalCrashHandlers,
   bindScreenWakeLock,
+  formatErrorMessage,
   pausedSignal,
   contextLostSignal,
   unsupportedSignal,
@@ -155,12 +156,7 @@ if (import.meta.env.DEV && isMapTool) {
   // the renderer's colliders so the first frame has full collision coverage.
   void bootGame().catch((err: unknown) => {
     mountUiApp();
-    const message =
-      err instanceof Error
-        ? err.message
-        : typeof err === 'string'
-          ? err
-          : 'Unknown error';
+    const message = formatErrorMessage(err);
     loadingSignal.value = {
       active: typeof document !== 'undefined',
       stageKey: 'loading.error',

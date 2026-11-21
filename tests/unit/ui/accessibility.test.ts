@@ -16,6 +16,7 @@ import {
   pausedSignal,
   isGamepadRebindingSignal,
   exitToTitle,
+  formatErrorMessage,
   type GameSettings,
 } from '../../../src/ui/store';
 import { setLanguage } from '../../../src/ui/i18n';
@@ -1336,5 +1337,21 @@ describe('P8.2 Runtime Resilience, Mobile In-App Browser Compatibility & Optiona
     expect(swToast).not.toBeNull();
     expect(swReloadBtn).not.toBeNull();
     swUpdateAvailableSignal!.value = false;
+  });
+
+  it('formatErrorMessage extracts useful text from Error instances, primitives, custom toString, and plain objects', () => {
+    expect(formatErrorMessage(new Error('boom'))).toBe('boom');
+    expect(formatErrorMessage('plain crash')).toBe('plain crash');
+    expect(formatErrorMessage(404)).toBe('404');
+    expect(formatErrorMessage({ message: 'structured failure' })).toBe('structured failure');
+    expect(formatErrorMessage({ code: 503, reason: 'quota' })).toBe('{"code":503,"reason":"quota"}');
+    expect(
+      formatErrorMessage({
+        toString() {
+          return 'CustomErrorText';
+        },
+      })
+    ).toBe('CustomErrorText');
+    expect(formatErrorMessage({})).toBe('Unknown error');
   });
 });

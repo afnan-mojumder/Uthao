@@ -487,9 +487,36 @@ test.describe('T3.10 Menus, Settings, Pause and Dhaka Map E2E', () => {
       .toBeGreaterThan(0);
     await page.keyboard.up('KeyW');
 
+    const openPauseCleanly = async () => {
+      for (let attempt = 0; attempt < 4; attempt++) {
+        const choiceCard = page.getByTestId('choice-card');
+        if (await choiceCard.isVisible().catch(() => false)) {
+          const outcomeContinue = page.getByTestId('choice-outcome-continue');
+          if (await outcomeContinue.isVisible().catch(() => false)) {
+            await outcomeContinue.click();
+          } else {
+            await choiceCard.locator('button').last().click();
+          }
+          await expect
+            .poll(async () => {
+              const postOutcome = page.getByTestId('choice-outcome-continue');
+              if (await postOutcome.isVisible().catch(() => false)) {
+                await postOutcome.click();
+              }
+              return await choiceCard.isVisible().catch(() => false);
+            })
+            .toBe(false);
+        }
+        await page.keyboard.press('Escape');
+        if (await page.getByTestId('pause-menu').isVisible().catch(() => false)) {
+          return;
+        }
+      }
+      await expect(page.getByTestId('pause-menu')).toBeVisible({ timeout: 5000 });
+    };
+
     // 2. Open Pause -> SaveSlots -> save to slot1 -> Exit to Main Menu -> Continue reload
-    await page.keyboard.press('Escape');
-    await expect(page.getByTestId('pause-menu')).toBeVisible({ timeout: 5000 });
+    await openPauseCleanly();
     await page.getByTestId('pause-btn-save').click();
     await expect(page.getByTestId('save-slots-modal')).toBeVisible({ timeout: 5000 });
     await page.getByTestId('btn-action-save-slot1').click();
@@ -505,7 +532,7 @@ test.describe('T3.10 Menus, Settings, Pause and Dhaka Map E2E', () => {
     await page.getByTestId('menu-btn-continue').click();
     await expect(page.locator('#hud')).toBeVisible({ timeout: 15000 });
 
-    // 3. Seed an end-of-shift v1 save in localStorage (exercises 1->2 migration + DayEnd Share Scorecard)
+    // 3. Seed an end-of-shift SaveV2 payload in localStorage (exercises DayEnd reload + Share Scorecard without debug hooks)
     await page.evaluate(() => {
       const slot1Raw = localStorage.getItem('uthao.save.slot1');
       if (slot1Raw) {
@@ -522,7 +549,7 @@ test.describe('T3.10 Menus, Settings, Pause and Dhaka Map E2E', () => {
         );
       }
     });
-    await page.keyboard.press('Escape');
+    await openPauseCleanly();
     await page.getByTestId('pause-btn-load').click();
     await page.getByTestId('btn-action-load-slot2').click();
     const dayEnd = page.getByTestId('day-end-screen');
@@ -583,7 +610,7 @@ test.describe('T3.10 Menus, Settings, Pause and Dhaka Map E2E', () => {
         );
       }
     });
-    await page.keyboard.press('Escape');
+    await openPauseCleanly();
     await page.getByTestId('pause-btn-load').click();
     await page.getByTestId('btn-action-load-slot3').click();
 
@@ -603,6 +630,40 @@ test.describe('T3.10 Menus, Settings, Pause and Dhaka Map E2E', () => {
     });
     expect(swReady.hasSwApi).toBe(true);
     expect(swReady.hasManifest).toBe(true);
+    expect(errors).toEqual([]);
+  });
+
+  test('service worker caches built dist/ and boots Main Menu offline after reload', async ({ page, context }) => {
+    test.skip(!process.env.PLAYWRIGHT_PREVIEW, 'Offline SW reload test requires built dist/ served by vite preview');
+    test.setTimeout(90000);
+    const errors: string[] = [];
+    page.on('pageerror', (e) => errors.push(e.message));
+
+    await page.goto('/');
+    await expect(page.getByTestId('main-menu')).toBeVisible({ timeout: 30000 });
+
+    await page.evaluate(async () => {
+      if ('serviceWorker' in navigator) {
+        await navigator.serviceWorker.ready;
+      }
+    });
+
+    const isControlled = await page.evaluate(() => Boolean(navigator.serviceWorker?.controller));
+    if (!isControlled) {
+      await page.reload();
+      await expect(page.getByTestId('main-menu')).toBeVisible({ timeout: 30000 });
+      await expect
+        .poll(() => page.evaluate(() => Boolean(navigator.serviceWorker?.controller)), { timeout: 15000 })
+        .toBe(true);
+    }
+
+    await context.setOffline(true);
+    try {
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await expect(page.getByTestId('main-menu')).toBeVisible({ timeout: 30000 });
+    } finally {
+      await context.setOffline(false);
+    }
     expect(errors).toEqual([]);
   });
 

@@ -335,16 +335,44 @@ export const loadingSignal = signal<LoadingState>({
 export const contextLostSignal = signal<boolean>(false);
 export const runtimeCrashSignal = signal<string | null>(null);
 
+export function formatErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message || error.name || 'Unknown error';
+  }
+  if (typeof error === 'string') return error || 'Unknown error';
+  if (
+    typeof error === 'number' ||
+    typeof error === 'boolean' ||
+    typeof error === 'bigint' ||
+    typeof error === 'symbol'
+  ) {
+    return String(error);
+  }
+  if (error !== null && typeof error === 'object') {
+    const maybeMsg = (error as { message?: unknown }).message;
+    if (typeof maybeMsg === 'string' && maybeMsg.length > 0) {
+      return maybeMsg;
+    }
+    try {
+      const rendered = (error as { toString?: () => unknown }).toString?.();
+      if (typeof rendered === 'string' && rendered.length > 0 && rendered !== '[object Object]') {
+        return rendered;
+      }
+    } catch {
+      // Fall through to JSON serialization
+    }
+    try {
+      const json = JSON.stringify(error);
+      if (json && json !== '{}') return json;
+    } catch {
+      // Circular or non-serializable object
+    }
+  }
+  return 'Unknown error';
+}
+
 export function reportRuntimeCrash(error: unknown): void {
-  const msg =
-    error instanceof Error
-      ? error.message
-      : typeof error === 'string'
-        ? error
-        : typeof error === 'number' || typeof error === 'boolean'
-          ? String(error)
-          : 'Unknown error';
-  runtimeCrashSignal.value = msg;
+  runtimeCrashSignal.value = formatErrorMessage(error);
 }
 
 export function clearRuntimeCrash(): void {
