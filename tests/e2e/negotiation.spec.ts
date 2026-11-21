@@ -5,7 +5,7 @@ test('negotiation flow: debug-spawn a bargainer, counter twice, accept, assert t
 }) => {
   test.setTimeout(120000);
 
-  await page.goto('/?debug=1&district=testloop&encounters=0');
+  await page.goto('/?debug=1&district=testloop&encounters=0&seed=4242');
   await page.waitForSelector('#game-canvas');
   await expect(page.locator('#hud')).toBeVisible();
 
@@ -55,8 +55,8 @@ test('negotiation flow: debug-spawn a bargainer, counter twice, accept, assert t
   await expect(page.locator('[data-testid="negotiation-destination"]')).not.toHaveText('');
   await expect(negPanel).not.toContainText(/\{(destination|place)\}/);
 
-  // Counter 2: step up high (+৳30) and counter again (passenger rejects)
-  for (let i = 0; i < 3; i++) {
+  // Counter 2: step up high (+৳80) and counter again (passenger rejects)
+  for (let i = 0; i < 8; i++) {
     await plus10Btn.click();
   }
   await counterBtn.click();
@@ -72,7 +72,10 @@ test('negotiation flow: debug-spawn a bargainer, counter twice, accept, assert t
     () => window.__uthao?.eventLog.filter((e) => e === 'ride/accepted').length ?? 0
   );
   expect(acceptedAfterAgreement).toBe(acceptedBefore + 1);
-  await page.evaluate(() => window.__uthao?.autopilot(true));
+  await page.evaluate(() => {
+    window.__uthao?.gm.roadEvents.clearEvents();
+    window.__uthao?.autopilot(true);
+  });
 
   // Wait for trip completion on autopilot
   await page.waitForFunction(

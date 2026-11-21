@@ -146,6 +146,10 @@ test.describe('P5.2 Save v2 & Bulletproof Resume @dev-only', () => {
     await page.waitForSelector('#game-canvas');
     await expect(page.locator('#hud')).toBeVisible();
 
+    await expect
+      .poll(() => page.evaluate(() => window.__uthao?.rideManager?.getTripState() ?? ''), { timeout: 5000 })
+      .toMatch(/^(EnRouteToPickup|EnRouteToDestination)$/);
+
     const preSave = await page.evaluate(() => {
       const api = window.__uthao!;
       return {
