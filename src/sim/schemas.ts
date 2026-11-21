@@ -200,7 +200,15 @@ export type ArchetypesData = z.infer<typeof ArchetypesDataSchema>;
 
 export const ConditionSchema = z.object({
   phase: z
-    .enum(['requestOffered', 'atPickup', 'onTrip', 'dropOff', 'roaming'])
+    .enum([
+      'requestOffered',
+      'enRouteToPickup',
+      'atPickup',
+      'onTrip',
+      'dropOff',
+      'postDropoff',
+      'roaming',
+    ])
     .optional(),
   tags: z.array(z.string()).optional(),
   weather: z
@@ -244,6 +252,12 @@ export const ConditionSchema = z.object({
       z.number()
     )
     .optional(),
+  minTripDistanceM: z.number().nonnegative().optional(),
+  minPickupDistanceM: z.number().nonnegative().optional(),
+  minRoamDistanceM: z.number().nonnegative().optional(),
+  requiresAnchorKind: z.array(z.string()).optional(),
+  requiresRoadEventKind: z.array(z.string()).optional(),
+  requiresChild: z.boolean().optional(),
   custom: z.string().optional(),
 });
 
@@ -397,6 +411,7 @@ export const EncounterDefSchema = z.object({
   weight: z.number().positive(),
   cooldownMin: z.number().nonnegative(),
   oncePerDay: z.boolean().optional(),
+  presentation: z.enum(['modal', 'inline']).optional(),
   lineKey: z.string(),
   cueKey: z.string().optional(),
   choices: z.array(EncounterChoiceDefSchema).min(1),

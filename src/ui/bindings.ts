@@ -20,6 +20,7 @@ import {
   setFuelDispatchers,
   setChargePhoneDispatcher,
   setRecoverBikeDispatcher,
+  setCancelWaitDispatcher,
   setMenuDispatchers,
   setHasSaveCallback,
   setSaveDispatchers,
@@ -67,10 +68,19 @@ export function syncMapLiveFromSession(session: GameSession): void {
   }
   const view = deriveRideView(rideManager);
   const req = rideManager.getActiveRequest();
-  const routeNodes = rideManager.currentRoute?.nodeIds ?? [];
+  const followUp = session.getActiveFollowUp?.() ?? null;
+  const routeNodes =
+    rideManager.currentRoute?.nodeIds ??
+    session.getFollowUpRoute?.()?.nodeIds ??
+    session.getActiveDeliveryRoute?.()?.nodeIds ??
+    session.getActiveMissionRoute?.()?.nodeIds ??
+    [];
   const pickupNodeId = req && view.pickupVisible ? req.pickupNodeId : null;
   const dropoffNodeId = req && view.dropoffVisible ? req.destinationNodeId : null;
-  const waypointNodeId = gm.waypointNodeId ?? null;
+  const waypointNodeId =
+    gm.waypointNodeId ??
+    (view.stopVisible ? view.stopNodeId : null) ??
+    (followUp ? followUp.nodeId : null);
 
   const activeEvents = gm.roadEvents
     .getActiveEvents()
@@ -90,14 +100,21 @@ export function syncMapLiveFromSession(session: GameSession): void {
     })
     .filter((ev) => ev.nodeId.length > 0);
 
-  const reachTarget = gm.missionManager.getActiveReachTarget();
   const storyNodeIds: string[] = [];
-  if (reachTarget) {
-    const matchedPoi = session.road
-      .getPois()
-      .find((p) => p.id === reachTarget.poiId || p.kind === reachTarget.poiId);
-    if (matchedPoi) {
-      storyNodeIds.push(matchedPoi.nodeId);
+  const missionBeacon = session.getActiveMissionBeaconState?.();
+  if (missionBeacon?.visible && missionBeacon.nodeId) {
+    storyNodeIds.push(missionBeacon.nodeId);
+  } else {
+    const reachTarget = gm.missionManager.getActiveReachTarget();
+    if (reachTarget) {
+      const isKind = reachTarget.poiId.startsWith('poi_kind:');
+      const stripped = isKind ? reachTarget.poiId.slice('poi_kind:'.length) : reachTarget.poiId;
+      const matchedPoi = session.road
+        .getPois()
+        .find((p) => (isKind ? p.kind === stripped : p.id === stripped || p.kind === stripped));
+      if (matchedPoi) {
+        storyNodeIds.push(matchedPoi.nodeId);
+      }
     }
   }
 
@@ -608,6 +625,10 @@ export function bindUi(session: GameSession, saveSystem?: SaveSystem): () => voi
       syncMapLive();
     }
   );
+  setCancelWaitDispatcher(() => {
+    rideManager.cancelActiveWait();
+    syncMapLive();
+  });
   setHasSaveCallback(() => saveSystem?.hasAnySave() ?? false);
 
   setSaveDispatchers(
@@ -637,9 +658,18 @@ export function bindUi(session: GameSession, saveSystem?: SaveSystem): () => voi
       } else if (nextStep === 'tea_stall') {
         gm.bus.emit('story/flag', { key: 'tutorial_mintu_advice', value: true });
         tutorialSignal.value = { ...tutorialSignal.value, ...liveFields, step: nextStep };
+      } else if (nextStep === 'riding') {
+        const fare = tutorialSignal.value.agreedFare ?? 100;
+        session.startLiveTutorialRide?.(fare);
+        tutorialSignal.value = {
+          ...tutorialSignal.value,
+          ...liveFields,
+          step: 'riding',
+          receipt: null,
+        };
       } else if (nextStep === 'receipt') {
         const fare = tutorialSignal.value.agreedFare ?? 100;
-        const receipt = session.settleTutorialRide(fare);
+        const receipt = tutorialSignal.value.receipt ?? session.settleTutorialRide(fare);
         tutorialSignal.value = {
           ...tutorialSignal.value,
           ...liveFields,
@@ -660,6 +690,7 @@ export function bindUi(session: GameSession, saveSystem?: SaveSystem): () => voi
       gm.bus.emit('story/flag', { key: 'tutorial_ride_done', value: true });
     },
     skip: () => {
+      session.cancelLiveTutorialRide?.();
       gm.bus.emit('story/flag', { key: 'tutorial_bike_started', value: true });
       gm.bus.emit('story/flag', { key: 'tutorial_mintu_advice', value: true });
       gm.bus.emit('story/flag', { key: 'tutorial_nabila_negotiated', value: true });

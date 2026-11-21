@@ -30,6 +30,7 @@ export interface HudSyncCache {
   lastMissionPollMs: number;
   lastObjKey: string;
   lastPlaceKey: string;
+  lastObjMin: number;
   cachedObjectiveText: string;
   lastDistrictId: string;
   cachedDistrictName: string;
@@ -54,6 +55,7 @@ export interface HudSyncInput {
   gear?: number;
   objectiveKey: string;
   placeKey: string;
+  objectiveMin?: number;
   navKind: string;
   navTextKey: string;
   navDistM: number;
@@ -92,6 +94,7 @@ export function createHudCache(): HudSyncCache {
     lastMissionPollMs: -Infinity,
     lastObjKey: '',
     lastPlaceKey: '',
+    lastObjMin: -1,
     cachedObjectiveText: '',
     lastDistrictId: '',
     cachedDistrictName: '',
@@ -115,6 +118,7 @@ export function resetHudCache(cache: HudSyncCache): void {
   cache.lastMissionPollMs = -Infinity;
   cache.lastObjKey = '';
   cache.lastPlaceKey = '';
+  cache.lastObjMin = -1;
   cache.cachedObjectiveText = '';
   cache.lastDistrictId = '';
   cache.cachedDistrictName = '';
@@ -151,13 +155,21 @@ export function syncHudWithCache(cache: HudSyncCache, input: HudSyncInput): bool
 
   const cur = hudSignal.value;
 
+  const objMin = input.objectiveMin ?? -1;
   const objChanged =
-    langChanged || input.objectiveKey !== cache.lastObjKey || input.placeKey !== cache.lastPlaceKey;
+    langChanged ||
+    input.objectiveKey !== cache.lastObjKey ||
+    input.placeKey !== cache.lastPlaceKey ||
+    objMin !== cache.lastObjMin;
   if (objChanged) {
     cache.lastObjKey = input.objectiveKey;
     cache.lastPlaceKey = input.placeKey;
+    cache.lastObjMin = objMin;
     cache.cachedObjectiveText = t(input.objectiveKey, {
       place: input.placeKey ? t(input.placeKey) : '',
+      ...(input.objectiveMin !== undefined
+        ? { min: localDigits(input.objectiveMin) }
+        : {}),
     });
   }
 

@@ -55,6 +55,7 @@ export class RoadEventManager {
   private network?: RoadNetwork;
   private readonly rng: Rng;
   private nextEventSeq = 0;
+  version = 0;
 
   private activeEvents: Map<string, ActiveRoadEvent> = new Map();
   private scheduledEvents: ScheduledRoadEvent[] = [];
@@ -89,6 +90,7 @@ export class RoadEventManager {
     };
 
     this.activeEvents.set(event.id, event);
+    this.version++;
 
     if (this.bus) {
       this.bus.emit('world/roadEvent', {
@@ -112,6 +114,7 @@ export class RoadEventManager {
     if (!existing) return false;
 
     this.activeEvents.delete(id);
+    this.version++;
 
     if (this.bus) {
       this.bus.emit('world/roadEvent', {
@@ -129,12 +132,14 @@ export class RoadEventManager {
 
   clearEvents(): void {
     this.activeEvents.clear();
+    this.version++;
   }
 
   reset(): void {
     this.activeEvents.clear();
     this.scheduledEvents.length = 0;
     this.nextEventSeq = 0;
+    this.version++;
   }
 
   setSeed(seed: number): void {
@@ -217,6 +222,26 @@ export class RoadEventManager {
       if (event.active) return event;
     }
     return undefined;
+  }
+
+  getEventById(id: string): ActiveRoadEvent | undefined {
+    return this.activeEvents.get(id);
+  }
+
+  hasActiveWorkerEventOnSegment(segmentId: string): boolean {
+    for (const event of this.activeEvents.values()) {
+      if (event.active && event.segmentId === segmentId && event.hasWorkers) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /** Zero-allocation iteration over active road events for per-tick scanning. */
+  forEachActiveEvent(cb: (event: ActiveRoadEvent) => void): void {
+    for (const event of this.activeEvents.values()) {
+      if (event.active) cb(event);
+    }
   }
 
   /**

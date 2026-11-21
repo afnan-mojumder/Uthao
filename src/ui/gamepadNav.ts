@@ -69,7 +69,9 @@ export function uiModalOpen(
     settingsOpen ||
     settingsOpenSignal.value ||
     screenSignal.value !== 'game' ||
-    choiceSignal.value.active ||
+    (choiceSignal.value.active &&
+      (choiceSignal.value.presentation !== 'inline' ||
+        Boolean(choiceSignal.value.outcomeLineKey))) ||
     negotiationSignal.value.active ||
     dayEndSignal.value.active ||
     endingSignal.value.active ||
@@ -78,7 +80,7 @@ export function uiModalOpen(
     karmaPanelSignal.value ||
     uiSheetSignal.value ||
     tripSummarySignal.value !== null ||
-    (!opts.ignoreTutorial && tutorialSignal.value.active) ||
+    (!opts.ignoreTutorial && tutorialSignal.value.active && tutorialSignal.value.step !== 'riding') ||
     saveSlotsSignal.value.isOpen ||
     phoneSignal.value.open
   );

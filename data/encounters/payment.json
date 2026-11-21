@@ -112,8 +112,9 @@
     "id": "enc_phone_left",
     "category": "payment",
     "trigger": {
-      "phase": "dropOff"
+      "phase": "postDropoff"
     },
+    "presentation": "inline",
     "weight": 8,
     "cooldownMin": 120,
     "oncePerDay": true,

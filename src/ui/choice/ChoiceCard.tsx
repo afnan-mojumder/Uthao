@@ -50,64 +50,108 @@ export function ChoiceCardView({
   }
 
   const showingOutcome = Boolean(choice.outcomeLineKey);
+  const isInline = choice.presentation === 'inline' && !showingOutcome;
 
   return (
     <div
-      data-testid="choice-card"
-      role="dialog"
-      aria-modal="true"
+      data-testid={isInline ? 'choice-inline-prompt' : 'choice-card'}
+      role={isInline ? 'status' : 'dialog'}
+      aria-modal={isInline ? undefined : 'true'}
       aria-labelledby="choice-card-prompt"
-      tabIndex={-1}
-      style={{
-        position: 'fixed',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        width: '92%',
-        maxWidth: '560px',
-        maxHeight: 'calc(100dvh - 24px - var(--safe-top, 0px) - var(--safe-bottom, 0px))',
-        overflowY: 'auto',
-        background: 'var(--surface-panel, rgba(15, 23, 42, 0.95))',
-        backdropFilter: 'blur(16px)',
-        border: '1px solid var(--info-sky-border, rgba(56, 189, 248, 0.4))',
-        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.7), 0 8px 10px -6px rgba(0, 0, 0, 0.7)',
-        borderRadius: '16px',
-        padding: '20px 24px',
-        zIndex: 9550,
-        color: 'var(--text-primary, #F8FAFC)',
-        fontFamily: "var(--font-sans, 'Hind Siliguri', system-ui, sans-serif)",
-        pointerEvents: 'auto',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '16px',
-        animation: 'choiceSlideDown 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
-      }}
+      tabIndex={isInline ? undefined : -1}
+      style={
+        isInline
+          ? {
+              position: 'fixed',
+              top: 'calc(76px + var(--safe-top, 0px))',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              width: '92%',
+              maxWidth: '520px',
+              background: 'rgba(15, 23, 42, 0.9)',
+              backdropFilter: 'blur(12px)',
+              border: '1px solid rgba(56, 189, 248, 0.48)',
+              boxShadow: '0 10px 24px rgba(0, 0, 0, 0.55)',
+              borderRadius: '14px',
+              padding: '12px 16px',
+              zIndex: 420,
+              color: 'var(--text-primary, #F8FAFC)',
+              fontFamily: "var(--font-sans, 'Hind Siliguri', system-ui, sans-serif)",
+              pointerEvents: 'auto',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '10px',
+              animation: 'choiceSlideDown 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+            }
+          : {
+              position: 'fixed',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: '92%',
+              maxWidth: '560px',
+              maxHeight: 'calc(100dvh - 24px - var(--safe-top, 0px) - var(--safe-bottom, 0px))',
+              overflowY: 'auto',
+              background: 'var(--surface-panel, rgba(15, 23, 42, 0.95))',
+              backdropFilter: 'blur(16px)',
+              border: '1px solid var(--info-sky-border, rgba(56, 189, 248, 0.4))',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.7), 0 8px 10px -6px rgba(0, 0, 0, 0.7)',
+              borderRadius: '16px',
+              padding: '20px 24px',
+              zIndex: 9550,
+              color: 'var(--text-primary, #F8FAFC)',
+              fontFamily: "var(--font-sans, 'Hind Siliguri', system-ui, sans-serif)",
+              pointerEvents: 'auto',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '16px',
+              animation: 'choiceSlideDown 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+            }
+      }
     >
-      <ModalFocusGuard />
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+      {!isInline && <ModalFocusGuard />}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
         <span
           aria-hidden="true"
           style={{
             display: 'inline-block',
-            width: '10px',
-            height: '10px',
+            width: isInline ? '8px' : '10px',
+            height: isInline ? '8px' : '10px',
             borderRadius: '50%',
             backgroundColor: showingOutcome ? 'var(--uthao-green, #22C55E)' : 'var(--info-sky, #38BDF8)',
             boxShadow: showingOutcome ? '0 0 10px var(--uthao-green, #22C55E)' : '0 0 10px var(--info-sky, #38BDF8)',
+            flexShrink: 0,
           }}
         />
         <h3
           id="choice-card-prompt"
           style={{
             margin: 0,
-            fontSize: '1.1rem',
+            fontSize: isInline ? '0.94rem' : '1.1rem',
             fontWeight: 700,
             color: '#f8fafc',
-            lineHeight: 1.4,
+            lineHeight: 1.35,
+            flex: 1,
           }}
         >
           {t(choice.prompt, localizeVars(choice.promptVars))}
         </h3>
+        {isInline && choice.anchorPlaceKey && (
+          <span
+            style={{
+              fontSize: '0.72rem',
+              fontWeight: 700,
+              padding: '2px 8px',
+              borderRadius: '999px',
+              background: 'rgba(56, 189, 248, 0.16)',
+              border: '1px solid rgba(56, 189, 248, 0.35)',
+              color: '#7dd3fc',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {t(choice.anchorPlaceKey)}
+          </span>
+        )}
       </div>
 
       {showingOutcome ? (
@@ -166,9 +210,14 @@ export function ChoiceCardView({
       ) : (
         <div
           style={{
-            display: 'grid',
-            gridTemplateColumns: choice.options.length > 2 ? 'repeat(2, 1fr)' : '1fr',
-            gap: '10px',
+            display: isInline ? 'flex' : 'grid',
+            flexWrap: isInline ? 'wrap' : undefined,
+            gridTemplateColumns: isInline
+              ? undefined
+              : choice.options.length > 2
+                ? 'repeat(2, 1fr)'
+                : '1fr',
+            gap: isInline ? '8px' : '10px',
           }}
         >
           {choice.options.map((opt, idx) => (
@@ -182,7 +231,8 @@ export function ChoiceCardView({
                 flexDirection: 'column',
                 alignItems: 'stretch',
                 justifyContent: 'space-between',
-                padding: '12px 16px',
+                flex: isInline ? '1 1 auto' : undefined,
+                padding: isInline ? '8px 12px' : '12px 16px',
                 backgroundColor:
                   opt.kind === 'illicit'
                     ? 'rgba(69, 26, 3, 0.45)'
@@ -193,7 +243,7 @@ export function ChoiceCardView({
                 borderRadius: '8px',
                 color: '#e2e8f0',
                 cursor: 'pointer',
-                fontSize: '0.95rem',
+                fontSize: isInline ? '0.84rem' : '0.95rem',
                 fontWeight: 500,
                 transition: 'all 0.15s ease',
                 textAlign: 'left',

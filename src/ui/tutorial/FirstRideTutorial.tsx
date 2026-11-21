@@ -19,6 +19,7 @@ import {
 } from '../components/icons';
 import { localDigits, t } from '../i18n';
 import {
+  hudSignal,
   onTutorialAdvanceCallback,
   onTutorialCompleteCallback,
   onTutorialNegotiateCallback,
@@ -34,6 +35,7 @@ export interface FirstRideTutorialProps {
   conditionPct?: number;
   rentTarget?: number;
   receipt?: TripReceipt | null;
+  ridingTipKey?: string;
   onAdvance?: (nextStep: TutorialStep) => void;
   onNegotiate?: (fare: number) => void;
   onComplete?: () => void;
@@ -575,7 +577,9 @@ export function FirstRideTutorialView(props: FirstRideTutorialViewProps): JSX.El
             <div style={{ fontSize: '0.82rem', color: '#22c55e', fontWeight: 700 }}>
               {t('character.nabila.name')} • ৳{localDigits(props.selectedOffer)}
             </div>
-            <div style={{ fontSize: '0.85rem', color: '#e2e8f0' }}>{t('tutorial.riding.tip')}</div>
+            <div style={{ fontSize: '0.85rem', color: '#e2e8f0' }}>
+              {t(props.ridingTipKey ?? 'tutorial.riding.tip')}
+            </div>
           </div>
         </div>
 
@@ -682,10 +686,19 @@ export function FirstRideTutorial(props: FirstRideTutorialProps): JSX.Element | 
     () => tutorialSignal.value.agreedFare ?? 100
   );
   const [agreedPrompt, setAgreedPrompt] = useState<string>('');
+  const paxStatus = hudSignal.value.passengerStatus?.status;
+  const ridingTipKey =
+    props.ridingTipKey ??
+    (paxStatus === 'Accepted' || paxStatus === 'RiderEnRoute'
+      ? 'tutorial.riding.pickup_tip'
+      : paxStatus === 'AtPickup' || paxStatus === 'OnTrip'
+        ? 'tutorial.riding.dropoff_tip'
+        : 'tutorial.riding.tip');
 
   return (
     <FirstRideTutorialView
       {...props}
+      ridingTipKey={ridingTipKey}
       selectedOffer={selectedOffer}
       agreedPrompt={agreedPrompt}
       onSelectOffer={setSelectedOffer}

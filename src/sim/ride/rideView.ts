@@ -12,6 +12,8 @@ export interface RideView {
   navTargetNodeId: string | null;
   pickupVisible: boolean;
   dropoffVisible: boolean;
+  stopVisible: boolean;
+  stopNodeId: string | null;
   /** T8.4: next maneuver on the live route; null unless a real route is being followed.
    * Shared scratch object: read it immediately, never keep a reference. */
   instruction: NavInstruction | null;
@@ -60,6 +62,8 @@ export function deriveRideView(ride: RideManager): RideView {
       navTargetNodeId: null,
       pickupVisible: false,
       dropoffVisible: false,
+      stopVisible: false,
+      stopNodeId: null,
       instruction: null,
     };
     views.set(ride, v);
@@ -76,6 +80,8 @@ export function deriveRideView(ride: RideManager): RideView {
   v.navTargetNodeId = null;
   v.pickupVisible = false;
   v.dropoffVisible = false;
+  v.stopVisible = false;
+  v.stopNodeId = null;
   v.instruction = null;
 
   if (!req) {
@@ -106,19 +112,49 @@ export function deriveRideView(ride: RideManager): RideView {
       v.pickupVisible = true;
       break;
     case 'Accepted':
-    case 'EnRouteToPickup':
-      v.objectiveKey = 'objective.go_to_pickup';
-      v.objectiveVars.place = nearestPlaceKey(ride, req.pickupNodeId);
+    case 'EnRouteToPickup': {
+      const wait = ride.getActiveWait();
+      if (wait && wait.kind === 'pickupWait') {
+        v.objectiveKey = 'objective.waiting_pickup';
+        v.objectiveVars.min = Math.max(1, Math.ceil(wait.remainingGameMin));
+      } else {
+        v.objectiveKey = 'objective.go_to_pickup';
+        v.objectiveVars.place = nearestPlaceKey(ride, req.pickupNodeId);
+      }
       v.navTargetNodeId = req.pickupNodeId;
       v.pickupVisible = true;
       break;
+    }
     case 'PassengerOnboard':
-    case 'EnRouteToDestination':
-      v.objectiveKey = 'objective.drop_off';
-      v.objectiveVars.place = nearestPlaceKey(ride, req.destinationNodeId);
-      v.navTargetNodeId = req.destinationNodeId;
-      v.dropoffVisible = true;
+    case 'EnRouteToDestination': {
+      const stop = ride.getIntermediateStop();
+      const wait = ride.getActiveWait();
+      if (stop) {
+        v.dropoffVisible = true;
+        v.stopVisible = true;
+        v.stopNodeId = stop.nodeId;
+        const stopPlace = stop.placeKey || nearestPlaceKey(ride, stop.nodeId);
+        if (!stop.arrived) {
+          v.objectiveKey = 'objective.go_to_stop';
+          v.objectiveVars.place = stopPlace;
+          v.navTargetNodeId = stop.nodeId;
+        } else {
+          v.objectiveKey = 'objective.waiting_stop';
+          v.objectiveVars.place = stopPlace;
+          v.objectiveVars.min = Math.max(
+            1,
+            Math.ceil(wait?.remainingGameMin ?? stop.waitGameMin)
+          );
+          v.navTargetNodeId = null;
+        }
+      } else {
+        v.objectiveKey = 'objective.drop_off';
+        v.objectiveVars.place = nearestPlaceKey(ride, req.destinationNodeId);
+        v.navTargetNodeId = req.destinationNodeId;
+        v.dropoffVisible = true;
+      }
       break;
+    }
     case 'Completing':
       v.objectiveKey = ride.getOutcome() === 'disputed' ? 'objective.dispute' : 'objective.completing';
       break;

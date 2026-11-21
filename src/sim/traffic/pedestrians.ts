@@ -149,9 +149,10 @@ export class PedestrianManager {
     _currentMinute: number,
     baseTargetCount = 20
   ): void {
-    // Despawn far pedestrians (> 350 m) without .entries() tuple allocs
+    // Despawn far pedestrians (> 350 m) without .entries() tuple allocs; keep road workers bound to active events
     this.deleteIdsScratch.length = 0;
     for (const ped of this.pedestrians.values()) {
+      if (ped.isRoadWorker) continue;
       const dist = distance2d(camera.x, camera.z, ped.x, ped.z);
       if (dist > 350) {
         this.deleteIdsScratch.push(ped.id);
@@ -318,6 +319,28 @@ export class PedestrianManager {
     }
 
     return workers;
+  }
+
+  hasRoadWorkers(segmentId: string): boolean {
+    for (const ped of this.pedestrians.values()) {
+      if (ped.isRoadWorker && ped.segmentId === segmentId) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  clearRoadWorkers(segmentId?: string): void {
+    this.deleteIdsScratch.length = 0;
+    for (const ped of this.pedestrians.values()) {
+      if (!ped.isRoadWorker) continue;
+      if (segmentId === undefined || ped.segmentId === segmentId) {
+        this.deleteIdsScratch.push(ped.id);
+      }
+    }
+    for (let i = 0; i < this.deleteIdsScratch.length; i++) {
+      this.pedestrians.delete(this.deleteIdsScratch[i]!);
+    }
   }
 
   /**

@@ -3,9 +3,11 @@ import type { Condition } from '../schemas';
 
 export type EncounterPhase =
   | 'requestOffered'
+  | 'enRouteToPickup'
   | 'atPickup'
   | 'onTrip'
   | 'dropOff'
+  | 'postDropoff'
   | 'roaming';
 
 export interface EncounterContext {
@@ -24,6 +26,13 @@ export interface EncounterContext {
   hasEscapePath?: boolean;
   witnesses?: number;
   meters?: Partial<Record<MeterId, number>>;
+  tripDistanceM?: number;
+  pickupDistanceM?: number;
+  roamDistanceM?: number;
+  nearbyAnchorKinds?: readonly string[];
+  nearbyAnchorPlaceKey?: string;
+  nearbyRoadEventKinds?: readonly string[];
+  inFastForward?: boolean;
   passenger?: {
     id: string;
     trust: number;
@@ -31,6 +40,7 @@ export interface EncounterContext {
     localKnowledge?: number;
     paymentReliability?: number;
     archetype?: string;
+    hasChild?: boolean;
   } | null;
 }
 
@@ -142,10 +152,69 @@ export function evaluateCondition(
   }
 
   if (cond.hasPassenger !== undefined) {
-    const actuallyHasPassenger = Boolean(
-      ctx.activeRequest && ctx.activeRequest.status === 'OnTrip'
-    );
+    const actuallyHasPassenger =
+      ctx.activeRequest !== undefined
+        ? Boolean(ctx.activeRequest && ctx.activeRequest.status === 'OnTrip')
+        : ctx.phase === 'onTrip' || ctx.phase === 'dropOff';
     if (actuallyHasPassenger !== cond.hasPassenger) return false;
+  }
+  if (
+    cond.minTripDistanceM !== undefined &&
+    ctx.tripDistanceM !== undefined &&
+    ctx.tripDistanceM < cond.minTripDistanceM
+  ) {
+    return false;
+  }
+  if (
+    cond.minPickupDistanceM !== undefined &&
+    ctx.pickupDistanceM !== undefined &&
+    ctx.pickupDistanceM < cond.minPickupDistanceM
+  ) {
+    return false;
+  }
+  if (
+    cond.minRoamDistanceM !== undefined &&
+    ctx.roamDistanceM !== undefined &&
+    ctx.roamDistanceM < cond.minRoamDistanceM
+  ) {
+    return false;
+  }
+  if (
+    cond.requiresAnchorKind !== undefined &&
+    cond.requiresAnchorKind.length > 0 &&
+    ctx.nearbyAnchorKinds !== undefined
+  ) {
+    let matched = false;
+    for (let i = 0; i < cond.requiresAnchorKind.length; i++) {
+      if (ctx.nearbyAnchorKinds.includes(cond.requiresAnchorKind[i]!)) {
+        matched = true;
+        break;
+      }
+    }
+    if (!matched) return false;
+  }
+  if (
+    cond.requiresRoadEventKind !== undefined &&
+    cond.requiresRoadEventKind.length > 0 &&
+    ctx.nearbyRoadEventKinds !== undefined
+  ) {
+    let matched = false;
+    for (let i = 0; i < cond.requiresRoadEventKind.length; i++) {
+      if (ctx.nearbyRoadEventKinds.includes(cond.requiresRoadEventKind[i]!)) {
+        matched = true;
+        break;
+      }
+    }
+    if (!matched) return false;
+  }
+  if (
+    cond.requiresChild !== undefined &&
+    ctx.passenger !== undefined &&
+    ctx.passenger !== null &&
+    ctx.passenger.hasChild !== undefined &&
+    ctx.passenger.hasChild !== cond.requiresChild
+  ) {
+    return false;
   }
 
   if (cond.passengerLocalKnowledgeMin !== undefined) {

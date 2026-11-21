@@ -10,6 +10,11 @@ export interface MinimapOptions {
 export interface MinimapMarkers {
   pickup?: { x: number; z: number } | null;
   dropoff?: { x: number; z: number } | null;
+  stop?: { x: number; z: number } | null;
+  mission?: { x: number; z: number } | null;
+  roadEvents?: ReadonlyArray<{ x: number; z: number }>;
+  streetHails?: ReadonlyArray<{ x: number; z: number }>;
+  hazard?: { x: number; z: number; kind: 'police' | 'ambush' } | null;
 }
 
 /**
@@ -214,6 +219,88 @@ export class Minimap {
       ctx.fill();
       ctx.strokeStyle = '#ffffff';
       ctx.lineWidth = 1.5;
+      ctx.stroke();
+    }
+
+    // 7b. Draw Stop / Return Waypoint Marker (sky-blue diamond)
+    if (markers?.stop) {
+      const sx = (markers.stop.x - playerPose.x) * scale;
+      const sz = (markers.stop.z - playerPose.z) * scale;
+      ctx.beginPath();
+      ctx.moveTo(sx, sz - 6);
+      ctx.lineTo(sx + 6, sz);
+      ctx.lineTo(sx, sz + 6);
+      ctx.lineTo(sx - 6, sz);
+      ctx.closePath();
+      ctx.fillStyle = '#38bdf8';
+      ctx.fill();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    }
+
+    // 7c. Draw Active Road Event Warnings (orange triangles)
+    if (markers?.roadEvents && markers.roadEvents.length > 0) {
+      for (let i = 0; i < markers.roadEvents.length; i++) {
+        const ev = markers.roadEvents[i]!;
+        const ex = (ev.x - playerPose.x) * scale;
+        const ez = (ev.z - playerPose.z) * scale;
+        ctx.beginPath();
+        ctx.moveTo(ex, ez - 5);
+        ctx.lineTo(ex + 4.5, ez + 4);
+        ctx.lineTo(ex - 4.5, ez + 4);
+        ctx.closePath();
+        ctx.fillStyle = '#f97316';
+        ctx.fill();
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+    }
+
+    // 7d. Draw Waving Street-Hail NPC Dots (amber)
+    if (markers?.streetHails && markers.streetHails.length > 0) {
+      for (let i = 0; i < markers.streetHails.length; i++) {
+        const sh = markers.streetHails[i]!;
+        const hx = (sh.x - playerPose.x) * scale;
+        const hz = (sh.z - playerPose.z) * scale;
+        ctx.beginPath();
+        ctx.arc(hx, hz, 3.8, 0, Math.PI * 2);
+        ctx.fillStyle = '#fbbf24';
+        ctx.fill();
+        ctx.strokeStyle = '#0f172a';
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+      }
+    }
+
+    // 7e. Draw Staged Police Checkpoint or Alley Ambush Ring
+    if (markers?.hazard) {
+      const hzX = (markers.hazard.x - playerPose.x) * scale;
+      const hzZ = (markers.hazard.z - playerPose.z) * scale;
+      ctx.beginPath();
+      ctx.arc(hzX, hzZ, 5.2, 0, Math.PI * 2);
+      ctx.fillStyle = markers.hazard.kind === 'police' ? '#2563eb' : '#ef4444';
+      ctx.fill();
+      ctx.strokeStyle = '#fca5a5';
+      ctx.lineWidth = 1.8;
+      ctx.stroke();
+    }
+
+    // 7f. Draw Active Mission Beacon Marker (violet diamond)
+    if (markers?.mission) {
+      const mx = (markers.mission.x - playerPose.x) * scale;
+      const mz = (markers.mission.z - playerPose.z) * scale;
+      ctx.beginPath();
+      ctx.moveTo(mx, mz - 6.5);
+      ctx.lineTo(mx + 6.5, mz);
+      ctx.lineTo(mx, mz + 6.5);
+      ctx.lineTo(mx - 6.5, mz);
+      ctx.closePath();
+      ctx.fillStyle = '#a855f7';
+      ctx.fill();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.6;
       ctx.stroke();
     }
 

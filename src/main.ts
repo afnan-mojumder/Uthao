@@ -22,6 +22,7 @@ import {
   bindScreenWakeLock,
   formatErrorMessage,
   pausedSignal,
+  rideWaitSignal,
   contextLostSignal,
   unsupportedSignal,
   loadingSignal,
@@ -320,6 +321,7 @@ async function bootGame(): Promise<void> {
         syncBikeAppearance(renderer);
         renderer?.snapBikeState(session.bike);
         renderer?.syncFloodedSegments(gm.weatherSystem, roadNetwork);
+        renderer?.syncRoadEvents(gm.roadEvents, roadNetwork);
       })
     );
     bootCleanups.push(
@@ -390,6 +392,7 @@ async function bootGame(): Promise<void> {
         nextRenderer.setPassengerVisible(restoredView.dropoffVisible);
         nextRenderer.snapBikeState(session.bike);
         nextRenderer.syncFloodedSegments(gm.weatherSystem, roadNetwork);
+        nextRenderer.syncRoadEvents(gm.roadEvents, roadNetwork);
         nextRenderer.render(gm.snapshot(), 1.0, trafficManager.signals);
 
         void nextRenderer.preloadAssets().then(() => {
@@ -534,6 +537,32 @@ async function bootGame(): Promise<void> {
   let cameraHeld = false;
   let lastBikeBrake = 0;
   let lastSimBattery = Math.round(gm.economyManager.phoneBattery);
+  let lastWaitSigKey = '';
+  const minimapRoadEventsScratch: Array<{ x: number; z: number }> = [];
+  const minimapStreetHailsScratch: Array<{ x: number; z: number }> = [];
+  const minimapHazardScratch: { x: number; z: number; kind: 'police' | 'ambush' } = {
+    x: 0,
+    z: 0,
+    kind: 'police',
+  };
+  const minimapMissionScratch: { x: number; z: number } = { x: 0, z: 0 };
+  const minimapMarkersScratch: {
+    pickup: { x: number; z: number } | null;
+    dropoff: { x: number; z: number } | null;
+    stop: { x: number; z: number } | null;
+    mission: { x: number; z: number } | null;
+    roadEvents: Array<{ x: number; z: number }>;
+    streetHails: Array<{ x: number; z: number }>;
+    hazard: { x: number; z: number; kind: 'police' | 'ambush' } | null;
+  } = {
+    pickup: null,
+    dropoff: null,
+    stop: null,
+    mission: null,
+    roadEvents: minimapRoadEventsScratch,
+    streetHails: minimapStreetHailsScratch,
+    hazard: null,
+  };
 
   // Pre-allocated scratch & cache for zero-alloc steady-state syncHud()
   const hudCache = createHudCache();
@@ -548,6 +577,7 @@ async function bootGame(): Promise<void> {
     gear: 1,
     objectiveKey: '',
     placeKey: '',
+    objectiveMin: undefined,
     navKind: '',
     navTextKey: '',
     navDistM: -1,
@@ -609,11 +639,29 @@ async function bootGame(): Promise<void> {
     hudInputScratch.simStepped = simStepped;
     hudInputScratch.isFirstPerson = renderer ? renderer.cameraRig.mode === 'firstPerson' : false;
     hudInputScratch.districtId = districtId;
-    hudInputScratch.canRecoverBike = !tutorialSignal.value.active;
+    hudInputScratch.canRecoverBike =
+      !tutorialSignal.value.active || tutorialSignal.value.step === 'riding';
     hudInputScratch.gear = session.bike.gear;
-    hudInputScratch.objectiveKey = view.objectiveKey;
-    hudInputScratch.placeKey =
-      typeof view.objectiveVars.place === 'string' ? view.objectiveVars.place : '';
+    const followUp = session.getActiveFollowUp();
+    const deliveryTarget = !activeReq && !followUp ? session.getActiveDeliveryTarget() : null;
+    if (!activeReq && followUp) {
+      hudInputScratch.objectiveKey = 'objective.phone_return';
+      hudInputScratch.placeKey = followUp.placeKey;
+      hudInputScratch.objectiveMin = undefined;
+    } else if (!activeReq && deliveryTarget) {
+      hudInputScratch.objectiveKey =
+        deliveryTarget.status === 'accepted'
+          ? 'objective.delivery_pickup'
+          : 'objective.delivery_dropoff';
+      hudInputScratch.placeKey = deliveryTarget.placeKey;
+      hudInputScratch.objectiveMin = undefined;
+    } else {
+      hudInputScratch.objectiveKey = view.objectiveKey;
+      hudInputScratch.placeKey =
+        typeof view.objectiveVars.place === 'string' ? view.objectiveVars.place : '';
+      hudInputScratch.objectiveMin =
+        typeof view.objectiveVars.min === 'number' ? view.objectiveVars.min : undefined;
+    }
     hudInputScratch.navKind = view.instruction ? view.instruction.kind : '';
     hudInputScratch.navTextKey = view.instruction ? view.instruction.textKey : '';
     hudInputScratch.navDistM = view.instruction ? Math.round(view.instruction.distanceM) : -1;
@@ -627,7 +675,7 @@ async function bootGame(): Promise<void> {
     hudInputScratch.roadEventKind = activeRoadEv ? activeRoadEv.kind : '';
     hudInputScratch.roadEventTitles = activeRoadEv?.title;
     hudInputScratch.activeMissionCount = gm.story.activeMissions.length;
-    hudInputScratch.fare = activeReq?.initialFare;
+    hudInputScratch.fare = activeReq ? activeReq.initialFare : deliveryTarget?.basePayout;
     hudInputScratch.etaMinutes = resolveHudEtaMinutes(
       Boolean(activeReq),
       routeEta,
@@ -782,22 +830,66 @@ async function bootGame(): Promise<void> {
     const view = deriveRideView(rideManager);
     const pNode = activeReq ? roadNetwork.getNode(activeReq.pickupNodeId) : undefined;
     const dNode = activeReq ? roadNetwork.getNode(activeReq.destinationNodeId) : undefined;
+    const stopNode =
+      view.stopVisible && view.stopNodeId
+        ? roadNetwork.getNode(view.stopNodeId)
+        : undefined;
+    const followUp = session.getActiveFollowUp();
+    const followUpNode =
+      !activeReq && followUp ? roadNetwork.getNode(followUp.nodeId) : undefined;
+    const deliveryTarget = !activeReq && !followUp ? session.getActiveDeliveryTarget() : null;
+    const deliveryNode =
+      !activeReq && !followUp && deliveryTarget
+        ? roadNetwork.getNode(deliveryTarget.nodeId)
+        : undefined;
+    const activeStopNode = stopNode ?? followUpNode ?? deliveryNode;
+
+    const activeWait = rideManager.getActiveWait();
+    const waitKey = activeWait
+      ? `${activeWait.kind}|${activeWait.labelKey}|${Math.round(activeWait.remainingSimSec * 20)}`
+      : '';
+    if (waitKey !== lastWaitSigKey) {
+      lastWaitSigKey = waitKey;
+      rideWaitSignal.value = activeWait ? { ...activeWait } : null;
+    }
+
+    const timeSec = now / 1000;
+    const stageState = session.getEncounterStageState();
+    const hailStates = session.getStreetHailStates();
+    const missionBeacon = session.getActiveMissionBeaconState();
+    const missionCharState = session.getMissionCharacterActorState();
 
     if (renderer) {
       if (pNode) renderer.markers.setPickup(pNode.x, pNode.z, view.pickupVisible);
       else renderer.markers.setPickup(0, 0, false);
       if (dNode) renderer.markers.setDropoff(dNode.x, dNode.z, view.dropoffVisible);
       else renderer.markers.setDropoff(0, 0, false);
-      renderer.setPassengerVisible(view.dropoffVisible);
+      if (activeStopNode) {
+        renderer.markers.setStop(activeStopNode.x, activeStopNode.z, true);
+      } else {
+        renderer.markers.setStop(0, 0, false);
+      }
+      renderer.markers.setMission(
+        missionBeacon.worldX,
+        missionBeacon.worldZ,
+        missionBeacon.visible
+      );
+      renderer.setPassengerVisible(session.isPassengerOnPillion());
+      renderer.updateRidePassenger(session.getPassengerActorState(), timeSec);
+      renderer.updateMissionCharacter(missionCharState, timeSec);
+      renderer.updateStreetHails(hailStates, timeSec);
+      renderer.updateEncounterStage(stageState, timeSec);
 
       renderer.updatePeople(
         trafficManager.pedestrians.getPedestrians(),
         trafficManager.getAgents(),
-        now / 1000
+        timeSec
       );
 
       renderer.setBrakeLight(lastBikeBrake > 0.05);
       renderer.syncFloodedSegments(gm.weatherSystem, roadNetwork);
+      renderer.syncRoadEvents(gm.roadEvents, roadNetwork);
+      renderer.updateWorldEvents(timeSec);
       const alpha = gm.accumulator / SIM_DT;
       renderer.render(gm.snapshot(), alpha, trafficManager.signals);
     }
@@ -818,12 +910,58 @@ async function bootGame(): Promise<void> {
     if (curScreen !== 'title') {
       // Update Minimap
       if (minimap) {
-        const pNodePos = view.pickupVisible ? pNode : null;
-        const dNodePos = view.dropoffVisible ? dNode : null;
+        minimapMarkersScratch.pickup = view.pickupVisible ? (pNode ?? null) : null;
+        minimapMarkersScratch.dropoff = view.dropoffVisible ? (dNode ?? null) : null;
+        minimapMarkersScratch.stop = activeStopNode ?? null;
+
+        minimapRoadEventsScratch.length = 0;
+        gm.roadEvents.forEachActiveEvent((ev) => {
+          if (!ev.segmentId) return;
+          const seg = roadNetwork.getSegment(ev.segmentId);
+          const sN = seg ? roadNetwork.getNode(seg.startNodeId) : undefined;
+          const eN = seg ? roadNetwork.getNode(seg.endNodeId) : undefined;
+          if (!sN || !eN) return;
+          minimapRoadEventsScratch.push({
+            x: (sN.x + eN.x) * 0.5,
+            z: (sN.z + eN.z) * 0.5,
+          });
+        });
+
+        minimapStreetHailsScratch.length = 0;
+        for (let i = 0; i < hailStates.length; i++) {
+          const sh = hailStates[i]!;
+          if (sh.active) {
+            minimapStreetHailsScratch.push({ x: sh.worldX, z: sh.worldZ });
+          }
+        }
+
+        if (stageState.kind !== 'none') {
+          minimapHazardScratch.x = stageState.worldX;
+          minimapHazardScratch.z = stageState.worldZ;
+          minimapHazardScratch.kind =
+            stageState.kind === 'policeCheckpoint' || stageState.kind === 'policeSignalStop'
+              ? 'police'
+              : 'ambush';
+          minimapMarkersScratch.hazard = minimapHazardScratch;
+        } else {
+          minimapMarkersScratch.hazard = null;
+        }
+
+        if (missionBeacon.visible) {
+          minimapMissionScratch.x = missionBeacon.worldX;
+          minimapMissionScratch.z = missionBeacon.worldZ;
+          minimapMarkersScratch.mission = minimapMissionScratch;
+        } else {
+          minimapMarkersScratch.mission = null;
+        }
+
         minimap.update(
           { x: session.bike.x, z: session.bike.z, heading: session.bike.heading },
-          rideManager.currentRoute,
-          { pickup: pNodePos ?? null, dropoff: dNodePos ?? null }
+          rideManager.currentRoute ??
+            session.getFollowUpRoute() ??
+            session.getActiveDeliveryRoute() ??
+            session.getActiveMissionRoute(),
+          minimapMarkersScratch
         );
       }
 

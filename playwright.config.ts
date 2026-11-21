@@ -9,6 +9,7 @@ const webServerCommand = isPreview
 export default defineConfig({
   testDir: './tests/e2e',
   timeout: 30000,
+  workers: 2,
   use: {
     baseURL,
     trace: 'on-first-retry',

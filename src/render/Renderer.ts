@@ -13,7 +13,19 @@ import { lerp, angleDiff } from '../core/math';
 import { WeatherFx } from './WeatherFx';
 import type { WeatherSystem } from '../sim/world/WeatherSystem';
 import type { RoadNetwork } from '../sim/road/RoadNetwork';
-import type { BikeId, DistrictId, RoadNode, RoadSegment } from '../core/types';
+import type {
+  BikeId,
+  DistrictId,
+  EncounterStageState,
+  PassengerActorState,
+  RoadNode,
+  RoadSegment,
+  StreetHailActorState,
+} from '../core/types';
+import { StreetHailRenderer, WorldPassengerActor } from './passengerActor';
+import { WorldEventRenderer } from './worldEvents';
+import { EncounterStageRenderer } from './encounterStage';
+import type { RoadEventManager } from '../sim/world/RoadEvents';
 import type { DistrictData, WorldData } from '../sim/schemas';
 import type { PhysicsWorld } from '../physics/PhysicsWorld';
 import { CityBuilder } from './CityBuilder';
@@ -32,6 +44,11 @@ export class Renderer {
   readonly cameraRig: CameraRig;
   readonly bikeMesh: MotorcycleMesh;
   readonly markers: RideMarkers;
+  readonly passengerActor: WorldPassengerActor;
+  readonly missionCharacterActor: WorldPassengerActor;
+  readonly streetHailRenderer: StreetHailRenderer;
+  readonly worldEventRenderer: WorldEventRenderer;
+  readonly encounterStageRenderer: EncounterStageRenderer;
   readonly qualityManager: AdaptiveQualityManager;
   readonly dirLight: THREE.DirectionalLight;
   readonly hemiLight: THREE.HemisphereLight;
@@ -55,6 +72,7 @@ export class Renderer {
   private configuredShadowMapSize = 0;
   private adaptiveQualityEnabled = true;
   private lastFloodVersion = -1;
+  private lastRoadEventVersion = -1;
   private readonly _floodedSegmentsScratch: RoadSegment[] = [];
   private testSceneGroup?: THREE.Group;
   private prevBikePose = { x: 0, y: 0, z: 0, heading: 0, lean: 0, steer: 0 };
@@ -152,6 +170,22 @@ export class Renderer {
 
     this.markers = new RideMarkers();
     this.scene.add(this.markers.root);
+
+    this.passengerActor = new WorldPassengerActor();
+    this.scene.add(this.passengerActor.root);
+
+    this.missionCharacterActor = new WorldPassengerActor();
+    this.missionCharacterActor.setBeaconColor(0xa855f7);
+    this.scene.add(this.missionCharacterActor.root);
+
+    this.streetHailRenderer = new StreetHailRenderer();
+    this.scene.add(this.streetHailRenderer.root);
+
+    this.worldEventRenderer = new WorldEventRenderer();
+    this.scene.add(this.worldEventRenderer.root);
+
+    this.encounterStageRenderer = new EncounterStageRenderer();
+    this.scene.add(this.encounterStageRenderer.root);
 
     this.ground = new THREE.Mesh(
       new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2),
@@ -466,6 +500,13 @@ export class Renderer {
     this.weatherFx.updateFloodedSegments(flooded, roadNetwork.getNodesMap());
   }
 
+  /** Syncs 3D road-event props whenever RoadEventManager mutates active events. */
+  syncRoadEvents(roadEvents: RoadEventManager, roadNetwork: RoadNetwork): void {
+    if (roadEvents.version === this.lastRoadEventVersion) return;
+    this.lastRoadEventVersion = roadEvents.version;
+    this.worldEventRenderer.sync(roadEvents.getActiveEvents(), roadNetwork);
+  }
+
   setBikeState(state: {
     x: number;
     y?: number;
@@ -626,6 +667,26 @@ export class Renderer {
     this.bikeMesh.setPassengerVisible(visible);
   }
 
+  updateRidePassenger(state: PassengerActorState, timeSec = 0): void {
+    this.passengerActor.update(state, timeSec);
+  }
+
+  updateMissionCharacter(state: PassengerActorState, timeSec = 0): void {
+    this.missionCharacterActor.update(state, timeSec);
+  }
+
+  updateStreetHails(states: readonly StreetHailActorState[], timeSec = 0): void {
+    this.streetHailRenderer.update(states, timeSec);
+  }
+
+  updateWorldEvents(timeSec = 0): void {
+    this.worldEventRenderer.update(timeSec);
+  }
+
+  updateEncounterStage(state: EncounterStageState, timeSec = 0): void {
+    this.encounterStageRenderer.update(state, timeSec);
+  }
+
   updatePeople(
     pedestrians: PedestrianAgent[],
     trafficAgents: TrafficAgent[],
@@ -699,6 +760,21 @@ export class Renderer {
 
     this.markers.dispose();
     this.scene.remove(this.markers.root);
+
+    this.passengerActor.dispose();
+    this.scene.remove(this.passengerActor.root);
+
+    this.missionCharacterActor.dispose();
+    this.scene.remove(this.missionCharacterActor.root);
+
+    this.streetHailRenderer.dispose();
+    this.scene.remove(this.streetHailRenderer.root);
+
+    this.worldEventRenderer.dispose();
+    this.scene.remove(this.worldEventRenderer.root);
+
+    this.encounterStageRenderer.dispose();
+    this.scene.remove(this.encounterStageRenderer.root);
 
     this.cameraRig.dispose();
     this.scene.remove(this.cameraRig.camera);

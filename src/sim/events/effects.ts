@@ -25,6 +25,16 @@ export interface EffectContext {
   encounterContext?: EncounterContext;
   rng?: Rng;
   outcomeLineKey?: string;
+  deferTimeToWait?: boolean;
+  deferredWaitMin?: number;
+  onRouteEffect?: (
+    action: 'avoid' | 'forceVia' | 'closeSegment',
+    ref: string
+  ) => void;
+  deferPhoneReturn?: boolean;
+  deferredPhoneReward?: { cash: number; trust: number } | null;
+  deferRoamingJob?: boolean;
+  deferredJobCash?: number;
 }
 
 function resolveEncounterContext(ctx: EffectContext): EncounterContext {
@@ -56,6 +66,17 @@ function resolveEncounterContext(ctx: EffectContext): EncounterContext {
 export function applyEffect(effect: Effect, ctx: EffectContext): void {
   switch (effect.type) {
     case 'money': {
+      if (ctx.deferPhoneReturn && effect.amount > 0) {
+        if (!ctx.deferredPhoneReward) {
+          ctx.deferredPhoneReward = { cash: 0, trust: 0 };
+        }
+        ctx.deferredPhoneReward.cash += effect.amount;
+        break;
+      }
+      if (ctx.deferRoamingJob && effect.amount > 0) {
+        ctx.deferredJobCash = (ctx.deferredJobCash ?? 0) + effect.amount;
+        break;
+      }
       // Money changes MUST ONLY route through EconomyManager
       const rngSuffix = ctx.gameManager.rng ? ctx.gameManager.rng.int(1000, 9999) : 1000;
       // A positive fare or tip from an encounter is not a trip: book it as event income.
@@ -76,6 +97,11 @@ export function applyEffect(effect: Effect, ctx: EffectContext): void {
     }
 
     case 'time': {
+      if (ctx.deferTimeToWait) {
+        ctx.deferredWaitMin =
+          (ctx.deferredWaitMin ?? 0) + Math.max(0, effect.min);
+        break;
+      }
       ctx.gameManager.clock.advance((effect.min * 60) / TIME_SCALE); // advance by minutes
       break;
     }
@@ -130,6 +156,13 @@ export function applyEffect(effect: Effect, ctx: EffectContext): void {
     }
 
     case 'localTrust': {
+      if (ctx.deferPhoneReturn && effect.delta > 0) {
+        if (!ctx.deferredPhoneReward) {
+          ctx.deferredPhoneReward = { cash: 0, trust: 0 };
+        }
+        ctx.deferredPhoneReward.trust += effect.delta;
+        break;
+      }
       ctx.eventBus.emit('reputation/changed', {
         delta: {
           localTrust: effect.delta,
@@ -150,10 +183,13 @@ export function applyEffect(effect: Effect, ctx: EffectContext): void {
     case 'route': {
       if (effect.action === 'avoid') {
         ctx.avoidSegments?.add(effect.ref);
+        ctx.onRouteEffect?.('avoid', effect.ref);
       } else if (effect.action === 'forceVia') {
         ctx.forceViaNodes?.push(effect.ref);
+        ctx.onRouteEffect?.('forceVia', effect.ref);
       } else if (effect.action === 'closeSegment') {
         ctx.avoidSegments?.add(effect.ref);
+        ctx.onRouteEffect?.('closeSegment', effect.ref);
         ctx.eventBus.emit('world/roadEvent', {
           event: {
             id: `closure_${effect.ref}`,

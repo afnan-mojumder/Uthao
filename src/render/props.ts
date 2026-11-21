@@ -327,13 +327,19 @@ export class RideMarkers {
   readonly root: THREE.Group;
   readonly pickup: RideMarker;
   readonly dropoff: RideMarker;
+  readonly stop: RideMarker;
+  readonly mission: RideMarker;
 
   constructor() {
     this.root = new THREE.Group();
     this.pickup = new RideMarker(0x00ff66); // Dhaka Green for pickup
     this.dropoff = new RideMarker(0xffaa00); // Amber Gold for dropoff
+    this.stop = new RideMarker(0x38bdf8); // Sky Blue for intermediate stops & return waypoints
+    this.mission = new RideMarker(0xa855f7); // Vivid Violet for active campaign/side mission target
     this.root.add(this.pickup.root);
     this.root.add(this.dropoff.root);
+    this.root.add(this.stop.root);
+    this.root.add(this.mission.root);
   }
 
   setPickup(x: number, z: number, visible: boolean = true): void {
@@ -346,14 +352,28 @@ export class RideMarkers {
     this.dropoff.setVisible(visible);
   }
 
+  setStop(x: number, z: number, visible: boolean = true): void {
+    this.stop.setPosition(x, z);
+    this.stop.setVisible(visible);
+  }
+
+  setMission(x: number, z: number, visible: boolean = true): void {
+    this.mission.setPosition(x, z);
+    this.mission.setVisible(visible);
+  }
+
   update(dt: number): void {
     this.pickup.update(dt);
     this.dropoff.update(dt);
+    this.stop.update(dt);
+    this.mission.update(dt);
   }
 
   dispose(): void {
     this.pickup.dispose();
     this.dropoff.dispose();
+    this.stop.dispose();
+    this.mission.dispose();
   }
 }
 

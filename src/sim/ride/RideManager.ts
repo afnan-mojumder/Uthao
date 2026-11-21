@@ -11,9 +11,11 @@ import type { EventBus, GameEvents } from '../../core/events';
 import type {
   ArchetypeId,
   BookingType,
+  IntermediateStopState,
   PassengerProfile,
   RideRequest,
   BikeId,
+  RideWaitState,
   RoadSegment,
   TripOutcome,
   TripReceipt,
@@ -121,6 +123,18 @@ export interface RideManagerOptions {
   weather?: () => WeatherKind;
   isFlooded?: (segment: RoadSegment) => boolean;
   getFloodLevel?: (segmentId: string) => number;
+  /** World-grounded pickup arrival hook: return 'hold' when an arrival encounter or boarding walk is pending. */
+  onPickupArrival?: (
+    req: RideRequest,
+    bikePose: { x: number; z: number; speed: number }
+  ) => 'hold' | 'proceed';
+  /** World-grounded drop-off arrival hook: return 'hold' when a drop-off settlement encounter must run before completing. */
+  onDropoffArrival?: (
+    req: RideRequest,
+    bikePose: { x: number; z: number; speed: number }
+  ) => 'hold' | 'proceed';
+  /** Advances the sim clock smoothly during real-time staged waits. */
+  advanceClockMin?: (gameMin: number) => void;
 }
 
 export class RideManager {
@@ -151,6 +165,15 @@ export class RideManager {
   private readonly weatherProvider?: () => WeatherKind;
   private readonly isFloodedFn?: (segment: RoadSegment) => boolean;
   private readonly getFloodLevelFn?: (segmentId: string) => number;
+  private readonly onPickupArrival?: RideManagerOptions['onPickupArrival'];
+  private readonly onDropoffArrival?: RideManagerOptions['onDropoffArrival'];
+  private readonly advanceClockMin?: RideManagerOptions['advanceClockMin'];
+  private pickupHold = false;
+  private dropoffHold = false;
+  private activeWait: RideWaitState | null = null;
+  private intermediateStop: IntermediateStopState | null = null;
+  private pickupArrivalEvaluatedForRequestId: string | null = null;
+  private dropoffArrivalEvaluatedForRequestId: string | null = null;
   // T8.4 live-navigation state. Scratch values only: nothing here allocates per step.
   private readonly pose = { x: 0, z: 0, heading: 0 };
   private hasPose = false;
@@ -221,6 +244,9 @@ export class RideManager {
       (opts.weatherSystem?.getFloodLevel
         ? (segId: string) => opts.weatherSystem!.getFloodLevel!(segId)
         : undefined);
+    this.onPickupArrival = opts.onPickupArrival;
+    this.onDropoffArrival = opts.onDropoffArrival;
+    this.advanceClockMin = opts.advanceClockMin;
     this.bus.on('bike/swapped', ({ bikeId }) => {
       this.activeBikeId = bikeId;
     });
@@ -285,6 +311,10 @@ export class RideManager {
 
   hasOfferedRequests(): boolean {
     return this.offeredRequests.size > 0;
+  }
+
+  hasOfferedRequest(requestId: string): boolean {
+    return this.offeredRequests.has(requestId);
   }
 
   getOfferedRequests(): RideRequest[] {
@@ -385,6 +415,28 @@ export class RideManager {
     this.rideElapsedSec = 0;
     this.smallTalkTriggered = false;
     this.offRouteSince = -1;
+    this.pickupHold = false;
+    this.dropoffHold = false;
+    this.activeWait = null;
+    this.intermediateStop = null;
+    this.pickupArrivalEvaluatedForRequestId = null;
+    this.dropoffArrivalEvaluatedForRequestId = null;
+  }
+
+  isPickupHold(): boolean {
+    return this.pickupHold;
+  }
+
+  isDropoffHold(): boolean {
+    return this.dropoffHold;
+  }
+
+  getActiveWait(): RideWaitState | null {
+    return this.activeWait;
+  }
+
+  getIntermediateStop(): IntermediateStopState | null {
+    return this.intermediateStop;
   }
 
   /** Node nearest the last known bike pose, or null before the first `update`. */
@@ -393,14 +445,18 @@ export class RideManager {
     return this.roadNetwork.nearestNode(this.pose.x, this.pose.z)?.nodeId ?? null;
   }
 
-  /** Where the current route is heading: the pickup until the passenger is aboard. */
+  /** Where the current route is heading: the pickup until the passenger is aboard, then optional stop, then destination. */
   private routeTargetId(): string | null {
     const req = this.activeRequest;
     if (!req) return null;
     const s = this.trip.state === 'EmergencyInterrupted' ? this.interruptedFrom : this.trip.state;
-    return s === 'Negotiating' || s === 'Accepted' || s === 'EnRouteToPickup'
-      ? req.pickupNodeId
-      : req.destinationNodeId;
+    if (s === 'Negotiating' || s === 'Accepted' || s === 'EnRouteToPickup') {
+      return req.pickupNodeId;
+    }
+    if (this.intermediateStop && !this.intermediateStop.arrived) {
+      return this.intermediateStop.nodeId;
+    }
+    return req.destinationNodeId;
   }
 
   /** No route remains: the ride fails visibly, never a silent stall. */
@@ -436,10 +492,10 @@ export class RideManager {
   }
 
   /** Accepts an offered request: opens negotiation and, when negotiation is not
-   * enabled (M1 auto-accept), agrees the listed fare straight away. */
-  accept(requestId: string, startNodeId?: string): boolean {
-    if (!this.openNegotiation(requestId, startNodeId)) return false;
-    if (!this.enableNegotiation && this.activeRequest) {
+   * enabled (or bypassed on pre-agreed direct calls), agrees the listed fare straight away. */
+  accept(requestId: string, startNodeId?: string, skipNegotiation = false): boolean {
+    if (!this.openNegotiation(requestId, startNodeId, skipNegotiation)) return false;
+    if ((!this.enableNegotiation || skipNegotiation) && this.activeRequest) {
       this.doAgree(this.activeRequest.initialFare);
     }
     return true;
@@ -447,7 +503,11 @@ export class RideManager {
 
   /** T8.1: negotiation comes before pickup. Takes an offered request and moves
    * the trip to `Negotiating`; `agreeFare` or a walk-away ends it. */
-  openNegotiation(requestId: string, startNodeId?: string): boolean {
+  openNegotiation(
+    requestId: string,
+    startNodeId?: string,
+    skipNegotiation = false
+  ): boolean {
     this.settleToIdle();
     const req = this.offeredRequests.get(requestId);
     if (!req || this.trip.state !== 'RequestAvailable') return false;
@@ -465,7 +525,7 @@ export class RideManager {
     this.currentRoute = from
       ? this.roadNetwork.route(from, req.pickupNodeId, motoOpts)
       : this.roadNetwork.route(req.pickupNodeId, req.destinationNodeId, motoOpts);
-    if (this.enableNegotiation) {
+    if (this.enableNegotiation && !skipNegotiation) {
       this.bus.emit('negotiation/started', { requestId, initialFare: req.initialFare });
     }
     return true;
@@ -583,6 +643,273 @@ export class RideManager {
     }
     this.failNoRoute();
     return null;
+  }
+
+  rerouteAvoiding(avoidSegmentIds: Iterable<string>): Route | null {
+    const target = this.routeTargetId();
+    const req = this.activeRequest;
+    if (!req || !target) return null;
+    const from = this.nearestNodeId() ?? req.pickupNodeId;
+    const avoidList = Array.from(avoidSegmentIds);
+    const fresh = this.roadNetwork.route(
+      from,
+      target,
+      this.routeOpts('motorcycle', avoidList.length > 0 ? avoidList : undefined)
+    );
+    if (fresh) {
+      this.currentRoute = fresh;
+      this.offRouteSince = -1;
+      return fresh;
+    }
+    return null;
+  }
+
+  rerouteViaTag(tag: string): Route | null {
+    const req = this.activeRequest;
+    const s = this.trip.state;
+    if (!req || (s !== 'PassengerOnboard' && s !== 'EnRouteToDestination')) return null;
+    const fromNodeId = this.nearestNodeId() ?? req.pickupNodeId;
+    const destNodeId = this.intermediateStop && !this.intermediateStop.arrived
+      ? this.intermediateStop.nodeId
+      : req.destinationNodeId;
+    const fromNode = this.roadNetwork.getNode(fromNodeId);
+    const destNode = this.roadNetwork.getNode(destNodeId);
+    if (!fromNode || !destNode) return null;
+
+    const midX = (fromNode.x + destNode.x) * 0.5;
+    const midZ = (fromNode.z + destNode.z) * 0.5;
+    const opts = this.routeOpts('motorcycle');
+    const candidates: Array<{ nodeId: string; score: number }> = [];
+    for (const node of this.roadNetwork.getAllNodes()) {
+      if (node.nodeId === fromNodeId || node.nodeId === destNodeId) continue;
+      const tags = this.roadNetwork.getNodeZoneTags(node.nodeId);
+      if (!tags.includes(tag)) continue;
+      candidates.push({
+        nodeId: node.nodeId,
+        score: distance2d(node.x, node.z, midX, midZ),
+      });
+    }
+    candidates.sort((a, b) => a.score - b.score);
+
+    for (let i = 0; i < Math.min(candidates.length, 6); i++) {
+      const viaId = candidates[i]!.nodeId;
+      const leg1 = this.roadNetwork.route(fromNodeId, viaId, opts);
+      const leg2 = leg1 ? this.roadNetwork.route(viaId, destNodeId, opts) : null;
+      if (!leg1 || !leg2) continue;
+      const stitched: Route = {
+        nodeIds: [...leg1.nodeIds, ...leg2.nodeIds.slice(1)],
+        segmentIds: [...leg1.segmentIds, ...leg2.segmentIds],
+        lengthM: leg1.lengthM + leg2.lengthM,
+        virtualKm: leg1.virtualKm + leg2.virtualKm,
+        etaMin: leg1.etaMin + leg2.etaMin,
+        uTurns: leg1.uTurns + leg2.uTurns,
+      };
+      this.currentRoute = stitched;
+      this.offRouteSince = -1;
+      return stitched;
+    }
+    return null;
+  }
+
+  setIntermediateStop(stop: IntermediateStopState): boolean {
+    const req = this.activeRequest;
+    const s = this.trip.state;
+    if (!req || (s !== 'PassengerOnboard' && s !== 'EnRouteToDestination')) return false;
+    const fromNode = this.nearestNodeId() ?? req.pickupNodeId;
+    const opts = this.routeOpts('motorcycle');
+    const toStop = this.roadNetwork.route(fromNode, stop.nodeId, opts);
+    const toDest = this.roadNetwork.route(stop.nodeId, req.destinationNodeId, opts);
+    if (!toStop || !toDest) return false;
+
+    this.intermediateStop = { ...stop, arrived: false };
+    this.currentRoute = toStop;
+    this.offRouteSince = -1;
+    this.bus.emit('ride/stopAdded', {
+      requestId: req.requestId,
+      nodeId: stop.nodeId,
+      placeKey: stop.placeKey,
+      kind: stop.kind,
+    });
+    return true;
+  }
+
+  relocatePickupToNearbyJunction(
+    minDistM: number = 45,
+    maxDistM: number = 120
+  ): { oldNodeId: string; newNodeId: string } | null {
+    const req = this.activeRequest;
+    const s = this.trip.state;
+    if (!req || (s !== 'Accepted' && s !== 'EnRouteToPickup')) return null;
+    const oldNodeId = req.pickupNodeId;
+    const oldNode = this.roadNetwork.getNode(oldNodeId);
+    if (!oldNode) return null;
+
+    const fromNode = this.nearestNodeId() ?? oldNodeId;
+    const opts = this.routeOpts('motorcycle');
+    let best: {
+      nodeId: string;
+      toNew: Route;
+      trip: Route;
+      distErr: number;
+    } | null = null;
+    const idealDist = (minDistM + maxDistM) * 0.5;
+
+    for (const pass of [0, 1]) {
+      const lo = pass === 0 ? minDistM : 20;
+      const hi = pass === 0 ? maxDistM : 180;
+      for (const node of this.roadNetwork.getAllNodes()) {
+        if (node.nodeId === oldNodeId || !this.roadNetwork.isPickupNode(node.nodeId)) {
+          continue;
+        }
+        const d = distance2d(oldNode.x, oldNode.z, node.x, node.z);
+        if (d < lo || d > hi) continue;
+        const toNew = this.roadNetwork.route(fromNode, node.nodeId, opts);
+        if (!toNew) continue;
+        const trip = this.roadNetwork.route(node.nodeId, req.destinationNodeId, opts);
+        if (!trip) continue;
+        const err = Math.abs(d - idealDist);
+        if (!best || err < best.distErr) {
+          best = { nodeId: node.nodeId, toNew, trip, distErr: err };
+        }
+      }
+      if (best) break;
+    }
+
+    if (!best) return null;
+    req.pickupNodeId = best.nodeId;
+    req.estimatedDistance = best.trip.virtualKm;
+    req.estimatedDuration = best.trip.etaMin;
+    this.currentRoute = best.toNew;
+    this.offRouteSince = -1;
+    this.pickupHold = false;
+    this.activeWait = null;
+    // Allow arrival at the corrected pin to board smoothly without re-triggering wrong pin
+    this.pickupArrivalEvaluatedForRequestId = req.requestId;
+    this.bus.emit('ride/pickupRelocated', {
+      requestId: req.requestId,
+      oldNodeId,
+      newNodeId: best.nodeId,
+    });
+    return { oldNodeId, newNodeId: best.nodeId };
+  }
+
+  startPickupWait(gameMin: number, realSec?: number): void {
+    const req = this.activeRequest;
+    if (!req || this.trip.state !== 'EnRouteToPickup') return;
+    const totalGameMin = Math.max(1, gameMin);
+    const totalSimSec = realSec ?? clamp(3 + totalGameMin * 0.7, 4, 8);
+    this.pickupHold = true;
+    this.activeWait = {
+      kind: 'pickupWait',
+      labelKey: 'hud.wait.pickup',
+      totalSimSec,
+      remainingSimSec: totalSimSec,
+      totalGameMin,
+      remainingGameMin: totalGameMin,
+      canCancel: true,
+    };
+    this.bus.emit('ride/waitUpdated', {
+      requestId: req.requestId,
+      active: true,
+      kind: 'pickupWait',
+      remainingGameMin: totalGameMin,
+    });
+  }
+
+  startDropoffWait(gameMin: number, realSec?: number): void {
+    const req = this.activeRequest;
+    if (!req || this.trip.state !== 'Completing') return;
+    const totalGameMin = Math.max(1, gameMin);
+    const totalSimSec = realSec ?? clamp(3 + totalGameMin * 0.7, 4, 8);
+    this.dropoffHold = true;
+    this.activeWait = {
+      kind: 'stopErrand',
+      labelKey: 'hud.wait.pickup',
+      totalSimSec,
+      remainingSimSec: totalSimSec,
+      totalGameMin,
+      remainingGameMin: totalGameMin,
+      canCancel: true,
+    };
+    this.bus.emit('ride/waitUpdated', {
+      requestId: req.requestId,
+      active: true,
+      kind: 'stopErrand',
+      remainingGameMin: totalGameMin,
+    });
+  }
+
+  resumePickupBoarding(): void {
+    if (!this.activeRequest || this.trip.state !== 'EnRouteToPickup') return;
+    const hadWait = this.activeWait !== null;
+    this.pickupHold = false;
+    this.activeWait = null;
+    if (hadWait) {
+      this.bus.emit('ride/waitUpdated', {
+        requestId: this.activeRequest.requestId,
+        active: false,
+      });
+    }
+    this.completePickupBoarding();
+  }
+
+  resumeDropoffSettlement(): void {
+    const req = this.activeRequest;
+    if (!req || this.trip.state !== 'Completing') return;
+    const hadWait = this.activeWait !== null;
+    this.dropoffHold = false;
+    this.activeWait = null;
+    if (hadWait) {
+      this.bus.emit('ride/waitUpdated', {
+        requestId: req.requestId,
+        active: false,
+      });
+    }
+    this.settleArrival(req);
+  }
+
+  cancelActiveWait(): boolean {
+    const req = this.activeRequest;
+    const wait = this.activeWait;
+    if (!req || !wait || !wait.canCancel) return false;
+    const kind = wait.kind;
+    this.activeWait = null;
+    this.bus.emit('ride/waitUpdated', {
+      requestId: req.requestId,
+      active: false,
+    });
+    if (kind === 'pickupWait') {
+      this.pickupHold = false;
+      this.cancel(req.requestId, 'rider', 'wait_cancelled');
+      return true;
+    }
+    if (this.trip.state === 'Completing') {
+      this.resumeDropoffSettlement();
+      return true;
+    }
+    const completedStop = this.intermediateStop;
+    this.intermediateStop = null;
+    const charId = req.characterId ?? req.passengerId;
+    if (charId) {
+      this.reputation?.changePassengerTrust(charId, -3);
+    }
+    this.adjustPassengerMood(-0.15);
+    const fromNode =
+      completedStop?.nodeId ?? this.nearestNodeId() ?? req.pickupNodeId;
+    this.currentRoute = this.roadNetwork.route(
+      fromNode,
+      req.destinationNodeId,
+      this.routeOpts('motorcycle')
+    );
+    this.offRouteSince = -1;
+    if (completedStop) {
+      this.bus.emit('ride/stopCompleted', {
+        requestId: req.requestId,
+        nodeId: completedStop.nodeId,
+        placeKey: completedStop.placeKey,
+      });
+    }
+    return true;
   }
 
   /** Moves the pickup to `nodeId` (e.g. a safe crossing), `walkM` metres from the old
@@ -1053,6 +1380,123 @@ export class RideManager {
     return tripReceipt;
   }
 
+  private tickWaitCountdown(dt: number): boolean {
+    const wait = this.activeWait;
+    if (!wait || !this.activeRequest) return false;
+    const prevMin = wait.remainingGameMin;
+    wait.remainingSimSec = Math.max(0, wait.remainingSimSec - dt);
+    const ratio = wait.totalSimSec > 0 ? wait.remainingSimSec / wait.totalSimSec : 0;
+    wait.remainingGameMin = wait.totalGameMin * ratio;
+    const deltaMin = prevMin - wait.remainingGameMin;
+    if (deltaMin > 0) {
+      this.advanceClockMin?.(deltaMin);
+    }
+    return wait.remainingSimSec <= 0;
+  }
+
+  private completePickupBoarding(): void {
+    const req = this.activeRequest;
+    if (!req || this.trip.state !== 'EnRouteToPickup') return;
+    this.go('arrivePickup');
+    this.bus.emit('ride/arrivedPickup', {
+      requestId: req.requestId,
+    });
+    this.go('startTrip');
+    const firstTarget = this.routeTargetId() ?? req.destinationNodeId;
+    this.currentRoute = this.roadNetwork.route(
+      req.pickupNodeId,
+      firstTarget,
+      this.routeOpts('motorcycle')
+    );
+    this.offRouteSince = -1;
+    const ctx = this.resolveDialogueContext(req);
+    this.reputation?.startTrip({
+      requestId: req.requestId,
+      bookingType: req.bookingType,
+      isCareful: ctx.archetype === 'careful',
+      isUrgent:
+        req.specialCircumstance === 'urgent' ||
+        ctx.archetype === 'urgent' ||
+        req.requestedArrivalTime !== null,
+    });
+    this.emitRideDialogue(req, 'greeting');
+    this.bus.emit('ride/started', {
+      requestId: req.requestId,
+    });
+  }
+
+  private settleArrival(req: RideRequest): void {
+    if (req.requestedArrivalTime !== null && this.clock) {
+      let lateMin = this.clock.minutes - req.requestedArrivalTime;
+      if (lateMin < -720) lateMin += 1440;
+      if (lateMin > 0) this.reputation?.recordLateness(lateMin);
+    }
+
+    const crashed = this.reputation?.getActiveTrip()?.crashed ?? false;
+    const rating = this.reputation?.getActiveTripRating() ?? 5;
+    const spec = { model: this.activeBikeId, engineTune: this.hasEngineTune };
+    const fuelLiters = this.tripFuelLiters?.() ?? fuelUsed(req.estimatedDistance, 0, spec);
+    const offApp = req.bookingType === 'offApp'
+      ? offAppPayout(
+          req.initialFare,
+          this.paymentReliabilityOf?.(req) ?? 1,
+          new SeededRng(hashSeed(req.requestId, 'offAppPay')).next()
+        )
+      : null;
+    const paidFare = offApp ? offApp.paid : req.initialFare;
+    const archetype = this.archetypeOf?.(req);
+    const disputed =
+      paidFare > 0 &&
+      archetype !== undefined &&
+      isDisputed(
+        archetype,
+        this.paymentReliabilityOf?.(req) ?? 1,
+        new SeededRng(hashSeed(req.requestId, 'dispute')).next()
+      );
+    const baseConsequences = [
+      ...(offApp?.unpaid ? ['trip.consequence.offAppUnpaid'] : []),
+      ...(disputed ? ['trip.consequence.disputed'] : []),
+    ];
+
+    if (disputed) {
+      this.outcome = 'disputed';
+      const partialFare = settledFare(paidFare, true);
+      this.pendingDispute = {
+        requestId: req.requestId,
+        fare: paidFare,
+        partialFare,
+        paidFare,
+        bookingType: req.bookingType,
+        fuelLiters,
+        rating,
+        crashed,
+        day: this.clock?.day ?? 1,
+        minute: this.clock?.minutes ?? 0,
+        consequences: baseConsequences,
+        unpaid: Boolean(offApp?.unpaid),
+      };
+      this.bus.emit('ride/disputed', {
+        requestId: req.requestId,
+        fare: paidFare,
+        partialFare,
+        bookingType: req.bookingType,
+      });
+      return;
+    }
+
+    this.finalizeTrip({
+      req,
+      fare: paidFare,
+      tip: offApp?.unpaid ? 0 : tipAmountFor(req.requestId, paidFare, rating),
+      rating,
+      crashed,
+      fuelLiters,
+      day: this.clock?.day ?? 1,
+      minute: this.clock?.minutes ?? 0,
+      consequences: baseConsequences,
+    });
+  }
+
   update(
     bikePose: { x: number; z: number; speed: number; heading?: number },
     dt: number
@@ -1076,6 +1520,15 @@ export class RideManager {
     const state = this.trip.state;
 
     if (state === 'EnRouteToPickup') {
+      if (this.activeWait && this.activeWait.kind === 'pickupWait') {
+        if (this.tickWaitCountdown(dt)) {
+          this.resumePickupBoarding();
+        }
+        return;
+      }
+      if (this.pickupHold) {
+        return;
+      }
       const pickupNode = this.roadNetwork.getNode(
         this.activeRequest.pickupNodeId
       );
@@ -1088,7 +1541,6 @@ export class RideManager {
         );
         if (dist <= 8.0 && bikePose.speed < 2.0) {
           const chance = this.noShowChance(this.activeRequest);
-          // ponytail: one roll on arrival; a waiting window with patience is T8.x work.
           if (this.rng && chance > 0 && this.rng.chance(chance)) {
             const requestId = this.activeRequest.requestId;
             this.go('noShow');
@@ -1096,35 +1548,85 @@ export class RideManager {
             this.bus.emit('ride/cancelled', { requestId, by: 'passenger', reason: 'noShow' });
             return;
           }
-          this.go('arrivePickup');
-          this.bus.emit('ride/arrivedPickup', {
-            requestId: this.activeRequest.requestId,
-          });
-          this.go('startTrip');
-          // Pickup done: the route now runs from here to the destination.
+          if (
+            this.onPickupArrival &&
+            this.pickupArrivalEvaluatedForRequestId !== this.activeRequest.requestId
+          ) {
+            this.pickupArrivalEvaluatedForRequestId = this.activeRequest.requestId;
+            const decision = this.onPickupArrival(this.activeRequest, bikePose);
+            if (decision === 'hold') {
+              this.pickupHold = true;
+              return;
+            }
+          }
+          this.completePickupBoarding();
+        }
+      }
+    } else if (state === 'EnRouteToDestination') {
+      if (this.activeWait && this.activeWait.kind === 'stopErrand') {
+        if (this.tickWaitCountdown(dt)) {
+          const completedStop = this.intermediateStop;
+          this.activeWait = null;
+          this.intermediateStop = null;
+          const fromNode =
+            completedStop?.nodeId ??
+            this.nearestNodeId() ??
+            this.activeRequest.pickupNodeId;
           this.currentRoute = this.roadNetwork.route(
-            this.activeRequest.pickupNodeId,
+            fromNode,
             this.activeRequest.destinationNodeId,
             this.routeOpts('motorcycle')
           );
           this.offRouteSince = -1;
-          const ctx = this.resolveDialogueContext(this.activeRequest);
-          this.reputation?.startTrip({
+          if (completedStop) {
+            this.bus.emit('ride/stopCompleted', {
+              requestId: this.activeRequest.requestId,
+              nodeId: completedStop.nodeId,
+              placeKey: completedStop.placeKey,
+            });
+          }
+          this.bus.emit('ride/waitUpdated', {
             requestId: this.activeRequest.requestId,
-            bookingType: this.activeRequest.bookingType,
-            isCareful: ctx.archetype === 'careful',
-            isUrgent:
-              this.activeRequest.specialCircumstance === 'urgent' ||
-              ctx.archetype === 'urgent' ||
-              this.activeRequest.requestedArrivalTime !== null,
-          });
-          this.emitRideDialogue(this.activeRequest, 'greeting');
-          this.bus.emit('ride/started', {
-            requestId: this.activeRequest.requestId,
+            active: false,
           });
         }
+        return;
       }
-    } else if (state === 'EnRouteToDestination') {
+
+      if (this.intermediateStop && !this.intermediateStop.arrived) {
+        const stopNode = this.roadNetwork.getNode(this.intermediateStop.nodeId);
+        if (stopNode) {
+          const stopDist = distance2d(bikePose.x, bikePose.z, stopNode.x, stopNode.z);
+          if (stopDist <= 8.0 && bikePose.speed < 2.0) {
+            this.intermediateStop.arrived = true;
+            const totalGameMin = Math.max(1, this.intermediateStop.waitGameMin);
+            const totalSimSec = clamp(3 + totalGameMin * 0.7, 4, 8);
+            this.activeWait = {
+              kind: 'stopErrand',
+              labelKey: 'hud.wait.stop_errand',
+              placeKey: this.intermediateStop.placeKey,
+              totalSimSec,
+              remainingSimSec: totalSimSec,
+              totalGameMin,
+              remainingGameMin: totalGameMin,
+              canCancel: true,
+            };
+            this.bus.emit('ride/stopArrived', {
+              requestId: this.activeRequest.requestId,
+              nodeId: this.intermediateStop.nodeId,
+              placeKey: this.intermediateStop.placeKey,
+            });
+            this.bus.emit('ride/waitUpdated', {
+              requestId: this.activeRequest.requestId,
+              active: true,
+              kind: 'stopErrand',
+              remainingGameMin: totalGameMin,
+            });
+          }
+        }
+        return;
+      }
+
       this.rideElapsedSec += dt;
       if (!this.smallTalkTriggered && this.rideElapsedSec >= 4.0) {
         this.smallTalkTriggered = true;
@@ -1141,86 +1643,28 @@ export class RideManager {
           destNode.z
         );
         if (dist <= 8.0 && bikePose.speed < 2.0) {
-          // Arrived at destination
           const req = this.activeRequest;
-          // MASTER §15 completion order: clear nav target -> settle -> reputation
-          // (ReputationSystem's ride/completed listener records receipt.rating) ->
-          // dropped off -> ride/completed -> Completed.
           this.go('arriveDestination'); // enters 'Completing'
           this.currentRoute = null;
 
-          if (req.requestedArrivalTime !== null && this.clock) {
-            let lateMin = this.clock.minutes - req.requestedArrivalTime;
-            if (lateMin < -720) lateMin += 1440;
-            if (lateMin > 0) this.reputation?.recordLateness(lateMin);
+          if (
+            this.onDropoffArrival &&
+            this.dropoffArrivalEvaluatedForRequestId !== req.requestId
+          ) {
+            this.dropoffArrivalEvaluatedForRequestId = req.requestId;
+            const decision = this.onDropoffArrival(req, bikePose);
+            if (decision === 'hold') {
+              this.dropoffHold = true;
+              return;
+            }
           }
 
-          const crashed = this.reputation?.getActiveTrip()?.crashed ?? false;
-          const rating = this.reputation?.getActiveTripRating() ?? 5;
-          const spec = { model: this.activeBikeId, engineTune: this.hasEngineTune };
-          const fuelLiters = this.tripFuelLiters?.() ?? fuelUsed(req.estimatedDistance, 0, spec);
-          // T8.6: an off-app fare can go unpaid. The roll is seeded by the request, so it replays.
-          const offApp = req.bookingType === 'offApp'
-            ? offAppPayout(
-                req.initialFare,
-                this.paymentReliabilityOf?.(req) ?? 1,
-                new SeededRng(hashSeed(req.requestId, 'offAppPay')).next()
-              )
-            : null;
-          // T8.6: an unreliable passenger may contest the ride (unless off-app non-payment already zeroed paidFare).
-          const paidFare = offApp ? offApp.paid : req.initialFare;
-          const archetype = this.archetypeOf?.(req);
-          const disputed =
-            paidFare > 0 &&
-            archetype !== undefined &&
-            isDisputed(
-              archetype,
-              this.paymentReliabilityOf?.(req) ?? 1,
-              new SeededRng(hashSeed(req.requestId, 'dispute')).next()
-            );
-          const baseConsequences = [
-            ...(offApp?.unpaid ? ['trip.consequence.offAppUnpaid'] : []),
-            ...(disputed ? ['trip.consequence.disputed'] : []),
-          ];
-
-          if (disputed) {
-            this.outcome = 'disputed';
-            const partialFare = settledFare(paidFare, true);
-            this.pendingDispute = {
-              requestId: req.requestId,
-              fare: paidFare,
-              partialFare,
-              paidFare,
-              bookingType: req.bookingType,
-              fuelLiters,
-              rating,
-              crashed,
-              day: this.clock?.day ?? 1,
-              minute: this.clock?.minutes ?? 0,
-              consequences: baseConsequences,
-              unpaid: Boolean(offApp?.unpaid),
-            };
-            this.bus.emit('ride/disputed', {
-              requestId: req.requestId,
-              fare: paidFare,
-              partialFare,
-              bookingType: req.bookingType,
-            });
-            return;
-          }
-
-          this.finalizeTrip({
-            req,
-            fare: paidFare,
-            tip: offApp?.unpaid ? 0 : tipAmountFor(req.requestId, paidFare, rating),
-            rating,
-            crashed,
-            fuelLiters,
-            day: this.clock?.day ?? 1,
-            minute: this.clock?.minutes ?? 0,
-            consequences: baseConsequences,
-          });
+          this.settleArrival(req);
         }
+      }
+    } else if (state === 'Completing') {
+      if (this.activeWait && this.tickWaitCountdown(dt)) {
+        this.resumeDropoffSettlement();
       }
     }
   }

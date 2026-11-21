@@ -14,13 +14,22 @@ import accident from '../../../data/encounters/accident.json';
 const encounters = [...bike, ...crime, ...passenger, ...payment, ...pickup, ...route, ...police, ...accident];
 
 const FAR = 500;
-const NEAR = 30;
+const NEAR = 8;
 
 describe('encounter phase from the live ride', () => {
-  it('no active request is roaming', () => {
+  it('no active request is roaming unless inside post-dropoff window', () => {
     expect(
       encounterPhaseFor({ trip: 'Idle', hasRequest: false, distToPickupM: FAR, distToDropoffM: FAR })
     ).toBe('roaming');
+    expect(
+      encounterPhaseFor({
+        trip: 'Idle',
+        hasRequest: false,
+        distToPickupM: FAR,
+        distToDropoffM: FAR,
+        isPostDropoff: true,
+      })
+    ).toBe('postDropoff');
   });
 
   it('a request on offer is requestOffered', () => {
@@ -29,10 +38,10 @@ describe('encounter phase from the live ride', () => {
     ).toBe('requestOffered');
   });
 
-  it('riding toward pickup is onTrip until the bike is close, then atPickup', () => {
+  it('riding toward pickup is enRouteToPickup until the bike is close, then atPickup', () => {
     const far = encounterPhaseFor({ trip: 'EnRouteToPickup', hasRequest: true, distToPickupM: FAR, distToDropoffM: FAR });
     const near = encounterPhaseFor({ trip: 'EnRouteToPickup', hasRequest: true, distToPickupM: NEAR, distToDropoffM: FAR });
-    expect(far).toBe('onTrip');
+    expect(far).toBe('enRouteToPickup');
     expect(near).toBe('atPickup');
   });
 

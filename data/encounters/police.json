@@ -180,6 +180,7 @@
     "weight": 6,
     "cooldownMin": 90,
     "oncePerDay": true,
+    "cueKey": "encounter.traffic_checkpoint.cue",
     "lineKey": "encounter.traffic_checkpoint.title",
     "choices": [
       {

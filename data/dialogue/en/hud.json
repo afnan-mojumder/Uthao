@@ -51,5 +51,19 @@
   "district.mohakhal": "Mohakhal",
   "district.gulbari": "Gulbari",
   "district.puranpara": "Puran Para",
-  "district.motinagar": "Motinagar"
+  "district.motinagar": "Motinagar",
+  "objective.waiting_pickup": "Waiting at pickup ({min} min left)",
+  "objective.go_to_stop": "Stop near {place} for the passenger",
+  "objective.waiting_stop": "Waiting while passenger visits {place}",
+  "objective.phone_return": "Return forgotten phone near {place}",
+  "hud.wait.pickup": "Waiting for passenger",
+  "hud.wait.stop_errand": "Passenger running errand",
+  "hud.wait.remaining": "{min} min left",
+  "hud.wait.cancel": "Leave & Cancel",
+  "hud.choice.inline_dismiss": "Ignore",
+  "hud.passenger.at_stop": "Passenger at stop",
+  "hud.passenger.boarding": "Passenger boarding",
+  "objective.delivery_pickup": "Pick up parcel near {place}",
+  "objective.delivery_dropoff": "Deliver parcel near {place}",
+  "hud.street_hail_nearby": "Passenger waving ahead — pull up to pick up"
 }

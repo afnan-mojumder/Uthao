@@ -20,22 +20,37 @@ import {
   type BikeState,
   type BikeEnvironment,
 } from '../physics/bikeModel';
-import { SIM_DT, DISTANCE_SCALE } from '../config/constants';
+import { DISTANCE_SCALE, SIM_DT } from '../config/constants';
 import { BALANCE } from '../config/balance';
-import type { Rng } from '../core/rng';
+import { hashSeed, type Rng } from '../core/rng';
 import { TIME_SCALE } from '../core/clock';
 import { clamp } from '../core/math';
 import { receipt as buildReceipt, fuelUsed, type FuelOptions } from './economy/fuel';
 import { bikeDefToSpec, getBikeDef } from './economy/bikes';
 import { checkPuncture } from './economy/maintenance';
 import type {
+  ActiveDeliveryTarget,
+  ActiveFollowUpState,
+  DeliveryJob,
+  EncounterStageKind,
+  EncounterStageState,
+  MissionBeaconKind,
+  MissionBeaconState,
+  StreetHailActorState,
   TripReceipt,
   PassengerProfile,
+  PassengerActorState,
+  IntermediateStopState,
   RoadSegment,
   RideRequest,
   BikeInfractionKind,
   EncounterInstance,
 } from '../core/types';
+import type { MissionWorldCue } from './mission/MissionManager';
+import type { ActiveRoadEvent } from './world/RoadEvents';
+import { nearestPlaceKey } from './ride/rideView';
+import { getSidewalkOffset } from './traffic/pedestrians';
+import type { Route } from './road/routing';
 import {
   startNegotiation,
   type NegotiationResult,
@@ -55,6 +70,17 @@ const TRAFFIC_NEAR_MISS_MARGIN_M = 1.5;
 const TRAFFIC_NEAR_MISS_MIN_SPEED_MS = 20 / 3.6;
 const TRAFFIC_NEAR_MISS_COOLDOWN_S = 1.0;
 const DYNAMIC_TRAFFIC_RANGE_SQ = 80 * 80;
+const PICKUP_ARRIVAL_ENCOUNTER_IDS = [
+  'enc_late_passenger',
+  'enc_wrong_pickup_pin',
+  'enc_parent_child',
+  'enc_off_app',
+  'enc_alley_enter',
+] as const;
+const DROPOFF_ARRIVAL_ENCOUNTER_IDS = [
+  'enc_no_change',
+  'enc_vendor_discount',
+] as const;
 
 export interface FastForwardTripOptions {
   idleMin?: number;
@@ -124,6 +150,7 @@ export class GameSession {
     hasRequest: false,
     distToPickupM: Infinity,
     distToDropoffM: Infinity,
+    isPostDropoff: false,
   };
   // T8.3 live fuel/wear state, all reused to keep step() allocation-free.
   private readonly fuelOpts: FuelOptions = {};
@@ -134,8 +161,119 @@ export class GameSession {
   private readonly teaStalls: { x: number; z: number }[] = [];
   private readonly homePos: { x: number; z: number } | null;
   private readonly kamalGaragePos: { x: number; z: number } | null;
-  private readonly poiPositions: { id: string; kind: string; nameKey: string; x: number; z: number }[] = [];
+  private readonly poiPositions: {
+    id: string;
+    nodeId: string;
+    kind: string;
+    nameKey: string;
+    x: number;
+    z: number;
+  }[] = [];
   private readonly nearbyPoiIds = new Set<string>();
+  private readonly nearbyAnchorKindsScratch: string[] = [];
+  private nearbyAnchorPlaceKeyScratch = '';
+  private nearbyAnchorNodeIdScratch: string | null = null;
+  private inlineAnchorNodeId: string | null = null;
+  private readonly nearbyRoadEventKindsScratch: string[] = [];
+  private tempBusBlockEventId: string | null = null;
+  private readonly encounterAvoidSegments = new Set<string>();
+  private inFastForward = false;
+  private pickupLegDistanceM = 0;
+  private tripLegDistanceM = 0;
+  private roamDistanceSinceLastEncM = 0;
+  private hasChildPassenger = false;
+  private passengerWalkPhase: 'none' | 'boarding' = 'none';
+  private passengerWalkElapsedSec = 0;
+  private activeFollowUp: ActiveFollowUpState | null = null;
+  private followUpRoute: Route | null = null;
+  private postDropoffUntilMin: number | null = null;
+  private postDropoffDropNodeId: string | null = null;
+  private readonly kerbsScratch = { x: 0, z: 0, facingRad: 0 };
+  private readonly stagePoseScratch = { x: 0, y: 0, z: 0, facingRad: 0 };
+  private stagedEncounterKey = '';
+  private stagedEncounterAnchorTag = '';
+  private stagedX = 0;
+  private stagedY = 0;
+  private stagedZ = 0;
+  private stagedFacing = 0;
+  private readonly encounterStageScratch: EncounterStageState = {
+    kind: 'none',
+    worldX: 0,
+    worldY: 0,
+    worldZ: 0,
+    facingRad: 0,
+    urgent: false,
+  };
+  private readonly streetHailSlots: Array<
+    StreetHailActorState & { ttlSec: number; offeredRequestId: string | null }
+  > = [
+      {
+        active: false,
+        nodeId: '',
+        worldX: 0,
+        worldZ: 0,
+        facingRad: 0,
+        seed: 0,
+        placeKey: '',
+        ttlSec: 0,
+        offeredRequestId: null,
+      },
+      {
+        active: false,
+        nodeId: '',
+        worldX: 0,
+        worldZ: 0,
+        facingRad: 0,
+        seed: 0,
+        placeKey: '',
+        ttlSec: 0,
+        offeredRequestId: null,
+      },
+    ];
+  private streetHailScanAccumSec = 0;
+  private nearbyHailNotifiedNodeId: string | null = null;
+  private roamingDeliverySeq = 0;
+  private cachedDeliveryTarget: ActiveDeliveryTarget | null = null;
+  private cachedDeliveryRoute: Route | null = null;
+  private cachedDeliveryKey = '';
+  private cachedDeliveryFromNodeId = '';
+  private readonly missionBeaconScratch: MissionBeaconState = {
+    visible: false,
+    missionId: '',
+    kind: 'reach',
+    nodeId: '',
+    placeKey: '',
+    worldX: 0,
+    worldZ: 0,
+    characterId: undefined,
+  };
+  private readonly missionCharacterScratch: PassengerActorState = {
+    mode: 'hidden',
+    worldX: 0,
+    worldZ: 0,
+    facingRad: 0,
+  };
+  private cachedMissionId = '';
+  private cachedMissionKind: MissionBeaconKind | '' = '';
+  private cachedMissionPoiId = '';
+  private cachedMissionCharId = '';
+  private cachedMissionDistrict = '';
+  private cachedMissionZoneTag = '';
+  private cachedMissionFromNodeId = '';
+  private cachedMissionNodeId = '';
+  private cachedMissionPlaceKey = '';
+  private cachedMissionWorldX = 0;
+  private cachedMissionWorldZ = 0;
+  private cachedMissionRoute: Route | null = null;
+  private missionPullUpOfferedCharId: string | null = null;
+  private missionZoneOfferCooldownSec = 0;
+  private stagedWrongPickupReqId: string | null = null;
+  private readonly passengerActorScratch: PassengerActorState = {
+    mode: 'hidden',
+    worldX: 0,
+    worldZ: 0,
+    facingRad: 0,
+  };
   private readonly speedBumps = new Map<string, { midX: number; midZ: number; ux: number; uz: number }>();
   private readonly recoveryAabbOut: StaticBoxHandle[] = [];
   private readonly segElevScratch: SegmentElevationHit = {
@@ -159,6 +297,7 @@ export class GameSession {
     localKnowledge: 0.5,
     paymentReliability: 1.0,
     archetype: 'commuter',
+    hasChild: false,
   };
   private readonly encounterCtxScratch: EncounterContext = {
     phase: 'roaming',
@@ -173,6 +312,11 @@ export class GameSession {
     bikeCondition: 80,
     segment: null,
     activeRequest: null,
+    tripDistanceM: 0,
+    pickupDistanceM: 0,
+    roamDistanceM: 0,
+    nearbyAnchorKinds: [],
+    nearbyAnchorPlaceKey: '',
     passenger: null,
   };
   private offAppSeq = 0;
@@ -232,10 +376,111 @@ export class GameSession {
         this.requests.getProfile(req.passengerId)?.paymentReliability,
       archetypeOf: (req) => this.requests.getProfile(req.passengerId)?.archetype,
       profileOf: (req) => this.requests.getProfile(req.passengerId),
+      onPickupArrival: (req) => this.handlePickupArrival(req),
+      onDropoffArrival: (req) => this.handleDropoffArrival(req),
+      advanceClockMin: (gameMin) => {
+        if (gameMin > 0) {
+          this.gm.clock.advance((gameMin * 60) / TIME_SCALE);
+        }
+      },
     });
     // T7.5: lets effect handlers (e.g. `endTrip`) reach the live ride state.
     this.gm.rideManager = this.ride;
     this.gm.setRoadNetwork(this.road);
+    this.gm.onRouteEffect = (action, ref) => {
+      if (action === 'forceVia') {
+        this.ride.rerouteViaTag(ref);
+      } else if (action === 'avoid' || action === 'closeSegment') {
+        this.encounterAvoidSegments.add(ref);
+        this.ride.rerouteAvoiding(this.encounterAvoidSegments);
+      }
+    };
+    this.gm.onEncounterOptionChosen = (info) => this.handleEncounterOptionChosen(info);
+    this.gm.bus.on('encounter/started', ({ instance }) => {
+      this.roamDistanceSinceLastEncM = 0;
+      this.inlineAnchorNodeId =
+        instance.presentation === 'inline' ? this.nearbyAnchorNodeIdScratch : null;
+      if (
+        instance.encounterId === 'enc_bus_block' &&
+        !this.inFastForward &&
+        !this.nearbyRoadEventKindsScratch.includes('stalled_vehicle') &&
+        this.lastStepSegment
+      ) {
+        this.tempBusBlockEventId = 'evt_enc_bus_block';
+        this.gm.roadEvents.addEvent({
+          id: this.tempBusBlockEventId,
+          kind: 'stalled_vehicle',
+          segmentId: this.lastStepSegment.segmentId,
+          closesSegment: false,
+          speedCapKmh: 8,
+          congestionMultiplier: 2.5,
+          startMinute: this.gm.clock.minutes,
+          durationMinutes: 15,
+          title: { bn: 'গাড়ি বিকল', en: 'Stalled Vehicle' },
+        });
+      }
+      this.syncEncounterStage(this.lastStepSegment);
+    });
+    this.gm.bus.on('encounter/resolved', (ev) => {
+      if (
+        ev.encounterId === 'enc_bus_block' &&
+        (ev.choiceId === 'honk' || ev.choiceId === 'wait')
+      ) {
+        if (this.tempBusBlockEventId) {
+          this.gm.roadEvents.removeEvent(this.tempBusBlockEventId);
+          this.tempBusBlockEventId = null;
+        } else {
+          const removeId = this.findNearestStalledEventId();
+          if (removeId) this.gm.roadEvents.removeEvent(removeId);
+        }
+      }
+      this.syncEncounterStage(this.lastStepSegment);
+    });
+    this.gm.bus.on('ride/accepted', () => {
+      for (let i = 0; i < this.streetHailSlots.length; i++) {
+        const slot = this.streetHailSlots[i]!;
+        slot.active = false;
+        slot.offeredRequestId = null;
+      }
+      this.nearbyHailNotifiedNodeId = null;
+    });
+    this.gm.bus.on('world/roadEvent', ({ event }) => {
+      if (!event.segmentId) return;
+      if (event.active) {
+        const full = this.gm.roadEvents.getEventById(event.id);
+        if (full?.hasWorkers && !this.traffic.pedestrians.hasRoadWorkers(event.segmentId)) {
+          this.traffic.pedestrians.spawnRoadWorkers(event.segmentId, 2);
+        }
+      } else if (!this.gm.roadEvents.hasActiveWorkerEventOnSegment(event.segmentId)) {
+        this.traffic.pedestrians.clearRoadWorkers(event.segmentId);
+      }
+    });
+    this.gm.bus.on('ride/completed', () => {
+      const doneReq = this.ride.getActiveRequest();
+      this.missionPullUpOfferedCharId = null;
+      this.stagedWrongPickupReqId = null;
+      if (!this.inFastForward) {
+        this.postDropoffUntilMin = this.gm.clock.minutes + 2.0;
+        this.postDropoffDropNodeId =
+          doneReq?.destinationNodeId ??
+          this.road.nearestNode(this.bike.x, this.bike.z)?.nodeId ??
+          null;
+      }
+      const act = this.gm.eventDirector.activeEncounter;
+      if (act?.presentation === 'inline' && act.encounterId !== 'enc_phone_left') {
+        this.gm.eventDirector.dismissActive('rideEnded', this.gm.bus);
+      }
+    });
+    this.gm.bus.on('ride/cancelled', () => {
+      this.passengerWalkPhase = 'none';
+      this.passengerWalkElapsedSec = 0;
+      this.missionPullUpOfferedCharId = null;
+      this.stagedWrongPickupReqId = null;
+      const act = this.gm.eventDirector.activeEncounter;
+      if (act?.presentation === 'inline' && act.encounterId !== 'enc_phone_left') {
+        this.gm.eventDirector.dismissActive('rideEnded', this.gm.bus);
+      }
+    });
     this.ride.enableNegotiation = opts.negotiation ?? true;
     // H: an agreed fare well above fair adds an overcharge mark, a fair one or explicit discount rebuilds goodwill.
     this.gm.bus.on('negotiation/result', (ev) => {
@@ -370,7 +615,14 @@ export class GameSession {
     for (const poi of this.road.getPois()) {
       const node = this.road.getNode(poi.nodeId);
       if (node) {
-        this.poiPositions.push({ id: poi.id, kind: poi.kind, nameKey: poi.nameKey, x: node.x, z: node.z });
+        this.poiPositions.push({
+          id: poi.id,
+          nodeId: poi.nodeId,
+          kind: poi.kind,
+          nameKey: poi.nameKey,
+          x: node.x,
+          z: node.z,
+        });
         if (poi.kind === 'fuel') this.fuelStations.push({ x: node.x, z: node.z });
         if (poi.kind === 'teaStall') this.teaStalls.push({ x: node.x, z: node.z });
       }
@@ -412,17 +664,17 @@ export class GameSession {
     this.gm.spawnSpecialRequest = (templateId) => {
       const res = templateId.startsWith('char_')
         ? this.requests.sampleRecurringRequest(
-            this.gm.clock.minutes,
-            this.gm.weather,
-            templateId,
-            'direct',
-            true
-          )
+          this.gm.clock.minutes,
+          this.gm.weather,
+          templateId,
+          'direct',
+          true
+        )
         : this.requests.sampleRequest(
-            this.gm.clock.minutes,
-            this.gm.weather,
-            templateId === 'street' ? 'street' : 'app'
-          );
+          this.gm.clock.minutes,
+          this.gm.weather,
+          templateId === 'street' ? 'street' : 'app'
+        );
       if (res) this.ride.offer(res.request);
     };
 
@@ -450,6 +702,8 @@ export class GameSession {
       this.lastAccidentEncounterMin = -Infinity;
       this.missionRideOfferCooldownSec = 0;
       this.violationMonitor.reset();
+      this.resetWorldEventStageState();
+      this.reconcileRoadEventWorkers();
       if (this.ride.getTripState() === 'EmergencyInterrupted') {
         this.ride.resumeTrip();
       }
@@ -479,12 +733,26 @@ export class GameSession {
       this.warnedWorn = false;
       this.trafficContacts.clear();
       this.violationMonitor.reset();
+      this.encounterAvoidSegments.clear();
+      this.activeFollowUp = null;
+      this.followUpRoute = null;
+      this.postDropoffUntilMin = null;
+      this.postDropoffDropNodeId = null;
+      this.pickupLegDistanceM = 0;
+      this.tripLegDistanceM = 0;
+      this.roamDistanceSinceLastEncM = 0;
+      this.passengerWalkPhase = 'none';
+      this.passengerWalkElapsedSec = 0;
+      this.inlineAnchorNodeId = null;
+      this.resetWorldEventStageState();
+      this.reconcileRoadEventWorkers();
       if (this.ride.getTripState() === 'EmergencyInterrupted') {
         this.ride.resumeTrip();
       }
       this.syncBikeSpec();
       this.syncLocation();
     });
+    this.reconcileRoadEventWorkers();
     this.syncBikeSpec();
     this.syncLocation();
   }
@@ -673,6 +941,262 @@ export class GameSession {
     return best;
   }
 
+  private resolveMissionTargetNode(cue: MissionWorldCue): {
+    nodeId: string;
+    placeKey: string;
+    worldX: number;
+    worldZ: number;
+  } | null {
+    if (cue.poiId) {
+      const isKind = cue.poiId.startsWith('poi_kind:');
+      const target = isKind ? cue.poiId.slice('poi_kind:'.length) : cue.poiId;
+      let bestPoi: (typeof this.poiPositions)[number] | null = null;
+      let bestDist = Infinity;
+      for (let i = 0; i < this.poiPositions.length; i++) {
+        const poi = this.poiPositions[i]!;
+        if (isKind ? poi.kind !== target : poi.id !== target) continue;
+        if (!this.road.getNode(poi.nodeId)) continue;
+        const d = Math.hypot(poi.x - this.bike.x, poi.z - this.bike.z);
+        if (d < bestDist) {
+          bestDist = d;
+          bestPoi = poi;
+        }
+      }
+      if (bestPoi) {
+        return {
+          nodeId: bestPoi.nodeId,
+          placeKey: bestPoi.nameKey,
+          worldX: bestPoi.x,
+          worldZ: bestPoi.z,
+        };
+      }
+    }
+
+    if (cue.characterId) {
+      const charDef = getCharacter(cue.characterId);
+      let nodeId = charDef?.homeNodeId ?? '';
+      if (!nodeId || !this.road.getNode(nodeId)) {
+        if (cue.characterId === 'char_kamal' && this.kamalGaragePos) {
+          nodeId = this.road.nearestNode(this.kamalGaragePos.x, this.kamalGaragePos.z)?.nodeId ?? '';
+        }
+      }
+      const node = nodeId ? this.road.getNode(nodeId) : undefined;
+      if (node) {
+        let worldX = node.x;
+        let worldZ = node.z;
+        if (this.resolveNodeKerbPose(node.nodeId, this.kerbsScratch)) {
+          worldX = this.kerbsScratch.x;
+          worldZ = this.kerbsScratch.z;
+        }
+        return {
+          nodeId: node.nodeId,
+          placeKey: nearestPlaceKey(this.ride, node.nodeId),
+          worldX,
+          worldZ,
+        };
+      }
+    }
+
+    if (cue.district || cue.zoneTag) {
+      const eligible = this.requests.getEligibleNodeIdsReadonly();
+      let bestNode: { nodeId: string; x: number; z: number } | null = null;
+      let bestDist = Infinity;
+      for (let i = 0; i < eligible.length; i++) {
+        const id = eligible[i]!;
+        if (cue.district && this.road.getNodeDistrict(id) !== cue.district) continue;
+        if (cue.zoneTag && !this.road.getNodeZoneTags(id).includes(cue.zoneTag)) continue;
+        const n = this.road.getNode(id);
+        if (!n) continue;
+        const d = Math.hypot(n.x - this.bike.x, n.z - this.bike.z);
+        if (d < bestDist) {
+          bestDist = d;
+          bestNode = n;
+        }
+      }
+      if (!bestNode) {
+        for (const n of this.road.getAllNodes()) {
+          if (cue.district && this.road.getNodeDistrict(n.nodeId) !== cue.district) continue;
+          if (cue.zoneTag && !this.road.getNodeZoneTags(n.nodeId).includes(cue.zoneTag)) continue;
+          const d = Math.hypot(n.x - this.bike.x, n.z - this.bike.z);
+          if (d < bestDist) {
+            bestDist = d;
+            bestNode = n;
+          }
+        }
+      }
+      if (bestNode) {
+        return {
+          nodeId: bestNode.nodeId,
+          placeKey: nearestPlaceKey(this.ride, bestNode.nodeId),
+          worldX: bestNode.x,
+          worldZ: bestNode.z,
+        };
+      }
+    }
+
+    return null;
+  }
+
+  /** Allocation-free live 3D beacon state for the active mission objective when not in a ride. */
+  getActiveMissionBeaconState(): MissionBeaconState {
+    const out = this.missionBeaconScratch;
+    if (
+      this.ride.getActiveRequest() !== null ||
+      this.activeFollowUp !== null ||
+      this.gm.deliveryManager.activeDeliveries.size > 0
+    ) {
+      out.visible = false;
+      return out;
+    }
+
+    const cue = this.gm.missionManager.getPrimaryWorldMissionCue();
+    if (!cue) {
+      if (this.cachedMissionId !== '') {
+        this.cachedMissionId = '';
+        this.cachedMissionKind = '';
+        this.cachedMissionNodeId = '';
+        this.cachedMissionRoute = null;
+      }
+      out.visible = false;
+      return out;
+    }
+
+    const fromNodeId = this.road.nearestNode(this.bike.x, this.bike.z)?.nodeId ?? '';
+    const cuePoi = cue.poiId ?? '';
+    const cueChar = cue.characterId ?? '';
+    const cueDist = cue.district ?? '';
+    const cueZone = cue.zoneTag ?? '';
+    const sameCue =
+      cue.missionId === this.cachedMissionId &&
+      cue.kind === this.cachedMissionKind &&
+      cuePoi === this.cachedMissionPoiId &&
+      cueChar === this.cachedMissionCharId &&
+      cueDist === this.cachedMissionDistrict &&
+      cueZone === this.cachedMissionZoneTag &&
+      fromNodeId === this.cachedMissionFromNodeId;
+
+    if (!sameCue) {
+      const resolved = this.resolveMissionTargetNode(cue);
+      this.cachedMissionId = cue.missionId;
+      this.cachedMissionKind = cue.kind;
+      this.cachedMissionPoiId = cuePoi;
+      this.cachedMissionCharId = cueChar;
+      this.cachedMissionDistrict = cueDist;
+      this.cachedMissionZoneTag = cueZone;
+      this.cachedMissionFromNodeId = fromNodeId;
+      if (resolved) {
+        this.cachedMissionNodeId = resolved.nodeId;
+        this.cachedMissionPlaceKey = resolved.placeKey;
+        this.cachedMissionWorldX = resolved.worldX;
+        this.cachedMissionWorldZ = resolved.worldZ;
+        this.cachedMissionRoute =
+          fromNodeId && resolved.nodeId && fromNodeId !== resolved.nodeId
+            ? this.road.route(fromNodeId, resolved.nodeId, {
+                mode: 'motorcycle',
+                roadEvents: this.gm.roadEvents,
+                weather: this.gm.weather,
+                minute: this.gm.clock.minutes,
+              })
+            : null;
+      } else {
+        this.cachedMissionNodeId = '';
+        this.cachedMissionPlaceKey = '';
+        this.cachedMissionWorldX = 0;
+        this.cachedMissionWorldZ = 0;
+        this.cachedMissionRoute = null;
+      }
+    }
+
+    if (!this.cachedMissionNodeId) {
+      out.visible = false;
+      return out;
+    }
+
+    out.visible = true;
+    out.missionId = this.cachedMissionId;
+    out.kind = cue.kind;
+    out.nodeId = this.cachedMissionNodeId;
+    out.placeKey = this.cachedMissionPlaceKey;
+    out.worldX = this.cachedMissionWorldX;
+    out.worldZ = this.cachedMissionWorldZ;
+    out.characterId = cue.characterId;
+    return out;
+  }
+
+  /** Route from the player's current nearest road node to the active mission target (if roaming). */
+  getActiveMissionRoute(): Route | null {
+    const beacon = this.getActiveMissionBeaconState();
+    return beacon.visible ? this.cachedMissionRoute : null;
+  }
+
+  /** Allocation-free 3D waving story character actor state for active `rideWith` / `relationship` missions. */
+  getMissionCharacterActorState(): PassengerActorState {
+    const out = this.missionCharacterScratch;
+    const beacon = this.getActiveMissionBeaconState();
+    if (
+      !beacon.visible ||
+      (beacon.kind !== 'ride_with' && beacon.kind !== 'relationship') ||
+      !beacon.characterId
+    ) {
+      out.mode = 'hidden';
+      out.waving = false;
+      out.beaconVisible = false;
+      return out;
+    }
+
+    const hasKerb = this.resolveNodeKerbPose(beacon.nodeId, this.kerbsScratch);
+    const wx = hasKerb ? this.kerbsScratch.x : beacon.worldX;
+    const wz = hasKerb ? this.kerbsScratch.z : beacon.worldZ;
+    const dx = this.bike.x - wx;
+    const dz = this.bike.z - wz;
+    const dist = Math.hypot(dx, dz);
+    out.mode = 'waitingAtPickup';
+    out.worldX = wx;
+    out.worldZ = wz;
+    out.facingRad =
+      dist < 45 && dist > 1e-3
+        ? Math.atan2(dx, dz)
+        : hasKerb
+          ? this.kerbsScratch.facingRad
+          : 0;
+    out.passengerId = beacon.characterId;
+    out.passengerSeed = hashSeed(beacon.characterId, 'appearance');
+    out.hasChild = Boolean(getCharacter(beacon.characterId)?.fixedTraits.child);
+    out.waving = true;
+    out.beaconVisible = false;
+    return out;
+  }
+
+  private updateMissionPullUpOffer(): void {
+    if (
+      this.inFastForward ||
+      this.gm.shiftEnded ||
+      this.ride.getActiveRequest() !== null ||
+      this.gm.eventDirector.activeEncounter !== null
+    ) {
+      return;
+    }
+    const beacon = this.getActiveMissionBeaconState();
+    if (!beacon.visible || beacon.kind !== 'ride_with' || !beacon.characterId) {
+      return;
+    }
+    const dist = Math.hypot(beacon.worldX - this.bike.x, beacon.worldZ - this.bike.z);
+    if (dist > 25) {
+      if (this.missionPullUpOfferedCharId === beacon.characterId) {
+        this.missionPullUpOfferedCharId = null;
+      }
+      return;
+    }
+    if (
+      dist <= 12.0 &&
+      Math.abs(this.bike.speed) < 3.5 &&
+      this.missionPullUpOfferedCharId !== beacon.characterId
+    ) {
+      this.missionPullUpOfferedCharId = beacon.characterId;
+      this.offerMissionRideWith(beacon.characterId);
+    }
+  }
+
   /** Starts a fresh fuel tally for a new trip. */
   beginTripFuel(): void {
     this.tripFuelLiters = 0;
@@ -859,10 +1383,10 @@ export class GameSession {
       const t =
         lenSq > 0
           ? clamp(
-              ((anchorX - startNode.x) * dx + (anchorZ - startNode.z) * dz) / lenSq,
-              0,
-              1
-            )
+            ((anchorX - startNode.x) * dx + (anchorZ - startNode.z) * dz) / lenSq,
+            0,
+            1
+          )
           : 0;
       const cx = startNode.x + t * dx;
       const cz = startNode.z + t * dz;
@@ -1057,7 +1581,7 @@ export class GameSession {
     return this.autoRequests;
   }
 
-  /** The encounter phase the live ride is in: offer, pickup, trip, drop-off or roaming. */
+  /** The encounter phase the live ride is in: offer, en-route pickup, pickup, trip, drop-off, post-dropoff or roaming. */
   private currentEncounterPhase(): EncounterPhase {
     const s = this.phaseInput;
     const req = this.ride.getActiveRequest();
@@ -1065,7 +1589,12 @@ export class GameSession {
     s.hasRequest = req !== null;
     s.distToPickupM = Infinity;
     s.distToDropoffM = Infinity;
+    if (this.postDropoffUntilMin !== null && this.gm.clock.minutes > this.postDropoffUntilMin) {
+      this.postDropoffUntilMin = null;
+    }
+    s.isPostDropoff = !req && this.postDropoffUntilMin !== null;
     if (req) {
+      this.postDropoffUntilMin = null;
       const pickup = this.ride.roadNetwork.getNode(req.pickupNodeId);
       const dropoff = this.ride.roadNetwork.getNode(req.destinationNodeId);
       if (pickup) s.distToPickupM = Math.hypot(this.bike.x - pickup.x, this.bike.z - pickup.z);
@@ -1074,10 +1603,1126 @@ export class GameSession {
     return encounterPhaseFor(s);
   }
 
+  private scanAheadAnchors(): void {
+    this.nearbyAnchorKindsScratch.length = 0;
+    this.nearbyAnchorPlaceKeyScratch = '';
+    this.nearbyAnchorNodeIdScratch = null;
+    const speed = Math.abs(this.bike.speed);
+    if (speed < 1.5 && !this.inFastForward) return;
+    const fwdX = Math.sin(this.bike.heading);
+    const fwdZ = Math.cos(this.bike.heading);
+    let bestDist = Infinity;
+    for (let i = 0; i < this.poiPositions.length; i++) {
+      const p = this.poiPositions[i]!;
+      const dx = p.x - this.bike.x;
+      const dz = p.z - this.bike.z;
+      const d = Math.hypot(dx, dz);
+      if (d < 25 || d > 65) continue;
+      if (!this.inFastForward) {
+        const forward = (dx * fwdX + dz * fwdZ) / d;
+        if (forward < 0.25) continue;
+      }
+      if (!this.nearbyAnchorKindsScratch.includes(p.kind)) {
+        this.nearbyAnchorKindsScratch.push(p.kind);
+      }
+      if (d < bestDist) {
+        bestDist = d;
+        this.nearbyAnchorPlaceKeyScratch = p.nameKey;
+        this.nearbyAnchorNodeIdScratch = p.nodeId;
+      }
+    }
+  }
+
+  private resolveNodeKerbPose(
+    nodeId: string,
+    out: { x: number; z: number; facingRad: number }
+  ): boolean {
+    const node = this.road.getNode(nodeId);
+    if (!node) return false;
+    const segs = this.road.getAllSegments();
+    for (let i = 0; i < segs.length; i++) {
+      const seg = segs[i]!;
+      if (seg.startNodeId !== nodeId && seg.endNodeId !== nodeId) continue;
+      const sNode = this.road.getNode(seg.startNodeId);
+      const eNode = this.road.getNode(seg.endNodeId);
+      if (!sNode || !eNode) continue;
+      const dx = eNode.x - sNode.x;
+      const dz = eNode.z - sNode.z;
+      const len = Math.hypot(dx, dz);
+      if (len <= 0) continue;
+      const nx = -dz / len;
+      const nz = dx / len;
+      const offset = getSidewalkOffset(seg);
+      out.x = node.x + nx * offset;
+      out.z = node.z + nz * offset;
+      out.facingRad = Math.atan2(-nx, -nz);
+      return true;
+    }
+    out.x = node.x + 2.8;
+    out.z = node.z;
+    out.facingRad = -Math.PI / 2;
+    return true;
+  }
+
+  private findAheadStopPoi(
+    kinds: readonly string[]
+  ): { nodeId: string; placeKey: string; kind: string } | null {
+    if (this.inlineAnchorNodeId) {
+      for (let i = 0; i < this.poiPositions.length; i++) {
+        const p = this.poiPositions[i]!;
+        if (p.nodeId === this.inlineAnchorNodeId && kinds.includes(p.kind)) {
+          return { nodeId: p.nodeId, placeKey: p.nameKey, kind: p.kind };
+        }
+      }
+    }
+    const fwdX = Math.sin(this.bike.heading);
+    const fwdZ = Math.cos(this.bike.heading);
+    let bestAhead: { nodeId: string; placeKey: string; kind: string } | null = null;
+    let bestAheadScore = Infinity;
+    let bestAny: { nodeId: string; placeKey: string; kind: string } | null = null;
+    let bestAnyDist = Infinity;
+
+    for (let i = 0; i < this.poiPositions.length; i++) {
+      const p = this.poiPositions[i]!;
+      if (!kinds.includes(p.kind)) continue;
+      const dx = p.x - this.bike.x;
+      const dz = p.z - this.bike.z;
+      const d = Math.hypot(dx, dz);
+      if (d < bestAnyDist) {
+        bestAnyDist = d;
+        bestAny = { nodeId: p.nodeId, placeKey: p.nameKey, kind: p.kind };
+      }
+      if (d >= 12 && d <= 200) {
+        const dot = (dx * fwdX + dz * fwdZ) / d;
+        if (dot >= 0 && d < bestAheadScore) {
+          bestAheadScore = d;
+          bestAhead = { nodeId: p.nodeId, placeKey: p.nameKey, kind: p.kind };
+        }
+      }
+    }
+    return bestAhead ?? bestAny;
+  }
+
+  private handlePickupArrival(req: RideRequest): 'hold' | 'proceed' {
+    if (this.inFastForward) {
+      return 'proceed';
+    }
+    if (req.requestId === 'req_tutorial_01') {
+      this.passengerWalkPhase = 'boarding';
+      this.passengerWalkElapsedSec = 0;
+      return 'hold';
+    }
+    if (this.pickupLegDistanceM < 15) {
+      return 'proceed';
+    }
+    const activeId = this.gm.eventDirector.activeEncounter?.encounterId;
+    if (
+      activeId &&
+      (PICKUP_ARRIVAL_ENCOUNTER_IDS as readonly string[]).includes(activeId)
+    ) {
+      return 'hold';
+    }
+    if (this.gm.eventDirector.enabled && !this.ride.getPendingDispute()) {
+      const ctx = this.buildEncounterContext(this.lastStepSegment, req);
+      ctx.phase = 'atPickup';
+      if (
+        this.stagedWrongPickupReqId !== req.requestId &&
+        this.gm.missionManager.hasIncompleteEncounterObjective('enc_wrong_pickup_pin')
+      ) {
+        this.stagedWrongPickupReqId = req.requestId;
+        const wrongPinEnc = this.gm.eventDirector.forceStart(
+          'enc_wrong_pickup_pin',
+          this.gm.bus,
+          ctx
+        );
+        if (wrongPinEnc) {
+          return 'hold';
+        }
+      }
+      const arrivalEnc = this.gm.eventDirector.evaluateArrivalEncounter(
+        PICKUP_ARRIVAL_ENCOUNTER_IDS,
+        ctx,
+        this.gm.bus
+      );
+      if (arrivalEnc) {
+        return 'hold';
+      }
+    }
+    this.passengerWalkPhase = 'boarding';
+    this.passengerWalkElapsedSec = 0;
+    return 'hold';
+  }
+
+  private handleDropoffArrival(req: RideRequest): 'hold' | 'proceed' {
+    if (this.inFastForward || req.requestId === 'req_tutorial_01' || this.tripLegDistanceM < 15) {
+      return 'proceed';
+    }
+    const activeId = this.gm.eventDirector.activeEncounter?.encounterId;
+    if (
+      activeId &&
+      (DROPOFF_ARRIVAL_ENCOUNTER_IDS as readonly string[]).includes(activeId)
+    ) {
+      return 'hold';
+    }
+    if (!this.gm.eventDirector.enabled || this.ride.getPendingDispute()) {
+      return 'proceed';
+    }
+    const ctx = this.buildEncounterContext(this.lastStepSegment, req);
+    ctx.phase = 'dropOff';
+    const arrivalEnc = this.gm.eventDirector.evaluateArrivalEncounter(
+      DROPOFF_ARRIVAL_ENCOUNTER_IDS,
+      ctx,
+      this.gm.bus
+    );
+    return arrivalEnc ? 'hold' : 'proceed';
+  }
+
+  private handleEncounterOptionChosen(info: {
+    encounterId: string;
+    choiceId: string;
+    instanceId: string;
+    anchorPlaceKey?: string;
+    deferredWaitMin: number;
+    deferredPhoneReward: { cash: number; trust: number } | null;
+    deferredJobCash: number;
+  }): void {
+    if (this.inFastForward) {
+      this.inlineAnchorNodeId = null;
+      return;
+    }
+    const {
+      encounterId,
+      choiceId,
+      anchorPlaceKey,
+      deferredWaitMin,
+      deferredPhoneReward,
+      deferredJobCash,
+    } = info;
+    if (encounterId === 'enc_wrong_pickup_pin') {
+      if (choiceId === 'drive') {
+        this.ride.relocatePickupToNearbyJunction(45, 120);
+      } else if (choiceId === 'walk') {
+        this.ride.startPickupWait(Math.max(2, deferredWaitMin || 2));
+      } else if (choiceId !== 'cancel' && this.ride.isPickupHold()) {
+        this.passengerWalkPhase = 'boarding';
+        this.passengerWalkElapsedSec = 0;
+      }
+      return;
+    }
+
+    if (encounterId === 'enc_late_passenger') {
+      if (choiceId === 'wait' || choiceId === 'hurry') {
+        this.ride.startPickupWait(
+          Math.max(1, deferredWaitMin || (choiceId === 'wait' ? 5 : 2))
+        );
+      }
+      return;
+    }
+
+    if (
+      encounterId === 'enc_parent_child' ||
+      encounterId === 'enc_alley_enter' ||
+      encounterId === 'enc_off_app'
+    ) {
+      if (this.ride.isPickupHold() && this.ride.getTripState() === 'EnRouteToPickup') {
+        if (deferredWaitMin > 0) {
+          this.ride.startPickupWait(deferredWaitMin);
+        } else {
+          this.passengerWalkPhase = 'boarding';
+          this.passengerWalkElapsedSec = 0;
+        }
+      }
+      return;
+    }
+
+    if (
+      (encounterId === 'enc_extra_stop' && (choiceId === 'agree' || choiceId === 'fee')) ||
+      (encounterId === 'enc_wait_errand' && (choiceId === 'fee' || choiceId === 'free'))
+    ) {
+      const stopKinds =
+        encounterId === 'enc_extra_stop'
+          ? ['market', 'teaStall']
+          : ['pharmacy', 'hospital', 'market'];
+      const target = this.findAheadStopPoi(stopKinds);
+      if (target) {
+        const stop: IntermediateStopState = {
+          nodeId: target.nodeId,
+          placeKey: target.placeKey || anchorPlaceKey || '',
+          kind: target.kind,
+          arrived: false,
+          waitGameMin: Math.max(
+            1,
+            deferredWaitMin || (encounterId === 'enc_extra_stop' ? 3 : 5)
+          ),
+          labelKey: 'hud.wait.stop_errand',
+        };
+        this.ride.setIntermediateStop(stop);
+      }
+      this.inlineAnchorNodeId = null;
+      return;
+    }
+
+    if (encounterId === 'enc_no_change' || encounterId === 'enc_vendor_discount') {
+      if (this.ride.isDropoffHold() && this.ride.getTripState() === 'Completing') {
+        if (
+          encounterId === 'enc_no_change' &&
+          choiceId === 'wait' &&
+          deferredWaitMin > 0
+        ) {
+          this.ride.startDropoffWait(deferredWaitMin);
+        } else {
+          this.ride.resumeDropoffSettlement();
+        }
+      }
+      return;
+    }
+
+    if (encounterId === 'enc_phone_left') {
+      this.postDropoffUntilMin = null;
+      if (choiceId === 'return') {
+        const targetNodeId =
+          this.postDropoffDropNodeId ??
+          this.road.nearestNode(this.bike.x, this.bike.z)?.nodeId ??
+          null;
+        if (targetNodeId) {
+          this.activeFollowUp = {
+            kind: 'phoneReturn',
+            nodeId: targetNodeId,
+            placeKey: anchorPlaceKey || nearestPlaceKey(this.ride, targetNodeId),
+            encounterId: 'enc_phone_left',
+            choiceId: 'return',
+            cashReward: deferredPhoneReward?.cash ?? 100,
+            trustBonus: deferredPhoneReward?.trust ?? 10,
+          };
+          const fromId = this.road.nearestNode(this.bike.x, this.bike.z)?.nodeId;
+          this.followUpRoute = fromId
+            ? this.road.route(fromId, targetNodeId, { mode: 'motorcycle' })
+            : null;
+        }
+      }
+      this.inlineAnchorNodeId = null;
+      return;
+    }
+
+    if (encounterId === 'enc_regular_direct_call' && choiceId === 'accept') {
+      if (!this.ride.getActiveRequest()) {
+        const sample = this.requests.sampleRecurringRequest(
+          this.gm.clock.minutes,
+          this.gm.weather,
+          'char_tanvir',
+          'direct',
+          true
+        );
+        if (sample) {
+          sample.request.initialFare = Math.max(
+            sample.request.initialFare,
+            deferredJobCash || 150
+          );
+          this.ride.offer(sample.request);
+          if (this.ride.accept(sample.request.requestId, undefined, true)) {
+            this.inlineAnchorNodeId = null;
+            return;
+          }
+        }
+      }
+      if (deferredJobCash > 0) {
+        this.creditDeferredEncounterCash('direct_fallback', deferredJobCash);
+      }
+      this.inlineAnchorNodeId = null;
+      return;
+    }
+
+    if (encounterId === 'enc_friend_package' && choiceId === 'accept') {
+      if (!this.ride.getActiveRequest()) {
+        const started = this.startMintuParcelDelivery(deferredJobCash || 120);
+        if (started) {
+          this.inlineAnchorNodeId = null;
+          return;
+        }
+      }
+      if (deferredJobCash > 0) {
+        this.creditDeferredEncounterCash('delivery_fallback', deferredJobCash);
+      }
+      if (deferredWaitMin > 0) {
+        this.gm.clock.advance((deferredWaitMin * 60) / TIME_SCALE);
+      }
+      this.inlineAnchorNodeId = null;
+      return;
+    }
+
+    this.inlineAnchorNodeId = null;
+  }
+
+  private creditDeferredEncounterCash(tag: string, amount: number): void {
+    if (amount <= 0) return;
+    this.gm.economyManager.post({
+      id: `tx_enc_${tag}_${this.gm.clock.day}_${Math.floor(this.gm.clock.minutes)}_${++this.roamingDeliverySeq}`,
+      day: this.gm.clock.day,
+      minute: this.gm.clock.minutes,
+      kind: 'event',
+      amount,
+    });
+    this.gm.economy.cash = this.gm.economyManager.cash;
+    this.gm.economy.dailyRevenue = this.gm.economyManager.dailyRevenue;
+  }
+
+  private startMintuParcelDelivery(basePayout: number): boolean {
+    if (this.gm.deliveryManager.activeDeliveries.size >= this.gm.deliveryManager.getMaxCapacity()) {
+      return false;
+    }
+    const eligible = this.requests.getEligibleNodeIdsReadonly();
+    if (eligible.length < 2) return false;
+
+    let teaPoi: { id: string; nodeId: string; dist: number } | null = null;
+    for (let i = 0; i < this.poiPositions.length; i++) {
+      const p = this.poiPositions[i]!;
+      if (p.kind !== 'teaStall' || !this.road.getNode(p.nodeId)) continue;
+      const d = Math.hypot(p.x - this.bike.x, p.z - this.bike.z);
+      if (!teaPoi || d < teaPoi.dist) {
+        teaPoi = { id: p.id, nodeId: p.nodeId, dist: d };
+      }
+    }
+
+    let pickupNodeId = teaPoi?.nodeId ?? '';
+    if (!pickupNodeId) {
+      let bestDist = Infinity;
+      for (let i = 0; i < eligible.length; i++) {
+        const id = eligible[i]!;
+        const node = this.road.getNode(id);
+        if (!node) continue;
+        const d = Math.hypot(node.x - this.bike.x, node.z - this.bike.z);
+        if (d >= 25 && d < bestDist) {
+          bestDist = d;
+          pickupNodeId = id;
+        }
+      }
+      pickupNodeId = pickupNodeId || (this.road.nearestNode(this.bike.x, this.bike.z)?.nodeId ?? eligible[0]!);
+    }
+
+    const pickupNode = this.road.getNode(pickupNodeId);
+    if (!pickupNode) return false;
+
+    let dropoffNodeId = '';
+    let bestFulgateDist = Infinity;
+    let fallbackNodeId = '';
+    let fallbackScore = Infinity;
+
+    for (let i = 0; i < eligible.length; i++) {
+      const id = eligible[i]!;
+      if (id === pickupNodeId) continue;
+      const node = this.road.getNode(id);
+      if (!node) continue;
+      const r = this.road.route(pickupNodeId, id, { mode: 'motorcycle' });
+      if (!r || r.nodeIds.length < 2) continue;
+      const d = Math.hypot(node.x - pickupNode.x, node.z - pickupNode.z);
+      if (this.road.getNodeDistrict(id) === 'fulgate') {
+        if (d < bestFulgateDist) {
+          bestFulgateDist = d;
+          dropoffNodeId = id;
+        }
+      } else {
+        const score = d >= 100 && d <= 650 ? d : d + 1000;
+        if (score < fallbackScore) {
+          fallbackScore = score;
+          fallbackNodeId = id;
+        }
+      }
+    }
+
+    const finalDropoffId = dropoffNodeId || fallbackNodeId;
+    if (!finalDropoffId || finalDropoffId === pickupNodeId) return false;
+
+    const job: DeliveryJob = {
+      id: `deliv_mintu_${this.gm.clock.day}_${++this.roamingDeliverySeq}`,
+      senderNameKey: 'character.mintu.name',
+      pickupPoiId: teaPoi?.id ?? pickupNodeId,
+      pickupNodeId,
+      dropoffNodeId: finalDropoffId,
+      pickupPlaceKey: nearestPlaceKey(this.ride, pickupNodeId) || undefined,
+      dropoffPlaceKey: nearestPlaceKey(this.ride, finalDropoffId) || undefined,
+      itemType: 'parcel',
+      fragile: false,
+      basePayout,
+      timeLimitMinutes: 30,
+      status: 'offered',
+    };
+    this.gm.deliveryManager.offer(job);
+    const res = this.gm.deliveryManager.accept(job.id, this.gm.clock.minutes);
+    if (!res.success) {
+      this.gm.deliveryManager.offeredDeliveries.delete(job.id);
+      return false;
+    }
+    this.cachedDeliveryKey = '';
+    return true;
+  }
+
+  getActiveFollowUp(): ActiveFollowUpState | null {
+    return this.activeFollowUp;
+  }
+
+  getFollowUpRoute(): Route | null {
+    return this.followUpRoute;
+  }
+
+  private resetWorldEventStageState(): void {
+    this.tempBusBlockEventId = null;
+    this.stagedEncounterKey = '';
+    this.stagedEncounterAnchorTag = '';
+    this.stagedX = 0;
+    this.stagedY = 0;
+    this.stagedZ = 0;
+    this.stagedFacing = 0;
+    this.encounterStageScratch.kind = 'none';
+    this.encounterStageScratch.worldX = 0;
+    this.encounterStageScratch.worldY = 0;
+    this.encounterStageScratch.worldZ = 0;
+    this.encounterStageScratch.facingRad = 0;
+    this.encounterStageScratch.urgent = false;
+    for (let i = 0; i < this.streetHailSlots.length; i++) {
+      const slot = this.streetHailSlots[i]!;
+      slot.active = false;
+      slot.nodeId = '';
+      slot.ttlSec = 0;
+      slot.offeredRequestId = null;
+    }
+    this.streetHailScanAccumSec = 0;
+    this.nearbyHailNotifiedNodeId = null;
+    this.cachedDeliveryTarget = null;
+    this.cachedDeliveryRoute = null;
+    this.cachedDeliveryKey = '';
+    this.cachedDeliveryFromNodeId = '';
+    this.cachedMissionId = '';
+    this.cachedMissionKind = '';
+    this.cachedMissionPoiId = '';
+    this.cachedMissionCharId = '';
+    this.cachedMissionDistrict = '';
+    this.cachedMissionZoneTag = '';
+    this.cachedMissionFromNodeId = '';
+    this.cachedMissionNodeId = '';
+    this.cachedMissionPlaceKey = '';
+    this.cachedMissionWorldX = 0;
+    this.cachedMissionWorldZ = 0;
+    this.cachedMissionRoute = null;
+    this.missionPullUpOfferedCharId = null;
+    this.missionZoneOfferCooldownSec = 0;
+    this.stagedWrongPickupReqId = null;
+  }
+
+  private reconcileRoadEventWorkers(): void {
+    this.traffic.pedestrians.clearRoadWorkers();
+    this.gm.roadEvents.forEachActiveEvent(this.reconcileWorkerCb);
+  }
+
+  private readonly reconcileWorkerCb = (ev: ActiveRoadEvent): void => {
+    if (
+      ev.hasWorkers &&
+      ev.segmentId &&
+      !this.traffic.pedestrians.hasRoadWorkers(ev.segmentId)
+    ) {
+      this.traffic.pedestrians.spawnRoadWorkers(ev.segmentId, 2);
+    }
+  };
+
+  private readonly scanRoadEventCb = (ev: ActiveRoadEvent): void => {
+    if (!ev.segmentId) return;
+    let matched = false;
+    if (ev.segmentId === this.lastStepSegment?.segmentId) {
+      matched = true;
+    } else {
+      const seg = this.road.getSegment(ev.segmentId);
+      const sNode = seg ? this.road.getNode(seg.startNodeId) : undefined;
+      const eNode = seg ? this.road.getNode(seg.endNodeId) : undefined;
+      if (sNode && eNode) {
+        const mx = (sNode.x + eNode.x) * 0.5;
+        const mz = (sNode.z + eNode.z) * 0.5;
+        const dx = mx - this.bike.x;
+        const dz = mz - this.bike.z;
+        const dist = Math.hypot(dx, dz);
+        if (dist <= 85) {
+          if (dist <= 22) {
+            matched = true;
+          } else {
+            const forward =
+              (dx * Math.sin(this.bike.heading) + dz * Math.cos(this.bike.heading)) /
+              dist;
+            if (forward >= 0.05) matched = true;
+          }
+        }
+      }
+    }
+    if (!matched) return;
+    if (!this.nearbyRoadEventKindsScratch.includes(ev.kind)) {
+      this.nearbyRoadEventKindsScratch.push(ev.kind);
+    }
+  };
+
+  private scanNearbyRoadEvents(): void {
+    this.nearbyRoadEventKindsScratch.length = 0;
+    if (this.inFastForward) return;
+    this.gm.roadEvents.forEachActiveEvent(this.scanRoadEventCb);
+  }
+
+  private findNearestStalledEventId(): string | null {
+    let bestId: string | null = null;
+    let bestDist = Infinity;
+    this.gm.roadEvents.forEachActiveEvent((ev) => {
+      if (ev.kind !== 'stalled_vehicle' || !ev.segmentId) return;
+      if (ev.segmentId === this.lastStepSegment?.segmentId) {
+        bestId = ev.id;
+        bestDist = 0;
+        return;
+      }
+      const seg = this.road.getSegment(ev.segmentId);
+      const sNode = seg ? this.road.getNode(seg.startNodeId) : undefined;
+      const eNode = seg ? this.road.getNode(seg.endNodeId) : undefined;
+      if (!sNode || !eNode) return;
+      const d = Math.hypot(
+        (sNode.x + eNode.x) * 0.5 - this.bike.x,
+        (sNode.z + eNode.z) * 0.5 - this.bike.z
+      );
+      if (d <= 95 && d < bestDist) {
+        bestDist = d;
+        bestId = ev.id;
+      }
+    });
+    return bestId;
+  }
+
+  private resolveAheadRoadPose(
+    distAheadM: number,
+    segOverride: RoadSegment | null,
+    out: { x: number; y: number; z: number; facingRad: number }
+  ): void {
+    const seg = segOverride ?? this.lastStepSegment;
+    const fwdX = Math.sin(this.bike.heading);
+    const fwdZ = Math.cos(this.bike.heading);
+    if (seg) {
+      const sNode = this.road.getNode(seg.startNodeId);
+      const eNode = this.road.getNode(seg.endNodeId);
+      if (sNode && eNode) {
+        const dx = eNode.x - sNode.x;
+        const dz = eNode.z - sNode.z;
+        const lenSq = dx * dx + dz * dz;
+        const len = Math.sqrt(lenSq);
+        if (len >= 12) {
+          const curT = clamp(
+            ((this.bike.x - sNode.x) * dx + (this.bike.z - sNode.z) * dz) / lenSq,
+            0,
+            1
+          );
+          const dirSign = (dx * fwdX + dz * fwdZ) >= 0 ? 1 : -1;
+          const targetT = clamp(curT + dirSign * (distAheadM / len), 0.1, 0.9);
+          out.x = sNode.x + dx * targetT;
+          out.y = (sNode.y ?? 0) + ((eNode.y ?? 0) - (sNode.y ?? 0)) * targetT;
+          out.z = sNode.z + dz * targetT;
+          out.facingRad = Math.atan2(-dirSign * dx, -dirSign * dz);
+          return;
+        }
+      }
+    }
+    out.x = this.bike.x + fwdX * distAheadM;
+    out.y = this.bike.y;
+    out.z = this.bike.z + fwdZ * distAheadM;
+    out.facingRad = this.bike.heading + Math.PI;
+  }
+
+  private syncEncounterStage(segOverride: RoadSegment | null = this.lastStepSegment): void {
+    const out = this.encounterStageScratch;
+    const active = this.gm.eventDirector.activeEncounter;
+    const cue = this.gm.eventDirector.pendingCue;
+
+    let kind: EncounterStageKind = 'none';
+    let key = '';
+    let anchorTag = '';
+    let urgent = false;
+
+    if (active) {
+      switch (active.encounterId) {
+        case 'enc_police_checkpoint':
+          kind = 'policeCheckpoint';
+          anchorTag = 'enc_police_checkpoint';
+          key = `act:${active.id}`;
+          urgent = true;
+          break;
+        case 'enc_police_signal_stop':
+          kind = 'policeSignalStop';
+          anchorTag = 'enc_police_signal_stop';
+          key = `act:${active.id}`;
+          urgent = true;
+          break;
+        case 'enc_dark_alley_blockage':
+        case 'enc_robbery_attempt':
+          kind = 'alleyAmbush';
+          anchorTag = active.encounterId;
+          key = `act:${active.id}`;
+          urgent = true;
+          break;
+        case 'enc_suspicious_pickup':
+          kind = 'suspiciousPickup';
+          anchorTag = 'enc_suspicious_pickup';
+          key = `act:${active.id}`;
+          urgent = true;
+          break;
+      }
+    } else if (cue) {
+      switch (cue.encounterId) {
+        case 'enc_police_checkpoint':
+          kind = 'policeCheckpoint';
+          anchorTag = 'enc_police_checkpoint';
+          key = `cue:enc_police_checkpoint:${cue.startedAtMinute}`;
+          urgent = false;
+          break;
+        case 'enc_dark_alley_blockage':
+        case 'enc_robbery_attempt':
+          kind = 'alleyAmbush';
+          anchorTag = cue.encounterId;
+          key = `cue:${cue.encounterId}:${cue.startedAtMinute}`;
+          urgent = false;
+          break;
+      }
+    } else if (!this.inFastForward && Boolean(this.gm.story.branchFlags['policeViolation'])) {
+      kind = 'policeSignalStop';
+      anchorTag = 'flag:policeViolation';
+      key = 'flag:policeViolation';
+      urgent = false;
+    }
+
+    if (kind === 'none') {
+      this.stagedEncounterKey = '';
+      this.stagedEncounterAnchorTag = '';
+      out.kind = 'none';
+      out.urgent = false;
+      return;
+    }
+
+    const tooFarPastFlagAnchor =
+      key === 'flag:policeViolation' &&
+      this.stagedEncounterKey === 'flag:policeViolation' &&
+      Math.hypot(this.bike.x - this.stagedX, this.bike.z - this.stagedZ) > 85;
+
+    if (key !== this.stagedEncounterKey || tooFarPastFlagAnchor) {
+      const keepSameCueAnchor =
+        !tooFarPastFlagAnchor &&
+        anchorTag !== '' &&
+        anchorTag === this.stagedEncounterAnchorTag;
+      if (!keepSameCueAnchor) {
+        const req = this.ride.getActiveRequest();
+        if (
+          kind === 'suspiciousPickup' &&
+          req &&
+          this.resolveNodeKerbPose(req.pickupNodeId, this.kerbsScratch)
+        ) {
+          this.stagedX = this.kerbsScratch.x;
+          this.stagedY = this.bike.y;
+          this.stagedZ = this.kerbsScratch.z;
+          this.stagedFacing = this.kerbsScratch.facingRad;
+        } else {
+          const resolvedSeg =
+            segOverride ??
+            this.road.segmentAtElevation(
+              this.bike.x,
+              this.bike.z,
+              this.bike.y,
+              10,
+              this.segElevScratch
+            ).segment;
+          this.resolveAheadRoadPose(26, resolvedSeg, this.stagePoseScratch);
+          this.stagedX = this.stagePoseScratch.x;
+          this.stagedY = this.stagePoseScratch.y;
+          this.stagedZ = this.stagePoseScratch.z;
+          this.stagedFacing = this.stagePoseScratch.facingRad;
+        }
+      }
+      this.stagedEncounterKey = key;
+      this.stagedEncounterAnchorTag = anchorTag;
+    }
+
+    out.kind = kind;
+    out.worldX = this.stagedX;
+    out.worldY = this.stagedY;
+    out.worldZ = this.stagedZ;
+    out.facingRad = this.stagedFacing;
+    out.urgent = urgent;
+  }
+
+  getEncounterStageState(): EncounterStageState {
+    this.syncEncounterStage(this.lastStepSegment);
+    return this.encounterStageScratch;
+  }
+
+  getStreetHailStates(): readonly StreetHailActorState[] {
+    return this.streetHailSlots;
+  }
+
+  private anchorStreetHailForRequest(req: RideRequest): void {
+    for (let i = 0; i < this.streetHailSlots.length; i++) {
+      const slot = this.streetHailSlots[i]!;
+      if (
+        slot.active &&
+        (slot.offeredRequestId === req.requestId || slot.nodeId === req.pickupNodeId)
+      ) {
+        slot.offeredRequestId = req.requestId;
+        slot.ttlSec = Math.max(slot.ttlSec, 45);
+        return;
+      }
+    }
+    let targetSlot = this.streetHailSlots[0]!;
+    for (let i = 0; i < this.streetHailSlots.length; i++) {
+      if (!this.streetHailSlots[i]!.active) {
+        targetSlot = this.streetHailSlots[i]!;
+        break;
+      }
+    }
+    if (!this.resolveNodeKerbPose(req.pickupNodeId, this.kerbsScratch)) return;
+    targetSlot.active = true;
+    targetSlot.nodeId = req.pickupNodeId;
+    targetSlot.worldX = this.kerbsScratch.x;
+    targetSlot.worldZ = this.kerbsScratch.z;
+    targetSlot.facingRad = this.kerbsScratch.facingRad;
+    targetSlot.seed = hashSeed(req.passengerId, 'hail');
+    targetSlot.placeKey = req.pickupPlaceKey ?? '';
+    targetSlot.ttlSec = 45;
+    targetSlot.offeredRequestId = req.requestId;
+  }
+
+  private updateStreetHails(dt: number): void {
+    if (this.gm.shiftEnded || this.ride.getActiveRequest() !== null) {
+      for (let i = 0; i < this.streetHailSlots.length; i++) {
+        const slot = this.streetHailSlots[i]!;
+        slot.active = false;
+        slot.offeredRequestId = null;
+      }
+      return;
+    }
+
+    const canPullUp = this.gm.eventDirector.activeEncounter === null;
+    const phoneUnavailable =
+      this.gm.economy.phoneBattery <= 0 || this.ride.isAppSuspended(this.gm.clock.day);
+
+    let activeCount = 0;
+    for (let i = 0; i < this.streetHailSlots.length; i++) {
+      const slot = this.streetHailSlots[i]!;
+      if (!slot.active) continue;
+
+      if (slot.offeredRequestId && !this.ride.hasOfferedRequest(slot.offeredRequestId)) {
+        slot.offeredRequestId = null;
+        slot.active = false;
+        continue;
+      }
+
+      slot.ttlSec -= dt;
+      const dx = this.bike.x - slot.worldX;
+      const dz = this.bike.z - slot.worldZ;
+      const dist = Math.hypot(dx, dz);
+      if (slot.ttlSec <= 0 || dist > 140) {
+        slot.active = false;
+        slot.offeredRequestId = null;
+        continue;
+      }
+
+      activeCount++;
+      if (dist < 45 && dist > 1e-3) {
+        slot.facingRad = Math.atan2(dx, dz);
+      }
+
+      if (canPullUp) {
+        if (dist <= 22 && this.nearbyHailNotifiedNodeId !== slot.nodeId) {
+          this.nearbyHailNotifiedNodeId = slot.nodeId;
+          this.gm.bus.emit('ui/dialogue', {
+            speakerKey: 'hud.passenger.waiting',
+            lineKey: 'hud.street_hail_nearby',
+            durationMs: 2600,
+          });
+        }
+        if (dist <= 10.0 && Math.abs(this.bike.speed) < 3.5) {
+          if (slot.offeredRequestId !== null) {
+            if (phoneUnavailable && this.ride.accept(slot.offeredRequestId)) {
+              if (this.ride.getActiveRequest()) return;
+            }
+          } else {
+            const hail = this.requests.sampleStreetHail(
+              this.pose,
+              this.gm.clock.minutes,
+              this.gm.weather,
+              slot.nodeId
+            );
+            if (hail) {
+              this.ride.offer(hail.request);
+              slot.offeredRequestId = hail.request.requestId;
+              if (phoneUnavailable) {
+                this.ride.accept(hail.request.requestId);
+                if (this.ride.getActiveRequest()) return;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    if (!this.autoRequests) return;
+    this.streetHailScanAccumSec += dt;
+    if (this.streetHailScanAccumSec < 2.0) return;
+    this.streetHailScanAccumSec = 0;
+
+    const targetCount = phoneUnavailable ? 2 : 1;
+    if (activeCount >= targetCount) return;
+
+    const eligible = this.requests.getEligibleNodeIdsReadonly();
+    if (eligible.length < 2) return;
+
+    const fwdX = Math.sin(this.bike.heading);
+    const fwdZ = Math.cos(this.bike.heading);
+
+    for (let s = 0; s < this.streetHailSlots.length && activeCount < targetCount; s++) {
+      const slot = this.streetHailSlots[s]!;
+      if (slot.active) continue;
+      const otherSlot = this.streetHailSlots[1 - s]!;
+      const usedNodeId = otherSlot.active ? otherSlot.nodeId : '';
+
+      let bestFwdId = '';
+      let bestFwdScore = Infinity;
+      let bestAnyId = '';
+      let bestAnyScore = Infinity;
+
+      for (let i = 0; i < eligible.length; i++) {
+        const nodeId = eligible[i]!;
+        if (nodeId === usedNodeId) continue;
+        const node = this.road.getNode(nodeId);
+        if (!node) continue;
+        const dx = node.x - this.bike.x;
+        const dz = node.z - this.bike.z;
+        const d = Math.hypot(dx, dz);
+        if (d < 28 || d > 110) continue;
+        const score = this.requests.isDemandNode(nodeId) ? d / 1.5 : d;
+        const dot = (dx * fwdX + dz * fwdZ) / d;
+        if (dot >= 0.1 && score < bestFwdScore) {
+          bestFwdScore = score;
+          bestFwdId = nodeId;
+        } else if (score < bestAnyScore) {
+          bestAnyScore = score;
+          bestAnyId = nodeId;
+        }
+      }
+
+      const chosenId = bestFwdId || bestAnyId;
+      if (!chosenId || !this.resolveNodeKerbPose(chosenId, this.kerbsScratch)) break;
+
+      slot.active = true;
+      slot.nodeId = chosenId;
+      slot.worldX = this.kerbsScratch.x;
+      slot.worldZ = this.kerbsScratch.z;
+      slot.facingRad = this.kerbsScratch.facingRad;
+      slot.seed = hashSeed(chosenId, 'hail');
+      slot.placeKey = nearestPlaceKey(this.ride, chosenId);
+      slot.ttlSec = 55;
+      slot.offeredRequestId = null;
+      activeCount++;
+    }
+  }
+
+  getActiveDeliveryTarget(): ActiveDeliveryTarget | null {
+    if (this.gm.deliveryManager.activeDeliveries.size === 0) {
+      if (this.cachedDeliveryKey !== '') {
+        this.cachedDeliveryTarget = null;
+        this.cachedDeliveryRoute = null;
+        this.cachedDeliveryKey = '';
+        this.cachedDeliveryFromNodeId = '';
+      }
+      return null;
+    }
+
+    let firstJob: DeliveryJob | undefined;
+    for (const job of this.gm.deliveryManager.activeDeliveries.values()) {
+      firstJob = job;
+      break;
+    }
+    if (!firstJob || (firstJob.status !== 'accepted' && firstJob.status !== 'in_transit')) {
+      return null;
+    }
+
+    const targetNodeId =
+      firstJob.status === 'accepted' ? firstJob.pickupNodeId : firstJob.dropoffNodeId;
+    const placeKey =
+      firstJob.status === 'accepted'
+        ? (firstJob.pickupPlaceKey ?? nearestPlaceKey(this.ride, targetNodeId))
+        : (firstJob.dropoffPlaceKey ?? nearestPlaceKey(this.ride, targetNodeId));
+    const key = `${firstJob.id}:${firstJob.status}`;
+    const fromNodeId = this.road.nearestNode(this.bike.x, this.bike.z)?.nodeId ?? '';
+
+    if (
+      key !== this.cachedDeliveryKey ||
+      fromNodeId !== this.cachedDeliveryFromNodeId ||
+      !this.cachedDeliveryTarget
+    ) {
+      this.cachedDeliveryKey = key;
+      this.cachedDeliveryFromNodeId = fromNodeId;
+      this.cachedDeliveryTarget = {
+        deliveryId: firstJob.id,
+        status: firstJob.status,
+        nodeId: targetNodeId,
+        placeKey,
+        basePayout: firstJob.basePayout,
+      };
+      this.cachedDeliveryRoute = fromNodeId
+        ? this.road.route(fromNodeId, targetNodeId, {
+          mode: 'motorcycle',
+          roadEvents: this.gm.roadEvents,
+          weather: this.gm.weather,
+          minute: this.gm.clock.minutes,
+        })
+        : null;
+    }
+
+    return this.cachedDeliveryTarget;
+  }
+
+  getActiveDeliveryRoute(): Route | null {
+    this.getActiveDeliveryTarget();
+    return this.cachedDeliveryRoute;
+  }
+
+  getPassengerActorState(): PassengerActorState {
+    const out = this.passengerActorScratch;
+    const req = this.ride.getActiveRequest();
+    const trip = this.ride.getTripState();
+
+    if (!req) {
+      if (
+        this.activeFollowUp &&
+        this.resolveNodeKerbPose(this.activeFollowUp.nodeId, this.kerbsScratch)
+      ) {
+        out.mode = 'waitingAtPickup';
+        out.worldX = this.kerbsScratch.x;
+        out.worldZ = this.kerbsScratch.z;
+        const dx = this.bike.x - out.worldX;
+        const dz = this.bike.z - out.worldZ;
+        out.facingRad =
+          Math.hypot(dx, dz) < 45 ? Math.atan2(dx, dz) : this.kerbsScratch.facingRad;
+        out.passengerId = 'phoneReturn';
+        out.passengerSeed = hashSeed(this.activeFollowUp.encounterId, 'pax');
+        out.hasChild = false;
+        out.waving = true;
+        out.beaconVisible = true;
+        return out;
+      }
+      out.mode = 'hidden';
+      out.worldX = 0;
+      out.worldZ = 0;
+      out.facingRad = 0;
+      out.passengerId = undefined;
+      out.passengerSeed = 0;
+      out.hasChild = false;
+      out.waving = false;
+      out.beaconVisible = false;
+      return out;
+    }
+
+    const paxId = req.characterId ?? req.passengerId;
+    out.passengerId = paxId;
+    out.passengerSeed = hashSeed(paxId, 'appearance');
+    out.hasChild = this.hasChildPassenger;
+
+    if (
+      trip === 'Negotiating' ||
+      trip === 'Accepted' ||
+      trip === 'EnRouteToPickup'
+    ) {
+      const hasKerb = this.resolveNodeKerbPose(req.pickupNodeId, this.kerbsScratch);
+      const kx = hasKerb ? this.kerbsScratch.x : this.bike.x;
+      const kz = hasKerb ? this.kerbsScratch.z : this.bike.z;
+      const kFacing = hasKerb ? this.kerbsScratch.facingRad : 0;
+
+      if (this.passengerWalkPhase === 'boarding') {
+        const t = clamp(this.passengerWalkElapsedSec / 1.6, 0, 1);
+        const sideX = this.bike.x - Math.cos(this.bike.heading) * 0.7;
+        const sideZ = this.bike.z + Math.sin(this.bike.heading) * 0.7;
+        out.mode = 'walkingToBike';
+        out.worldX = kx + (sideX - kx) * t;
+        out.worldZ = kz + (sideZ - kz) * t;
+        out.facingRad = Math.atan2(sideX - kx, sideZ - kz);
+        out.waving = false;
+        out.beaconVisible = false;
+        return out;
+      }
+
+      const wait = this.ride.getActiveWait();
+      out.mode = 'waitingAtPickup';
+      out.worldX = kx;
+      out.worldZ = kz;
+      const dx = this.bike.x - kx;
+      const dz = this.bike.z - kz;
+      out.facingRad = Math.hypot(dx, dz) < 45 ? Math.atan2(dx, dz) : kFacing;
+      out.waving = wait === null;
+      out.beaconVisible = true;
+      return out;
+    }
+
+    if (trip === 'PassengerOnboard' || trip === 'EnRouteToDestination') {
+      const stop = this.ride.getIntermediateStop();
+      const wait = this.ride.getActiveWait();
+      if (stop && stop.arrived && wait) {
+        const hasKerb = this.resolveNodeKerbPose(stop.nodeId, this.kerbsScratch);
+        const kx = hasKerb ? this.kerbsScratch.x : this.bike.x;
+        const kz = hasKerb ? this.kerbsScratch.z : this.bike.z;
+        const kFacing = hasKerb ? this.kerbsScratch.facingRad : 0;
+        const sideX = this.bike.x - Math.cos(this.bike.heading) * 0.7;
+        const sideZ = this.bike.z + Math.sin(this.bike.heading) * 0.7;
+        if (wait.remainingSimSec <= 1.2) {
+          const t = clamp(1 - wait.remainingSimSec / 1.2, 0, 1);
+          out.mode = 'walkingBackToBike';
+          out.worldX = kx + (sideX - kx) * t;
+          out.worldZ = kz + (sideZ - kz) * t;
+          out.facingRad = Math.atan2(sideX - kx, sideZ - kz);
+        } else {
+          out.mode = 'atStop';
+          out.worldX = kx;
+          out.worldZ = kz;
+          out.facingRad = kFacing;
+        }
+        out.waving = false;
+        out.beaconVisible = true;
+        return out;
+      }
+
+      out.mode = 'onPillion';
+      out.worldX = this.bike.x;
+      out.worldZ = this.bike.z;
+      out.facingRad = this.bike.heading;
+      out.waving = false;
+      out.beaconVisible = false;
+      return out;
+    }
+
+    if (trip === 'Completing') {
+      const hasKerb = this.resolveNodeKerbPose(
+        req.destinationNodeId,
+        this.kerbsScratch
+      );
+      out.mode = 'atDropoff';
+      out.worldX = hasKerb ? this.kerbsScratch.x : this.bike.x + 2;
+      out.worldZ = hasKerb ? this.kerbsScratch.z : this.bike.z;
+      out.facingRad = hasKerb ? this.kerbsScratch.facingRad : 0;
+      out.waving = false;
+      out.beaconVisible = false;
+      return out;
+    }
+
+    out.mode = 'hidden';
+    out.waving = false;
+    out.beaconVisible = false;
+    return out;
+  }
+
+  isPassengerOnPillion(): boolean {
+    return this.getPassengerActorState().mode === 'onPillion';
+  }
+
   private buildEncounterContext(
     segment: RoadSegment | null,
     activeReq: RideRequest | null
   ): EncounterContext {
+    this.scanAheadAnchors();
+    this.scanNearbyRoadEvents();
     const ctx = this.encounterCtxScratch;
     ctx.phase = this.currentEncounterPhase();
     ctx.minute = this.gm.clock.minutes;
@@ -1091,6 +2736,15 @@ export class GameSession {
     ctx.bikeCondition = this.gm.economyManager.motorcycleCondition;
     ctx.segment = segment;
     ctx.activeRequest = activeReq;
+    ctx.tripDistanceM = this.tripLegDistanceM;
+    ctx.pickupDistanceM = this.pickupLegDistanceM;
+    ctx.roamDistanceM = this.roamDistanceSinceLastEncM;
+    ctx.nearbyAnchorKinds = this.nearbyAnchorKindsScratch;
+    ctx.nearbyAnchorPlaceKey = this.nearbyAnchorPlaceKeyScratch;
+    ctx.nearbyRoadEventKinds = this.inFastForward
+      ? undefined
+      : this.nearbyRoadEventKindsScratch;
+    ctx.inFastForward = this.inFastForward;
     ctx.meters = this.gm.reputationSystem.getMetersView();
     ctx.witnesses = segment ? Math.round(clamp(segment.pedestrianDensity, 0, 1) * 5) : 0;
     if (!segment) {
@@ -1114,6 +2768,7 @@ export class GameSession {
       p.localKnowledge = profile?.localKnowledge ?? charDef?.localKnowledge ?? 0.5;
       p.paymentReliability = profile?.paymentReliability ?? charDef?.paymentReliability ?? 1.0;
       p.archetype = profile?.archetype ?? charDef?.archetype ?? 'commuter';
+      p.hasChild = this.hasChildPassenger;
       ctx.passenger = p;
     } else {
       ctx.passenger = null;
@@ -1138,7 +2793,28 @@ export class GameSession {
 
     const phase = this.currentEncounterPhase();
     this.gm.tick(dt, Math.abs(this.bike.speed) * 3.6, phase, false);
-    this.gm.evaluateEncounters(this.buildEncounterContext(segment, activeReq));
+    const encCtx = this.buildEncounterContext(segment, activeReq);
+    const deferAtPickupForWrongPin =
+      encCtx.phase === 'atPickup' &&
+      activeReq !== null &&
+      this.stagedWrongPickupReqId !== activeReq.requestId &&
+      this.gm.missionManager.hasIncompleteEncounterObjective('enc_wrong_pickup_pin');
+    if (activeReq?.requestId !== 'req_tutorial_01' && !deferAtPickupForWrongPin) {
+      this.gm.evaluateEncounters(encCtx);
+    }
+    if (
+      !this.inFastForward &&
+      this.gm.eventDirector.enabled &&
+      activeReq &&
+      activeReq.requestId !== 'req_tutorial_01' &&
+      (this.ride.getTripState() === 'PassengerOnboard' ||
+        this.ride.getTripState() === 'EnRouteToDestination') &&
+      this.tripLegDistanceM >= 35 &&
+      this.gm.missionManager.hasIncompleteEncounterObjective('enc_police_checkpoint')
+    ) {
+      this.gm.eventDirector.startCueIfEligible('enc_police_checkpoint', encCtx, this.gm.bus);
+    }
+    this.syncEncounterStage(segment);
     this.env.wet = this.gm.weatherSystem.isRoadWet();
     this.env.surface = segment ? this.gm.weatherSystem.getSurfaceModifier(segment) : 1.0;
     this.envFlooded = segment ? this.gm.weatherSystem.isFlooded(segment.segmentId) : false;
@@ -1153,7 +2829,20 @@ export class GameSession {
     const reqId = activeReq ? activeReq.requestId : null;
     if (reqId !== this.tripReqId) {
       this.tripReqId = reqId;
-      if (reqId) this.beginTripFuel();
+      this.pickupLegDistanceM = 0;
+      this.tripLegDistanceM = 0;
+      this.passengerWalkPhase = 'none';
+      this.passengerWalkElapsedSec = 0;
+      this.encounterAvoidSegments.clear();
+      this.hasChildPassenger = reqId
+        ? activeReq!.characterId === 'char_ferdousi' || hashSeed(reqId, 'child') % 5 === 0
+        : false;
+      if (reqId) {
+        this.activeFollowUp = null;
+        this.followUpRoute = null;
+        this.postDropoffUntilMin = null;
+        this.beginTripFuel();
+      }
     }
 
     if (this.stallSec > 0) {
@@ -1197,7 +2886,18 @@ export class GameSession {
     const moved = Math.sqrt(mx * mx + mz * mz);
     // A jump larger than any real step (teleport, respawn) is not riding.
     const plausible = (this.bikeSpec.vmax + 1) * dt * 2;
-    this.burnAndWear(input, dt, moved <= plausible ? moved : 0, activeReq !== null);
+    const stepDist = moved <= plausible ? moved : 0;
+    this.burnAndWear(input, dt, stepDist, activeReq !== null);
+    if (activeReq) {
+      const ts = this.ride.getTripState();
+      if (ts === 'Accepted' || ts === 'EnRouteToPickup') {
+        this.pickupLegDistanceM += stepDist;
+      } else if (ts === 'PassengerOnboard' || ts === 'EnRouteToDestination') {
+        this.tripLegDistanceM += stepDist;
+      }
+    } else {
+      this.roamDistanceSinceLastEncM += stepDist;
+    }
 
     // The tyres reaching the grip limit is reported once per slide, not every frame.
     const wobbleNow = this.bike.wobble === true;
@@ -1252,6 +2952,73 @@ export class GameSession {
     }
 
     this.ride.update(this.pose, dt);
+    if (
+      this.ride.isPickupHold() &&
+      this.passengerWalkPhase === 'boarding' &&
+      this.gm.eventDirector.activeEncounter === null &&
+      !this.ride.getActiveWait()
+    ) {
+      this.passengerWalkElapsedSec += dt;
+      if (this.passengerWalkElapsedSec >= 1.6) {
+        this.passengerWalkPhase = 'none';
+        this.passengerWalkElapsedSec = 0;
+        this.ride.resumePickupBoarding();
+      }
+    }
+    if (this.activeFollowUp) {
+      const fNode = this.road.getNode(this.activeFollowUp.nodeId);
+      if (
+        fNode &&
+        Math.hypot(this.bike.x - fNode.x, this.bike.z - fNode.z) <= 10.0 &&
+        Math.abs(this.bike.speed) < 2.5
+      ) {
+        const fu = this.activeFollowUp;
+        this.activeFollowUp = null;
+        this.followUpRoute = null;
+        if (fu.cashReward > 0) {
+          this.gm.economyManager.post({
+            id: `tx_phone_ret_${this.gm.clock.day}_${Math.floor(this.gm.clock.minutes)}`,
+            day: this.gm.clock.day,
+            minute: this.gm.clock.minutes,
+            kind: 'tip',
+            amount: fu.cashReward,
+          });
+          this.gm.economy.cash = this.gm.economyManager.cash;
+          this.gm.economy.dailyRevenue = this.gm.economyManager.dailyRevenue;
+        }
+        if (fu.trustBonus > 0) {
+          this.gm.bus.emit('reputation/changed', {
+            delta: { localTrust: fu.trustBonus },
+          });
+        }
+        this.gm.bus.emit('ui/dialogue', {
+          speakerKey: 'hud.passenger.on_bike',
+          lineKey: 'encounter.phone_left.choice.return',
+          durationMs: 3200,
+        });
+      }
+    }
+    const activeEnc = this.gm.eventDirector.activeEncounter;
+    if (activeEnc?.presentation === 'inline') {
+      this.gm.eventDirector.tickInlineExpiry(dt, this.gm.bus);
+      if (
+        this.gm.eventDirector.activeEncounter?.id === activeEnc.id &&
+        this.inlineAnchorNodeId
+      ) {
+        const anchorNode = this.road.getNode(this.inlineAnchorNodeId);
+        if (anchorNode) {
+          const adx = anchorNode.x - this.bike.x;
+          const adz = anchorNode.z - this.bike.z;
+          const adist = Math.hypot(adx, adz);
+          if (adist > 25) {
+            const dot = (adx * Math.sin(this.bike.heading) + adz * Math.cos(this.bike.heading)) / adist;
+            if (dot < -0.25) {
+              this.gm.eventDirector.dismissActive('overshot', this.gm.bus);
+            }
+          }
+        }
+      }
+    }
     this.syncLocation();
     if (!this.gm.shiftEnded) {
       this.gm.deliveryManager.updateProximity(
@@ -1264,19 +3031,41 @@ export class GameSession {
     }
     this.checkMissionPois();
     this.navigate();
+    if (!this.inFastForward) {
+      this.updateStreetHails(dt);
+      this.updateMissionPullUpOffer();
+    }
 
     if (this.autoRequests) {
       this.missionRideOfferCooldownSec = Math.max(0, this.missionRideOfferCooldownSec - dt);
+      this.missionZoneOfferCooldownSec = Math.max(0, this.missionZoneOfferCooldownSec - dt);
       if (
         !this.gm.shiftEnded &&
         !this.ride.getActiveRequest() &&
-        !this.ride.hasOfferedRequests() &&
-        this.missionRideOfferCooldownSec <= 0
+        !this.ride.hasOfferedRequests()
       ) {
         const pendingChar = this.gm.missionManager.getFirstPendingRideWithCharacterId();
-        if (pendingChar !== null) {
+        if (pendingChar !== null && this.missionRideOfferCooldownSec <= 0) {
           this.missionRideOfferCooldownSec = 5;
           this.offerMissionRideWith(pendingChar);
+        } else if (
+          !this.inFastForward &&
+          pendingChar === null &&
+          this.missionZoneOfferCooldownSec <= 0
+        ) {
+          const rideFilter = this.gm.missionManager.getActiveRideObjectiveFilter();
+          if (rideFilter) {
+            const filtered = this.requests.sampleFilteredRequest(
+              this.gm.clock.minutes,
+              this.gm.weather,
+              rideFilter,
+              this.pose
+            );
+            if (filtered) {
+              this.missionZoneOfferCooldownSec = 6;
+              this.ride.offer(filtered.request);
+            }
+          }
         }
       }
 
@@ -1291,6 +3080,9 @@ export class GameSession {
       );
       for (const req of newRequests) {
         this.ride.offer(req);
+        if (req.bookingType === 'street' && !this.inFastForward) {
+          this.anchorStreetHailForRequest(req);
+        }
       }
 
       if (
@@ -1318,8 +3110,21 @@ export class GameSession {
     this.warnedWorn = false;
     this.trafficContacts.clear();
     this.violationMonitor.reset();
+    this.encounterAvoidSegments.clear();
+    this.activeFollowUp = null;
+    this.followUpRoute = null;
+    this.postDropoffUntilMin = null;
+    this.postDropoffDropNodeId = null;
+    this.pickupLegDistanceM = 0;
+    this.tripLegDistanceM = 0;
+    this.roamDistanceSinceLastEncM = 0;
+    this.passengerWalkPhase = 'none';
+    this.passengerWalkElapsedSec = 0;
+    this.inlineAnchorNodeId = null;
+    this.resetWorldEventStageState();
     this.ride.resetCareer();
     this.gm.resetCareerState(nextSeed);
+    this.reconcileRoadEventWorkers();
     this.breakdownRng.setState(this.gm.rng.fork('breakdown').getState());
     this.punctureRng.setState(this.gm.rng.fork('puncture').getState());
     this.deliveryRng.setState(this.gm.rng.fork('delivery').getState());
@@ -1379,10 +3184,107 @@ export class GameSession {
     return true;
   }
 
+  isTutorialRideActive(): boolean {
+    return this.ride.getActiveRequest()?.requestId === 'req_tutorial_01';
+  }
+
+  /** Starts the scripted first-ride tutorial as a live 3D ride from Clinic to Campus Gate. */
+  startLiveTutorialRide(fare: number = 80): boolean {
+    if (this.ride.getActiveRequest()?.requestId === 'req_tutorial_01') {
+      return true;
+    }
+    if (this.ride.getActiveRequest() !== null) {
+      return false;
+    }
+
+    const clinicPoi = this.poiPositions.find((p) => p.id === 'poi_mirpara_clinic');
+    const gatePoi = this.poiPositions.find((p) => p.id === 'poi_mirpara_campus_gate');
+    const eligible = this.requests.getEligibleNodeIdsReadonly();
+
+    let pickupNodeId =
+      clinicPoi?.nodeId ??
+      (this.road.getNode('res_s2_1') ? 'res_s2_1' : eligible[0] ?? '');
+    let destNodeId =
+      gatePoi?.nodeId ??
+      (this.road.getNode('res_n1_1') ? 'res_n1_1' : eligible[eligible.length - 1] ?? '');
+
+    if (!pickupNodeId || !destNodeId || pickupNodeId === destNodeId) {
+      for (let i = 0; i < eligible.length && (!pickupNodeId || !destNodeId || pickupNodeId === destNodeId); i++) {
+        const cand = eligible[i]!;
+        if (!pickupNodeId) pickupNodeId = cand;
+        else if (cand !== pickupNodeId) destNodeId = cand;
+      }
+    }
+    if (!pickupNodeId || !destNodeId || pickupNodeId === destNodeId) {
+      return false;
+    }
+
+    const route = this.road.route(pickupNodeId, destNodeId, { mode: 'motorcycle' });
+    if (!route || route.nodeIds.length === 0) {
+      return false;
+    }
+
+    if (!this.requests.getProfile('char_nabila')) {
+      const nabilaChar = getCharacter('char_nabila');
+      this.requests.setProfile({
+        passengerId: 'char_nabila',
+        characterId: 'char_nabila',
+        nameKey: 'character.nabila.name',
+        archetype: nabilaChar?.archetype ?? 'commuter',
+        budget: Math.max(fare, nabilaChar?.budget ?? 100),
+        patience: nabilaChar?.patience ?? 0.9,
+        urgency: nabilaChar?.urgency ?? 0.4,
+        bargainingTendency: nabilaChar?.bargainingTendency ?? 0.3,
+        safetySensitivity: nabilaChar?.safetySensitivity ?? 0.7,
+        trustInRider: nabilaChar?.trustInRider ?? 0.65,
+        localKnowledge: nabilaChar?.localKnowledge ?? 0.85,
+        paymentReliability: nabilaChar?.paymentReliability ?? 0.98,
+        relationshipLevel: nabilaChar?.initialRelationship ?? 10,
+        traits: {
+          luggage: false,
+          child: false,
+          walkTolerance: nabilaChar?.fixedTraits.walkTolerance ?? 0.7,
+        },
+        personalBias: 0,
+      });
+    }
+
+    const req: RideRequest = {
+      requestId: 'req_tutorial_01',
+      passengerId: 'char_nabila',
+      characterId: 'char_nabila',
+      passengerNameKey: 'character.nabila.name',
+      pickupNodeId,
+      destinationNodeId: destNodeId,
+      pickupPlaceKey: clinicPoi?.nameKey ?? (nearestPlaceKey(this.ride, pickupNodeId) || 'poi.mirpara.clinic'),
+      destinationPlaceKey:
+        gatePoi?.nameKey ?? (nearestPlaceKey(this.ride, destNodeId) || 'poi.mirpara.campus_gate'),
+      initialFare: fare,
+      estimatedDistance: route.virtualKm,
+      estimatedDuration: route.etaMin,
+      requestedArrivalTime: null,
+      bookingType: 'app',
+      status: 'WaitingForPickup',
+      surge: 1,
+    };
+
+    this.ride.offer(req);
+    return this.ride.accept('req_tutorial_01', undefined, true);
+  }
+
+  cancelLiveTutorialRide(): void {
+    if (this.ride.getActiveRequest()?.requestId === 'req_tutorial_01') {
+      this.ride.cancel('req_tutorial_01', 'system', 'tutorial_skipped');
+    }
+  }
+
   /** T8.2: settles the scripted tutorial ride through the same exactly-once path as a
    * live ride and announces `ride/completed`. If it was already settled it pays nothing
    * but still announces completion (so the tutorial and m1_first_ride cannot softlock). */
   settleTutorialRide(fare: number): TripReceipt {
+    if (this.ride.getActiveRequest()?.requestId === 'req_tutorial_01') {
+      this.ride.cancel('req_tutorial_01', 'system', 'tutorial_fast_forward');
+    }
     const { gm } = this;
     const base = {
       requestId: 'req_tutorial_01',
@@ -1497,13 +3399,13 @@ export class GameSession {
     const route = useActive
       ? activeRoute
       : this.road.route(fromNodeId, toNodeId, {
-          mode: 'motorcycle',
-          weather: this.gm.weather,
-          minute: this.gm.clock.minutes,
-          roadEvents: this.gm.roadEvents,
-          isFlooded: (s) => this.gm.weatherSystem.isFlooded(s.segmentId),
-          getFloodLevel: (id) => this.gm.weatherSystem.getFloodLevel(id),
-        });
+        mode: 'motorcycle',
+        weather: this.gm.weather,
+        minute: this.gm.clock.minutes,
+        roadEvents: this.gm.roadEvents,
+        isFlooded: (s) => this.gm.weatherSystem.isFlooded(s.segmentId),
+        getFloodLevel: (id) => this.gm.weatherSystem.getFloodLevel(id),
+      });
 
     this.env.hasPassenger = hasPassenger;
     this.env.wet = this.gm.weatherSystem.isRoadWet();
@@ -1573,7 +3475,12 @@ export class GameSession {
           );
         }
         this.checkMissionPois();
-        const phase: EncounterPhase = hasPassenger ? 'onTrip' : 'atPickup';
+        if (hasPassenger) {
+          this.tripLegDistanceM += chunkDistM;
+        } else {
+          this.pickupLegDistanceM += chunkDistM;
+        }
+        const phase: EncounterPhase = this.currentEncounterPhase();
         this.gm.tick(chunkDt, cruiseMs * 3.6, phase, false);
         this.gm.evaluateEncounters(this.buildEncounterContext(seg, this.ride.getActiveRequest()));
         encountersResolved += this.resolveEncounterIfAny(onEncounter);
@@ -1647,7 +3554,7 @@ export class GameSession {
     if (approachGameMin > 0 && this.ride.getActiveRequest()) {
       this.bike.speed = 0;
       this.pose.speed = 0;
-      const phase: EncounterPhase = hasPassenger ? 'onTrip' : 'atPickup';
+      const phase: EncounterPhase = this.currentEncounterPhase();
       encountersResolved += this.advanceMacroMinutes(approachGameMin, phase, 0, onEncounter);
       if (totalIdleMin > 0 && em.fuelLevel > 0) {
         const o = this.fuelOpts;
@@ -1690,6 +3597,8 @@ export class GameSession {
       }
     });
 
+    this.inFastForward = true;
+    this.gm.inFastForward = true;
     try {
       const activeReq = this.ride.getActiveRequest();
       if (!activeReq) {
@@ -1869,11 +3778,22 @@ export class GameSession {
         }
       }
 
-      // Allow roaming encounters triggered by flags (e.g. policeViolation) to fire at drop-off stop
+      // Allow post-dropoff / roaming encounters (e.g. enc_phone_left or policeViolation) at drop-off stop
       if (!this.ride.getActiveRequest() && opts.onEncounter && !this.gm.shiftEnded) {
         this.bike.speed = 0;
         this.pose.speed = 0;
-        encountersResolved += this.advanceMacroMinutes(1, 'roaming', 0, opts.onEncounter);
+        if (completedReceipt) {
+          this.postDropoffUntilMin = this.gm.clock.minutes + 2.0;
+          encountersResolved += this.advanceMacroMinutes(
+            1,
+            this.currentEncounterPhase(),
+            0,
+            opts.onEncounter
+          );
+          this.postDropoffUntilMin = null;
+        } else {
+          encountersResolved += this.advanceMacroMinutes(1, 'roaming', 0, opts.onEncounter);
+        }
       }
 
       const durationMin =
@@ -1900,6 +3820,9 @@ export class GameSession {
         encountersResolved,
       };
     } finally {
+      this.inFastForward = false;
+      this.gm.inFastForward = false;
+      this.postDropoffUntilMin = null;
       unsubComp();
       unsubCanc();
     }

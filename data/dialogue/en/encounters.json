@@ -39,6 +39,7 @@
   "encounter.phone_left.choice.police": "Hand over to SI Morshed at traffic police booth",
   "encounter.phone_left.choice.keep": "Keep the phone (High risk, morally questionable)",
 
+  "encounter.traffic_checkpoint.cue": "Traffic police checkpoint barrier spotted ahead — SI Morshed is waving bikes into the lane.",
   "encounter.traffic_checkpoint.title": "Police checkpoint ahead! SI Morshed is waving bikes over for inspection.",
   "encounter.traffic_checkpoint.choice.cooperate": "Stop politely and present valid license and registration",
   "encounter.traffic_checkpoint.choice.explain_rush": "Explain you have a passenger in a hurry",
@@ -95,5 +96,10 @@
 
   "encounter.m4_police_decision.title": "SI Morshed calls after your dark-alley close call: 'Will you testify against the extortion ring in Puran Para?'",
   "encounter.m4_police_decision.choice.cooperate": "Cooperate with the police investigation and share what you saw",
-  "encounter.m4_police_decision.choice.decline": "Stay out of the investigation to avoid street retaliation"
+  "encounter.m4_police_decision.choice.decline": "Stay out of the investigation to avoid street retaliation",
+
+  "encounter.late_passenger.title": "You reach the pickup point, but the passenger messages: 'Sorry! Coming down in 5 minutes—please wait.'",
+  "encounter.late_passenger.choice.wait": "Wait at the pickup spot for 5 minutes",
+  "encounter.late_passenger.choice.hurry": "Call and ask them to hurry (wait 2 minutes)",
+  "encounter.late_passenger.choice.cancel": "Cancel the pickup and look for another ride"
 }

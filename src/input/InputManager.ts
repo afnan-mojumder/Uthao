@@ -96,7 +96,7 @@ function defaultIsModalOpen(): boolean {
     karmaPanelSignal.value ||
     uiSheetSignal.value ||
     tripSummarySignal.value !== null ||
-    tutorialSignal.value.active ||
+    (tutorialSignal.value.active && tutorialSignal.value.step !== 'riding') ||
     saveSlotsSignal.value.isOpen ||
     phoneSignal.value.open ||
     screenSignal.value === 'pause' ||

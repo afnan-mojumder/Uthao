@@ -745,13 +745,18 @@ describe('P4.4 Live EncounterContext in GameSession & day-rollover accident rese
       sample.request.destinationNodeId = 'n_dest';
       s.ride.offer(sample.request);
       s.ride.accept(sample.request.requestId);
-      // Place at pickup to board passenger, then move to market segment (> 60m from n_dest)
+      // Place at pickup to board passenger, then drive >= 30m along seg_market
       s.bike.x = 0;
       s.bike.z = 0;
       s.bike.speed = 0;
       s.step(NEUTRAL_INPUT, SIM_DT);
-      s.bike.x = 300;
+      s.bike.x = 240;
       s.bike.z = 0;
+      s.bike.heading = Math.PI / 2;
+      s.bike.speed = 12;
+      for (let i = 0; i < 220; i++) {
+        s.step({ throttle: 0.7, brake: 0, steer: 0 }, SIM_DT);
+      }
       s.bike.speed = 0;
     });
 
@@ -763,8 +768,8 @@ describe('P4.4 Live EncounterContext in GameSession & day-rollover accident rese
       sample.request.destinationNodeId = 'n_main_a';
       s.ride.offer(sample.request);
       s.ride.accept(sample.request.requestId);
-      // Within 60m of n_alley (x=600), sitting on seg_alley (x=560)
-      s.bike.x = 560;
+      // Within 10m arrival radius of n_alley (x=600) while staying on seg_alley (> 8m so not auto-boarded)
+      s.bike.x = 591.5;
       s.bike.z = 0;
       s.bike.speed = 0;
     });
@@ -783,8 +788,8 @@ describe('P4.4 Live EncounterContext in GameSession & day-rollover accident rese
       s.bike.z = 0;
       s.bike.speed = 0;
       s.step(NEUTRAL_INPUT, SIM_DT); // board
-      // Within 60m of n_dest (x=800), > 8m so not Completing yet
-      s.bike.x = 760;
+      // Within 10m of n_dest (x=800), > 8m so not Completing yet
+      s.bike.x = 791.5;
       s.bike.z = 0;
       s.bike.speed = 0;
     });
@@ -797,7 +802,7 @@ describe('P4.4 Live EncounterContext in GameSession & day-rollover accident rese
       sample.request.destinationNodeId = 'n_main_a';
       s.ride.offer(sample.request);
       s.ride.accept(sample.request.requestId);
-      s.bike.x = 560;
+      s.bike.x = 591.5;
       s.bike.z = 0;
       s.bike.speed = 0;
     });

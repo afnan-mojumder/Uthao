@@ -202,6 +202,14 @@ export class RequestGenerator {
     return [...this.eligibleNodeIds];
   }
 
+  getEligibleNodeIdsReadonly(): readonly string[] {
+    return this.eligibleNodeIds;
+  }
+
+  isDemandNode(nodeId: string): boolean {
+    return this.demandNodeIds.has(nodeId);
+  }
+
   /** Registers a profile for a passenger created outside the generator (debug/test rides). */
   setProfile(profile: PassengerProfile): void {
     this.profiles.set(profile.passengerId, profile);
@@ -246,6 +254,76 @@ export class RequestGenerator {
     return 'risky';
   }
 
+  private buildRequestFromPair(
+    pickupNodeId: string,
+    destNodeId: string,
+    currentMinute: number,
+    weather: WeatherKind,
+    bookingType: BookingType,
+    surge: number,
+    profile: PassengerProfile
+  ): RideRequest | null {
+    const r = this.network.route(pickupNodeId, destNodeId, {
+      mode: 'motorcycle',
+      weather,
+    });
+
+    // The pickup must also be reachable from the destination side, or the rider
+    // could be stranded there with nobody to take.
+    if (
+      !r ||
+      r.nodeIds.length === 0 ||
+      !this.network.route(destNodeId, pickupNodeId, { mode: 'motorcycle', weather })
+    ) {
+      return null;
+    }
+
+    const fare = fairFare(r.virtualKm, r.etaMin, surge);
+    const reqId = this.nextRequestId();
+
+    let special: SpecialCircumstance | undefined;
+    if (weather === 'lightRain' || weather === 'heavyRain') {
+      special = 'rain';
+    } else if (profile.traits.luggage) {
+      special = 'luggage';
+    } else if (profile.traits.child) {
+      special = 'child';
+    } else if (profile.urgency > 0.8) {
+      special = 'urgent';
+    }
+
+    const tripGameMin = ((r.lengthM / 10.5 + 8) * TIME_SCALE) / 60;
+    const requestedArrivalTime =
+      profile.urgency > 0.6
+        ? Math.round(
+            currentMinute +
+              tripGameMin * (1.5 - profile.urgency * 0.2) +
+              35
+          )
+        : null;
+
+    const pickupPlaceKey = nearestPlaceKey({ roadNetwork: this.network }, pickupNodeId) || undefined;
+    const destinationPlaceKey = nearestPlaceKey({ roadNetwork: this.network }, destNodeId) || undefined;
+
+    return {
+      requestId: reqId,
+      passengerId: profile.passengerId,
+      pickupNodeId,
+      destinationNodeId: destNodeId,
+      ...(pickupPlaceKey ? { pickupPlaceKey } : {}),
+      ...(destinationPlaceKey ? { destinationPlaceKey } : {}),
+      ...(profile.nameKey ? { passengerNameKey: profile.nameKey } : {}),
+      initialFare: fare,
+      estimatedDistance: r.virtualKm,
+      estimatedDuration: r.etaMin,
+      requestedArrivalTime,
+      bookingType,
+      status: 'WaitingForPickup',
+      surge,
+      specialCircumstance: special,
+    };
+  }
+
   sampleRequest(
     currentMinute: number,
     weather: WeatherKind,
@@ -284,63 +362,77 @@ export class RequestGenerator {
         continue;
       }
 
-      const r = this.network.route(pickupNodeId, destNodeId, {
-        mode: 'motorcycle',
+      const request = this.buildRequestFromPair(
+        pickupNodeId,
+        destNodeId,
+        currentMinute,
         weather,
-      });
+        bookingType,
+        surge,
+        profile
+      );
+      if (request) {
+        this.profiles.set(profile.passengerId, profile);
+        return { request, profile };
+      }
+    }
 
-      // The pickup must also be reachable from the destination side, or the rider
-      // could be stranded there with nobody to take.
-      if (
-        r &&
-        r.nodeIds.length > 0 &&
-        this.network.route(destNodeId, pickupNodeId, { mode: 'motorcycle', weather })
-      ) {
-        const fare = fairFare(r.virtualKm, r.etaMin, surge);
-        const reqId = this.nextRequestId();
+    return null;
+  }
 
-        let special: SpecialCircumstance | undefined;
-        if (weather === 'lightRain' || weather === 'heavyRain') {
-          special = 'rain';
-        } else if (profile.traits.luggage) {
-          special = 'luggage';
-        } else if (profile.traits.child) {
-          special = 'child';
-        } else if (profile.urgency > 0.8) {
-          special = 'urgent';
-        }
+  /** Samples a ride matching campaign district and/or zoneTag criteria for live world staging. */
+  sampleFilteredRequest(
+    currentMinute: number,
+    weather: WeatherKind,
+    filter: { district?: string; zoneTag?: string },
+    playerPose?: { x: number; z: number },
+    bookingType: BookingType = 'app'
+  ): { request: RideRequest; profile: PassengerProfile } | null {
+    if (this.eligibleNodeIds.length < 2) return null;
+    if (bookingType === 'app' && (this.getPhoneBattery() <= 0 || this.appSuspendedProvider?.())) {
+      return null;
+    }
 
-        const tripGameMin = ((r.lengthM / 10.5 + 8) * TIME_SCALE) / 60;
-        const requestedArrivalTime =
-          profile.urgency > 0.6
-            ? Math.round(
-                currentMinute +
-                  tripGameMin * (1.5 - profile.urgency * 0.2) +
-                  35
-              )
-            : null;
+    const matchingNodes = this.eligibleNodeIds.filter((id) => {
+      if (filter.district && this.network.getNodeDistrict(id) !== filter.district) {
+        return false;
+      }
+      if (filter.zoneTag && !this.network.getNodeZoneTags(id).includes(filter.zoneTag)) {
+        return false;
+      }
+      return true;
+    });
+    if (matchingNodes.length === 0) return null;
 
-        const pickupPlaceKey = nearestPlaceKey({ roadNetwork: this.network }, pickupNodeId) || undefined;
-        const destinationPlaceKey = nearestPlaceKey({ roadNetwork: this.network }, destNodeId) || undefined;
+    const pickupPool = playerPose
+      ? [...this.eligibleNodeIds].sort((a, b) => {
+          const na = this.network.getNode(a);
+          const nb = this.network.getNode(b);
+          const da = na ? distance2d(playerPose.x, playerPose.z, na.x, na.z) : Infinity;
+          const db = nb ? distance2d(playerPose.x, playerPose.z, nb.x, nb.z) : Infinity;
+          return da - db;
+        }).slice(0, Math.max(4, Math.min(10, this.eligibleNodeIds.length)))
+      : this.eligibleNodeIds;
 
-        const request: RideRequest = {
-          requestId: reqId,
-          passengerId: profile.passengerId,
-          pickupNodeId,
-          destinationNodeId: destNodeId,
-          ...(pickupPlaceKey ? { pickupPlaceKey } : {}),
-          ...(destinationPlaceKey ? { destinationPlaceKey } : {}),
-          ...(profile.nameKey ? { passengerNameKey: profile.nameKey } : {}),
-          initialFare: fare,
-          estimatedDistance: r.virtualKm,
-          estimatedDuration: r.etaMin,
-          requestedArrivalTime,
-          bookingType,
-          status: 'WaitingForPickup',
-          surge,
-          specialCircumstance: special,
-        };
+    const surge = surgeAt(undefined, currentMinute, weather);
+    const archetype = this.sampleArchetype(currentMinute);
+    const profile = generateProfile(archetype, this.rng);
 
+    for (let tryCount = 0; tryCount < 24; tryCount++) {
+      const destNodeId = this.rng.pick(matchingNodes);
+      const pickupNodeId =
+        tryCount < 16 ? this.rng.pick(pickupPool) : this.rng.pick(this.eligibleNodeIds);
+      if (destNodeId === pickupNodeId) continue;
+      const request = this.buildRequestFromPair(
+        pickupNodeId,
+        destNodeId,
+        currentMinute,
+        weather,
+        bookingType,
+        surge,
+        profile
+      );
+      if (request) {
         this.profiles.set(profile.passengerId, profile);
         return { request, profile };
       }
@@ -476,8 +568,12 @@ export class RequestGenerator {
   sampleStreetHail(
     playerPose: { x: number; z: number },
     currentMinute: number,
-    weather: WeatherKind
+    weather: WeatherKind,
+    forcedPickupNodeId?: string
   ): { request: RideRequest; profile: PassengerProfile } | null {
+    if (forcedPickupNodeId && this.network.getNode(forcedPickupNodeId)) {
+      return this.sampleRequest(currentMinute, weather, 'street', forcedPickupNodeId);
+    }
     const nearbyNodes = this.eligibleNodeIds.filter((id) => {
       const node = this.network.getNode(id);
       if (!node) return false;

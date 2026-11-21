@@ -51,5 +51,19 @@
   "district.mohakhal": "মহাখাল",
   "district.gulbari": "গুলবাড়ি",
   "district.puranpara": "পুরানপাড়া",
-  "district.motinagar": "মতিনগর"
+  "district.motinagar": "মতিনগর",
+  "objective.waiting_pickup": "পিকআপে অপেক্ষা করছেন ({min} মি. বাকি)",
+  "objective.go_to_stop": "{place}-এর কাছে যাত্রীর জন্য থামুন",
+  "objective.waiting_stop": "যাত্রী {place}-এ কাজ সারছেন, অপেক্ষা করুন",
+  "objective.phone_return": "{place}-এর কাছে ভুলে যাওয়া ফোনটি ফেরত দিন",
+  "hud.wait.pickup": "যাত্রীর জন্য অপেক্ষা চলছে",
+  "hud.wait.stop_errand": "যাত্রী কাজে গেছেন",
+  "hud.wait.remaining": "{min} মি. বাকি",
+  "hud.wait.cancel": "ছেড়ে চলে যান",
+  "hud.choice.inline_dismiss": "এড়িয়ে যান",
+  "hud.passenger.at_stop": "যাত্রী থামার স্থানে",
+  "hud.passenger.boarding": "যাত্রী বাইকে উঠছেন",
+  "objective.delivery_pickup": "{place}-এর কাছ থেকে পার্সেল নিন",
+  "objective.delivery_dropoff": "{place}-এর কাছে পার্সেল পৌঁছে দিন",
+  "hud.street_hail_nearby": "সামনে যাত্রী হাত নাড়ছে — তুলে নিতে কাছে থামুন"
 }

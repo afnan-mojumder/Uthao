@@ -4,9 +4,12 @@
     "category": "route",
     "trigger": {
       "phase": "onTrip",
+      "hasPassenger": true,
+      "minTripDistanceM": 30,
       "passengerLocalKnowledgeMin": 0.5,
       "tags": ["market"]
     },
+    "presentation": "inline",
     "weight": 10,
     "cooldownMin": 60,
     "oncePerDay": false,
@@ -60,8 +63,11 @@
     "category": "route",
     "trigger": {
       "phase": "onTrip",
+      "hasPassenger": true,
+      "minTripDistanceM": 30,
       "weather": ["lightRain", "heavyRain"]
     },
+    "presentation": "inline",
     "weight": 12,
     "cooldownMin": 60,
     "oncePerDay": false,
@@ -99,8 +105,12 @@
     "id": "enc_extra_stop",
     "category": "route",
     "trigger": {
-      "phase": "onTrip"
+      "phase": "onTrip",
+      "hasPassenger": true,
+      "minTripDistanceM": 30,
+      "requiresAnchorKind": ["market", "teaStall"]
     },
+    "presentation": "inline",
     "weight": 8,
     "cooldownMin": 60,
     "oncePerDay": false,
@@ -143,8 +153,11 @@
     "id": "enc_urgent_exam",
     "category": "route",
     "trigger": {
-      "phase": "onTrip"
+      "phase": "onTrip",
+      "hasPassenger": true,
+      "minTripDistanceM": 30
     },
+    "presentation": "inline",
     "weight": 8,
     "cooldownMin": 60,
     "oncePerDay": false,
@@ -193,7 +206,10 @@
     "id": "enc_bus_block",
     "category": "route",
     "trigger": {
-      "phase": "onTrip"
+      "phase": "onTrip",
+      "hasPassenger": true,
+      "minTripDistanceM": 30,
+      "requiresRoadEventKind": ["stalled_vehicle"]
     },
     "weight": 8,
     "cooldownMin": 60,
@@ -248,8 +264,12 @@
     "id": "enc_wait_errand",
     "category": "route",
     "trigger": {
-      "phase": "onTrip"
+      "phase": "onTrip",
+      "hasPassenger": true,
+      "minTripDistanceM": 30,
+      "requiresAnchorKind": ["pharmacy", "hospital", "market"]
     },
+    "presentation": "inline",
     "weight": 8,
     "cooldownMin": 60,
     "oncePerDay": false,

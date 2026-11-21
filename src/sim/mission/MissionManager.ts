@@ -16,6 +16,17 @@ import { applyEffect } from '../events/effects';
 import { canonicalCharacterId } from '../passenger/PassengerAI';
 import type { ReputationSystem } from '../reputation/ReputationSystem';
 
+export type MissionWorldCueKind = 'reach' | 'fuel' | 'ride_with' | 'relationship' | 'zone_ride';
+
+export interface MissionWorldCue {
+  missionId: string;
+  kind: MissionWorldCueKind;
+  poiId?: string;
+  characterId?: string;
+  district?: string;
+  zoneTag?: string;
+}
+
 export interface HudMissionEntry {
   id: string;
   titleKey: string;
@@ -67,6 +78,10 @@ export class MissionManager {
   private currentDay: number = 1;
   private inRide: boolean = false;
   private currentTripCrashed: boolean = false;
+  private readonly worldCueScratch: MissionWorldCue = {
+    missionId: '',
+    kind: 'reach',
+  };
 
   constructor(opts: MissionManagerOptions) {
     this.bus = opts.bus;
@@ -333,6 +348,128 @@ export class MissionManager {
       }
       this.checkMissionCompletion(missionId);
     }
+  }
+
+  /** Returns the primary incomplete world-groundable cue across active missions (allocation-free). */
+  getPrimaryWorldMissionCue(): MissionWorldCue | null {
+    if (this.activeMissionIds.size === 0) return null;
+    const out = this.worldCueScratch;
+    for (const missionId of this.activeMissionIds) {
+      const def = this.missions.get(missionId);
+      const objMap = this.objectiveStates.get(missionId);
+      if (!def || !objMap) continue;
+      for (let j = 0; j < def.objectives.length; j++) {
+        const obj = def.objectives[j]!;
+        const state = objMap.get(obj.id);
+        if (!state || state.completed) continue;
+        if (obj.type === 'reach') {
+          out.missionId = missionId;
+          out.kind = 'reach';
+          out.poiId = obj.poiId;
+          out.characterId = undefined;
+          out.district = undefined;
+          out.zoneTag = undefined;
+          return out;
+        }
+        if (obj.type === 'rideWith') {
+          out.missionId = missionId;
+          out.kind = 'ride_with';
+          out.poiId = undefined;
+          out.characterId = obj.characterId;
+          out.district = undefined;
+          out.zoneTag = undefined;
+          return out;
+        }
+        if (obj.type === 'payExpense' && obj.expenseId === 'fuel') {
+          out.missionId = missionId;
+          out.kind = 'fuel';
+          out.poiId = 'poi_kind:fuel';
+          out.characterId = undefined;
+          out.district = undefined;
+          out.zoneTag = undefined;
+          return out;
+        }
+        if (obj.type === 'relationship') {
+          out.missionId = missionId;
+          out.kind = 'relationship';
+          out.poiId = undefined;
+          out.characterId = obj.characterId;
+          out.district = undefined;
+          out.zoneTag = undefined;
+          return out;
+        }
+        if (obj.type === 'completeRides' && (obj.district || obj.zoneTag)) {
+          out.missionId = missionId;
+          out.kind = 'zone_ride';
+          out.poiId = undefined;
+          out.characterId = undefined;
+          out.district = obj.district;
+          out.zoneTag = obj.zoneTag;
+          return out;
+        }
+      }
+    }
+    return null;
+  }
+
+  /** True when any active mission has an incomplete `survive` or `choose` objective for `encounterId`. */
+  hasIncompleteEncounterObjective(encounterId: string): boolean {
+    if (this.activeMissionIds.size === 0) return false;
+    for (const missionId of this.activeMissionIds) {
+      const def = this.missions.get(missionId);
+      const objMap = this.objectiveStates.get(missionId);
+      if (!def || !objMap) continue;
+      for (let j = 0; j < def.objectives.length; j++) {
+        const obj = def.objectives[j]!;
+        const state = objMap.get(obj.id);
+        if (!state || state.completed) continue;
+        if ((obj.type === 'survive' || obj.type === 'choose') && obj.encounterId === encounterId) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  /** Returns the first incomplete encounter ID required by an active mission, or null. */
+  getActiveEncounterMissionTarget(): string | null {
+    if (this.activeMissionIds.size === 0) return null;
+    for (const missionId of this.activeMissionIds) {
+      const def = this.missions.get(missionId);
+      const objMap = this.objectiveStates.get(missionId);
+      if (!def || !objMap) continue;
+      for (let j = 0; j < def.objectives.length; j++) {
+        const obj = def.objectives[j]!;
+        const state = objMap.get(obj.id);
+        if (!state || state.completed) continue;
+        if (obj.type === 'survive' || obj.type === 'choose') {
+          return obj.encounterId;
+        }
+      }
+    }
+    return null;
+  }
+
+  /** Returns active district/zoneTag ride filter from the first incomplete `completeRides` objective, or null. */
+  getActiveRideObjectiveFilter(): { district?: string; zoneTag?: string } | null {
+    if (this.activeMissionIds.size === 0) return null;
+    for (const missionId of this.activeMissionIds) {
+      const def = this.missions.get(missionId);
+      const objMap = this.objectiveStates.get(missionId);
+      if (!def || !objMap) continue;
+      for (let j = 0; j < def.objectives.length; j++) {
+        const obj = def.objectives[j]!;
+        const state = objMap.get(obj.id);
+        if (!state || state.completed) continue;
+        if (obj.type === 'completeRides' && (obj.district || obj.zoneTag)) {
+          return {
+            ...(obj.district ? { district: obj.district } : {}),
+            ...(obj.zoneTag ? { zoneTag: obj.zoneTag } : {}),
+          };
+        }
+      }
+    }
+    return null;
   }
 
   /** Returns the first incomplete `reach` objective's target POI/kind, if any. */

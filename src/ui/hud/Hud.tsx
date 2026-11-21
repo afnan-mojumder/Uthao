@@ -5,6 +5,8 @@ import { t, localDigits } from '../i18n';
 import {
   hudSignal,
   minimapCanvasSignal,
+  rideWaitSignal,
+  cancelRideWait,
   settingsSignal,
   onRefuelCallback,
   onFuelRescueCallback,
@@ -549,6 +551,94 @@ function PassengerChip({
   );
 }
 
+function RideWaitBanner({ compact = false }: { compact?: boolean }): JSX.Element | null {
+  const wait = rideWaitSignal.value;
+  if (!wait) return null;
+  const ratio =
+    wait.totalSimSec > 0
+      ? Math.max(0, Math.min(1, 1 - wait.remainingSimSec / wait.totalSimSec))
+      : 1;
+  const remMin = Math.max(1, Math.ceil(wait.remainingGameMin));
+  const titleText = wait.placeKey
+    ? `${t(wait.labelKey)} • ${t(wait.placeKey)}`
+    : t(wait.labelKey);
+
+  return (
+    <div
+      data-testid="hud-wait-banner"
+      style={{
+        pointerEvents: 'auto',
+        background: 'var(--surface-panel, rgba(15, 23, 42, 0.92))',
+        border: '1px solid rgba(56, 189, 248, 0.45)',
+        backdropFilter: 'blur(10px)',
+        borderRadius: '12px',
+        padding: compact ? '6px 10px' : '8px 14px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '5px',
+        minWidth: compact ? '200px' : '250px',
+        maxWidth: '340px',
+        boxShadow: '0 6px 18px rgba(0, 0, 0, 0.45)',
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '10px',
+          fontSize: compact ? '11px' : '12px',
+          fontWeight: 700,
+          color: '#e2e8f0',
+        }}
+      >
+        <span>{titleText}</span>
+        <span style={{ color: 'var(--info-sky, #38BDF8)', whiteSpace: 'nowrap' }}>
+          {t('hud.wait.remaining', { min: localDigits(remMin) })}
+        </span>
+      </div>
+      <div
+        style={{
+          height: '5px',
+          width: '100%',
+          background: 'rgba(255, 255, 255, 0.14)',
+          borderRadius: '4px',
+          overflow: 'hidden',
+        }}
+      >
+        <div
+          style={{
+            height: '100%',
+            width: `${Math.round(ratio * 100)}%`,
+            background: 'linear-gradient(90deg, #38bdf8, #22c55e)',
+            transition: 'width 0.15s linear',
+          }}
+        />
+      </div>
+      {wait.canCancel && (
+        <button
+          type="button"
+          data-testid="hud-wait-cancel"
+          onClick={() => cancelRideWait()}
+          style={{
+            alignSelf: 'flex-end',
+            padding: compact ? '3px 8px' : '4px 10px',
+            background: 'rgba(239, 68, 68, 0.16)',
+            border: '1px solid rgba(239, 68, 68, 0.45)',
+            borderRadius: '7px',
+            color: '#fca5a5',
+            fontSize: '11px',
+            fontWeight: 700,
+            cursor: 'pointer',
+          }}
+        >
+          {t('hud.wait.cancel')}
+        </button>
+      )}
+    </div>
+  );
+}
+
 export function HudView({
   state,
   minimapHostRef,
@@ -636,9 +726,39 @@ export function HudView({
           </div>
         </div>
 
+        {/* Floating Ride Wait Banner: positioned independently so it never pushes bottom pods out of viewport */}
+        <div
+          style={{
+            position: 'absolute',
+            top: isTouch ? '116px' : '74px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 2,
+            pointerEvents: 'none',
+          }}
+        >
+          <RideWaitBanner compact={true} />
+        </div>
+
         {/* Bottom Cluster: Subtitle, Quick Actions, Handlebar Pod + Passenger Chip */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-          {state.dialogueSubtitle && <DialogueSubtitleBubble subtitle={state.dialogueSubtitle} />}
+        <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+          {state.dialogueSubtitle && (
+            <div
+              style={{
+                position: 'absolute',
+                bottom: '100%',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                marginBottom: '6px',
+                width: 'max-content',
+                maxWidth: 'min(92vw, 420px)',
+                pointerEvents: 'none',
+                zIndex: 2,
+              }}
+            >
+              <DialogueSubtitleBubble subtitle={state.dialogueSubtitle} />
+            </div>
+          )}
 
           <div
             style={{
@@ -844,8 +964,11 @@ export function HudView({
           )}
         </div>
 
-        {/* Top-Center: Compact Objective & Fare Pill */}
-        <ObjectivePill state={state} compact={isTouch} topOffsetPx={isTouch ? 56 : 0} />
+        {/* Top-Center: Compact Objective, Fare Pill & Active Wait Banner */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+          <ObjectivePill state={state} compact={isTouch} topOffsetPx={isTouch ? 56 : 0} />
+          <RideWaitBanner compact={isTouch} />
+        </div>
 
         {/* Top-Right: Fullscreen button, Earnings, Rating & Shift Clock */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: isTouch ? '4px' : '6px' }}>

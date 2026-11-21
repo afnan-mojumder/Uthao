@@ -92,6 +92,38 @@ export interface GameEvents extends Record<string, unknown> {
     encounterId?: string;
     outcomeLineKey?: string;
   };
+  'encounter/dismissed': {
+    instanceId: string;
+    encounterId?: string;
+    reason: 'expired' | 'overshot' | 'rideEnded';
+  };
+  'ride/stopAdded': {
+    requestId: string;
+    nodeId: string;
+    placeKey: string;
+    kind: string;
+  };
+  'ride/stopArrived': {
+    requestId: string;
+    nodeId: string;
+    placeKey: string;
+  };
+  'ride/stopCompleted': {
+    requestId: string;
+    nodeId: string;
+    placeKey: string;
+  };
+  'ride/pickupRelocated': {
+    requestId: string;
+    oldNodeId: string;
+    newNodeId: string;
+  };
+  'ride/waitUpdated': {
+    requestId: string;
+    active: boolean;
+    kind?: 'pickupWait' | 'stopErrand';
+    remainingGameMin?: number;
+  };
   'mission/objectiveUpdated': {
     missionId: string;
     objectiveId: string;

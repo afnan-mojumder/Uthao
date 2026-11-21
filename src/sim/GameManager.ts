@@ -198,6 +198,19 @@ export class GameManager {
   /** Provided by GameSession so snapshots read and restore live bike coordinates and heading. */
   getBikePose?: () => BikePoseSnapshot;
   restoreBikePose?: (pose?: BikePoseSnapshot) => void;
+  onRouteEffect?: (
+    action: 'avoid' | 'forceVia' | 'closeSegment',
+    ref: string
+  ) => void;
+  onEncounterOptionChosen?: (info: {
+    encounterId: string;
+    choiceId: string;
+    instanceId: string;
+    anchorPlaceKey?: string;
+    deferredWaitMin: number;
+    deferredPhoneReward: { cash: number; trust: number } | null;
+    deferredJobCash: number;
+  }) => void;
   private savedBikePose?: BikePoseSnapshot;
   private savedRideMeta?: RideMetaSave;
   private restoringSnapshot: boolean = false;
@@ -238,6 +251,7 @@ export class GameManager {
   weather: WeatherKind = 'clear';
   waypointNodeId: string | null = null;
   isNavigating: boolean = false;
+  inFastForward: boolean = false;
   shiftEnded: boolean = false;
   /** Rent posted at this shift's end; a delay can move it to the next rent day. */
   todayRentPosted = 0;
@@ -346,7 +360,11 @@ export class GameManager {
       // Cards never freeze the sim: a card waits for a stopped bike and the
       // world keeps running behind it, so the driving keys stay live.
       pauseOnDecisions: false,
-      globalCooldownMin: 12,
+      globalCooldownMin: 25,
+      maxRandomPerRide: 1,
+      roamingTriggerChance: 0.15,
+      onTripTriggerChance: 0.35,
+      suppressIdleEncounters: true,
       contextProvider: () => this.buildDefaultEncounterContext('roaming', 0),
     });
 
@@ -405,10 +423,10 @@ export class GameManager {
         const started =
           this.eventDirector.enabled && this.eventDirector.activeEncounter === null
             ? this.eventDirector.forceStart(
-                'enc_m4_police_decision',
-                this.bus,
-                this.buildDefaultEncounterContext('roaming', 0)
-              )
+              'enc_m4_police_decision',
+              this.bus,
+              this.buildDefaultEncounterContext('roaming', 0)
+            )
             : null;
         this.pendingM4PoliceDecision = started === null;
       }
@@ -652,7 +670,9 @@ export class GameManager {
     ctx.speedKmh = speedKmh;
     ctx.bikeCondition = this.economyManager.motorcycleCondition;
     ctx.segment = null;
-    ctx.activeRequest = this.rideManager?.getActiveRequest?.() ?? null;
+    ctx.activeRequest = this.rideManager
+      ? (this.rideManager.getActiveRequest?.() ?? null)
+      : undefined;
     ctx.meters = this.reputationSystem.getMetersView();
     ctx.passenger = null;
     return ctx;
@@ -687,7 +707,11 @@ export class GameManager {
         }
       }
       const encounter = this.eventDirector.evaluate(ctx, this.bus);
-      if (encounter && this.eventDirector.pauseOnDecisions) {
+      if (
+        encounter &&
+        this.eventDirector.pauseOnDecisions &&
+        encounter.presentation !== 'inline'
+      ) {
         this.paused = true;
       }
     }
@@ -901,18 +925,57 @@ export class GameManager {
         return res;
       }
       case 'chooseEncounterOption': {
+        const activeInst = this.eventDirector.activeEncounter;
+        const encounterId = activeInst?.encounterId ?? '';
+        const anchorPlaceKey = activeInst?.anchorPlaceKey;
+        const shouldDeferRoamingJob =
+          Boolean(this.onEncounterOptionChosen) &&
+          !this.inFastForward &&
+          !this.rideInProgress() &&
+          (encounterId === 'enc_regular_direct_call' ||
+            encounterId === 'enc_friend_package');
+        const shouldDeferTime =
+          Boolean(this.onEncounterOptionChosen) &&
+          !this.inFastForward &&
+          (encounterId === 'enc_late_passenger' ||
+            encounterId === 'enc_wrong_pickup_pin' ||
+            encounterId === 'enc_parent_child' ||
+            encounterId === 'enc_alley_enter' ||
+            encounterId === 'enc_extra_stop' ||
+            encounterId === 'enc_wait_errand' ||
+            encounterId === 'enc_no_change' ||
+            encounterId === 'enc_phone_left' ||
+            (shouldDeferRoamingJob && encounterId === 'enc_friend_package'));
         const effectCtx: EffectContext = {
           gameManager: this,
           economyManager: this.economyManager,
           rideManager: this.rideManager,
           eventBus: this.bus,
           spawnSpecialRequest: this.spawnSpecialRequest,
+          onRouteEffect: this.inFastForward ? undefined : this.onRouteEffect,
+          deferTimeToWait: shouldDeferTime,
+          deferPhoneReturn:
+            Boolean(this.onEncounterOptionChosen) &&
+            !this.inFastForward &&
+            encounterId === 'enc_phone_left',
+          deferRoamingJob: shouldDeferRoamingJob,
         };
         const ok = this.eventDirector.chooseOption(
           cmd.instanceId,
           cmd.choiceId,
           effectCtx
         );
+        if (ok && this.onEncounterOptionChosen) {
+          this.onEncounterOptionChosen({
+            encounterId,
+            choiceId: cmd.choiceId,
+            instanceId: cmd.instanceId,
+            anchorPlaceKey,
+            deferredWaitMin: effectCtx.deferredWaitMin ?? 0,
+            deferredPhoneReward: effectCtx.deferredPhoneReward ?? null,
+            deferredJobCash: effectCtx.deferredJobCash ?? 0,
+          });
+        }
         if (ok && this.paused && this.eventDirector.pauseOnDecisions) {
           this.paused = false;
         }
@@ -1084,12 +1147,12 @@ export class GameManager {
     const rideMeta: RideMetaSave = this.rideManager
       ? this.rideManager.exportMeta()
       : {
-          offAppStrikes: this.reputationSystem.getOffAppStrikes(),
-          appSuspendedUntilDay: this.reputationSystem.getAppSuspendedUntilDay(),
-          directContacts: [...(this.savedRideMeta?.directContacts ?? [])],
-          activeBikeId: this.savedRideMeta?.activeBikeId ?? this.economyManager.currentBikeId,
-          hadUnsettledTrip: this.savedRideMeta?.hadUnsettledTrip ?? false,
-        };
+        offAppStrikes: this.reputationSystem.getOffAppStrikes(),
+        appSuspendedUntilDay: this.reputationSystem.getAppSuspendedUntilDay(),
+        directContacts: [...(this.savedRideMeta?.directContacts ?? [])],
+        activeBikeId: this.savedRideMeta?.activeBikeId ?? this.economyManager.currentBikeId,
+        hadUnsettledTrip: this.savedRideMeta?.hadUnsettledTrip ?? false,
+      };
     const bikePose: BikePoseSnapshot = this.getBikePose
       ? this.getBikePose()
       : this.savedBikePose
@@ -1254,9 +1317,9 @@ export class GameManager {
         relationships: snap.story.characterRelationships,
         ...(!snap.reputation && snap.rideMeta
           ? {
-              offAppStrikes: snap.rideMeta.offAppStrikes,
-              suspendedUntilDay: snap.rideMeta.appSuspendedUntilDay,
-            }
+            offAppStrikes: snap.rideMeta.offAppStrikes,
+            suspendedUntilDay: snap.rideMeta.appSuspendedUntilDay,
+          }
           : {}),
       });
       this.economy.reputation = this.reputationSystem.getAppRating();
@@ -1292,7 +1355,7 @@ export class GameManager {
         }
         this.pendingM4PoliceDecision = Boolean(
           this.missionManager.isMissionActive('m4_home_safe') &&
-            !this.story.branchFlags['m4_police_decision_made']
+          !this.story.branchFlags['m4_police_decision_made']
         );
       }
 
@@ -1308,8 +1371,8 @@ export class GameManager {
         snap.todayRentAutoFlagged ??
         Boolean(
           this.todayRentPosted > 0 &&
-            this.story.branchFlags['rentDelayedOnce'] &&
-            !this.rentDelayedByCommand
+          this.story.branchFlags['rentDelayedOnce'] &&
+          !this.rentDelayedByCommand
         );
       this.todayLivingExpenses = null;
 

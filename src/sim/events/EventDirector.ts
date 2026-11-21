@@ -44,8 +44,14 @@ export interface EventDirectorOptions {
   seed?: number;
   pauseOnDecisions?: boolean;
   globalCooldownMin?: number;
+  maxRandomPerRide?: number;
+  roamingTriggerChance?: number;
+  onTripTriggerChance?: number;
+  suppressIdleEncounters?: boolean;
   contextProvider?: () => EncounterContext;
 }
+
+const INLINE_PROMPT_LIFETIME_SEC = 12;
 
 export class EventDirector {
   readonly definitions: EncounterDef[];
@@ -65,7 +71,14 @@ export class EventDirector {
   private hasEvaluatedOnce: boolean = false;
   private currentPhase: EncounterPhase = 'roaming';
   private readonly globalCooldownMin: number;
+  private readonly maxRandomPerRide: number;
+  private readonly roamingTriggerChance: number;
+  private readonly onTripTriggerChance: number;
+  private readonly suppressIdleEncounters: boolean;
   private nextGlobalEncounterMinute: number = 0;
+  private randomEncountersThisRide: number = 0;
+  private lastRideRequestId: string | null = null;
+  private inlineRemainingSec: number | null = null;
   private lastContext?: EncounterContext;
   private contextProvider?: () => EncounterContext;
   private readonly eligibleScratch: EncounterDef[] = [];
@@ -76,6 +89,10 @@ export class EventDirector {
     this.rng = new Rng(opts.seed ?? 42);
     this.pauseOnDecisions = opts.pauseOnDecisions ?? true;
     this.globalCooldownMin = opts.globalCooldownMin ?? 0;
+    this.maxRandomPerRide = opts.maxRandomPerRide ?? Number.POSITIVE_INFINITY;
+    this.roamingTriggerChance = opts.roamingTriggerChance ?? 1;
+    this.onTripTriggerChance = opts.onTripTriggerChance ?? 1;
+    this.suppressIdleEncounters = opts.suppressIdleEncounters ?? false;
     this.contextProvider = opts.contextProvider;
   }
 
@@ -92,6 +109,9 @@ export class EventDirector {
     this.cooldowns.clear();
     this.nextGlobalEncounterMinute = 0;
     this.lastEvaluationMinute = -1;
+    this.randomEncountersThisRide = 0;
+    this.lastRideRequestId = null;
+    this.inlineRemainingSec = null;
     this.pendingCue = null;
     this.activeEncounter = null;
     this.activeEncounterDef = null;
@@ -185,12 +205,22 @@ export class EventDirector {
     markCooldown: boolean
   ): EncounterInstance {
     if (markCooldown && ctx) {
-      if (this.globalCooldownMin > 0) {
-        this.nextGlobalEncounterMinute = ctx.minute + this.globalCooldownMin;
+      const effectiveGlobalCooldown = ctx.inFastForward
+        ? Math.min(this.globalCooldownMin, 12)
+        : this.globalCooldownMin;
+      if (effectiveGlobalCooldown > 0) {
+        this.nextGlobalEncounterMinute = ctx.minute + effectiveGlobalCooldown;
       }
       this.cooldowns.set(def.id, ctx.minute + def.cooldownMin);
       if (def.oncePerDay) {
         this.firedToday.add(def.id);
+      }
+      if (
+        ctx.phase === 'atPickup' ||
+        ctx.phase === 'onTrip' ||
+        ctx.phase === 'dropOff'
+      ) {
+        this.randomEncountersThisRide += 1;
       }
     }
 
@@ -199,17 +229,24 @@ export class EventDirector {
       instanceChoices.push(this.buildChoiceMeta(choices[i]!));
     }
 
+    const presentation = def.presentation ?? 'modal';
     const minTag = ctx ? `_${Math.floor(ctx.minute)}` : '';
     const instance: EncounterInstance = {
       id: `inst_${def.id}${minTag}_${this.rng.int(1000, 9999)}`,
       encounterId: def.id,
       lineKey: def.lineKey,
       ...(def.cueKey ? { cueKey: def.cueKey } : {}),
+      presentation,
+      ...(presentation === 'inline' && ctx?.nearbyAnchorPlaceKey
+        ? { anchorPlaceKey: ctx.nearbyAnchorPlaceKey }
+        : {}),
       choices: instanceChoices,
     };
 
     this.activeEncounter = instance;
     this.activeEncounterDef = def;
+    this.inlineRemainingSec =
+      presentation === 'inline' ? INLINE_PROMPT_LIFETIME_SEC : null;
 
     if (bus) {
       bus.emit('encounter/started', { instance });
@@ -226,6 +263,12 @@ export class EventDirector {
     bus?: EventBus<GameEvents>
   ): EncounterInstance | null {
     this.lastContext = ctx;
+
+    const reqId = ctx.activeRequest?.requestId ?? null;
+    if (reqId !== this.lastRideRequestId) {
+      this.lastRideRequestId = reqId;
+      this.randomEncountersThisRide = 0;
+    }
 
     // Max 1 active encounter at a time
     if (this.activeEncounter !== null) {
@@ -253,7 +296,11 @@ export class EventDirector {
           bus.emit('encounter/cueCleared', { encounterId: clearedId });
         }
       } else if (ctx.minute >= this.pendingCue.fireAtMinute) {
-        if (!this.pauseOnDecisions && ctx.speedKmh >= 10) {
+        if (
+          !this.pauseOnDecisions &&
+          ctx.speedKmh >= 10 &&
+          (ctx.inFastForward || cueDef.presentation !== 'inline')
+        ) {
           return null;
         }
         const choices = this.collectValidChoices(cueDef, ctx);
@@ -270,15 +317,22 @@ export class EventDirector {
 
     const isMinuteTick =
       Math.floor(ctx.minute) !== Math.floor(this.lastEvaluationMinute);
-    const isPhaseChange = ctx.phase !== this.currentPhase;
+    const isPhaseChange =
+      ctx.phase !== this.currentPhase &&
+      ctx.phase !== 'enRouteToPickup' &&
+      ctx.phase !== 'roaming';
 
     if (!isMinuteTick && !isPhaseChange) {
       return null;
     }
 
+    const effectiveGlobalCooldown = ctx.inFastForward
+      ? Math.min(this.globalCooldownMin, 12)
+      : this.globalCooldownMin;
+
     if (!this.hasEvaluatedOnce) {
       this.hasEvaluatedOnce = true;
-      if (this.globalCooldownMin > 0 && !this.pauseOnDecisions) {
+      if (effectiveGlobalCooldown > 0 && !this.pauseOnDecisions) {
         // Avoid firing a random encounter on the very first frame of a live session.
         this.nextGlobalEncounterMinute = ctx.minute + 3;
       }
@@ -287,20 +341,57 @@ export class EventDirector {
     this.lastEvaluationMinute = ctx.minute;
     this.currentPhase = ctx.phase;
 
-    if (this.globalCooldownMin > 0 && ctx.minute < this.nextGlobalEncounterMinute) {
+    if (
+      effectiveGlobalCooldown > 0 &&
+      ctx.minute < this.nextGlobalEncounterMinute
+    ) {
       return null;
     }
 
-    // When pauseOnDecisions is OFF, bike must be under 10 km/h for the card to appear
-    if (!this.pauseOnDecisions && ctx.speedKmh >= 10) {
+    // Enforce per-ride random encounter cap while inside a live active ride
+    if (
+      !ctx.inFastForward &&
+      (ctx.phase === 'atPickup' ||
+        ctx.phase === 'onTrip' ||
+        ctx.phase === 'dropOff') &&
+      this.randomEncountersThisRide >= this.maxRandomPerRide
+    ) {
       return null;
     }
+
+    if (ctx.inFastForward && !this.pauseOnDecisions && ctx.speedKmh >= 10) {
+      return null;
+    }
+
+    const onlyInlineAllowed =
+      !ctx.inFastForward && !this.pauseOnDecisions && ctx.speedKmh >= 10;
 
     // Filter eligible encounters without allocating
     this.eligibleScratch.length = 0;
     let totalWeight = 0;
+    let hasAnchorMatchedCandidate = false;
+    let allFlagDriven = true;
     for (let i = 0; i < this.definitions.length; i++) {
       const def = this.definitions[i]!;
+      if (onlyInlineAllowed && def.presentation !== 'inline') {
+        continue;
+      }
+
+      const hasFlagTrigger = Boolean(
+        def.trigger.flags && Object.keys(def.trigger.flags).length > 0
+      );
+      // Suppress idle roaming chatter at 0 m distance in live driving while still allowing flag-driven consequence events
+      if (
+        !ctx.inFastForward &&
+        this.suppressIdleEncounters &&
+        ctx.phase === 'roaming' &&
+        ctx.roamDistanceM !== undefined &&
+        ctx.roamDistanceM < 25 &&
+        !hasFlagTrigger
+      ) {
+        continue;
+      }
+
       // Cooldown check
       const readyAt = this.cooldowns.get(def.id) ?? 0;
       if (readyAt > ctx.minute) {
@@ -322,6 +413,23 @@ export class EventDirector {
         continue;
       }
 
+      if (!hasFlagTrigger) {
+        allFlagDriven = false;
+      }
+
+      if (
+        (def.trigger.requiresAnchorKind &&
+          def.trigger.requiresAnchorKind.length > 0 &&
+          ctx.nearbyAnchorKinds &&
+          ctx.nearbyAnchorKinds.length > 0) ||
+        (def.trigger.requiresRoadEventKind &&
+          def.trigger.requiresRoadEventKind.length > 0 &&
+          ctx.nearbyRoadEventKinds &&
+          ctx.nearbyRoadEventKinds.length > 0)
+      ) {
+        hasAnchorMatchedCandidate = true;
+      }
+
       this.eligibleScratch.push(def);
       totalWeight += def.weight;
     }
@@ -330,13 +438,57 @@ export class EventDirector {
       return null;
     }
 
+    // Probability gate: roaming & non-anchor onTrip events roll chance in live play
+    if (
+      !ctx.inFastForward &&
+      !this.pauseOnDecisions &&
+      this.definitions.length > 1 &&
+      !allFlagDriven
+    ) {
+      if (
+        ctx.phase === 'roaming' &&
+        this.roamingTriggerChance < 1 &&
+        this.rng.next() >= this.roamingTriggerChance
+      ) {
+        return null;
+      }
+      if (
+        ctx.phase === 'onTrip' &&
+        !hasAnchorMatchedCandidate &&
+        this.onTripTriggerChance < 1 &&
+        this.rng.next() >= this.onTripTriggerChance
+      ) {
+        return null;
+      }
+    }
+
+    // Prefer world-anchored stop or road-event candidates when approaching matching world state
+    const isWorldAnchored = (d: EncounterDef): boolean =>
+      Boolean(
+        (d.trigger.requiresAnchorKind && d.trigger.requiresAnchorKind.length > 0) ||
+          (d.trigger.requiresRoadEventKind && d.trigger.requiresRoadEventKind.length > 0)
+      );
+    let selectionTotalWeight = totalWeight;
+    if (hasAnchorMatchedCandidate) {
+      selectionTotalWeight = 0;
+      for (let i = 0; i < this.eligibleScratch.length; i++) {
+        const def = this.eligibleScratch[i]!;
+        if (isWorldAnchored(def)) {
+          selectionTotalWeight += def.weight;
+        }
+      }
+    }
+
     // Seeded weighted selection
-    const roll = this.rng.next() * totalWeight;
+    const roll = this.rng.next() * selectionTotalWeight;
     let sum = 0;
     let selected: EncounterDef = this.eligibleScratch[0]!;
 
     for (let i = 0; i < this.eligibleScratch.length; i++) {
       const def = this.eligibleScratch[i]!;
+      if (hasAnchorMatchedCandidate && !isWorldAnchored(def)) {
+        continue;
+      }
       sum += def.weight;
       if (roll < sum) {
         selected = def;
@@ -365,6 +517,52 @@ export class EventDirector {
 
     const choices = this.collectValidChoices(selected, ctx);
     return this.activateEncounter(selected, choices, ctx, bus, true);
+  }
+
+  /**
+   * Deterministically stages an encounter's advance warning cue (`pendingCue`) when eligible,
+   * so mission-critical hazards appear in 3D before the modal fires.
+   */
+  startCueIfEligible(
+    encounterId: string,
+    ctx: EncounterContext,
+    bus?: EventBus<GameEvents>
+  ): boolean {
+    if (!this.enabled || this.activeEncounter !== null || this.pendingCue !== null) {
+      return false;
+    }
+    const def = this.definitions.find((d) => d.id === encounterId);
+    if (!def || !def.cueKey) {
+      return false;
+    }
+    if (def.oncePerDay && this.firedToday.has(def.id)) {
+      return false;
+    }
+    if ((this.cooldowns.get(def.id) ?? 0) > ctx.minute) {
+      return false;
+    }
+    if (!evaluateCondition(def.trigger, ctx)) {
+      return false;
+    }
+    if (this.collectValidChoices(def, ctx).length === 0) {
+      return false;
+    }
+
+    const fireAtMinute = ctx.minute + CUE_LEAD_GAME_MINUTES;
+    this.pendingCue = {
+      encounterId: def.id,
+      cueKey: def.cueKey,
+      startedAtMinute: ctx.minute,
+      fireAtMinute,
+    };
+    if (bus) {
+      bus.emit('encounter/cue', {
+        encounterId: def.id,
+        cueKey: def.cueKey,
+        fireAtMinute,
+      });
+    }
+    return true;
   }
 
   /**
@@ -441,9 +639,105 @@ export class EventDirector {
       ...(ctx.outcomeLineKey ? { outcomeLineKey: ctx.outcomeLineKey } : {}),
     });
 
+    const baseMin = ctx.encounterContext?.minute ?? this.lastEvaluationMinute;
+    const effectiveGlobalCooldown = ctx.encounterContext?.inFastForward
+      ? Math.min(this.globalCooldownMin, 12)
+      : this.globalCooldownMin;
+    if (effectiveGlobalCooldown > 0 && baseMin >= 0) {
+      this.nextGlobalEncounterMinute = Math.max(
+        this.nextGlobalEncounterMinute,
+        baseMin + effectiveGlobalCooldown
+      );
+    }
+
     this.activeEncounter = null;
     this.activeEncounterDef = null;
+    this.inlineRemainingSec = null;
 
+    return true;
+  }
+
+  /**
+   * Evaluates an arrival-gated encounter from explicit candidate ids when the player
+   * physically stops at pickup or drop-off.
+   */
+  evaluateArrivalEncounter(
+    candidateIds: readonly string[],
+    ctx: EncounterContext,
+    bus?: EventBus<GameEvents>
+  ): EncounterInstance | null {
+    this.lastContext = ctx;
+    if (this.activeEncounter !== null) {
+      return null;
+    }
+
+    this.eligibleScratch.length = 0;
+    let totalWeight = 0;
+    for (let i = 0; i < this.definitions.length; i++) {
+      const def = this.definitions[i]!;
+      if (!candidateIds.includes(def.id)) continue;
+
+      const readyAt = this.cooldowns.get(def.id) ?? 0;
+      if (readyAt > ctx.minute) continue;
+      if (def.oncePerDay && this.firedToday.has(def.id)) continue;
+      if (!evaluateCondition(def.trigger, ctx)) continue;
+      if (this.collectValidChoices(def, ctx).length === 0) continue;
+
+      this.eligibleScratch.push(def);
+      totalWeight += def.weight;
+    }
+
+    if (this.eligibleScratch.length === 0 || totalWeight <= 0) {
+      return null;
+    }
+
+    const roll = this.rng.next() * totalWeight;
+    let sum = 0;
+    let selected: EncounterDef = this.eligibleScratch[0]!;
+    for (let i = 0; i < this.eligibleScratch.length; i++) {
+      const def = this.eligibleScratch[i]!;
+      sum += def.weight;
+      if (roll < sum) {
+        selected = def;
+        break;
+      }
+    }
+
+    const choices = this.collectValidChoices(selected, ctx);
+    return this.activateEncounter(selected, choices, ctx, bus, true);
+  }
+
+  tickInlineExpiry(dtSimSec: number, bus?: EventBus<GameEvents>): boolean {
+    if (
+      this.activeEncounter?.presentation !== 'inline' ||
+      this.inlineRemainingSec === null
+    ) {
+      return false;
+    }
+    this.inlineRemainingSec -= dtSimSec;
+    if (this.inlineRemainingSec <= 0) {
+      return this.dismissActive('expired', bus);
+    }
+    return false;
+  }
+
+  dismissActive(
+    reason: 'expired' | 'overshot' | 'rideEnded',
+    bus?: EventBus<GameEvents>
+  ): boolean {
+    if (!this.activeEncounter) return false;
+    const inst = this.activeEncounter;
+    const def = this.activeEncounterDef;
+    this.activeEncounter = null;
+    this.activeEncounterDef = null;
+    this.inlineRemainingSec = null;
+    if (bus) {
+      bus.emit('encounter/dismissed', {
+        instanceId: inst.id,
+        encounterId: def?.id,
+        reason,
+      });
+    }
     return true;
   }
 

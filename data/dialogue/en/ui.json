@@ -267,6 +267,8 @@
   "tutorial.nabila.accept_80": "“All right, brother, let us go for 80 taka.”",
   "tutorial.nabila.accepted": "Nabila: 'Accha thik ache, cholen. Taratari jete hobe.'",
   "tutorial.riding.tip": "Follow the navigation arrow to Campus Gate. Keep an eye on traffic.",
+  "tutorial.riding.pickup_tip": "Ride to Community Health Clinic (green beacon) to pick up Nabila — or use the shortcut below.",
+  "tutorial.riding.dropoff_tip": "Nabila is on board! Follow the amber route to North Campus Gate — or use the shortcut below.",
   "tutorial.receipt.title": "Trip Complete — Receipt Explained",
   "tutorial.receipt.desc": "Gross Fare collected in cash. Uthao 15% platform commission deducted. Net earnings added to wallet. Future tips appear contextually.",
   "tutorial.receipt.btn": "Complete First Ride",

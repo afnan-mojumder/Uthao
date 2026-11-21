@@ -155,7 +155,8 @@
     "id": "enc_parent_child",
     "category": "pickup",
     "trigger": {
-      "phase": "atPickup"
+      "phase": "atPickup",
+      "requiresChild": true
     },
     "weight": 10,
     "cooldownMin": 90,
@@ -187,6 +188,45 @@
         "effects": [
           { "type": "mood", "delta": -0.2 },
           { "type": "relationship", "characterId": "char_ferdousi", "delta": -5 }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "enc_late_passenger",
+    "category": "pickup",
+    "trigger": {
+      "phase": "atPickup"
+    },
+    "weight": 10,
+    "cooldownMin": 75,
+    "oncePerDay": false,
+    "lineKey": "encounter.late_passenger.title",
+    "choices": [
+      {
+        "id": "wait",
+        "labelKey": "encounter.late_passenger.choice.wait",
+        "effects": [
+          { "type": "time", "min": 5 },
+          { "type": "mood", "delta": 0.15 },
+          { "type": "trust", "delta": 4 },
+          { "type": "rating", "delta": 0.1 }
+        ]
+      },
+      {
+        "id": "hurry",
+        "labelKey": "encounter.late_passenger.choice.hurry",
+        "effects": [
+          { "type": "time", "min": 2 },
+          { "type": "mood", "delta": -0.1 }
+        ]
+      },
+      {
+        "id": "cancel",
+        "labelKey": "encounter.late_passenger.choice.cancel",
+        "effects": [
+          { "type": "flag", "key": "cancelled_late_pickup", "value": true },
+          { "type": "endTrip", "paid": false }
         ]
       }
     ]

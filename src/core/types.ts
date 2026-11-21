@@ -407,6 +407,106 @@ export interface EncounterInstance {
   lineKey: string;
   cueKey?: string;
   choices: EncounterChoice[];
+  presentation?: 'modal' | 'inline';
+  anchorPlaceKey?: string;
+}
+
+export type PassengerActorMode =
+  | 'hidden'
+  | 'waitingAtPickup'
+  | 'walkingToBike'
+  | 'onPillion'
+  | 'atStop'
+  | 'walkingBackToBike'
+  | 'atDropoff';
+
+export interface PassengerActorState {
+  mode: PassengerActorMode;
+  worldX: number;
+  worldZ: number;
+  facingRad: number;
+  passengerId?: string;
+  passengerSeed?: number;
+  hasChild?: boolean;
+  waving?: boolean;
+  beaconVisible?: boolean;
+}
+
+export interface RideWaitState {
+  kind: 'pickupWait' | 'stopErrand';
+  labelKey: string;
+  placeKey?: string;
+  totalSimSec: number;
+  remainingSimSec: number;
+  totalGameMin: number;
+  remainingGameMin: number;
+  canCancel: boolean;
+}
+
+export interface IntermediateStopState {
+  nodeId: string;
+  placeKey: string;
+  kind: string;
+  arrived: boolean;
+  waitGameMin: number;
+  labelKey: string;
+}
+
+export interface ActiveFollowUpState {
+  kind: 'phoneReturn';
+  nodeId: string;
+  placeKey: string;
+  encounterId: string;
+  choiceId: string;
+  cashReward: number;
+  trustBonus: number;
+}
+
+export type EncounterStageKind =
+  | 'none'
+  | 'policeCheckpoint'
+  | 'policeSignalStop'
+  | 'alleyAmbush'
+  | 'suspiciousPickup';
+
+export interface EncounterStageState {
+  kind: EncounterStageKind;
+  worldX: number;
+  worldY: number;
+  worldZ: number;
+  facingRad: number;
+  urgent: boolean;
+}
+
+export interface StreetHailActorState {
+  active: boolean;
+  nodeId: string;
+  worldX: number;
+  worldZ: number;
+  facingRad: number;
+  seed: number;
+  placeKey: string;
+}
+
+export interface ActiveDeliveryTarget {
+  deliveryId: string;
+  status: 'accepted' | 'in_transit';
+  nodeId: string;
+  placeKey: string;
+  basePayout: number;
+}
+
+export type MissionBeaconKind = 'reach' | 'fuel' | 'ride_with' | 'relationship' | 'zone_ride';
+
+export interface MissionBeaconState {
+  visible: boolean;
+  missionId: string;
+  kind: MissionBeaconKind;
+  nodeId: string;
+  placeKey: string;
+  worldX: number;
+  worldZ: number;
+  characterId?: string;
 }
 
 export type WeatherKind = 'clear' | 'cloudy' | 'lightRain' | 'heavyRain';

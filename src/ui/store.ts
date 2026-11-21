@@ -5,7 +5,14 @@ import { DEFAULT_VOLUMES } from '../audio/AudioManager';
 import type { AudioSettings } from '../audio/bindAudio';
 import { BALANCE } from '../config/balance';
 import type { EventBus, GameEvents } from '../core/events';
-import type { DaySummary, DeliveryJob, PassengerStatus, RideRequest, TripReceipt } from '../core/types';
+import type {
+  DaySummary,
+  DeliveryJob,
+  PassengerStatus,
+  RideRequest,
+  RideWaitState,
+  TripReceipt,
+} from '../core/types';
 import type { GameManager } from '../sim/GameManager';
 import { getCharacter } from '../sim/passenger/PassengerAI';
 import { t } from './i18n';
@@ -113,6 +120,8 @@ export interface ChoiceState {
   options: ChoiceOption[];
   instanceId?: string;
   outcomeLineKey?: string;
+  presentation?: 'modal' | 'inline';
+  anchorPlaceKey?: string;
 }
 
 export interface EncounterCueState {
@@ -703,7 +712,11 @@ export const choiceSignal = signal<ChoiceState>({
   prompt: '',
   options: [],
   outcomeLineKey: undefined,
+  presentation: undefined,
+  anchorPlaceKey: undefined,
 });
+
+export const rideWaitSignal = signal<RideWaitState | null>(null);
 
 export const encounterCueSignal = signal<EncounterCueState>({
   cueKey: null,
@@ -719,6 +732,8 @@ export function dismissChoiceOutcome(): void {
     options: [],
     instanceId: undefined,
     outcomeLineKey: undefined,
+    presentation: undefined,
+    anchorPlaceKey: undefined,
   };
 }
 
@@ -757,6 +772,7 @@ if (import.meta.env.DEV && typeof window !== 'undefined') {
     dayEndSignal,
     negotiationSignal,
     choiceSignal,
+    rideWaitSignal,
     tutorialSignal,
     endingSignal,
     unsupportedSignal,
@@ -899,7 +915,10 @@ export function exitToTitle(): void {
     options: [],
     instanceId: undefined,
     outcomeLineKey: undefined,
+    presentation: undefined,
+    anchorPlaceKey: undefined,
   };
+  rideWaitSignal.value = null;
   encounterCueSignal.value = { cueKey: null, encounterId: undefined, seq: encounterCueSignal.value.seq };
   audioPreviewSignal.value = null;
   phoneTabSignal.value = 'requests';
@@ -971,6 +990,15 @@ export function setTutorialDispatchers(dispatchers: {
 
 export function setRecoverBikeDispatcher(fn: () => void): void {
   onRecoverBikeCallback = fn;
+}
+
+export let onCancelWaitCallback: (() => void) | null = null;
+export function setCancelWaitDispatcher(fn: () => void): void {
+  onCancelWaitCallback = fn;
+}
+
+export function cancelRideWait(): void {
+  onCancelWaitCallback?.();
 }
 
 export function setNegotiationActionDispatcher(fn: (action: NegotiationAction) => void): void {
@@ -1221,6 +1249,7 @@ function resetTransientUiState(): void {
   }
   deliveryNoticeSignal.value = { messageKey: null, vars: undefined, seq: deliveryNoticeSignal.value.seq };
   encounterCueSignal.value = { cueKey: null, encounterId: undefined, seq: encounterCueSignal.value.seq };
+  rideWaitSignal.value = null;
   inActiveTrip = false;
   activeOfferQueue = [];
   heldRequest = null;
@@ -1428,7 +1457,11 @@ export function bindEventBusToStore(bus: EventBus<GameEvents>): () => void {
     if (!tutorialSignal.value.active) {
       tripSummarySignal.value = ev.receipt;
     } else if (ev.requestId === 'req_tutorial_01') {
-      tutorialSignal.value = { ...tutorialSignal.value, receipt: ev.receipt };
+      tutorialSignal.value = {
+        ...tutorialSignal.value,
+        step: tutorialSignal.value.step === 'riding' ? 'receipt' : tutorialSignal.value.step,
+        receipt: ev.receipt,
+      };
     }
   });
   unsubscribers.push(unsubComplete);
@@ -1502,9 +1535,18 @@ export function bindEventBusToStore(bus: EventBus<GameEvents>): () => void {
       })),
       instanceId: ev.instance.id,
       outcomeLineKey: undefined,
+      presentation: ev.instance.presentation ?? 'modal',
+      anchorPlaceKey: ev.instance.anchorPlaceKey,
     };
   });
   unsubscribers.push(unsubEncounterStart);
+
+  const unsubEncounterDismiss = bus.on('encounter/dismissed', (ev) => {
+    if (choiceSignal.value.active && choiceSignal.value.instanceId === ev.instanceId) {
+      dismissChoiceOutcome();
+    }
+  });
+  unsubscribers.push(unsubEncounterDismiss);
 
   const unsubEncounterEnd = bus.on('encounter/resolved', (ev) => {
     if (ev.outcomeLineKey) {

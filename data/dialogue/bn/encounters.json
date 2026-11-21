@@ -39,6 +39,7 @@
   "encounter.phone_left.choice.police": "ট্রাফিক মোড়ে এসআই মোর্শেদের পুলিশ বক্সে জমা দিন",
   "encounter.phone_left.choice.keep": "ফোনটা নিজের পকেটে রেখে দিন (উচ্চ ঝুঁকি ও অনৈতিক)",
 
+  "encounter.traffic_checkpoint.cue": "সামনে ট্রাফিক পুলিশের চেকপোস্ট ব্যারিয়ার দেখা যাচ্ছে — এসআই মোর্শেদ বাইক থামানোর ইশারা করছেন।",
   "encounter.traffic_checkpoint.title": "সামনে পুলিশের চেকপোস্ট! এসআই মোর্শেদ কাগজপত্র চেক করার জন্য হাত তুলে থামতে বলছেন।",
   "encounter.traffic_checkpoint.choice.cooperate": "শ্রদ্ধার সাথে থেমে লাইসেন্স ও গাড়ির কাগজপত্র দেখান",
   "encounter.traffic_checkpoint.choice.explain_rush": "যাত্রীর জরুরি তাড়ার কথা বুঝিয়ে ছাড় চেয়ে নিন",
@@ -95,5 +96,10 @@
 
   "encounter.m4_police_decision.title": "অন্ধ গলির ঘটনার পর এসআই মোর্শেদ ফোন করলেন: 'পুরান পাড়ার চাঁদাবাজ চক্রের বিরুদ্ধে তদন্তে সাক্ষ্য দেবেন?'",
   "encounter.m4_police_decision.choice.cooperate": "পুলিশের তদন্তে সহযোগিতা করুন এবং যা দেখেছেন জানান",
-  "encounter.m4_police_decision.choice.decline": "ঝামেলা এড়াতে তদন্তের বাইরে থাকুন এবং নীরব থাকুন"
+  "encounter.m4_police_decision.choice.decline": "ঝামেলা এড়াতে তদন্তের বাইরে থাকুন এবং নীরব থাকুন",
+
+  "encounter.late_passenger.title": "আপনি পিকআপ পয়েন্টে পৌঁছেছেন, কিন্তু যাত্রী মেসেজ দিলেন: 'দুঃখিত! ৫ মিনিটের মধ্যে নামছি—দয়া করে একটু অপেক্ষা করুন।'",
+  "encounter.late_passenger.choice.wait": "পিকআপ পয়েন্টে ৫ মিনিট অপেক্ষা করুন",
+  "encounter.late_passenger.choice.hurry": "ফোন করে তাড়াতাড়ি আসতে বলুন (২ মিনিট অপেক্ষা)",
+  "encounter.late_passenger.choice.cancel": "রাইড বাতিল করে অন্য যাত্রী খুঁজুন"
 }
