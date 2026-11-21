@@ -153,8 +153,11 @@ describe('T2.8 & T4.10 Rider HUD and Mobile Polish', () => {
     const vnode = ChoiceCardView({ choice: choiceSignal.value, onChoose: () => {} });
     expect(vnode).not.toBeNull();
     const style = vnode?.props.style as Record<string, unknown>;
-    expect(style.top).toContain('env(safe-area-inset-top, 0px)');
-    expect(style.maxHeight).toBe('calc(100vh - 180px)');
+    expect(style.top).toBe('50%');
+    expect(style.transform).toBe('translate(-50%, -50%)');
+    expect(style.maxHeight).toContain('100dvh');
+    expect(style.maxHeight).toContain('var(--safe-top, 0px)');
+    expect(style.maxHeight).toContain('var(--safe-bottom, 0px)');
   });
 });
 

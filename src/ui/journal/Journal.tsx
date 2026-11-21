@@ -104,7 +104,8 @@ export function Journal({
   const ownedUpgrades = ownedUpgradesProp;
 
   const unlockedDistricts = MissionManager.getUnlockedDistrictsForChapter(chapter).filter(
-    (d) => !import.meta.env.DEV || d !== 'testloop'
+    // MissionManager already omits testloop in prod; fold out the literal so verify-prod-bundle stays clean.
+    (d) => (import.meta.env.DEV ? d !== 'testloop' : true)
   );
   const activeFlags = Object.entries(story.branchFlags).filter(
     ([flagKey, val]) => KNOWN_FLAG_KEYS.has(flagKey) && Boolean(val)

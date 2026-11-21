@@ -150,10 +150,19 @@ describe('All Five Endings Evaluation (T5.5)', () => {
     const workshop = choices.find((c) => c.id === 'workshop');
     expect(workshop?.available).toBe(false);
     expect(workshop?.disabledReason).toContain('25,000');
+    expect(workshop?.disabledReasonKey).toBe('ending.choice_requires_workshop_deposit');
+    expect(workshop?.disabledReasonVars).toEqual({ cost: '25,000' });
 
     const bike = choices.find((c) => c.id === 'bike');
     expect(bike?.available).toBe(false);
     expect(bike?.disabledReason).toContain('15,000');
+    expect(bike?.disabledReasonKey).toBe('ending.choice_requires_bike_savings');
+    expect(bike?.disabledReasonVars).toEqual({ cost: '15,000' });
+
+    const relLocked = getAvailableCareerChoices(30000, 10).find((c) => c.id === 'workshop');
+    expect(relLocked?.available).toBe(false);
+    expect(relLocked?.disabledReasonKey).toBe('ending.choice_requires_kamal_rel');
+    expect(relLocked?.disabledReasonVars).toEqual({ min: 30 });
 
     const cont = choices.find((c) => c.id === 'continue');
     expect(cont?.available).toBe(true);

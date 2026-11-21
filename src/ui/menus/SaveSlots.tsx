@@ -87,7 +87,7 @@ export function SaveSlots({
         style={{
           width: '100%',
           maxWidth: '560px',
-          maxHeight: '90vh',
+          maxHeight: '90dvh',
           background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.98), rgba(15, 23, 42, 0.99))',
           border: '1px solid rgba(255, 255, 255, 0.14)',
           borderRadius: '24px',

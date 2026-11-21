@@ -228,6 +228,8 @@ export function verifyProdBundle(distDir = DEFAULT_DIST_DIR, opts = {}) {
     const headersText = fs.readFileSync(headersPath, 'utf8');
     const requiredHeaderSnippets = [
       'Content-Security-Policy',
+      "'wasm-unsafe-eval'",
+      "connect-src 'self' blob:",
       'X-Content-Type-Options: nosniff',
       'Referrer-Policy: strict-origin-when-cross-origin',
       '/assets/*',

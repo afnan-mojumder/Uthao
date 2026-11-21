@@ -27,7 +27,7 @@ const VALID_INDEX_HTML = `<!DOCTYPE html>
 </html>`;
 
 const VALID_HEADERS = `/*
-  Content-Security-Policy: default-src 'self'
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; connect-src 'self' blob:
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
 
@@ -94,6 +94,16 @@ describe('Sanity & P8.1/P8.3 Production Bundle Verification Gate', () => {
     expect(passRes.ok).toBe(true);
     expect(passRes.entryShellGzBytes).toBeLessThanOrEqual(MAX_ENTRY_SHELL_GZ_BYTES);
 
+    // Reject _headers if WASM or blob: CSP directives required by Meshopt + GLTFLoader are stripped
+    fs.writeFileSync(
+      path.join(tmpDir, '_headers'),
+      VALID_HEADERS.replace(" 'wasm-unsafe-eval'", '').replace(" blob:", '')
+    );
+    const badCspRes = verifyProdBundle(tmpDir, { rootDir: tmpDir });
+    expect(badCspRes.ok).toBe(false);
+    expect(badCspRes.errors.some((e: string) => e.includes('wasm-unsafe-eval'))).toBe(true);
+    expect(badCspRes.errors.some((e: string) => e.includes("connect-src 'self' blob:"))).toBe(true);
+
     fs.rmSync(tmpDir, { recursive: true, force: true });
   });
 
@@ -114,6 +124,8 @@ describe('Sanity & P8.1/P8.3 Production Bundle Verification Gate', () => {
     expect(fs.existsSync(headersPath), 'Missing public/_headers').toBe(true);
     const headersText = fs.readFileSync(headersPath, 'utf8');
     expect(headersText).toContain('Content-Security-Policy');
+    expect(headersText).toContain("'wasm-unsafe-eval'");
+    expect(headersText).toContain("connect-src 'self' blob:");
     expect(headersText).toContain('X-Content-Type-Options: nosniff');
     expect(headersText).toContain('Referrer-Policy: strict-origin-when-cross-origin');
     expect(headersText).toContain('max-age=31536000, immutable');

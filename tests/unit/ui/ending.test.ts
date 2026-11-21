@@ -8,7 +8,7 @@ import {
 } from '../../../src/ui/store';
 import { Ending } from '../../../src/ui/menus/Ending';
 import { t, setLanguage } from '../../../src/ui/i18n';
-import type { EndingResult, CareerChoiceOption } from '../../../src/sim/mission/endings';
+import { getAvailableCareerChoices, type EndingResult, type CareerChoiceOption } from '../../../src/sim/mission/endings';
 
 describe('T5.5 Ending UI & Store Integration', () => {
   const mockResult: EndingResult = {
@@ -164,5 +164,19 @@ describe('T5.5 Ending UI & Store Integration', () => {
     });
 
     expect(findByTestId(vnode, 'career-choice-prototype-notice')).toBe(false);
+  });
+
+  it('renders localized Bangla disabled reasons and Bangla numerals for locked career choices without English leakage', () => {
+    setLanguage('bn');
+    const choices = getAvailableCareerChoices(12000, 20);
+    const vnode = Ending({
+      result: mockResult,
+      choices,
+      onSelectChoice: vi.fn(),
+    });
+    const text = JSON.stringify(vnode);
+    expect(text).toContain('২৫,০০০');
+    expect(text).toContain('১৫,০০০');
+    expect(text).not.toContain('Requires ');
   });
 });

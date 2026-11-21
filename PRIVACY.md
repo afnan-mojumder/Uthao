@@ -14,8 +14,8 @@
 
 To let you save your 20-day career, customize controls, and play offline, Uthao stores data **exclusively on your own device**:
 
-- **Career Saves (`uthao_save_slot_*`):** Stores your in-game day, cash, motorcycle condition, mission progress, and karma meters in your browser's `window.localStorage`.
-- **Game Settings & Keybindings (`uthao_settings`, `uthao_bindings_v1`):** Stores your preferred language (`বাংলা` / `English`), graphics quality, audio volume levels, accessibility toggles, and custom keyboard/controller bindings in `window.localStorage`.
+- **Career Saves (`uthao.save.*`):** Stores your in-game day, cash, motorcycle condition, mission progress, and karma meters in your browser's `window.localStorage` (`uthao.save.auto`, `uthao.save.slot1`–`slot3`).
+- **Game Settings & Keybindings (`uthao_user_settings`, `uthao_input_bindings`):** Stores your preferred language (`বাংলা` / `English`), graphics quality, audio volume levels, accessibility toggles, and custom keyboard/controller bindings in `window.localStorage`.
 - **Service Worker Cache (Optional PWA):** Caches static game scripts, self-hosted fonts, and 3D/audio assets in the browser's Cache Storage API so the game loads quickly and works offline.
 
 You can clear all saved data at any time by deleting save slots in the in-game **Save / Load** menu or by clearing site data in your browser settings.

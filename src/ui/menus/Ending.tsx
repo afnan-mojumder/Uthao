@@ -278,9 +278,25 @@ export function Ending({
                   <div style={{ fontSize: '0.8rem', color: c.available ? '#94a3b8' : '#475569' }}>
                     {t(c.descKey)}
                   </div>
-                  {!c.available && c.disabledReason && (
-                    <div style={{ fontSize: '0.75rem', color: '#ef4444', marginTop: '2px' }}>
-                      ⚠️ {c.disabledReason}
+                  {!c.available && (c.disabledReasonKey || c.disabledReason) && (
+                    <div
+                      data-testid={`career-choice-disabled-${c.id}`}
+                      style={{ fontSize: '0.75rem', color: '#ef4444', marginTop: '2px' }}
+                    >
+                      ⚠️{' '}
+                      {c.disabledReasonKey
+                        ? t(
+                            c.disabledReasonKey,
+                            c.disabledReasonVars
+                              ? Object.fromEntries(
+                                  Object.entries(c.disabledReasonVars).map(([k, v]) => [
+                                    k,
+                                    localDigits(v),
+                                  ])
+                                )
+                              : undefined
+                          )
+                        : c.disabledReason}
                     </div>
                   )}
                 </div>

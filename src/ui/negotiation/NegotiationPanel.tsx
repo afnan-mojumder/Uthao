@@ -214,7 +214,7 @@ export function NegotiationPanelView({
               {passengerName}
             </span>
             <span style={{ fontSize: '12px', color: '#94a3b8' }}>
-              {session.profile.archetype} •{' '}
+              {t(`phone.archetype.${session.profile.archetype}`)} •{' '}
               {t('negotiation.round', {
                 current: localDigits(Math.min(session.round, session.maxRounds)),
                 max: localDigits(session.maxRounds),

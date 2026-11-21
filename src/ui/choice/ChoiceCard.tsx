@@ -60,12 +60,12 @@ export function ChoiceCardView({
       tabIndex={-1}
       style={{
         position: 'fixed',
-        top: 'calc(140px + env(safe-area-inset-top, 0px))',
+        top: '50%',
         left: '50%',
-        transform: 'translateX(-50%)',
+        transform: 'translate(-50%, -50%)',
         width: '92%',
         maxWidth: '560px',
-        maxHeight: 'calc(100vh - 180px)',
+        maxHeight: 'calc(100dvh - 24px - var(--safe-top, 0px) - var(--safe-bottom, 0px))',
         overflowY: 'auto',
         background: 'var(--surface-panel, rgba(15, 23, 42, 0.95))',
         backdropFilter: 'blur(16px)',

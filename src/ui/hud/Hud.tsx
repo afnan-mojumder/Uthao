@@ -809,8 +809,8 @@ export function HudView({
             data-testid="hud-minimap-host"
             ref={minimapHostRef}
             style={{
-              width: isTouch ? 'clamp(92px, 22vh, 152px)' : 'clamp(108px, 24vh, 152px)',
-              height: isTouch ? 'clamp(92px, 22vh, 152px)' : 'clamp(108px, 24vh, 152px)',
+              width: isTouch ? 'clamp(92px, 22dvh, 152px)' : 'clamp(108px, 24dvh, 152px)',
+              height: isTouch ? 'clamp(92px, 22dvh, 152px)' : 'clamp(108px, 24dvh, 152px)',
               position: 'relative',
               borderRadius: '50%',
               overflow: 'hidden',

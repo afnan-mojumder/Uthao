@@ -32,6 +32,8 @@ export interface CareerChoiceOption {
   cost: number;
   available: boolean;
   disabledReason?: string;
+  disabledReasonKey?: string;
+  disabledReasonVars?: Record<string, string | number>;
 }
 
 export interface EndingResult {
@@ -69,6 +71,18 @@ export function getAvailableCareerChoices(
           : kamalRelationship < 30
           ? 'Requires Kamal bhai relationship ≥ 30'
           : undefined,
+      disabledReasonKey:
+        savings < workshopCost
+          ? 'ending.choice_requires_workshop_deposit'
+          : kamalRelationship < 30
+          ? 'ending.choice_requires_kamal_rel'
+          : undefined,
+      disabledReasonVars:
+        savings < workshopCost
+          ? { cost: workshopCost.toLocaleString('en-US') }
+          : kamalRelationship < 30
+          ? { min: 30 }
+          : undefined,
     },
     {
       id: 'bike',
@@ -80,6 +94,10 @@ export function getAvailableCareerChoices(
         savings < bikeCost
           ? `Requires ৳${bikeCost.toLocaleString('en-US')} for used 125cc bike`
           : undefined,
+      disabledReasonKey:
+        savings < bikeCost ? 'ending.choice_requires_bike_savings' : undefined,
+      disabledReasonVars:
+        savings < bikeCost ? { cost: bikeCost.toLocaleString('en-US') } : undefined,
     },
     {
       id: 'continue',
