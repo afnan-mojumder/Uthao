@@ -25,6 +25,7 @@ import {
   onTutorialNegotiateCallback,
   onTutorialSkipCallback,
   tutorialSignal,
+  Z_LAYER,
   type TutorialStep,
 } from '../store';
 
@@ -553,7 +554,7 @@ export function FirstRideTutorialView(props: FirstRideTutorialViewProps): JSX.El
           top: '16px',
           left: '50%',
           transform: 'translateX(-50%)',
-          zIndex: 9520,
+          zIndex: Z_LAYER.HUD + 20,
           width: '92%',
           maxWidth: '640px',
           background: 'rgba(15, 23, 42, 0.92)',

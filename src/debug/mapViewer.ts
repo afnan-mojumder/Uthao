@@ -19,6 +19,7 @@ export class MapViewer {
   private dragStartX: number = 0;
   private dragStartY: number = 0;
   private hoveredPoi: Poi | null = null;
+  private hasFittedToCanvas: boolean = false;
 
   constructor(opts: MapViewerOptions) {
     this.district = opts.district;
@@ -104,6 +105,10 @@ export class MapViewer {
     const handleResize = () => {
       this.canvas.width = this.canvas.clientWidth * (window.devicePixelRatio || 1);
       this.canvas.height = this.canvas.clientHeight * (window.devicePixelRatio || 1);
+      if (!this.hasFittedToCanvas && this.canvas.width > 0 && this.canvas.height > 0) {
+        this.hasFittedToCanvas = true;
+        this.fitToScreen();
+      }
       this.render();
     };
     window.addEventListener('resize', handleResize);
@@ -208,10 +213,10 @@ export class MapViewer {
     const w = maxX - minX || 600;
     const h = maxZ - minZ || 600;
 
-    const availableW = this.canvas.width - margin * 2;
-    const availableH = this.canvas.height - margin * 2;
+    const availableW = Math.max(1, this.canvas.width - margin * 2);
+    const availableH = Math.max(1, this.canvas.height - margin * 2);
 
-    this.scale = Math.min(availableW / w, availableH / h) * 0.9;
+    this.scale = Math.max(0.01, Math.min(availableW / w, availableH / h) * 0.9);
     this.offsetX = (this.canvas.width - w * this.scale) / 2 - minX * this.scale;
     this.offsetZ = (this.canvas.height - h * this.scale) / 2 - minZ * this.scale;
   }

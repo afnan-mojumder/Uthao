@@ -79,6 +79,7 @@ export class EventDirector {
   private randomEncountersThisRide: number = 0;
   private lastRideRequestId: string | null = null;
   private inlineRemainingSec: number | null = null;
+  private resolvingInstanceId: string | null = null;
   private lastContext?: EncounterContext;
   private contextProvider?: () => EncounterContext;
   private readonly eligibleScratch: EncounterDef[] = [];
@@ -237,7 +238,9 @@ export class EventDirector {
       lineKey: def.lineKey,
       ...(def.cueKey ? { cueKey: def.cueKey } : {}),
       presentation,
-      ...(presentation === 'inline' && ctx?.nearbyAnchorPlaceKey
+      ...(presentation === 'inline' &&
+      Boolean(def.trigger.requiresAnchorKind?.length) &&
+      ctx?.nearbyAnchorPlaceKey
         ? { anchorPlaceKey: ctx.nearbyAnchorPlaceKey }
         : {}),
       choices: instanceChoices,
@@ -628,16 +631,21 @@ export class EventDirector {
     ctx.encounterContext = ctx.encounterContext ?? this.lastContext ?? this.contextProvider?.();
     ctx.outcomeLineKey = undefined;
 
-    // Apply effects to owning systems
-    applyEffects(choice.effects, ctx);
+    this.resolvingInstanceId = instanceId;
+    try {
+      // Apply effects to owning systems
+      applyEffects(choice.effects, ctx);
 
-    // Emit resolved event
-    ctx.eventBus.emit('encounter/resolved', {
-      instanceId,
-      choiceId,
-      encounterId: def.id,
-      ...(ctx.outcomeLineKey ? { outcomeLineKey: ctx.outcomeLineKey } : {}),
-    });
+      // Emit resolved event
+      ctx.eventBus.emit('encounter/resolved', {
+        instanceId,
+        choiceId,
+        encounterId: def.id,
+        ...(ctx.outcomeLineKey ? { outcomeLineKey: ctx.outcomeLineKey } : {}),
+      });
+    } finally {
+      this.resolvingInstanceId = null;
+    }
 
     const baseMin = ctx.encounterContext?.minute ?? this.lastEvaluationMinute;
     const effectiveGlobalCooldown = ctx.encounterContext?.inFastForward
@@ -650,9 +658,11 @@ export class EventDirector {
       );
     }
 
-    this.activeEncounter = null;
-    this.activeEncounterDef = null;
-    this.inlineRemainingSec = null;
+    if (this.activeEncounter?.id === instanceId) {
+      this.activeEncounter = null;
+      this.activeEncounterDef = null;
+      this.inlineRemainingSec = null;
+    }
 
     return true;
   }
@@ -725,7 +735,9 @@ export class EventDirector {
     reason: 'expired' | 'overshot' | 'rideEnded',
     bus?: EventBus<GameEvents>
   ): boolean {
-    if (!this.activeEncounter) return false;
+    if (!this.activeEncounter || this.activeEncounter.id === this.resolvingInstanceId) {
+      return false;
+    }
     const inst = this.activeEncounter;
     const def = this.activeEncounterDef;
     this.activeEncounter = null;
@@ -755,6 +767,10 @@ export class EventDirector {
     outcome?: CrimeOutcome;
     instance?: EncounterInstance | null;
   } {
+    if (this.activeEncounter !== null) {
+      return { triggered: false };
+    }
+
     if (isSafeCh1Alley(segment, ctx.chapter, ctx.flags)) {
       return { triggered: false };
     }
@@ -813,7 +829,10 @@ export class EventDirector {
       };
 
       this.activeEncounter = instance;
-      this.activeEncounterDef = matchingDef;
+      this.activeEncounterDef = hasTurnAround
+        ? matchingDef
+        : { ...matchingDef, choices: validChoices };
+      this.inlineRemainingSec = null;
 
       if (bus) {
         bus.emit('encounter/started', { instance });

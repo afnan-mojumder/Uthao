@@ -172,6 +172,10 @@ export function dispatchKey(key: string, code: string): void {
   window.dispatchEvent(new KeyboardEvent('keydown', { key, code, bubbles: true }));
 }
 
+function keyFromCode(code: string): string {
+  return code.startsWith('Key') ? code.slice(3).toLowerCase() : code;
+}
+
 function firstGamepad(): Gamepad | null {
   if (typeof navigator === 'undefined' || typeof navigator.getGamepads !== 'function') return null;
   for (const pad of navigator.getGamepads()) {
@@ -194,7 +198,9 @@ export function startGamepadNav(isSettingsOpen: () => boolean): () => void {
 
   const tick = () => {
     if (!running) return;
-    const gp = getActiveControlsBindings().gamepad;
+    const bindings = getActiveControlsBindings();
+    const gp = bindings.gamepad;
+    const kb = bindings.keyboard;
     const choiceButtons = gp.choiceButtons;
     const snap = edges.poll(firstGamepad());
 
@@ -229,9 +235,18 @@ export function startGamepadNav(isSettingsOpen: () => boolean): () => void {
         if (snap.pressed.includes(BTN_BACK)) dispatchKey('Escape', 'Escape');
       }
 
-      if (snap.pressed.includes(gp.pauseButton)) dispatchKey('Escape', 'Escape');
-      if (snap.pressed.includes(gp.phoneButton)) dispatchKey('Tab', 'Tab');
-      if (snap.pressed.includes(gp.mapButton)) dispatchKey('m', 'KeyM');
+      if (snap.pressed.includes(gp.pauseButton)) {
+        const code = kb.pause[0] ?? 'Escape';
+        dispatchKey(keyFromCode(code), code);
+      }
+      if (snap.pressed.includes(gp.phoneButton)) {
+        const code = kb.phone[0] ?? 'Tab';
+        dispatchKey(keyFromCode(code), code);
+      }
+      if (snap.pressed.includes(gp.mapButton)) {
+        const code = kb.map[0] ?? 'KeyM';
+        dispatchKey(keyFromCode(code), code);
+      }
     }
 
     frame = requestAnimationFrame(tick);

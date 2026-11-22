@@ -1,5 +1,5 @@
 import type { JSX } from 'preact';
-import { useState } from 'preact/hooks';
+import { useEffect, useState } from 'preact/hooks';
 import { ModalFocusGuard } from '../focusTrap';
 import { t } from '../i18n';
 import {
@@ -38,6 +38,18 @@ export function MainMenu({
 }: MainMenuProps): JSX.Element {
   const [showCredits, setShowCredits] = useState(propShowCredits ?? false);
   const [confirmNewCareer, setConfirmNewCareer] = useState(false);
+
+  useEffect(() => {
+    if (!showCredits) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setShowCredits(false);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [showCredits]);
 
   return (
     <div

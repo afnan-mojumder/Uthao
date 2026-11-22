@@ -1,4 +1,5 @@
 import type { JSX } from 'preact';
+import { useEffect } from 'preact/hooks';
 import { loadBindings } from '../../input/bindings';
 import { touchLayout } from '../../input/layout';
 import {
@@ -42,6 +43,42 @@ function holdCode(code: string, down: boolean, field?: 'horn' | 'camera'): void 
   const key = code.startsWith('Key') ? code.slice(3).toLowerCase() : code;
   if (field) setHoldFeedback(field, down);
   window.dispatchEvent(new KeyboardEvent(down ? 'keydown' : 'keyup', { key, code }));
+}
+
+const heldCodes: { horn: string | null; camera: string | null } = {
+  horn: null,
+  camera: null,
+};
+
+function releaseHold(field: 'horn' | 'camera'): void {
+  const code = heldCodes[field];
+  if (!code) return;
+  heldCodes[field] = null;
+  holdCode(code, false, field);
+}
+
+function pressHold(field: 'horn' | 'camera', code: string): void {
+  if (heldCodes[field] && heldCodes[field] !== code) {
+    releaseHold(field);
+  }
+  heldCodes[field] = code;
+  holdCode(code, true, field);
+}
+
+function releaseAllHolds(): void {
+  releaseHold('horn');
+  releaseHold('camera');
+}
+
+function TouchHoldLifecycle(): null {
+  useEffect(() => {
+    window.addEventListener('blur', releaseAllHolds);
+    return () => {
+      window.removeEventListener('blur', releaseAllHolds);
+      releaseAllHolds();
+    };
+  }, []);
+  return null;
 }
 
 const iconStyle = {
@@ -102,6 +139,7 @@ export function TouchActions(): JSX.Element {
       data-testid="touch-actions"
       style={{ position: 'absolute', inset: 0, pointerEvents: 'none', touchAction: 'none' }}
     >
+      <TouchHoldLifecycle />
       {/* Bottom-left steering pad (slider or dual L/R visual buttons) */}
       <div
         data-testid="touch-zone-steer"
@@ -332,10 +370,10 @@ export function TouchActions(): JSX.Element {
           aria-label={t('touch.horn')}
           title={t('touch.horn')}
           style={iconStyle}
-          onPointerDown={() => holdCode(bindings.keyboard.horn[0] ?? 'KeyH', true, 'horn')}
-          onPointerUp={() => holdCode(bindings.keyboard.horn[0] ?? 'KeyH', false, 'horn')}
-          onPointerLeave={() => holdCode(bindings.keyboard.horn[0] ?? 'KeyH', false, 'horn')}
-          onPointerCancel={() => holdCode(bindings.keyboard.horn[0] ?? 'KeyH', false, 'horn')}
+          onPointerDown={() => pressHold('horn', bindings.keyboard.horn[0] ?? 'KeyH')}
+          onPointerUp={() => releaseHold('horn')}
+          onPointerLeave={() => releaseHold('horn')}
+          onPointerCancel={() => releaseHold('horn')}
         >
           <IconBell size={18} />
         </button>
@@ -347,10 +385,10 @@ export function TouchActions(): JSX.Element {
           aria-label={t('touch.camera')}
           title={t('touch.camera')}
           style={iconStyle}
-          onPointerDown={() => holdCode(bindings.keyboard.camera[0] ?? 'KeyC', true, 'camera')}
-          onPointerUp={() => holdCode(bindings.keyboard.camera[0] ?? 'KeyC', false, 'camera')}
-          onPointerLeave={() => holdCode(bindings.keyboard.camera[0] ?? 'KeyC', false, 'camera')}
-          onPointerCancel={() => holdCode(bindings.keyboard.camera[0] ?? 'KeyC', false, 'camera')}
+          onPointerDown={() => pressHold('camera', bindings.keyboard.camera[0] ?? 'KeyC')}
+          onPointerUp={() => releaseHold('camera')}
+          onPointerLeave={() => releaseHold('camera')}
+          onPointerCancel={() => releaseHold('camera')}
         >
           <IconFullscreen size={18} />
         </button>

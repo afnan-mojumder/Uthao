@@ -141,10 +141,10 @@ export class Minimap {
 
       const maxDist = this.viewRadiusM * 1.5;
       if (
-        Math.abs(dx1) > maxDist &&
-        Math.abs(dx2) > maxDist &&
-        Math.abs(dz1) > maxDist &&
-        Math.abs(dz2) > maxDist
+        (dx1 < -maxDist && dx2 < -maxDist) ||
+        (dx1 > maxDist && dx2 > maxDist) ||
+        (dz1 < -maxDist && dz2 < -maxDist) ||
+        (dz1 > maxDist && dz2 > maxDist)
       ) {
         continue;
       }

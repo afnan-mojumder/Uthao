@@ -604,8 +604,28 @@ export function App(): JSX.Element {
       )}
 
       {/* 5. Modal layer */}
-      {tutorialSignal.value.active && (
-        <div style={layerStyle(Z_LAYER.MODAL)}>
+      {tutorialSignal.value.active &&
+        !(
+          tutorialSignal.value.step === 'riding' &&
+          (screenSignal.value !== 'game' ||
+            showSettings ||
+            phoneSignal.value.open ||
+            garageSignal.value.open ||
+            journalSignal.value ||
+            karmaPanelSignal.value ||
+            uiSheetSignal.value ||
+            saveSlotsSignal.value.isOpen ||
+            negotiationSignal.value.active ||
+            dayEndSignal.value.active ||
+            endingSignal.value.active ||
+            tripSummarySignal.value !== null ||
+            choiceSignal.value.active)
+        ) && (
+        <div
+          style={layerStyle(
+            tutorialSignal.value.step === 'riding' ? Z_LAYER.HUD : Z_LAYER.MODAL
+          )}
+        >
           <FirstRideTutorial />
         </div>
       )}

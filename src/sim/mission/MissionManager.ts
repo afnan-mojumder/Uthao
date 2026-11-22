@@ -83,6 +83,7 @@ export class MissionManager {
     missionId: '',
     kind: 'reach',
   };
+  private readonly activeMissionIdScratch: string[] = [];
 
   constructor(opts: MissionManagerOptions) {
     this.bus = opts.bus;
@@ -166,7 +167,7 @@ export class MissionManager {
       if (ev.destinationDistrict) this.visitedDistricts.add(ev.destinationDistrict);
       if (district) this.visitedDistricts.add(district);
 
-      for (const missionId of this.activeMissionIds) {
+      for (const missionId of Array.from(this.activeMissionIds)) {
         const def = this.missions.get(missionId);
         const objMap = this.objectiveStates.get(missionId);
         if (!def || !objMap) continue;
@@ -202,7 +203,7 @@ export class MissionManager {
     });
 
     this.bus.on('economy/transaction', ({ tx }) => {
-      for (const missionId of this.activeMissionIds) {
+      for (const missionId of Array.from(this.activeMissionIds)) {
         const def = this.missions.get(missionId);
         const objMap = this.objectiveStates.get(missionId);
         if (!def || !objMap) continue;
@@ -231,7 +232,7 @@ export class MissionManager {
     });
 
     this.bus.on('encounter/resolved', ({ instanceId, choiceId, encounterId }) => {
-      for (const missionId of this.activeMissionIds) {
+      for (const missionId of Array.from(this.activeMissionIds)) {
         const def = this.missions.get(missionId);
         const objMap = this.objectiveStates.get(missionId);
         if (!def || !objMap) continue;
@@ -262,7 +263,7 @@ export class MissionManager {
 
     this.bus.on('story/flag', ({ key, value }) => {
       this.storyState.branchFlags[key] = value;
-      for (const missionId of this.activeMissionIds) {
+      for (const missionId of Array.from(this.activeMissionIds)) {
         const def = this.missions.get(missionId);
         const objMap = this.objectiveStates.get(missionId);
         if (!def || !objMap) continue;
@@ -293,7 +294,7 @@ export class MissionManager {
           ? this.reputationSystem.getRelationship(characterId)
           : (this.storyState.characterRelationships[characterId] ?? 0);
 
-        for (const missionId of this.activeMissionIds) {
+        for (const missionId of Array.from(this.activeMissionIds)) {
           const def = this.missions.get(missionId);
           const objMap = this.objectiveStates.get(missionId);
           if (!def || !objMap) continue;
@@ -336,7 +337,12 @@ export class MissionManager {
   /** Evaluates `reach` objectives against the POIs currently within range of the player. */
   checkNearbyPois(nearbyPoiIds: Set<string>): void {
     if (nearbyPoiIds.size === 0 || this.activeMissionIds.size === 0) return;
-    for (const missionId of this.activeMissionIds) {
+    this.activeMissionIdScratch.length = 0;
+    for (const id of this.activeMissionIds) {
+      this.activeMissionIdScratch.push(id);
+    }
+    for (let i = 0; i < this.activeMissionIdScratch.length; i++) {
+      const missionId = this.activeMissionIdScratch[i]!;
       const def = this.missions.get(missionId);
       const objMap = this.objectiveStates.get(missionId);
       if (!def || !objMap) continue;
@@ -694,16 +700,16 @@ export class MissionManager {
       return ['mirpara'];
     }
     if (ch === 2) {
-      return ['mirpara', 'fulgate', 'motinagar'];
+      return ['mirpara', 'fulgate', 'mohakhal', 'motinagar'];
     }
     if (ch === 3) {
-      return ['mirpara', 'fulgate', 'motinagar', 'dhanbagh'];
+      return ['mirpara', 'fulgate', 'mohakhal', 'motinagar', 'dhanbagh'];
     }
     if (ch === 4) {
-      return ['mirpara', 'fulgate', 'motinagar', 'dhanbagh', 'puranpara'];
+      return ['mirpara', 'fulgate', 'mohakhal', 'motinagar', 'dhanbagh', 'puranpara'];
     }
     if (ch === 5) {
-      return ['mirpara', 'fulgate', 'motinagar', 'dhanbagh', 'puranpara', 'gulbari', 'mohakhal'];
+      return ['mirpara', 'fulgate', 'mohakhal', 'motinagar', 'dhanbagh', 'puranpara', 'gulbari'];
     }
     return import.meta.env.DEV
       ? [

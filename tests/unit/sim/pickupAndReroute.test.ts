@@ -464,7 +464,7 @@ describe('Detours, Crossings, and Off-App (T2.5)', () => {
     // Case 1: X_bad is a crossing node within 25m of P and walk-connected,
     // but ONLY touches divided/inaccessible segments (isPickupNode === false).
     const nodes: RoadNode[] = [
-      { nodeId: 'R', x: 0, z: 0, kind: 'junction' },
+      { nodeId: 'R', x: -200, z: 0, kind: 'junction' },
       { nodeId: 'X_disconnected', x: 40, z: 0, kind: 'junction', tags: ['crossing'] },
       { nodeId: 'X_bad', x: 60, z: 0, kind: 'junction', tags: ['crossing'] },
       { nodeId: 'U', x: 500, z: 0, kind: 'uturn' },
@@ -474,7 +474,7 @@ describe('Detours, Crossings, and Off-App (T2.5)', () => {
     ];
     const segments: RoadSegment[] = [
       mkSeg('R_Xd', 'R', 'X_disconnected'),
-      mkSeg('Xd_Xb', 'X_disconnected', 'X_bad'),
+      mkSeg('R_Xb', 'R', 'X_bad'),
       mkSeg('Xb_U', 'X_bad', 'U'),
       mkSeg('U_W', 'U', 'W'),
       mkSeg('W_P', 'W', 'P'),

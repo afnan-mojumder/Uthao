@@ -768,9 +768,13 @@ describe('P4.4 Live EncounterContext in GameSession & day-rollover accident rese
       sample.request.destinationNodeId = 'n_main_a';
       s.ride.offer(sample.request);
       s.ride.accept(sample.request.requestId);
-      // Within 10m arrival radius of n_alley (x=600) while staying on seg_alley (> 8m so not auto-boarded)
-      s.bike.x = 591.5;
+      // Drive >= 15m along seg_alley into the 8m pickup radius of n_alley (x=600)
+      s.bike.x = 575;
       s.bike.z = 0;
+      s.bike.heading = Math.PI / 2;
+      for (let i = 0; i < 300 && s.bike.x < 594; i++) {
+        s.step({ throttle: 0.6, brake: 0, steer: 0 }, SIM_DT);
+      }
       s.bike.speed = 0;
     });
 
@@ -788,9 +792,13 @@ describe('P4.4 Live EncounterContext in GameSession & day-rollover accident rese
       s.bike.z = 0;
       s.bike.speed = 0;
       s.step(NEUTRAL_INPUT, SIM_DT); // board
-      // Within 10m of n_dest (x=800), > 8m so not Completing yet
-      s.bike.x = 791.5;
+      // Drive >= 15m into the 8m drop-off radius of n_dest (x=800)
+      s.bike.x = 775;
       s.bike.z = 0;
+      s.bike.heading = Math.PI / 2;
+      for (let i = 0; i < 300 && s.bike.x < 794; i++) {
+        s.step({ throttle: 0.6, brake: 0, steer: 0 }, SIM_DT);
+      }
       s.bike.speed = 0;
     });
 
@@ -802,8 +810,13 @@ describe('P4.4 Live EncounterContext in GameSession & day-rollover accident rese
       sample.request.destinationNodeId = 'n_main_a';
       s.ride.offer(sample.request);
       s.ride.accept(sample.request.requestId);
-      s.bike.x = 591.5;
+      // Drive >= 15m along seg_alley into the 8m pickup radius of n_alley (x=600)
+      s.bike.x = 575;
       s.bike.z = 0;
+      s.bike.heading = Math.PI / 2;
+      for (let i = 0; i < 300 && s.bike.x < 594; i++) {
+        s.step({ throttle: 0.6, brake: 0, steer: 0 }, SIM_DT);
+      }
       s.bike.speed = 0;
     });
 

@@ -1400,6 +1400,26 @@ export function bindEventBusToStore(bus: EventBus<GameEvents>): () => void {
   });
   unsubscribers.push(unsubPassengerDialogue);
 
+  const unsubUiDialogue = bus.on('ui/dialogue', (ev) => {
+    const subtitle: DialogueSubtitleState = {
+      text: t(ev.lineKey),
+      speaker: ev.speakerKey,
+      phase: 'small_talk',
+    };
+    dialogueSubtitleSignal.value = subtitle;
+    hudSignal.value = {
+      ...hudSignal.value,
+      dialogueSubtitle: subtitle,
+    };
+    if (dialogueClearTimer !== undefined) clearTimeout(dialogueClearTimer);
+    dialogueClearTimer = setTimeout(() => {
+      dialogueSubtitleSignal.value = null;
+      hudSignal.value = { ...hudSignal.value, dialogueSubtitle: null };
+      dialogueClearTimer = undefined;
+    }, ev.durationMs ?? DIALOGUE_SUBTITLE_MS);
+  });
+  unsubscribers.push(unsubUiDialogue);
+
   const unsubRideDisputed = bus.on('ride/disputed', (ev) => {
     choiceSignal.value = {
       active: true,

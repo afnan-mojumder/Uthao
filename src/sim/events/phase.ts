@@ -2,7 +2,7 @@ import type { TripState } from '../../core/types';
 import type { EncounterPhase } from './conditions';
 
 /** Within this distance of the pickup or drop-off, the bike counts as being there. */
-export const RIDE_PHASE_RADIUS_M = 10;
+export const RIDE_PHASE_RADIUS_M = 8;
 
 export interface RidePhaseInput {
   trip: TripState;

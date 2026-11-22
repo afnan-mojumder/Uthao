@@ -41,6 +41,7 @@ interface GraphEdge {
   fromNodeId: string;
   toNodeId: string;
   length: number;
+  reverseOneWay?: boolean;
 }
 
 export class RoutingGraph {
@@ -81,15 +82,14 @@ export class RoutingGraph {
         length: len,
       });
 
-      // Backward edge if not oneWay
-      if (!seg.oneWay) {
-        this.adjacency.get(seg.endNodeId)?.push({
-          segment: seg,
-          fromNodeId: seg.endNodeId,
-          toNodeId: seg.startNodeId,
-          length: len,
-        });
-      }
+      // Backward edge (walk mode may traverse one-way streets in reverse)
+      this.adjacency.get(seg.endNodeId)?.push({
+        segment: seg,
+        fromNodeId: seg.endNodeId,
+        toNodeId: seg.startNodeId,
+        length: len,
+        ...(seg.oneWay ? { reverseOneWay: true } : {}),
+      });
     }
   }
 
@@ -234,6 +234,11 @@ export class RoutingGraph {
       for (const edge of edges) {
         const seg = edge.segment;
 
+        // One-way restriction applies to vehicles only, not pedestrians
+        if (!isWalk && edge.reverseOneWay) {
+          continue;
+        }
+
         // In motorcycle mode, check accessibility
         if (!isWalk && !seg.motorcycleAccessible) {
           continue;
@@ -255,8 +260,8 @@ export class RoutingGraph {
           continue;
         }
 
-        // Turn restrictions from previous segment
-        if (current.prevSegId) {
+        // Turn restrictions from previous segment (vehicular only)
+        if (!isWalk && current.prevSegId) {
           const prevSeg = this.segmentsMap.get(current.prevSegId);
           if (prevSeg && prevSeg.turnRestrictions.includes(seg.segmentId)) {
             continue;
@@ -286,11 +291,11 @@ export class RoutingGraph {
 
           if (diff > 2.35 || seg.tags.includes('uturn')) {
             isUTurn = true;
-            // On divided roads, U-turns are ONLY allowed at kind === 'uturn' nodes
-            if (isDivided && currNode.kind !== 'uturn') {
+            // On divided roads, vehicular U-turns are ONLY allowed at kind === 'uturn' nodes
+            if (!isWalk && isDivided && currNode.kind !== 'uturn') {
               continue; // disallowed U-turn on divided road!
             }
-            turnPenaltySec = 25;
+            turnPenaltySec = isWalk ? 0 : 25;
           } else if (diff > 0.5) {
             turnPenaltySec = 3;
           }

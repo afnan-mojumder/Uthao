@@ -132,6 +132,7 @@ export class Renderer {
         uniforms: this.skyUniforms,
         side: THREE.BackSide,
         depthWrite: false,
+        depthTest: false,
         fog: false,
         vertexShader: `
           varying vec3 vWorldPos;
@@ -153,6 +154,8 @@ export class Renderer {
       })
     );
     this.skyDome.name = 'sky_dome';
+    this.skyDome.renderOrder = -1000;
+    this.skyDome.frustumCulled = false;
     this.scene.add(this.skyDome);
 
     const aspect = canvas.clientWidth / (canvas.clientHeight || 1);
@@ -427,6 +430,7 @@ export class Renderer {
 
     createBuilding(16, 24, 20, 118, 20);
     createBuilding(22, 28, 25, 120, 60);
+    bldgMat.dispose();
 
     this.scene.add(this.testSceneGroup);
   }
@@ -451,6 +455,10 @@ export class Renderer {
     for (const node of district.nodes) {
       nodeMap.set(node.nodeId, node);
     }
+    this.lastFloodVersion = -1;
+    this.lastRoadEventVersion = -1;
+    this.weatherFx.updateFloodedSegments([], nodeMap);
+    this.worldEventRenderer.clear();
     this.weatherFx.populateStreetlights(district.segments, nodeMap);
   }
 
@@ -486,6 +494,10 @@ export class Renderer {
     const allSegments = world.connectors
       ? [...districtSegments, ...world.connectors]
       : districtSegments;
+    this.lastFloodVersion = -1;
+    this.lastRoadEventVersion = -1;
+    this.weatherFx.updateFloodedSegments([], nodeMap);
+    this.worldEventRenderer.clear();
     this.weatherFx.populateStreetlights(districtSegments, nodeMap, allSegments);
   }
 

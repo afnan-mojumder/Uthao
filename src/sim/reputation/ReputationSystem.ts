@@ -988,7 +988,8 @@ export class ReputationSystem {
     this.offAppStrikes = Math.max(0, opts.offAppStrikes ?? 0);
     this.suspendedUntilDay = Math.max(0, opts.suspendedUntilDay ?? 0);
     this.wasWarned = opts.wasWarned ?? false;
-    this.wasSuspended = opts.wasSuspended ?? false;
+    this.wasSuspended =
+      opts.wasSuspended ?? this.suspendedUntilDay > (this.clock?.day ?? 0);
     this.ratingSuspensionCleared = opts.ratingSuspensionCleared ?? false;
     this.activeTrip = null;
   }

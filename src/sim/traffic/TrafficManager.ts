@@ -768,7 +768,8 @@ export class TrafficManager {
     }
 
     const stopPos = lane.lengthM - STOP_LINE_SETBACK_M;
-    const distToStop = stopPos - agent.distAlongLane;
+    const frontPos = agent.distAlongLane + agent.length * 0.5;
+    const distToStop = stopPos - frontPos;
     if (
       this.signalHoldsAt(agent, lane, stopPos) ||
       (distToStop >= 0 && distToStop <= 25 && !this.canEnterJunction(agent, lane))
@@ -820,7 +821,8 @@ export class TrafficManager {
   private signalHoldsAt(agent: TrafficAgent, lane: Lane, stopPos: number): boolean {
     const node = this.network.getNode(lane.endNodeId);
     if (!node?.signal) return false;
-    const distToLine = stopPos - agent.distAlongLane;
+    const frontPos = agent.distAlongLane + agent.length * 0.5;
+    const distToLine = stopPos - frontPos;
     if (distToLine < 0 || distToLine > SIGNAL_REACT_RANGE_M) return false;
 
     // Phase 0 serves east-west approaches, phase 1 north-south.

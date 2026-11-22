@@ -257,8 +257,12 @@ export class WeatherFx {
     this.maxAllocatedSplashCount = nextSplash;
     this.rainPositions = new Float32Array(nextRain * 3);
     this.rainLineVerts = new Float32Array(nextRain * 6);
-    this.rainGeometry.setAttribute('position', new THREE.BufferAttribute(this.rainLineVerts, 3));
-    this.rainGeometry.setDrawRange(0, nextRain * 2);
+    const nextRainGeo = new THREE.BufferGeometry();
+    nextRainGeo.setAttribute('position', new THREE.BufferAttribute(this.rainLineVerts, 3));
+    nextRainGeo.setDrawRange(0, nextRain * 2);
+    this.rainGeometry.dispose();
+    this.rainGeometry = nextRainGeo;
+    this.rainLines.geometry = nextRainGeo;
 
     this.splashData = new Float32Array(nextSplash * 4);
     this.splashVerts = new Float32Array(nextSplash * 12);
@@ -267,8 +271,12 @@ export class WeatherFx {
       this.splashData[i * 4 + 2] = Math.random() * maxAge;
       this.splashData[i * 4 + 3] = maxAge;
     }
-    this.splashGeometry.setAttribute('position', new THREE.BufferAttribute(this.splashVerts, 3));
-    this.splashGeometry.setDrawRange(0, nextSplash * 4);
+    const nextSplashGeo = new THREE.BufferGeometry();
+    nextSplashGeo.setAttribute('position', new THREE.BufferAttribute(this.splashVerts, 3));
+    nextSplashGeo.setDrawRange(0, nextSplash * 4);
+    this.splashGeometry.dispose();
+    this.splashGeometry = nextSplashGeo;
+    this.splashLines.geometry = nextSplashGeo;
     this.rainInitialized = false;
   }
 

@@ -429,7 +429,8 @@ export const migrations: Record<number, (legacy: Record<string, unknown>) => Any
         offAppStrikes: v1.reputation.offAppStrikes ?? 0,
         suspendedUntilDay: v1.reputation.suspendedUntilDay ?? 0,
         wasWarned: v1.reputation.wasWarned ?? false,
-        wasSuspended: v1.reputation.wasSuspended ?? false,
+        wasSuspended:
+          v1.reputation.wasSuspended ?? (v1.reputation.suspendedUntilDay ?? 0) > v1.clock.day,
         ratingSuspensionCleared: v1.reputation.ratingSuspensionCleared ?? false,
         karmaSeq: v1.reputation.karmaSeq ?? karmaLog.length,
       },

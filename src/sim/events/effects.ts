@@ -5,6 +5,7 @@ import type { RideManager } from '../ride/RideManager';
 import type { EventBus, GameEvents } from '../../core/events';
 import type { Rng } from '../../core/rng';
 import { clamp } from '../../core/math';
+import { BALANCE } from '../../config/balance';
 import { TIME_SCALE } from '../../config/constants';
 import { canonicalCharacterId } from '../passenger/PassengerAI';
 import { evaluateCondition, type EncounterContext } from './conditions';
@@ -102,7 +103,15 @@ export function applyEffect(effect: Effect, ctx: EffectContext): void {
           (ctx.deferredWaitMin ?? 0) + Math.max(0, effect.min);
         break;
       }
-      ctx.gameManager.clock.advance((effect.min * 60) / TIME_SCALE); // advance by minutes
+      if (effect.min > 0) {
+        ctx.gameManager.clock.advance((effect.min * 60) / TIME_SCALE); // advance by minutes
+      } else if (effect.min < 0) {
+        // Time saved relaxes any active trip's arrival deadline without rewinding wall-clock time.
+        const active = ctx.rideManager?.getActiveRequest();
+        if (active && active.requestedArrivalTime !== null) {
+          active.requestedArrivalTime += Math.abs(effect.min);
+        }
+      }
       break;
     }
 
@@ -210,6 +219,24 @@ export function applyEffect(effect: Effect, ctx: EffectContext): void {
       // ended.
       const active = ctx.rideManager?.getActiveRequest();
       if (active) {
+        if (effect.paid) {
+          const partialFare = Math.max(
+            BALANCE.FARE.minFare,
+            Math.round(active.initialFare * 0.5)
+          );
+          const rngSuffix = ctx.gameManager.rng ? ctx.gameManager.rng.int(1000, 9999) : 1000;
+          ctx.economyManager.post({
+            id: `tx_endtrip_${ctx.gameManager.clock.day}_${Math.floor(ctx.gameManager.clock.minutes)}_${rngSuffix}`,
+            day: ctx.gameManager.clock.day,
+            minute: ctx.gameManager.clock.minutes,
+            kind: 'fare',
+            amount: partialFare,
+          });
+          ctx.gameManager.economy.cash = ctx.economyManager.cash;
+          ctx.gameManager.economy.debt = ctx.economyManager.debt;
+          ctx.gameManager.economy.dailyRevenue = ctx.economyManager.dailyRevenue;
+          ctx.gameManager.economy.dailyExpenses = ctx.economyManager.dailyExpenses;
+        }
         ctx.rideManager!.cancel(
           active.requestId,
           'system',

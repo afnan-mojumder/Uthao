@@ -74,7 +74,7 @@ export class WeatherSystem {
     this.manualOverride = true;
     if (this.weather !== w) {
       this.weather = w;
-      if (w === 'clear' || w === 'cloudy') {
+      if (w === 'clear' || w === 'cloudy' || w === 'lightRain') {
         this.rainDurationMinutes = 0;
       }
     }
@@ -258,7 +258,7 @@ export class WeatherSystem {
     if (target !== this.weather) {
       const from = this.weather;
       this.weather = target;
-      if (target === 'clear' || target === 'cloudy') {
+      if (target === 'clear' || target === 'cloudy' || target === 'lightRain') {
         this.rainDurationMinutes = 0;
       }
       this.bus?.emit('world/weatherChanged', { from, to: target });
@@ -267,7 +267,13 @@ export class WeatherSystem {
 
   private updateSegmentFlood(seg: RoadSegment, dtMinutes: number, accumulation: number): void {
     if (this.weather === 'heavyRain') {
-      const level = clamp(accumulation * seg.floodSensitivity, 0, 1);
+      const current = this.segmentFloodLevels.get(seg.segmentId) ?? 0;
+      const target = clamp(accumulation * seg.floodSensitivity, 0, 1);
+      const incremental = Math.min(
+        seg.floodSensitivity,
+        current + (dtMinutes / 30) * seg.floodSensitivity
+      );
+      const level = Math.max(current, incremental, target);
       this.setSegmentFloodInternal(seg.segmentId, level);
     } else if (this.weather === 'lightRain') {
       const current = this.segmentFloodLevels.get(seg.segmentId) ?? 0;
@@ -308,7 +314,7 @@ export class WeatherSystem {
       // Accumulation reaches 1.0 after 30 minutes of heavy rain
       accumulation = Math.min(1.0, this.rainDurationMinutes / 30);
     } else if (this.weather === 'lightRain') {
-      this.rainDurationMinutes += dtMinutes;
+      this.rainDurationMinutes = 0;
       this.roadWetness = 1.0;
     } else {
       // Clear or cloudy: roads dry and flood waters drain

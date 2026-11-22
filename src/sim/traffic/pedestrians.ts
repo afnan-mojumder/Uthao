@@ -527,8 +527,8 @@ export class PedestrianManager {
             this.tryStartJaywalk(ped, player, Math.abs(player.speed), wet);
           }
 
-          // Check if reached segment boundary
-          if (ped.distAlongSegment >= segLen) {
+          // Check if reached segment boundary (skip if jaywalking just started this tick)
+          if ((ped.state as string) === 'sidewalk' && ped.distAlongSegment >= segLen) {
             if (this.crossingNodeIds.has(seg.endNodeId)) {
               const kerb = this.computePositionInto(sNode, eNode, segLen, ped.lateralOffset, this.posScratch);
               if (
@@ -553,7 +553,7 @@ export class PedestrianManager {
               ped.distAlongSegment = segLen;
               ped.heading = baseHeading + Math.PI;
             }
-          } else if (ped.distAlongSegment <= 0) {
+          } else if ((ped.state as string) === 'sidewalk' && ped.distAlongSegment <= 0) {
             if (this.crossingNodeIds.has(seg.startNodeId)) {
               const kerb = this.computePositionInto(sNode, eNode, 0, ped.lateralOffset, this.posScratch);
               if (
@@ -859,7 +859,7 @@ export class PedestrianManager {
     const vx = Math.sin(v.heading) * v.speed;
     const vz = Math.cos(v.heading) * v.speed;
     if (vx * rx + vz * rz <= 0) return false; // moving away from the point
-    return dist / v.speed < timeNeededS + hazardWindowS;
+    return dist / Math.abs(v.speed) < timeNeededS + hazardWindowS;
   }
 
   private computePositionInto(

@@ -220,7 +220,7 @@ describe('T4.5 Remaining Signature Situations', () => {
               if (eff.min > 0) {
                 expect(gm.clock.minutes).toBeGreaterThan(startDayMinutes);
               } else if (eff.min < 0) {
-                expect(gm.clock.minutes).toBeLessThan(startDayMinutes);
+                expect(gm.clock.minutes).toBe(startDayMinutes);
               }
               break;
             case 'mood':

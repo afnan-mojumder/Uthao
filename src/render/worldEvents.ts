@@ -282,12 +282,16 @@ export class WorldEventRenderer {
     return this.eventGroups.get(eventId);
   }
 
-  dispose(): void {
+  clear(): void {
     for (const group of this.eventGroups.values()) {
       this.root.remove(group);
       disposeHierarchy(group);
     }
     this.eventGroups.clear();
+  }
+
+  dispose(): void {
+    this.clear();
 
     this.coneGeo.dispose();
     this.barrierBeamGeo.dispose();

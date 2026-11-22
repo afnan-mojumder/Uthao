@@ -8,11 +8,7 @@
     { "nodeId": "N1", "x": 0, "z": 0, "kind": "junction" },
     { "nodeId": "N2", "x": 100, "z": 0, "kind": "junction" },
     { "nodeId": "N3", "x": 100, "z": 100, "kind": "junction" },
-    { "nodeId": "N4", "x": 0, "z": 100, "kind": "junction" },
-    { "nodeId": "N5", "x": 200, "z": 0, "kind": "junction" },
-    { "nodeId": "N6", "x": 200, "z": 100, "kind": "uturn" },
-    { "nodeId": "N7", "x": 210, "z": 100, "kind": "junction" },
-    { "nodeId": "N8", "x": 210, "z": 0, "kind": "junction" }
+    { "nodeId": "N4", "x": 0, "z": 100, "kind": "junction" }
   ],
   "segments": [
     {

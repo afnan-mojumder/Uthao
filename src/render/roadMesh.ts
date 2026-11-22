@@ -750,12 +750,12 @@ export class RoadMeshBuilder {
     if (!isElevated && seg.tags && (seg.tags.includes('speed_bump') || seg.tags.includes('school'))) {
       const bumpW = width * 0.9;
       const bumpGeo = new THREE.CylinderGeometry(0.5, 0.5, bumpW, 8);
+      bumpGeo.rotateZ(Math.PI / 2);
+      bumpGeo.scale(1.0, 0.2, 1.0);
       applyVertexColor(bumpGeo, 0xd97706);
       const bump = new THREE.Mesh(bumpGeo, this.roadTrimMat);
-      bump.rotation.z = Math.PI / 2;
       bump.rotation.y = rotY;
-      bump.scale.set(1.0, 0.2, 1.0);
-      bump.position.set(midX, 0.05, midZ);
+      bump.position.set(midX, 0.02, midZ);
       bump.castShadow = false;
       outObjects.push(bump);
     }

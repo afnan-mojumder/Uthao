@@ -149,6 +149,7 @@ export class RideManager {
   private offeredRequests: Map<string, RideRequest> = new Map();
   private offerDeadlines: Map<string, number> = new Map();
   private activeRequest: RideRequest | null = null;
+  private prepaidFareOffset = 0;
   private pendingDispute: PendingDispute | null = null;
   private readonly trip: Fsm<TripState, TripEvent> = createTripFsm();
   private outcome: TripOutcome | null = null;
@@ -428,6 +429,13 @@ export class RideManager {
     this.intermediateStop = null;
     this.pickupArrivalEvaluatedForRequestId = null;
     this.dropoffArrivalEvaluatedForRequestId = null;
+    this.prepaidFareOffset = 0;
+  }
+
+  /** Credits upfront cash already paid during the ride (e.g. off-app pickup encounter) against drop-off fare. */
+  applyPrepaidFare(amount: number): void {
+    if (!Number.isFinite(amount) || amount <= 0) return;
+    this.prepaidFareOffset += Math.round(amount);
   }
 
   isPickupHold(): boolean {
@@ -1451,9 +1459,10 @@ export class RideManager {
         )
       : null;
     const paidFare = offApp ? offApp.paid : req.initialFare;
+    const remainingFare = Math.max(0, paidFare - this.prepaidFareOffset);
     const archetype = this.archetypeOf?.(req);
     const disputed =
-      paidFare > 0 &&
+      remainingFare > 0 &&
       archetype !== undefined &&
       isDisputed(
         archetype,
@@ -1467,12 +1476,12 @@ export class RideManager {
 
     if (disputed) {
       this.outcome = 'disputed';
-      const partialFare = settledFare(paidFare, true);
+      const partialFare = settledFare(remainingFare, true);
       this.pendingDispute = {
         requestId: req.requestId,
-        fare: paidFare,
+        fare: remainingFare,
         partialFare,
-        paidFare,
+        paidFare: remainingFare,
         bookingType: req.bookingType,
         fuelLiters,
         rating,
@@ -1484,7 +1493,7 @@ export class RideManager {
       };
       this.bus.emit('ride/disputed', {
         requestId: req.requestId,
-        fare: paidFare,
+        fare: remainingFare,
         partialFare,
         bookingType: req.bookingType,
       });
@@ -1493,7 +1502,7 @@ export class RideManager {
 
     this.finalizeTrip({
       req,
-      fare: paidFare,
+      fare: remainingFare,
       tip: offApp?.unpaid ? 0 : tipAmountFor(req.requestId, paidFare, rating),
       rating,
       crashed,

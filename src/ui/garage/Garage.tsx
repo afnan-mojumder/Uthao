@@ -6,6 +6,7 @@ import {
   calculateRepairCost,
   calculateUpgradeCost,
 } from '../../sim/economy/maintenance';
+import { BALANCE } from '../../config/balance';
 import { t, localDigits } from '../i18n';
 import type { BikeId } from '../../core/types';
 import {
@@ -82,7 +83,7 @@ export function Garage({
   const mechanicalUpgrades = upgrades.filter((u) => u.category === 'mechanical');
   const cosmeticUpgrades = upgrades.filter((u) => u.category === 'cosmetic');
 
-  const oilFreshness = Math.max(0, Math.round(100 - (kmSinceOilChange / 60) * 100));
+  const oilFreshness = Math.max(0, Math.round(100 - (kmSinceOilChange / BALANCE.WEAR.oilEveryKm) * 100));
 
   const getConditionColor = (val: number) => {
     if (val >= 75) return '#10b981'; // Green

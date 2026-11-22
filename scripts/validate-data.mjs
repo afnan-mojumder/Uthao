@@ -376,6 +376,22 @@ if (fs.existsSync(districtsDir)) {
             }
           }
         }
+
+        // Check 4b: No orphaned nodes with zero connected segments
+        const connectedNodes = new Set();
+        for (const s of district.segments) {
+          connectedNodes.add(s.startNodeId);
+          connectedNodes.add(s.endNodeId);
+        }
+        const orphanNodes = district.nodes
+          .map((n) => n.nodeId)
+          .filter((id) => !connectedNodes.has(id));
+        if (orphanNodes.length > 0) {
+          console.error(
+            `District ${filePath}: orphaned node(s) with no connected segments: ${orphanNodes.join(', ')}`
+          );
+          process.exit(1);
+        }
       } catch (err) {
         console.error(`Failed reading district ${filePath}:`, err);
         process.exit(1);

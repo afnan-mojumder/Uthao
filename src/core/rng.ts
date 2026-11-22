@@ -14,22 +14,23 @@ export class Rng {
   private s: number;
 
   constructor(seed: number) {
-    this.s = (seed >>> 0) || 1;
+    this.s = ((seed >>> 0) || 1) | 0;
   }
 
   /** Returns internal RNG state for save serialization */
   getState(): number {
-    return this.s;
+    return this.s >>> 0;
   }
 
   /** Restores internal RNG state from save serialization */
   setState(state: number): void {
-    this.s = (state >>> 0) || 1;
+    this.s = state | 0;
   }
 
   /** Returns pseudo-random float in [0, 1) using Mulberry32 */
   next(): number {
-    let t = (this.s += 0x6d2b79f5);
+    this.s = (this.s + 0x6d2b79f5) | 0;
+    let t = this.s;
     t = Math.imul(t ^ (t >>> 15), t | 1);
     t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
@@ -62,7 +63,7 @@ export class Rng {
   }
 
   fork(label: string, ...parts: (string | number)[]): Rng {
-    const derived = hashSeed(this.s, label, ...parts);
+    const derived = hashSeed(this.s >>> 0, label, ...parts);
     return new Rng(derived);
   }
 }

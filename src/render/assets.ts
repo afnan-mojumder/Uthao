@@ -229,7 +229,7 @@ export class AssetManager {
     }
 
     const startGen = this.generation;
-    this.initPromise = (async () => {
+    const initTask = (async () => {
       const loader = new GLTFLoader();
       try {
         if (MeshoptDecoder.supported) {
@@ -245,11 +245,14 @@ export class AssetManager {
       this.loader = loader;
       this.initialized = true;
     })();
+    this.initPromise = initTask;
 
     try {
-      await this.initPromise;
+      await initTask;
     } finally {
-      this.initPromise = null;
+      if (this.initPromise === initTask) {
+        this.initPromise = null;
+      }
     }
   }
 
@@ -281,7 +284,11 @@ export class AssetManager {
    * Preloads all 3D models in the catalog with bounded concurrency and progress callback (0..100).
    */
   async preloadCore(onProgress?: (pct: number) => void): Promise<void> {
+    const startGen = this.generation;
     await this.init(this.renderer);
+    if (this.generation !== startGen) {
+      return;
+    }
     const entries = Array.from(this.catalogMap.values()).filter((e) => e.category !== 'audio');
     if (entries.length === 0) {
       onProgress?.(100);
@@ -294,10 +301,12 @@ export class AssetManager {
 
     const worker = async () => {
       while (cursor < entries.length) {
+        if (this.generation !== startGen) return;
         const index = cursor++;
         const entry = entries[index];
         if (!entry) continue;
         await this.loadModel(entry.id, 'high');
+        if (this.generation !== startGen) return;
         completed++;
         onProgress?.(Math.round((completed / entries.length) * 100));
       }
@@ -386,7 +395,7 @@ export class AssetManager {
     this.inflight.set(key, loadTask);
     try {
       const result = await loadTask;
-      return result.clone();
+      return this.cache.get(key) === result ? result.clone() : result;
     } finally {
       if (this.inflight.get(key) === loadTask) {
         this.inflight.delete(key);

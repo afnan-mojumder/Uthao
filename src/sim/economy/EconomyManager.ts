@@ -247,11 +247,14 @@ export class EconomyManager {
   }
 
   refuel(liters: number, pricePerL = BALANCE.FUEL.pricePerL, day = 1, minute = 0): number {
+    if (!Number.isFinite(liters) || liters <= 0 || !Number.isFinite(pricePerL) || pricePerL < 0) {
+      return 0;
+    }
     const space = Math.max(0, this.maxFuelL() - this.fuelLevel);
-    const added = Math.min(space, Math.max(0, liters));
+    const added = Math.min(space, liters);
     if (added <= 0) return 0;
 
-    const cost = Math.round(added * pricePerL);
+    const cost = pricePerL > 0 ? Math.max(1, Math.round(added * pricePerL)) : 0;
     this.fuelLevel += added;
     this.post({
       id: `tx_refuel_${day}_${minute}_${++this.txSeq}`,
@@ -819,25 +822,37 @@ export class EconomyManager {
   }
 
   restoreState(econ: Partial<PlayerEconomy>): void {
-    if (econ.cash !== undefined) this.cash = econ.cash;
-    if (econ.advancesTaken !== undefined) this.advancesTaken = econ.advancesTaken;
-    if (econ.deferredRent !== undefined) this.deferredRent = econ.deferredRent;
-    if (econ.savings !== undefined) this.savings = econ.savings;
-    if (econ.debt !== undefined) this.debt = econ.debt;
-    if (econ.dailyRevenue !== undefined) this.dailyRevenue = econ.dailyRevenue;
-    if (econ.dailyExpenses !== undefined) this.dailyExpenses = econ.dailyExpenses;
-    if (econ.fuelLevel !== undefined) this.fuelLevel = econ.fuelLevel;
-    if (econ.engineCondition !== undefined) this.engineCondition = econ.engineCondition;
-    if (econ.tiresCondition !== undefined) this.tiresCondition = econ.tiresCondition;
-    if (econ.brakesCondition !== undefined) this.brakesCondition = econ.brakesCondition;
-    if (econ.kmSinceOilChange !== undefined) this.kmSinceOilChange = econ.kmSinceOilChange;
-    if (econ.appBalance !== undefined) this.appBalance = econ.appBalance;
-    if (econ.reputation !== undefined) this.reputation = econ.reputation;
-    if (econ.phoneBattery !== undefined) this.phoneBattery = econ.phoneBattery;
-    if (econ.ownedUpgrades) this.ownedUpgrades = [...econ.ownedUpgrades];
-    if (econ.installedCosmetics) this.installedCosmetics = { ...econ.installedCosmetics };
-    if (econ.currentBikeId) this.currentBikeId = econ.currentBikeId;
-    if (econ.ownedBikes) this.ownedBikes = [...econ.ownedBikes];
+    const rawCash = econ.cash ?? BALANCE.LIVING.startCash;
+    const rawDebt = econ.debt ?? 0;
+    this.debt = Number.isFinite(rawDebt) ? Math.max(0, rawDebt) : 0;
+    this.cash = Number.isFinite(rawCash) ? rawCash : 0;
+    if (this.cash < 0) {
+      this.debt += Math.abs(this.cash);
+      this.cash = 0;
+    }
+    this.advancesTaken = econ.advancesTaken ?? 0;
+    this.deferredRent = econ.deferredRent ?? 0;
+    this.savings = econ.savings ?? 0;
+    this.dailyRevenue = econ.dailyRevenue ?? 0;
+    this.dailyExpenses = econ.dailyExpenses ?? 0;
+    this.currentBikeId = econ.currentBikeId ?? 'old100';
+    this.ownedBikes = econ.ownedBikes ? [...econ.ownedBikes] : ['old100'];
+    if (!this.ownedBikes.includes(this.currentBikeId)) {
+      this.ownedBikes.push(this.currentBikeId);
+    }
+    const rawFuel = econ.fuelLevel ?? BALANCE.FUEL.startL;
+    this.fuelLevel = Number.isFinite(rawFuel)
+      ? Math.max(0, Math.min(this.maxFuelL(), rawFuel))
+      : BALANCE.FUEL.startL;
+    this.engineCondition = econ.engineCondition ?? 85;
+    this.tiresCondition = econ.tiresCondition ?? 80;
+    this.brakesCondition = econ.brakesCondition ?? 85;
+    this.kmSinceOilChange = econ.kmSinceOilChange ?? 15;
+    this.appBalance = econ.appBalance ?? 0;
+    this.reputation = econ.reputation ?? 5.0;
+    this.phoneBattery = econ.phoneBattery ?? 100;
+    this.ownedUpgrades = econ.ownedUpgrades ? [...econ.ownedUpgrades] : [];
+    this.installedCosmetics = econ.installedCosmetics ? { ...econ.installedCosmetics } : {};
     if (econ.motorcycleCondition !== undefined) {
       this.motorcycleCondition = econ.motorcycleCondition;
     } else {

@@ -476,6 +476,16 @@ export class GameManager {
       this.story.branchFlags['lastInfractionKind'] = kind;
     });
 
+    this.bus.on('encounter/started', ({ instance }) => {
+      if (
+        !this.inFastForward &&
+        this.eventDirector.pauseOnDecisions &&
+        instance.presentation !== 'inline'
+      ) {
+        this.paused = true;
+      }
+    });
+
     this.todayStartRating = this.reputationSystem.getAppRating();
     this.todayRelationshipsStart = this.reputationSystem.getAllRelationships();
   }

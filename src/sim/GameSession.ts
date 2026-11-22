@@ -76,6 +76,7 @@ const PICKUP_ARRIVAL_ENCOUNTER_IDS = [
   'enc_parent_child',
   'enc_off_app',
   'enc_alley_enter',
+  'enc_suspicious_pickup',
 ] as const;
 const DROPOFF_ARRIVAL_ENCOUNTER_IDS = [
   'enc_no_change',
@@ -404,7 +405,9 @@ export class GameSession {
     this.gm.bus.on('encounter/started', ({ instance }) => {
       this.roamDistanceSinceLastEncM = 0;
       this.inlineAnchorNodeId =
-        instance.presentation === 'inline' ? this.nearbyAnchorNodeIdScratch : null;
+        instance.presentation === 'inline' && Boolean(instance.anchorPlaceKey)
+          ? this.nearbyAnchorNodeIdScratch
+          : null;
       if (
         instance.encounterId === 'enc_bus_block' &&
         !this.inFastForward &&
@@ -1825,6 +1828,13 @@ export class GameSession {
     deferredPhoneReward: { cash: number; trust: number } | null;
     deferredJobCash: number;
   }): void {
+    if (
+      info.encounterId === 'enc_off_app' &&
+      (info.choiceId === 'accept' || info.choiceId === 'negotiate')
+    ) {
+      this.markOffApp();
+      this.ride.applyPrepaidFare(info.choiceId === 'negotiate' ? 110 : 80);
+    }
     if (this.inFastForward) {
       this.inlineAnchorNodeId = null;
       return;
@@ -1858,6 +1868,30 @@ export class GameSession {
         this.ride.startPickupWait(
           Math.max(1, deferredWaitMin || (choiceId === 'wait' ? 5 : 2))
         );
+      }
+      return;
+    }
+
+    if (encounterId === 'enc_suspicious_pickup') {
+      if (choiceId === 'turn_around') {
+        const relocated = this.ride.relocatePickupToNearbyJunction(45, 120);
+        if (!relocated && this.ride.isPickupHold()) {
+          const active = this.ride.getActiveRequest();
+          if (active) {
+            this.ride.cancel(
+              active.requestId,
+              'rider',
+              'Turned around from suspicious pickup'
+            );
+          }
+        }
+      } else if (
+        choiceId !== 'refuse_report' &&
+        this.ride.isPickupHold() &&
+        this.ride.getTripState() === 'EnRouteToPickup'
+      ) {
+        this.passengerWalkPhase = 'boarding';
+        this.passengerWalkElapsedSec = 0;
       }
       return;
     }

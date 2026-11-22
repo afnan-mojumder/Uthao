@@ -4,7 +4,7 @@ import type { DaySummary } from '../../core/types';
 import type { EndingResult } from '../../sim/mission/endings';
 import { SecondaryButton } from '../components';
 import { IconShare } from '../components/icons';
-import { getLanguage, localDigits, t } from '../i18n';
+import { getLanguage, getLocaleVersion, localDigits, t } from '../i18n';
 
 export interface ShareCardProps {
   summary?: DaySummary;
@@ -170,6 +170,7 @@ export function ShareCard({ summary, ending, style }: ShareCardProps): JSX.Eleme
   const mountedRef = useRef(true);
   const [status, setStatus] = useState<string | null>(null);
   const lang = getLanguage();
+  const localeVersion = getLocaleVersion();
 
   useEffect(() => {
     mountedRef.current = true;
@@ -182,7 +183,7 @@ export function ShareCard({ summary, ending, style }: ShareCardProps): JSX.Eleme
     const canvas = canvasRef.current;
     if (!canvas) return;
     drawScorecardCanvas(canvas, summary, ending);
-  }, [summary, ending, lang]);
+  }, [summary, ending, lang, localeVersion]);
 
   const setStatusIfMounted = (msg: string) => {
     if (mountedRef.current) setStatus(msg);

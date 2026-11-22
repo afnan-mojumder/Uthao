@@ -929,7 +929,9 @@ export function respond(
   // Decision roll seeded by hash(requestId, round, salt)
   const decisionSeed = hashSeed(session.req.requestId, session.round, session.salt);
   const decisionRng = new Rng(decisionSeed);
-  const accepted = decisionRng.next() < effectivePAccept;
+  const accepted =
+    (action.kind !== 'offApp' && F <= session.currentPassengerOffer) ||
+    decisionRng.next() < effectivePAccept;
   const acceptedTopFactor: ReasonCode =
     action.kind === 'offApp' && F <= session.expectedBudget ? 'TRUSTS_YOU' : baseTopFactor;
 

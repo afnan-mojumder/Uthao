@@ -404,7 +404,12 @@ export class RoadEventManager {
       if (eligibleSegments.length === 0) {
         eligibleSegments = segments.filter((s) => !this.hasEventOnSegment(s.segmentId));
       }
-    } else if (kind === 'diversion' || kind === 'closure' || kind === 'vip_protocol') {
+    } else if (
+      kind === 'diversion' ||
+      kind === 'closure' ||
+      kind === 'vip_protocol' ||
+      kind === 'blocked_intersection'
+    ) {
       eligibleSegments = segments.filter(
         (s) =>
           !s.tags.includes('arterial') &&
@@ -510,12 +515,19 @@ export class RoadEventManager {
 
     // Never isolate nodes or block the only motorcycle route with a full closure
     if (closesSegment && this.network) {
-      const bypass = this.network.route(seg.startNodeId, seg.endNodeId, {
+      const bypassFwd = this.network.route(seg.startNodeId, seg.endNodeId, {
         mode: 'motorcycle',
         roadEvents: this,
         avoid: [seg.segmentId],
       });
-      if (!bypass) {
+      const bypassRev = seg.oneWay
+        ? bypassFwd
+        : this.network.route(seg.endNodeId, seg.startNodeId, {
+            mode: 'motorcycle',
+            roadEvents: this,
+            avoid: [seg.segmentId],
+          });
+      if (!bypassFwd || !bypassRev) {
         closesSegment = false;
         speedCapKmh = speedCapKmh ?? 12;
         congestionMultiplier = congestionMultiplier ?? 2.0;

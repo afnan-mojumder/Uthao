@@ -116,12 +116,12 @@ export class AutopilotController {
 
     if (isFinal) {
       if (dist <= 6.0) {
-        // Inside arrival zone: full brake to stop
+        // Inside arrival zone: brake while moving, release once stopped to avoid reverse gear
         if (bike.speed > 0.4) {
           brake = 1.0;
           throttle = 0;
         } else {
-          brake = 0.2;
+          brake = 0;
           throttle = 0;
         }
       } else if (dist < 16.0) {

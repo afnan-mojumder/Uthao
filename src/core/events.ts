@@ -59,6 +59,11 @@ export interface GameEvents extends Record<string, unknown> {
     phase: 'greeting' | 'offer' | 'counter' | 'accept' | 'reject' | 'small_talk' | 'drop_off';
     speaker?: string;
   };
+  'ui/dialogue': {
+    speakerKey: string;
+    lineKey: string;
+    durationMs?: number;
+  };
   'ride/cancelled': {
     requestId: string;
     by: 'rider' | 'passenger' | 'system';
