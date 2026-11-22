@@ -430,16 +430,15 @@ export class GameSession {
       this.syncEncounterStage(this.lastStepSegment);
     });
     this.gm.bus.on('encounter/resolved', (ev) => {
-      if (
-        ev.encounterId === 'enc_bus_block' &&
-        (ev.choiceId === 'honk' || ev.choiceId === 'wait')
-      ) {
-        if (this.tempBusBlockEventId) {
-          this.gm.roadEvents.removeEvent(this.tempBusBlockEventId);
-          this.tempBusBlockEventId = null;
-        } else {
-          const removeId = this.findNearestStalledEventId();
-          if (removeId) this.gm.roadEvents.removeEvent(removeId);
+      if (ev.encounterId === 'enc_bus_block') {
+        const tempId = this.tempBusBlockEventId;
+        this.tempBusBlockEventId = null;
+        if (ev.choiceId === 'honk' || ev.choiceId === 'wait') {
+          const removedTemp = tempId ? this.gm.roadEvents.removeEvent(tempId) : false;
+          if (!removedTemp) {
+            const removeId = this.findNearestStalledEventId();
+            if (removeId) this.gm.roadEvents.removeEvent(removeId);
+          }
         }
       }
       this.syncEncounterStage(this.lastStepSegment);

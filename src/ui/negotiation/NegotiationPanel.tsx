@@ -180,13 +180,30 @@ export function NegotiationPanelView({
   if (otherLang === 'en' && !otherDict[rawKey]) {
     void ensureLocaleLoaded('en').catch(() => {});
   }
+  const otherDestRaw = resolvedDestKey
+    ? (otherDict[resolvedDestKey] ??
+      (otherLang === 'bn' ? (bnDialogue as Record<string, string>)[resolvedDestKey] : undefined))
+    : undefined;
+  const otherDestLabel =
+    otherDestRaw && otherDestRaw !== resolvedDestKey
+      ? otherDestRaw
+      : (otherDict['phone.unknown_stop'] ?? destinationLabel);
+  const subtitleVars: Record<string, string | number> = {
+    fare: localDigits(
+      isCounterReply ? session.currentRiderOffer! : session.currentPassengerOffer,
+      otherLang
+    ),
+    offer: localDigits(session.currentPassengerOffer, otherLang),
+    counter: localDigits(session.currentPassengerOffer, otherLang),
+    destination: otherDestLabel,
+  };
   const subtitleTemplate =
     otherDict[rawKey] ??
     (currentLang === 'en' ? (bnDialogue as Record<string, string>)[rawKey] : undefined) ??
     '';
   const subtitleLine = subtitleTemplate.replace(
     /\{(\w+)\}/g,
-    (_: string, k: string) => String(vars[k] ?? '')
+    (_: string, k: string) => String(subtitleVars[k] ?? '')
   );
 
   const patiencePct = Math.max(0, Math.min(100, session.currentPatience * 100));
@@ -345,7 +362,7 @@ export function NegotiationPanelView({
       >
         <div>
           <span style={{ fontSize: '11px', color: '#94a3b8' }}>
-            {t('negotiation.passenger_offer', { fare: '' })}
+            {t('negotiation.passenger_offer', { fare: '' }).replace(/:\s*৳\s*$/, '')}
           </span>
           <span style={{ display: 'block', fontSize: '18px', fontWeight: 800, color: '#38bdf8' }}>
             ৳{localDigits(session.currentPassengerOffer)}
@@ -353,7 +370,7 @@ export function NegotiationPanelView({
         </div>
         <div>
           <span style={{ fontSize: '11px', color: '#94a3b8' }}>
-            {t('negotiation.fair_fare', { fare: '' })}
+            {t('negotiation.fair_fare', { fare: '' }).replace(/:\s*৳\s*$/, '')}
           </span>
           <span style={{ display: 'block', fontSize: '18px', fontWeight: 800, color: '#94a3b8' }}>
             ৳{localDigits(session.fairFare)}

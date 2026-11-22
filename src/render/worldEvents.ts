@@ -152,16 +152,17 @@ export class WorldEventRenderer {
       case 'stalled_vehicle': {
         const bus = createBusMesh();
         bus.rotation.y = 0.55;
-        group.add(bus);
         const hL = new THREE.Mesh(this.bulbGeo, this.amberFlashMat);
-        hL.position.set(-1.3, 1.1, 4.2);
+        hL.position.set(-1.1, 1.1, 3.92);
         const hR = new THREE.Mesh(this.bulbGeo, this.amberFlashMat);
-        hR.position.set(1.3, 1.1, 4.2);
+        hR.position.set(1.1, 1.1, 3.92);
+        bus.add(hL, hR);
+        group.add(bus);
         const tri = new THREE.Mesh(this.signBoardGeo, this.redFlashMat);
         tri.position.set(0, 0.35, -5.2);
         this.addCone(group, -1.5, -4.6);
         this.addCone(group, 1.5, 4.6);
-        group.add(hL, hR, tri);
+        group.add(tri);
         break;
       }
       case 'vip_protocol': {
@@ -177,9 +178,9 @@ export class WorldEventRenderer {
         const sheet = new THREE.Mesh(this.floodSheetGeo, this.waterOverlayMat);
         sheet.position.set(0, 0.04, 0);
         const board = new THREE.Mesh(this.signBoardGeo, this.yellowWarnMat);
-        board.position.set(-2.2, 0.9, -4.5);
+        board.position.set(-2.2, 1.55, -4.5);
         const pole = new THREE.Mesh(this.signPoleGeo, this.darkFrameMat);
-        pole.position.set(-2.2, 0.55, -4.5);
+        pole.position.set(-2.2, 0.9, -4.5);
         this.addCone(group, -2.1, -3.5);
         this.addCone(group, 2.1, -3.5);
         group.add(sheet, pole, board);
@@ -212,9 +213,11 @@ export class WorldEventRenderer {
         this.addCone(group, 1.7, -2.0);
         this.addFlashPole(group, 1.7, -1.0, this.amberFlashMat);
         if (ev.kind === 'diversion') {
+          const signPole = new THREE.Mesh(this.signPoleGeo, this.darkFrameMat);
+          signPole.position.set(-1.7, 0.9, -1.0);
           const sign = new THREE.Mesh(this.signBoardGeo, this.policeBlueMat);
-          sign.position.set(-1.7, 1.35, -1.0);
-          group.add(sign);
+          sign.position.set(-1.7, 1.55, -1.0);
+          group.add(signPole, sign);
         }
         break;
       }

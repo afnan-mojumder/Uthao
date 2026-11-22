@@ -134,9 +134,9 @@ export function getLanguage(): Language {
 const BANGLA_DIGITS = '০১২৩৪৫৬৭৮৯';
 
 /** A number as shown on screen: Bangla digits in Bangla mode, Western otherwise (audit). */
-export function localDigits(value: string | number): string {
+export function localDigits(value: string | number, lang?: Language): string {
   const text = String(value);
-  if (languageSignal.value !== 'bn') return text;
+  if ((lang ?? languageSignal.value) !== 'bn') return text;
   return text.replace(/[0-9]/g, (d) => BANGLA_DIGITS[Number(d)]!);
 }
 

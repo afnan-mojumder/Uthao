@@ -408,6 +408,9 @@ export class SaveSystem {
       this.storage.setItem(key, jsonStr);
       this.memoryOverlay.delete(key);
       this.deletedKeys.delete(key);
+      if (this.memoryOverlay.size === 0) {
+        this.isMemoryOnly = !!this.storage.isMemoryOnly;
+      }
       return { success: true, slot, timestamp: saveObj.timestamp };
     } catch (err) {
       // The browser refused the write (quota, private window). Keep a copy in
@@ -475,6 +478,21 @@ export class SaveSystem {
     return { success: true, gm, save: res.save };
   }
 
+  private isSlotReadable(slot: SaveSlot): boolean {
+    const raw = this.readRaw(this.getSlotKey(slot));
+    if (!raw) return false;
+    try {
+      const parsed: unknown = JSON.parse(raw);
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+        return false;
+      }
+      migrateSave(parsed as Record<string, unknown>);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   hasSave(slot: SaveSlot): boolean {
     const key = this.getSlotKey(slot);
     return !!this.readRaw(key);
@@ -482,7 +500,7 @@ export class SaveSystem {
 
   hasAnySave(): boolean {
     const slots: SaveSlot[] = ['auto', 'slot1', 'slot2', 'slot3'];
-    return slots.some((s) => this.hasSave(s));
+    return slots.some((s) => this.isSlotReadable(s));
   }
 
   /** The most recently written readable save across all slots, or null. */

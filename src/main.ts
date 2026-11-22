@@ -457,6 +457,16 @@ async function bootGame(): Promise<void> {
       rideManager,
       requests: session.requests,
       trafficManager,
+      onTeleport: (nodeId) => {
+        const node = roadNetwork.getNode(nodeId);
+        if (node) {
+          session.bike.x = node.x;
+          session.bike.y = node.y ?? 0;
+          session.bike.z = node.z;
+          session.bike.speed = 0;
+          renderer?.snapBikeState(session.bike);
+        }
+      },
     });
     if (isSingleDistrict) {
       spawnTestRequest(rideManager, 120);

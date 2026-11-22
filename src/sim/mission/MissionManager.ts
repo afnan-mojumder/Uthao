@@ -216,6 +216,7 @@ export class MissionManager {
             kind: tx.kind,
             amount: tx.amount,
             expenseId: tx.kind,
+            txId: tx.id,
           });
 
           if (changed) {

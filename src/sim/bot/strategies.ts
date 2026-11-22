@@ -596,7 +596,7 @@ export function createBalanceDistrict(): DistrictData {
         id: 'poi_garage_1',
         kind: 'garage',
         nodeId: 'N7',
-        nameKey: 'poi.garage',
+        nameKey: 'poi.mirpara.garage',
       },
     ],
     lots: [],

@@ -128,6 +128,23 @@ async function main() {
       console.error(`[optimize-assets] REJECTED non-CC0 audio: ${entry.id} (${entry.license})`);
       process.exit(1);
     }
+    const outPath = path.resolve('public', entry.url.replace(/^\//, ''));
+    fs.mkdirSync(path.dirname(outPath), { recursive: true });
+    expectedAudioPaths.add(outPath);
+
+    if (entry.source === 'synthesized') {
+      expectedAudioPaths.add(outPath.replace(/\.[^.]+$/, '.ogg'));
+      if (!fs.existsSync(outPath)) {
+        console.error(
+          `[optimize-assets] Missing synthesized audio '${entry.id}': ${outPath}. Run 'node scripts/fetch-assets.mjs' first.`
+        );
+        process.exit(1);
+      }
+      const buf = fs.readFileSync(outPath);
+      entry.sha256 = crypto.createHash('sha256').update(buf).digest('hex');
+      continue;
+    }
+
     const srcPath = path.resolve('assets-src', entry.source);
     if (!fs.existsSync(srcPath)) {
       console.error(
@@ -135,9 +152,6 @@ async function main() {
       );
       process.exit(1);
     }
-    const outPath = path.resolve('public', entry.url.replace(/^\//, ''));
-    fs.mkdirSync(path.dirname(outPath), { recursive: true });
-    expectedAudioPaths.add(outPath);
 
     const buf = fs.readFileSync(srcPath);
     if (buf.subarray(0, 4).toString('ascii') !== 'OggS') {

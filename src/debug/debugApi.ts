@@ -51,6 +51,7 @@ export interface DebugApiOptions {
   rideManager?: RideManager;
   requests?: import('../sim/ride/RequestGenerator').RequestGenerator;
   trafficManager?: import('../sim/traffic/TrafficManager').TrafficManager;
+  onTeleport?: (nodeId: string) => void;
 }
 
 /** T7.2: offers and auto-accepts a deterministic ride on the first two nodes
@@ -116,18 +117,25 @@ export function initDebugApi(
     dispatch: (cmd: Command) => gm.dispatch(cmd),
     snapshot: () => gm.snapshot(),
     setSeed: (seed: number) => {
-      void seed;
+      if (!Number.isFinite(seed)) return;
+      const normalized = (Math.floor(Math.abs(seed)) >>> 0) || 1;
+      gm.seed = normalized;
+      gm.rng.setState(normalized);
+      gm.weatherSystem.setSeed(normalized);
+      gm.roadEvents.setSeed(normalized);
+      gm.eventDirector.setSeed(normalized);
     },
     teleport: (nodeId: string) => {
       gm.waypointNodeId = nodeId;
+      options.onTeleport?.(nodeId);
     },
     setTime: (hhmm: string) => {
-      const parts = hhmm.split(':');
-      if (parts.length === 2) {
-        const h = parseInt(parts[0] ?? '0', 10);
-        const m = parseInt(parts[1] ?? '0', 10);
-        gm.clock.minutes = (h * 60 + m) % 1440;
-      }
+      const match = /^\s*(-?\d+)\s*:\s*(-?\d+)\s*$/.exec(hhmm);
+      if (!match) return;
+      const h = Number(match[1]);
+      const m = Number(match[2]);
+      if (!Number.isFinite(h) || !Number.isFinite(m)) return;
+      gm.clock.minutes = (((h * 60 + m) % 1440) + 1440) % 1440;
     },
     setWeather: (w: WeatherKind) => {
       const prev = gm.weather;

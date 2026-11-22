@@ -195,7 +195,7 @@ export class WorldPassengerActor {
 
     if (state.waving) {
       this.rightArm.rotation.x = -0.35;
-      this.rightArm.rotation.z = -(2.3 + Math.sin(timeSec * 7.5) * 0.35);
+      this.rightArm.rotation.z = 2.3 + Math.sin(timeSec * 7.5) * 0.35;
     } else {
       this.rightArm.rotation.x = 0;
       this.rightArm.rotation.z = 0;

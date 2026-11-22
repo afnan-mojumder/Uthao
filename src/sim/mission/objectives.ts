@@ -111,6 +111,8 @@ export function evaluateTransaction(
     kind: string;
     amount: number;
     expenseId?: string;
+    txId?: string;
+    targetId?: string;
   }
 ): boolean {
   if (state.completed) return false;
@@ -155,10 +157,22 @@ export function evaluateTransaction(
       }
     }
   } else if (objective.type === 'buy') {
-    if (payload.kind === 'upgrade' || payload.kind === 'bike') {
-      state.progress = 1;
-      state.completed = true;
-      changed = true;
+    const kindMatches =
+      objective.target === 'bike'
+        ? payload.kind === 'bike_purchase' || payload.kind === 'bike'
+        : payload.kind === 'upgrade';
+    if (kindMatches) {
+      const itemId = payload.targetId;
+      const targetMatches =
+        !objective.targetId ||
+        (itemId !== undefined
+          ? itemId === objective.targetId
+          : payload.txId === undefined || payload.txId.includes(`_${objective.targetId}_`));
+      if (targetMatches) {
+        state.progress = 1;
+        state.completed = true;
+        changed = true;
+      }
     }
   }
 

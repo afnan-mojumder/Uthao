@@ -213,7 +213,7 @@ export class EncounterStageRenderer {
 
       const waveAmp = state.urgent || state.kind === 'policeSignalStop' ? 0.42 : 0.22;
       this.officerRightArm.rotation.x = -0.35;
-      this.officerRightArm.rotation.z = -(1.95 + Math.sin(timeSec * 7) * waveAmp);
+      this.officerRightArm.rotation.z = 1.95 + Math.sin(timeSec * 7) * waveAmp;
       return;
     }
 
@@ -227,7 +227,7 @@ export class EncounterStageRenderer {
     this.ambushCrateGroup.visible = isFullAmbush;
     this.ambushCenterArm.rotation.x = state.urgent ? -0.95 : -0.45;
     this.ambushCenterArm.rotation.z = state.urgent
-      ? -(1.4 + Math.sin(timeSec * 5) * 0.25)
+      ? 1.4 + Math.sin(timeSec * 5) * 0.25
       : 0;
   }
 

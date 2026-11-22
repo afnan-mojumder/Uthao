@@ -89,7 +89,7 @@ export function ChoiceCardView({
               display: 'flex',
               flexDirection: 'column',
               gap: '10px',
-              animation: 'choiceSlideDown 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+              animation: 'choiceInlineSlideDown 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
             }
           : {
               position: 'fixed',

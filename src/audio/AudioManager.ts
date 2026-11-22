@@ -173,11 +173,18 @@ export class AudioManager {
         this.audioContext.suspend().catch(() => {});
       }
     } else if (
-      (this.suspendedByVisibility || this.audioContext.state === 'suspended') &&
+      (this.suspendedByVisibility ||
+        this.audioContext.state === 'suspended' ||
+        (this.audioContext.state as string) === 'interrupted') &&
       typeof this.audioContext.resume === 'function'
     ) {
       this.suspendedByVisibility = false;
-      this.audioContext.resume().catch(() => {});
+      this.audioContext.resume().catch(() => {
+        if (!this.isDisposed) {
+          this.isUnlocked = false;
+          this.setupUnlockListeners();
+        }
+      });
     }
   }
 
