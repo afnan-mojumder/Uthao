@@ -56,7 +56,9 @@ function hashId(id: string): number {
   return h >>> 0;
 }
 
-function disposeSlotResources(mesh: THREE.InstancedMesh): void {
+function disposeSlotResources(mesh: THREE.InstancedMesh, isGltf = false): void {
+  mesh.dispose();
+  if (isGltf) return;
   if (mesh.geometry && !mesh.geometry.userData?.shared) {
     mesh.geometry.dispose();
   }
@@ -140,6 +142,7 @@ export class PeopleRenderer {
       this.maxRickshaws
     );
     this.rickshawMesh.count = 0;
+    this.rickshawMesh.frustumCulled = false;
     this.rickshawMesh.castShadow = true;
     this.rickshawMesh.receiveShadow = true;
     this.root.add(this.rickshawMesh);
@@ -195,6 +198,7 @@ export class PeopleRenderer {
   ): THREE.InstancedMesh {
     const mesh = new THREE.InstancedMesh(geo, mat, this.maxPedestrians);
     mesh.count = 0;
+    mesh.frustumCulled = false;
     mesh.castShadow = false;
     mesh.receiveShadow = true;
     // Pre-allocate instanceColor buffer once at construction time so update() stays zero-alloc
@@ -210,6 +214,7 @@ export class PeopleRenderer {
   ): THREE.InstancedMesh {
     const mesh = new THREE.InstancedMesh(proto.geometry, proto.material, capacity);
     mesh.count = 0;
+    mesh.frustumCulled = false;
     mesh.castShadow = true;
     mesh.receiveShadow = true;
     this.root.add(mesh);
@@ -333,11 +338,12 @@ export class PeopleRenderer {
         slot.capacity
       );
       nextMesh.count = 0;
+      nextMesh.frustumCulled = false;
       nextMesh.castShadow = true;
       nextMesh.receiveShadow = true;
 
       this.root.remove(oldMesh);
-      disposeSlotResources(oldMesh);
+      disposeSlotResources(oldMesh, slot.isGltf);
       this.root.add(nextMesh);
 
       slot.mesh = nextMesh;

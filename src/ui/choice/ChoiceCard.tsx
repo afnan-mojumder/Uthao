@@ -6,9 +6,17 @@ import {
   dayEndSignal,
   dismissChoiceOutcome,
   endingSignal,
+  garageSignal,
+  journalSignal,
+  karmaPanelSignal,
+  negotiationSignal,
   onChooseCallback,
+  phoneSignal,
   saveSlotsSignal,
   screenSignal,
+  settingsOpenSignal,
+  tripSummarySignal,
+  uiSheetSignal,
   type ChoiceOption,
   type ChoiceState,
 } from '../store';
@@ -380,9 +388,17 @@ export function handleChoiceCardKeyDown(
   if (!choice.active) return;
   if (
     screenSignal.value !== 'game' ||
+    settingsOpenSignal.value ||
     dayEndSignal.value.active ||
     endingSignal.value.active ||
-    saveSlotsSignal.value.isOpen
+    saveSlotsSignal.value.isOpen ||
+    phoneSignal.value.open ||
+    garageSignal.value.open ||
+    journalSignal.value ||
+    karmaPanelSignal.value ||
+    uiSheetSignal.value ||
+    negotiationSignal.value.active ||
+    tripSummarySignal.value !== null
   ) {
     return;
   }

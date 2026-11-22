@@ -1,8 +1,15 @@
-import type { ArchetypeId } from '../../core/types';
+import type { ArchetypeId, WeatherKind } from '../../core/types';
 import type { DialogueLineDef, DialoguePhase } from '../schemas';
 import dialogueLinesRaw from '../../../data/dialogue_lines.json';
 import { Rng } from '../../core/rng';
 import { t } from '../../ui/i18n';
+
+function normalizeDialogueWeather(w: string): string {
+  if (w === 'cloudy') return 'overcast';
+  if (w === 'lightRain') return 'rain';
+  if (w === 'heavyRain') return 'monsoon';
+  return w;
+}
 
 export interface DialogueQueryContext {
   phase: DialoguePhase;
@@ -10,7 +17,7 @@ export interface DialogueQueryContext {
   characterId?: string;
   relationshipLevel?: number;
   flags?: Record<string, boolean | string | number>;
-  weather?: 'clear' | 'overcast' | 'rain' | 'monsoon';
+  weather?: 'clear' | 'overcast' | 'rain' | 'monsoon' | WeatherKind;
   timeOfDay?: 'morning' | 'rush_morning' | 'midday' | 'rush_evening' | 'night';
   category?: 'cricket' | 'exams' | 'jam' | 'rain' | 'family' | 'general' | 'humour';
   vars?: Record<string, string | number>;
@@ -64,15 +71,23 @@ export class DialogueManager {
           if (rel < line.requires.minRelationship) return false;
         }
 
-        if (line.requires.weather && ctx.weather && line.requires.weather !== ctx.weather) {
-          return false;
+        if (line.requires.weather) {
+          if (
+            !ctx.weather ||
+            normalizeDialogueWeather(ctx.weather) !== normalizeDialogueWeather(line.requires.weather)
+          ) {
+            return false;
+          }
         }
 
-        if (line.requires.timeOfDay && ctx.timeOfDay && line.requires.timeOfDay !== ctx.timeOfDay) {
-          return false;
+        if (line.requires.timeOfDay) {
+          if (!ctx.timeOfDay || line.requires.timeOfDay !== ctx.timeOfDay) {
+            return false;
+          }
         }
 
-        if (line.requires.flags && ctx.flags) {
+        if (line.requires.flags) {
+          if (!ctx.flags) return false;
           for (const [flagKey, expectedVal] of Object.entries(line.requires.flags)) {
             if (ctx.flags[flagKey] !== expectedVal) {
               return false;

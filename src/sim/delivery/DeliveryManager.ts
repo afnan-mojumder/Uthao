@@ -4,6 +4,11 @@ import type { Rng } from '../../core/rng';
 import type { RoadNetwork } from '../road/RoadNetwork';
 import type { EconomyManager } from '../economy/EconomyManager';
 import { nearestPlaceKey } from '../ride/rideView';
+import { TIME_SCALE } from '../../core/clock';
+
+function travelGameMinutes(distanceM: number, bufferRealSec = 10): number {
+  return ((distanceM / 10.5 + bufferRealSec) * TIME_SCALE) / 60;
+}
 
 const DELIVERY_SENDER_KINDS = new Set([
   'pharmacy',
@@ -83,21 +88,58 @@ export class DeliveryManager {
    * `upgrade_luggage_carrier` is owned. Returns null if locked, at offer cap,
    * or no valid route exists.
    */
-  generateOffer(road: RoadNetwork, rng: Rng, day: number): DeliveryJob | null {
+  generateOffer(
+    road: RoadNetwork,
+    rng: Rng,
+    day: number,
+    opts?: {
+      playerPos?: { x: number; z: number };
+      unlockedDistricts?: readonly string[];
+    }
+  ): DeliveryJob | null {
     if (!this.isUnlocked()) return null;
     if (this.offeredDeliveries.size >= MAX_OFFERED_DELIVERIES) return null;
 
-    const nodes = road.getAllNodes();
-    if (nodes.length < 2) return null;
+    const allNodes = road.getAllNodes();
+    if (allNodes.length < 2) return null;
 
-    const pois = road.getPois();
-    const senderPois = pois.filter((p) => DELIVERY_SENDER_KINDS.has(p.kind) && road.getNode(p.nodeId));
-    const fallbackPois = senderPois.length > 0 ? senderPois : pois.filter((p) => road.getNode(p.nodeId));
+    const unlockedSet =
+      opts?.unlockedDistricts && opts.unlockedDistricts.length > 0
+        ? new Set(opts.unlockedDistricts)
+        : null;
+    const nodes = unlockedSet
+      ? allNodes.filter((n) => {
+          const d = road.getNodeDistrict(n.nodeId);
+          return !d || unlockedSet.has(d);
+        })
+      : allNodes;
+    const candidateNodes = nodes.length >= 2 ? nodes : allNodes;
+
+    const pois = road.getPois().filter((p) => {
+      if (!road.getNode(p.nodeId)) return false;
+      if (!unlockedSet) return true;
+      const d = road.getNodeDistrict(p.nodeId);
+      return !d || unlockedSet.has(d);
+    });
+    const senderPois = pois.filter((p) => DELIVERY_SENDER_KINDS.has(p.kind));
+    const playerPos = opts?.playerPos;
+    const nearbySenderPois = playerPos
+      ? senderPois.filter((p) => {
+          const n = road.getNode(p.nodeId);
+          return n ? Math.hypot(n.x - playerPos.x, n.z - playerPos.z) <= 750 : false;
+        })
+      : [];
+    const fallbackPois =
+      nearbySenderPois.length > 0
+        ? nearbySenderPois
+        : senderPois.length > 0
+          ? senderPois
+          : pois;
 
     for (let attempt = 0; attempt < 15; attempt++) {
       const pickupPoi = fallbackPois.length > 0 ? rng.pick(fallbackPois) : null;
-      const pickupNodeId = pickupPoi ? pickupPoi.nodeId : rng.pick(nodes).nodeId;
-      const dropoffNode = rng.pick(nodes);
+      const pickupNodeId = pickupPoi ? pickupPoi.nodeId : rng.pick(candidateNodes).nodeId;
+      const dropoffNode = rng.pick(candidateNodes);
       if (dropoffNode.nodeId === pickupNodeId) continue;
 
       const route = road.route(pickupNodeId, dropoffNode.nodeId, { mode: 'motorcycle' });
@@ -107,7 +149,19 @@ export class DeliveryManager {
       const itemType = rng.pick(DELIVERY_ITEM_TYPES);
       const fragile = itemType === 'medicine' || itemType === 'fragile_electronics';
       const basePayout = Math.max(80, Math.round((80 + route.virtualKm * 35) / 5) * 5);
-      const timeLimitMinutes = Math.max(15, Math.ceil(route.etaMin * 2));
+      const timeLimitMinutes = Math.max(
+        45,
+        Math.ceil(travelGameMinutes(route.lengthM, 10) * 1.8 + 15)
+      );
+      const pickupNodeObj = road.getNode(pickupNodeId);
+      const pickupDistM =
+        playerPos && pickupNodeObj
+          ? Math.hypot(pickupNodeObj.x - playerPos.x, pickupNodeObj.z - playerPos.z)
+          : 400;
+      const pickupTimeLimitMinutes = Math.max(
+        45,
+        Math.ceil(travelGameMinutes(pickupDistM, 12) * 1.8 + 15)
+      );
       const pickupPlaceKey = nearestPlaceKey({ roadNetwork: road }, pickupNodeId) || undefined;
       const dropoffPlaceKey = nearestPlaceKey({ roadNetwork: road }, dropoffNode.nodeId) || undefined;
 
@@ -123,6 +177,7 @@ export class DeliveryManager {
         fragile,
         basePayout,
         timeLimitMinutes,
+        pickupTimeLimitMinutes,
         status: 'offered',
       };
       this.offer(job);
@@ -245,7 +300,7 @@ export class DeliveryManager {
     }
 
     job.status = 'accepted';
-    job.pickupDeadlineMinute = currentMinute + 15;
+    job.pickupDeadlineMinute = currentMinute + (job.pickupTimeLimitMinutes ?? 15);
     this.offeredDeliveries.delete(deliveryId);
     this.activeDeliveries.set(deliveryId, job);
 

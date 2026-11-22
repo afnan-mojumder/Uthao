@@ -39,7 +39,20 @@ export class MotorcycleController {
   /** Seconds since the last frame of contact ended; a contact that
    * restarts within CONTACT_RELEASE_S is the same contact. */
   private contactHoldS = 0;
+  private contactSeverityRank = 0;
+  private contactOtherKind: 'static' | 'traffic' | null = null;
+  private contactOtherId: string | undefined = undefined;
   private readonly _nextState: BikeState = createDefaultBikeState();
+  private readonly _pushHit: SweepHit = {
+    hit: false,
+    toi: 1,
+    normalX: 0,
+    normalZ: 0,
+    otherKind: 'building',
+    otherVx: 0,
+    otherVz: 0,
+  };
+  private readonly _pushSlide = { x: 0, z: 0 };
   private readonly _hit: SweepHit = {
     hit: false,
     toi: 1,
@@ -78,6 +91,11 @@ export class MotorcycleController {
   update(input: BikeInput, env: BikeEnvironment, dt: number): BikeState {
     this.nearMissCooldownS = Math.max(0, this.nearMissCooldownS - dt);
     this.contactHoldS = Math.max(0, this.contactHoldS - dt);
+    if (this.contactHoldS <= 0) {
+      this.contactSeverityRank = 0;
+      this.contactOtherKind = null;
+      this.contactOtherId = undefined;
+    }
 
     const desiredState = stepBike(this.state, input, this.spec, env, dt, this._nextState);
     const dx = desiredState.x - this.state.x;
@@ -97,6 +115,10 @@ export class MotorcycleController {
     let nextX = this.state.x + this._slide.x;
     let nextZ = this.state.z + this._slide.z;
 
+    const safeDt = dt > 1e-6 ? dt : 1e-6;
+    const bikeVx = dx / safeDt;
+    const bikeVz = dz / safeDt;
+
     const pushed = this.world.resolveDynamicOverlap(
       nextX,
       nextZ,
@@ -106,9 +128,24 @@ export class MotorcycleController {
       this._pushOut
     );
     if (pushed) {
-      nextX += this._pushOut.x;
-      nextZ += this._pushOut.z;
-      if (!this._hit.hit) {
+      this.world.sweepCapsule(
+        nextX,
+        nextZ,
+        this.state.y,
+        BIKE_RADIUS_M,
+        this._pushOut.x,
+        this._pushOut.z,
+        this._pushHit,
+        this._pushSlide
+      );
+      nextX += this._pushSlide.x;
+      nextZ += this._pushSlide.z;
+      const overlapImpactKmh =
+        Math.hypot(bikeVx - this._overlapHit.otherVx, bikeVz - this._overlapHit.otherVz) * 3.6;
+      const staticImpactKmh = this._hit.hit
+        ? Math.max(0, -(bikeVx * this._hit.normalX + bikeVz * this._hit.normalZ) * 3.6)
+        : -1;
+      if (!this._hit.hit || (this._hit.otherKind !== 'traffic' && overlapImpactKmh >= staticImpactKmh)) {
         this._hit.hit = true;
         this._hit.toi = 0;
         this._hit.normalX = this._overlapHit.normalX;
@@ -120,13 +157,10 @@ export class MotorcycleController {
       }
     }
 
-    const safeDt = dt > 1e-6 ? dt : 1e-6;
     let collisionSeverity: BikeCollisionSeverity | null = null;
     const totalSpeedKmh = Math.abs(this.state.speed) * 3.6;
 
     if (this._hit.hit) {
-      const bikeVx = dx / safeDt;
-      const bikeVz = dz / safeDt;
       let impactKmh: number;
       if (this._hit.otherKind === 'traffic') {
         impactKmh = Math.hypot(bikeVx - this._hit.otherVx, bikeVz - this._hit.otherVz) * 3.6;
@@ -153,16 +187,27 @@ export class MotorcycleController {
       }
 
       // The physical response above applies every frame of contact, but the
-      // event is one report per contact (audit: grinding fires every frame).
-      if (this.contactHoldS <= 0) {
-        const isTraffic = this._hit.otherKind === 'traffic';
+      // event is one report per contact unless severity escalates or a new traffic entity hits.
+      const severityRank = collisionSeverity === 'crash' ? 3 : collisionSeverity === 'bump' ? 2 : 1;
+      const isTraffic = this._hit.otherKind === 'traffic';
+      const hitKind: 'static' | 'traffic' = isTraffic ? 'traffic' : 'static';
+      const shouldEmit =
+        this.contactHoldS <= 0 ||
+        severityRank > this.contactSeverityRank ||
+        (isTraffic &&
+          (this.contactOtherKind !== 'traffic' ||
+            (this._hit.otherId !== undefined && this._hit.otherId !== this.contactOtherId)));
+      if (shouldEmit) {
+        this.contactSeverityRank = Math.max(this.contactSeverityRank, severityRank);
+        this.contactOtherKind = hitKind;
+        this.contactOtherId = this._hit.otherId;
         const otherSpeedKmh = isTraffic
           ? Math.hypot(this._hit.otherVx, this._hit.otherVz) * 3.6
           : 0;
         this.bus?.emit('bike/collision', {
           severity: collisionSeverity,
           relSpeedKmh: impactKmh,
-          otherKind: isTraffic ? 'traffic' : 'static',
+          otherKind: hitKind,
           otherParty: isTraffic,
           bikeSpeedKmh: totalSpeedKmh,
           otherSpeedKmh,

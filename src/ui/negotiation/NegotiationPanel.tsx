@@ -162,17 +162,23 @@ export function NegotiationPanelView({
   // Passenger lines: active language first with subtitle in the alternate language
   const rawKey = lastResult?.passengerLine ?? 'dialogue.negotiation.opening';
   const currentLang = getLanguage();
+  const isCounterReply =
+    lastResult?.outcome?.kind === 'rejected' &&
+    rawKey.includes('.counter.') &&
+    session.currentRiderOffer !== undefined;
   const vars: Record<string, string | number> = {
-    fare: localDigits(session.currentPassengerOffer),
+    fare: localDigits(
+      isCounterReply ? session.currentRiderOffer! : session.currentPassengerOffer
+    ),
     offer: localDigits(session.currentPassengerOffer),
-    counter: localDigits(counterAmount),
+    counter: localDigits(session.currentPassengerOffer),
     destination: destinationLabel,
   };
   const primaryLine = t(rawKey, vars);
   const otherLang = currentLang === 'bn' ? 'en' : 'bn';
   const otherDict = getDictionary(otherLang);
   if (otherLang === 'en' && !otherDict[rawKey]) {
-    void ensureLocaleLoaded('en');
+    void ensureLocaleLoaded('en').catch(() => {});
   }
   const subtitleTemplate =
     otherDict[rawKey] ??

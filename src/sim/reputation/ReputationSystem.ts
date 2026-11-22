@@ -474,15 +474,16 @@ export class ReputationSystem {
     if (!Number.isFinite(delta)) {
       return this.getAppRating();
     }
-    const target = clamp(this.getAppRating() + delta, 1.0, 5.0);
     if (this.ratings.length === 0) {
-      this.defaultRating = target;
+      this.defaultRating = Math.round(clamp(this.defaultRating + delta, 1.0, 5.0) * 100) / 100;
     } else {
-      this.ratings[this.ratings.length - 1] = target;
+      for (let i = 0; i < this.ratings.length; i++) {
+        this.ratings[i] = Math.round(clamp(this.ratings[i]! + delta, 1.0, 5.0) * 100) / 100;
+      }
     }
     const currentRating = this.getAppRating();
     this.evaluateRatingThresholds(currentRating, delta < 0);
-    this.bus?.emit('reputation/changed', { delta: { rating: target } });
+    this.bus?.emit('reputation/changed', { delta: { rating: currentRating } });
     return currentRating;
   }
 

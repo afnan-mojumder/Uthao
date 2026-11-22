@@ -184,6 +184,7 @@ export class GameSession {
   private hasChildPassenger = false;
   private passengerWalkPhase: 'none' | 'boarding' = 'none';
   private passengerWalkElapsedSec = 0;
+  private activeRideRequestId: string | null = null;
   private activeFollowUp: ActiveFollowUpState | null = null;
   private followUpRoute: Route | null = null;
   private postDropoffUntilMin: number | null = null;
@@ -383,6 +384,7 @@ export class GameSession {
           this.gm.clock.advance((gameMin * 60) / TIME_SCALE);
         }
       },
+      getStoryFlags: () => this.gm.story.branchFlags,
     });
     // T7.5: lets effect handlers (e.g. `endTrip`) reach the live ride state.
     this.gm.rideManager = this.ride;
@@ -391,7 +393,10 @@ export class GameSession {
       if (action === 'forceVia') {
         this.ride.rerouteViaTag(ref);
       } else if (action === 'avoid' || action === 'closeSegment') {
-        this.encounterAvoidSegments.add(ref);
+        const resolvedRef =
+          ref === 'active_segment' ? (this.lastStepSegment?.segmentId ?? '') : ref;
+        if (!resolvedRef) return;
+        this.encounterAvoidSegments.add(resolvedRef);
         this.ride.rerouteAvoiding(this.encounterAvoidSegments);
       }
     };
@@ -455,8 +460,17 @@ export class GameSession {
         this.traffic.pedestrians.clearRoadWorkers(event.segmentId);
       }
     });
-    this.gm.bus.on('ride/completed', () => {
+    this.gm.bus.on('ride/accepted', (ev) => {
+      this.activeRideRequestId = ev.requestId;
+    });
+    this.gm.bus.on('ride/started', (ev) => {
+      this.activeRideRequestId = ev.requestId;
+    });
+    this.gm.bus.on('ride/completed', (ev) => {
       const doneReq = this.ride.getActiveRequest();
+      if (!this.activeRideRequestId || this.activeRideRequestId === ev.requestId) {
+        this.activeRideRequestId = null;
+      }
       this.missionPullUpOfferedCharId = null;
       this.stagedWrongPickupReqId = null;
       if (!this.inFastForward) {
@@ -471,7 +485,10 @@ export class GameSession {
         this.gm.eventDirector.dismissActive('rideEnded', this.gm.bus);
       }
     });
-    this.gm.bus.on('ride/cancelled', () => {
+    this.gm.bus.on('ride/cancelled', (ev) => {
+      const currentActiveId = this.ride.getActiveRequest()?.requestId ?? this.activeRideRequestId;
+      if (currentActiveId !== ev.requestId) return;
+      this.activeRideRequestId = null;
       this.passengerWalkPhase = 'none';
       this.passengerWalkElapsedSec = 0;
       this.missionPullUpOfferedCharId = null;
@@ -661,6 +678,19 @@ export class GameSession {
       heading: this.bike.heading,
     });
     this.gm.restoreBikePose = (pose) => this.restoreBikePose(pose);
+    this.gm.getActiveFollowUp = () =>
+      this.activeFollowUp ? { ...this.activeFollowUp } : null;
+    this.gm.restoreActiveFollowUp = (followUp) => {
+      this.activeFollowUp = followUp ? { ...followUp } : null;
+      if (this.activeFollowUp) {
+        const fromId = this.road.nearestNode(this.bike.x, this.bike.z)?.nodeId;
+        this.followUpRoute = fromId
+          ? this.road.route(fromId, this.activeFollowUp.nodeId, { mode: 'motorcycle' })
+          : null;
+      } else {
+        this.followUpRoute = null;
+      }
+    };
     this.gm.spawnSpecialRequest = (templateId) => {
       const res = templateId.startsWith('char_')
         ? this.requests.sampleRecurringRequest(
@@ -695,12 +725,21 @@ export class GameSession {
         ev.upgradeId === 'upgrade_luggage_carrier' &&
         this.gm.deliveryManager.offeredDeliveries.size === 0
       ) {
-        this.gm.deliveryManager.generateOffer(this.road, this.deliveryRng, this.gm.clock.day);
+        this.gm.deliveryManager.generateOffer(this.road, this.deliveryRng, this.gm.clock.day, {
+          playerPos: this.pose,
+          unlockedDistricts: this.gm.missionManager.getUnlockedDistricts(),
+        });
       }
     });
     this.gm.bus.on('day/started', () => {
       this.lastAccidentEncounterMin = -Infinity;
       this.missionRideOfferCooldownSec = 0;
+      this.postDropoffUntilMin = null;
+      this.postDropoffDropNodeId = null;
+      this.activeFollowUp = null;
+      this.followUpRoute = null;
+      this.encounterAvoidSegments.clear();
+      this.inlineAnchorNodeId = null;
       this.violationMonitor.reset();
       this.resetWorldEventStageState();
       this.reconcileRoadEventWorkers();
@@ -1800,7 +1839,11 @@ export class GameSession {
     } = info;
     if (encounterId === 'enc_wrong_pickup_pin') {
       if (choiceId === 'drive') {
-        this.ride.relocatePickupToNearbyJunction(45, 120);
+        const relocated = this.ride.relocatePickupToNearbyJunction(45, 120);
+        if (!relocated && this.ride.isPickupHold()) {
+          this.passengerWalkPhase = 'boarding';
+          this.passengerWalkElapsedSec = 0;
+        }
       } else if (choiceId === 'walk') {
         this.ride.startPickupWait(Math.max(2, deferredWaitMin || 2));
       } else if (choiceId !== 'cancel' && this.ride.isPickupHold()) {
@@ -2032,6 +2075,17 @@ export class GameSession {
     const finalDropoffId = dropoffNodeId || fallbackNodeId;
     if (!finalDropoffId || finalDropoffId === pickupNodeId) return false;
 
+    const pickupDistM = Math.hypot(pickupNode.x - this.bike.x, pickupNode.z - this.bike.z);
+    const dropoffRoute = this.road.route(pickupNodeId, finalDropoffId, { mode: 'motorcycle' });
+    const pickupTimeLimitMinutes = Math.max(
+      45,
+      Math.ceil((((pickupDistM / 10.5 + 12) * TIME_SCALE) / 60) * 1.8 + 15)
+    );
+    const timeLimitMinutes = Math.max(
+      60,
+      Math.ceil((((((dropoffRoute?.lengthM ?? 400) / 10.5) + 10) * TIME_SCALE) / 60) * 1.8 + 15)
+    );
+
     const job: DeliveryJob = {
       id: `deliv_mintu_${this.gm.clock.day}_${++this.roamingDeliverySeq}`,
       senderNameKey: 'character.mintu.name',
@@ -2043,7 +2097,8 @@ export class GameSession {
       itemType: 'parcel',
       fragile: false,
       basePayout,
-      timeLimitMinutes: 30,
+      timeLimitMinutes,
+      pickupTimeLimitMinutes,
       status: 'offered',
     };
     this.gm.deliveryManager.offer(job);
@@ -2065,6 +2120,7 @@ export class GameSession {
   }
 
   private resetWorldEventStageState(): void {
+    this.activeRideRequestId = null;
     this.tempBusBlockEventId = null;
     this.stagedEncounterKey = '';
     this.stagedEncounterAnchorTag = '';
@@ -3070,18 +3126,20 @@ export class GameSession {
       }
 
       const dtMinutes = (dt * TIME_SCALE) / 60;
-      const eventDemandMult = this.gm.roadEvents.getDemandMultiplier();
-      const newRequests = this.requests.tick(
-        dtMinutes,
-        this.gm.clock.minutes,
-        this.gm.weather,
-        this.pose,
-        this.requests.getRequestRateMultiplier() * eventDemandMult
-      );
-      for (const req of newRequests) {
-        this.ride.offer(req);
-        if (req.bookingType === 'street' && !this.inFastForward) {
-          this.anchorStreetHailForRequest(req);
+      if (!this.gm.shiftEnded) {
+        const eventDemandMult = this.gm.roadEvents.getDemandMultiplier();
+        const newRequests = this.requests.tick(
+          dtMinutes,
+          this.gm.clock.minutes,
+          this.gm.weather,
+          this.pose,
+          this.requests.getRequestRateMultiplier() * eventDemandMult
+        );
+        for (const req of newRequests) {
+          this.ride.offer(req);
+          if (req.bookingType === 'street' && !this.inFastForward) {
+            this.anchorStreetHailForRequest(req);
+          }
         }
       }
 
@@ -3092,7 +3150,10 @@ export class GameSession {
         this.gm.deliveryManager.offeredDeliveries.size < 2 &&
         this.deliveryRng.chance(0.15 * dtMinutes)
       ) {
-        this.gm.deliveryManager.generateOffer(this.road, this.deliveryRng, this.gm.clock.day);
+        this.gm.deliveryManager.generateOffer(this.road, this.deliveryRng, this.gm.clock.day, {
+          playerPos: this.pose,
+          unlockedDistricts: this.gm.missionManager.getUnlockedDistricts(),
+        });
       }
     }
   }

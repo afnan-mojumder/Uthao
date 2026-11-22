@@ -5,10 +5,12 @@ export function nearestNode(
   nodes: RoadNode[],
   x: number,
   z: number,
-  filter?: (node: RoadNode) => boolean
+  filter?: (node: RoadNode) => boolean,
+  y?: number
 ): RoadNode | null {
   let closest: RoadNode | null = null;
   let minDistSq = Infinity;
+  let bestSameBand = false;
 
   for (let i = 0; i < nodes.length; i++) {
     const node = nodes[i]!;
@@ -18,7 +20,23 @@ export function nearestNode(
     const dx = node.x - x;
     const dz = node.z - z;
     const distSq = dx * dx + dz * dz;
-    if (distSq < minDistSq) {
+    if (y !== undefined) {
+      const sameBand = Math.abs((node.y ?? 0) - y) <= ELEVATION_BAND_TOLERANCE_M;
+      if (closest === null) {
+        closest = node;
+        minDistSq = distSq;
+        bestSameBand = sameBand;
+      } else if (sameBand !== bestSameBand) {
+        if (sameBand) {
+          closest = node;
+          minDistSq = distSq;
+          bestSameBand = true;
+        }
+      } else if (distSq < minDistSq) {
+        closest = node;
+        minDistSq = distSq;
+      }
+    } else if (distSq < minDistSq) {
       minDistSq = distSq;
       closest = node;
     }

@@ -42,7 +42,7 @@
       "phase": "onTrip",
       "roadType": ["alley"],
       "hours": [20, 5],
-      "minRiskLevel": 0.5
+      "minRiskLevel": 0.15
     },
     "weight": 10,
     "cooldownMin": 60,
@@ -139,7 +139,7 @@
       "roadType": ["alley"],
       "hours": [22, 5],
       "chapter": [2, 6],
-      "minRiskLevel": 0.5
+      "minRiskLevel": 0.15
     },
     "weight": 7,
     "cooldownMin": 90,

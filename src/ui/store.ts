@@ -1335,6 +1335,15 @@ export function bindEventBusToStore(bus: EventBus<GameEvents>): () => void {
   unsubscribers.push(unsubRideAccepted);
 
   const unsubRideCancelled = bus.on('ride/cancelled', (ev) => {
+    if (
+      negotiationSignal.value.active &&
+      negotiationSignal.value.session?.req.requestId === ev.requestId
+    ) {
+      negotiationSignal.value = {
+        ...negotiationSignal.value,
+        active: false,
+      };
+    }
     const cancelledHeld = heldRequest?.requestId === ev.requestId;
     if (cancelledHeld) {
       heldRequest = null;

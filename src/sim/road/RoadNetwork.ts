@@ -40,6 +40,7 @@ export class RoadNetwork {
   private segments: RoadSegment[] = [];
   private pois: Poi[] = [];
   private nodeDistrict: Map<string, DistrictId> = new Map();
+  private readonly motorcycleNodeIds: Set<string>;
   private graph: RoutingGraph;
 
   private constructor(
@@ -52,6 +53,14 @@ export class RoadNetwork {
     this.segments = segments;
     this.pois = pois;
     this.nodeDistrict = nodeDistrict;
+    this.motorcycleNodeIds = new Set<string>();
+    for (let i = 0; i < segments.length; i++) {
+      const seg = segments[i]!;
+      if (seg.motorcycleAccessible) {
+        this.motorcycleNodeIds.add(seg.startNodeId);
+        this.motorcycleNodeIds.add(seg.endNodeId);
+      }
+    }
     this.graph = new RoutingGraph(nodes, segments);
   }
 
@@ -106,9 +115,21 @@ export class RoadNetwork {
   nearestNode(
     x: number,
     z: number,
-    filter?: (node: RoadNode) => boolean
+    filter?: (node: RoadNode) => boolean,
+    y?: number
   ): RoadNode | null {
-    return nearestNode(this.nodes, x, z, filter);
+    return nearestNode(this.nodes, x, z, filter, y);
+  }
+
+  isMotorcycleNode(nodeId: string): boolean {
+    return this.motorcycleNodeIds.has(nodeId);
+  }
+
+  nearestMotorcycleNode(x: number, z: number, y?: number): RoadNode | null {
+    return (
+      nearestNode(this.nodes, x, z, (n) => this.motorcycleNodeIds.has(n.nodeId), y) ??
+      nearestNode(this.nodes, x, z, undefined, y)
+    );
   }
 
   segmentAt(x: number, z: number, tolerance: number = 10): RoadSegment | null {

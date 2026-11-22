@@ -1,4 +1,5 @@
 import type {
+  ActiveFollowUpState,
   Transaction,
   WeatherKind,
   SafetyRecord,
@@ -146,6 +147,7 @@ export interface SaveV2 {
   rentDelayedByCommand?: boolean;
   todayCompletedRides?: number;
   deliveries?: DeliverySnapshot;
+  activeFollowUp?: ActiveFollowUpState | null;
 }
 
 export type AnySave = SaveV1 | SaveV2 | Record<string, unknown>;

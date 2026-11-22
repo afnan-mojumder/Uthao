@@ -77,6 +77,7 @@ export class MissionManager {
   private visitedDistricts: Set<string> = new Set();
   private currentDay: number = 1;
   private inRide: boolean = false;
+  private activeRideRequestId: string | null = null;
   private currentTripCrashed: boolean = false;
   private readonly worldCueScratch: MissionWorldCue = {
     missionId: '',
@@ -129,12 +130,16 @@ export class MissionManager {
       this.checkFailConditions(day);
     });
 
-    this.bus.on('ride/started', () => {
+    this.bus.on('ride/started', ({ requestId }) => {
+      this.activeRideRequestId = requestId;
       this.inRide = true;
       this.currentTripCrashed = false;
     });
 
-    this.bus.on('ride/cancelled', () => {
+    this.bus.on('ride/cancelled', ({ requestId }) => {
+      if (!this.inRide) return;
+      if (this.activeRideRequestId !== null && requestId !== this.activeRideRequestId) return;
+      this.activeRideRequestId = null;
       this.inRide = false;
       this.currentTripCrashed = false;
     });
@@ -148,6 +153,7 @@ export class MissionManager {
     this.bus.on('ride/completed', (ev) => {
       const { receipt, crashed } = ev;
       const didCrash = Boolean(crashed || this.currentTripCrashed);
+      this.activeRideRequestId = null;
       this.currentTripCrashed = false;
       this.inRide = false;
 
@@ -887,6 +893,7 @@ export class MissionManager {
     this.objectiveStates.clear();
     this.visitedDistricts.clear();
     this.currentDay = 1;
+    this.activeRideRequestId = null;
     this.inRide = false;
     this.currentTripCrashed = false;
   }
@@ -897,6 +904,7 @@ export class MissionManager {
     this.completedMissionIds.clear();
     this.objectiveStates.clear();
     this.visitedDistricts.clear();
+    this.activeRideRequestId = null;
     this.inRide = false;
     this.currentTripCrashed = false;
     for (const id of this.storyState.completedMissions ?? []) {

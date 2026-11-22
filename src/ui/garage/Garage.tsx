@@ -660,7 +660,8 @@ export function Garage({
                   overallCond,
                   hasKamalDiscount
                 );
-                const canAfford = cash + savings >= netCost;
+                const isTradeDown = !isOwned && bike.price < currentDef.price;
+                const canAfford = cash + savings >= netCost && !isTradeDown;
 
                 return (
                   <div

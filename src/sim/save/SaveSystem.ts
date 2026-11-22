@@ -209,6 +209,7 @@ export function serialize(gm: GameManager, slot: SaveSlot = 'auto'): SaveV2 {
     rentDelayedByCommand: snap.rentDelayedByCommand,
     todayCompletedRides: snap.todayCompletedRides ?? 0,
     deliveries: snap.deliveries,
+    ...(snap.activeFollowUp ? { activeFollowUp: { ...snap.activeFollowUp } } : {}),
   };
 }
 
@@ -319,6 +320,7 @@ export function deserialize(save: AnySave, gameData?: GameData): GameManager {
       segmentFloodLevels: { ...validated.weatherState.segmentFloodLevels },
     },
     bikePose: { ...validated.bikePose },
+    activeFollowUp: validated.activeFollowUp ? { ...validated.activeFollowUp } : null,
   };
 
   gm.applySnapshot(snapshot, validated.rngState);

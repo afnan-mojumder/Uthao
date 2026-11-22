@@ -48,7 +48,6 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,ico,png,svg,json,wasm,woff2}'],
         globIgnores: [
           '**/district-*.js',
-          '**/locale-en-*.js',
           'og-cover.webp',
           'assets/audio/**',
           'assets/portraits/**',

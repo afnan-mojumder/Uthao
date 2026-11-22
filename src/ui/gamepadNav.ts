@@ -59,6 +59,14 @@ export function hasSystemOverlay(): boolean {
   );
 }
 
+/** True when a choice card is modal/blocking (non-inline or showing an outcome). */
+export function isBlockingChoice(): boolean {
+  return (
+    choiceSignal.value.active &&
+    (choiceSignal.value.presentation !== 'inline' || Boolean(choiceSignal.value.outcomeLineKey))
+  );
+}
+
 /** True when a menu, panel or overlay owns the screen, so the pad navigates it. */
 export function uiModalOpen(
   settingsOpen: boolean = settingsOpenSignal.value,
@@ -69,9 +77,7 @@ export function uiModalOpen(
     settingsOpen ||
     settingsOpenSignal.value ||
     screenSignal.value !== 'game' ||
-    (choiceSignal.value.active &&
-      (choiceSignal.value.presentation !== 'inline' ||
-        Boolean(choiceSignal.value.outcomeLineKey))) ||
+    isBlockingChoice() ||
     negotiationSignal.value.active ||
     dayEndSignal.value.active ||
     endingSignal.value.active ||
@@ -195,9 +201,17 @@ export function startGamepadNav(isSettingsOpen: () => boolean): () => void {
     if (!hasSystemOverlay() && !isGamepadRebindingSignal.value) {
       const choiceBlockedByModal =
         screenSignal.value !== 'game' ||
+        isSettingsOpen() ||
         dayEndSignal.value.active ||
         endingSignal.value.active ||
-        saveSlotsSignal.value.isOpen;
+        saveSlotsSignal.value.isOpen ||
+        phoneSignal.value.open ||
+        garageSignal.value.open ||
+        journalSignal.value ||
+        karmaPanelSignal.value ||
+        uiSheetSignal.value ||
+        negotiationSignal.value.active ||
+        tripSummarySignal.value !== null;
       if (choiceSignal.value.active && !choiceBlockedByModal) {
         if (choiceSignal.value.outcomeLineKey || choiceSignal.value.options.length === 0) {
           if (snap.pressed.includes(BTN_CONFIRM) || snap.pressed.includes(BTN_BACK)) {

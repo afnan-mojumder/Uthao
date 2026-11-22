@@ -380,7 +380,10 @@ export class CityBuilder {
 
   private buildDistrictProps(task: BuildDistrictTask): void {
     const district = task.district;
-    const nodeMap = new Map(district.nodes.map((n) => [n.nodeId, n]));
+    const nodeMap =
+      this.worldNodesMap.size > 0
+        ? this.worldNodesMap
+        : new Map(district.nodes.map((n) => [n.nodeId, n]));
     const trimContext =
       this.allWorldSegments.length > 0 ? this.allWorldSegments : district.segments;
 
@@ -612,14 +615,21 @@ export class CityBuilder {
   private stepTask(task: BuildDistrictTask): boolean {
     if (task.stage === 'roads') {
       if (!task.roadSliceCtx) {
-        const nodeMap = new Map<string, RoadNode>();
-        for (const node of task.district.nodes) {
-          nodeMap.set(node.nodeId, node);
+        let nodeMap: Map<string, RoadNode>;
+        if (this.worldNodesMap.size > 0) {
+          nodeMap = this.worldNodesMap;
+        } else {
+          nodeMap = new Map<string, RoadNode>();
+          for (const node of task.district.nodes) {
+            nodeMap.set(node.nodeId, node);
+          }
         }
+        const trimContext =
+          this.allWorldSegments.length > 0 ? this.allWorldSegments : task.district.segments;
         task.roadSliceCtx = this.roadBuilder.createSliceContext(
           task.district.segments,
           nodeMap,
-          task.district.segments
+          trimContext
         );
       }
 
@@ -734,7 +744,10 @@ export class CityBuilder {
         task.stage = 'props';
         return false;
       }
-      const nodeMap = new Map(task.district.nodes.map((n) => [n.nodeId, n]));
+      const nodeMap =
+        this.worldNodesMap.size > 0
+          ? this.worldNodesMap
+          : new Map(task.district.nodes.map((n) => [n.nodeId, n]));
       const batch = segments.slice(task.kerbIndex, task.kerbIndex + 30);
       const trimContext =
         this.allWorldSegments.length > 0 ? this.allWorldSegments : segments;

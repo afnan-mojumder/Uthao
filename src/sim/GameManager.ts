@@ -11,6 +11,7 @@ import {
 import { BALANCE } from '../config/balance';
 import type { Command, CommandResult } from '../core/commands';
 import type {
+  ActiveFollowUpState,
   DaySummary,
   KarmaEvent,
   MeterId,
@@ -161,6 +162,7 @@ export interface SimSnapshot {
   eventDirectorState?: EventDirectorState;
   weatherState?: WeatherSystemState;
   bikePose?: BikePoseSnapshot;
+  activeFollowUp?: ActiveFollowUpState | null;
 }
 
 export class GameManager {
@@ -198,6 +200,9 @@ export class GameManager {
   /** Provided by GameSession so snapshots read and restore live bike coordinates and heading. */
   getBikePose?: () => BikePoseSnapshot;
   restoreBikePose?: (pose?: BikePoseSnapshot) => void;
+  /** Provided by GameSession so snapshots read and restore active grounded follow-up objectives. */
+  getActiveFollowUp?: () => ActiveFollowUpState | null;
+  restoreActiveFollowUp?: (followUp?: ActiveFollowUpState | null) => void;
   onRouteEffect?: (
     action: 'avoid' | 'forceVia' | 'closeSegment',
     ref: string
@@ -213,6 +218,8 @@ export class GameManager {
   }) => void;
   private savedBikePose?: BikePoseSnapshot;
   private savedRideMeta?: RideMetaSave;
+  private savedActiveFollowUp?: ActiveFollowUpState | null;
+  private inDayTransition = false;
   private restoringSnapshot: boolean = false;
   get isRestoringSnapshot(): boolean {
     return this.restoringSnapshot;
@@ -380,6 +387,12 @@ export class GameManager {
     const endingDefs =
       (this.data.endings as EndingDef[] | undefined) ?? endingsData;
 
+    this.bus.on('day/started', () => {
+      this.eventDirector.resetDaily();
+      this.weatherSystem.onDayStarted(this.clock.day, this.story.currentChapter);
+      this.weather = this.weatherSystem.weather;
+    });
+
     this.missionManager = new MissionManager({
       bus: this.bus,
       missions: missionDefs,
@@ -400,12 +413,6 @@ export class GameManager {
       economyManager: this.economyManager,
     });
 
-    this.bus.on('day/started', () => {
-      this.eventDirector.resetDaily();
-      this.weatherSystem.onDayStarted(this.clock.day, this.story.currentChapter);
-      this.weather = this.weatherSystem.weather;
-    });
-
     this.bus.on('ending/reached', ({ endingId }) => {
       if (endingId in this.story.endingEligibility) {
         this.story.endingEligibility[endingId] = true;
@@ -421,7 +428,9 @@ export class GameManager {
         !this.story.branchFlags['m4_police_decision_made']
       ) {
         const started =
-          this.eventDirector.enabled && this.eventDirector.activeEncounter === null
+          !this.inDayTransition &&
+          this.eventDirector.enabled &&
+          this.eventDirector.activeEncounter === null
             ? this.eventDirector.forceStart(
               'enc_m4_police_decision',
               this.bus,
@@ -540,6 +549,13 @@ export class GameManager {
     if (this.rideManager?.getTripState() === 'Negotiating') {
       this.rideManager.walkAwayNegotiation();
     }
+    if (
+      this.rideManager &&
+      typeof this.rideManager.resetUnsettledToIdle === 'function' &&
+      (this.rideInProgress() || this.rideManager.getActiveRequest?.() !== null)
+    ) {
+      this.rideManager.resetUnsettledToIdle('shift_ended');
+    }
     this.deliveryManager.endShiftCleanup();
 
     // Commute home if > 1.5 km (1500m)
@@ -596,7 +612,11 @@ export class GameManager {
    * (main menu or post-ending) behaves the same as a fresh endless boot. */
   enterEndlessMode(): void {
     this.mode = 'endless';
+    this.paused = false;
     this.pendingM4PoliceDecision = false;
+    if (this.eventDirector.activeEncounter) {
+      this.eventDirector.dismissActive('expired', this.bus);
+    }
     this.missionManager.resetCareer();
     this.missionManager.missions.clear();
     this.story.activeMissions = [];
@@ -607,6 +627,7 @@ export class GameManager {
    * hour event, phone drain and the forced 23:00 shift end. Shared by `tick` and
    * waits (fuel rescue) so both are observed identically. */
   private advanceTime(dt: number): void {
+    if (this.shiftEnded) return;
     const prevHour = Math.floor(this.clock.minutes / 60);
     this.clock.advance(dt);
     const currHour = Math.floor(this.clock.minutes / 60);
@@ -858,6 +879,9 @@ export class GameManager {
           this.clock.day,
           this.clock.minutes
         );
+        if (res.success) {
+          this.story.branchFlags['boughtBike'] = true;
+        }
         this.syncEconomy();
         return res;
       }
@@ -944,7 +968,7 @@ export class GameManager {
             encounterId === 'enc_extra_stop' ||
             encounterId === 'enc_wait_errand' ||
             encounterId === 'enc_no_change' ||
-            encounterId === 'enc_phone_left' ||
+            (encounterId === 'enc_phone_left' && cmd.choiceId === 'return') ||
             (shouldDeferRoamingJob && encounterId === 'enc_friend_package'));
         const effectCtx: EffectContext = {
           gameManager: this,
@@ -957,7 +981,8 @@ export class GameManager {
           deferPhoneReturn:
             Boolean(this.onEncounterOptionChosen) &&
             !this.inFastForward &&
-            encounterId === 'enc_phone_left',
+            encounterId === 'enc_phone_left' &&
+            cmd.choiceId === 'return',
           deferRoamingJob: shouldDeferRoamingJob,
         };
         const ok = this.eventDirector.chooseOption(
@@ -1013,7 +1038,12 @@ export class GameManager {
         this.todayCompletedRides = 0;
         this.todayStartRating = this.reputationSystem.getAppRating();
         this.todayRelationshipsStart = this.reputationSystem.getAllRelationships();
-        this.bus.emit('day/started', { day: this.clock.day });
+        this.inDayTransition = true;
+        try {
+          this.bus.emit('day/started', { day: this.clock.day });
+        } finally {
+          this.inDayTransition = false;
+        }
         return { success: true };
       }
       case 'chargePhone': {
@@ -1080,7 +1110,8 @@ export class GameManager {
             delayedAmount,
             this.clock.day,
             this.clock.minutes,
-            this.todayRentDebt
+            this.todayRentDebt,
+            this.todayRentAutoFlagged
           )
         ) {
           return { success: false, reason: 'No rent to delay' };
@@ -1160,6 +1191,9 @@ export class GameManager {
         : { x: 0, y: 0, z: 0, heading: 0 };
     const eventDirectorState = this.eventDirector.exportState();
     eventDirectorState.pendingM4PoliceDecision = this.pendingM4PoliceDecision;
+    const activeFollowUp = this.getActiveFollowUp
+      ? this.getActiveFollowUp()
+      : (this.savedActiveFollowUp ?? null);
 
     return {
       seed: this.seed,
@@ -1203,6 +1237,7 @@ export class GameManager {
       eventDirectorState,
       weatherState: this.weatherSystem.exportState(),
       bikePose,
+      ...(activeFollowUp ? { activeFollowUp: { ...activeFollowUp } } : {}),
     };
   }
 
@@ -1220,6 +1255,10 @@ export class GameManager {
       this.seed = (Math.floor(Math.abs(nextSeed)) >>> 0) || 1;
     }
     this.mode = 'career';
+    this.paused = false;
+    this.ticks = 0;
+    this.accumulator = 0;
+    this.waypointNodeId = null;
     this.rng.setState(this.seed);
     this.weatherSystem.setSeed(this.seed);
     this.roadEvents.setSeed(this.seed);
@@ -1244,6 +1283,7 @@ export class GameManager {
     this.pendingM4PoliceDecision = false;
     this.savedBikePose = undefined;
     this.savedRideMeta = undefined;
+    this.savedActiveFollowUp = null;
     this.isNavigating = false;
     this.deliveryManager.reset();
     this.eventDirector.resetCareer();
@@ -1390,6 +1430,7 @@ export class GameManager {
         ? { ...snap.rideMeta, directContacts: [...snap.rideMeta.directContacts] }
         : undefined;
       this.savedBikePose = snap.bikePose ? { ...snap.bikePose } : undefined;
+      this.savedActiveFollowUp = snap.activeFollowUp ? { ...snap.activeFollowUp } : null;
 
       if (this.rideManager) {
         this.rideManager.importMeta(snap.rideMeta);
@@ -1399,6 +1440,7 @@ export class GameManager {
       this.restoreBikePose?.(snap.bikePose);
 
       this.bus.emit('state/restored', {});
+      this.restoreActiveFollowUp?.(this.savedActiveFollowUp);
 
       if (this.shiftEnded) {
         this.emitDaySummaryIfEnded();

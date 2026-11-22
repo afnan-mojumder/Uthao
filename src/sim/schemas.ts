@@ -590,6 +590,7 @@ export const DeliveryJobSchema = z.object({
   fragile: z.boolean(),
   basePayout: z.number().positive(),
   timeLimitMinutes: z.number().positive(),
+  pickupTimeLimitMinutes: z.number().positive().optional(),
   pickupDeadlineMinute: z.number().optional(),
   dropoffDeadlineMinute: z.number().optional(),
   status: z.enum(['offered', 'accepted', 'in_transit', 'delivered', 'failed']),
@@ -922,6 +923,16 @@ export const SaveV1Schema = z.object({
   missions: MissionSaveStateSchema.optional(),
 });
 
+export const SaveActiveFollowUpSchema = z.object({
+  kind: z.literal('phoneReturn'),
+  nodeId: z.string(),
+  placeKey: z.string(),
+  encounterId: z.string(),
+  choiceId: z.string(),
+  cashReward: z.number().finite(),
+  trustBonus: z.number().finite(),
+});
+
 export const SaveV2Schema = z.object({
   version: z.literal(2),
   timestamp: z.number().finite(),
@@ -966,4 +977,5 @@ export const SaveV2Schema = z.object({
   rentDelayedByCommand: z.boolean().optional(),
   todayCompletedRides: z.number().int().nonnegative().optional(),
   deliveries: SaveDeliverySnapshotSchema.optional(),
+  activeFollowUp: SaveActiveFollowUpSchema.nullable().optional(),
 });

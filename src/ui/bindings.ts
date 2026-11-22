@@ -416,8 +416,18 @@ export function bindUi(session: GameSession, saveSystem?: SaveSystem): () => voi
   setNegotiationActionDispatcher((action) => {
     const current = negotiationSignal.value.session;
     // Only the live negotiation for the ride that is still active may act.
-    if (!current || current.status !== 'active') return;
-    if (rideManager.getActiveRequest()?.requestId !== current.req.requestId) return;
+    if (!current || current.status !== 'active') {
+      if (negotiationSignal.value.active) {
+        negotiationSignal.value = { ...negotiationSignal.value, active: false };
+      }
+      return;
+    }
+    if (rideManager.getActiveRequest()?.requestId !== current.req.requestId) {
+      if (negotiationSignal.value.active) {
+        negotiationSignal.value = { ...negotiationSignal.value, active: false };
+      }
+      return;
+    }
     // Relocation and alley refusal use the sim's measured option, never numbers the panel sent.
     const choice = action.kind === 'pickupAdjust' ? session.pickupChoice() : null;
     if (action.kind === 'pickupAdjust' && !choice) return;
@@ -507,6 +517,7 @@ export function bindUi(session: GameSession, saveSystem?: SaveSystem): () => voi
   setEndShiftEarlyDispatcher(() => {
     const res = gm.dispatch({ type: 'endShiftEarly' });
     if (res.success) {
+      gm.dispatch({ type: 'resume' });
       pausedSignal.value = false;
       screenSignal.value = 'game';
       endShiftBlockedKeySignal.value = null;
@@ -572,6 +583,8 @@ export function bindUi(session: GameSession, saveSystem?: SaveSystem): () => voi
       return;
     }
     session.newCareer(resolveCareerSeed());
+    gm.dispatch({ type: 'resume' });
+    pausedSignal.value = false;
     tutorialSignal.value = {
       active: true,
       step: 'alarm',
@@ -618,6 +631,7 @@ export function bindUi(session: GameSession, saveSystem?: SaveSystem): () => voi
       syncMapLive();
     },
     () => {
+      gm.dispatch({ type: 'resume' });
       pausedSignal.value = false;
     },
     (nodeId) => {
@@ -712,7 +726,11 @@ export function bindUi(session: GameSession, saveSystem?: SaveSystem): () => voi
   setEndingDispatchers(
     (choice) => gm.dispatch({ type: 'selectCareerChoice', choice }),
     startNewCareer,
-    () => session.enterEndless()
+    () => {
+      session.enterEndless();
+      gm.paused = false;
+      pausedSignal.value = false;
+    }
   );
 
   const cleanup = () => {

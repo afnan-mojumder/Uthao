@@ -22,6 +22,8 @@ import {
   bindScreenWakeLock,
   formatErrorMessage,
   pausedSignal,
+  dayEndSignal,
+  endingSignal,
   rideWaitSignal,
   contextLostSignal,
   unsupportedSignal,
@@ -717,7 +719,8 @@ async function bootGame(): Promise<void> {
     // encounters are additionally suppressed during the opening tutorial or when
     // disabled via URL — otherwise a roaming encounter can fire behind the main
     // menu and softlock boot.
-    const inGame = screenSignal.value === 'game';
+    const modalHaltsSim = dayEndSignal.value.active || endingSignal.value.active;
+    const inGame = screenSignal.value === 'game' && !modalHaltsSim;
     gm.eventDirector.enabled = inGame && !tutorialSignal.value.active && !encountersDisabledByUrl;
 
     // Frame-rate decoupling: convert the variable rAF dt into a whole number of

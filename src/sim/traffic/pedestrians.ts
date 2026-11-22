@@ -48,6 +48,7 @@ export interface PedestrianAgent {
   lod: 'near' | 'mid' | 'far';
   lodAccum?: number;
   isRoadWorker?: boolean;
+  originSegmentId?: string;
 }
 
 export function getSidewalkOffset(seg: RoadSegment): number {
@@ -312,6 +313,7 @@ export class PedestrianManager {
         direction: 1,
         lod: 'near',
         isRoadWorker: true,
+        originSegmentId: segmentId,
       };
 
       this.pedestrians.set(id, worker);
@@ -334,7 +336,11 @@ export class PedestrianManager {
     this.deleteIdsScratch.length = 0;
     for (const ped of this.pedestrians.values()) {
       if (!ped.isRoadWorker) continue;
-      if (segmentId === undefined || ped.segmentId === segmentId) {
+      if (
+        segmentId === undefined ||
+        ped.originSegmentId === segmentId ||
+        ped.segmentId === segmentId
+      ) {
         this.deleteIdsScratch.push(ped.id);
       }
     }
@@ -352,6 +358,7 @@ export class PedestrianManager {
 
     let affected = 0;
     for (const ped of this.pedestrians.values()) {
+      if (ped.isRoadWorker) continue;
       const dist = distance2d(hornPos.x, hornPos.z, ped.x, ped.z);
       if (dist <= radius) {
         ped.state = 'yielding';
@@ -475,7 +482,7 @@ export class PedestrianManager {
           ped.lateralOffset += stepLat;
           if ((ped.yieldTimer ?? 0) <= 0) {
             ped.yieldTimer = 0;
-            ped.state = 'sidewalk';
+            ped.state = ped.isRoadWorker ? 'road_worker' : 'sidewalk';
           }
         }
         this.syncPedWorldPose(ped, this.network.getSegment(ped.segmentId) ?? seg);
@@ -584,13 +591,29 @@ export class PedestrianManager {
             ped.state === 'crossing' &&
             this.crossingHazard(here.x, here.z, remainingS, hazardWindowS, player, vehicles);
 
+          let finishedCrossing: boolean;
           if (hazard && (ped.crossingProgress ?? 0) < 0.45) {
             // Early in crossing: step back toward starting kerb while facing it (no moonwalking)
-            this.advanceCrossingStep(ped, effDt, crossDistTotal, sidewalkOffset, nx, nz, baseHeading, -1, 1.0);
+            finishedCrossing = this.advanceCrossingStep(ped, effDt, crossDistTotal, sidewalkOffset, nx, nz, baseHeading, -1, 1.0);
           } else {
             // Forward crossing completion (hurry forward if hazard appeared after midpoint)
             const speedMult = hazard ? 1.45 : 1.0;
-            this.advanceCrossingStep(ped, effDt, crossDistTotal, sidewalkOffset, nx, nz, baseHeading, 1, speedMult);
+            finishedCrossing = this.advanceCrossingStep(ped, effDt, crossDistTotal, sidewalkOffset, nx, nz, baseHeading, 1, speedMult);
+          }
+          if (finishedCrossing) {
+            if (ped.distAlongSegment >= segLen && ped.direction === 1) {
+              if (!this.turnCorner(ped, seg, sNode, eNode, segLen, seg.endNodeId, true)) {
+                ped.direction = -1;
+                ped.distAlongSegment = Math.max(0.2, segLen - 0.2);
+                ped.heading = baseHeading + Math.PI;
+              }
+            } else if (ped.distAlongSegment <= 0 && ped.direction === -1) {
+              if (!this.turnCorner(ped, seg, sNode, eNode, segLen, seg.startNodeId, false)) {
+                ped.direction = 1;
+                ped.distAlongSegment = Math.min(segLen, 0.2);
+                ped.heading = baseHeading;
+              }
+            }
           }
         }
       } else if (ped.state === 'road_worker') {

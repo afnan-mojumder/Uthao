@@ -915,11 +915,21 @@ export function buildMultiMaterialPrototype(root: THREE.Object3D): {
   const buckets = new Map<string, { mat: THREE.Material; geos: THREE.BufferGeometry[] }>();
   const matOrder: string[] = [];
   const detailGeos: THREE.BufferGeometry[] = [];
+  const sourceGeos = new Set<THREE.BufferGeometry>();
+  const sourceMats = new Set<THREE.Material>();
 
   root.traverse((child) => {
     if (!(child instanceof THREE.Mesh) || !child.geometry) return;
     const childMat = child.material as THREE.Material | THREE.Material[];
     const childGeo = child.geometry as THREE.BufferGeometry;
+    sourceGeos.add(childGeo);
+    if (Array.isArray(childMat)) {
+      for (const m of childMat) {
+        if (m) sourceMats.add(m);
+      }
+    } else if (childMat) {
+      sourceMats.add(childMat);
+    }
     const rawMat = Array.isArray(childMat) ? childMat[0] : childMat;
     if (!rawMat) return;
     const std = rawMat as THREE.MeshStandardMaterial;
@@ -952,10 +962,14 @@ export function buildMultiMaterialPrototype(root: THREE.Object3D): {
   });
 
   if (matOrder.length === 0 && detailGeos.length === 0) {
+    for (const g of sourceGeos) {
+      if (!g.userData?.shared) g.dispose();
+    }
+    for (const m of sourceMats) {
+      if (!m.userData?.shared) m.dispose();
+    }
     const geo = new THREE.BoxGeometry(1.4, 1.2, 2.5);
     const mat = new THREE.MeshStandardMaterial({ color: 0x64748b });
-    geo.userData.shared = true;
-    mat.userData.shared = true;
     return { geometry: geo, material: mat };
   }
 
@@ -971,7 +985,6 @@ export function buildMultiMaterialPrototype(root: THREE.Object3D): {
     }
     if (mergedBucket) {
       bucketGeos.push(mergedBucket);
-      bucket.mat.userData.shared = true;
       materials.push(bucket.mat);
     }
   }
@@ -989,7 +1002,6 @@ export function buildMultiMaterialPrototype(root: THREE.Object3D): {
         roughness: 0.7,
         metalness: 0.15,
       });
-      detailMat.userData.shared = true;
       bucketGeos.push(mergedDetail);
       materials.push(detailMat);
     }
@@ -1003,7 +1015,18 @@ export function buildMultiMaterialPrototype(root: THREE.Object3D): {
     for (const g of bucketGeos) g.dispose();
   }
 
-  finalGeo.userData.shared = true;
+  const retainedMats = new Set<THREE.Material>(materials);
+  for (const g of sourceGeos) {
+    if (g !== finalGeo && !g.userData?.shared) {
+      g.dispose();
+    }
+  }
+  for (const m of sourceMats) {
+    if (!retainedMats.has(m) && !m.userData?.shared) {
+      m.dispose();
+    }
+  }
+
   finalGeo.computeBoundingBox();
 
   return {
@@ -1026,18 +1049,21 @@ export class InstancedTrafficRenderer {
     const carMat = new THREE.MeshStandardMaterial({ color: 0xcccccc, roughness: 0.4 });
     this.carInstanced = new THREE.InstancedMesh(carGeo, carMat, maxVehicles);
     this.carInstanced.count = 0;
+    this.carInstanced.frustumCulled = false;
     this.group.add(this.carInstanced);
 
     const busGeo = new THREE.BoxGeometry(2.4, 2.8, 8.0);
     const busMat = new THREE.MeshStandardMaterial({ color: 0x1e88e5, roughness: 0.5 });
     this.busInstanced = new THREE.InstancedMesh(busGeo, busMat, maxVehicles);
     this.busInstanced.count = 0;
+    this.busInstanced.frustumCulled = false;
     this.group.add(this.busInstanced);
 
     const cngGeo = new THREE.BoxGeometry(1.3, 1.8, 2.8);
     const cngMat = new THREE.MeshStandardMaterial({ color: 0x2e7d32, roughness: 0.6 });
     this.cngInstanced = new THREE.InstancedMesh(cngGeo, cngMat, maxVehicles);
     this.cngInstanced.count = 0;
+    this.cngInstanced.frustumCulled = false;
     this.group.add(this.cngInstanced);
   }
 

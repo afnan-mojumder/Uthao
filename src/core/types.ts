@@ -534,6 +534,7 @@ export interface DeliveryJob {
   fragile: boolean;
   basePayout: number;
   timeLimitMinutes: number;
+  pickupTimeLimitMinutes?: number;
   pickupDeadlineMinute?: number;
   dropoffDeadlineMinute?: number;
   status: 'offered' | 'accepted' | 'in_transit' | 'delivered' | 'failed';

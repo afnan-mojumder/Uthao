@@ -135,6 +135,8 @@ export interface RideManagerOptions {
   ) => 'hold' | 'proceed';
   /** Advances the sim clock smoothly during real-time staged waits. */
   advanceClockMin?: (gameMin: number) => void;
+  /** Story branch flags for flag-gated passenger dialogue lines. */
+  getStoryFlags?: () => Record<string, boolean | string | number>;
 }
 
 export class RideManager {
@@ -168,6 +170,7 @@ export class RideManager {
   private readonly onPickupArrival?: RideManagerOptions['onPickupArrival'];
   private readonly onDropoffArrival?: RideManagerOptions['onDropoffArrival'];
   private readonly advanceClockMin?: RideManagerOptions['advanceClockMin'];
+  private readonly getStoryFlags?: RideManagerOptions['getStoryFlags'];
   private pickupHold = false;
   private dropoffHold = false;
   private activeWait: RideWaitState | null = null;
@@ -247,6 +250,7 @@ export class RideManager {
     this.onPickupArrival = opts.onPickupArrival;
     this.onDropoffArrival = opts.onDropoffArrival;
     this.advanceClockMin = opts.advanceClockMin;
+    this.getStoryFlags = opts.getStoryFlags;
     this.bus.on('bike/swapped', ({ bikeId }) => {
       this.activeBikeId = bikeId;
     });
@@ -359,10 +363,13 @@ export class RideManager {
     phase: 'greeting' | 'small_talk' | 'drop_off'
   ): void {
     const ctx = this.resolveDialogueContext(req);
+    const weather = this.weatherSystem?.weather ?? this.weatherProvider?.();
     const query = {
       archetype: ctx.archetype,
       characterId: req.characterId,
       relationshipLevel: ctx.relationshipLevel,
+      flags: this.getStoryFlags?.() ?? {},
+      ...(weather !== undefined ? { weather } : {}),
       vars: {
         destination: ctx.destination,
         fare: req.initialFare,
@@ -442,7 +449,7 @@ export class RideManager {
   /** Node nearest the last known bike pose, or null before the first `update`. */
   private nearestNodeId(): string | null {
     if (!this.hasPose) return null;
-    return this.roadNetwork.nearestNode(this.pose.x, this.pose.z)?.nodeId ?? null;
+    return this.roadNetwork.nearestMotorcycleNode(this.pose.x, this.pose.z)?.nodeId ?? null;
   }
 
   /** Where the current route is heading: the pickup until the passenger is aboard, then optional stop, then destination. */
@@ -631,10 +638,10 @@ export class RideManager {
 
   /** Recalculates the route from the bike's position to the current target (after a
    * missed turn). Fails the ride clearly when the target is unreachable. */
-  reroute(pose: { x: number; z: number }): Route | null {
+  reroute(pose: { x: number; z: number; y?: number }): Route | null {
     const target = this.routeTargetId();
     if (!this.activeRequest || !target) return null;
-    const from = this.roadNetwork.nearestNode(pose.x, pose.z)?.nodeId;
+    const from = this.roadNetwork.nearestMotorcycleNode(pose.x, pose.z, pose.y)?.nodeId;
     const fresh = from ? this.roadNetwork.route(from, target, this.routeOpts('motorcycle')) : null;
     this.offRouteSince = -1;
     if (fresh) {
@@ -1114,7 +1121,7 @@ export class RideManager {
   }
 
   /** Cancels/resets any unsettled live ride or queued offers cleanly to Idle on reload without penalty. */
-  resetUnsettledToIdle(): boolean {
+  resetUnsettledToIdle(reason = 'reload_unsettled'): boolean {
     const active = this.activeRequest;
     this.offeredRequests.clear();
     this.offerDeadlines.clear();
@@ -1138,7 +1145,7 @@ export class RideManager {
       this.outcome = null;
       this.clearActive();
       this.settleToIdle();
-      this.bus.emit('ride/cancelled', { requestId: reqId, by: 'system', reason: 'reload_unsettled' });
+      this.bus.emit('ride/cancelled', { requestId: reqId, by: 'system', reason });
       return true;
     }
 

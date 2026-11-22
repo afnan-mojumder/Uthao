@@ -48,6 +48,7 @@ export class RoutingGraph {
   private nodesMap: Map<string, RoadNode> = new Map();
   private segmentsMap: Map<string, RoadSegment> = new Map();
   private pickupNodes: Set<string> = new Set();
+  private motorcycleNodes: Set<string> = new Set();
 
   constructor(nodes: RoadNode[], segments: RoadSegment[]) {
     for (const node of nodes) {
@@ -57,6 +58,10 @@ export class RoutingGraph {
 
     for (const seg of segments) {
       this.segmentsMap.set(seg.segmentId, seg);
+      if (seg.motorcycleAccessible) {
+        this.motorcycleNodes.add(seg.startNodeId);
+        this.motorcycleNodes.add(seg.endNodeId);
+      }
       if (isPickupSegment(seg)) {
         this.pickupNodes.add(seg.startNodeId);
         this.pickupNodes.add(seg.endNodeId);
@@ -91,6 +96,11 @@ export class RoutingGraph {
   /** True when `nodeId` touches at least one pickup-eligible segment. */
   isPickupNode(nodeId: string): boolean {
     return this.pickupNodes.has(nodeId);
+  }
+
+  /** True when `nodeId` touches at least one motorcycle-accessible segment. */
+  isMotorcycleNode(nodeId: string): boolean {
+    return this.motorcycleNodes.has(nodeId);
   }
 
   getNodesMap(): Map<string, RoadNode> {
@@ -399,7 +409,7 @@ export interface PickupOptionsResult {
 
 export function pickupOptions(
   req: { pickupNodeId: string },
-  riderPos: { x: number; z: number } | string,
+  riderPos: { x: number; z: number; y?: number } | string,
   graph: RoutingGraph,
   options?: PickupOptionsQuery
 ): PickupOptionsResult | null {
@@ -410,9 +420,23 @@ export function pickupOptions(
     startNodeId = riderPos;
   } else {
     let bestDist = Infinity;
+    let bestSameBand = false;
+    const refY = riderPos.y;
     for (const node of nodesMap.values()) {
+      if (!graph.isMotorcycleNode(node.nodeId)) continue;
       const d = distance2d(riderPos.x, riderPos.z, node.x, node.z);
-      if (d < bestDist) {
+      if (refY !== undefined) {
+        const sameBand = Math.abs((node.y ?? 0) - refY) <= 2.5;
+        if (
+          startNodeId === null ||
+          (sameBand && !bestSameBand) ||
+          (sameBand === bestSameBand && d < bestDist)
+        ) {
+          bestDist = d;
+          bestSameBand = sameBand;
+          startNodeId = node.nodeId;
+        }
+      } else if (d < bestDist) {
         bestDist = d;
         startNodeId = node.nodeId;
       }

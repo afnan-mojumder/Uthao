@@ -395,7 +395,7 @@ export class EconomyManager {
       rent = rentAmount + this.deferredRent;
       this.deferredRent = 0;
 
-      if (options?.delayRent || this.cash < rentAmount) {
+      if (options?.delayRent || this.cash < rent) {
         this.rentMissedCount++;
         if (this.rentMissedCount === 1) {
           rentDelayed = true;
@@ -459,8 +459,17 @@ export class EconomyManager {
    * is reversed first and the remainder returns to cash, while the full bill
    * moves to the next rent day. Returns false when there is nothing to delay.
    */
-  delayRent(amount: number, day: number, minute: number, debtCreated = 0): boolean {
+  delayRent(
+    amount: number,
+    day: number,
+    minute: number,
+    debtCreated = 0,
+    alreadyCountedMissed = false
+  ): boolean {
     if (!Number.isFinite(amount) || amount <= 0) return false;
+    if (!alreadyCountedMissed) {
+      this.rentMissedCount++;
+    }
     const debtRefund = Math.min(this.debt, Math.max(0, debtCreated));
     const cashRefund = amount - debtRefund;
     this.debt = Math.max(0, this.debt - debtRefund);
@@ -707,9 +716,15 @@ export class EconomyManager {
     if (this.currentBikeId === targetBikeId) {
       return { success: false, netCost: 0, reason: 'Already riding this bike' };
     }
+    if (this.ownedBikes.includes(targetBikeId)) {
+      return { success: false, netCost: 0, reason: 'Bike already owned' };
+    }
 
     const currentDef = getBikeDef(this.currentBikeId);
     const targetDef = getBikeDef(targetBikeId);
+    if (useTradeIn && targetDef.price < currentDef.price) {
+      return { success: false, netCost: 0, reason: 'Cannot trade down to a lower-tier bike' };
+    }
     const hasKamalDiscount = atKamalBhai && kamalRelationship >= 20;
 
     const netCost = useTradeIn
@@ -748,6 +763,7 @@ export class EconomyManager {
       this.ownedBikes.push(targetBikeId);
     }
     this.currentBikeId = targetBikeId;
+    this.fuelLevel = Math.min(this.fuelLevel, this.maxFuelL());
 
     if (targetBikeId === 'new150') {
       this.engineCondition = 100;
@@ -772,6 +788,7 @@ export class EconomyManager {
     }
     const prevBikeId = this.currentBikeId;
     this.currentBikeId = targetBikeId;
+    this.fuelLevel = Math.min(this.fuelLevel, this.maxFuelL());
     this.bus.emit('bike/swapped', { bikeId: targetBikeId, prevBikeId });
     return { success: true };
   }

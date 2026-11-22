@@ -94,7 +94,13 @@ import { KarmaPanel } from './karma/KarmaPanel';
 import { UiSheet } from './sheet/UiSheet';
 import { localDigits, t } from './i18n';
 import { toggleMute } from './store';
-import { getActiveControlsBindings, hasSystemOverlay, startGamepadNav, uiModalOpen } from './gamepadNav';
+import {
+  getActiveControlsBindings,
+  hasSystemOverlay,
+  isBlockingChoice,
+  startGamepadNav,
+  uiModalOpen,
+} from './gamepadNav';
 
 export function App(): JSX.Element {
   const [showSettings, setShowSettingsState] = useState(false);
@@ -122,12 +128,12 @@ export function App(): JSX.Element {
       hasSystemOverlay() ||
       showSettingsRef.current ||
       saveSlotsSignal.value.isOpen ||
-      choiceSignal.value.active ||
+      isBlockingChoice() ||
       negotiationSignal.value.active ||
       dayEndSignal.value.active ||
       endingSignal.value.active ||
       tripSummarySignal.value !== null ||
-      tutorialSignal.value.active ||
+      (tutorialSignal.value.active && tutorialSignal.value.step !== 'riding') ||
       phoneSignal.value.open ||
       (except !== 'garage' && garageSignal.value.open) ||
       (except !== 'journal' && journalSignal.value) ||
@@ -211,7 +217,7 @@ export function App(): JSX.Element {
           endingSignal.value.active ||
           dayEndSignal.value.active ||
           tripSummarySignal.value !== null ||
-          choiceSignal.value.active ||
+          isBlockingChoice() ||
           negotiationSignal.value.active
         ) {
           return;
@@ -615,9 +621,27 @@ export function App(): JSX.Element {
         </div>
       )}
 
-      <div style={layerStyle(Z_LAYER.MODAL)}>
-        <ChoiceCard />
-      </div>
+      {!(
+        choiceSignal.value.presentation === 'inline' &&
+        !choiceSignal.value.outcomeLineKey &&
+        (phoneSignal.value.open ||
+          garageSignal.value.open ||
+          journalSignal.value ||
+          karmaPanelSignal.value ||
+          uiSheetSignal.value ||
+          showSettings ||
+          saveSlotsSignal.value.isOpen)
+      ) && (
+        <div
+          style={layerStyle(
+            choiceSignal.value.presentation === 'inline' && !choiceSignal.value.outcomeLineKey
+              ? Z_LAYER.TOAST
+              : Z_LAYER.MODAL
+          )}
+        >
+          <ChoiceCard />
+        </div>
+      )}
 
       {dayEndSignal.value.active && (
         <div style={layerStyle(Z_LAYER.MODAL)}>
@@ -662,16 +686,20 @@ export function App(): JSX.Element {
               onResumeGameCallback?.();
             }}
             onOpenMap={() => {
+              pausedSignal.value = false;
+              onResumeGameCallback?.();
               screenSignal.value = 'map';
             }}
             onOpenGarage={() => {
               screenSignal.value = 'game';
               pausedSignal.value = false;
+              onResumeGameCallback?.();
               garageSignal.value = { ...garageSignal.value, open: true };
             }}
             onOpenJournal={() => {
               screenSignal.value = 'game';
               pausedSignal.value = false;
+              onResumeGameCallback?.();
               journalSignal.value = true;
             }}
             onRecoverBike={() => {
@@ -688,7 +716,10 @@ export function App(): JSX.Element {
             }}
             onEndShiftEarly={() => onEndShiftEarlyCallback?.()}
             endShiftBlockedKey={endShiftBlockedKeySignal.value}
-            onExitToMainMenu={() => exitToTitle()}
+            onExitToMainMenu={() => {
+              onResumeGameCallback?.();
+              exitToTitle();
+            }}
           />
         </div>
       )}

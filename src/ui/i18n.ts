@@ -92,7 +92,10 @@ export function ensureLocaleLoaded(lang: Language): Promise<Record<string, strin
   if (existing) {
     return existing;
   }
-  const promise = fetchEnglishDictionary();
+  const promise = fetchEnglishDictionary().catch((err) => {
+    delete localePromises[lang];
+    throw err;
+  });
   localePromises[lang] = promise;
   return promise;
 }
@@ -116,7 +119,7 @@ export function getLocaleVersion(): number {
 
 export function setLanguage(lang: Language): void {
   if (!localeLoaded[lang]) {
-    void ensureLocaleLoaded(lang);
+    void ensureLocaleLoaded(lang).catch(() => {});
   }
   languageSignal.value = lang;
   if (typeof document !== 'undefined' && document.documentElement) {

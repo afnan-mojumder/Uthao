@@ -20,9 +20,17 @@ const UTURN_RAD = (150 * Math.PI) / 180;
 const WRONG_WAY_RAD = (120 * Math.PI) / 180;
 
 /** Finds the route leg nearest (x, z) and the distance to it. Allocation-free. */
-function locate(route: Route, nodes: NodeLookup, x: number, z: number): boolean {
+function locate(
+  route: Route,
+  nodes: NodeLookup,
+  x: number,
+  z: number,
+  heading?: number
+): boolean {
   const ids = route.nodeIds;
   let best = Infinity;
+  let bestAlign = Infinity;
+  let bestT = 0;
   let bestLeg = -1;
   for (let i = 0; i + 1 < ids.length; i++) {
     const a = nodes.get(ids[i]!);
@@ -36,8 +44,28 @@ function locate(route: Route, nodes: NodeLookup, x: number, z: number): boolean 
     const px = a.x + t * dx - x;
     const pz = a.z + t * dz - z;
     const d = Math.sqrt(px * px + pz * pz);
-    if (d < best) {
+    const align =
+      heading !== undefined ? Math.abs(angleDiff(heading, Math.atan2(dx, dz))) : 0;
+
+    let take = false;
+    if (bestLeg < 0) {
+      take = true;
+    } else if (heading !== undefined && Math.abs(d - best) <= 2.0) {
+      if (align < bestAlign - 0.15) {
+        take = true;
+      } else if (Math.abs(align - bestAlign) <= 0.15 && (bestT >= 0.99 || d < best)) {
+        take = true;
+      }
+    } else if (d < best - 0.25) {
+      take = true;
+    } else if (Math.abs(d - best) <= 0.25 && bestT >= 0.99) {
+      take = true;
+    }
+
+    if (take) {
       best = d;
+      bestAlign = align;
+      bestT = t;
       bestLeg = i;
     }
   }
@@ -67,7 +95,7 @@ export function isWrongWayOnRoute(
   z: number,
   heading: number
 ): boolean {
-  if (!locate(route, nodes, x, z)) return false;
+  if (!locate(route, nodes, x, z, heading)) return false;
   const ids = route.nodeIds;
   const a = nodes.get(ids[loc.leg]!);
   const b = nodes.get(ids[loc.leg + 1]!);
@@ -91,7 +119,7 @@ export function nextInstruction(
   const ids = route.nodeIds;
   const last = nodes.get(ids[ids.length - 1]!);
   if (!last) return null;
-  if (ids.length < 2 || !locate(route, nodes, pose.x, pose.z)) {
+  if (ids.length < 2 || !locate(route, nodes, pose.x, pose.z, pose.heading)) {
     instr.kind = 'arrive';
     instr.textKey = 'nav.arrive';
     instr.distanceM = Math.hypot(last.x - pose.x, last.z - pose.z);
@@ -143,12 +171,12 @@ export function nextInstruction(
  */
 export function remainingRouteEtaMin(
   route: Route | null,
-  pose: { x: number; z: number },
+  pose: { x: number; z: number; heading?: number },
   nodes: NodeLookup
 ): number | undefined {
   if (!route || route.nodeIds.length === 0) return undefined;
   const ids = route.nodeIds;
-  if (ids.length < 2 || route.lengthM <= 0 || !locate(route, nodes, pose.x, pose.z)) {
+  if (ids.length < 2 || route.lengthM <= 0 || !locate(route, nodes, pose.x, pose.z, pose.heading)) {
     return Math.max(0, Math.round(route.etaMin));
   }
 
