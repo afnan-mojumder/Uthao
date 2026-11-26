@@ -62,11 +62,16 @@ export function bindAudio(
   if (typeof unsubSeq === 'function') cleanups.push(unsubSeq as () => void);
 
   cleanups.push(bus.on('ride/requested', () => audio.playNotify()));
+  cleanups.push(bus.on('ride/started', () => audio.playBoarding?.()));
   cleanups.push(bus.on('delivery/offered', () => audio.playNotify()));
   cleanups.push(bus.on('ride/completed', () => audio.playCashRegister()));
   cleanups.push(bus.on('delivery/completed', () => audio.playCashRegister()));
   cleanups.push(bus.on('mission/completed', () => audio.playMissionComplete()));
   cleanups.push(bus.on('bike/collision', (ev) => audio.playImpact(ev.severity)));
+  cleanups.push(bus.on('bike/speedBump', () => audio.playSpeedBump?.()));
+  cleanups.push(bus.on('bike/fuelEmpty', () => audio.playEngineStall?.()));
+  cleanups.push(bus.on('bike/breakdown', () => audio.playEngineStall?.()));
+  cleanups.push(bus.on('bike/puncture', () => audio.playPuncture?.()));
   cleanups.push(bus.on('day/started', () => audio.playIgnition?.()));
   cleanups.push(bus.on('bike/swapped', () => audio.playIgnition?.()));
   cleanups.push(

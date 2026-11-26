@@ -12,6 +12,12 @@ import {
   onFuelRescueCallback,
   onChargePhoneCallback,
   onRecoverBikeCallback,
+  phoneSignal,
+  screenSignal,
+  garageSignal,
+  journalSignal,
+  karmaPanelSignal,
+  uiSheetSignal,
   type HudState,
   type HudPassengerInfo,
   type HudNavigationTurn,
@@ -22,8 +28,13 @@ import {
   IconChat,
   IconFuel,
   IconFullscreen,
+  IconMap,
   IconMapPin,
   IconMotorcycle,
+  IconPhone,
+  IconScroll,
+  IconShield,
+  IconSliders,
   IconStar,
   IconTurnLeft,
   IconTurnRight,
@@ -34,6 +45,7 @@ import {
   IconWrench,
 } from '../components/icons';
 import { BALANCE } from '../../config/balance';
+import { getActiveControlsBindings } from '../gamepadNav';
 import { isTouchDevice } from '../touch/TouchActions';
 
 export type { HudState, HudPassengerInfo, HudNavigationTurn, HudMissionInfo };
@@ -121,6 +133,23 @@ const quickBtnStyle = {
   whiteSpace: 'nowrap' as const,
 };
 
+function keyBadgeText(code?: string): string {
+  if (!code) return '';
+  if (code.startsWith('Key')) return code.slice(3);
+  if (code.startsWith('Digit')) return code.slice(5);
+  return code;
+}
+
+const kbdBadgeStyle = {
+  fontSize: '10px',
+  fontWeight: 800,
+  padding: '1px 5px',
+  borderRadius: '4px',
+  background: 'rgba(148, 163, 184, 0.16)',
+  color: '#cbd5e1',
+  fontFamily: 'var(--font-mono)',
+};
+
 /** Renders contextual fuel/charge alerts and quick actions (refuel, rescue, charge, recover bike). */
 function QuickActions({ state, compact = false }: { state: HudState; compact?: boolean }): JSX.Element {
   const canRescue = state.fuelL < BALANCE.FUEL.rescueBelowL;
@@ -128,6 +157,10 @@ function QuickActions({ state, compact = false }: { state: HudState; compact?: b
   const worn = (state.conditionPct ?? 100) < BALANCE.WEAR.warnBelow;
   const canCharge = !!state.chargeSpot;
   const showRecover = state.canRecoverBike !== false;
+  const isTouch = isTouchDevice();
+  const phoneState = phoneSignal.value;
+  const hasUnreadPhone = Boolean(phoneState.incomingRequest) || (phoneState.unreadCount ?? 0) > 0;
+  const kb = getActiveControlsBindings().keyboard;
 
   return (
     <div
@@ -185,18 +218,179 @@ function QuickActions({ state, compact = false }: { state: HudState; compact?: b
             <span>{t('hud.fuel_rescue', { cost: localDigits(BALANCE.FUEL.rescue.cost), min: localDigits(BALANCE.FUEL.rescue.waitMin) })}</span>
           </button>
         )}
+        {!isTouch && !compact && (
+          <div
+            data-testid="hud-shortcut-bar"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '5px',
+              background: 'rgba(15, 23, 42, 0.78)',
+              border: '1px solid rgba(148, 163, 184, 0.2)',
+              borderRadius: '10px',
+              padding: '3px 5px',
+              backdropFilter: 'blur(8px)',
+              pointerEvents: 'auto',
+            }}
+          >
+            <button
+              type="button"
+              data-testid="hud-shortcut-phone"
+              onClick={() => {
+                phoneSignal.value = { ...phoneSignal.value, open: !phoneSignal.value.open };
+              }}
+              style={{
+                ...quickBtnStyle,
+                minHeight: '28px',
+                padding: '3px 8px',
+                fontSize: '11px',
+                borderRadius: '7px',
+                border: hasUnreadPhone
+                  ? '1px solid rgba(34, 197, 94, 0.7)'
+                  : '1px solid rgba(148, 163, 184, 0.22)',
+                background: hasUnreadPhone ? 'rgba(34, 197, 94, 0.16)' : 'rgba(30, 41, 59, 0.75)',
+              }}
+              title={t('phone.title')}
+            >
+              <IconPhone size={12} color={hasUnreadPhone ? '#22c55e' : '#38bdf8'} />
+              <span style={kbdBadgeStyle}>{keyBadgeText(kb.phone[0])}</span>
+              {hasUnreadPhone && (
+                <span
+                  style={{
+                    background: '#22c55e',
+                    color: '#0f172a',
+                    fontSize: '10px',
+                    fontWeight: 800,
+                    borderRadius: '999px',
+                    padding: '0 5px',
+                    lineHeight: '15px',
+                  }}
+                >
+                  {localDigits(
+                    phoneState.requestQueue?.length || phoneState.unreadCount || 1
+                  )}
+                </span>
+              )}
+            </button>
+            <button
+              type="button"
+              data-testid="hud-shortcut-map"
+              onClick={() => {
+                screenSignal.value = screenSignal.value === 'map' ? 'game' : 'map';
+              }}
+              style={{
+                ...quickBtnStyle,
+                minHeight: '28px',
+                padding: '3px 8px',
+                fontSize: '11px',
+                borderRadius: '7px',
+                border: '1px solid rgba(148, 163, 184, 0.22)',
+                background: 'rgba(30, 41, 59, 0.75)',
+              }}
+              title={t('map.title')}
+            >
+              <IconMap size={12} color="#f59e0b" />
+              <span style={kbdBadgeStyle}>{keyBadgeText(kb.map[0])}</span>
+            </button>
+            <button
+              type="button"
+              data-testid="hud-shortcut-garage"
+              onClick={() => {
+                garageSignal.value = { ...garageSignal.value, open: !garageSignal.value.open };
+              }}
+              style={{
+                ...quickBtnStyle,
+                minHeight: '28px',
+                padding: '3px 8px',
+                fontSize: '11px',
+                borderRadius: '7px',
+                border: '1px solid rgba(148, 163, 184, 0.22)',
+                background: 'rgba(30, 41, 59, 0.75)',
+              }}
+              title={t('garage.title')}
+            >
+              <IconWrench size={12} color="#34d399" />
+              <span style={kbdBadgeStyle}>{keyBadgeText(kb.garage[0])}</span>
+            </button>
+            <button
+              type="button"
+              data-testid="hud-shortcut-journal"
+              onClick={() => {
+                journalSignal.value = !journalSignal.value;
+              }}
+              style={{
+                ...quickBtnStyle,
+                minHeight: '28px',
+                padding: '3px 8px',
+                fontSize: '11px',
+                borderRadius: '7px',
+                border: '1px solid rgba(148, 163, 184, 0.22)',
+                background: 'rgba(30, 41, 59, 0.75)',
+              }}
+              title={t('journal.title')}
+            >
+              <IconScroll size={12} color="#a78bfa" />
+              <span style={kbdBadgeStyle}>{keyBadgeText(kb.journal[0])}</span>
+            </button>
+            <button
+              type="button"
+              data-testid="hud-shortcut-karma"
+              onClick={() => {
+                karmaPanelSignal.value = !karmaPanelSignal.value;
+              }}
+              style={{
+                ...quickBtnStyle,
+                minHeight: '28px',
+                padding: '3px 8px',
+                fontSize: '11px',
+                borderRadius: '7px',
+                border: '1px solid rgba(148, 163, 184, 0.22)',
+                background: 'rgba(30, 41, 59, 0.75)',
+              }}
+              title={t('karma.title')}
+            >
+              <IconShield size={12} color="#fbbf24" />
+              <span style={kbdBadgeStyle}>{keyBadgeText(kb.karma[0])}</span>
+            </button>
+            <button
+              type="button"
+              data-testid="hud-shortcut-ui-sheet"
+              onClick={() => {
+                uiSheetSignal.value = !uiSheetSignal.value;
+              }}
+              style={{
+                ...quickBtnStyle,
+                minHeight: '28px',
+                padding: '3px 8px',
+                fontSize: '11px',
+                borderRadius: '7px',
+                border: '1px solid rgba(148, 163, 184, 0.22)',
+                background: 'rgba(30, 41, 59, 0.75)',
+              }}
+              title={t('settings.controls.action.uiSheet')}
+            >
+              <IconSliders size={12} color="#38bdf8" />
+              <span style={kbdBadgeStyle}>{keyBadgeText(kb.uiSheet[0])}</span>
+            </button>
+          </div>
+        )}
         {showRecover && (
           <button
             type="button"
             data-testid="hud-btn-recover-bike"
             style={{
               ...quickBtnStyle,
-              padding: compact ? '4px 8px' : '6px 10px',
-              minHeight: compact ? '32px' : '36px',
+              padding: compact ? '4px 8px' : '4px 9px',
+              minHeight: isTouch ? '44px' : '30px',
+              minWidth: isTouch ? '44px' : undefined,
+              fontSize: '11px',
+              color: '#94a3b8',
+              background: 'rgba(15, 23, 42, 0.75)',
+              border: '1px solid rgba(148, 163, 184, 0.22)',
             }}
             onClick={() => onRecoverBikeCallback?.()}
           >
-            <IconWrench size={14} color="var(--info-sky, #38BDF8)" />
+            <IconWrench size={12} color="var(--info-sky, #38BDF8)" />
             <span>{t('hud.recover_bike')}</span>
           </button>
         )}
@@ -524,23 +718,30 @@ function PassengerChip({
           >
             {displayName}
           </span>
-          <span
-            data-testid="hud-passenger-mood"
-            style={{
-              fontSize: '10px',
-              fontWeight: 800,
-              color: moodInfo.color,
-              background: 'rgba(15, 23, 42, 0.7)',
-              border: `1px solid ${moodInfo.color}`,
-              borderRadius: '9999px',
-              padding: '1px 6px',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {hasActivePassenger && state.passengerStatus?.mood !== undefined
-              ? `${t(moodInfo.key)} ${localDigits(Math.round(state.passengerStatus.mood * 100))}%`
-              : t(moodInfo.key)}
-          </span>
+          {(() => {
+            const pillColor = hasActivePassenger ? moodInfo.color : '#38bdf8';
+            return (
+              <span
+                data-testid="hud-passenger-mood"
+                style={{
+                  fontSize: '10px',
+                  fontWeight: 800,
+                  color: pillColor,
+                  background: 'rgba(15, 23, 42, 0.7)',
+                  border: `1px solid ${pillColor}`,
+                  borderRadius: '9999px',
+                  padding: '1px 6px',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {hasActivePassenger
+                  ? state.passengerStatus?.mood !== undefined
+                    ? `${t(moodInfo.key)} ${localDigits(Math.round(state.passengerStatus.mood * 100))}%`
+                    : t(moodInfo.key)
+                  : t('hud.status.available')}
+              </span>
+            );
+          })()}
         </div>
         <div style={{ fontSize: compact ? '11px' : '13px', color: 'var(--text-muted, #94A3B8)', fontWeight: 600 }}>
           {t(passengerHintKey(state.passengerStatus?.status))}
@@ -673,9 +874,25 @@ export function HudView({
           userSelect: 'none',
         }}
       >
-        {/* Top Helmet Visor Strip: District, Objective Pill, Rating & Clock (+ Earnings on touch) */}
+        {/* Top Helmet Visor Strip: Minimap + District, Objective Pill, Rating & Clock (+ Earnings on touch) */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px', width: '100%' }}>
-          <DistrictBadge districtName={state.districtName} districtId={state.districtId} />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <div
+              id="minimap-container"
+              data-testid="hud-minimap-host"
+              ref={minimapHostRef}
+              style={{
+                width: isTouch ? 'clamp(80px, 18dvh, 116px)' : 'clamp(88px, 18dvh, 128px)',
+                height: isTouch ? 'clamp(80px, 18dvh, 116px)' : 'clamp(88px, 18dvh, 128px)',
+                position: 'relative',
+                borderRadius: '50%',
+                overflow: 'hidden',
+                border: '2px solid rgba(56, 189, 248, 0.4)',
+                boxShadow: '0 4px 16px rgba(0, 0, 0, 0.6)',
+              }}
+            />
+            <DistrictBadge districtName={state.districtName} districtId={state.districtId} />
+          </div>
           <ObjectivePill state={state} compact={true} topOffsetPx={isTouch ? 56 : 0} />
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
             {isTouch && (
@@ -934,6 +1151,8 @@ export function HudView({
               position: 'relative',
               borderRadius: '50%',
               overflow: 'hidden',
+              border: '2px solid rgba(56, 189, 248, 0.4)',
+              boxShadow: '0 4px 16px rgba(0, 0, 0, 0.6)',
             }}
           />
 
@@ -991,7 +1210,8 @@ export function HudView({
               gap: '5px',
               backdropFilter: 'blur(8px)',
               boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)',
-              minHeight: isTouch ? '30px' : '36px',
+              minHeight: isTouch ? '44px' : '36px',
+              minWidth: isTouch ? '44px' : undefined,
             }}
             title={t('hud.fullscreen')}
           >

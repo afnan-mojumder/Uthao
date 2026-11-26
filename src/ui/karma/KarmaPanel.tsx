@@ -69,7 +69,7 @@ export function KarmaPanel({
   isOpen = true,
   data,
   onClose,
-  zIndex = Z_LAYER.PANEL,
+  zIndex = Z_LAYER.MODAL + 20,
 }: KarmaPanelProps) {
   if (!isOpen || !data) return null;
 

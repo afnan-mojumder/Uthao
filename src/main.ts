@@ -11,7 +11,7 @@ import { SIM_DT, MAX_FRAME_DT, MAX_SIM_STEPS_PER_FRAME } from './config/constant
 import type { BikeInput } from './physics/bikeModel';
 import { RoadNetwork } from './sim/road/RoadNetwork';
 import type { AutopilotController } from './debug/autopilot';
-import type { Renderer } from './render/Renderer';
+import type { Renderer, RenderFrameState } from './render/Renderer';
 import { InputManager } from './input';
 import { loadBindings } from './input/bindings';
 import { App } from './ui/App';
@@ -20,12 +20,18 @@ import {
   bindEventBusToStore,
   bindGlobalCrashHandlers,
   bindScreenWakeLock,
+  choiceSignal,
   formatErrorMessage,
+  garageSignal,
+  karmaPanelSignal,
   pausedSignal,
   dayEndSignal,
   endingSignal,
   rideWaitSignal,
+  saveSlotsSignal,
   contextLostSignal,
+  tripSummarySignal,
+  uiSheetSignal,
   unsupportedSignal,
   loadingSignal,
   initPwaInstall,
@@ -187,8 +193,11 @@ async function bootGame(): Promise<void> {
     return;
   }
 
-  // Dynamically load non-Mirpara districts so they live in separate lazy chunks
-  const allDistrictsList = await loadAllDistricts();
+  // Dynamically load districts and initialize Rapier physics concurrently
+  const [allDistrictsList, physics] = await Promise.all([
+    loadAllDistricts(),
+    PhysicsWorld.create(),
+  ]);
   for (const d of allDistrictsList) {
     allDistrictsMap[d.districtId] = d;
   }
@@ -249,10 +258,7 @@ async function bootGame(): Promise<void> {
   bootCleanups.push(gm.bus.on('bike/wobble', () => audio.playWobble()));
   bootCleanups.push(gm.bus.on('bike/nearMiss', () => audio.playNearMiss()));
 
-  // Deterministic 2.5D spatial-hash physics world, used by GameSession's
-  // MotorcycleController (collisions/near-misses) and CityBuilder colliders.
   setLoadingStage('loading.physics', 25);
-  const physics = await PhysicsWorld.create();
 
   // T7.2: single-district debug/test URLs (in DEV) get one deterministic ride
   // instead of the real RequestGenerator, so e2e specs stay stable.
@@ -721,6 +727,22 @@ async function bootGame(): Promise<void> {
     syncHudWithCache(hudCache, hudInputScratch);
   }
 
+  const renderFrameEconomyScratch: NonNullable<RenderFrameState['economy']> = {
+    currentBikeId: 'old100',
+    installedCosmetics: undefined,
+    ownedUpgrades: [],
+  };
+  const renderFrameScratch: RenderFrameState = {
+    clock: { minutes: 420 },
+    weather: 'clear',
+    economy: renderFrameEconomyScratch,
+  };
+  const minimapPoseScratch = { x: 0, z: 0, heading: 0 };
+  const minimapRoadEventPool: Array<{ x: number; z: number }> = [];
+  const minimapStreetHailPool: Array<{ x: number; z: number }> = [];
+  let lastJournalSyncMs = 0;
+  let lastJournalSyncTicks = -1;
+
   function frame(now: number) {
     const dt = (now - lastTime) / 1000;
     lastTime = now;
@@ -729,9 +751,24 @@ async function bootGame(): Promise<void> {
     // encounters are additionally suppressed during the opening tutorial or when
     // disabled via URL — otherwise a roaming encounter can fire behind the main
     // menu and softlock boot.
-    const modalHaltsSim = dayEndSignal.value.active || endingSignal.value.active;
+    // Modal overlay state freezes traffic/physics/clock while player reads menus,
+    // and suppresses ambient roaming encounters while blocking panels or the phone are open.
+    const modalHaltsSim =
+      dayEndSignal.value.active ||
+      endingSignal.value.active ||
+      tripSummarySignal.value !== null ||
+      negotiationSignal.value.active ||
+      saveSlotsSignal.value.isOpen ||
+      garageSignal.value.open ||
+      journalSignal.value ||
+      karmaPanelSignal.value ||
+      uiSheetSignal.value ||
+      settingsOpenSignal.value ||
+      (choiceSignal.value.active && choiceSignal.value.presentation !== 'inline') ||
+      (tutorialSignal.value.active && tutorialSignal.value.step !== 'riding');
     const inGame = screenSignal.value === 'game' && !modalHaltsSim;
-    gm.eventDirector.enabled = inGame && !tutorialSignal.value.active && !encountersDisabledByUrl;
+    const blocksEncounters = modalHaltsSim || phoneSignal.value.open || choiceSignal.value.active;
+    gm.eventDirector.enabled = inGame && !blocksEncounters && !encountersDisabledByUrl;
 
     // Frame-rate decoupling: convert the variable rAF dt into a whole number of
     // fixed SIM_DT ticks, same clamp/cap as GameManager.runFrame. The clock tick
@@ -825,18 +862,40 @@ async function bootGame(): Promise<void> {
       lastBikeBrake = 0;
     }
 
-    // Engine and ambience follow the bike; menus and pause are silent.
-    const playing = inGame && !pausedSignal.value;
+    // Engine and ambience follow the bike; menus/modals silence the engine, pause silences all ambience.
+    const ambiencePlaying = inGame && !pausedSignal.value;
+    const engineRunning = ambiencePlaying && !gm.paused;
+    let nearbyTraffic = 0;
+    if (ambiencePlaying) {
+      const bx = session.bike.x;
+      const bz = session.bike.z;
+      const agentList = trafficManager.agents.list;
+      for (let i = 0; i < agentList.length; i++) {
+        const agent = agentList[i]!;
+        const dx = agent.x - bx;
+        const dz = agent.z - bz;
+        if (dx * dx + dz * dz < 5625) nearbyTraffic++;
+      }
+    }
+    const clockMin = ((gm.clock.minutes % 1440) + 1440) % 1440;
+    const timeBase = clockMin < 300 || clockMin >= 1320 ? 0.08 : 0.24;
+    const rushBoost = gm.clock.isRushHour() ? 0.14 : 0;
+    const rawDensity = Math.min(
+      1,
+      Math.max(0.08, timeBase + rushBoost + Math.min(1, nearbyTraffic / 14) * 0.62)
+    );
+    const cityDensity = gm.paused ? rawDensity * 0.35 : rawDensity;
+
     audio.setEnginePitch(getBikeDef(gm.economyManager.currentBikeId).audioPitch);
     audio.updateEngine(
       session.bike.speed,
       engineThrottle,
-      playing,
+      engineRunning,
       session.bike.gear,
       session.bike.rpmNorm
     );
-    audio.setAmbience(0.5, gm.weather, playing);
-    if (!playing) audio.stopHorn();
+    audio.setAmbience(cityDensity, gm.weather, ambiencePlaying);
+    if (!engineRunning) audio.stopHorn();
 
     const activeReq = rideManager.getActiveRequest();
     // T8.1: the one place HUD, minimap and markers read ride state from.
@@ -894,8 +953,8 @@ async function bootGame(): Promise<void> {
       renderer.updateEncounterStage(stageState, timeSec);
 
       renderer.updatePeople(
-        trafficManager.pedestrians.getPedestrians(),
-        trafficManager.getAgents(),
+        trafficManager.pedestrians.pedestrians.list,
+        trafficManager.agents.list,
         timeSec
       );
 
@@ -904,19 +963,30 @@ async function bootGame(): Promise<void> {
       renderer.syncRoadEvents(gm.roadEvents, roadNetwork);
       renderer.updateWorldEvents(timeSec);
       const alpha = gm.accumulator / SIM_DT;
-      renderer.render(gm.snapshot(), alpha, trafficManager.signals);
+      renderFrameScratch.clock.minutes = gm.clock.minutes;
+      renderFrameScratch.weather = gm.weather;
+      renderFrameEconomyScratch.currentBikeId = gm.economyManager.currentBikeId;
+      renderFrameEconomyScratch.installedCosmetics = gm.economyManager.installedCosmetics;
+      renderFrameEconomyScratch.ownedUpgrades = gm.economyManager.ownedUpgrades;
+      renderer.render(renderFrameScratch, alpha, trafficManager.signals);
     }
 
-    // T7.4: Journal reads a live snapshot; only built while it's actually open.
+    // T7.4: Journal reads a live snapshot; only built while open and throttled to 250ms / tick change.
     if (journalSignal.value) {
-      journalDataSignal.value = {
-        snapshot: gm.snapshot(),
-        activeMissions: gm.story.activeMissions
-          .map((id) => gm.missionManager.missions.get(id))
-          .filter((m): m is NonNullable<typeof m> => Boolean(m)),
-        getObjectiveStates: (missionId) => gm.missionManager.getObjectiveStates(missionId),
-        ownedUpgrades: [...gm.economyManager.ownedUpgrades],
-      };
+      if (lastJournalSyncTicks !== gm.ticks && (lastJournalSyncTicks < 0 || now - lastJournalSyncMs >= 250)) {
+        lastJournalSyncMs = now;
+        lastJournalSyncTicks = gm.ticks;
+        journalDataSignal.value = {
+          snapshot: gm.snapshot(),
+          activeMissions: gm.story.activeMissions
+            .map((id) => gm.missionManager.missions.get(id))
+            .filter((m): m is NonNullable<typeof m> => Boolean(m)),
+          getObjectiveStates: (missionId) => gm.missionManager.getObjectiveStates(missionId),
+          ownedUpgrades: [...gm.economyManager.ownedUpgrades],
+        };
+      }
+    } else {
+      lastJournalSyncTicks = -1;
     }
 
     const curScreen = screenSignal.value;
@@ -928,23 +998,38 @@ async function bootGame(): Promise<void> {
         minimapMarkersScratch.stop = activeStopNode ?? null;
 
         minimapRoadEventsScratch.length = 0;
+        let roadEvPoolIdx = 0;
         gm.roadEvents.forEachActiveEvent((ev) => {
           if (!ev.segmentId) return;
           const seg = roadNetwork.getSegment(ev.segmentId);
           const sN = seg ? roadNetwork.getNode(seg.startNodeId) : undefined;
           const eN = seg ? roadNetwork.getNode(seg.endNodeId) : undefined;
           if (!sN || !eN) return;
-          minimapRoadEventsScratch.push({
-            x: (sN.x + eN.x) * 0.5,
-            z: (sN.z + eN.z) * 0.5,
-          });
+          let entry = minimapRoadEventPool[roadEvPoolIdx];
+          if (!entry) {
+            entry = { x: 0, z: 0 };
+            minimapRoadEventPool.push(entry);
+          }
+          entry.x = (sN.x + eN.x) * 0.5;
+          entry.z = (sN.z + eN.z) * 0.5;
+          minimapRoadEventsScratch.push(entry);
+          roadEvPoolIdx++;
         });
 
         minimapStreetHailsScratch.length = 0;
+        let hailPoolIdx = 0;
         for (let i = 0; i < hailStates.length; i++) {
           const sh = hailStates[i]!;
           if (sh.active) {
-            minimapStreetHailsScratch.push({ x: sh.worldX, z: sh.worldZ });
+            let entry = minimapStreetHailPool[hailPoolIdx];
+            if (!entry) {
+              entry = { x: 0, z: 0 };
+              minimapStreetHailPool.push(entry);
+            }
+            entry.x = sh.worldX;
+            entry.z = sh.worldZ;
+            minimapStreetHailsScratch.push(entry);
+            hailPoolIdx++;
           }
         }
 
@@ -968,8 +1053,11 @@ async function bootGame(): Promise<void> {
           minimapMarkersScratch.mission = null;
         }
 
+        minimapPoseScratch.x = session.bike.x;
+        minimapPoseScratch.z = session.bike.z;
+        minimapPoseScratch.heading = session.bike.heading;
         minimap.update(
-          { x: session.bike.x, z: session.bike.z, heading: session.bike.heading },
+          minimapPoseScratch,
           rideManager.currentRoute ??
             session.getFollowUpRoute() ??
             session.getActiveDeliveryRoute() ??
@@ -997,7 +1085,6 @@ async function bootGame(): Promise<void> {
     }
   }
 
-  if (typeof requestAnimationFrame !== 'undefined') {
-    requestAnimationFrame(frame);
-  }
+  // Render first warm-up frame synchronously before scheduling rAF loop
+  frame(lastTime);
 }

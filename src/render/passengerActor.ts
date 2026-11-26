@@ -19,12 +19,14 @@ export class WorldPassengerActor {
   private readonly childShirtMat: THREE.MeshStandardMaterial;
   private readonly pantsMat: THREE.MeshStandardMaterial;
   private readonly beaconMat: THREE.MeshBasicMaterial;
+  private readonly ringMat: THREE.MeshBasicMaterial;
 
   private readonly headGeo: THREE.BoxGeometry;
   private readonly torsoGeo: THREE.BoxGeometry;
   private readonly legGeo: THREE.BoxGeometry;
   private readonly armGeo: THREE.BoxGeometry;
   private readonly beaconGeo: THREE.OctahedronGeometry;
+  private readonly ringGeo: THREE.RingGeometry;
 
   private readonly leftLeg: THREE.Mesh;
   private readonly rightLeg: THREE.Mesh;
@@ -34,6 +36,7 @@ export class WorldPassengerActor {
   private readonly childLeftLeg: THREE.Mesh;
   private readonly childRightLeg: THREE.Mesh;
   private readonly beaconMesh: THREE.Mesh;
+  private readonly ringMesh: THREE.Mesh;
 
   private lastSeed = -1;
 
@@ -61,6 +64,12 @@ export class WorldPassengerActor {
     this.beaconMat = new THREE.MeshBasicMaterial({
       color: 0x22c55e,
     });
+    this.ringMat = new THREE.MeshBasicMaterial({
+      color: 0x22c55e,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.78,
+    });
 
     this.headGeo = new THREE.BoxGeometry(0.21, 0.22, 0.21);
     this.headGeo.translate(0, 1.56, 0);
@@ -76,24 +85,24 @@ export class WorldPassengerActor {
 
     const head = new THREE.Mesh(this.headGeo, this.skinMat);
     const torso = new THREE.Mesh(this.torsoGeo, this.shirtMat);
-    head.castShadow = true;
+    head.castShadow = false;
     torso.castShadow = true;
 
     this.leftLeg = new THREE.Mesh(this.legGeo, this.pantsMat);
     this.leftLeg.position.set(-0.1, 0.84, 0);
-    this.leftLeg.castShadow = true;
+    this.leftLeg.castShadow = false;
 
     this.rightLeg = new THREE.Mesh(this.legGeo, this.pantsMat);
     this.rightLeg.position.set(0.1, 0.84, 0);
-    this.rightLeg.castShadow = true;
+    this.rightLeg.castShadow = false;
 
     this.leftArm = new THREE.Mesh(this.armGeo, this.shirtMat);
     this.leftArm.position.set(-0.24, 1.36, 0);
-    this.leftArm.castShadow = true;
+    this.leftArm.castShadow = false;
 
     this.rightArm = new THREE.Mesh(this.armGeo, this.shirtMat);
     this.rightArm.position.set(0.24, 1.36, 0);
-    this.rightArm.castShadow = true;
+    this.rightArm.castShadow = false;
 
     this.root.add(head, torso, this.leftLeg, this.rightLeg, this.leftArm, this.rightArm);
 
@@ -123,11 +132,18 @@ export class WorldPassengerActor {
     );
     this.root.add(this.childGroup);
 
-    this.beaconGeo = new THREE.OctahedronGeometry(0.24, 0);
+    this.beaconGeo = new THREE.OctahedronGeometry(0.11, 0);
     this.beaconMesh = new THREE.Mesh(this.beaconGeo, this.beaconMat);
-    this.beaconMesh.position.set(0, 2.45, 0);
+    this.beaconMesh.position.set(0, 2.1, 0);
     this.beaconMesh.visible = false;
     this.root.add(this.beaconMesh);
+
+    this.ringGeo = new THREE.RingGeometry(0.55, 0.72, 24);
+    this.ringGeo.rotateX(-Math.PI / 2);
+    this.ringMesh = new THREE.Mesh(this.ringGeo, this.ringMat);
+    this.ringMesh.position.set(0, 0.03, 0);
+    this.ringMesh.visible = false;
+    this.root.add(this.ringMesh);
   }
 
   private syncPalette(seed: number): void {
@@ -152,11 +168,12 @@ export class WorldPassengerActor {
     if (state.mode === 'hidden' || state.mode === 'onPillion') {
       this.root.visible = false;
       this.beaconMesh.visible = false;
+      this.ringMesh.visible = false;
       return;
     }
 
     this.root.visible = true;
-    this.root.position.set(state.worldX, 0, state.worldZ);
+    this.root.position.set(state.worldX, 0.12, state.worldZ);
     this.root.rotation.y = state.facingRad;
 
     this.syncPalette(state.passengerSeed ?? 0);
@@ -166,9 +183,12 @@ export class WorldPassengerActor {
 
     const beaconVisible = Boolean(state.beaconVisible);
     this.beaconMesh.visible = beaconVisible;
+    this.ringMesh.visible = beaconVisible;
     if (beaconVisible) {
-      this.beaconMesh.position.y = 2.45 + Math.sin(timeSec * 3.5) * 0.12;
+      this.beaconMesh.position.y = 2.1 + Math.sin(timeSec * 3.5) * 0.08;
       this.beaconMesh.rotation.y = timeSec * 1.8;
+      const pulse = 1 + Math.sin(timeSec * 3.5) * 0.08;
+      this.ringMesh.scale.set(pulse, 1, pulse);
     }
 
     if (state.mode === 'walkingToBike' || state.mode === 'walkingBackToBike') {
@@ -204,6 +224,7 @@ export class WorldPassengerActor {
 
   setBeaconColor(hex: number): void {
     this.beaconMat.color.setHex(hex);
+    this.ringMat.color.setHex(hex);
   }
 
   dispose(): void {
@@ -212,11 +233,13 @@ export class WorldPassengerActor {
     this.legGeo.dispose();
     this.armGeo.dispose();
     this.beaconGeo.dispose();
+    this.ringGeo.dispose();
     this.skinMat.dispose();
     this.shirtMat.dispose();
     this.childShirtMat.dispose();
     this.pantsMat.dispose();
     this.beaconMat.dispose();
+    this.ringMat.dispose();
   }
 }
 

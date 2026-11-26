@@ -257,8 +257,8 @@ export class RoadMeshBuilder {
   /** Adjusts asphalt roughness/metalness for monsoon wetness (0 = dry, 1 = soaked). */
   setWetness(wet01: number): void {
     const w = Math.max(0, Math.min(1, wet01));
-    this.roadMat.roughness = 0.85 - w * 0.67;
-    this.roadMat.metalness = 0.05 + w * 0.25;
+    this.roadMat.roughness = 0.85 - w * 0.58;
+    this.roadMat.metalness = 0.05 + w * 0.06;
   }
 
   build(district: DistrictData): RoadBuildResult {

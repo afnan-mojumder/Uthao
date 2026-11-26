@@ -38,6 +38,16 @@ import type { PedestrianAgent } from '../sim/traffic/pedestrians';
 import type { TrafficAgent } from '../sim/traffic/TrafficManager';
 import type { SignalController } from '../sim/traffic/signals';
 
+export interface RenderFrameState {
+  clock: { minutes: number };
+  weather: SimSnapshot['weather'];
+  economy?: {
+    currentBikeId?: BikeId;
+    installedCosmetics?: BikeCosmetics;
+    ownedUpgrades?: readonly string[];
+  };
+}
+
 export class Renderer {
   readonly webglRenderer: THREE.WebGLRenderer;
   readonly scene: THREE.Scene;
@@ -149,6 +159,8 @@ export class Renderer {
             float h = clamp(normalize(vWorldPos).y, 0.0, 1.0);
             vec3 col = mix(uHorizonColor, uTopColor, pow(h, 0.55));
             gl_FragColor = vec4(col, 1.0);
+            #include <tonemapping_fragment>
+            #include <colorspace_fragment>
           }
         `,
       })
@@ -565,7 +577,7 @@ export class Renderer {
     this.cameraRig.snapTo(this._bikePos, state.heading, state.speed);
   }
 
-  render(snapshot: SimSnapshot, alpha = 1.0, signals?: SignalController): void {
+  render(snapshot: RenderFrameState, alpha = 1.0, signals?: SignalController): void {
     const now = performance.now();
     const frameDt =
       this.lastRenderMs > 0
@@ -662,7 +674,7 @@ export class Renderer {
       const wet01 =
         snapshot.weather === 'heavyRain' ? 1.0 : snapshot.weather === 'lightRain' ? 0.65 : 0.0;
       this.cityBuilder.roadBuilder.setWetness(wet01);
-      const nightGlow = TimeOfDay.isStreetlightsActive(snapshot.clock.minutes) ? 1.0 : 0.0;
+      const nightGlow = TimeOfDay.getStreetlightIntensity(snapshot.clock.minutes);
       this.cityBuilder.buildingBuilder.setNightGlow(nightGlow);
       this._camPos.x = x;
       this._camPos.z = z;
@@ -700,8 +712,8 @@ export class Renderer {
   }
 
   updatePeople(
-    pedestrians: PedestrianAgent[],
-    trafficAgents: TrafficAgent[],
+    pedestrians: Iterable<PedestrianAgent>,
+    trafficAgents: Iterable<TrafficAgent>,
     timeSec = 0
   ): void {
     this._peopleCamPos.x = this.currBikePose.x;

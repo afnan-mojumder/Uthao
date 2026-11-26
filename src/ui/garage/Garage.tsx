@@ -19,7 +19,10 @@ import { onBuyBikeCallback, onSwitchBikeCallback, garageTabSignal } from '../sto
 import { ModalPanel } from '../components';
 import {
   IconCheck,
+  IconFuel,
   IconMotorcycle,
+  IconSettings,
+  IconShield,
   IconSliders,
   IconStar,
   IconWrench,
@@ -309,14 +312,41 @@ export function Garage({
             flex: 1,
             minHeight: 0,
             overflowY: 'auto',
-            padding: '16px 20px',
+            padding: '16px 20px 28px',
             display: 'flex',
             flexDirection: 'column',
             gap: '14px',
           }}
         >
           {/* Tab 1: Repairs */}
-          {activeTab === 'repairs' && (
+          {activeTab === 'repairs' && (() => {
+            const engineCost = calculateRepairCost('engine', atKamalBhai, kamalRelationship);
+            const tiresCost = calculateRepairCost('tires', atKamalBhai, kamalRelationship);
+            const brakesCost = calculateRepairCost('brakes', atKamalBhai, kamalRelationship);
+            const oilCost = calculateRepairCost('oil', atKamalBhai, kamalRelationship);
+            const fullCost = calculateRepairCost('full', atKamalBhai, kamalRelationship);
+
+            const engineDisabled = engineCondition >= 100 || cash < engineCost;
+            const tiresDisabled = tiresCondition >= 100 || cash < tiresCost;
+            const brakesDisabled = brakesCondition >= 100 || cash < brakesCost;
+            const oilDisabled = oilFreshness >= 100 || cash < oilCost;
+            const fullDisabled = cash < fullCost;
+
+            const repairBtnStyle = (disabled: boolean) => ({
+              width: '100%',
+              marginTop: '8px',
+              padding: '6px',
+              borderRadius: '8px',
+              background: disabled ? 'rgba(51, 65, 85, 0.45)' : 'rgba(56, 189, 248, 0.12)',
+              border: disabled ? '1px solid rgba(148, 163, 184, 0.2)' : '1px solid rgba(56, 189, 248, 0.3)',
+              color: disabled ? '#64748b' : '#38bdf8',
+              fontSize: '0.75rem',
+              fontWeight: 700,
+              cursor: disabled ? 'not-allowed' : 'pointer',
+              opacity: disabled ? 0.7 : 1,
+            });
+
+            return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {/* Condition Bars */}
               <div
@@ -333,7 +363,10 @@ export function Garage({
                 {/* Engine */}
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 600 }}>
-                    <span>⚙️ {t('garage.condition_engine')}</span>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                      <IconSettings size={14} color="#94a3b8" />
+                      {t('garage.condition_engine')}
+                    </span>
                     <span data-testid="garage-condition-engine" style={{ color: getConditionColor(engineCondition) }}>
                       {localDigits(engineCondition)}%
                     </span>
@@ -343,29 +376,21 @@ export function Garage({
                   </div>
                   <button
                     data-testid="garage-repair-engine-btn"
-                    disabled={engineCondition >= 100 || cash < calculateRepairCost('engine', atKamalBhai, kamalRelationship)}
+                    disabled={engineDisabled}
                     onClick={() => onRepair?.('engine')}
-                    style={{
-                      width: '100%',
-                      marginTop: '8px',
-                      padding: '6px',
-                      borderRadius: '8px',
-                      background: 'rgba(56, 189, 248, 0.12)',
-                      border: '1px solid rgba(56, 189, 248, 0.3)',
-                      color: '#38bdf8',
-                      fontSize: '0.75rem',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                    }}
+                    style={repairBtnStyle(engineDisabled)}
                   >
-                    {t('garage.repair_btn')} (৳{localDigits(calculateRepairCost('engine', atKamalBhai, kamalRelationship))})
+                    {t('garage.repair_btn')} (৳{localDigits(engineCost)})
                   </button>
                 </div>
 
                 {/* Tires */}
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 600 }}>
-                    <span>🛞 {t('garage.condition_tires')}</span>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                      <IconSliders size={14} color="#94a3b8" />
+                      {t('garage.condition_tires')}
+                    </span>
                     <span data-testid="garage-condition-tires" style={{ color: getConditionColor(tiresCondition) }}>
                       {localDigits(tiresCondition)}%
                     </span>
@@ -375,29 +400,21 @@ export function Garage({
                   </div>
                   <button
                     data-testid="garage-repair-tires-btn"
-                    disabled={tiresCondition >= 100 || cash < calculateRepairCost('tires', atKamalBhai, kamalRelationship)}
+                    disabled={tiresDisabled}
                     onClick={() => onRepair?.('tires')}
-                    style={{
-                      width: '100%',
-                      marginTop: '8px',
-                      padding: '6px',
-                      borderRadius: '8px',
-                      background: 'rgba(56, 189, 248, 0.12)',
-                      border: '1px solid rgba(56, 189, 248, 0.3)',
-                      color: '#38bdf8',
-                      fontSize: '0.75rem',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                    }}
+                    style={repairBtnStyle(tiresDisabled)}
                   >
-                    {t('garage.repair_btn')} (৳{localDigits(calculateRepairCost('tires', atKamalBhai, kamalRelationship))})
+                    {t('garage.repair_btn')} (৳{localDigits(tiresCost)})
                   </button>
                 </div>
 
                 {/* Brakes */}
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 600 }}>
-                    <span>🛑 {t('garage.condition_brakes')}</span>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                      <IconShield size={14} color="#94a3b8" />
+                      {t('garage.condition_brakes')}
+                    </span>
                     <span data-testid="garage-condition-brakes" style={{ color: getConditionColor(brakesCondition) }}>
                       {localDigits(brakesCondition)}%
                     </span>
@@ -407,29 +424,21 @@ export function Garage({
                   </div>
                   <button
                     data-testid="garage-repair-brakes-btn"
-                    disabled={brakesCondition >= 100 || cash < calculateRepairCost('brakes', atKamalBhai, kamalRelationship)}
+                    disabled={brakesDisabled}
                     onClick={() => onRepair?.('brakes')}
-                    style={{
-                      width: '100%',
-                      marginTop: '8px',
-                      padding: '6px',
-                      borderRadius: '8px',
-                      background: 'rgba(56, 189, 248, 0.12)',
-                      border: '1px solid rgba(56, 189, 248, 0.3)',
-                      color: '#38bdf8',
-                      fontSize: '0.75rem',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                    }}
+                    style={repairBtnStyle(brakesDisabled)}
                   >
-                    {t('garage.repair_btn')} (৳{localDigits(calculateRepairCost('brakes', atKamalBhai, kamalRelationship))})
+                    {t('garage.repair_btn')} (৳{localDigits(brakesCost)})
                   </button>
                 </div>
 
                 {/* Oil */}
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 600 }}>
-                    <span>🛢️ {t('garage.condition_oil')}</span>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                      <IconFuel size={14} color="#94a3b8" />
+                      {t('garage.condition_oil')}
+                    </span>
                     <span data-testid="garage-condition-oil" style={{ color: getConditionColor(oilFreshness) }}>
                       {localDigits(oilFreshness)}%
                     </span>
@@ -439,22 +448,11 @@ export function Garage({
                   </div>
                   <button
                     data-testid="garage-repair-oil-btn"
-                    disabled={oilFreshness >= 100 || cash < calculateRepairCost('oil', atKamalBhai, kamalRelationship)}
+                    disabled={oilDisabled}
                     onClick={() => onRepair?.('oil')}
-                    style={{
-                      width: '100%',
-                      marginTop: '8px',
-                      padding: '6px',
-                      borderRadius: '8px',
-                      background: 'rgba(56, 189, 248, 0.12)',
-                      border: '1px solid rgba(56, 189, 248, 0.3)',
-                      color: '#38bdf8',
-                      fontSize: '0.75rem',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                    }}
+                    style={repairBtnStyle(oilDisabled)}
                   >
-                    {t('garage.repair_btn')} (৳{localDigits(calculateRepairCost('oil', atKamalBhai, kamalRelationship))})
+                    {t('garage.repair_btn')} (৳{localDigits(oilCost)})
                   </button>
                 </div>
               </div>
@@ -462,24 +460,33 @@ export function Garage({
               {/* Full Service Overhaul Button */}
               <button
                 data-testid="garage-repair-all-btn"
-                disabled={cash < calculateRepairCost('full', atKamalBhai, kamalRelationship)}
+                disabled={fullDisabled}
                 onClick={() => onRepair?.('full')}
                 style={{
                   padding: '12px',
                   borderRadius: '12px',
-                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                  border: 'none',
-                  color: '#ffffff',
+                  background: fullDisabled
+                    ? 'rgba(51, 65, 85, 0.5)'
+                    : 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                  border: fullDisabled ? '1px solid rgba(148, 163, 184, 0.2)' : 'none',
+                  color: fullDisabled ? '#64748b' : '#ffffff',
                   fontWeight: 700,
                   fontSize: '0.9rem',
-                  cursor: 'pointer',
-                  boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
+                  cursor: fullDisabled ? 'not-allowed' : 'pointer',
+                  opacity: fullDisabled ? 0.7 : 1,
+                  boxShadow: fullDisabled ? 'none' : '0 4px 12px rgba(16, 185, 129, 0.3)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
                 }}
               >
-                ✨ {t('garage.repair_all')} (৳{localDigits(calculateRepairCost('full', atKamalBhai, kamalRelationship))})
+                <IconStar size={15} />
+                <span>{t('garage.repair_all')} (৳{localDigits(fullCost)})</span>
               </button>
             </div>
-          )}
+            );
+          })()}
 
           {/* Tab 2: Mechanical Upgrades */}
           {activeTab === 'upgrades' && (

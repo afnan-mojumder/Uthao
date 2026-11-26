@@ -13,6 +13,7 @@ export interface ButtonProps {
   ariaLabel?: string;
   testId?: string;
   'data-testid'?: string;
+  'data-autofocus'?: 'true';
   id?: string;
   style?: CSSProperties;
 }
@@ -48,6 +49,7 @@ function ActionButton({
   ariaLabel,
   testId,
   'data-testid': dataTestId,
+  'data-autofocus': dataAutofocus,
   id,
   style,
 }: ButtonProps & { variant: ButtonVariant }): JSX.Element {
@@ -56,6 +58,7 @@ function ActionButton({
       id={id}
       type={type}
       data-testid={dataTestId ?? testId}
+      data-autofocus={dataAutofocus}
       aria-label={ariaLabel}
       disabled={disabled}
       onClick={onClick}
@@ -692,6 +695,7 @@ export function ModalPanel({
     >
       <div
         id={id}
+        className="uthao-dark-scroll"
         role="dialog"
         aria-modal="true"
         aria-label={ariaLabel}

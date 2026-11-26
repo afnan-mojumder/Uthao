@@ -62,11 +62,10 @@ export class Minimap {
       this.canvas.width = this.size;
       this.canvas.height = this.size;
       this.canvas.id = 'minimap-canvas';
-      this.canvas.style.width = `${this.size}px`;
-      this.canvas.style.height = `${this.size}px`;
+      this.canvas.style.width = '100%';
+      this.canvas.style.height = '100%';
+      this.canvas.style.display = 'block';
       this.canvas.style.borderRadius = '50%';
-      this.canvas.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 0.6)';
-      this.canvas.style.border = '2px solid rgba(56, 189, 248, 0.4)';
       this.ctx = this.canvas.getContext('2d');
     } else {
       // Mock for node/headless test environments

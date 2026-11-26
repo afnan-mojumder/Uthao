@@ -702,6 +702,7 @@ export function bindUi(session: GameSession, saveSystem?: SaveSystem): () => voi
     complete: () => {
       tutorialSignal.value = { active: false, step: 'completed' };
       gm.bus.emit('story/flag', { key: 'tutorial_ride_done', value: true });
+      saveSystem?.save(gm, 'auto');
     },
     skip: () => {
       session.cancelLiveTutorialRide?.();
@@ -710,12 +711,17 @@ export function bindUi(session: GameSession, saveSystem?: SaveSystem): () => voi
       gm.bus.emit('story/flag', { key: 'tutorial_nabila_negotiated', value: true });
       gm.bus.emit('story/flag', { key: 'tutorial_ride_done', value: true });
       if (gm.missionManager?.isMissionActive?.('m1_first_ride')) {
+        for (const st of gm.missionManager.getObjectiveStates('m1_first_ride')) {
+          st.progress = st.target;
+          st.completed = true;
+        }
         gm.missionManager.completeMission('m1_first_ride');
       }
       tutorialSignal.value = { active: false, step: 'completed' };
       gm.paused = false;
       pausedSignal.value = false;
       screenSignal.value = 'game';
+      saveSystem?.save(gm, 'auto');
     },
   });
 

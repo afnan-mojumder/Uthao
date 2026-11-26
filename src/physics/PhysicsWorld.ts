@@ -239,7 +239,7 @@ export class PhysicsWorld {
       const midZ = (p1.z + p2.z) / 2;
       const dx = p2.x - p1.x;
       const dz = p2.z - p1.z;
-      const len = Math.hypot(dx, dz);
+      const len = Math.sqrt(dx * dx + dz * dz);
       if (len < 1e-6) continue;
       const angle = Math.atan2(dx, dz);
       const col = this.addStaticBox(

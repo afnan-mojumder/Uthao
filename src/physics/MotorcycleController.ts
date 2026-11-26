@@ -36,6 +36,7 @@ export class MotorcycleController {
   state: BikeState;
 
   private nearMissCooldownS = 0;
+  private bumpCooldownS = 0;
   /** Seconds since the last frame of contact ended; a contact that
    * restarts within CONTACT_RELEASE_S is the same contact. */
   private contactHoldS = 0;
@@ -90,6 +91,7 @@ export class MotorcycleController {
 
   update(input: BikeInput, env: BikeEnvironment, dt: number): BikeState {
     this.nearMissCooldownS = Math.max(0, this.nearMissCooldownS - dt);
+    this.bumpCooldownS = Math.max(0, this.bumpCooldownS - dt);
     this.contactHoldS = Math.max(0, this.contactHoldS - dt);
     if (this.contactHoldS <= 0) {
       this.contactSeverityRank = 0;
@@ -201,17 +203,24 @@ export class MotorcycleController {
         this.contactSeverityRank = Math.max(this.contactSeverityRank, severityRank);
         this.contactOtherKind = hitKind;
         this.contactOtherId = this._hit.otherId;
-        const otherSpeedKmh = isTraffic
-          ? Math.hypot(this._hit.otherVx, this._hit.otherVz) * 3.6
-          : 0;
-        this.bus?.emit('bike/collision', {
-          severity: collisionSeverity,
-          relSpeedKmh: impactKmh,
-          otherKind: hitKind,
-          otherParty: isTraffic,
-          bikeSpeedKmh: totalSpeedKmh,
-          otherSpeedKmh,
-        });
+        if (collisionSeverity === 'bump' && this.bumpCooldownS > 0) {
+          // Suppress rapid repeated bump penalties during minor scrape/bounce contacts
+        } else {
+          if (collisionSeverity === 'bump') {
+            this.bumpCooldownS = 0.75;
+          }
+          const otherSpeedKmh = isTraffic
+            ? Math.hypot(this._hit.otherVx, this._hit.otherVz) * 3.6
+            : 0;
+          this.bus?.emit('bike/collision', {
+            severity: collisionSeverity,
+            relSpeedKmh: impactKmh,
+            otherKind: hitKind,
+            otherParty: isTraffic,
+            bikeSpeedKmh: totalSpeedKmh,
+            otherSpeedKmh,
+          });
+        }
       }
     } else if (totalSpeedKmh > 20) {
       // Near miss check: raycast left and right, subtracting capsule radius.

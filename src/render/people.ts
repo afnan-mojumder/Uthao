@@ -47,6 +47,20 @@ export interface PedestrianPartMeshes {
   rightArm: THREE.InstancedMesh;
 }
 
+const SMALL_NO_SHADOW_KINDS = new Set<TrafficVehicleKind>([
+  'bicycle',
+  'scooter',
+  'motorcycle',
+  'vendor_cart',
+  'rickshaw',
+  'cng',
+  'car',
+  'ride_hailing_car',
+  'bus',
+  'minibus',
+  'delivery_van',
+]);
+
 function hashId(id: string): number {
   let h = 2166136261;
   for (let i = 0; i < id.length; i++) {
@@ -143,7 +157,7 @@ export class PeopleRenderer {
     );
     this.rickshawMesh.count = 0;
     this.rickshawMesh.frustumCulled = false;
-    this.rickshawMesh.castShadow = true;
+    this.rickshawMesh.castShadow = false;
     this.rickshawMesh.receiveShadow = true;
     this.root.add(this.rickshawMesh);
 
@@ -160,7 +174,7 @@ export class PeopleRenderer {
         );
         for (const modelId of modelIds) {
           const proto = this.resolveVehiclePrototype(kind, modelId);
-          const mesh = this.createVehicleInstancedMesh(proto, perVariantCap);
+          const mesh = this.createVehicleInstancedMesh(proto, perVariantCap, kind);
           const slot: VehicleSlot = {
             kind,
             modelId,
@@ -175,7 +189,7 @@ export class PeopleRenderer {
         }
       } else {
         const proto = this.resolveVehiclePrototype(kind);
-        const mesh = this.createVehicleInstancedMesh(proto, this.maxVehiclesPerKind);
+        const mesh = this.createVehicleInstancedMesh(proto, this.maxVehiclesPerKind, kind);
         const slot: VehicleSlot = {
           kind,
           mesh,
@@ -210,12 +224,13 @@ export class PeopleRenderer {
 
   private createVehicleInstancedMesh(
     proto: VehiclePrototype,
-    capacity: number
+    capacity: number,
+    kind?: TrafficVehicleKind
   ): THREE.InstancedMesh {
     const mesh = new THREE.InstancedMesh(proto.geometry, proto.material, capacity);
     mesh.count = 0;
     mesh.frustumCulled = false;
-    mesh.castShadow = true;
+    mesh.castShadow = kind ? !SMALL_NO_SHADOW_KINDS.has(kind) : true;
     mesh.receiveShadow = true;
     this.root.add(mesh);
     return mesh;
@@ -339,7 +354,7 @@ export class PeopleRenderer {
       );
       nextMesh.count = 0;
       nextMesh.frustumCulled = false;
-      nextMesh.castShadow = true;
+      nextMesh.castShadow = !SMALL_NO_SHADOW_KINDS.has(slot.kind);
       nextMesh.receiveShadow = true;
 
       this.root.remove(oldMesh);
@@ -383,8 +398,8 @@ export class PeopleRenderer {
   }
 
   update(
-    pedestrians: PedestrianAgent[],
-    trafficAgents: TrafficAgent[],
+    pedestrians: Iterable<PedestrianAgent>,
+    trafficAgents: Iterable<TrafficAgent>,
     timeSec = 0,
     cameraPos?: { x: number; z: number },
     maxDistance = 250
@@ -394,8 +409,8 @@ export class PeopleRenderer {
     // 1. Update multi-part pedestrians (allocation-free)
     let pedCount = 0;
     const maxPeds = this.maxPedestrians;
-    for (let i = 0; i < pedestrians.length && pedCount < maxPeds; i++) {
-      const p = pedestrians[i]!;
+    for (const p of pedestrians) {
+      if (pedCount >= maxPeds) break;
       if (cameraPos) {
         const dx = p.x - cameraPos.x;
         const dz = p.z - cameraPos.z;
@@ -480,42 +495,33 @@ export class PeopleRenderer {
     this.commitPedPartMesh(this.pedLeftArmMesh, pedCount);
     this.commitPedPartMesh(this.pedRightArmMesh, pedCount);
 
-    // 2. Update rickshaws without array allocations
-    let rCount = 0;
-    for (let i = 0; i < trafficAgents.length && rCount < this.maxRickshaws; i++) {
-      const r = trafficAgents[i]!;
-      if (r.kind !== 'rickshaw') continue;
-      if (cameraPos) {
-        const dx = r.x - cameraPos.x;
-        const dz = r.z - cameraPos.z;
-        if (dx * dx + dz * dz > maxDistSq) continue;
-      }
-      const y = r.y ?? 0;
-      this._pos.set(r.x, y, r.z);
-      this._quat.setFromAxisAngle(this._yAxis, r.heading);
-      this._rootMat.compose(this._pos, this._quat, this._scale);
-      this.rickshawMesh.setMatrixAt(rCount, this._rootMat);
-      rCount++;
-    }
-    this.rickshawMesh.count = rCount;
-    if (this.rickshawMesh.instanceMatrix) {
-      this.rickshawMesh.instanceMatrix.needsUpdate = true;
-    }
-
-    // 3. Cars, buses, CNGs, trucks, motorcycles, scooters, bicycles, carts
+    // 2. Single-pass update for rickshaws & all other traffic vehicles (zero allocations)
     for (let s = 0; s < this.slotCounts.length; s++) {
       this.slotCounts[s] = 0;
     }
 
-    for (let i = 0; i < trafficAgents.length; i++) {
-      const a = trafficAgents[i]!;
-      const slots = this.slotsByKind.get(a.kind);
-      if (!slots || slots.length === 0) continue;
+    let rCount = 0;
+    for (const a of trafficAgents) {
       if (cameraPos) {
         const dx = a.x - cameraPos.x;
         const dz = a.z - cameraPos.z;
         if (dx * dx + dz * dz > maxDistSq) continue;
       }
+
+      if (a.kind === 'rickshaw') {
+        if (rCount < this.maxRickshaws) {
+          const y = a.y ?? 0;
+          this._pos.set(a.x, y, a.z);
+          this._quat.setFromAxisAngle(this._yAxis, a.heading);
+          this._rootMat.compose(this._pos, this._quat, this._scale);
+          this.rickshawMesh.setMatrixAt(rCount, this._rootMat);
+          rCount++;
+        }
+        continue;
+      }
+
+      const slots = this.slotsByKind.get(a.kind);
+      if (!slots || slots.length === 0) continue;
 
       const slot = slots.length === 1 ? slots[0]! : slots[hashId(a.id) % slots.length]!;
       const slotIdx = slot.slotIndex;
@@ -528,6 +534,11 @@ export class PeopleRenderer {
       this._rootMat.compose(this._pos, this._quat, this._scale);
       slot.mesh.setMatrixAt(n, this._rootMat);
       this.slotCounts[slotIdx] = n + 1;
+    }
+
+    this.rickshawMesh.count = rCount;
+    if (this.rickshawMesh.instanceMatrix) {
+      this.rickshawMesh.instanceMatrix.needsUpdate = true;
     }
 
     for (let s = 0; s < this.allSlots.length; s++) {

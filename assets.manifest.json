@@ -446,6 +446,24 @@
       "sha256": "1956f9a4dc6fa0ec6224641e858884920402c421d4cae6730d7d47914592af7e"
     },
     {
+      "id": "audio_runtime_impact_light",
+      "url": "/assets/audio/impact_light.webm",
+      "pack": "Kenney Impact Sounds",
+      "license": "CC0-1.0",
+      "category": "audio",
+      "source": "impact-sounds/Audio/impactGeneric_light_000.ogg",
+      "sha256": "b63b603148e9d4cb3bdb379ee335df75fc106516b92adf4d5064ff7508c527c5"
+    },
+    {
+      "id": "audio_runtime_impact_metal",
+      "url": "/assets/audio/impact_metal.webm",
+      "pack": "Kenney Impact Sounds",
+      "license": "CC0-1.0",
+      "category": "audio",
+      "source": "impact-sounds/Audio/impactMetal_medium_000.ogg",
+      "sha256": "4b15f0aaab6ecaca22e43fa5b0cabe24d9dcc0758d1df4aa9e95a7c9ff7fb172"
+    },
+    {
       "id": "audio_runtime_cash",
       "url": "/assets/audio/cash.webm",
       "pack": "Uthao Synthesized Audio",

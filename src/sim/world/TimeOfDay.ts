@@ -43,8 +43,8 @@ const SKY_KEYFRAMES: readonly SkyKeyframe[] = [
     fogColor: 0x151e32,
     sunColor: 0x334155,
     sunIntensity: 0,
-    ambientColor: 0x64748b,
-    groundColor: 0x222938,
+    ambientColor: 0x788aa4,
+    groundColor: 0x2e3748,
     ambientIntensity: 0.42,
   },
   {
@@ -55,8 +55,8 @@ const SKY_KEYFRAMES: readonly SkyKeyframe[] = [
     fogColor: 0x151e32,
     sunColor: 0x334155,
     sunIntensity: 0,
-    ambientColor: 0x64748b,
-    groundColor: 0x222938,
+    ambientColor: 0x788aa4,
+    groundColor: 0x2e3748,
     ambientIntensity: 0.42,
   },
   {
@@ -163,8 +163,8 @@ const SKY_KEYFRAMES: readonly SkyKeyframe[] = [
     fogColor: 0x151e32,
     sunColor: 0x334155,
     sunIntensity: 0,
-    ambientColor: 0x64748b,
-    groundColor: 0x222938,
+    ambientColor: 0x788aa4,
+    groundColor: 0x2e3748,
     ambientIntensity: 0.42,
   },
   {
@@ -175,8 +175,8 @@ const SKY_KEYFRAMES: readonly SkyKeyframe[] = [
     fogColor: 0x151e32,
     sunColor: 0x334155,
     sunIntensity: 0,
-    ambientColor: 0x64748b,
-    groundColor: 0x222938,
+    ambientColor: 0x788aa4,
+    groundColor: 0x2e3748,
     ambientIntensity: 0.42,
   },
 ];
@@ -336,10 +336,10 @@ export class TimeOfDay {
    * When `out` is provided, writes in-place with zero heap allocations.
    */
   static getHeadlightSpec(hasLedUpgrade: boolean = false, out?: HeadlightSpec): HeadlightSpec {
-    const angle = hasLedUpgrade ? 0.7 : 0.45;
-    const distance = hasLedUpgrade ? 60 : 38;
-    const intensity = hasLedUpgrade ? 6.0 : 3.0;
-    const penumbra = hasLedUpgrade ? 0.4 : 0.5;
+    const angle = hasLedUpgrade ? 0.72 : 0.50;
+    const distance = hasLedUpgrade ? 68 : 44;
+    const intensity = hasLedUpgrade ? 48.0 : 26.0;
+    const penumbra = hasLedUpgrade ? 0.45 : 0.55;
     const color = hasLedUpgrade ? 0xf8fafc : 0xfff3d6;
 
     if (out) {

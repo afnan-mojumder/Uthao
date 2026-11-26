@@ -61,47 +61,47 @@ export function Pause({
         background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.98))',
         borderRadius: '24px',
         boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 35px rgba(56, 189, 248, 0.1)',
-        padding: '24px 20px',
-        gap: '18px',
+        padding: '18px 20px',
+        gap: '12px',
       }}
-      contentStyle={{ width: '100%', alignItems: 'center', gap: '18px' }}
+      contentStyle={{ width: '100%', alignItems: 'center', gap: '12px' }}
     >
         {/* Title */}
         <div style={{ textAlign: 'center' }}>
           <div
             style={{
-              width: '44px',
-              height: '44px',
+              width: '38px',
+              height: '38px',
               borderRadius: '50%',
               background: 'rgba(56, 189, 248, 0.15)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              margin: '0 auto 10px auto',
+              margin: '0 auto 6px auto',
               color: '#38bdf8',
             }}
           >
-            <IconPause size={22} />
+            <IconPause size={20} />
           </div>
           <h2
             id="pause-dialog-title"
             data-testid="pause-title"
             style={{
-              margin: '0 0 4px 0',
-              fontSize: '1.45rem',
+              margin: '0 0 2px 0',
+              fontSize: '1.35rem',
               fontWeight: 800,
               letterSpacing: '0.5px',
             }}
           >
             {t('pause.title')}
           </h2>
-          <p style={{ margin: 0, fontSize: '0.85rem', color: '#94a3b8' }}>
+          <p style={{ margin: 0, fontSize: '0.82rem', color: '#94a3b8' }}>
             {t('pause.subtitle')}
           </p>
         </div>
 
         {/* Action Buttons */}
-        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '8px' }}>
           <button
             type="button"
             data-testid="pause-btn-resume"
@@ -199,101 +199,101 @@ export function Pause({
             </button>
           </div>
 
-          <button
-            type="button"
-            data-testid="pause-btn-recover-bike"
-            onClick={onRecoverBike}
-            style={{
-              width: '100%',
-              padding: '11px',
-              borderRadius: '12px',
-              border: '1px solid rgba(245, 158, 11, 0.35)',
-              background: 'rgba(245, 158, 11, 0.14)',
-              color: '#fbbf24',
-              fontSize: '0.9rem',
-              fontWeight: 700,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-            }}
-          >
-            <IconMotorcycle size={16} />
-            <span>{t('pause.recover_bike')}</span>
-          </button>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', width: '100%' }}>
+            <button
+              type="button"
+              data-testid="pause-btn-save"
+              onClick={onOpenSave}
+              style={{
+                padding: '10px',
+                borderRadius: '12px',
+                border: '1px solid rgba(245, 158, 11, 0.3)',
+                background: 'rgba(245, 158, 11, 0.12)',
+                color: '#f59e0b',
+                fontSize: '0.88rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+              }}
+            >
+              <IconSave size={15} />
+              <span>{t('pause.save')}</span>
+            </button>
 
-          <button
-            type="button"
-            data-testid="pause-btn-save"
-            onClick={onOpenSave}
-            style={{
-              width: '100%',
-              padding: '11px',
-              borderRadius: '12px',
-              border: '1px solid rgba(245, 158, 11, 0.3)',
-              background: 'rgba(245, 158, 11, 0.12)',
-              color: '#f59e0b',
-              fontSize: '0.92rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-            }}
-          >
-            <IconSave size={16} />
-            <span>{t('pause.save')}</span>
-          </button>
+            <button
+              type="button"
+              data-testid="pause-btn-load"
+              onClick={onOpenLoad}
+              style={{
+                padding: '10px',
+                borderRadius: '12px',
+                border: '1px solid rgba(56, 189, 248, 0.3)',
+                background: 'rgba(56, 189, 248, 0.12)',
+                color: '#38bdf8',
+                fontSize: '0.88rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+              }}
+            >
+              <IconSave size={15} />
+              <span>{t('pause.load')}</span>
+            </button>
+          </div>
 
-          <button
-            type="button"
-            data-testid="pause-btn-load"
-            onClick={onOpenLoad}
-            style={{
-              width: '100%',
-              padding: '11px',
-              borderRadius: '12px',
-              border: '1px solid rgba(56, 189, 248, 0.3)',
-              background: 'rgba(56, 189, 248, 0.12)',
-              color: '#38bdf8',
-              fontSize: '0.92rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-            }}
-          >
-            <IconSave size={16} />
-            <span>{t('pause.load')}</span>
-          </button>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', width: '100%' }}>
+            <button
+              type="button"
+              data-testid="pause-btn-settings"
+              onClick={onOpenSettings}
+              style={{
+                padding: '10px',
+                borderRadius: '12px',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                background: 'rgba(30, 41, 59, 0.6)',
+                color: '#cbd5e1',
+                fontSize: '0.88rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+              }}
+            >
+              <IconSettings size={15} />
+              <span>{t('pause.settings')}</span>
+            </button>
 
-          <button
-            type="button"
-            data-testid="pause-btn-settings"
-            onClick={onOpenSettings}
-            style={{
-              width: '100%',
-              padding: '11px',
-              borderRadius: '12px',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              background: 'rgba(30, 41, 59, 0.6)',
-              color: '#cbd5e1',
-              fontSize: '0.92rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-            }}
-          >
-            <IconSettings size={16} />
-            <span>{t('pause.settings')}</span>
-          </button>
+            <button
+              type="button"
+              data-testid="pause-btn-recover-bike"
+              onClick={onRecoverBike}
+              style={{
+                padding: '10px',
+                borderRadius: '12px',
+                border: '1px solid rgba(245, 158, 11, 0.35)',
+                background: 'rgba(245, 158, 11, 0.14)',
+                color: '#fbbf24',
+                fontSize: '0.88rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+              }}
+            >
+              <IconMotorcycle size={15} />
+              <span>{t('pause.recover_bike')}</span>
+            </button>
+          </div>
 
           {onEndShiftEarly && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', width: '100%' }}>

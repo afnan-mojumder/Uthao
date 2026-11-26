@@ -381,7 +381,7 @@ export class RoutingGraph {
 
     const lengthM = goalItem.lengthM;
     const virtualKm = (lengthM * DISTANCE_SCALE) / 1000;
-    const etaMin = Math.ceil(goalItem.g / 60);
+    const etaMin = Math.ceil((goalItem.g * DISTANCE_SCALE) / 60);
 
     return {
       nodeIds,

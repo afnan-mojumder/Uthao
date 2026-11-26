@@ -274,13 +274,25 @@ export function ChoiceCardView({
               <div
                 style={{
                   display: 'flex',
+                  flexWrap: 'wrap',
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   gap: '8px',
                 }}
               >
-                <span>{t(opt.text, localizeVars(opt.vars))}</span>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                <span style={{ flex: '1 1 160px', lineHeight: 1.35 }}>
+                  {t(opt.text, localizeVars(opt.vars))}
+                </span>
+                <span
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    flexShrink: 0,
+                    marginLeft: 'auto',
+                    flexWrap: 'wrap',
+                  }}
+                >
                   {opt.kind === 'official' && (
                     <span
                       style={{

@@ -53,7 +53,7 @@ export function Contacts({
         flexDirection: 'column',
         height: '100%',
         overflowY: 'auto',
-        padding: '16px',
+        padding: '16px 16px 28px',
         gap: '12px',
         background: '#090d16',
         color: '#f8fafc',
@@ -206,23 +206,33 @@ export function Contacts({
                 />
 
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: '14px', fontWeight: 700, color: '#f8fafc' }}>
-                      {t(char.nameKey)}
-                    </span>
-                    <span
-                      style={{
-                        fontSize: '10px',
-                        background: 'rgba(56, 189, 248, 0.15)',
-                        color: '#38bdf8',
-                        padding: '1px 6px',
-                        borderRadius: '4px',
-                        fontWeight: 600,
-                      }}
-                    >
-                      {t(char.roleKey)}
-                    </span>
-                  </div>
+                  {(() => {
+                    const nameLabel = t(char.nameKey);
+                    const roleLabel = t(char.roleKey);
+                    const showRoleBadge =
+                      roleLabel.trim().toLowerCase() !== nameLabel.trim().toLowerCase();
+                    return (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: '14px', fontWeight: 700, color: '#f8fafc' }}>
+                          {nameLabel}
+                        </span>
+                        {showRoleBadge && (
+                          <span
+                            style={{
+                              fontSize: '10px',
+                              background: 'rgba(56, 189, 248, 0.15)',
+                              color: '#38bdf8',
+                              padding: '1px 6px',
+                              borderRadius: '4px',
+                              fontWeight: 600,
+                            }}
+                          >
+                            {roleLabel}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })()}
                   <span style={{ fontSize: '11px', color: '#94a3b8' }}>{localDigits(char.phone)}</span>
                 </div>
 

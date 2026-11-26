@@ -26,6 +26,8 @@ export const AUDIO_SAMPLE_IDS = [
   'phone_ring',
   'ui_click',
   'impact',
+  'impact_light',
+  'impact_metal',
   'cash',
   'thunder',
 ] as const;
@@ -36,6 +38,7 @@ export type AudioSampleId = (typeof AUDIO_SAMPLE_IDS)[number];
 const IMPACT_COOLDOWN_S = 0.3;
 const BRAKE_COOLDOWN_S = 0.35;
 const SHIFT_COOLDOWN_S = 0.18;
+const BUMP_COOLDOWN_S = 0.25;
 
 const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
 
@@ -76,17 +79,21 @@ export class AudioManager {
   private volumes: AudioVolumes = { ...DEFAULT_VOLUMES };
 
   private masterGain: GainNode | null = null;
+  private compressor: DynamicsCompressorNode | null = null;
   private sfxGain: GainNode | null = null;
   private ambientGain: GainNode | null = null;
 
   private engineOsc: OscillatorNode | null = null;
   private engineSubOsc: OscillatorNode | null = null;
   private engineSampleSource: AudioBufferSourceNode | null = null;
+  private engineSynthGain: GainNode | null = null;
   private engineFilter: BiquadFilterNode | null = null;
   private engineGain: GainNode | null = null;
   private hornOsc1: OscillatorNode | null = null;
   private hornOsc2: OscillatorNode | null = null;
   private hornSampleSource: AudioBufferSourceNode | null = null;
+  private hornFilter: BiquadFilterNode | null = null;
+  private hornSynthGain: GainNode | null = null;
   private hornGain: GainNode | null = null;
   private cityBedSource: AudioBufferSourceNode | null = null;
   private cityBedGain: GainNode | null = null;
@@ -101,9 +108,11 @@ export class AudioManager {
   private enginePitchMult = 1.0;
   private lastGear = 1;
   private lastRunning = false;
+  private activeRainSampleId: 'rain_light' | 'rain_heavy' | null = null;
   private lastImpactAt = -Infinity;
   private lastBrakeAt = -Infinity;
   private lastShiftAt = -Infinity;
+  private lastBumpAt = -Infinity;
 
   private unlockHandler: (() => void) | null = null;
   private visibilityHandler: (() => void) | null = null;
@@ -221,8 +230,11 @@ export class AudioManager {
     stopNode(this.rainBedSource);
 
     for (const g of [
+      this.engineSynthGain,
       this.engineFilter,
       this.engineGain,
+      this.hornFilter,
+      this.hornSynthGain,
       this.hornGain,
       this.cityBedGain,
       this.rainBedFilter,
@@ -230,6 +242,7 @@ export class AudioManager {
       this.sfxGain,
       this.ambientGain,
       this.masterGain,
+      this.compressor,
     ]) {
       try {
         g?.disconnect?.();
@@ -241,20 +254,25 @@ export class AudioManager {
     this.engineOsc = null;
     this.engineSubOsc = null;
     this.engineSampleSource = null;
+    this.engineSynthGain = null;
     this.engineFilter = null;
     this.engineGain = null;
     this.hornOsc1 = null;
     this.hornOsc2 = null;
     this.hornSampleSource = null;
+    this.hornFilter = null;
+    this.hornSynthGain = null;
     this.hornGain = null;
     this.cityBedSource = null;
     this.cityBedGain = null;
     this.rainBedSource = null;
     this.rainBedFilter = null;
     this.rainBedGain = null;
+    this.activeRainSampleId = null;
     this.sfxGain = null;
     this.ambientGain = null;
     this.masterGain = null;
+    this.compressor = null;
     this.sampleBuffers.clear();
     this.samplePromises.clear();
 
@@ -389,13 +407,15 @@ export class AudioManager {
   }
 
   public playClick(): void {
-    this.playOneShotSample('ui_click', 0.25);
-    this.tone([800], 0.04, 0.25, 'sine', 400);
+    if (!this.playOneShotSample('ui_click', 0.25)) {
+      this.tone([800], 0.04, 0.25, 'sine', 400);
+    }
   }
 
   public playCashRegister(): void {
-    this.playOneShotSample('cash', 0.35);
-    this.tone([987.77, 1318.51], 0.25, 0.3, 'triangle'); // B5, E6
+    if (!this.playOneShotSample('cash', 0.35)) {
+      this.tone([987.77, 1318.51], 0.25, 0.3, 'triangle'); // B5, E6
+    }
   }
 
   /** Phone ping for a new ride or delivery offer. */
@@ -404,12 +424,38 @@ export class AudioManager {
   }
 
   public playPhoneRing(): void {
-    this.playOneShotSample('phone_ring', 0.32);
-    this.tone([880, 1174.66], 0.12, 0.25, 'sine'); // A5, D6
+    if (!this.playOneShotSample('phone_ring', 0.32)) {
+      this.tone([880, 1174.66], 0.12, 0.25, 'sine'); // A5, D6
+    }
   }
 
   public playMissionComplete(): void {
     this.tone([523.25, 659.25, 783.99], 0.3, 0.3, 'triangle'); // C5 E5 G5
+  }
+
+  /** Warm ascending chime when a passenger boards or ride starts. */
+  public playBoarding(): void {
+    this.tone([523.25, 659.25], 0.11, 0.18, 'sine');
+  }
+
+  /** Low suspension thump when crossing a speed bump. */
+  public playSpeedBump(): void {
+    if (!this.audioContext) return;
+    const now = this.audioContext.currentTime;
+    if (now - this.lastBumpAt < BUMP_COOLDOWN_S) return;
+    this.lastBumpAt = now;
+    this.noiseBurst(0.09, 0.22, 'lowpass', 240);
+    this.tone([105], 0.08, 0.18, 'sine', 62);
+  }
+
+  /** Descending engine sputter on fuel empty or mechanical breakdown. */
+  public playEngineStall(): void {
+    this.tone([150, 95, 58], 0.14, 0.22, 'sawtooth', 42);
+  }
+
+  /** Sharp tyre air-hiss pop on puncture. */
+  public playPuncture(): void {
+    this.noiseBurst(0.22, 0.3, 'bandpass', 2200);
   }
 
   /** Starter motor crank + combustion catch. */
@@ -441,9 +487,10 @@ export class AudioManager {
 
   /** Monsoon thunder crack & low rumble on heavy rain transition. */
   public playThunder(): void {
-    this.playOneShotSample('thunder', 0.45);
-    this.tone([68, 46], 0.45, 0.28, 'sawtooth', 32);
-    this.noiseBurst(0.55, 0.32, 'lowpass', 380);
+    if (!this.playOneShotSample('thunder', 0.45)) {
+      this.tone([68, 46], 0.45, 0.28, 'sawtooth', 32);
+      this.noiseBurst(0.55, 0.32, 'lowpass', 380);
+    }
   }
 
   /** Tyre scrub when the bike starts to wobble. */
@@ -462,13 +509,22 @@ export class AudioManager {
     if (now - this.lastImpactAt < IMPACT_COOLDOWN_S) return;
     this.lastImpactAt = now;
     const vol = severity === 'crash' ? 0.9 : severity === 'bump' ? 0.5 : 0.2;
-    this.playOneShotSample('impact', vol * 0.75, severity === 'crash' ? 0.85 : 1.1);
-    this.noiseBurst(
-      severity === 'crash' ? 0.5 : 0.15,
-      vol,
-      'lowpass',
-      severity === 'crash' ? 600 : 900
-    );
+    const preferredSample: AudioSampleId =
+      severity === 'scuff' ? 'impact_light' : severity === 'crash' ? 'impact_metal' : 'impact';
+    const played =
+      this.playOneShotSample(preferredSample, vol * 0.75, severity === 'crash' ? 0.85 : 1.1) ||
+      (preferredSample !== 'impact' &&
+        this.playOneShotSample('impact', vol * 0.75, severity === 'crash' ? 0.85 : 1.1));
+    if (played) {
+      this.noiseBurst(severity === 'crash' ? 0.2 : 0.08, vol * 0.25, 'lowpass', 360);
+    } else {
+      this.noiseBurst(
+        severity === 'crash' ? 0.5 : 0.15,
+        vol,
+        'lowpass',
+        severity === 'crash' ? 600 : 900
+      );
+    }
   }
 
   /**
@@ -494,17 +550,25 @@ export class AudioManager {
     this.cityBedGain.gain.setTargetAtTime(clamp01(districtDensity) * 0.2, now, 0.5);
 
     let rainGain = 0;
-    let rainCutoff = 2500;
+    let rainCutoff = 3400;
+    let wantHeavyRain = false;
     if (typeof rainOrWeather === 'boolean') {
       rainGain = rainOrWeather ? 0.35 : 0;
+      rainCutoff = 3400;
+      wantHeavyRain = rainOrWeather;
     } else if (rainOrWeather === 'heavyRain') {
       rainGain = 0.45;
-      rainCutoff = 1600;
+      rainCutoff = 4200;
+      wantHeavyRain = true;
     } else if (rainOrWeather === 'lightRain') {
       rainGain = 0.25;
-      rainCutoff = 2400;
+      rainCutoff = 2800;
+      wantHeavyRain = false;
     }
 
+    if (rainGain > 0) {
+      this.syncRainSample(wantHeavyRain);
+    }
     if (this.rainBedFilter) {
       this.rainBedFilter.frequency.setTargetAtTime(rainCutoff, now, 0.3);
     }
@@ -520,10 +584,10 @@ export class AudioManager {
     this.ambientGain.gain.setValueAtTime(this.isPlaying ? this.volumes.ambient : 0, now);
   }
 
-  private playOneShotSample(id: AudioSampleId, vol: number, playbackRate = 1): void {
+  private playOneShotSample(id: AudioSampleId, vol: number, playbackRate = 1): boolean {
     const ctx = this.audioContext;
     const buf = this.sampleBuffers.get(id);
-    if (!ctx || !this.sfxGain || !buf) return;
+    if (!ctx || !this.sfxGain || !buf) return false;
     try {
       const src = ctx.createBufferSource();
       src.buffer = buf;
@@ -534,9 +598,18 @@ export class AudioManager {
       gain.gain.setValueAtTime(vol, ctx.currentTime);
       src.connect(gain);
       gain.connect(this.sfxGain);
+      src.onended = () => {
+        try {
+          src.disconnect();
+          gain.disconnect();
+        } catch {
+          // Ignore disconnect errors
+        }
+      };
       src.start();
+      return true;
     } catch {
-      // Fallback DSP handles playback if sample node fails
+      return false;
     }
   }
 
@@ -584,6 +657,40 @@ export class AudioManager {
     return task;
   }
 
+  private syncRainSample(wantHeavy: boolean): void {
+    const ctx = this.audioContext;
+    if (!ctx || this.isDisposed || !this.rainBedFilter) return;
+    const targetId: 'rain_light' | 'rain_heavy' = wantHeavy ? 'rain_heavy' : 'rain_light';
+    const fallbackId: 'rain_light' | 'rain_heavy' = wantHeavy ? 'rain_light' : 'rain_heavy';
+    const chosenId = this.sampleBuffers.has(targetId)
+      ? targetId
+      : this.sampleBuffers.has(fallbackId)
+        ? fallbackId
+        : null;
+    if (!chosenId || this.activeRainSampleId === chosenId) return;
+    const buffer = this.sampleBuffers.get(chosenId);
+    if (!buffer) return;
+    try {
+      if (this.rainBedSource) {
+        try {
+          this.rainBedSource.stop();
+          this.rainBedSource.disconnect();
+        } catch {
+          // Ignore
+        }
+      }
+      const src = ctx.createBufferSource();
+      src.buffer = buffer;
+      src.loop = true;
+      src.connect(this.rainBedFilter);
+      src.start();
+      this.rainBedSource = src;
+      this.activeRainSampleId = chosenId;
+    } catch {
+      // Keep procedural rain bed
+    }
+  }
+
   private attachLoopSampleIfReady(id: AudioSampleId, buffer: AudioBuffer): void {
     const ctx = this.audioContext;
     if (!ctx || this.isDisposed) return;
@@ -595,6 +702,9 @@ export class AudioManager {
         src.connect(this.engineFilter);
         src.start();
         this.engineSampleSource = src;
+        if (this.engineSynthGain) {
+          this.engineSynthGain.gain.setTargetAtTime(0.22, ctx.currentTime, 0.08);
+        }
       } else if (id === 'horn' && this.hornGain && !this.hornSampleSource) {
         const src = ctx.createBufferSource();
         src.buffer = buffer;
@@ -602,6 +712,9 @@ export class AudioManager {
         src.connect(this.hornGain);
         src.start();
         this.hornSampleSource = src;
+        if (this.hornSynthGain) {
+          this.hornSynthGain.gain.setTargetAtTime(0, ctx.currentTime, 0.04);
+        }
       } else if (id === 'dhaka_street' && this.cityBedGain) {
         if (this.cityBedSource) {
           try {
@@ -617,21 +730,8 @@ export class AudioManager {
         src.connect(this.cityBedGain);
         src.start();
         this.cityBedSource = src;
-      } else if (id === 'rain_heavy' && this.rainBedFilter) {
-        if (this.rainBedSource) {
-          try {
-            this.rainBedSource.stop();
-            this.rainBedSource.disconnect();
-          } catch {
-            // Ignore
-          }
-        }
-        const src = ctx.createBufferSource();
-        src.buffer = buffer;
-        src.loop = true;
-        src.connect(this.rainBedFilter);
-        src.start();
-        this.rainBedSource = src;
+      } else if (id === 'rain_heavy' || id === 'rain_light') {
+        this.syncRainSample(id === 'rain_heavy');
       }
     } catch {
       // Keep procedural loop
@@ -653,6 +753,14 @@ export class AudioManager {
         gain.gain.exponentialRampToValueAtTime(0.001, start + dur);
         osc.connect(gain);
         gain.connect(this.sfxGain!);
+        osc.onended = () => {
+          try {
+            osc.disconnect();
+            gain.disconnect();
+          } catch {
+            // Ignore
+          }
+        };
         osc.start(start);
         osc.stop(start + dur);
       });
@@ -676,6 +784,15 @@ export class AudioManager {
       src.connect(filter);
       filter.connect(gain);
       gain.connect(this.sfxGain);
+      src.onended = () => {
+        try {
+          src.disconnect();
+          filter.disconnect();
+          gain.disconnect();
+        } catch {
+          // Ignore
+        }
+      };
       src.start();
       src.stop(ctx.currentTime + dur);
     } catch {
@@ -714,7 +831,21 @@ export class AudioManager {
         return g;
       };
 
-      this.masterGain = gainAt(0, ctx.destination);
+      let finalDest: AudioNode = ctx.destination;
+      if (typeof ctx.createDynamicsCompressor === 'function') {
+        const comp = ctx.createDynamicsCompressor();
+        comp.threshold.setValueAtTime(-6, now);
+        comp.knee.setValueAtTime(12, now);
+        comp.ratio.setValueAtTime(4, now);
+        comp.attack.setValueAtTime(0.005, now);
+        comp.release.setValueAtTime(0.12, now);
+        comp.connect(ctx.destination);
+        this.compressor = comp;
+        finalDest = comp;
+      }
+
+      // Keep the first 7 GainNodes in fixed order: master, sfx, ambient, engine, horn, cityBed, rainBed.
+      this.masterGain = gainAt(0, finalDest);
       this.sfxGain = gainAt(0, this.masterGain);
       this.ambientGain = gainAt(0, this.masterGain);
 
@@ -735,11 +866,6 @@ export class AudioManager {
       this.engineFilter.type = 'lowpass';
       this.engineFilter.frequency.setValueAtTime(320, now);
       this.engineGain = gainAt(0, this.sfxGain);
-      this.engineOsc.connect(this.engineFilter);
-      this.engineSubOsc.connect(this.engineFilter);
-      this.engineFilter.connect(this.engineGain);
-      this.engineOsc.start();
-      this.engineSubOsc.start();
 
       // Horn: dual-tone Dhaka bike horn (440 Hz + 554 Hz).
       this.hornOsc1 = ctx.createOscillator();
@@ -749,19 +875,33 @@ export class AudioManager {
       this.hornOsc2.type = 'sawtooth';
       this.hornOsc2.frequency.setValueAtTime(554.37, now);
       this.hornGain = gainAt(0, this.sfxGain);
-      this.hornOsc1.connect(this.hornGain);
-      this.hornOsc2.connect(this.hornGain);
-      this.hornOsc1.start();
-      this.hornOsc2.start();
 
       this.cityBedGain = gainAt(0, this.ambientGain);
       const cityBed = this.noiseBed(this.cityBedGain, 'lowpass', 400);
       this.cityBedSource = cityBed.src;
 
       this.rainBedGain = gainAt(0, this.ambientGain);
-      const rainBed = this.noiseBed(this.rainBedGain, 'highpass', 2500);
+      const rainBed = this.noiseBed(this.rainBedGain, 'lowpass', 3600);
       this.rainBedSource = rainBed.src;
       this.rainBedFilter = rainBed.filter;
+
+      this.engineSynthGain = gainAt(1, this.engineFilter);
+      this.engineOsc.connect(this.engineSynthGain);
+      this.engineSubOsc.connect(this.engineSynthGain);
+      this.engineFilter.connect(this.engineGain);
+      this.engineOsc.start();
+      this.engineSubOsc.start();
+
+      this.hornFilter = ctx.createBiquadFilter();
+      this.hornFilter.type = 'lowpass';
+      this.hornFilter.frequency.setValueAtTime(1550, now);
+      this.hornFilter.Q.setValueAtTime(1.1, now);
+      this.hornSynthGain = gainAt(1, this.hornGain);
+      this.hornOsc1.connect(this.hornFilter);
+      this.hornOsc2.connect(this.hornFilter);
+      this.hornFilter.connect(this.hornSynthGain);
+      this.hornOsc1.start();
+      this.hornOsc2.start();
     } catch {
       // Audio nodes creation fallback
     }

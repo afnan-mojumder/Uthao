@@ -1,5 +1,6 @@
 import { getRoadWidth, type RoadNetwork } from '../road/RoadNetwork';
 import type { RoadSegment, RoadNode } from '../../core/types';
+import { DenseMap } from '../../core/DenseMap';
 import { Rng } from '../../core/rng';
 import { distance2d, clamp } from '../../core/math';
 import { BALANCE } from '../../config/balance';
@@ -90,7 +91,7 @@ export function canStartJaywalk(
 
 export class PedestrianManager {
   readonly network: RoadNetwork;
-  readonly pedestrians: Map<string, PedestrianAgent> = new Map();
+  readonly pedestrians: DenseMap<string, PedestrianAgent> = new DenseMap();
   private rng: Rng;
   private nextPedSeq = 0;
   private crossingNodeIds: Set<string> = new Set();
@@ -104,6 +105,7 @@ export class PedestrianManager {
   private lastSegScanZ = NaN;
   private hornCooldownS = 0;
   private readonly posScratch = { x: 0, z: 0 };
+  private readonly jaywalkPosScratch = { x: 0, z: 0 };
 
   constructor(network: RoadNetwork, seed = 4242) {
     this.network = network;
@@ -139,7 +141,7 @@ export class PedestrianManager {
   }
 
   getPedestrians(): PedestrianAgent[] {
-    return Array.from(this.pedestrians.values());
+    return this.pedestrians.list.slice();
   }
 
   /**
@@ -152,7 +154,9 @@ export class PedestrianManager {
   ): void {
     // Despawn far pedestrians (> 350 m) without .entries() tuple allocs; keep road workers bound to active events
     this.deleteIdsScratch.length = 0;
-    for (const ped of this.pedestrians.values()) {
+    const pedList = this.pedestrians.list;
+    for (let i = 0; i < pedList.length; i++) {
+      const ped = pedList[i]!;
       if (ped.isRoadWorker) continue;
       const dist = distance2d(camera.x, camera.z, ped.x, ped.z);
       if (dist > 350) {
@@ -261,7 +265,9 @@ export class PedestrianManager {
     if (ped.state !== 'sidewalk') return false;
 
     // Check fairness rule (wet-aware)
-    if (!canStartJaywalk({ x: ped.x, z: ped.z }, playerPos, playerSpeedMs, 6.0, wet)) {
+    this.jaywalkPosScratch.x = ped.x;
+    this.jaywalkPosScratch.z = ped.z;
+    if (!canStartJaywalk(this.jaywalkPosScratch, playerPos, playerSpeedMs, 6.0, wet)) {
       return false; // Disallowed by bounded fairness rule
     }
 
@@ -324,7 +330,9 @@ export class PedestrianManager {
   }
 
   hasRoadWorkers(segmentId: string): boolean {
-    for (const ped of this.pedestrians.values()) {
+    const pedList = this.pedestrians.list;
+    for (let i = 0; i < pedList.length; i++) {
+      const ped = pedList[i]!;
       if (ped.isRoadWorker && ped.segmentId === segmentId) {
         return true;
       }
@@ -334,7 +342,9 @@ export class PedestrianManager {
 
   clearRoadWorkers(segmentId?: string): void {
     this.deleteIdsScratch.length = 0;
-    for (const ped of this.pedestrians.values()) {
+    const pedList = this.pedestrians.list;
+    for (let i = 0; i < pedList.length; i++) {
+      const ped = pedList[i]!;
       if (!ped.isRoadWorker) continue;
       if (
         segmentId === undefined ||
@@ -357,7 +367,9 @@ export class PedestrianManager {
     this.hornCooldownS = HORN_COOLDOWN_S;
 
     let affected = 0;
-    for (const ped of this.pedestrians.values()) {
+    const pedList = this.pedestrians.list;
+    for (let i = 0; i < pedList.length; i++) {
+      const ped = pedList[i]!;
       if (ped.isRoadWorker) continue;
       const dist = distance2d(hornPos.x, hornPos.z, ped.x, ped.z);
       if (dist <= radius) {
@@ -396,7 +408,9 @@ export class PedestrianManager {
 
     const hazardWindowS = wet ? WET_CROSSING_HAZARD_WINDOW_S : CROSSING_HAZARD_WINDOW_S;
 
-    for (const ped of this.pedestrians.values()) {
+    const pedList = this.pedestrians.list;
+    for (let pIdx = 0; pIdx < pedList.length; pIdx++) {
+      const ped = pedList[pIdx]!;
       // Update LOD first so approaching pedestrians immediately wake to 60Hz
       if (camera) {
         const d = distance2d(camera.x, camera.z, ped.x, ped.z);
@@ -437,11 +451,11 @@ export class PedestrianManager {
       const eNode = this.network.getNode(seg.endNodeId);
       if (!sNode || !eNode) continue;
 
-      const segLen = Math.max(0.1, Math.hypot(eNode.x - sNode.x, eNode.z - sNode.z));
-      const sidewalkOffset = getSidewalkOffset(seg);
-      const crossDistTotal = sidewalkOffset * 2;
       const dx = eNode.x - sNode.x;
       const dz = eNode.z - sNode.z;
+      const segLen = Math.max(0.1, Math.sqrt(dx * dx + dz * dz));
+      const sidewalkOffset = getSidewalkOffset(seg);
+      const crossDistTotal = sidewalkOffset * 2;
       const nx = -dz / segLen;
       const nz = dx / segLen;
       const baseHeading = Math.atan2(dx, dz);
@@ -640,7 +654,7 @@ export class PedestrianManager {
     const pos = this.computePositionInto(sNode, eNode, ped.distAlongSegment, ped.lateralOffset, this.posScratch);
     ped.x = pos.x;
     ped.z = pos.z;
-    const len = Math.max(0.1, Math.hypot(eNode.x - sNode.x, eNode.z - sNode.z));
+    const len = Math.max(0.1, distance2d(sNode.x, sNode.z, eNode.x, eNode.z));
     const t = clamp(ped.distAlongSegment / len, 0, 1);
     ped.y = (sNode.y ?? 0) + t * ((eNode.y ?? 0) - (sNode.y ?? 0));
   }
@@ -730,7 +744,7 @@ export class PedestrianManager {
       const cs = this.network.getNode(cand.startNodeId);
       const ce = this.network.getNode(cand.endNodeId);
       if (!cs || !ce) continue;
-      const cLen = Math.hypot(ce.x - cs.x, ce.z - cs.z);
+      const cLen = distance2d(cs.x, cs.z, ce.x, ce.z);
       if (cLen < 5) continue;
 
       const candDir: 1 | -1 = cand.startNodeId === junctionNodeId ? 1 : -1;
@@ -755,7 +769,7 @@ export class PedestrianManager {
     if (!bestSeg) return false;
     const bs = this.network.getNode(bestSeg.startNodeId)!;
     const be = this.network.getNode(bestSeg.endNodeId)!;
-    const bLen = Math.max(0.1, Math.hypot(be.x - bs.x, be.z - bs.z));
+    const bLen = Math.max(0.1, distance2d(bs.x, bs.z, be.x, be.z));
     const bux = (be.x - bs.x) / bLen;
     const buz = (be.z - bs.z) / bLen;
     const bnx = -buz;
@@ -828,15 +842,13 @@ export class PedestrianManager {
       return true;
     }
     if (vehicles) {
-      const isReadonlyArray = (
-        col: ReadonlyMap<string, VehicleView> | readonly VehicleView[]
-      ): col is readonly VehicleView[] => Array.isArray(col);
-      if (isReadonlyArray(vehicles)) {
-        for (const v of vehicles) {
-          if (this.isApproaching(px, pz, v, timeNeededS, hazardWindowS)) return true;
+      if (Array.isArray(vehicles)) {
+        const vehArr = vehicles as readonly VehicleView[];
+        for (let i = 0; i < vehArr.length; i++) {
+          if (this.isApproaching(px, pz, vehArr[i]!, timeNeededS, hazardWindowS)) return true;
         }
       } else {
-        for (const v of vehicles.values()) {
+        for (const v of (vehicles as ReadonlyMap<string, VehicleView>).values()) {
           if (this.isApproaching(px, pz, v, timeNeededS, hazardWindowS)) return true;
         }
       }
@@ -854,7 +866,7 @@ export class PedestrianManager {
     if (v.heading === undefined || Math.abs(v.speed) < 0.5) return false;
     const rx = px - v.x;
     const rz = pz - v.z;
-    const dist = Math.hypot(rx, rz);
+    const dist = Math.sqrt(rx * rx + rz * rz);
     if (dist > HAZARD_RANGE_M) return false;
     const vx = Math.sin(v.heading) * v.speed;
     const vz = Math.cos(v.heading) * v.speed;
@@ -871,7 +883,7 @@ export class PedestrianManager {
   ): { x: number; z: number } {
     const dx = eNode.x - sNode.x;
     const dz = eNode.z - sNode.z;
-    const len = Math.max(0.1, Math.hypot(dx, dz));
+    const len = Math.max(0.1, Math.sqrt(dx * dx + dz * dz));
     const t = clamp(distAlong / len, 0, 1);
 
     const nx = -dz / len;

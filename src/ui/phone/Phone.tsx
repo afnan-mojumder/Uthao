@@ -630,11 +630,12 @@ export function Phone({
                   style={{
                     background: 'rgba(15, 23, 42, 0.85)',
                     borderRadius: '14px',
-                    padding: '10px 12px',
+                    padding: !activeRide ? '8px 10px' : '10px 12px',
                     border: '1px solid rgba(148, 163, 184, 0.2)',
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '8px',
+                    gap: !activeRide ? '6px' : '8px',
+                    opacity: !activeRide ? 0.88 : 1,
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>

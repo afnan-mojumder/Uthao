@@ -5,7 +5,12 @@ import fs from 'node:fs';
 test('screenshot chase cam and fps probe @dev-only', async ({ page }, testInfo) => {
   await page.goto('/?debug=1');
   await page.waitForSelector('#game-canvas');
-  await page.waitForTimeout(600); // Allow several frames to render
+  await page.waitForFunction(
+    () => (window.__uthao?.getDrawCalls() ?? 0) > 0,
+    undefined,
+    { timeout: 10000 }
+  );
+  await page.waitForTimeout(300); // Allow several frames to render
 
   const screenshotsDir = path.resolve('tests/e2e/__screenshots__');
   if (!fs.existsSync(screenshotsDir)) {

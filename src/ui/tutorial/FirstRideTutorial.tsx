@@ -50,16 +50,34 @@ export interface FirstRideTutorialViewProps extends FirstRideTutorialProps {
   onSetAgreedPrompt: (prompt: string) => void;
 }
 
+const TUTORIAL_BACKDROP = {
+  background: 'rgba(2, 6, 23, 0.42)',
+  backdropFilter: 'blur(3px)',
+} as const;
+
+const TUTORIAL_STEP_NUM: Partial<Record<TutorialStep, number>> = {
+  alarm: 1,
+  ma_reminder: 2,
+  wallet_check: 3,
+  bike_inspection: 4,
+  tea_stall: 5,
+  open_app: 6,
+  negotiation: 7,
+  receipt: 8,
+};
+
 function TutorialHeader({
   icon,
   title,
   meta,
+  stepNum,
   accentColor,
   onSkip,
 }: {
   icon: JSX.Element;
   title: string;
   meta: string;
+  stepNum?: number;
   accentColor: string;
   onSkip?: () => void;
 }): JSX.Element {
@@ -78,6 +96,20 @@ function TutorialHeader({
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: accentColor, fontWeight: 700 }}>
         {icon}
         <span>{title}</span>
+        {stepNum !== undefined && (
+          <span
+            style={{
+              fontSize: '0.72rem',
+              padding: '2px 7px',
+              borderRadius: '999px',
+              background: 'rgba(148, 163, 184, 0.16)',
+              color: '#cbd5e1',
+              fontWeight: 700,
+            }}
+          >
+            {localDigits(stepNum)}/{localDigits(8)}
+          </span>
+        )}
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
         <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>{meta}</span>
@@ -127,11 +159,12 @@ export function FirstRideTutorialView(props: FirstRideTutorialViewProps): JSX.El
   // 1. Alarm Screen
   if (currentStep === 'alarm') {
     return (
-      <ModalPanel testId="tutorial-overlay" ariaLabel={t('tutorial.alarm.title')} maxWidth="540px" zIndex={9520}>
+      <ModalPanel testId="tutorial-overlay" ariaLabel={t('tutorial.alarm.title')} maxWidth="540px" zIndex={9520} backdropStyle={TUTORIAL_BACKDROP}>
         <TutorialHeader
           icon={<IconClock size={18} />}
           title={t('tutorial.alarm.title')}
           meta={`${t('hud.day', { day: localDigits(1) })} • ${localDigits('07:00')}`}
+          stepNum={TUTORIAL_STEP_NUM[currentStep]}
           accentColor="#22c55e"
           onSkip={skip}
         />
@@ -145,6 +178,7 @@ export function FirstRideTutorialView(props: FirstRideTutorialViewProps): JSX.El
           <PrimaryButton
             type="button"
             data-testid="tutorial-btn-alarm"
+            data-autofocus="true"
             onClick={() => advance?.('ma_reminder')}
             style={{ width: '100%' }}
           >
@@ -159,11 +193,12 @@ export function FirstRideTutorialView(props: FirstRideTutorialViewProps): JSX.El
   // 2. Ma's Reminder
   if (currentStep === 'ma_reminder') {
     return (
-      <ModalPanel testId="tutorial-overlay" ariaLabel={t('tutorial.ma.title')} maxWidth="540px" zIndex={9520}>
+      <ModalPanel testId="tutorial-overlay" ariaLabel={t('tutorial.ma.title')} maxWidth="540px" zIndex={9520} backdropStyle={TUTORIAL_BACKDROP}>
         <TutorialHeader
           icon={<IconUser size={18} />}
           title={t('tutorial.ma.title')}
           meta={t('character.ma.name')}
+          stepNum={TUTORIAL_STEP_NUM[currentStep]}
           accentColor="#f59e0b"
           onSkip={skip}
         />
@@ -188,6 +223,7 @@ export function FirstRideTutorialView(props: FirstRideTutorialViewProps): JSX.El
         <PrimaryButton
           type="button"
           data-testid="tutorial-btn-ma"
+          data-autofocus="true"
           onClick={() => advance?.('wallet_check')}
           style={{ width: '100%' }}
         >
@@ -201,11 +237,12 @@ export function FirstRideTutorialView(props: FirstRideTutorialViewProps): JSX.El
   // 3. Wallet Check (live cash & rent target)
   if (currentStep === 'wallet_check') {
     return (
-      <ModalPanel testId="tutorial-overlay" ariaLabel={t('tutorial.wallet.title')} maxWidth="540px" zIndex={9520}>
+      <ModalPanel testId="tutorial-overlay" ariaLabel={t('tutorial.wallet.title')} maxWidth="540px" zIndex={9520} backdropStyle={TUTORIAL_BACKDROP}>
         <TutorialHeader
           icon={<IconShield size={18} />}
           title={t('tutorial.wallet.title')}
           meta={t('dayend.wallet')}
+          stepNum={TUTORIAL_STEP_NUM[currentStep]}
           accentColor="#38bdf8"
           onSkip={skip}
         />
@@ -250,6 +287,7 @@ export function FirstRideTutorialView(props: FirstRideTutorialViewProps): JSX.El
         <PrimaryButton
           type="button"
           data-testid="tutorial-btn-wallet"
+          data-autofocus="true"
           onClick={() => advance?.('bike_inspection')}
           style={{ width: '100%' }}
         >
@@ -263,11 +301,12 @@ export function FirstRideTutorialView(props: FirstRideTutorialViewProps): JSX.El
   // 4. Motorcycle Inspection (live fuelL & conditionPct)
   if (currentStep === 'bike_inspection') {
     return (
-      <ModalPanel testId="tutorial-overlay" ariaLabel={t('tutorial.bike.title')} maxWidth="540px" zIndex={9520}>
+      <ModalPanel testId="tutorial-overlay" ariaLabel={t('tutorial.bike.title')} maxWidth="540px" zIndex={9520} backdropStyle={TUTORIAL_BACKDROP}>
         <TutorialHeader
           icon={<IconMotorcycle size={18} />}
           title={t('tutorial.bike.title')}
           meta={`${localDigits(100)}cc`}
+          stepNum={TUTORIAL_STEP_NUM[currentStep]}
           accentColor="#f59e0b"
           onSkip={skip}
         />
@@ -314,6 +353,7 @@ export function FirstRideTutorialView(props: FirstRideTutorialViewProps): JSX.El
         <PrimaryButton
           type="button"
           data-testid="tutorial-btn-bike"
+          data-autofocus="true"
           onClick={() => advance?.('tea_stall')}
           style={{ width: '100%' }}
         >
@@ -327,11 +367,12 @@ export function FirstRideTutorialView(props: FirstRideTutorialViewProps): JSX.El
   // 5. Tea Stall Dialogue (Mintu)
   if (currentStep === 'tea_stall') {
     return (
-      <ModalPanel testId="tutorial-overlay" ariaLabel={t('tutorial.tea_stall.title')} maxWidth="540px" zIndex={9520}>
+      <ModalPanel testId="tutorial-overlay" ariaLabel={t('tutorial.tea_stall.title')} maxWidth="540px" zIndex={9520} backdropStyle={TUTORIAL_BACKDROP}>
         <TutorialHeader
           icon={<IconUser size={18} />}
           title={t('tutorial.tea_stall.title')}
           meta={t('poi.mirpara.tea_stall')}
+          stepNum={TUTORIAL_STEP_NUM[currentStep]}
           accentColor="#10b981"
           onSkip={skip}
         />
@@ -353,6 +394,7 @@ export function FirstRideTutorialView(props: FirstRideTutorialViewProps): JSX.El
         <PrimaryButton
           type="button"
           data-testid="tutorial-btn-tea-stall"
+          data-autofocus="true"
           onClick={() => advance?.('open_app')}
           style={{ width: '100%' }}
         >
@@ -366,11 +408,12 @@ export function FirstRideTutorialView(props: FirstRideTutorialViewProps): JSX.El
   // 6. Incoming Ride Request (Nabila)
   if (currentStep === 'open_app') {
     return (
-      <ModalPanel testId="tutorial-overlay" ariaLabel={t('tutorial.nabila.title')} maxWidth="540px" zIndex={9520}>
+      <ModalPanel testId="tutorial-overlay" ariaLabel={t('tutorial.nabila.title')} maxWidth="540px" zIndex={9520} backdropStyle={TUTORIAL_BACKDROP}>
         <TutorialHeader
           icon={<IconBell size={18} />}
           title={t('tutorial.nabila.title')}
           meta={t('menu.title')}
+          stepNum={TUTORIAL_STEP_NUM[currentStep]}
           accentColor="#22c55e"
           onSkip={skip}
         />
@@ -410,10 +453,11 @@ export function FirstRideTutorialView(props: FirstRideTutorialViewProps): JSX.El
         <PrimaryButton
           type="button"
           data-testid="tutorial-btn-open-request"
+          data-autofocus="true"
           onClick={() => advance?.('negotiation')}
           style={{ width: '100%' }}
         >
-          <span>{t('tutorial.nego.title')}</span>
+          <span>{t('tutorial.nabila.open_btn')}</span>
         </PrimaryButton>
       </ModalPanel>
     );
@@ -428,11 +472,12 @@ export function FirstRideTutorialView(props: FirstRideTutorialViewProps): JSX.El
     };
 
     return (
-      <ModalPanel testId="tutorial-overlay" ariaLabel={t('tutorial.nego.title')} maxWidth="540px" zIndex={9520}>
+      <ModalPanel testId="tutorial-overlay" ariaLabel={t('tutorial.nego.title')} maxWidth="540px" zIndex={9520} backdropStyle={TUTORIAL_BACKDROP}>
         <TutorialHeader
           icon={<IconShield size={18} />}
           title={t('tutorial.nego.title')}
           meta={t('tutorial.nego.passenger_label')}
+          stepNum={TUTORIAL_STEP_NUM[currentStep]}
           accentColor="#f59e0b"
           onSkip={skip}
         />
@@ -448,7 +493,7 @@ export function FirstRideTutorialView(props: FirstRideTutorialViewProps): JSX.El
             {t('tutorial.nego.offer_label')}
           </div>
           <div style={{ fontSize: '1rem', color: '#f8fafc', fontWeight: 600 }}>
-            "{t('tutorial.nabila.dialogue')}"
+            {t('tutorial.nabila.dialogue')}
           </div>
         </div>
 
@@ -473,6 +518,7 @@ export function FirstRideTutorialView(props: FirstRideTutorialViewProps): JSX.El
             <button
               type="button"
               data-testid="tutorial-nego-counter-100"
+              data-autofocus="true"
               onClick={() => handlePickFare(100)}
               style={{
                 padding: '10px 14px',
@@ -524,15 +570,33 @@ export function FirstRideTutorialView(props: FirstRideTutorialViewProps): JSX.El
               <span style={{ fontWeight: 800 }}>৳{localDigits(80)}</span> — {t('tutorial.nabila.accept_80')}
             </button>
 
-            <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+            <button
+              type="button"
+              disabled
+              aria-disabled="true"
+              data-testid="tutorial-nego-decline-disabled"
+              style={{
+                padding: '9px 14px',
+                borderRadius: '12px',
+                border: '1px dashed rgba(148, 163, 184, 0.25)',
+                background: 'rgba(15, 23, 42, 0.4)',
+                color: '#64748b',
+                fontSize: '0.82rem',
+                fontWeight: 600,
+                textAlign: 'left',
+                cursor: 'not-allowed',
+                opacity: 0.65,
+              }}
+            >
               {t('tutorial.nabila.decline_example')}
-            </div>
+            </button>
           </div>
         )}
 
         <PrimaryButton
           type="button"
           data-testid="tutorial-btn-start-ride"
+          data-autofocus="true"
           disabled={!props.agreedPrompt}
           onClick={() => advance?.('riding')}
           style={{ width: '100%' }}
@@ -624,11 +688,12 @@ export function FirstRideTutorialView(props: FirstRideTutorialViewProps): JSX.El
     const net = Math.round(liveReceipt?.net ?? gross - commission - fuelCost);
 
     return (
-      <ModalPanel testId="tutorial-overlay" ariaLabel={t('tutorial.receipt.title')} maxWidth="540px" zIndex={9520}>
+      <ModalPanel testId="tutorial-overlay" ariaLabel={t('tutorial.receipt.title')} maxWidth="540px" zIndex={9520} backdropStyle={TUTORIAL_BACKDROP}>
         <TutorialHeader
           icon={<IconTrophy size={18} />}
           title={t('tutorial.receipt.title')}
           meta={t('trip.summary.title')}
+          stepNum={TUTORIAL_STEP_NUM[currentStep]}
           accentColor="#22c55e"
           onSkip={skip}
         />
@@ -661,6 +726,7 @@ export function FirstRideTutorialView(props: FirstRideTutorialViewProps): JSX.El
         <PrimaryButton
           type="button"
           data-testid="tutorial-btn-finish-receipt"
+          data-autofocus="true"
           onClick={() => complete?.()}
           style={{ width: '100%' }}
         >

@@ -196,13 +196,14 @@ export function SaveSlots({
           {slotKeys.map(({ id, label, isAuto }) => {
             const data: SaveSlotPreview | null = slotsData[id];
             const hasData = Boolean(data);
+            const canSelect = mode === 'save' ? !isAuto : hasData;
 
             return (
               <div
                 key={id}
                 data-testid={`save-slot-${id}`}
                 onClick={() => {
-                  if (mode === 'save' || hasData) {
+                  if (canSelect) {
                     onSelectSlot(id);
                   }
                 }}
@@ -218,7 +219,7 @@ export function SaveSlots({
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  cursor: mode === 'save' || hasData ? 'pointer' : 'default',
+                  cursor: canSelect ? 'pointer' : 'default',
                   transition: 'all 0.2s ease',
                 }}
               >
@@ -282,22 +283,34 @@ export function SaveSlots({
                     <button
                       type="button"
                       data-testid={`btn-action-save-${id}`}
+                      disabled={isAuto}
                       onClick={(e) => {
                         e.stopPropagation();
-                        onSelectSlot(id);
+                        if (!isAuto) {
+                          onSelectSlot(id);
+                        }
                       }}
                       style={{
                         padding: '10px 16px',
                         borderRadius: '10px',
-                        border: 'none',
-                        background: hasData ? '#f59e0b' : '#10b981',
-                        color: '#ffffff',
+                        border: isAuto ? '1px solid rgba(148, 163, 184, 0.25)' : 'none',
+                        background: isAuto
+                          ? 'rgba(51, 65, 85, 0.5)'
+                          : hasData
+                            ? '#f59e0b'
+                            : '#10b981',
+                        color: isAuto ? '#94a3b8' : '#ffffff',
                         fontWeight: 700,
                         fontSize: '0.9rem',
-                        cursor: 'pointer',
+                        cursor: isAuto ? 'not-allowed' : 'pointer',
+                        opacity: isAuto ? 0.72 : 1,
                       }}
                     >
-                      {hasData ? t('save.btn_overwrite') : t('save.btn_save')}
+                      {isAuto
+                        ? t('save.auto_protected')
+                        : hasData
+                          ? t('save.btn_overwrite')
+                          : t('save.btn_save')}
                     </button>
                   )}
 

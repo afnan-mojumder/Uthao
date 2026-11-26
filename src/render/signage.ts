@@ -128,7 +128,7 @@ export class SignageAtlas {
 
     try {
       if (typeof document.fonts.load === 'function') {
-        void document.fonts.load(`bold 32px ${SIGN_FONT_FAMILY}`).catch(() => {});
+        void document.fonts.load(`bold 32px ${SIGN_FONT_FAMILY}`).catch(() => { });
       }
       if (!('ready' in document.fonts)) {
         return Promise.resolve();
@@ -141,7 +141,7 @@ export class SignageAtlas {
           this.paint(ctx, this.canvas.width, this.canvas.height);
           this.texture.needsUpdate = true;
         })
-        .catch(() => {});
+        .catch(() => { });
     } catch {
       return Promise.resolve();
     }

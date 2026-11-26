@@ -465,6 +465,7 @@ export function MapScreen({
   const [selectedPoi, setSelectedPoi] = useState<MapPoiPoint | null>(null);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(waypointNodeId);
   const [filter, setFilter] = useState<'all' | 'fuel' | 'garage' | 'tea'>('all');
+  const [districtFilter, setDistrictFilter] = useState<string | null>(null);
   const [zoom, setZoom] = useState<number>(1.0);
   const [viewportTick, setViewportTick] = useState<number>(0);
   const [loadedDistricts, setLoadedDistricts] = useState<DistrictData[] | null>(
@@ -533,6 +534,9 @@ export function MapScreen({
   });
 
   const displayedPois = model.pois.filter((poi) => {
+    if (districtFilter && effectiveNetwork.getNodeDistrict(poi.nodeId) !== districtFilter) {
+      return false;
+    }
     if (filter === 'fuel') return poi.kind === 'fuel';
     if (filter === 'garage') return poi.kind === 'garage';
     if (filter === 'tea') return poi.kind === 'teaStall';
@@ -642,12 +646,6 @@ export function MapScreen({
         ctx.strokeStyle = 'rgba(148, 163, 184, 0.14)';
         ctx.lineWidth = 1 * dpr;
         ctx.strokeRect(tl.x, tl.y, Math.max(8, br.x - tl.x), Math.max(8, br.y - tl.y));
-
-        const center = toScreen(dist.centerX, dist.minZ + 22);
-        ctx.fillStyle = 'rgba(226, 232, 240, 0.7)';
-        ctx.font = `700 ${11 * dpr}px sans-serif`;
-        ctx.textAlign = 'center';
-        ctx.fillText(t(`district.${dist.id}`), center.x, center.y);
       }
     }
 
@@ -806,6 +804,28 @@ export function MapScreen({
       }
     }
 
+    if (model.isWorldScale) {
+      ctx.font = `700 ${11 * dpr}px sans-serif`;
+      ctx.textAlign = 'center';
+      for (const dist of model.districts) {
+        const label = t(`district.${dist.id}`);
+        const center = toScreen(dist.centerX, dist.minZ + 18);
+        const textW =
+          typeof ctx.measureText === 'function'
+            ? ctx.measureText(label).width
+            : label.length * 7 * dpr;
+        const boxW = textW + 14 * dpr;
+        const boxH = 18 * dpr;
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.84)';
+        ctx.fillRect(center.x - boxW / 2, center.y - 13 * dpr, boxW, boxH);
+        ctx.strokeStyle = 'rgba(148, 163, 184, 0.35)';
+        ctx.lineWidth = 1 * dpr;
+        ctx.strokeRect(center.x - boxW / 2, center.y - 13 * dpr, boxW, boxH);
+        ctx.fillStyle = '#E2E8F0';
+        ctx.fillText(label, center.x, center.y);
+      }
+    }
+
     const playerPt = toScreen(playerPos.x, playerPos.z);
     ctx.beginPath();
     ctx.arc(playerPt.x, playerPt.y, 12 * dpr, 0, Math.PI * 2);
@@ -936,9 +956,9 @@ export function MapScreen({
                 borderRadius: '999px',
                 fontSize: '11px',
                 fontWeight: 700,
-                backgroundColor: 'rgba(245, 158, 11, 0.16)',
-                border: '1px solid rgba(245, 158, 11, 0.45)',
-                color: '#FCD34D',
+                backgroundColor: 'rgba(56, 189, 248, 0.12)',
+                border: '1px solid rgba(56, 189, 248, 0.3)',
+                color: '#7DD3FC',
               }}
             >
               {t('map.prototype_label')}
@@ -1102,6 +1122,7 @@ export function MapScreen({
       {/* Districts Strip */}
       <div
         data-testid="map-districts-bar"
+        className="uthao-dark-scroll"
         style={{
           padding: '6px 16px',
           backgroundColor: 'rgba(15, 23, 42, 0.85)',
@@ -1117,17 +1138,21 @@ export function MapScreen({
           {t('map.districts_label')}:
         </span>
         {model.districts.map((dist) => {
-          const isActiveDistrict = selectedDistrict === dist.id;
+          const isActiveDistrict = districtFilter === dist.id || (!districtFilter && selectedDistrict === dist.id);
           return (
-            <span
+            <button
               key={dist.id}
+              type="button"
               data-testid={`map-district-badge-${dist.id}`}
+              aria-pressed={districtFilter === dist.id}
+              onClick={() => setDistrictFilter((prev) => (prev === dist.id ? null : dist.id))}
               style={{
                 padding: '2px 8px',
                 borderRadius: '999px',
                 fontSize: '11px',
                 fontWeight: 600,
                 whiteSpace: 'nowrap',
+                cursor: 'pointer',
                 backgroundColor: isActiveDistrict
                   ? 'rgba(56, 189, 248, 0.22)'
                   : 'rgba(30, 41, 59, 0.85)',
@@ -1138,7 +1163,7 @@ export function MapScreen({
               }}
             >
               {t(`district.${dist.id}`)}
-            </span>
+            </button>
           );
         })}
       </div>
@@ -1147,6 +1172,7 @@ export function MapScreen({
       {displayedPois.length > 0 && (
         <div
           data-testid="map-poi-bar"
+          className="uthao-dark-scroll"
           style={{
             padding: '6px 16px',
             backgroundColor: 'rgba(15, 23, 42, 0.9)',
@@ -1223,6 +1249,7 @@ export function MapScreen({
         {/* Map Legend Panel */}
         <div
           data-testid="map-legend-panel"
+          className="uthao-dark-scroll"
           style={{
             position: 'absolute',
             top: '10px',

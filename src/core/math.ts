@@ -1,5 +1,5 @@
 export function clamp(val: number, min: number, max: number): number {
-  return Math.max(min, Math.min(max, val));
+  return val < min ? min : val > max ? max : val;
 }
 
 export function lerp(a: number, b: number, t: number): number {
@@ -28,5 +28,5 @@ export function angleDiff(a: number, b: number): number {
 export function distance2d(x1: number, z1: number, x2: number, z2: number): number {
   const dx = x2 - x1;
   const dz = z2 - z1;
-  return Math.hypot(dx, dz);
+  return Math.sqrt(dx * dx + dz * dz);
 }

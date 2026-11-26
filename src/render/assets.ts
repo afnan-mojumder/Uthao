@@ -493,31 +493,120 @@ export class AssetManager {
       }
     }
 
-    const prepared = normalizeGeometriesForMerge(clonedGeos);
     const uniqueMaterials = Array.from(new Set(materials));
     const singleMaterial = uniqueMaterials.length === 1;
-    const merged = mergeGeometries(prepared, !singleMaterial);
 
-    for (const g of prepared) {
-      g.dispose();
-    }
-
-    if (!merged) {
-      const fallbackMesh = meshes[0]!;
-      const fallbackGeo = deinterleaveToFloat32(fallbackMesh.geometry);
-      rel.multiplyMatrices(rootInv, fallbackMesh.matrixWorld);
-      fallbackGeo.applyMatrix4(rel);
-      fallbackGeo.computeBoundingBox();
-      return tagSharedPrototype({
-        geometry: fallbackGeo,
-        material: fallbackMesh.material,
+    if (singleMaterial) {
+      const prepared = normalizeGeometriesForMerge(clonedGeos);
+      const merged = mergeGeometries(prepared, false);
+      for (const g of prepared) g.dispose();
+      if (merged) {
+        merged.computeBoundingBox();
+        return tagSharedPrototype({
+          geometry: merged,
+          material: uniqueMaterials[0]!,
+        });
+      }
+    } else {
+      const anyTextured = uniqueMaterials.some((m) => {
+        const std = m as THREE.MeshStandardMaterial;
+        return Boolean(
+          std.map ||
+            std.normalMap ||
+            std.emissiveMap ||
+            std.roughnessMap ||
+            std.metalnessMap ||
+            std.aoMap
+        );
       });
+
+      if (!anyTextured) {
+        const colScratch = new THREE.Color();
+        const emScratch = new THREE.Color();
+        for (let i = 0; i < clonedGeos.length; i++) {
+          const g = clonedGeos[i]!;
+          const std = materials[i] as THREE.MeshStandardMaterial;
+          colScratch.setHex(std.color ? std.color.getHex() : 0xffffff);
+          if (std.emissive && std.emissive.getHex() !== 0 && (std.emissiveIntensity ?? 1) > 0) {
+            emScratch.setHex(std.emissive.getHex());
+            colScratch.lerp(emScratch, 0.75);
+          }
+          const posCount = g.getAttribute('position')?.count ?? 0;
+          const colors = new Float32Array(posCount * 3);
+          for (let v = 0; v < posCount; v++) {
+            colors[v * 3] = colScratch.r;
+            colors[v * 3 + 1] = colScratch.g;
+            colors[v * 3 + 2] = colScratch.b;
+          }
+          g.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+        }
+        const prepared = normalizeGeometriesForMerge(clonedGeos);
+        const merged = mergeGeometries(prepared, false);
+        for (const g of prepared) g.dispose();
+        if (merged) {
+          merged.computeBoundingBox();
+          return tagSharedPrototype({
+            geometry: merged,
+            material: new THREE.MeshStandardMaterial({
+              color: 0xffffff,
+              vertexColors: true,
+              roughness: 0.55,
+              metalness: 0.15,
+            }),
+          });
+        }
+      } else {
+        // Deduplicate geometry buckets by unique material so groups == uniqueMaterials.length
+        const buckets = new Map<THREE.Material, THREE.BufferGeometry[]>();
+        const preparedAll = normalizeGeometriesForMerge(clonedGeos);
+        for (let i = 0; i < preparedAll.length; i++) {
+          const m = materials[i]!;
+          let list = buckets.get(m);
+          if (!list) {
+            list = [];
+            buckets.set(m, list);
+          }
+          list.push(preparedAll[i]!);
+        }
+        const mergedBuckets: THREE.BufferGeometry[] = [];
+        const bucketMats: THREE.Material[] = [];
+        for (const [m, list] of buckets.entries()) {
+          const mBucket = list.length === 1 ? list[0]! : mergeGeometries(list, false);
+          if (list.length > 1) {
+            for (const g of list) g.dispose();
+          }
+          if (mBucket) {
+            mergedBuckets.push(mBucket);
+            bucketMats.push(m);
+          }
+        }
+        const merged =
+          mergedBuckets.length === 1
+            ? mergedBuckets[0]!
+            : mergeGeometries(mergedBuckets, true);
+        if (mergedBuckets.length > 1) {
+          for (const g of mergedBuckets) {
+            if (g !== merged) g.dispose();
+          }
+        }
+        if (merged) {
+          merged.computeBoundingBox();
+          return tagSharedPrototype({
+            geometry: merged,
+            material: bucketMats.length === 1 ? bucketMats[0]! : bucketMats,
+          });
+        }
+      }
     }
 
-    merged.computeBoundingBox();
+    const fallbackMesh = meshes[0]!;
+    const fallbackGeo = deinterleaveToFloat32(fallbackMesh.geometry);
+    rel.multiplyMatrices(rootInv, fallbackMesh.matrixWorld);
+    fallbackGeo.applyMatrix4(rel);
+    fallbackGeo.computeBoundingBox();
     return tagSharedPrototype({
-      geometry: merged,
-      material: singleMaterial ? uniqueMaterials[0]! : materials,
+      geometry: fallbackGeo,
+      material: fallbackMesh.material,
     });
   }
 

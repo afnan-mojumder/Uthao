@@ -189,6 +189,7 @@ describe('Campaign Chapters 2–6, Side Missions, and Endless Mode (T5.4)', () =
     });
 
     expect(gm.mode).toBe('endless');
+    expect(gm.economyManager.fuelLevel).toBeGreaterThanOrEqual(5.0);
     expect(gm.missionManager.getActiveMissions().length).toBe(0);
     const districts = gm.missionManager.getUnlockedDistricts();
     expect(districts.length).toBe(8);
@@ -208,6 +209,7 @@ describe('Campaign Chapters 2–6, Side Missions, and Endless Mode (T5.4)', () =
 
     // Switching an active career into Endless mode clears activeMissionIds & objectiveStates
     const gmCareer = new GameManager({ seed: 43, mode: 'career', data: {} });
+    expect(gmCareer.economyManager.fuelLevel).toBeCloseTo(1.2, 2);
     expect(gmCareer.missionManager.isMissionActive('m1_first_ride')).toBe(true);
     expect(gmCareer.missionManager.getObjectiveStates('m1_first_ride').length).toBeGreaterThan(0);
     gmCareer.enterEndlessMode();

@@ -289,7 +289,11 @@ export function watchOverlayFocus(): () => void {
     setTimeout(() => {
       if (hasSystemOverlay() || !uiModalOpen(false)) return;
       const active = document.activeElement as HTMLElement | null;
-      if (!active || active === document.body) focusables()[0]?.focus();
+      if (!active || active === document.body) {
+        const list = focusables();
+        const preferred = list.find((el) => el.dataset.autofocus === 'true');
+        (preferred ?? list[0])?.focus();
+      }
     }, 0);
   });
 }

@@ -47,7 +47,7 @@ export function detectViolations(
       if (startNode && endNode) {
         const dx = endNode.x - startNode.x;
         const dz = endNode.z - startNode.z;
-        const len = Math.hypot(dx, dz);
+        const len = Math.sqrt(dx * dx + dz * dz);
         if (len > 0.1) {
           const segHeading = Math.atan2(dx, dz);
           const travelHeading = bike.speed >= 0 ? bike.heading : bike.heading + Math.PI;

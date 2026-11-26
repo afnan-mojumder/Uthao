@@ -90,10 +90,14 @@ export class WeatherFx {
 
   private readonly _skyTopColor = new THREE.Color(0x2563eb);
   private readonly _skyHorizonColor = new THREE.Color(0xc7e8fb);
-  private readonly _stormTopColor = new THREE.Color(0x334155);
+  private readonly _stormTopColor = new THREE.Color(0x222d3d);
   private readonly _stormNightColor = new THREE.Color(0x0f172a);
-  private readonly _overcastTopColor = new THREE.Color(0x64748b);
+  private readonly _stormHorizonColor = new THREE.Color(0x334155);
+  private readonly _stormNightHorizonColor = new THREE.Color(0x1b2538);
+  private readonly _overcastTopColor = new THREE.Color(0x475569);
   private readonly _overcastNightColor = new THREE.Color(0x162033);
+  private readonly _overcastHorizonColor = new THREE.Color(0x64748b);
+  private readonly _overcastNightHorizonColor = new THREE.Color(0x223047);
   private readonly _sunSkyScratch: SunSkyState = {
     sunColor: 0,
     sunIntensity: 0,
@@ -200,7 +204,7 @@ export class WeatherFx {
     this.streetlightMaterials.push(this.lampHeadMat);
 
     for (let i = 0; i < MAX_POOL_LIGHTS; i++) {
-      const pl = new THREE.PointLight(0xffd27d, 0, 28, 1.6);
+      const pl = new THREE.PointLight(0xffd27d, 0, 36, 1.6);
       pl.castShadow = false;
       pl.visible = i < this.maxPointLights;
       this.pointLightPool.push(pl);
@@ -443,10 +447,14 @@ export class WeatherFx {
     const dayFactor = Math.max(0, Math.min(1, (sunSky.ambientIntensity - 0.42) / (1.0 - 0.42)));
     if (weather === 'heavyRain') {
       this._skyTopColor.copy(this._stormNightColor).lerp(this._stormTopColor, dayFactor);
-      this._skyHorizonColor.copy(this._skyTopColor);
+      this._skyHorizonColor
+        .copy(this._stormNightHorizonColor)
+        .lerp(this._stormHorizonColor, dayFactor);
     } else if (weather === 'lightRain' || weather === 'cloudy') {
       this._skyTopColor.copy(this._overcastNightColor).lerp(this._overcastTopColor, dayFactor);
-      this._skyHorizonColor.copy(this._skyTopColor);
+      this._skyHorizonColor
+        .copy(this._overcastNightHorizonColor)
+        .lerp(this._overcastHorizonColor, dayFactor);
     } else {
       this._skyTopColor.setHex(sunSky.skyTopColor);
       this._skyHorizonColor.setHex(sunSky.skyHorizonColor);
@@ -454,7 +462,7 @@ export class WeatherFx {
 
     if (this.scene.background instanceof THREE.Color) {
       if (weather === 'heavyRain' || weather === 'lightRain' || weather === 'cloudy') {
-        this.scene.background.copy(this._skyTopColor);
+        this.scene.background.copy(this._skyHorizonColor);
       } else {
         this.scene.background.setHex(sunSky.skyColor);
       }
@@ -488,7 +496,7 @@ export class WeatherFx {
       this.rainGroup.position.set(0, 0, 0);
       const fallSpeed = weather === 'heavyRain' ? 45 : 25;
       this.rainMaterial.opacity = weather === 'heavyRain' ? 0.8 : 0.45;
-      this.splashMaterial.opacity = weather === 'heavyRain' ? 0.6 : 0.35;
+      this.splashMaterial.opacity = weather === 'heavyRain' ? 0.38 : 0.22;
 
       const streakSec = weather === 'heavyRain' ? 0.018 : 0.016;
       const windMul = weather === 'heavyRain' ? 1.0 : 0.5;
@@ -551,8 +559,8 @@ export class WeatherFx {
       this.rainGeometry.attributes.position!.needsUpdate = true;
 
       // Ground splash particles
-      const splashMaxHeight = weather === 'heavyRain' ? 0.24 : 0.14;
-      const splashMaxSpread = weather === 'heavyRain' ? 0.28 : 0.18;
+      const splashMaxHeight = weather === 'heavyRain' ? 0.11 : 0.07;
+      const splashMaxSpread = weather === 'heavyRain' ? 0.14 : 0.09;
       const sData = this.splashData;
       const sVerts = this.splashVerts;
       const splashY = groundY + 0.02;
@@ -685,7 +693,7 @@ export class WeatherFx {
       const lz = this.lampPositions[idx + 2]!;
       pl.position.set(lx, ly - 0.35, lz);
       const distRatio = Math.sqrt(this._nearestDistSq[k]!) / 70;
-      pl.intensity = 22 * duskGlow * (0.4 + 0.6 * (1 - Math.min(1, distRatio)));
+      pl.intensity = 32 * duskGlow * (0.4 + 0.6 * (1 - Math.min(1, distRatio)));
     }
   }
 

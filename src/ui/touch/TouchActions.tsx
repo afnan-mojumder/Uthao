@@ -4,7 +4,7 @@ import { loadBindings } from '../../input/bindings';
 import { touchLayout } from '../../input/layout';
 import {
   IconBell,
-  IconFullscreen,
+  IconCamera,
   IconMap,
   IconPause,
   IconPhone,
@@ -390,7 +390,7 @@ export function TouchActions(): JSX.Element {
           onPointerLeave={() => releaseHold('camera')}
           onPointerCancel={() => releaseHold('camera')}
         >
-          <IconFullscreen size={18} />
+          <IconCamera size={18} />
         </button>
       </div>
     </div>

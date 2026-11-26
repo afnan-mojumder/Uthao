@@ -54,6 +54,7 @@ export function MainMenu({
   return (
     <div
       data-testid="main-menu"
+      className="uthao-main-menu"
       style={{
         position: 'fixed',
         inset: 0,
@@ -89,6 +90,7 @@ export function MainMenu({
 
       {/* Main Title Container */}
       <div
+        className="uthao-main-menu-header"
         style={{
           textAlign: 'center',
           marginBottom: '40px',
@@ -96,6 +98,7 @@ export function MainMenu({
         }}
       >
         <div
+          className="uthao-main-menu-subtitle"
           style={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -117,6 +120,7 @@ export function MainMenu({
 
         <h1
           data-testid="main-menu-title"
+          className="uthao-main-menu-title"
           style={{
             margin: '0 0 8px 0',
             fontSize: 'clamp(3rem, 7vw, 5rem)',
@@ -132,6 +136,7 @@ export function MainMenu({
         </h1>
 
         <p
+          className="uthao-main-menu-tagline"
           style={{
             margin: 0,
             fontSize: '1rem',
@@ -146,6 +151,7 @@ export function MainMenu({
 
       {/* Navigation Buttons Card */}
       <div
+        className="uthao-main-menu-actions"
         style={{
           width: '100%',
           maxWidth: '360px',
@@ -284,7 +290,7 @@ export function MainMenu({
               {t('menu.career_badge')}
             </span>
           </span>
-          <span style={{ fontSize: '0.75rem', fontWeight: 500, color: '#cbd5e1' }}>
+          <span className="uthao-main-menu-desc" style={{ fontSize: '0.75rem', fontWeight: 500, color: '#cbd5e1' }}>
             {t('menu.career_desc')}
           </span>
         </button>
@@ -313,54 +319,56 @@ export function MainMenu({
             <IconRoad size={18} color="#38bdf8" />
             <span>{t('menu.quick_ride')}</span>
           </span>
-          <span style={{ fontSize: '0.75rem', fontWeight: 500, color: '#94a3b8' }}>
+          <span className="uthao-main-menu-desc" style={{ fontSize: '0.75rem', fontWeight: 500, color: '#94a3b8' }}>
             {t('menu.quick_ride_desc')}
           </span>
         </button>
 
-        <button
-          data-testid="menu-btn-settings"
-          onClick={onOpenSettings}
-          style={{
-            padding: '14px',
-            borderRadius: '14px',
-            border: '1px solid rgba(255, 255, 255, 0.12)',
-            background: 'rgba(30, 41, 59, 0.7)',
-            color: '#f8fafc',
-            fontSize: '1rem',
-            fontWeight: 600,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '10px',
-            transition: 'all 0.2s ease',
-          }}
-        >
-          <IconSettings size={18} /> {t('menu.settings')}
-        </button>
+        <div className="uthao-main-menu-secondary-row" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <button
+            data-testid="menu-btn-settings"
+            onClick={onOpenSettings}
+            style={{
+              padding: '14px',
+              borderRadius: '14px',
+              border: '1px solid rgba(255, 255, 255, 0.12)',
+              background: 'rgba(30, 41, 59, 0.7)',
+              color: '#f8fafc',
+              fontSize: '1rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '10px',
+              transition: 'all 0.2s ease',
+            }}
+          >
+            <IconSettings size={18} /> {t('menu.settings')}
+          </button>
 
-        <button
-          data-testid="menu-btn-credits"
-          onClick={() => setShowCredits(true)}
-          style={{
-            padding: '12px',
-            borderRadius: '14px',
-            border: 'none',
-            background: 'transparent',
-            color: '#94a3b8',
-            fontSize: '0.9rem',
-            fontWeight: 600,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '8px',
-            transition: 'all 0.2s ease',
-          }}
-        >
-          <IconScroll size={16} /> {t('menu.credits')}
-        </button>
+          <button
+            data-testid="menu-btn-credits"
+            onClick={() => setShowCredits(true)}
+            style={{
+              padding: '12px',
+              borderRadius: '14px',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              background: 'rgba(15, 23, 42, 0.35)',
+              color: '#cbd5e1',
+              fontSize: '0.9rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              transition: 'all 0.2s ease',
+            }}
+          >
+            <IconScroll size={16} /> {t('menu.credits')}
+          </button>
+        </div>
 
         {installPromptSignal.value && (
           <button
@@ -433,17 +441,19 @@ export function MainMenu({
             style={{
               width: '100%',
               maxWidth: '540px',
-              maxHeight: '90dvh',
-              overflowY: 'auto',
+              maxHeight: 'calc(100dvh - 32px)',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
               background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.98))',
               border: '1px solid rgba(255, 255, 255, 0.12)',
               borderRadius: '20px',
-              padding: '28px',
+              padding: '22px 24px',
               boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7)',
             }}
           >
             <ModalFocusGuard />
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexShrink: 0 }}>
               <h2 style={{ margin: 0, fontSize: '1.4rem', color: '#38bdf8' }}>{t('menu.credits_title')}</h2>
               <button
                 type="button"
@@ -465,7 +475,7 @@ export function MainMenu({
               </button>
             </div>
 
-            <div style={{ fontSize: '0.9rem', color: '#cbd5e1', lineHeight: 1.6, display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', paddingRight: '4px', paddingBottom: '12px', fontSize: '0.9rem', color: '#cbd5e1', lineHeight: 1.6, display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div>
                 <strong style={{ color: '#f8fafc' }}>{t('menu.credits_dev_heading')}</strong>
                 <p style={{ margin: '4px 0 0 0' }}>{t('menu.credits_dev_names')}</p>
@@ -503,23 +513,24 @@ export function MainMenu({
               </div>
             </div>
 
-            <button
-              type="button"
-              onClick={() => setShowCredits(false)}
-              style={{
-                width: '100%',
-                marginTop: '20px',
-                padding: '12px',
-                borderRadius: '12px',
-                background: 'rgba(56, 189, 248, 0.2)',
-                border: '1px solid rgba(56, 189, 248, 0.4)',
-                color: '#38bdf8',
-                fontWeight: 700,
-                cursor: 'pointer',
-              }}
-            >
-              {t('menu.close')}
-            </button>
+            <div style={{ flexShrink: 0, paddingTop: '14px', borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
+              <button
+                type="button"
+                onClick={() => setShowCredits(false)}
+                style={{
+                  width: '100%',
+                  padding: '11px',
+                  borderRadius: '12px',
+                  background: 'rgba(56, 189, 248, 0.2)',
+                  border: '1px solid rgba(56, 189, 248, 0.4)',
+                  color: '#38bdf8',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                {t('menu.close')}
+              </button>
+            </div>
           </div>
         </div>
       )}

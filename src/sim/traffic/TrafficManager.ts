@@ -8,6 +8,7 @@ import { isRushHourMinute } from '../../core/clock';
 import { distance2d, angleDiff, clamp } from '../../core/math';
 import { BALANCE } from '../../config/balance';
 import type { RoadType } from '../../core/types';
+import { DenseMap } from '../../core/DenseMap';
 import type { RoadEventManager } from '../world/RoadEvents';
 
 /** Stop line sits this far before the end of an approach lane (the junction). */
@@ -24,8 +25,18 @@ const HORN_COOLDOWN_S = 0.4;
 const MID_LOD_STEP_S = 1 / 20;
 const FAR_LOD_STEP_S = 1 / 5;
 
-function compareAgentDistDesc(a: TrafficAgent, b: TrafficAgent): number {
-  return b.distAlongLane - a.distAlongLane;
+/** In-place descending sort on `distAlongLane` with zero scratch allocations. */
+function sortAgentsByDistDesc(agents: TrafficAgent[]): void {
+  for (let i = 1; i < agents.length; i++) {
+    const key = agents[i]!;
+    const keyDist = key.distAlongLane;
+    let j = i - 1;
+    while (j >= 0 && agents[j]!.distAlongLane < keyDist) {
+      agents[j + 1] = agents[j]!;
+      j--;
+    }
+    agents[j + 1] = key;
+  }
 }
 
 export type TrafficVehicleKind =
@@ -176,7 +187,7 @@ export class TrafficManager {
   readonly signals: SignalController;
   readonly pedestrians: PedestrianManager;
   readonly busStops: BusStopLocation[] = [];
-  readonly agents: Map<string, TrafficAgent> = new Map();
+  readonly agents: DenseMap<string, TrafficAgent> = new DenseMap();
   readonly roadEvents?: RoadEventManager;
   private rng: Rng;
   private nextAgentSeq = 0;
@@ -259,7 +270,7 @@ export class TrafficManager {
   }
 
   getAgents(): TrafficAgent[] {
-    return Array.from(this.agents.values());
+    return this.agents.list.slice();
   }
 
   /**
@@ -422,7 +433,9 @@ export class TrafficManager {
     let near200Count = 0;
     let furthestFarId: string | null = null;
     let furthestFarDist = 300;
-    for (const agent of this.agents.values()) {
+    const agentList = this.agents.list;
+    for (let i = 0; i < agentList.length; i++) {
+      const agent = agentList[i]!;
       const d = distance2d(camera.x, camera.z, agent.x, agent.z);
       if (d > DESPAWN_DIST_M) {
         this.deleteIdsScratch.push(agent.id);
@@ -476,6 +489,9 @@ export class TrafficManager {
       const distToCam = distance2d(camera.x, camera.z, pos.x, pos.z);
 
       if (distToCam < SPAWN_RING_MIN_M || distToCam > SPAWN_RING_MAX_M) {
+        continue;
+      }
+      if (this.bikeView && distance2d(this.bikeView.x, this.bikeView.z, pos.x, pos.z) < 25) {
         continue;
       }
       if (!isSpawnPositionAllowed(pos, camera)) {
@@ -570,7 +586,7 @@ export class TrafficManager {
     if (Math.abs(lateralOffset) > 0.001) {
       const dx = p2.x - p1.x;
       const dz = p2.z - p1.z;
-      const len = Math.hypot(dx, dz);
+      const len = Math.sqrt(dx * dx + dz * dz);
       if (len > 0) {
         const leftX = dz / len;
         const leftZ = -dx / len;
@@ -725,7 +741,7 @@ export class TrafficManager {
       ) {
         const toNodeX = endNode.x - bike.x;
         const toNodeZ = endNode.z - bike.z;
-        const distBike = Math.hypot(toNodeX, toNodeZ);
+        const distBike = Math.sqrt(toNodeX * toNodeX + toNodeZ * toNodeZ);
         if (distBike > 1.0 && distBike < 35.0) {
           const dirDot =
             (Math.sin(bike.heading) * toNodeX + Math.cos(bike.heading) * toNodeZ) / distBike;
@@ -797,7 +813,7 @@ export class TrafficManager {
       (bike.y === undefined || Math.abs(bike.y - (agent.y ?? 0)) <= 2.5)
     ) {
       const along = this.projectOntoLane(lane, bike.x, bike.z);
-      if (along !== null && along > agent.distAlongLane) {
+      if (along >= 0 && along > agent.distAlongLane) {
         const meta = this.laneMeta.get(lane.laneId);
         let projSpeed = Math.max(0, bike.speed);
         if (bike.heading !== undefined && meta) {
@@ -836,15 +852,15 @@ export class TrafficManager {
     return false;
   }
 
-  /** Distance along the lane where a point lies, or null if it is off the lane. */
-  private projectOntoLane(lane: Lane, x: number, z: number): number | null {
+  /** Distance along the lane where a point lies, or -1 if it is off the lane. */
+  private projectOntoLane(lane: Lane, x: number, z: number): number {
     const p1 = lane.points[0];
     const p2 = lane.points[1];
-    if (!p1 || !p2) return null;
+    if (!p1 || !p2) return -1;
     const dx = p2.x - p1.x;
     const dz = p2.z - p1.z;
-    const len = Math.hypot(dx, dz);
-    if (len < 0.1) return null;
+    const len = Math.sqrt(dx * dx + dz * dz);
+    if (len < 0.1) return -1;
     const ux = dx / len;
     const uz = dz / len;
     const rx = x - p1.x;
@@ -852,7 +868,7 @@ export class TrafficManager {
     const along = rx * ux + rz * uz;
     const lateral = rx * uz - rz * ux;
     if (along < 0 || along > lane.lengthM || Math.abs(lateral) > BIKE_LANE_HALF_WIDTH_M) {
-      return null;
+      return -1;
     }
     return along;
   }
@@ -890,7 +906,9 @@ export class TrafficManager {
     const pedsYielded = this.pedestrians.triggerHorn(hornPos, radius);
     let rickshawsYielded = 0;
 
-    for (const agent of this.agents.values()) {
+    const agentList = this.agents.list;
+    for (let i = 0; i < agentList.length; i++) {
+      const agent = agentList[i]!;
       if (
         agent.kind === 'rickshaw' ||
         agent.kind === 'motorcycle' ||
@@ -934,7 +952,11 @@ export class TrafficManager {
     if (!list) return;
     const idx = list.indexOf(agent);
     if (idx >= 0) {
-      list.splice(idx, 1);
+      const lastIdx = list.length - 1;
+      for (let i = idx; i < lastIdx; i++) {
+        list[i] = list[i + 1]!;
+      }
+      list.pop();
     }
   }
 
@@ -953,7 +975,9 @@ export class TrafficManager {
       this.laneAgentLists[i]!.length = 0;
     }
     this.processScratch.length = 0;
-    for (const agent of this.agents.values()) {
+    const agentList = this.agents.list;
+    for (let i = 0; i < agentList.length; i++) {
+      const agent = agentList[i]!;
       let laneList = this.agentsByLane.get(agent.laneId);
       if (!laneList) {
         laneList = [];
@@ -968,7 +992,7 @@ export class TrafficManager {
       const laneAgents = this.laneAgentLists[i]!;
       if (laneAgents.length === 0) continue;
       if (laneAgents.length > 1) {
-        laneAgents.sort(compareAgentDistDesc);
+        sortAgentsByDistDesc(laneAgents);
       }
       for (let j = 0; j < laneAgents.length; j++) {
         this.processScratch.push(laneAgents[j]!);
@@ -1208,7 +1232,7 @@ export class TrafficManager {
         (bike.y === undefined || Math.abs(bike.y - (agent.y ?? 0)) <= 2.5)
       ) {
         const alongBike = this.projectOntoLane(lane, bike.x, bike.z);
-        if (alongBike !== null && alongBike > agent.distAlongLane && alongBike - agent.distAlongLane <= 55) {
+        if (alongBike >= 0 && alongBike > agent.distAlongLane && alongBike - agent.distAlongLane <= 55) {
           const dot = Math.sin(bike.heading) * meta.ux + Math.cos(bike.heading) * meta.uz;
           if (bike.speed * dot < -0.5) {
             const bikeLat =
@@ -1331,13 +1355,11 @@ export class TrafficManager {
       agent.z = pos.z;
 
       const targetHeading = updatedMeta ? updatedMeta.heading : this.computeLaneHeading(updatedLane);
-      if (agent.kind === 'rickshaw' || agent.kind === 'vendor_cart') {
-        const diff = angleDiff(agent.heading, targetHeading);
-        const maxTurnThisFrame = 1.2 * effDt;
-        agent.heading += clamp(diff, -maxTurnThisFrame, maxTurnThisFrame);
-      } else {
-        agent.heading = targetHeading;
-      }
+      const diff = angleDiff(agent.heading, targetHeading);
+      const turnRate =
+        agent.kind === 'rickshaw' || agent.kind === 'vendor_cart' ? 1.2 : 5.5;
+      const maxTurnThisFrame = turnRate * effDt;
+      agent.heading += clamp(diff, -maxTurnThisFrame, maxTurnThisFrame);
     }
   }
 }

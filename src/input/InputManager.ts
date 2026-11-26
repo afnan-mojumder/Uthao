@@ -307,8 +307,13 @@ export class InputManager {
       this.currentSteer = 0;
       this.clearTouchInputs();
     } else if (dt > 0) {
-      // Smooth keyboard steer towards target
-      const step = (1.0 / this.STEER_RAMP_TIME) * dt;
+      // Smooth keyboard steer towards target (1.8x faster active counter-steer)
+      const isCountering =
+        targetKbSteer !== 0 &&
+        this.currentSteer !== 0 &&
+        Math.sign(targetKbSteer) !== Math.sign(this.currentSteer);
+      const rate = (1.0 / this.STEER_RAMP_TIME) * (isCountering ? 1.8 : 1.0);
+      const step = rate * dt;
       if (this.currentSteer < targetKbSteer) {
         this.currentSteer = Math.min(targetKbSteer, this.currentSteer + step);
       } else if (this.currentSteer > targetKbSteer) {

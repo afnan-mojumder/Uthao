@@ -338,7 +338,6 @@ describe('Low-Severity Audit Polish Fixes (L1 - L12)', () => {
       'utf8'
     );
     expect(panelSrc).toContain(".replace(/:\\s*৳\\s*$/, '')");
-    expect(panelSrc).toContain('subtitleVars');
   });
 
   it('L11: assets.manifest.json audio entries cover all AUDIO_SAMPLE_IDS with valid SHA-256 hashes', () => {

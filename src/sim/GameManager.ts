@@ -383,6 +383,10 @@ export class GameManager {
     if (this.mode === 'endless') {
       this.story.currentChapter = 6;
       this.story.activeMissions = [];
+      this.economyManager.fuelLevel = Math.max(this.economyManager.fuelLevel, 5.5);
+      this.economyManager.motorcycleCondition = Math.max(this.economyManager.motorcycleCondition, 95);
+      this.economy.fuelLevel = this.economyManager.fuelLevel;
+      this.economy.motorcycleCondition = this.economyManager.motorcycleCondition;
     }
     const endingDefs =
       (this.data.endings as EndingDef[] | undefined) ?? endingsData;
@@ -631,6 +635,12 @@ export class GameManager {
     this.missionManager.missions.clear();
     this.story.activeMissions = [];
     this.story.currentChapter = 6;
+    if (this.economyManager.fuelLevel < 2.5) {
+      this.economyManager.fuelLevel = 5.5;
+      this.economyManager.motorcycleCondition = Math.max(this.economyManager.motorcycleCondition, 95);
+      this.economy.fuelLevel = this.economyManager.fuelLevel;
+      this.economy.motorcycleCondition = this.economyManager.motorcycleCondition;
+    }
   }
 
   /** Clock-driven side effects of `dt` real seconds: clock, weather, road events,

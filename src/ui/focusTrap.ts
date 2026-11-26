@@ -159,16 +159,18 @@ export function makeRestInert(overlay: HTMLElement): () => void {
   };
 }
 
-function activateOverlayTrap(overlay: HTMLElement): () => void {
+export function activateOverlayTrap(overlay: HTMLElement): () => void {
   const opener =
     typeof document !== 'undefined' ? (document.activeElement as HTMLElement | null) : null;
   const release = makeRestInert(overlay);
   const currentActive =
     typeof document !== 'undefined' ? (document.activeElement as HTMLElement | null) : null;
   if (!currentActive || !overlay.contains(currentActive)) {
-    const firstFocusable = getFocusableInside(overlay)[0];
-    if (firstFocusable) {
-      firstFocusable.focus?.();
+    const focusables = getFocusableInside(overlay);
+    const preferred = focusables.find((el) => el.dataset.autofocus === 'true');
+    const target = preferred ?? focusables[0];
+    if (target) {
+      target.focus?.();
     } else {
       overlay.focus?.();
     }
@@ -183,12 +185,9 @@ function activateOverlayTrap(overlay: HTMLElement): () => void {
       const activeAfter =
         typeof document !== 'undefined' ? (document.activeElement as HTMLElement | null) : null;
       if (!activeAfter || !top.overlay.contains(activeAfter)) {
-        const firstFocusable = getFocusableInside(top.overlay)[0];
-        if (firstFocusable) {
-          firstFocusable.focus?.();
-        } else {
-          top.overlay.focus?.();
-        }
+        const focusables = getFocusableInside(top.overlay);
+        const preferred = focusables.find((el) => el.dataset.autofocus === 'true');
+        (preferred ?? focusables[0])?.focus?.();
       }
     }
   };

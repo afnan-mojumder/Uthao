@@ -44,6 +44,56 @@ export interface SettingsProps {
   onSave?: (settings: GameSettings) => void;
 }
 
+const KEYBOARD_FRIENDLY: Record<string, string> = {
+  ArrowUp: '↑',
+  ArrowDown: '↓',
+  ArrowLeft: '←',
+  ArrowRight: '→',
+  Space: 'Space',
+  Tab: 'Tab',
+  Escape: 'Esc',
+  Enter: 'Enter',
+};
+
+function formatKeyCode(code: string): string {
+  const friendly = KEYBOARD_FRIENDLY[code];
+  if (friendly) {
+    return friendly === code ? code : `${friendly} (${code})`;
+  }
+  if (code.startsWith('Key') && code.length === 4) {
+    return `${code.slice(3)} (${code})`;
+  }
+  if (code.startsWith('Digit') && code.length === 6) {
+    return `${code.slice(5)} (${code})`;
+  }
+  return code;
+}
+
+function formatKeyBindingLabel(codes: readonly string[]): string {
+  return codes.map(formatKeyCode).join(' / ');
+}
+
+const GAMEPAD_FRIENDLY: Record<number, string> = {
+  0: 'A / ✕',
+  1: 'B / ○',
+  2: 'X / □',
+  3: 'Y / △',
+  4: 'LB / L1',
+  5: 'RB / R1',
+  6: 'LT / L2',
+  7: 'RT / R2',
+  8: 'View / Share',
+  9: 'Menu / Options',
+  10: 'L3',
+  11: 'R3',
+};
+
+function formatGamepadLabel(btnNum: number): string {
+  const name = GAMEPAD_FRIENDLY[btnNum];
+  const code = `B${localDigits(btnNum)}`;
+  return name ? `${name} (${code})` : code;
+}
+
 const KEYBOARD_ACTIONS: Array<{ action: RebindableKeyboardAction; labelKey: string }> = [
   { action: 'throttle', labelKey: 'settings.controls.action.throttle' },
   { action: 'brake', labelKey: 'settings.controls.action.brake' },
@@ -467,7 +517,7 @@ export function Settings({
         {/* Content Body */}
         <div
           style={{
-            padding: '18px 20px',
+            padding: '18px 20px 28px',
             overflowY: 'auto',
             minHeight: 0,
             flex: 1,
@@ -943,7 +993,7 @@ export function Settings({
                   {KEYBOARD_ACTIONS.map(({ action, labelKey }) => {
                     const isListening =
                       listeningTarget?.kind === 'keyboard' && listeningTarget.action === action;
-                    const keyCodes = draftBindings.keyboard[action].join(' / ');
+                    const keyCodes = formatKeyBindingLabel(draftBindings.keyboard[action]);
                     return (
                       <button
                         key={action}
@@ -1007,7 +1057,7 @@ export function Settings({
                       >
                         <span style={{ color: '#cbd5e1' }}>{t(labelKey)}</span>
                         <strong style={{ color: isListening ? '#fbbf24' : '#38bdf8' }}>
-                          {isListening ? t('settings.controls.listening') : `B${localDigits(btnNum)}`}
+                          {isListening ? t('settings.controls.listening') : formatGamepadLabel(btnNum)}
                         </strong>
                       </button>
                     );

@@ -125,7 +125,7 @@ export class BuildingBuilder {
 
   /** Controls warm lit window intensity at dusk/night (0 = off, 1 = full night). */
   setNightGlow(glow01: number): void {
-    this.windowMat.emissiveIntensity = Math.max(0, Math.min(1, glow01)) * 0.9;
+    this.windowMat.emissiveIntensity = Math.max(0, Math.min(1, glow01)) * 1.2;
   }
 
   private resolvePackMaterial(
@@ -215,7 +215,9 @@ export class BuildingBuilder {
           // Kenney building GLBs have their front entrance along -Z; flip PI so front faces +Z (road)
           glbMesh.rotation.y = Math.PI;
           glbMesh.scale.set(fitXZ, fitY, fitXZ);
-          glbMesh.castShadow = true;
+          // GLB buildings stay receiveShadow-only so each unique GLB material does not
+          // add an extra shadow-pass draw call inside the near-shadow ring.
+          glbMesh.castShadow = false;
           glbMesh.receiveShadow = true;
           buildingGroup.add(glbMesh);
 

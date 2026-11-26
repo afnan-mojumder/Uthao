@@ -24,7 +24,7 @@ import { DISTANCE_SCALE, SIM_DT } from '../config/constants';
 import { BALANCE } from '../config/balance';
 import { hashSeed, type Rng } from '../core/rng';
 import { TIME_SCALE } from '../core/clock';
-import { clamp } from '../core/math';
+import { clamp, distance2d } from '../core/math';
 import { receipt as buildReceipt, fuelUsed, type FuelOptions } from './economy/fuel';
 import { bikeDefToSpec, getBikeDef } from './economy/bikes';
 import { checkPuncture } from './economy/maintenance';
@@ -807,7 +807,7 @@ export class GameSession {
     if (this.homePos) {
       const dx = this.bike.x - this.homePos.x;
       const dz = this.bike.z - this.homePos.z;
-      distFromHomeM = Math.hypot(dx, dz) * DISTANCE_SCALE;
+      distFromHomeM = Math.sqrt(dx * dx + dz * dz) * DISTANCE_SCALE;
     }
     let atKamal = false;
     if (this.kamalGaragePos) {
@@ -1538,7 +1538,7 @@ export class GameSession {
       }
       const dx = agent.x - this.bike.x;
       const dz = agent.z - this.bike.z;
-      const dist = Math.hypot(dx, dz);
+      const dist = Math.sqrt(dx * dx + dz * dz);
       const touchRadius = Math.max(agent.length, agent.width) / 2 + TRAFFIC_COLLISION_MARGIN_M;
       const gap = dist - touchRadius;
       if (gap < nearestGapM) {
@@ -1558,7 +1558,9 @@ export class GameSession {
       const agentSpeed = agent.speed ?? 0;
       const agentVx = Math.sin(agentYaw) * agentSpeed;
       const agentVz = Math.cos(agentYaw) * agentSpeed;
-      const relSpeedKmh = Math.hypot(bikeVx - agentVx, bikeVz - agentVz) * 3.6;
+      const dvx = bikeVx - agentVx;
+      const dvz = bikeVz - agentVz;
+      const relSpeedKmh = Math.sqrt(dvx * dvx + dvz * dvz) * 3.6;
       let severity: BikeCollisionSeverity;
       if (relSpeedKmh > 25) {
         severity = 'crash';
@@ -1638,8 +1640,8 @@ export class GameSession {
       this.postDropoffUntilMin = null;
       const pickup = this.ride.roadNetwork.getNode(req.pickupNodeId);
       const dropoff = this.ride.roadNetwork.getNode(req.destinationNodeId);
-      if (pickup) s.distToPickupM = Math.hypot(this.bike.x - pickup.x, this.bike.z - pickup.z);
-      if (dropoff) s.distToDropoffM = Math.hypot(this.bike.x - dropoff.x, this.bike.z - dropoff.z);
+      if (pickup) s.distToPickupM = distance2d(this.bike.x, this.bike.z, pickup.x, pickup.z);
+      if (dropoff) s.distToDropoffM = distance2d(this.bike.x, this.bike.z, dropoff.x, dropoff.z);
     }
     return encounterPhaseFor(s);
   }
@@ -1657,7 +1659,7 @@ export class GameSession {
       const p = this.poiPositions[i]!;
       const dx = p.x - this.bike.x;
       const dz = p.z - this.bike.z;
-      const d = Math.hypot(dx, dz);
+      const d = Math.sqrt(dx * dx + dz * dz);
       if (d < 25 || d > 65) continue;
       if (!this.inFastForward) {
         const forward = (dx * fwdX + dz * fwdZ) / d;
@@ -1694,8 +1696,13 @@ export class GameSession {
       const nx = -dz / len;
       const nz = dx / len;
       const offset = getSidewalkOffset(seg);
-      out.x = node.x + nx * offset;
-      out.z = node.z + nz * offset;
+      // Step back from the intersection along the segment so waiting NPCs don't stand in cross-streets
+      const dirSign = seg.startNodeId === nodeId ? 1 : -1;
+      const alongX = (dx / len) * dirSign;
+      const alongZ = (dz / len) * dirSign;
+      const setback = Math.min(len * 0.3, Math.max(7, offset + 2.5));
+      out.x = node.x + alongX * setback + nx * offset;
+      out.z = node.z + alongZ * setback + nz * offset;
       out.facingRad = Math.atan2(-nx, -nz);
       return true;
     }

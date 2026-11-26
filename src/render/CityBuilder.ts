@@ -26,6 +26,7 @@ import {
   districtsToLoad,
   districtsToUnload,
   createDistrictSilhouette,
+  createWorldHorizonSkyline,
   disposeHierarchy,
   type DistrictBounds,
 } from './lod';
@@ -107,6 +108,7 @@ export class CityBuilder {
   private physicsWorld?: PhysicsWorld;
   private worldNodesMap: Map<string, RoadNode> = new Map();
   private allWorldSegments: RoadSegment[] = [];
+  private horizonSkyline?: THREE.Object3D;
 
   constructor(opts: CityBuilderOptions = {}) {
     this.signageAtlas = opts.signageAtlas ?? new SignageAtlas();
@@ -166,6 +168,13 @@ export class CityBuilder {
       this.allWorldSegments.push(...world.connectors);
       this.buildConnectors(world.connectors, this.worldNodesMap, physicsWorld, this.allWorldSegments);
     }
+
+    if (this.horizonSkyline) {
+      this.root.remove(this.horizonSkyline);
+      disposeHierarchy(this.horizonSkyline);
+    }
+    this.horizonSkyline = createWorldHorizonSkyline(world);
+    this.root.add(this.horizonSkyline);
 
     // Trigger initial load around starting position with enough initial budget to prepare starting district
     this.update(initialPos, 250, 50);
@@ -577,9 +586,12 @@ export class CityBuilder {
         }
       }
 
-      // Roadside trees on residential / service / main sidewalks where clear of lots & junctions
+      // Roadside trees on residential / service / main / market sidewalks where clear of lots & junctions
       if (
-        (seg.roadType === 'residential' || seg.roadType === 'service' || seg.roadType === 'main') &&
+        (seg.roadType === 'residential' ||
+          seg.roadType === 'service' ||
+          seg.roadType === 'main' ||
+          seg.roadType === 'market') &&
         len > 30
       ) {
         for (const side of [-1, 1] as const) {
@@ -588,7 +600,7 @@ export class CityBuilder {
           const kLen = len - st - et;
           if (kLen < 22) continue;
 
-          const treeStep = 36;
+          const treeStep = 26;
           const numTrees = Math.floor(kLen / treeStep);
           const treeLat = roadW / 2 + 2.05;
           for (let i = 0; i < numTrees; i++) {
@@ -1053,8 +1065,15 @@ export class CityBuilder {
       }
     }
 
-    // 4. Update spatial chunk and district-road visibility culling
+    // 4. Update spatial chunk, traffic-signal, and district-road visibility culling
     this.lodManager.update(cameraPos, maxDistance);
+    const sigMaxDistSq = Math.min(maxDistance, 85) ** 2;
+    for (let i = 0; i < this.signalVisuals.length; i++) {
+      const g = this.signalVisuals[i]!.group;
+      const dx = g.position.x - cameraPos.x;
+      const dz = g.position.z - cameraPos.z;
+      g.visible = dx * dx + dz * dz <= sigMaxDistSq;
+    }
     for (const entry of this.districtRoadGroups.values()) {
       entry.group.visible = distanceToDistrictBounds(entry.bounds, cameraPos) <= maxDistance;
     }
@@ -1450,6 +1469,12 @@ export class CityBuilder {
       disposeHierarchy(sil);
     }
     this.silhouettes.clear();
+
+    if (this.horizonSkyline) {
+      this.root.remove(this.horizonSkyline);
+      disposeHierarchy(this.horizonSkyline);
+      this.horizonSkyline = undefined;
+    }
 
     this.signageAtlas.dispose();
     this.roadBuilder.dispose();

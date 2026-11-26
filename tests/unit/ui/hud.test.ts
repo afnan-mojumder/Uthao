@@ -452,7 +452,10 @@ describe('T8.3 fuel recovery affordances', () => {
       });
 
       expect(root.querySelector('[data-testid="hud-first-person"]')).not.toBeNull();
-      expect(fakeCanvas.isConnected).toBe(false);
+      const hostFp = root.querySelector('[data-testid="hud-minimap-host"]');
+      expect(hostFp).not.toBeNull();
+      expect(fakeCanvas.isConnected).toBe(true);
+      expect(hostFp?.contains(fakeCanvas)).toBe(true);
 
       // Toggle back to thirdPerson -> minimapCanvas MUST reattach into the new host
       act(() => {

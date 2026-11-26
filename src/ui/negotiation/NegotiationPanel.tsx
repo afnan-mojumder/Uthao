@@ -1,6 +1,5 @@
 import type { JSX } from 'preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
-import bnDialogue from '../../../data/dialogue/bn/negotiation.json';
 import type {
   NegotiationAction,
   NegotiationResult,
@@ -15,7 +14,7 @@ import {
   IconShield,
   IconWarning,
 } from '../components/icons';
-import { ensureLocaleLoaded, getDictionary, getLanguage, localDigits, t } from '../i18n';
+import { localDigits, t } from '../i18n';
 
 export interface NegotiationPanelProps {
   active: boolean;
@@ -159,9 +158,8 @@ export function NegotiationPanelView({
       ? translatedDest
       : t('phone.unknown_stop');
 
-  // Passenger lines: active language first with subtitle in the alternate language
+  // Passenger lines in active language
   const rawKey = lastResult?.passengerLine ?? 'dialogue.negotiation.opening';
-  const currentLang = getLanguage();
   const isCounterReply =
     lastResult?.outcome?.kind === 'rejected' &&
     rawKey.includes('.counter.') &&
@@ -175,36 +173,6 @@ export function NegotiationPanelView({
     destination: destinationLabel,
   };
   const primaryLine = t(rawKey, vars);
-  const otherLang = currentLang === 'bn' ? 'en' : 'bn';
-  const otherDict = getDictionary(otherLang);
-  if (otherLang === 'en' && !otherDict[rawKey]) {
-    void ensureLocaleLoaded('en').catch(() => {});
-  }
-  const otherDestRaw = resolvedDestKey
-    ? (otherDict[resolvedDestKey] ??
-      (otherLang === 'bn' ? (bnDialogue as Record<string, string>)[resolvedDestKey] : undefined))
-    : undefined;
-  const otherDestLabel =
-    otherDestRaw && otherDestRaw !== resolvedDestKey
-      ? otherDestRaw
-      : (otherDict['phone.unknown_stop'] ?? destinationLabel);
-  const subtitleVars: Record<string, string | number> = {
-    fare: localDigits(
-      isCounterReply ? session.currentRiderOffer! : session.currentPassengerOffer,
-      otherLang
-    ),
-    offer: localDigits(session.currentPassengerOffer, otherLang),
-    counter: localDigits(session.currentPassengerOffer, otherLang),
-    destination: otherDestLabel,
-  };
-  const subtitleTemplate =
-    otherDict[rawKey] ??
-    (currentLang === 'en' ? (bnDialogue as Record<string, string>)[rawKey] : undefined) ??
-    '';
-  const subtitleLine = subtitleTemplate.replace(
-    /\{(\w+)\}/g,
-    (_: string, k: string) => String(subtitleVars[k] ?? '')
-  );
 
   const patiencePct = Math.max(0, Math.min(100, session.currentPatience * 100));
   const passengerName =
@@ -342,11 +310,6 @@ export function NegotiationPanelView({
         <span style={{ fontSize: '15px', fontWeight: 600, color: '#f8fafc', lineHeight: 1.4 }}>
           "{primaryLine}"
         </span>
-        {subtitleLine && (
-          <span style={{ fontSize: '12px', color: '#94a3b8', fontStyle: 'italic' }}>
-            {subtitleLine}
-          </span>
-        )}
       </div>
 
       {/* Offer Comparison Box */}
@@ -470,37 +433,64 @@ export function NegotiationPanelView({
       </div>
 
       {/* Custom counteroffer: draft string while typing, clamped to >= 50 on blur / Enter / submit */}
-      <input
-        type="number"
-        min={50}
-        step={5}
-        data-testid="custom-counter-input"
-        aria-label={t('negotiation.custom_counter')}
-        value={draftCounter}
-        onInput={(e) => onDraftInput((e.target as HTMLInputElement).value)}
-        onBlur={() => {
-          commitDraftCounter();
-        }}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') {
-            commitDraftCounter();
-          }
-        }}
+      <label
+        htmlFor="negotiation-custom-counter"
         style={{
-          padding: '8px 12px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '10px',
+          padding: '6px 10px',
           borderRadius: '10px',
           background: '#0f172a',
           border: '1px solid rgba(255, 255, 255, 0.15)',
-          color: '#f8fafc',
-          fontSize: '14px',
         }}
-      />
+      >
+        <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 600 }}>
+          {t('negotiation.custom_counter').replace(/:\s*৳\s*$/, '')}
+        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <span style={{ fontSize: '14px', color: '#fbbf24', fontWeight: 800 }}>৳</span>
+          <input
+            id="negotiation-custom-counter"
+            name="customCounter"
+            type="number"
+            min={50}
+            max={Math.max(2000, Math.round(session.fairFare * 5))}
+            step={5}
+            data-testid="custom-counter-input"
+            aria-label={t('negotiation.custom_counter')}
+            value={draftCounter}
+            onInput={(e) => onDraftInput((e.target as HTMLInputElement).value)}
+            onBlur={() => {
+              commitDraftCounter();
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                commitDraftCounter();
+              }
+            }}
+            style={{
+              width: '86px',
+              padding: '4px 6px',
+              borderRadius: '6px',
+              background: 'rgba(30, 41, 59, 0.9)',
+              border: '1px solid rgba(148, 163, 184, 0.25)',
+              color: '#f8fafc',
+              fontSize: '14px',
+              fontWeight: 700,
+              textAlign: 'right',
+            }}
+          />
+        </div>
+      </label>
 
-      {/* Quick Action Buttons Grid */}
+      {/* Primary Action Buttons */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px' }}>
         <button
           type="button"
           data-testid="accept-btn"
+          data-autofocus="true"
           onClick={() => onAction({ kind: 'accept' })}
           style={{
             padding: '12px',
@@ -517,24 +507,35 @@ export function NegotiationPanelView({
           {t('negotiation.accept', { fare: localDigits(session.currentPassengerOffer) })}
         </button>
 
-        <button
-          type="button"
-          data-testid="counter-btn"
-          onClick={() => onAction({ kind: 'counter', amount: commitDraftCounter() })}
-          style={{
-            padding: '12px',
-            borderRadius: '12px',
-            background: '#f59e0b',
-            border: 'none',
-            color: '#0f172a',
-            fontSize: '14px',
-            fontWeight: 800,
-            cursor: 'pointer',
-            boxShadow: '0 4px 12px rgba(245, 158, 11, 0.3)',
-          }}
-        >
-          {t('negotiation.counter', { fare: localDigits(counterAmount) })}
-        </button>
+        {(() => {
+          const canCounter = counterAmount > session.currentPassengerOffer;
+          return (
+            <button
+              type="button"
+              data-testid="counter-btn"
+              disabled={!canCounter}
+              onClick={() => {
+                if (canCounter) {
+                  onAction({ kind: 'counter', amount: commitDraftCounter() });
+                }
+              }}
+              style={{
+                padding: '12px',
+                borderRadius: '12px',
+                background: canCounter ? '#f59e0b' : 'rgba(51, 65, 85, 0.6)',
+                border: 'none',
+                color: canCounter ? '#0f172a' : '#94a3b8',
+                fontSize: '14px',
+                fontWeight: 800,
+                cursor: canCounter ? 'pointer' : 'not-allowed',
+                opacity: canCounter ? 1 : 0.5,
+                boxShadow: canCounter ? '0 4px 12px rgba(245, 158, 11, 0.3)' : 'none',
+              }}
+            >
+              {t('negotiation.counter', { fare: localDigits(counterAmount) })}
+            </button>
+          );
+        })()}
 
         {(() => {
           const discountAmount = Math.max(50, counterAmount - 10);
@@ -546,7 +547,7 @@ export function NegotiationPanelView({
               disabled={!canDiscount}
               onClick={() => onAction({ kind: 'discount', amount: discountAmount })}
               style={{
-                padding: '10px',
+                padding: '9px 10px',
                 borderRadius: '10px',
                 background: canDiscount ? 'rgba(56, 189, 248, 0.2)' : 'rgba(30, 41, 59, 0.35)',
                 border: '1px solid rgba(56, 189, 248, 0.4)',
@@ -562,6 +563,35 @@ export function NegotiationPanelView({
           );
         })()}
 
+        <button
+          type="button"
+          data-testid="decline-btn"
+          onClick={() => onAction({ kind: 'decline' })}
+          style={{
+            padding: '9px 10px',
+            borderRadius: '10px',
+            background: 'rgba(239, 68, 68, 0.2)',
+            border: '1px solid rgba(239, 68, 68, 0.4)',
+            color: '#ef4444',
+            fontSize: '12px',
+            fontWeight: 700,
+            cursor: 'pointer',
+          }}
+        >
+          {t('negotiation.decline')}
+        </button>
+      </div>
+
+      {/* Secondary Negotiation Tactics */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(2, 1fr)',
+          gap: '8px',
+          borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+          paddingTop: '8px',
+        }}
+      >
         {pickup && (
           <button
             type="button"
@@ -570,12 +600,12 @@ export function NegotiationPanelView({
               onAction({ kind: 'pickupAdjust', walkM: pickup.walkM, savesMin: pickup.savesMin })
             }
             style={{
-              padding: '10px',
+              padding: '7px 10px',
               borderRadius: '10px',
               background: 'rgba(30, 41, 59, 0.8)',
               border: '1px solid rgba(255, 255, 255, 0.1)',
               color: '#f8fafc',
-              fontSize: '12px',
+              fontSize: '11px',
               fontWeight: 600,
               cursor: 'pointer',
             }}
@@ -593,12 +623,12 @@ export function NegotiationPanelView({
             data-testid="refuse-alley-btn"
             onClick={() => onAction({ kind: 'refuseAlley', walkM: alley.walkM })}
             style={{
-              padding: '10px',
+              padding: '7px 10px',
               borderRadius: '10px',
               background: 'rgba(30, 41, 59, 0.8)',
               border: '1px solid rgba(255, 255, 255, 0.1)',
               color: '#f8fafc',
-              fontSize: '12px',
+              fontSize: '11px',
               fontWeight: 600,
               cursor: 'pointer',
             }}
@@ -618,14 +648,14 @@ export function NegotiationPanelView({
               disabled={!canExplainDetour}
               onClick={() => onAction({ kind: 'explainDetour', extraMin: 8 })}
               style={{
-                padding: '10px',
+                padding: '7px 10px',
                 borderRadius: '10px',
                 background: canExplainDetour
                   ? 'rgba(30, 41, 59, 0.8)'
                   : 'rgba(30, 41, 59, 0.35)',
                 border: '1px solid rgba(255, 255, 255, 0.1)',
                 color: canExplainDetour ? '#f8fafc' : '#64748b',
-                fontSize: '12px',
+                fontSize: '11px',
                 fontWeight: 600,
                 cursor: canExplainDetour ? 'pointer' : 'not-allowed',
                 opacity: canExplainDetour ? 1 : 0.65,
@@ -641,12 +671,12 @@ export function NegotiationPanelView({
           data-testid="off-app-btn"
           onClick={() => onAction({ kind: 'offApp', amount: commitDraftCounter() })}
           style={{
-            padding: '10px',
+            padding: '7px 10px',
             borderRadius: '10px',
             background: 'rgba(234, 179, 8, 0.2)',
             border: '1px solid rgba(234, 179, 8, 0.4)',
             color: '#eab308',
-            fontSize: '12px',
+            fontSize: '11px',
             fontWeight: 700,
             cursor: 'pointer',
           }}
@@ -659,12 +689,12 @@ export function NegotiationPanelView({
           data-testid="mislead-distance-btn"
           onClick={() => onAction({ kind: 'misleadDistance' })}
           style={{
-            padding: '10px',
+            padding: '7px 10px',
             borderRadius: '10px',
             background: 'rgba(249, 115, 22, 0.18)',
             border: '1px solid rgba(249, 115, 22, 0.4)',
             color: '#fb923c',
-            fontSize: '12px',
+            fontSize: '11px',
             fontWeight: 700,
             cursor: 'pointer',
           }}
@@ -677,36 +707,17 @@ export function NegotiationPanelView({
           data-testid="pressure-btn"
           onClick={() => onAction({ kind: 'pressure', amount: commitDraftCounter() })}
           style={{
-            padding: '10px',
+            padding: '7px 10px',
             borderRadius: '10px',
             background: 'rgba(244, 63, 94, 0.18)',
             border: '1px solid rgba(244, 63, 94, 0.4)',
             color: '#fb7185',
-            fontSize: '12px',
+            fontSize: '11px',
             fontWeight: 700,
             cursor: 'pointer',
           }}
         >
           {t('negotiation.pressure')}
-        </button>
-
-        <button
-          type="button"
-          data-testid="decline-btn"
-          onClick={() => onAction({ kind: 'decline' })}
-          style={{
-            gridColumn: '1 / -1',
-            padding: '10px',
-            borderRadius: '10px',
-            background: 'rgba(239, 68, 68, 0.2)',
-            border: '1px solid rgba(239, 68, 68, 0.4)',
-            color: '#ef4444',
-            fontSize: '12px',
-            fontWeight: 700,
-            cursor: 'pointer',
-          }}
-        >
-          {t('negotiation.decline')}
         </button>
       </div>
     </ModalPanel>

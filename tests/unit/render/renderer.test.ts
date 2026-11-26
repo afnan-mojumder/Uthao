@@ -449,4 +449,66 @@ describe('Renderer P2.6 real dt, AdaptiveQuality, WeatherFx quality sync & dispo
     api.toggleCamera();
     expect(toggleSpy2).toHaveBeenCalledTimes(1);
   });
+
+  it('updatePeople accepts Map.values() iterables directly and updates rickshaws and cars in a single pass', () => {
+    const r = Renderer.init(canvas);
+    const peds = new Map([
+      [
+        'p1',
+        {
+          id: 'p1',
+          x: 5,
+          z: 5,
+          heading: 0,
+          speed: 1.1,
+          state: 'sidewalk' as const,
+          segmentId: 'S1',
+          distAlongSegment: 5,
+          lateralOffset: 0,
+          side: 'left' as const,
+          direction: 1 as const,
+          lod: 'near' as const,
+        },
+      ],
+    ]);
+    const traffic = new Map([
+      [
+        'v1',
+        {
+          id: 'v1',
+          kind: 'rickshaw' as const,
+          x: 10,
+          z: 10,
+          heading: 0.5,
+          speed: 3,
+          laneId: 'L1',
+          distAlongLane: 10,
+          length: 2.2,
+          width: 1.1,
+          desiredSpeed: 3,
+          lod: 'near' as const,
+        },
+      ],
+      [
+        'v2',
+        {
+          id: 'v2',
+          kind: 'car' as const,
+          x: 20,
+          z: 20,
+          heading: 1.0,
+          speed: 8,
+          laneId: 'L1',
+          distAlongLane: 20,
+          length: 4.4,
+          width: 1.8,
+          desiredSpeed: 10,
+          lod: 'near' as const,
+        },
+      ],
+    ]);
+
+    expect(() => r.updatePeople(peds.values(), traffic.values(), 1.0)).not.toThrow();
+    r.dispose();
+  });
 });

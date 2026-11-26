@@ -298,6 +298,8 @@ describe('T3.9 / P7.1 Audio System', () => {
       'phone_ring',
       'ui_click',
       'impact',
+      'impact_light',
+      'impact_metal',
       'cash',
       'thunder',
     ] as const;
@@ -356,5 +358,46 @@ describe('bindAudio', () => {
     const g2 = ctx.gains.length;
     bus.emit('world/weatherChanged', { from: 'lightRain', to: 'heavyRain' });
     expect(ctx.gains.length).toBeGreaterThan(g2);
+
+    const oscBeforeNew = ctx.oscillators.length;
+    bus.emit('ride/started', { requestId: 'r1' });
+    expect(ctx.oscillators.length).toBeGreaterThan(oscBeforeNew);
+
+    const gainsBeforeBump = ctx.gains.length;
+    bus.emit('bike/speedBump', { speedKmh: 28 });
+    expect(ctx.gains.length).toBeGreaterThan(gainsBeforeBump);
+
+    const oscBeforeStall = ctx.oscillators.length;
+    bus.emit('bike/fuelEmpty', {});
+    expect(ctx.oscillators.length).toBeGreaterThan(oscBeforeStall);
+
+    const oscBeforeBreakdown = ctx.oscillators.length;
+    bus.emit('bike/breakdown', { conditionPct: 12 });
+    expect(ctx.oscillators.length).toBeGreaterThan(oscBeforeBreakdown);
+
+    const gainsBeforePuncture = ctx.gains.length;
+    bus.emit('bike/puncture', {});
+    expect(ctx.gains.length).toBeGreaterThan(gainsBeforePuncture);
+  });
+
+  it('suppresses duplicate synthetic oscillators when a decoded sample is present and swaps rain_light/rain_heavy beds', () => {
+    const { audio, ctx } = unlocked();
+    const fakeBuf = { getChannelData: () => new Float32Array(100), duration: 1 } as unknown as AudioBuffer;
+    const buffers = (audio as unknown as { sampleBuffers: Map<string, AudioBuffer> }).sampleBuffers;
+    buffers.set('ui_click', fakeBuf);
+    buffers.set('rain_light', fakeBuf);
+    buffers.set('rain_heavy', fakeBuf);
+
+    const oscBefore = ctx.oscillators.length;
+    const bufSrcBefore = ctx.bufferSources.length;
+    audio.playClick();
+    expect(ctx.bufferSources.length).toBe(bufSrcBefore + 1);
+    expect(ctx.oscillators.length).toBe(oscBefore);
+
+    const bufSrcBeforeRain = ctx.bufferSources.length;
+    audio.setAmbience(0.5, 'lightRain', true);
+    expect(ctx.bufferSources.length).toBe(bufSrcBeforeRain + 1);
+    audio.setAmbience(0.5, 'heavyRain', true);
+    expect(ctx.bufferSources.length).toBe(bufSrcBeforeRain + 2);
   });
 });

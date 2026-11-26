@@ -156,9 +156,11 @@ export function App(): JSX.Element {
       const bound = getActiveControlsBindings().keyboard;
       const pressed = (codes: string[]) => codes.includes(e.code);
       if (pressed(bound.phone)) {
-        // Tab opens the phone only while driving. In menus and modals, and
-        // with the phone already open, Tab moves focus like any other key.
-        if (!uiModalOpen(showSettingsRef.current, { ignoreTutorial: true })) {
+        // Tab opens the phone only while driving (including the riding tutorial step).
+        // In menus and modals, and with the phone already open, Tab moves focus like any other key.
+        const drivingTutorial =
+          !tutorialSignal.value.active || tutorialSignal.value.step === 'riding';
+        if (!uiModalOpen(showSettingsRef.current, { ignoreTutorial: drivingTutorial })) {
           e.preventDefault();
           phoneSignal.value = { ...phoneSignal.value, open: true };
         }
@@ -641,17 +643,18 @@ export function App(): JSX.Element {
         </div>
       )}
 
-      {!(
-        choiceSignal.value.presentation === 'inline' &&
-        !choiceSignal.value.outcomeLineKey &&
-        (phoneSignal.value.open ||
-          garageSignal.value.open ||
-          journalSignal.value ||
-          karmaPanelSignal.value ||
-          uiSheetSignal.value ||
-          showSettings ||
-          saveSlotsSignal.value.isOpen)
-      ) && (
+      {!negotiationSignal.value.active &&
+        !(
+          choiceSignal.value.presentation === 'inline' &&
+          !choiceSignal.value.outcomeLineKey &&
+          (phoneSignal.value.open ||
+            garageSignal.value.open ||
+            journalSignal.value ||
+            karmaPanelSignal.value ||
+            uiSheetSignal.value ||
+            showSettings ||
+            saveSlotsSignal.value.isOpen)
+        ) && (
         <div
           style={layerStyle(
             choiceSignal.value.presentation === 'inline' && !choiceSignal.value.outcomeLineKey

@@ -91,7 +91,7 @@ export function Journal({
   getObjectiveStates,
   ownedUpgrades: ownedUpgradesProp = [],
   onClose,
-  zIndex = Z_LAYER.PANEL,
+  zIndex = Z_LAYER.MODAL + 20,
 }: JournalProps) {
   const [activeTab, setActiveTab] = useState<'missions' | 'relations' | 'records'>('missions');
 
@@ -100,6 +100,14 @@ export function Journal({
   const chapter = story.currentChapter;
   const relationships = story.characterRelationships ?? {};
   const rating = reputation?.rating ?? economy.reputation ?? 5.0;
+  const ledgerEarnings = (snapshot.ledger ?? [])
+    .filter(
+      (tx) =>
+        tx.amount > 0 &&
+        (tx.kind === 'fare' || tx.kind === 'tip' || tx.kind === 'delivery' || tx.kind === 'reward')
+    )
+    .reduce((sum, tx) => sum + tx.amount, 0);
+  const totalEarnings = Math.max(ledgerEarnings, Math.round(economy.dailyRevenue ?? 0));
   const promisesRecord = reputation?.promises ?? { kept: 0, broken: 0 };
   const ownedUpgrades = ownedUpgradesProp;
 
@@ -194,7 +202,7 @@ export function Journal({
           >
             <div style={{ fontSize: '11px', color: '#94A3B8' }}>{t('journal.summary_earnings')}</div>
             <div style={{ fontSize: '16px', fontWeight: 700, color: '#4ADE80' }}>
-              ৳{localDigits(economy.cash)}
+              ৳{localDigits(totalEarnings)}
             </div>
           </div>
           <div
@@ -341,7 +349,7 @@ export function Journal({
                             <span style={{ flex: 1 }}>
                               {objDef ? t(objDef.descKey) : st.id}
                             </span>
-                            {st.target > 1 && (
+                            {st.target >= 1 && (
                               <span style={{ fontSize: '12px', color: '#94A3B8' }}>
                                 {localDigits(st.progress)}/{localDigits(st.target)}
                               </span>

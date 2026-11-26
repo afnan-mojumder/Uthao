@@ -189,7 +189,7 @@ export function DayEnd({
                 marginTop: '2px',
               }}
             >
-              {isNetPositive ? '+' : ''}৳{localDigits(Math.round(summary.net))}
+              {isNetPositive ? '+' : '-'}৳{localDigits(Math.abs(Math.round(summary.net)))}
             </div>
           </div>
         </div>

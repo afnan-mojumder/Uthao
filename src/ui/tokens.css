@@ -98,6 +98,43 @@
   }
 }
 
+@media (max-height: 460px) {
+  .uthao-main-menu {
+    padding: 10px 16px !important;
+  }
+  .uthao-main-menu-header {
+    margin-bottom: 10px !important;
+  }
+  .uthao-main-menu-title {
+    font-size: clamp(1.9rem, 5vw, 2.6rem) !important;
+    margin-bottom: 2px !important;
+  }
+  .uthao-main-menu-subtitle {
+    margin-bottom: 4px !important;
+    padding: 3px 10px !important;
+    font-size: 0.72rem !important;
+  }
+  .uthao-main-menu-tagline {
+    font-size: 0.78rem !important;
+    line-height: 1.25 !important;
+  }
+  .uthao-main-menu-actions {
+    max-width: 540px !important;
+    gap: 8px !important;
+  }
+  .uthao-main-menu-actions button {
+    padding: 8px 12px !important;
+  }
+  .uthao-main-menu-desc {
+    display: none !important;
+  }
+  .uthao-main-menu-secondary-row {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+}
+
 html,
 body,
 #ui-root {
@@ -209,6 +246,26 @@ html[data-high-contrast="true"] {
   --text-primary: #FFFFFF;
   --text-secondary: #F1F5F9;
   --text-muted: #CBD5E1;
+}
+
+.uthao-dark-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.35) rgba(15, 23, 42, 0.4);
+}
+.uthao-dark-scroll::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+}
+.uthao-dark-scroll::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.4);
+  border-radius: 999px;
+}
+.uthao-dark-scroll::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.35);
+  border-radius: 999px;
+}
+.uthao-dark-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.55);
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -1300,7 +1300,7 @@ export function bindEventBusToStore(bus: EventBus<GameEvents>): () => void {
       heldRequest = ev.request;
       phoneSignal.value = {
         ...phoneSignal.value,
-        unreadCount: phoneSignal.value.unreadCount + 1,
+        unreadCount: Math.min(9, phoneSignal.value.unreadCount + 1),
       };
       return;
     }

@@ -43,7 +43,7 @@ export class CameraRig {
   private buildHandlebarGroup(): THREE.Group {
     const group = new THREE.Group();
     group.name = 'first_person_handlebars';
-    group.position.set(0, -0.34, -0.52);
+    group.position.set(0, -0.22, -0.56);
 
     const barMat = new THREE.MeshStandardMaterial({
       color: 0x1e293b,
@@ -54,6 +54,16 @@ export class CameraRig {
       color: 0x0f172a,
       roughness: 0.9,
       metalness: 0.05,
+    });
+    const leverMat = new THREE.MeshStandardMaterial({
+      color: 0x94a3b8,
+      roughness: 0.35,
+      metalness: 0.8,
+    });
+    const mirrorGlassMat = new THREE.MeshStandardMaterial({
+      color: 0x64748b,
+      roughness: 0.12,
+      metalness: 0.92,
     });
     const dialMat = new THREE.MeshBasicMaterial({
       color: 0x38bdf8,
@@ -67,11 +77,21 @@ export class CameraRig {
     barMesh.receiveShadow = false;
     group.add(barMesh);
 
-    // Left & right rubber grips + side mirrors
+    // Center steering stem / riser
+    const riserGeo = new THREE.CylinderGeometry(0.022, 0.026, 0.09, 8);
+    const riser = new THREE.Mesh(riserGeo, barMat);
+    riser.position.set(0, -0.045, 0);
+    riser.castShadow = false;
+    riser.receiveShadow = false;
+    group.add(riser);
+
+    // Left & right rubber grips, levers, and side mirrors
     const gripGeo = new THREE.CylinderGeometry(0.022, 0.022, 0.14, 8);
     gripGeo.rotateZ(Math.PI / 2);
+    const leverGeo = new THREE.BoxGeometry(0.11, 0.012, 0.018);
     const stemGeo = new THREE.CylinderGeometry(0.008, 0.008, 0.14, 6);
     const mirrorGeo = new THREE.BoxGeometry(0.11, 0.06, 0.02);
+    const mirrorGlassGeo = new THREE.PlaneGeometry(0.095, 0.048);
 
     for (const side of [-1, 1] as const) {
       const grip = new THREE.Mesh(gripGeo, gripMat);
@@ -80,6 +100,13 @@ export class CameraRig {
       grip.castShadow = false;
       grip.receiveShadow = false;
       group.add(grip);
+
+      const lever = new THREE.Mesh(leverGeo, leverMat);
+      lever.position.set(side * 0.24, -0.004, -0.032);
+      lever.rotation.y = side * -0.22;
+      lever.castShadow = false;
+      lever.receiveShadow = false;
+      group.add(lever);
 
       const stem = new THREE.Mesh(stemGeo, barMat);
       stem.position.set(side * 0.19, 0.07, -0.01);
@@ -94,9 +121,16 @@ export class CameraRig {
       mirror.castShadow = false;
       mirror.receiveShadow = false;
       group.add(mirror);
+
+      const glass = new THREE.Mesh(mirrorGlassGeo, mirrorGlassMat);
+      glass.position.set(side * 0.22, 0.14, 0.001);
+      glass.rotation.y = side * 0.18;
+      glass.castShadow = false;
+      glass.receiveShadow = false;
+      group.add(glass);
     }
 
-    // Center speedometer housing & illuminated dial
+    // Center speedometer housing, bezel & illuminated dial
     const podGeo = new THREE.BoxGeometry(0.14, 0.06, 0.09);
     const pod = new THREE.Mesh(podGeo, gripMat);
     pod.position.set(0, 0.03, -0.04);
@@ -105,9 +139,17 @@ export class CameraRig {
     pod.receiveShadow = false;
     group.add(pod);
 
+    const bezelGeo = new THREE.BoxGeometry(0.115, 0.046, 0.012);
+    const bezel = new THREE.Mesh(bezelGeo, leverMat);
+    bezel.position.set(0, 0.041, 0.001);
+    bezel.rotation.x = -0.35;
+    bezel.castShadow = false;
+    bezel.receiveShadow = false;
+    group.add(bezel);
+
     const dialGeo = new THREE.PlaneGeometry(0.1, 0.036);
     const dial = new THREE.Mesh(dialGeo, dialMat);
-    dial.position.set(0, 0.042, 0.006);
+    dial.position.set(0, 0.042, 0.008);
     dial.rotation.x = -0.35;
     dial.castShadow = false;
     dial.receiveShadow = false;
@@ -297,6 +339,7 @@ export class CameraRig {
       const distanceBehind = 4.8;
       const heightAbove = 2.3;
       const lookAheadDist = lerp(5, 16, speedRatio);
+      const lookHeading = heading + (this.reduceMotion ? 0 : steer * 0.14);
 
       this._idealPos.set(
         targetPos.x - Math.sin(heading) * distanceBehind,
@@ -305,9 +348,9 @@ export class CameraRig {
       );
 
       this._idealLookAt.set(
-        targetPos.x + Math.sin(heading) * lookAheadDist,
+        targetPos.x + Math.sin(lookHeading) * lookAheadDist,
         targetPos.y + 1.1,
-        targetPos.z + Math.cos(heading) * lookAheadDist
+        targetPos.z + Math.cos(lookHeading) * lookAheadDist
       );
 
       const idealObstructed = this.applyAntiClip(targetPos, this._idealPos, colliders);
@@ -318,8 +361,8 @@ export class CameraRig {
         this.initialized = true;
       } else {
         const safeDt = Math.max(0, dt);
-        const posDamping = 1 - Math.exp(-8 * safeDt);
-        const lookDamping = 1 - Math.exp(-12 * safeDt);
+        const posDamping = 1 - Math.exp(-11 * safeDt);
+        const lookDamping = 1 - Math.exp(-15 * safeDt);
 
         if (idealObstructed) {
           this.currentPos.copy(this._idealPos);
